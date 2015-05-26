@@ -773,7 +773,7 @@ tcpip_uipcall(void)
 
 void *	tcpip_gethandler(void)
 {
-	return eventhandler;
+	return (void *) eventhandler;
 }
 
 /*---------------------------------------------------------------------------*/

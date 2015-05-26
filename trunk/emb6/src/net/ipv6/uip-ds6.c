@@ -139,7 +139,7 @@ uip_ds6_init(void)
              random_rand() % (UIP_ND6_MAX_RTR_SOLICITATION_DELAY *
             		 bsp_get(E_BSP_GET_TRES)), tcpip_gethandler());
 #endif /* UIP_CONF_ROUTER */
-  etimer_set(&uip_ds6_timer_periodic, UIP_DS6_PERIOD, tcpip_gethandler());
+  etimer_set(&uip_ds6_timer_periodic, UIP_DS6_PERIOD, (pfn_callback_t) tcpip_gethandler());
 
   return;
 }
