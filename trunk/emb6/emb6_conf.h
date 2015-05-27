@@ -64,8 +64,10 @@
 /*=============================================================================
                                 APPLICATION LAYER SECTION
 ===============================================================================*/
+#ifndef EMB6_INIT_ROOT
 /** Define node act as DAG root */
 #define 	EMB6_INIT_ROOT						FALSE
+#endif
 
 /** Define a network prefix for dag root */
 #define NETWORK_PREFIX_DODAG					0xaaaa, 0x0000, 0x0000, 0x0000
