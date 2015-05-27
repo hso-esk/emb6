@@ -66,8 +66,13 @@
 #include "ctimer.h"
 #include "random.h"
 
+#if NETSTACK_CONF_WITH_IPV6
 #include "uip-ds6.h"
+#endif
+
+#if UIP_CONF_IPV6_RPL
 #include "rpl.h"
+#endif
 
 #define LOGGER_ENABLE   FALSE
 #include "logger.h"
