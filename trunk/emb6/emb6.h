@@ -384,8 +384,9 @@ extern const s_nsLowMac_t 		nullrdc_driver;
 
 
 /*! Supported framers */
-extern const s_nsFramer_t 		framer_802154;
-extern const s_nsFramer_t 		no_framer;
+extern const s_nsFramer_t     framer_802154;
+extern const s_nsFramer_t     no_framer;
+extern const s_nsFramer_t     nullframer;
 
 
 /*! Supported interfaces */
