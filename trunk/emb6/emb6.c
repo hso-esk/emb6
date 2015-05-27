@@ -66,7 +66,11 @@
 #include "ctimer.h"
 #include "random.h"
 
+#include "uip-ds6.h"
+#include "rpl.h"
 
+#define LOGGER_ENABLE   FALSE
+#include "logger.h"
 
 /*==============================================================================
                            LOCAL FUNCTION PROTOTYPES
