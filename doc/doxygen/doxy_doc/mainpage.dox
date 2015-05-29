@@ -1,0 +1,25 @@
+/*! \mainpage 
+ *
+ * 	This project is aimed to create full featured 6LoWPAN network stack based on a Contiki network stack. Although it utilize some libraries
+ * 	from the original source without modification it has differences such as lack of protothreads and processes.\n
+ * 	To know more about 6LoWPAN you may refer to the Wikipedia (http://en.wikipedia.org/wiki/6LoWPAN).\n
+ * 	To know more about the Contiki OS you may refer to the Wikipedia (http://en.wikipedia.org/wiki/Contiki).
+ *
+ *  [In German] 
+ *	Das Projekt wird finanziert vom Bundesministerium für Wirtschaft und Technologie (BMWi) 
+ *  im Rahmen eines ZIM-Projekts (Zentrales Innovationsprogramm Mittelstand). 
+ *	Partner in diesem kooperativen Forschungsprojekt ist das Dresdner Unternehmen AN Solutions GmbH.
+ *
+ *  [In English]
+ *	This project financed by German Federal Ministry of Economics and Energy (abbr. BMWi)
+ *	as part of a ZIM project (Central Innovation Program for mid-sized companies). 
+ *	Partner in this project is AN Solitions GmbH.
+ *
+ * 	This manual is divided in the following sections:
+ * - \subpage src_org	
+ * - \subpage mig_guide 		
+ */
+ //-----------------------------------------------------------
+
+
+ 

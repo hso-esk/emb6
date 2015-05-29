@@ -1,0 +1,714 @@
+/*! \page mig_guide	Migration guide
+ * This page will explain how to replace protothreads of the Contiki OS with minor changes.
+ * To know more about protohreads it is recommended to read these (http://dunkels.com/adam/pt/) and these (http://dunkels.com/adam/pt/about.html) articles.
+ * To get rid of protothreads several steps should be done:
+ * 	- modify timers library (ctimer, etimer)
+ * 	- write new event drive library
+ * 	- change protothreads by normal functions calls
+ *
+ * \li \ref mig_guide_p1
+ * \li \ref mig_guide_p2
+ * \li \ref mig_guide_p3
+ */
+  //-----------------------------------------------------------
+ /*!
+ \page mig_guide_p1 Contiki events processing
+ 	To explain what particularly should be changed lets look into the Contiki code.
+	Here is a essential part of a main function from contiki-avr-zigbit-main.c 
+	file which is stored in the platform/avr-zigbit folder
+	\code 
+	int main(void) 
+	{
+	        rs232_init();
+	        clock_init();
+	
+	        process_init();
+	        process_start(&etimer_process, NULL);
+	        process_start(&mac_process, NULL);
+	        process_start(&tcpip_process, NULL);
+	
+	        while(1) {
+	               process_run();
+	               watchdog_periodic();
+	        }
+	        //...
+	}
+	\endcode
+	
+	In general process_start(...) include function code to a big switch case statement.
+	\code
+	switch(procecc_list->process_id) 
+	{
+	        case etimer_process:
+	                // function code here
+	                break;
+	        case mac_process:
+	                // function code here
+	                break;
+	        case tcpip_process:
+	                // function code here
+	                break;
+	        case idle_process:
+	                break;
+	        default:
+	                break;        
+	}
+	\endcode
+	
+	Lets look into the function process_run();
+	It is defined in process.c file
+	
+	\code
+	int process_run(void)
+	{
+	        /* Process poll events. */
+	        if(poll_requested) {
+	               do_poll();
+	        }
+	
+	        /* Process one event from the queue */
+	        do_event();
+	
+	        return nevents + poll_requested;
+	}
+	\endcode
+	
+	First if said that if poll_requested are not equal to 0, than do_poll() should be called,
+	but as there was no changing poll_requested = 0.
+	Going further
+	
+	\code
+	static void do_event(void)
+	{
+	        /* Process poll events. */
+	        if(nevents > 0) {
+	           //exec code here ...
+	        }
+	}
+	\endcode
+	
+	Again, as we don't have any changes in system nothing happens.
+	However, if we will look into the clock realization file of an avr cpu
+	we may see following
+	
+	\code
+	ISR(AVR_OUTPUT_COMPARE_INT)
+	{
+	        count++;
+	        if(++scount >= CLOCK_SECOND) {
+	                scount = 0;
+	                seconds++;
+	        }
+	        if(etimer_pending()) {
+	                etimer_request_poll();
+	        }
+	}
+	\endcode
+	
+	- ISR - interrupt service routine
+	- count - ticks counter
+	- scount - ticks counter for 1 second
+	- second - seconds counter
+	- etimer_pending() - return NULL if etimer library wasn't init
+	- etimer_request_poll - checks if any timers in timerlist has been expired (they were started in the beginning of the main function).
+	and if look into etimer_request_poll() it may be seen this equation 
+	
+	\code
+	poll_requested = 1;
+	\endcode
+	
+	which returns us to process_run() function.
+	The simplified do_poll function lies below	
+	
+	\code
+	/*---------------------------------------------------------------------------*/
+	/* Call each process' poll handler.
+	/*---------------------------------------------------------------------------*/
+	static void do_poll(void)
+	{
+	        struct process *p;
+	
+	        poll_requested = 0;
+	        /* Call the processes that needs to be polled. */
+	        for(p = process_list; p != NULL; p = p->next) {
+	                if(p->needspoll) {
+	                        call_process(p, PROCESS_EVENT_POLL, NULL);
+	                }
+	        }
+	}
+	\endcode
+	
+	as was mentioned above that the Contiki core at the preprocessing time during compilation
+	creates very big switch statement, consist of functions execution code.
+	That is why call_process(...); function just goes to the exact case branch of a process.
+
+	It is a common approach for Contiki to insert process call into the interrupt routine.
+ */
+  //-----------------------------------------------------------
+  /*!
+ \page mig_guide_p2 Embetter6 events processing
+It was done from the Contiki sources and developers do not intended to change whole architecture of the Contiki network stack. 
+So the goal was just to eliminate dependencies from the Contiki OS.
+Network stack essential files where protohreads were used:
+ - etimer.c (Event timer library)
+ - ctimer.c (Callback timer library)
+ - tcpip.c (TCP/IP library)
+ - process.c (Event management, protothreads etc.)
+ 
+Nevertheless protothreads can be easily removed by replacing them with ordinary functions the event management should be done in other way.
+That is why the evproc.c (Event processing library) has been written. Full API and example of usage you may find in \ref evproc "Event processing library" module.
+Event management based on three functions: evproc_regCallback() , evproc_putEvent() and evproc_nextEvent().
+- evproc_regCallback() -  This function takes as parameters type of an event (EVENT_TYPES) and callback function (pfn_callback_t). If you need information about callback function, 
+please refer to <a href="http://www.linuxforu.com/2012/02/function-pointers-and-callbacks-in-c-an-odyssey/">this</a> link. So, further given event will be associated 
+with given function and whenever this event will be processed this function will be called.
+- evproc_putEvent() - This function takes as parameters type of an event (EVENT_TYPES), data which are need to be associated with this event (p_data_t
+) and type of action (en_evprocAction_t) with an event queue.
+For instance you may put new event to the head of a queue, to the tail of a queue and process event immediately.
+- evproc_nextEvent() - This function takes event from the head of a queue and call all of the linked with this event callback functions one by one. 
+Also it should be called periodically from the main loop (see main())
+
+The event timer library working exactly the same as the original one with one minor change, when assigned timer has been expired 
+evproc_putEvent(E_EVPROC_HEAD,EVENT_TYPE_TIMER_EXP,pst_tTim), not the process_poll() function.
+
+The same approach was used for callback timer library.
+
+All of mentioned files should not be replaces when a new version of the Contiki OS will be released. 
+Only a tcpip.c need to be slightly changed. Here is some tips which was done when Contiki 2.7 has been began available for downloading.
+<center>
+<table border> 
+<tr> 
+	<td><b> Line(s) number/range </b></td> 
+	<td><b> Action type </b></td> 
+	<td><b> Comments </b></td> 
+</tr> 
+
+<tr> 
+	<td> 75 - 78 </td> 
+	<td> delete/comment </td>
+	<td>  </td> 
+</tr> 
+
+<tr> 
+	<td> 89 </td> 
+	<td> insert </td>
+	<td> uint8_t	last_conn_id = 1; </td> 
+</tr>
+
+<tr> 
+	<td> 94 </td> 
+	<td> replace with </td>
+	<td> uint8_t 	conn_id;</td> 
+</tr>
+
+<tr> 
+	<td> 99 </td> 
+	<td> delete/comment </td>
+	<td>  </td> 
+</tr>
+
+<tr> 
+	<td> 103 - 107 </td> 
+	<td> delete/comment </td>
+	<td>  </td> 
+</tr>
+
+<tr> 
+	<td> 155 </td> 
+	<td> delete/comment </td>
+	<td>  </td> 
+</tr>
+
+<tr> 
+	<td> 240 </td> 
+	<td> replace with </td>
+	<td> c->appstate.conn_id = last_conn_id++; </td> 
+</tr>
+
+<tr> 
+	<td> 250 </td> 
+	<td> add parameter </td>
+	<td> uint8_t conn_id </td> 
+</tr>
+
+<tr> 
+	<td> 250 </td> 
+	<td> add parameter </td>
+	<td> uint8_t conn_id </td> 
+</tr>
+
+<tr> 
+	<td> 258 </td> 
+	<td> replace with </td>
+	<td> l->conn_id == conn_id </td> 
+</tr>
+
+<tr> 
+	<td> 285 </td> 
+	<td> replace with </td>
+	<td> uint8_t </td> 
+</tr>
+
+<tr> 
+	<td> 292 </td> 
+	<td> replace with </td>
+	<td> s->conn_id = last_conn_id++; </td> 
+</tr>
+
+<tr> 
+	<td> 293 </td> 
+	<td> add to the end </td>
+	<td> return s->conn_id; </td> 
+</tr>
+
+<tr> 
+	<td> 299 </td> 
+	<td> replace with </td>
+	<td> uint8_t </td> 
+</tr>
+
+<tr> 
+	<td> 306 </td> 
+	<td> replace with </td>
+	<td> s->conn_id = last_conn_id++; </td> 
+</tr>
+
+<tr> 
+	<td> 308 </td> 
+	<td> add to the end </td>
+	<td> return s->conn_id; </td> 
+</tr>
+
+<tr> 
+	<td> 322 </td> 
+	<td> replace with </td>
+	<td> s->conn_id = last_conn_id++; </td> 
+</tr>
+
+<tr> 
+	<td> 350 </td> 
+	<td> replace with </td>
+	<td> uip_icmp6_conns.appstate.conn_id == 0 </td> 
+</tr>
+
+<tr> 
+	<td> 351 </td> 
+	<td> replace with </td>
+	<td> uip_icmp6_conns.appstate.conn_id = last_conn_id++; </td> 
+</tr>
+
+<tr> 
+	<td> 361 </td> 
+	<td> replace with </td>
+	<td> if(uip_icmp6_conns.appstate.conn_id != 0) </td> 
+</tr>
+
+<tr> 
+	<td> 364 </td> 
+	<td> replace with </td>
+	<td> evproc_putEvent(E_EVPROC_HEAD,EVENT_TYPE_ICMP6,&type); </td> 
+</tr>
+
+<tr> 
+	<td> 375 </td> 
+	<td> delete/comment </td>
+	<td>  </td> 
+</tr>
+
+<tr> 
+	<td> 380 - 422 </td> 
+	<td> delete/comment </td>
+	<td>  </td> 
+</tr>
+
+<tr> 
+	<td> 423 </td> 
+	<td> replace with </td>
+	<td> EVENT_TYPE_TIMER_EXP </td> 
+</tr>
+
+<tr> 
+	<td> 491 </td> 
+	<td> replace with </td>
+	<td> EVENT_TYPE_TCP_POLL </td> 
+</tr>
+
+<tr> 
+	<td> 508 </td> 
+	<td> replace with </td>
+	<td> EVENT_TYPE_UDP_POLL </td> 
+</tr>
+
+<tr> 
+	<td> 522 </td> 
+	<td> replace with </td>
+	<td> EVENT_TYPE_PCK_INPUT </td> 
+</tr>
+
+<tr> 
+	<td> 531 </td> 
+	<td> replace with </td>
+	<td> evproc_putEvent(E_EVPROC_EXEC,EVENT_TYPE_PCK_INPUT,NULL); </td> 
+</tr>
+
+<tr> 
+	<td> 738 </td> 
+	<td> replace with </td>
+	<td> evproc_putEvent(E_EVPROC_TAIL,EVENT_TYPE_UDP_POLL,conn); </td> 
+</tr>
+
+<tr> 
+	<td> 738 </td> 
+	<td> replace with </td>
+	<td> evproc_putEvent(E_EVPROC_TAIL,EVENT_TYPE_UDP_POLL,conn); </td> 
+</tr>
+
+<tr> 
+	<td> 746 </td> 
+	<td> replace with </td>
+	<td> evproc_putEvent(E_EVPROC_TAIL,EVENT_TYPE_TCP_POLL,conn); </td> 
+</tr>
+
+<tr> 
+	<td> 776 </td> 
+	<td> replace with </td>
+	<td> l->conn_id != 0 </td> 
+</tr>
+
+<tr> 
+	<td> 777 </td> 
+	<td> replace with </td>
+	<td> ts->conn_id = l->conn_id; </td> 
+</tr>
+
+<tr> 
+	<td> 790 </td> 
+	<td> replace with </td>
+	<td> evproc_putEvent(E_EVPROC_EXEC,EVENT_TYPE_TCPIP,ts->state); </td> 
+</tr>
+
+<tr> 
+	<td> 790-792 </td> 
+	<td> replace with </td>
+	<td> if (ts->conn_id != 0)
+			evproc_putEvent(E_EVPROC_EXEC,EVENT_TYPE_TCPIP,ts->state); 
+	</td> 
+</tr>
+
+<tr> 
+	<td> xx </td> 
+	<td> add function </td>
+	<td> void * tcpip_gethandler(void) { return eventhandler;} </td> 
+</tr>
+</table> 
+</center>
+
+In the end the main process was replaces with tcpip_init() function.
+Also, all paths includes was replaced with appropriate.
+ */
+   //-----------------------------------------------------------
+  /*!
+ \page mig_guide_p3 Protothread Replacement for Erbium (Er) REST Engine and CoAP Implementation
+ 
+
+For the CoAP implementation the following files with protohreads were changed:
+ - er-coap-transactions.h (CoAP module for reliable transport)
+ - er-coap-transactions.c (CoAP module for reliable transport)
+ - er-coap-engine.h (CoAP implementation for the REST Engine)
+ - er-coap-engine.c (CoAP implementation for the REST Engine)
+ - rest-engine.c (abstraction layer for RESTful Web services)
+
+changes in er-coap-transactions.c:
+a callback timer for retransmissions has been added
+<center>
+<table border> 
+<tr> 
+	<td><b> Line(s) number/range </b></td> 
+	<td><b> Action type </b></td> 
+	<td><b> Comments </b></td> 
+</tr> 
+
+<tr> 
+	<td> 60 </td> 
+	<td> delete/comment </td>
+	<td>  </td> 
+</tr> 
+
+<tr> 
+	<td> 65 - 69 </td> 
+	<td> delete/comment </td>
+	<td>  </td> 
+</tr> 
+
+<tr> 
+	<td> 116 - 124 </td> 
+	<td> replace with </td>
+	<td> \code etimer_set(&t->retrans_timer, t->retrans_timer.timer.interval, coap_engine_callback); \endcode </td>
+</tr>
+</table> 
+</center>
+
+changes in er-coap-transactions.h:
+<center>
+<table border> 
+<tr> 
+	<td><b> Line(s) number/range </b></td> 
+	<td><b> Action type </b></td> 
+	<td><b> Comments </b></td> 
+</tr> 
+
+<tr> 
+	<td> 70 </td> 
+	<td> delete/comment </td>
+	<td>  </td> 
+</tr> 
+</table> 
+</center>
+
+changes in er-coap-engine.h:
+<center>
+<table border> 
+<tr> 
+	<td><b> Line(s) number/range </b></td> 
+	<td><b> Action type </b></td> 
+	<td><b> Comments </b></td> 
+</tr> 
+
+<tr> 
+	<td> 54 </td> 
+	<td> insert </td>
+	<td> \code void coap_engine_callback(c_event_t c_event, p_data_t p_data); \endcode </td>
+</tr> 
+
+<tr> 
+	<td> 58 - 82 </td> 
+	<td> replace with </td>
+	<td> \code typedef void (*nonblocking_response_handler)(void *response);
+
+		struct request_state_t {
+		  coap_transaction_t *transaction;
+		  coap_packet_t *response;
+		  uint32_t block_num;
+		  uint8_t more;
+		  uint32_t res_block;
+		  uint8_t block_error;
+		  uip_ipaddr_t *remote_ipaddr;
+		  uint16_t remote_port;
+		  coap_packet_t *request;
+		  nonblocking_response_handler request_callback;
+		};
+
+		void coap_nonblocking_request (uip_ipaddr_t *remote_ipaddr, uint16_t remote_port,
+					coap_packet_t *request,
+					nonblocking_response_handler request_callback); \endcode </td>
+</tr> 
+</table> 
+</center>
+
+changes in er-coap-engine.c:
+in this file the protothread child process has been separated into several functions
+<center>
+<table border> 
+<tr> 
+	<td><b> Line(s) number/range </b></td>
+	<td><b> Action type </b></td> 
+	<td><b> Comments </b></td> 
+</tr> 
+
+<tr> 
+	<td> 56 </td> 
+	<td> delete/comment </td>
+	<td>  </td> 
+</tr> 
+
+<tr> 
+	<td> 62 </td> 
+	<td> insert </td>
+	<td> \code static struct request_state_t request_state; \endcode </td>
+</tr> 
+
+<tr> 
+	<td> 62 </td> 
+	<td> insert </td>
+	<td> \code void _coap_nonblocking_request_task(struct request_state_t *state);
+		 void _coap_nonblocking_request_start(struct request_state_t *state); \endcode </td>
+</tr>
+
+<tr> 
+	<td> 298 </td> 
+	<td> replace with </td>
+	<td> \code rest_activate_resource(&res_well_known_core, ".well-known/core");
+		 coap_init_connection(SERVER_LISTEN_PORT);
+		 evproc_regCallback(EVENT_TYPE_TCPIP, coap_engine_callback); \endcode </td>
+</tr> 
+
+<tr> 
+	<td> 324 - 346 </td> 
+	<td> replace with </td>
+	<td> \code void coap_engine_callback(c_event_t c_event, p_data_t p_data) {
+				if(c_event == EVENT_TYPE_TCPIP) {
+				  coap_receive();
+				} else if(c_event == EVENT_TYPE_TIMER_EXP) {
+				  /* retransmissions are handled here */
+				  coap_check_transactions();
+				} } \endcode </td>
+</tr> 
+
+<tr> 
+	<td> 351 </td> 
+	<td> replace with </td>
+	<td> \code coap_nonblocking_request_callback(void *callback_data, void *response) \endcode </td>
+</tr> 
+
+<tr> 
+	<td> 356 </td> 
+	<td> replace with </td>
+	<td> \code _coap_nonblocking_request_task(state); \endcode </td>
+</tr> 
+
+<tr> 
+	<td> 359 - 377 </td> 
+	<td> replace with </td>
+	<td> \code void coap_nonblocking_request(uip_ipaddr_t *remote_ipaddr, uint16_t remote_port,
+					coap_packet_t *request,
+					nonblocking_response_handler request_callback)
+			{
+			  static struct request_state_t *state = &request_state;
+
+			  state->block_num = 0;
+			  state->response = NULL;
+			  state->more = 0;
+			  state->res_block = 0;
+			  state->block_error = 0;
+			  state->remote_ipaddr = remote_ipaddr;
+			  state->remote_port = remote_port;
+			  state->request = request;
+			  state->request_callback = request_callback;
+
+			  _coap_nonblocking_request_start(state);
+			} \endcode </td>
+</tr> 
+
+<tr> 
+	<td> 379 </td> 
+	<td> replace with </td>
+	<td> \code void _coap_nonblocking_request_start(struct request_state_t *state) { \endcode </td>
+</tr> 
+
+<tr> 
+	<td> 380 - 383 </td> 
+	<td> replace with </td>
+	<td> \code state->request->mid = coap_get_mid();
+		 if((state->transaction = coap_new_transaction(state->request->mid, state->remote_ipaddr,
+    		state->remote_port))) {
+			state->transaction->callback = coap_nonblocking_request_callback; \endcode </td>
+</tr> 
+
+<tr> 
+	<td> 390 - 393 </td> 
+	<td> replace with </td>
+	<td> \code state->transaction->packet_len = coap_serialize_message(state->request, state->transaction->packet); \endcode </td>
+</tr> 
+
+<tr> 
+	<td> 398 </td> 
+	<td> replace with </td>
+	<td> \code } else {
+          PRINTF("Could not allocate transaction buffer");
+		 } } \endcode </td>
+</tr> 
+
+<tr> 
+	<td> 399 </td> 
+	<td> insert </td>
+	<td> \code void _coap_nonblocking_request_task(struct request_state_t *state) { \endcode </td>
+</tr> 
+
+<tr> 
+	<td> 402 </td> 
+	<td> replace with </td>
+	<td> \code return; \endcode </td>
+</tr> 
+
+<tr> 
+	<td> 405 </td> 
+	<td> replace with </td>
+	<td> \code coap_get_header_block2(state->response, &state->res_block, &state->more, NULL, NULL); \endcode </td>
+</tr> 
+
+<tr> 
+	<td> 411 </td> 
+	<td> replace with </td>
+	<td> \code state->request_callback(state->response); \endcode </td>
+</tr> 
+
+<tr> 
+	<td> 415 </td> 
+	<td> replace with </td>
+	<td> \code ++(state->block_num); \endcode </td>
+</tr> 
+
+<tr> 
+	<td> 417 - 423 </td> 
+	<td> replace with </td>
+	<td> \code if(state->more && state->block_error < COAP_MAX_ATTEMPTS) {
+    	  /* request next block */
+         _coap_nonblocking_request_start(state); } \endcode </td>
+</tr> 
+</table> 
+</center>
+
+changes in rest-engine.c:
+<center>
+<table border> 
+<tr> 
+	<td><b> Line(s) number/range </b></td> 
+	<td><b> Action type </b></td> 
+	<td><b> Comments </b></td> 
+</tr> 
+
+<tr> 
+	<td> 57 </td> 
+	<td> delete/comment </td>
+	<td>  </td> 
+</tr> 
+
+<tr> 
+	<td> 61 </td> 
+	<td> insert </td>
+	<td> \code void _rest_et_callback(c_event_t c_event, p_data_t p_data); \endcode </td>
+</tr> 
+
+<tr> 
+	<td> 81 </td> 
+	<td> replace with </td>
+	<td>   \code for(periodic_resource =
+			(periodic_resource_t *)list_head(restful_periodic_services);
+			periodic_resource; periodic_resource = periodic_resource->next) {
+		if(periodic_resource->periodic_handler && periodic_resource->period) {
+			 periodic_resource->resource->url, periodic_resource->period);
+			 etimer_set(&periodic_resource->periodic_timer,
+						periodic_resource->period, _rest_et_callback); 
+		 } } \endcode </td>
+</tr>
+
+<tr> 
+	<td> 174 - 217 </td> 
+	<td> replace with </td>
+	<td> \code void _rest_et_callback(c_event_t c_event, p_data_t p_data) {
+		if(c_event == EVENT_TYPE_TIMER_EXP) {
+		  for(periodic_resource =
+			(periodic_resource_t *)list_head(restful_periodic_services);
+			periodic_resource; 
+			periodic_resource = periodic_resource->next) {
+			  if(periodic_resource->period
+				&& etimer_expired(&periodic_resource->periodic_timer)) {
+				periodic_resource->resource->url, periodic_resource->period);
+				(periodic_resource->periodic_handler)();
+				etimer_reset(&periodic_resource->periodic_timer);
+		} } } } \endcode </td>
+</tr> 
+</table> 
+</center>
+Also, all paths includes was replaced with appropriate.
+ */
+ 
