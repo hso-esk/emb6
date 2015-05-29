@@ -1,0 +1,16 @@
+arch = {
+	'extra' : [
+		'CMSIS',
+		'preprocessor',
+		'device/common',
+		'device/utils',
+	],
+# C global defines
+	'defines' : [
+	],
+# GCC flags
+	'cflags' : [
+	]	
+}
+
+Return('arch')

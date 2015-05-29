@@ -1,0 +1,23 @@
+extif = {
+	'demo' : [
+	],
+	'emb6' : [
+		'ipv6',
+		'slip',
+		'llsec',
+		'nullmac',
+		'nullframer',
+	],
+	'utils' : [
+		'*',
+	],
+# C global defines
+	'defines' : [
+		('DEMO_USE_EXTIF',1),
+	],
+# GCC flags
+	'cflags' : [
+	]	
+}
+
+Return('extif')

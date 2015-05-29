@@ -1,0 +1,28 @@
+toolchain = {
+	'AS' : ['avr-as'],
+	'CC' : ['avr-gcc'],
+	'LINK' : ['avr-gcc'],
+	'OBJCOPY' : ['avr-objcopy'],
+	'OBJDUMP' : ['avr-objdump'],
+	'SIZE' : ['avr-size'],
+	'ASFLAGS' : [
+		'--traditional-format',
+		],
+	'CPPDEFINES' : [
+		],
+	'CFLAGS' :  [
+		'-O2', 
+		'-Wall',
+		'-fno-strict-aliasing',
+		'-Werror-implicit-function-declaration',
+		'-ffunction-sections', 
+		'-fdata-sections',
+		'-std=c99',
+		'-g2',
+		'-gstabs',
+		],
+	'LINKFLAGS' : [
+		'-Wl,-Map=${TARGET.base}.map,--gc-section',
+		]
+}
+Return('toolchain')

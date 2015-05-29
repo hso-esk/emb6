@@ -1,0 +1,35 @@
+toolchain = {
+	'AS' : ['arm-none-eabi-as'],
+	'CC' : ['arm-none-eabi-gcc'],
+	'LINK' : ['arm-none-eabi-gcc'],
+	'OBJCOPY' : ['arm-none-eabi-objcopy'],
+	'OBJDUMP' : ['arm-none-eabi-objdump'],
+	'SIZE' : ['arm-none-eabi-size'],
+	'ASFLAGS' : [
+		'-mthumb',
+		'-mcpu=cortex-m0plus',
+		],
+	'CPPDEFINES' : [
+		{'printf': 'iprintf'},
+		],
+	'CFLAGS' :  [
+		'-O0', 
+		'-Wall', 
+		'-fno-strict-aliasing',
+		'-Werror-implicit-function-declaration',
+		'-mthumb',
+		'-mcpu=cortex-m0plus',
+		'-ffunction-sections', 
+		'-fdata-sections',
+		'-std=c99',
+		'-Wno-format',
+		'-Wno-comment',
+		'-g',
+		],
+	'LINKFLAGS' : [
+		'-mthumb',  
+		'-mcpu=cortex-m0plus', 
+		'-Wl,-Map=${TARGET.base}.map,--gc-section,--cref',
+		]
+}
+Return('toolchain')

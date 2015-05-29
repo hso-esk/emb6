@@ -1,0 +1,27 @@
+coap = {
+	'demo' : [
+		'*',
+	],
+	'emb6' : [
+		'coap',
+		'rpl',
+		'ipv6',
+		'sicslowpan',
+		'llsec',
+		'nullmac',
+		'802154framer',
+	],
+	'utils' : [
+		'*',
+	],
+# C global defines
+	'defines' : [
+		('DEMO_USE_COAP',1),
+		('NET_USE_RPL',1),
+	],
+# GCC flags
+	'cflags' : [
+	]	
+}
+
+Return('coap')

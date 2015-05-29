@@ -1,0 +1,38 @@
+hardware_config = {
+# Micro Controller Unit description (HEAD/arch/<arch>/<mcu_fam>/<vendor> folder)
+	'mcu_arch' 		: 	'arm',
+	'mcu_family' 	: 	'cm3',
+	'mcu_vendor' 	: 	'silabs',
+	'mcu_cpu' 		: 	'efm32lg',
+	'mcu_toolchain' : 	'GCC',
+
+
+# Device driver description (HEAD/target/mcu folder)
+	'mcu' 			:	'efm32lg990f256',
+
+# Transceiver source description (HEAD/target/if folder)
+	'if'			:	'at86rf212b',
+
+# C code global defined symbols
+	'defines' : [
+		'EXTINT_CALLBACK_MODE=true',
+		'RTC_COUNT_ASYNC=true',
+		'IF_AT86RF212B',
+		'EFM32LG990F256',
+		'BOARD_EFM32STK3600',
+		'_PACK_STRUCT_END=',
+	],
+
+# GCC flags
+	'cflags' : [
+	],
+
+# LINKER flags
+	'ldflags' : [
+		'--entry=ResetISR',
+	],
+	'startupfile': 'GCC/startup_efm32lg.S',
+	'scriptfile' : 'GCC/efm32lg.ld'
+}
+
+Return('hardware_config')
