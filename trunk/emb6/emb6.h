@@ -356,11 +356,15 @@ typedef const struct netstack_interface {
 	/** Get RSSI Value */
 	int8_t (* get_rssi)(void);
 
-	/** Set Antenna Diversity*/
+	/** Set Antenna Diversity */
 	void (* ant_div)(uint8_t value);
 
 	/** Set RF Switch*/
 	void (* ant_rf_switch)(uint8_t value);
+
+	/** Set promiscuous mode */
+	void (* set_promisc)(uint8_t c_on_off);
+
 }s_nsIf_t;
 
 /*! Supported headers compression handlers */

@@ -393,6 +393,8 @@
 #define SR_I_AM_COORD               		0x2e, 0x08, 3
 /** Access parameters for sub-register CSMA_SEED_1 in register @ref RG_CSMA_SEED_1 */
 #define SR_CSMA_SEED_1               		0x2e, 0x07, 0
+/** Access parameters for sub-register AACK_DIS_ACK in register @ref RG_CSMA_SEED_1 */
+#define SR_AACK_DIS_ACK   					0x2E, 0x10, 4
 
 /** Read register command for at86rfxxx. Must be applied as OR argument */
 #define RF212B_READ_COMMAND					0x80

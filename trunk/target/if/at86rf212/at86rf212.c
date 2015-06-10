@@ -164,6 +164,7 @@ static	void 					_rf212_setSensitivity(int8_t sens);
 static	int8_t 					_rf212_getSensitivity(void);
 static	int8_t					_rf212_getRSSI(void);
 static	void 					_rf212_wReset(void);
+static  void					_rf212_promisc(uint8_t value);
 static	int8_t 					_rf212_send(const void *pr_payload, uint8_t c_len);
 static	int8_t 					_rf212_init(s_ns_t* p_netStack);
 static	void 					_spiBitWrite(void * p_spi, uint8_t c_addr,uint8_t c_mask,
@@ -186,6 +187,9 @@ const s_nsIf_t rf212_driver = {
 		_rf212_setSensitivity,
 		_rf212_getSensitivity,
 		_rf212_getRSSI,
+		NULL,
+		NULL,
+		_rf212_promisc,
 };
 /*==============================================================================
                                 LOCAL FUNCTIONS
@@ -990,6 +994,21 @@ void _rf212_wReset(void)
 
 
 } /* _rf212_wReset() */
+
+static void _rf212_promisc(uint8_t value)
+{
+	uint8_t ac_addr[8];
+	if (value) {
+		memset(&ac_addr, 0, 8);
+		_rf212b_setPanAddr(0x0000, 0, ac_addr);
+		_spiBitWrite(p_spi, SR_AACK_PROM_MODE, 1);
+		_spiBitWrite(p_spi, SR_AACK_DIS_ACK, 1);
+	}
+	else {
+		_spiBitWrite(p_spi, SR_AACK_PROM_MODE, 0);
+		_spiBitWrite(p_spi, SR_AACK_DIS_ACK, 0);
+	}
+}
 
 /*---------------------------------------------------------------------------*/
 static int8_t _rf212_send(const void *pr_payload, uint8_t c_len)

@@ -136,6 +136,7 @@ static	int8_t 					_rf230_extOFF(void);
 static	uint8_t 				_rf230_getTxPower(void);
 static	void 					_rf230_setTxPower(uint8_t c_power);
 static	void 					_rf230_wReset(void);
+static  void					_rf239_promisc(void);
 static	int8_t 					_rf230_send(const void *pr_payload, uint8_t c_len);
 static	int8_t 					_rf230_init(s_ns_t* ns);
 static	void 					_spiBitWrite(void * p_spi, uint8_t c_addr,uint8_t c_mask,
@@ -149,6 +150,14 @@ const s_nsIf_t rf230_driver = {
 		_rf230_send,
 		_rf230_extON,
 		_rf230_extOFF,
+		NULL,
+		NULL,
+		NULL,
+		NULL,
+		NULL,
+		NULL,
+		NULL,
+		_rf230_promisc,
 };
 /*==============================================================================
                                 LOCAL FUNCTIONS
@@ -948,6 +957,21 @@ void _rf230_wReset(void)
   		  _rf230_setTxPower(TX_PWR_MIN);  //0=3dbm 15=-17.2dbm
 #endif
 } /* _rf230_wReset() */
+
+static void _rf230_promisc(uint8_t value)
+{
+	uint8_t ac_addr[8];
+	if (value) {
+		memset(&ac_addr, 0, 8);
+		_rf212b_setPanAddr(0x0000, 0, ac_addr);
+		_spiBitWrite(p_spi, SR_AACK_PROM_MODE, 1);
+		_spiBitWrite(p_spi, SR_AACK_DIS_ACK, 1);
+	}
+	else {
+		_spiBitWrite(p_spi, SR_AACK_PROM_MODE, 0);
+		_spiBitWrite(p_spi, SR_AACK_DIS_ACK, 0);
+	}
+}
 
 /*---------------------------------------------------------------------------*/
 static int8_t _rf230_send(const void *pr_payload, uint8_t c_len)

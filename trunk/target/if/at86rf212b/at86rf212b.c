@@ -200,6 +200,7 @@ static	int8_t 					_rf212b_send(const void *pr_payload, uint8_t c_len);
 static	int8_t 					_rf212b_init(s_ns_t* p_netStack);
 static	void 					_rf212b_AntDiv(uint8_t value);
 static	void 					_rf212b_AntExtSw(uint8_t value);
+static  void					_rf212b_promisc(uint8_t value);
 static	void 					_spiBitWrite(void * p_spi, uint8_t c_addr,uint8_t c_mask,
 																uint8_t c_off,uint8_t c_data);
 #if PRINT_PCK_STAT
@@ -221,6 +222,7 @@ const s_nsIf_t rf212b_driver = {
 		_rf212b_getRSSI,
 		_rf212b_AntDiv,
 		_rf212b_AntExtSw,
+		_rf212b_promisc,
 };
 /*==============================================================================
                                 LOCAL FUNCTIONS
@@ -993,6 +995,21 @@ void _rf212b_AntDiv(uint8_t value)
 void _rf212b_AntExtSw(uint8_t value)
 {
 
+}
+
+static void _rf212b_promisc(uint8_t value)
+{
+	uint8_t ac_addr[8];
+	if (value) {
+		memset(&ac_addr, 0, 8);
+		_rf212b_setPanAddr(0x0000, 0, ac_addr);
+		_spiBitWrite(p_spi, SR_AACK_PROM_MODE, 1);
+		_spiBitWrite(p_spi, SR_AACK_DIS_ACK, 1);
+	}
+	else {
+		_spiBitWrite(p_spi, SR_AACK_PROM_MODE, 0);
+		_spiBitWrite(p_spi, SR_AACK_DIS_ACK, 0);
+	}
 }
 
 
