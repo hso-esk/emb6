@@ -536,11 +536,11 @@ static e_radio_tx_status_t _rf212_transmit(uint8_t c_len)
 
 	c_total_len = c_len + RF212_CHECKSUM_LEN;
 
+	_rf212_fWrite(pc_buffer, c_total_len);
 	/* Toggle the SLP_TR pin to initiate the frame transmission */
 	bsp_setPin(p_slpTrig);
 	bsp_clrPin(p_slpTrig);
 
-	_rf212_fWrite(pc_buffer, c_total_len);
 	LOG_DBG("_rf212_transmit: %d", (int)c_total_len);
 
 	/* We wait until transmission has ended so that we get an

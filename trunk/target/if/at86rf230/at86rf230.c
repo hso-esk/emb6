@@ -523,10 +523,10 @@ static e_radio_tx_status_t _rf230_transmit(uint8_t c_len)
 
 	c_total_len = c_len + RF230_CHECKSUM_LEN;
 
+	_rf230_fWrite(pc_buffer, c_total_len);
 	/* Toggle the SLP_TR pin to initiate the frame transmission */
 	bsp_pin(E_BSP_PIN_SET, p_slpTrig);
-	bsp_clrPin(p_slpTrig);
-	_rf230_fWrite(pc_buffer, c_total_len);
+	bsp_pin(E_BSP_PIN_CLR, p_slpTrig);
 	LOG_DBG("_rf230_transmit: %d\n\r", (int)c_total_len);
 
 	/* We wait until transmission has ended so that we get an
