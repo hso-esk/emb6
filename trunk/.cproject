@@ -306,36 +306,38 @@
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="refreshScope" versionNumber="2">
-		<configuration configurationName="cs_xpro_212b">
-			<resource resourceType="PROJECT" workspacePath="/trunk"/>
-		</configuration>
-		<configuration configurationName="cs_stk3600">
-			<resource resourceType="PROJECT" workspacePath="/trunk"/>
-		</configuration>
-		<configuration configurationName="cs_xpro_212">
-			<resource resourceType="PROJECT" workspacePath="/trunk"/>
-		</configuration>
-		<configuration configurationName="cs_atany900pro">
-			<resource resourceType="PROJECT" workspacePath="/trunk"/>
-		</configuration>
-		<configuration configurationName="if_atany900">
-			<resource resourceType="PROJECT" workspacePath="/trunk"/>
-		</configuration>
-		<configuration configurationName="cs_atany2400">
+		<configuration configurationName="Default">
 			<resource resourceType="PROJECT" workspacePath="/trunk"/>
 		</configuration>
 		<configuration configurationName="cs_atany900">
 			<resource resourceType="PROJECT" workspacePath="/trunk"/>
 		</configuration>
-		<configuration configurationName="Default">
+		<configuration configurationName="sn_atany900basic"/>
+		<configuration configurationName="cs_atany900pro5">
 			<resource resourceType="PROJECT" workspacePath="/trunk"/>
 		</configuration>
-		<configuration configurationName="cs_atany900pro5">
+		<configuration configurationName="if_atany900">
 			<resource resourceType="PROJECT" workspacePath="/trunk"/>
 		</configuration>
 		<configuration configurationName="cs_atany900pro3">
 			<resource resourceType="PROJECT" workspacePath="/trunk"/>
 		</configuration>
+		<configuration configurationName="cs_xpro_212b">
+			<resource resourceType="PROJECT" workspacePath="/trunk"/>
+		</configuration>
+		<configuration configurationName="cs_xpro_212">
+			<resource resourceType="PROJECT" workspacePath="/trunk"/>
+		</configuration>
+		<configuration configurationName="cs_atany2400">
+			<resource resourceType="PROJECT" workspacePath="/trunk"/>
+		</configuration>
+		<configuration configurationName="cs_stk3600">
+			<resource resourceType="PROJECT" workspacePath="/trunk"/>
+		</configuration>
+		<configuration configurationName="cs_atany900pro">
+			<resource resourceType="PROJECT" workspacePath="/trunk"/>
+		</configuration>
+		<configuration configurationName="cs_atany900basic"/>
 	</storageModule>
 	<storageModule moduleId="scannerConfiguration">
 		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
