@@ -899,7 +899,7 @@ static void _rf212b_setPanAddr(unsigned pan,
 } /* _rf212b_setPanAddr() */
 
 /*---------------------------------------------------------------------------*/
-uint8_t _rf212b_getTxPower(void)
+static uint8_t _rf212b_getTxPower(void)
 {
 	uint8_t pwr = TX_PWR_UNDEFINED;
 	if (bsp_getPin(p_slpTrig)) {
@@ -912,7 +912,7 @@ uint8_t _rf212b_getTxPower(void)
 
 
 /*---------------------------------------------------------------------------*/
-void _rf212b_setTxPower(uint8_t cpower)
+static void _rf212b_setTxPower(uint8_t cpower)
 {
 	uint8_t i, pwr = 0;
 	for (i=0;i<TXPWR_LIST_LEN;i++)
@@ -931,7 +931,7 @@ void _rf212b_setTxPower(uint8_t cpower)
 	c_power = cpower;
 } /* _rf212b_setTxPower() */
 
-void _rf212b_setPower(int8_t power)
+static void _rf212b_setPower(int8_t power)
 {
 	uint8_t pwr = 0xA0, i;
 	if (power > TX_PWR_MAX) {
@@ -950,7 +950,7 @@ void _rf212b_setPower(int8_t power)
 	_rf212b_setTxPower(pwr);
 }
 
-int8_t _rf212b_getPower(void)
+static int8_t _rf212b_getPower(void)
 {
 	uint8_t i;
 	for (i=0;i<TXPWR_LIST_LEN;i++)
@@ -963,7 +963,7 @@ int8_t _rf212b_getPower(void)
 	return -99;
 }
 
-void _rf212b_setSensitivity(int8_t sens)
+static void _rf212b_setSensitivity(int8_t sens)
 {
 	int8_t s = 0;
 	s = (sens - c_rssi_base_val) / 3.1;
@@ -977,22 +977,22 @@ void _rf212b_setSensitivity(int8_t sens)
 	c_sensitivity = s;
 }
 
-int8_t _rf212b_getSensitivity(void)
+static int8_t _rf212b_getSensitivity(void)
 {
 	return (c_rssi_base_val + 3.1 * c_sensitivity);
 }
 
-int8_t _rf212b_getRSSI(void)
+static int8_t _rf212b_getRSSI(void)
 {
 	return (c_rssi_base_val + 1.03 * c_last_rssi);
 }
 
-void _rf212b_AntDiv(uint8_t value)
+static void _rf212b_AntDiv(uint8_t value)
 {
 
 }
 
-void _rf212b_AntExtSw(uint8_t value)
+static void _rf212b_AntExtSw(uint8_t value)
 {
 
 }
