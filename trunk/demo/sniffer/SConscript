@@ -1,0 +1,26 @@
+sniffer = {
+	'demo' : [
+		'*',
+	],
+	'emb6' : [
+		'ipv6',
+		'sicslowpan',
+		'llsec',
+		'nullmac',
+		'nullframer',
+	],
+	'utils' : [
+		'*',
+	],
+# C global defines
+	'defines' : [
+		('DEMO_USE_SNIFFER',1),
+		('UIP_CONF_ND6_SEND_RA',0),
+		('UIP_CONF_ND6_SEND_NA',0),
+	],
+# GCC flags
+	'cflags' : [
+	]	
+}
+
+Return('sniffer')

@@ -811,8 +811,10 @@ void uip_log(char *msg);
  #define LOGGER_RADIO						FALSE
  /** DEMO UDP example						(see demo_exudp.c) */
  #define LOGGER_DEMO_EXUDP					FALSE
- /** DEMO UDP example						(see demo_coap_*.c) */
+ /** DEMO COAP example						(see demo_coap_*.c) */
  #define LOGGER_DEMO_COAP					FALSE
+ /** DEMO SNIFFER 							(see demo_sniffer.c) */
+ #define LOGGER_DEMO_SNIFFER				FALSE
  /** Event timer functions					(see etimer.c) */
  #define LOGGER_ETIMER						FALSE
  /** Callback timer functions				(see ctimer.c) */

@@ -82,6 +82,10 @@
 #endif
 #endif
 
+#if DEMO_USE_SNIFFER
+#include "demo_sniffer.h"
+#endif
+
 #if DEMO_USE_UDPALIVE
 #include "demo_udp_alive.h"
 #endif
@@ -151,6 +155,10 @@ static uint8_t loc_demoAppsConf(s_ns_t* pst_netStack)
     demo_coapConf(pst_netStack);
     #endif
 
+    #if DEMO_USE_SNIFFER
+	demo_sniffConf(pst_netStack);
+    #endif
+
     #if DEMO_USE_UDPALIVE
     demo_udpAliveConf(pst_netStack);
     #endif
@@ -183,6 +191,12 @@ static uint8_t loc_demoAppsInit(void)
 		return 0;
 	}
 	#endif
+
+    #if DEMO_USE_SNIFFER
+	if (!demo_sniffInit()) {
+		return 0;
+	}
+    #endif
 
     #if DEMO_USE_UDPALIVE
     if (!demo_udpAliveInit()) {

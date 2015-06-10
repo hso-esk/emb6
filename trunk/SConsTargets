@@ -19,9 +19,11 @@ TARGETS = [
 ['cs_atany900pro3',  [('coap','server'),
                       ('udp_alive','')],             'atany900_pro3',    	'0x15A5',   '11',          '-100',       'MODULATION_QPSK100'],
 ['cs_atany900pro5',  [('coap','server'),
-                      ('udp_alive','')],             'atany900_pro5',    	'0x16A6',  '-11',           '-60',       'MODULATION_QPSK100'],
+                      ('udp_alive','')],             'atany900_pro5',    	'0x16A6',   '-11',           '-60',       'MODULATION_QPSK100'],
 ['cs_atany900basic', [('coap','server'),
-                      ('udp_alive','')],             'atany900_basic',   	'0xCCCC',   '-11',          '-90',       'MODULATION_QPSK100'],
+                      ('udp_alive','')],             'atany900_basic',   	'0xAAAA',   '-11',          '-90',        'MODULATION_QPSK100'],
+
+['sn_atany900basic', [('sniffer','')],               'atany900_basic',   	'0xFEFE',   '-11',          '-100',       'MODULATION_QPSK100'],
 
 ['cs_xpro_212',      [('coap','server'),
                       ('udp_alive','')],             'samd20xpro_rf212', 	'0x20B0',   '11',          '-100',       'MODULATION_QPSK100'],
