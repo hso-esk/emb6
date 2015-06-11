@@ -285,7 +285,8 @@
 #define SR_AACK_FLTR_RES_FT					0x20, 5
 #define SR_AACK_UPLD_RES_FT					0x10, 4
 #define SR_AACK_ACK_TIME					0x04, 2
-#define SR_AACK_PROM_MODE					0x03, 0
+/** Access parameters for sub-register AACK_PROM_MODE in register @ref RG_XAH_CTRL_1 */
+#define SR_AACK_PROM_MODE					0x17, 0x02, 1
 /** Offset for register FTN_CTRL */
 #define RG_FTN_CTRL                      	(0x18)
 /** Access parameters for sub-register FTN_START in register @ref RG_FTN_CTRL */
@@ -395,6 +396,8 @@
 #define SR_I_AM_COORD               		0x2e, 0x08, 3
 /** Access parameters for sub-register CSMA_SEED_1 in register @ref RG_CSMA_SEED_1 */
 #define SR_CSMA_SEED_1               		0x2e, 0x07, 0
+/** Access parameters for sub-register AACK_DIS_ACK in register @ref RG_CSMA_SEED_1 */
+#define SR_AACK_DIS_ACK   					0x2E, 0x10, 4
 
 /** Read register command for at86rfxxx. Must be applied as OR argument */
 #define RF212_READ_COMMAND					0x80

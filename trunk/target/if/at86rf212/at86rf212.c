@@ -1000,7 +1000,7 @@ static void _rf212_promisc(uint8_t value)
 	uint8_t ac_addr[8];
 	if (value) {
 		memset(&ac_addr, 0, 8);
-		_rf212b_setPanAddr(0x0000, 0, ac_addr);
+		_rf212_setPanAddr(0x0000, 0, ac_addr);
 		_spiBitWrite(p_spi, SR_AACK_PROM_MODE, 1);
 		_spiBitWrite(p_spi, SR_AACK_DIS_ACK, 1);
 	}
