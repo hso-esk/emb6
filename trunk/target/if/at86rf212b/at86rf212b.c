@@ -548,6 +548,7 @@ static e_radio_tx_status_t _rf212b_transmit(uint8_t c_len)
 	int8_t					c_txpower;
 	uint8_t 				c_total_len;
 	uint8_t 				c_tx_result;
+	uint8_t 				c_ndx;
 	/* If radio is sleeping we have to turn it on first */
 	/* This automatically does the PLL calibrations */
 	if (bsp_getPin(p_slpTrig)) {
@@ -626,6 +627,11 @@ static e_radio_tx_status_t _rf212b_transmit(uint8_t c_len)
 		_rf212b_intOFF();
 	#endif
 	}
+
+	LOG_RAW("_rf212b_txFrame: ");
+	for(c_ndx = 0; c_ndx < c_total_len; c_ndx++)
+		LOG_RAW("%02x", pc_buffer[c_ndx]);
+	LOG_RAW("\n\r");
 
 #if RF212B_INSERTACK
    ack_pending = 0;
@@ -1304,7 +1310,6 @@ static int8_t _rf212b_init(s_ns_t* p_netStack)
 		_rf212b_wReset();
 		  /* Leave radio in on state (?)*/
 		_rf212b_intON();
-		//_spiBitWrite(p_spi, SR_AACK_PROM_MODE, 1);
 		if (mac_phy_config.mac_address == NULL) {
 			c_ret = 0;
 		}
@@ -1350,6 +1355,7 @@ static int8_t _rf212b_init(s_ns_t* p_netStack)
 static void _rf212b_callback(c_event_t c_event, p_data_t p_data)
 {
 	int8_t c_len;
+	uint8_t c_ndx;
     c_rf212b_pending = 0;
     // The case where c_pckCounter is less or equal to 0 is not possible, however...
     c_pckCounter = (c_pckCounter > 0) ? (c_pckCounter - 1) : c_pckCounter;
@@ -1357,6 +1363,11 @@ static void _rf212b_callback(c_event_t c_event, p_data_t p_data)
 
     /* Turn off interrupts to avoid ISR writing to the same buffers we are reading. */
     bsp_enterCritical();
+
+	LOG_RAW("_rf212b_rxFrame: ");
+	for(c_ndx = 0; c_ndx < gps_rxframe[c_rxframe_head].length; c_ndx++)
+		LOG_RAW("%02x", gps_rxframe[c_rxframe_head].data[c_ndx]);
+	LOG_RAW("\n\r");
 
     c_len = _rf212b_read(packetbuf_dataptr(), PACKETBUF_SIZE);
 
