@@ -167,7 +167,7 @@ static uint8_t loc_demoAppsConf(s_ns_t* pst_netStack)
     demo_udpAliveConf(pst_netStack);
     #endif
 
-    #if DEMO_USE_UDPALIVE
+    #if DEMO_USE_APTB
     demo_aptbConf(pst_netStack);
     #endif
 
