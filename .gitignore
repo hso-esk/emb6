@@ -1,6 +1,8 @@
 .metadata/
-trunk/.metadata/*
-trunk/.settings/*
+build/
+bin/
+.project
+.cproject
 _*/
 *.svn-base
 *.o
