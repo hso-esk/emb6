@@ -5,6 +5,7 @@ udp_alive = {
 		'rpl',
 		'ipv6',
 		'sicslowpan',
+		'llsec',
 		'nullmac',
 		'802154framer',
 	],
