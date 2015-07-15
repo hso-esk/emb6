@@ -95,7 +95,7 @@
 /** Define a network prefix for all addresses */
 #define     NETWORK_PREFIX          0x2001, 0xbbbb, 0xdddd, 0x0000
 /** Mode 3 - derived from server link-local (MAC) address */
-#define     SERVER_IP_ADDR80        0x0200, 0x0000, 0x0000, 0xbabe
+#define     SERVER_IP_ADDR80        0x0250, 0xc2ff, 0xfea8, 0xbabe
 /** Server IP address consist of network prefix and 64 bit of mac address */
 #define     SERVER_IP_ADDR          NETWORK_PREFIX,SERVER_IP_ADDR80
 
@@ -199,17 +199,13 @@ static  uint64_t    loc_aptb_str2Seq(char * str)
 {
     char temp[20];
     uint8_t i = 0;
-    uint8_t j = 0;
+    //uint8_t j = 0;
 
     for (i=uip_datalen();i>0;i--) {
-        if (str[i] == '(' ) {
-            i++;
-            while (str[i] != ')') {
-                temp[j] = str[i];
-                i++;
-                j++;
-            }
-            temp[j] = '\0';
+        if (str[i] == '|' ) {
+            i--;
+            memcpy(temp,str,i);
+            temp[i] = '\0';
             break;
         }
     }
@@ -250,6 +246,31 @@ static    void      loc_aptb_callback(c_event_t c_event, p_data_t p_data)
 /*----------------------------------------------------------------------------*/
 int8_t demo_aptbInit(void)
 {
+    /* The choice of server address determines its 6LoPAN header compression.
+    * (Our address will be compressed Mode 3 since it is derived from our link-local address)
+    * Obviously the choice made here must also be selected in udp-server.c.
+    *
+    * For correct Wireshark decoding using a sniffer, add the /64 prefix to the 6LowPAN protocol preferences,
+    * e.g. set Context 0 to aaaa::.  At present Wireshark copies Context/128 and then overwrites it.
+    * (Setting Context 0 to aaaa::1111:2222:3333:4444 will report a 16 bit compressed address of aaaa::1111:22ff:fe33:xxxx)
+    *
+    * Note the IPCMV6 checksum verification depends on the correct uncompressed addresses.
+    */
+    /* We know destination IP address but we need to properly convert it */
+    uip_ip6addr(&un_server_ipaddr,
+                un_server_ipaddr.u16[0],un_server_ipaddr.u16[1],\
+                un_server_ipaddr.u16[2],un_server_ipaddr.u16[3],\
+                un_server_ipaddr.u16[4],un_server_ipaddr.u16[5],\
+                un_server_ipaddr.u16[6],un_server_ipaddr.u16[7]);
+    pst_conn = udp_new(NULL, UIP_HTONS(__SERVER_PORT), NULL);
+    udp_bind(pst_conn, UIP_HTONS(__CLIENT_PORT));
+
+    LOG_INFO("%s", "Create connection with the server ");
+    //uip_debug_ipaddr_print(&un_server_ipaddr);
+    LOG_RAW("\n\r");
+    LOG_INFO("local/remote port %u/%u\n\r",
+            UIP_HTONS(pst_conn->lport),
+            UIP_HTONS(pst_conn->rport));
     //printf("Set dudp timer %p\n\r",&s_et);
     etimer_set(&s_et, SEND_INTERVAL, loc_aptb_callback);
     evproc_regCallback(EVENT_TYPE_TCPIP,loc_aptb_callback);
@@ -271,6 +292,7 @@ uint8_t demo_aptbConf(s_ns_t* pst_netStack)
     if (pst_netStack != NULL) {
         if (!pst_netStack->c_configured) {
             pst_netStack->hc     = &sicslowpan_driver;
+            pst_netStack->llsec  = &nullsec_driver;
             pst_netStack->hmac   = &nullmac_driver;
             pst_netStack->lmac   = &sicslowmac_driver;
             pst_netStack->frame  = &framer_802154;
@@ -279,6 +301,7 @@ uint8_t demo_aptbConf(s_ns_t* pst_netStack)
             /* pst_netStack->inif   = $<some_transceiver>;*/
         } else {
             if ((pst_netStack->hc == &sicslowpan_driver)   &&
+                (pst_netStack->llsec == &nullsec_driver)   &&
                 (pst_netStack->hmac == &nullmac_driver)    &&
                 (pst_netStack->lmac == &sicslowmac_driver) &&
                 (pst_netStack->frame == &framer_802154)) {
@@ -288,32 +311,6 @@ uint8_t demo_aptbConf(s_ns_t* pst_netStack)
                 c_ret = 0;
             }
         }
-
-        /* The choice of server address determines its 6LoPAN header compression.
-        * (Our address will be compressed Mode 3 since it is derived from our link-local address)
-        * Obviously the choice made here must also be selected in udp-server.c.
-        *
-        * For correct Wireshark decoding using a sniffer, add the /64 prefix to the 6LowPAN protocol preferences,
-        * e.g. set Context 0 to aaaa::.  At present Wireshark copies Context/128 and then overwrites it.
-        * (Setting Context 0 to aaaa::1111:2222:3333:4444 will report a 16 bit compressed address of aaaa::1111:22ff:fe33:xxxx)
-        *
-        * Note the IPCMV6 checksum verification depends on the correct uncompressed addresses.
-        */
-        /* We know destination IP address but we need to properly convert it */
-        uip_ip6addr(&un_server_ipaddr,
-                    un_server_ipaddr.u16[0],un_server_ipaddr.u16[1],\
-                    un_server_ipaddr.u16[2],un_server_ipaddr.u16[3],\
-                    un_server_ipaddr.u16[4],un_server_ipaddr.u16[5],\
-                    un_server_ipaddr.u16[6],un_server_ipaddr.u16[7]);
-        pst_conn = udp_new(NULL, UIP_HTONS(__SERVER_PORT), NULL);
-        udp_bind(pst_conn, UIP_HTONS(__CLIENT_PORT));
-
-        LOG_INFO("%s", "Create connection with the server ");
-        //uip_debug_ipaddr_print(&un_server_ipaddr);
-        LOG_RAW("\n\r");
-        LOG_INFO("local/remote port %u/%u\n\r",
-                UIP_HTONS(pst_conn->lport),
-                UIP_HTONS(pst_conn->rport));
     }
     return (c_ret);
 }/* demo_aptbConf()  */

@@ -69,7 +69,7 @@
 void uip_log(char *msg);
 #define UIP_LOG(m) uip_log(m)
 #else
-#define UIP_LOG(m) printf(m)
+#define UIP_LOG(m)
 #endif
 
 #define UIP_ICMP_BUF ((struct uip_icmp_hdr *)&uip_buf[UIP_LLIPH_LEN + uip_ext_len])
@@ -764,8 +764,9 @@ tcpip_uipcall(void)
 //  if(ts->p != NULL) {
 //    process_post_synch(ts->p, tcpip_event, ts->state);
 //     }
-      if (ts->conn_id != 0)
+      if (ts->conn_id != 0) {
           evproc_putEvent(E_EVPROC_EXEC,EVENT_TYPE_TCPIP,ts->state);
+      }
 
 //      evproc_pushEvent(EVENT_TYPE_TCPIP,ts->state);
 

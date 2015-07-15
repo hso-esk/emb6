@@ -156,8 +156,8 @@ typedef enum {
 //! We are using IEEE 802.15.4
 #define UIP_CONF_LL_802154                   TRUE
 #define UIP_CONF_LLH_LEN                     0
-#define    PRINT_PCK_STAT                        FALSE
-#define TIMESTAMP_PERIOD_SEC                10    // in in sec
+#define PRINT_PCK_STAT                       TRUE
+#define TIMESTAMP_PERIOD_SEC                 10    // in in sec
 
 #ifdef LINKADDR_CONF_SIZE
 #define LINKADDR_SIZE                         LINKADDR_CONF_SIZE
@@ -172,11 +172,11 @@ typedef union {
 
 /** \brief 16 bit 802.15.4 address */
 typedef struct uip_802154_shortaddr {
-  uint8_t addr[2];
+    uint8_t addr[2];
 } uip_802154_shortaddr;
 /** \brief 64 bit 802.15.4 address */
 typedef struct uip_802154_longaddr {
-  uint8_t addr[8];
+    uint8_t addr[8];
 } uip_802154_longaddr;
 
 #if UIP_CONF_LL_802154

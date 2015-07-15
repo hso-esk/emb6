@@ -64,6 +64,7 @@
 #include "at86rf212b_regmap.h"
 
 #include "evproc.h"
+#include "ctimer.h"
 #include "packetbuf.h"
 
 
@@ -95,37 +96,37 @@
 /*==============================================================================
                           VARIABLE DECLARATIONS
 ==============================================================================*/
-        st_rxframe_t             gps_rxframe[RF212B_CONF_RX_BUFFERS];
-        uint8_t                 pc_buffer[RF212B_MAX_TX_FRAME_LENGTH + RF212B_CHECKSUM_LEN];
+          st_rxframe_t             gps_rxframe[RF212B_CONF_RX_BUFFERS];
+          uint8_t                 pc_buffer[RF212B_MAX_TX_FRAME_LENGTH + RF212B_CHECKSUM_LEN];
 static    uint8_t                 c_rxframe_head;
 static    uint8_t                 c_rxframe_tail;
 static    uint8_t                 c_receive_on;
-static  uint8_t                 c_channel;
+static    uint8_t                 c_channel;
 static    uint8_t                 c_last_correlation;
-static    uint8_t                    c_last_rssi;
-static    uint8_t                    c_smallest_rssi;
-static  int8_t                    c_rssi_base_val = -100;
-static    uint8_t                    c_rf212b_pending;
-static    uint8_t                    c_pckCounter = 0;
-static  uint8_t                    c_power;
-static  uint8_t                    c_sensitivity;
-static    void *                     p_spi = NULL;
-static    void *                     p_slpTrig = NULL;
-static     void *                     p_rst = NULL;
-static    s_nsLowMac_t*            p_lmac = NULL;
+static    uint8_t                 c_last_rssi;
+static    uint8_t                 c_smallest_rssi;
+static    int8_t                  c_rssi_base_val = -100;
+static    uint8_t                 c_rf212b_pending;
+static    uint8_t                 c_pckCounter = 0;
+static    uint8_t                 c_power;
+static    uint8_t                 c_sensitivity;
+static    void *                  p_spi = NULL;
+static    void *                  p_slpTrig = NULL;
+static    void *                  p_rst = NULL;
+static    s_nsLowMac_t*           p_lmac = NULL;
 
 
 
 /*               Output Power            dBm, Register Mapping */
 static int16_t txpower[TXPWR_LIST_LEN][2] = { {  11, 0xA0 },
                                  {  10, 0x80 },
-                                  {   9, 0xE4 },
-                                  {   8, 0xE6 },
+                                 {   9, 0xE4 },
+                                 {   8, 0xE6 },
                                  {   7, 0xE7 },
                                  {   6, 0xE8 },
                                  {   5, 0xE9 },
                                  {   4, 0xEA },
-                                     {   3, 0xCB },
+                                 {   3, 0xCB },
                                  {   2, 0xCC },
                                  {   1, 0xCD },
                                  {   0, 0xAD },
@@ -171,38 +172,38 @@ static    uint32_t                pck_cntr_out = 0;
 ==============================================================================*/
 /* Radio transceiver local functions */
 static void                     _rf212b_fRead(st_rxframe_t * ps_rx_frame);
-static void                        _rf212b_fWrite(uint8_t * pc_write_buffer, uint8_t c_length);
+static void                     _rf212b_fWrite(uint8_t * pc_write_buffer, uint8_t c_length);
 static void                     _rf212b_setChannel(uint8_t c);
 static void                     _rf212b_smReset(void);
-static uint8_t                     _rf212b_isIdle(void);
+static uint8_t                  _rf212b_isIdle(void);
 static void                     _rf212b_waitIdle(void);
-static uint8_t                     _rf212b_getState(void);
-static e_rf212b_sm_status_t        _rf212b_setTrxState(uint8_t c_new_state);
-static e_radio_tx_status_t         _rf212b_transmit(uint8_t c_len);
+static uint8_t                  _rf212b_getState(void);
+static e_rf212b_sm_status_t     _rf212b_setTrxState(uint8_t c_new_state);
+static e_radio_tx_status_t      _rf212b_transmit(uint8_t c_len);
 static void                     _rf212b_callback(c_event_t c_event, p_data_t p_data);
-static    void                    _isr_callback(void *);
-static int8_t                     _rf212b_prepare(const void * p_payload, uint8_t c_len);
-static int8_t                     _rf212b_read(void *p_buf, uint8_t c_bufsize);
-static    void                     _rf212b_setPanAddr(unsigned pan,unsigned addr,const uint8_t ieee_addr[8]);
-static    int8_t                    _rf212b_intON(void);
-static    int8_t                    _rf212b_intOFF(void);
-static    int8_t                     _rf212b_extON(void);
-static    int8_t                     _rf212b_extOFF(void);
-static    uint8_t                 _rf212b_getTxPower(void);
-static    void                     _rf212b_setTxPower(uint8_t power);
-static    void                     _rf212b_setPower(int8_t power);
-static  int8_t                     _rf212b_getPower(void);
-static    void                     _rf212b_setSensitivity(int8_t sens);
-static    int8_t                     _rf212b_getSensitivity(void);
-static    int8_t                    _rf212b_getRSSI(void);
-static    void                     _rf212b_wReset(void);
-static    int8_t                     _rf212b_send(const void *pr_payload, uint8_t c_len);
-static    int8_t                     _rf212b_init(s_ns_t* p_netStack);
-static    void                     _rf212b_AntDiv(uint8_t value);
-static    void                     _rf212b_AntExtSw(uint8_t value);
+static    void                  _isr_callback(void *);
+static int8_t                   _rf212b_prepare(const void * p_payload, uint8_t c_len);
+static int8_t                   _rf212b_read(void *p_buf, uint8_t c_bufsize);
+static    void                  _rf212b_setPanAddr(unsigned pan,unsigned addr,const uint8_t ieee_addr[8]);
+static    int8_t                _rf212b_intON(void);
+static    int8_t                _rf212b_intOFF(void);
+static    int8_t                _rf212b_extON(void);
+static    int8_t                _rf212b_extOFF(void);
+static    uint8_t               _rf212b_getTxPower(void);
+static    void                  _rf212b_setTxPower(uint8_t power);
+static    void                  _rf212b_setPower(int8_t power);
+static  int8_t                  _rf212b_getPower(void);
+static    void                  _rf212b_setSensitivity(int8_t sens);
+static    int8_t                _rf212b_getSensitivity(void);
+static    int8_t                _rf212b_getRSSI(void);
+static    void                  _rf212b_wReset(void);
+static    int8_t                _rf212b_send(const void *pr_payload, uint8_t c_len);
+static    int8_t                _rf212b_init(s_ns_t* p_netStack);
+static    void                  _rf212b_AntDiv(uint8_t value);
+static    void                  _rf212b_AntExtSw(uint8_t value);
 static  void                    _rf212b_promisc(uint8_t value);
-static    void                     _spiBitWrite(void * p_spi, uint8_t c_addr,uint8_t c_mask,
-                                                                uint8_t c_off,uint8_t c_data);
+static    void                  _spiBitWrite(void * p_spi, uint8_t c_addr,uint8_t c_mask,
+                                             uint8_t c_off,uint8_t c_data);
 #if PRINT_PCK_STAT
 static    void                     _show_stat(void *);
 #endif /* PRINT_PCK_STAT */

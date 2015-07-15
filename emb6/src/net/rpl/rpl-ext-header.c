@@ -128,7 +128,7 @@ rpl_verify_header(int uip_ext_opt_offset)
 
   PRINTF("RPL: Packet going %s, sender closer %d (%d < %d)\n", down == 1 ? "down" : "up",
      sender_closer,
-     senderrank,
+     sender_rank,
      instance->current_dag->rank
      );
 

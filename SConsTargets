@@ -24,10 +24,12 @@ TARGETS = [
 ['cs_atany900basic', [('coap','server'),
                       ('udp_alive','')],             'atany900_basic',   	'0xAAAA',   '-11',          '-90',        'MODULATION_QPSK100'],
                       
-['as_atany900basic', [('aptb','server')],            'atany900_basic',      '0xbabe',   '-11',          '-90',        'MODULATION_QPSK100'],
+['as_atany900basic', [('coap','server'),
+                      ('aptb','server')],            'atany900_basic',      '0xbabe',     '0',          '-90',        'MODULATION_QPSK100'],
                                                 ## Don't change this address ^^^^^^, or change in aptb client as well ##
 
-['ac_atany900basic', [('aptb','client')],            'atany900_basic',      '0xAAAA',   '-11',          '-90',        'MODULATION_QPSK100'],
+['ac_atany900basic', [('coap','server'),
+                      ('aptb','client')],            'atany900_basic',      '0x2222',   '0',            '-90',        'MODULATION_QPSK100'],
 
 ['sn_atany900basic', [('sniffer','')],               'atany900_basic',   	'0xFEFE',   '-11',          '-100',       'MODULATION_QPSK100'],
 

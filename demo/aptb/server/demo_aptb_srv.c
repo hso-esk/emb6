@@ -185,7 +185,14 @@ static    void _aptb_callback(c_event_t c_event, p_data_t p_data) {
 /*----------------------------------------------------------------------------*/
 /*    demo_aptbInit()                                                           */
 /*----------------------------------------------------------------------------*/
-int8_t demo_aptbInit(void) {
+int8_t demo_aptbInit(void)
+{
+    pst_conn = udp_new(NULL, UIP_HTONS(__CLIENT_PORT), NULL);
+    udp_bind(pst_conn, UIP_HTONS(__SERVER_PORT));
+    LOG_INFO("local/remote port %u/%u\n\r",
+            UIP_HTONS(pst_conn->lport),
+            UIP_HTONS(pst_conn->rport));
+    LOG_INFO("%s\n\r", "UDP server started");
     evproc_regCallback(EVENT_TYPE_TCPIP,_aptb_callback);
     LOG_INFO("%s\n\r", "APTB demo initialized, waiting for connection...");
     return 1;
@@ -204,6 +211,7 @@ uint8_t demo_aptbConf(s_ns_t* pst_netStack)
     if (pst_netStack != NULL) {
         if (!pst_netStack->c_configured) {
             pst_netStack->hc     = &sicslowpan_driver;
+            pst_netStack->llsec  = &nullsec_driver;
             pst_netStack->hmac   = &nullmac_driver;
             pst_netStack->lmac   = &sicslowmac_driver;
             pst_netStack->frame  = &framer_802154;
@@ -212,6 +220,7 @@ uint8_t demo_aptbConf(s_ns_t* pst_netStack)
             /* pst_netStack->inif   = $<some_transceiver>;*/
         } else {
             if ((pst_netStack->hc == &sicslowpan_driver)   &&
+                (pst_netStack->llsec == &nullsec_driver)   &&
                 (pst_netStack->hmac == &nullmac_driver)    &&
                 (pst_netStack->lmac == &sicslowmac_driver) &&
                 (pst_netStack->frame == &framer_802154)) {
@@ -221,13 +230,6 @@ uint8_t demo_aptbConf(s_ns_t* pst_netStack)
                 c_ret = 0;
             }
         }
-
-        pst_conn = udp_new(NULL, UIP_HTONS(__CLIENT_PORT), NULL);
-        udp_bind(pst_conn, UIP_HTONS(__SERVER_PORT));
-        LOG_INFO("local/remote port %u/%u\n\r",
-                UIP_HTONS(pst_conn->lport),
-                UIP_HTONS(pst_conn->rport));
-        LOG_INFO("%s\n\r", "UDP server started");
     }
 
     return (c_ret);

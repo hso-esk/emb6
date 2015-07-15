@@ -814,7 +814,7 @@ void uip_log(char *msg);
  /** DEMO APTB example                           (see demo_aptb_xxx.c) */
  #define LOGGER_DEMO_APTB                       TRUE
  /** DEMO COAP example                           (see demo_coap_*.c) */
- #define LOGGER_DEMO_COAP                       FALSE
+ #define LOGGER_DEMO_COAP                       TRUE
  /** DEMO SNIFFER                               (see demo_sniffer.c) */
  #define LOGGER_DEMO_SNIFFER                    FALSE
  /** Event timer functions                      (see etimer.c) */
