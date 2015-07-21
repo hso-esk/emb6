@@ -326,8 +326,7 @@ uint8_t demo_udpAliveConf(s_ns_t* pst_netStack)
 int8_t demo_udpAliveInit(void)
 {
     /* set periodic timer */
-    etimer_set( &e_udpAliveTmr,
-                SEND_INTERVAL * bsp_get(E_BSP_GET_TRES),
+    etimer_set( &e_udpAliveTmr,SEND_INTERVAL * bsp_get(E_BSP_GET_TRES),
                 _udpAlive_callback);
     /* set udp is running */
     return 1;
