@@ -99,8 +99,8 @@
  =============================================================================*/
 typedef enum e_udpAliveStateS {
     E_UDPALIVE_UNDEF,
-    E_UDPALIVE_GETNEIGHADDR,
     E_UDPALIVE_GETDESTADDR,
+    E_UDPALIVE_CONNECT,
     E_UDPALIVE_PREPMSG,
     E_UDPALIVE_SENDMSG,
     E_UDPALIVE_DONE,
@@ -110,10 +110,9 @@ typedef enum e_udpAliveStateS {
                           LOCAL VARIABLE DECLARATIONS
  =============================================================================*/
 
-static struct uip_udp_conn*  ps_udpDescr = NULL;
+static struct uip_udp_conn*  ps_udpDesc = NULL;
 
 static uip_ip6addr_t         s_destAddr;
-static e_udpAlive_t          e_udpAliveState;
 
 struct etimer                e_udpAliveTmr;
 
@@ -121,7 +120,7 @@ struct etimer                e_udpAliveTmr;
                                LOCAL FUNCTION PROTOTYPES
  =============================================================================*/
 
-static  void    _udpAlive_sendMsg(void);
+static  int8_t  _udpAlive_sendMsg(void);
 static  uint8_t _udpAlive_addAddr(char * pc_buf, const uip_ipaddr_t* rps_addr);
 
 /*==============================================================================
@@ -180,92 +179,90 @@ static uint8_t _udpAlive_addAddr(char * pc_buf, const uip_ipaddr_t* rps_addr)
  *  \returns none
  */
 /*----------------------------------------------------------------------------*/
-static void _udpAlive_sendMsg(void)
+static int8_t _udpAlive_sendMsg(void)
 {
     LOG_INFO("Try to send message...");
 
-    static uint32_t     l_seqId;
-    char                ac_buf[MAX_PAYLOAD_LEN];
-    uint32_t            i;
-    uint16_t            i_destPort      = _PORT;
-    uip_ipaddr_t*       ps_defRt        = uip_ds6_defrt_choose();
-    uint8_t             c_exitCond      = 0;
-    rpl_dag_t*          ps_dag          = rpl_get_any_dag();
+    static uint32_t l_seqId;
+    char            ac_buf[MAX_PAYLOAD_LEN];
+    uint32_t        i;
+    uint8_t         c_err               = 0;
+    uint8_t         c_leaveFSM          = 0;
+    uint16_t        i_destPort          = UIP_HTONS(_PORT);
+    uip_ds6_addr_t* ps_destAddrDesc     = uip_ds6_get_global(ADDR_PREFERRED);
+    uip_ipaddr_t*   ps_destAddr         = &ps_destAddrDesc->ipaddr;
+    rpl_dag_t*      ps_dagDesc          = rpl_get_any_dag();
+    e_udpAlive_t    e_state             = E_UDPALIVE_GETDESTADDR;
 
-    while (!c_exitCond) {
-        switch (e_udpAliveState) {
-        case E_UDPALIVE_GETNEIGHADDR:
-            if (uip_ds6_get_global(ADDR_PREFERRED) != NULL)
+    while (!c_leaveFSM) {
+        switch (e_state) {
+        case E_UDPALIVE_GETDESTADDR:
+            if (ps_destAddrDesc != NULL)
             {
-
-                if(ps_dag) {
-                    memcpy( &s_destAddr.u8[8],&ps_dag->dag_id.u8[8],HALFIP6ADDR);
-                    e_udpAliveState = E_UDPALIVE_GETDESTADDR;
-                }
-                else if (ps_defRt) {
-                    memcpy( &s_destAddr.u8[8],&ps_defRt->u8[8],HALFIP6ADDR);
-                    e_udpAliveState = E_UDPALIVE_GETDESTADDR;
+                if(ps_dagDesc) {
+                    uip_ipaddr_copy(&s_destAddr, ps_destAddr);
+                    e_state = E_UDPALIVE_CONNECT;
                 }
                 else {
                     LOG_ERR("Get parent address FAILED");
-                    e_udpAliveState = E_UDPALIVE_UNDEF;
+                    c_err = -1;
+                    e_state = E_UDPALIVE_UNDEF;
                 }
             }
             break;
-        case E_UDPALIVE_GETDESTADDR:
-            if (!ps_udpDescr)
+        case E_UDPALIVE_CONNECT:
+            if (!ps_udpDesc)
             {
-                ps_udpDescr = udp_new(&s_destAddr,UIP_HTONS(i_destPort),NULL);
+                ps_udpDesc = udp_new(ps_destAddr,i_destPort,NULL);
 
             } else {
-                if (memcmp(&ps_udpDescr->ripaddr, &s_destAddr, IP6ADDRSIZE))
+                if (memcmp(&ps_udpDesc->ripaddr, ps_destAddr, IP6ADDRSIZE))
                 {
-                    uip_udp_remove(ps_udpDescr);
-                    ps_udpDescr = udp_new(&s_destAddr,UIP_HTONS(i_destPort),NULL);
+                    uip_udp_remove(ps_udpDesc);
+                    ps_udpDesc = udp_new(ps_destAddr,i_destPort,NULL);
+                    LOG_WARN("Reconnection to server");
                 }
             }
 
-            if (ps_udpDescr) {
+            if (ps_udpDesc) {
                 PRINTF("UDPALIVE: Using destination addr:");
-                PRINT6ADDR(&ps_udpDescr->ripaddr);
+                PRINT6ADDR(&ps_udpDesc->ripaddr);
                 PRINTF(" local/remote port %u/%u\n",
-                       UIP_HTONS(ps_udpDescr->lport),
-                       UIP_HTONS(ps_udpDescr->rport));
-                e_udpAliveState = E_UDPALIVE_PREPMSG;
+                       UIP_HTONS(ps_udpDesc->lport),
+                       UIP_HTONS(ps_udpDesc->rport));
+                e_state = E_UDPALIVE_PREPMSG;
             }
             else {
-                e_udpAliveState = E_UDPALIVE_UNDEF;
+                e_state = E_UDPALIVE_UNDEF;
+                c_err = -2;
                 LOG_ERR("Get destination address FAILED\n");
             }
 
             break;
         case E_UDPALIVE_PREPMSG:
                 i = sprintf(ac_buf, "%d | ", ++l_seqId);
-                if(ps_dag && ps_dag->instance->def_route) {
-                    _udpAlive_addAddr(ac_buf + i, &ps_dag->instance->def_route->ipaddr);
-                } else {
-                    sprintf(ac_buf + i, "(null)");
-                }
-
-                if (ps_defRt != NULL) {
-                    _udpAlive_addAddr(ac_buf + i, ps_defRt);
+                if(ps_dagDesc && ps_dagDesc->instance->def_route) {
+                    _udpAlive_addAddr(ac_buf + i,
+                                      &ps_dagDesc->instance->def_route->ipaddr);
                 } else {
                     sprintf(ac_buf + i, "(null)");
                 }
                 LOG_INFO("Payload: %s", ac_buf);
-                e_udpAliveState = E_UDPALIVE_SENDMSG;
+                e_state = E_UDPALIVE_SENDMSG;
             break;
         case E_UDPALIVE_SENDMSG:
-            uip_udp_packet_send(ps_udpDescr, ac_buf, strlen(ac_buf));
-            e_udpAliveState = E_UDPALIVE_DONE;
+            uip_udp_packet_send(ps_udpDesc, ac_buf, strlen(ac_buf));
+            e_state = E_UDPALIVE_DONE;
             break;
         case E_UDPALIVE_DONE:
         case E_UDPALIVE_UNDEF:
         default:
-            c_exitCond = 1;
+            c_leaveFSM = 1;
             break;
         }
     }
+
+    return (c_err);
 
 } /* _udpAlive_sendMsg */
 
@@ -281,7 +278,6 @@ static void _udpAlive_sendMsg(void)
 static    void _udpAlive_callback(c_event_t c_event, p_data_t p_data) {
     if (etimer_expired(&e_udpAliveTmr))
     {
-        e_udpAliveState = E_UDPALIVE_GETNEIGHADDR;
         _udpAlive_sendMsg();
         etimer_restart(&e_udpAliveTmr);
     }
