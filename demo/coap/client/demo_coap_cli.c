@@ -206,6 +206,7 @@ uint8_t demo_coapConf(s_ns_t* pst_netStack)
                 /* right configuration */
             }
             else {
+                pst_netStack = NULL;
                 c_ret = 0;
             }
         }

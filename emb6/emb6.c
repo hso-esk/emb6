@@ -74,8 +74,11 @@
 #include "rpl.h"
 #endif
 
-#define LOGGER_ENABLE   FALSE
-#include "logger.h"
+#define     LOGGER_ENABLE        LOGGER_CORE
+#if            LOGGER_ENABLE     ==     TRUE
+#define        LOGGER_SUBSYSTEM    "core"
+#endif
+#include    "logger.h"
 
 /*==============================================================================
                            LOCAL FUNCTION PROTOTYPES
@@ -173,6 +176,7 @@ static int8_t loc_emb6DagRootInit(void)
 
 uint8_t loc_emb6NetstackInit(s_ns_t * ps_ns)
 {
+    uint8_t     c_err = 0;
     /* Initialize stack protocols */
     queuebuf_init();
     ctimer_init();
@@ -185,11 +189,12 @@ uint8_t loc_emb6NetstackInit(s_ns_t * ps_ns)
         ps_ns->llsec->init(ps_ns);
         ps_ns->hc->init(ps_ns);
         tcpip_init();
+        c_err = 1;
     }
 
 #if EMB6_INIT_ROOT==TRUE
     if (!loc_emb6DagRootInit()) {
-        return 0;
+        c_err = 1;
     }
 #endif /* DEMO_USE_DAG_ROOT */
 
@@ -197,7 +202,7 @@ uint8_t loc_emb6NetstackInit(s_ns_t * ps_ns)
     /* deinit tcpip stack after 30 minutes */
     etimer_set(&et_timeout, EMB6_DEMO_TOT * bsp_get(E_BSP_GET_TRES), loc_emb6ToutHandler);
 #endif /* #if EMB6_DEMO_TOT */
-    return 1;
+    return (c_err);
 }
 
 #if EMB6_DEMO_TOT
@@ -223,19 +228,22 @@ void rimeaddr_emb6_set_node_addr(linkaddr_t *t)
 
 uint8_t emb6_init(s_ns_t * ps_ns)
 {
+    uint8_t c_err = 1;
+
     if (!bsp_init(ps_ns)) {
         ps_ns = NULL;
-        return 0;
+        c_err = 0;
     }
 
-    if (!loc_emb6NetstackInit(ps_ns)) {
+    if (!loc_emb6NetstackInit(ps_ns) && c_err) {
         ps_ns = NULL;
-        return 0;
+        LOG_ERR("Failed to initialise emb6 stack");
+        c_err = 0;
     }
 
     ps_emb6Stack = ps_ns;
 
-    return 1;
+    return (c_err);
 }
 
 s_ns_t * emb6_get(void)

@@ -60,7 +60,7 @@
 
 #include <string.h>
 #include "evproc.h"
-#define DEBUG DEBUG_NONE
+#define DEBUG DEBUG_PRINT
 #include "uip-debug.h"
 
 
@@ -69,7 +69,7 @@
 void uip_log(char *msg);
 #define UIP_LOG(m) uip_log(m)
 #else
-#define UIP_LOG(m)
+#define UIP_LOG(m) printf(m)
 #endif
 
 #define UIP_ICMP_BUF ((struct uip_icmp_hdr *)&uip_buf[UIP_LLIPH_LEN + uip_ext_len])

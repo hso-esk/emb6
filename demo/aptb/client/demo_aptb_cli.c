@@ -185,14 +185,13 @@ static  void        loc_aptb_sendMsg(uint32_t l_seqID)
 
     if(s_gAddr) {
         loc_aptb_addAddr(pc_buf + i, &(s_gAddr->ipaddr));
-    } else {
-        sprintf(pc_buf + i, "(null)");
-    }
-    LOG_INFO("Send message: %s\n\r",pc_buf);
+        LOG_INFO("Send message: %s\n\r",pc_buf);
 
-    uip_udp_packet_sendto(pst_conn,
-                          pc_buf, strlen(pc_buf),
-                          &un_server_ipaddr,UIP_HTONS(__SERVER_PORT));
+        uip_udp_packet_sendto(pst_conn,
+                              pc_buf, strlen(pc_buf),
+                              &un_server_ipaddr,UIP_HTONS(__SERVER_PORT));
+    }
+
 } /* loc_aptb_sendMsg */
 
 static  uint64_t    loc_aptb_str2Seq(char * str)
@@ -308,6 +307,7 @@ uint8_t demo_aptbConf(s_ns_t* pst_netStack)
                 /* right configuration */
             }
             else {
+                pst_netStack = NULL;
                 c_ret = 0;
             }
         }

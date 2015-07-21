@@ -203,19 +203,19 @@ typedef uip_eth_addr uip_lladdr_t;
  =============================================================================*/
 
 typedef struct netstack {
-    const struct netstack_headerCompression*        hc;
+    const struct netstack_headerCompression*            hc;
 
-    const struct netstack_llsec*                    llsec;
+    const struct netstack_llsec*                        llsec;
 
-    const struct netstack_highMac*                    hmac;
+    const struct netstack_highMac*                      hmac;
 
-    const struct netstack_lowMac*                    lmac;
+    const struct netstack_lowMac*                       lmac;
 
-    const struct netstack_framer*                    frame;
+    const struct netstack_framer*                       frame;
 
-    const struct netstack_interface*                inif;
+    const struct netstack_interface*                    inif;
 
-    uint8_t                                            c_configured;
+    uint8_t                                             c_configured;
 }s_ns_t;
 
 typedef const struct netstack_headerCompression {
@@ -372,32 +372,32 @@ extern const s_nsHeadComp_t     sicslowpan_driver;
 
 /*! This driver are pretending to be a hc layer
  *  for sniffing data and sending them via USART     */
-extern const s_nsHeadComp_t     slipnet_driver;
+extern const s_nsHeadComp_t         slipnet_driver;
 
 
 /*! Supported link layer security handlers */
-extern const s_nsllsec_t         nullsec_driver;
+extern const s_nsllsec_t            nullsec_driver;
 
 /*! Supported high mac handlers */
-extern const s_nsHighMac_t         nullmac_driver;
+extern const s_nsHighMac_t          nullmac_driver;
 
 
 /*! Supported low mac handlers */
-extern const s_nsLowMac_t         sicslowmac_driver;
-extern const s_nsLowMac_t         nullrdc_driver;
+extern const s_nsLowMac_t           sicslowmac_driver;
+extern const s_nsLowMac_t           nullrdc_driver;
 
 
 /*! Supported framers */
-extern const s_nsFramer_t     framer_802154;
-extern const s_nsFramer_t     no_framer;
-extern const s_nsFramer_t     nullframer;
+extern const s_nsFramer_t           framer_802154;
+extern const s_nsFramer_t           no_framer;
+extern const s_nsFramer_t           nullframer;
 
 
 /*! Supported interfaces */
-extern const s_nsIf_t             rf212_driver;
-extern const s_nsIf_t             rf212b_driver;
-extern const s_nsIf_t             rf230_driver;
-extern const s_nsIf_t            fradio_driver;
+extern const s_nsIf_t               rf212_driver;
+extern const s_nsIf_t               rf212b_driver;
+extern const s_nsIf_t               rf230_driver;
+extern const s_nsIf_t               fradio_driver;
 
 
 

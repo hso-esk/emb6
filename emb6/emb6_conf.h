@@ -800,7 +800,10 @@ void uip_log(char *msg);
 
  /*=============================================================================
                                  DEBUG ENABLER SECTION
- ===============================================================================*/
+ =============================================================================*/
+ /** Core logging, should be TRUE for almost all cases except for production
+  * (see emb6.c) */
+ #define LOGGER_CORE                            TRUE
  /** Hardware abstraction layer functions       (see target.c) */
  #define LOGGER_HAL                             FALSE
  /** Board support package                      (see bsp.c) */
@@ -810,7 +813,7 @@ void uip_log(char *msg);
  /** Radio functions                            (see $(IF).c) */
  #define LOGGER_RADIO                           FALSE
  /** DEMO UDP example                           (see demo_exudp.c) */
- #define LOGGER_DEMO_EXUDP                      FALSE
+ #define LOGGER_DEMO_UDPIAA                     TRUE
  /** DEMO APTB example                           (see demo_aptb_xxx.c) */
  #define LOGGER_DEMO_APTB                       TRUE
  /** DEMO COAP example                           (see demo_coap_*.c) */

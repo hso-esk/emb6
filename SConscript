@@ -205,7 +205,12 @@ env.Clean(retf, '*')
 # Show program size
 psize = env.Command(' ', TARGET_NAME + '.elf', Action('$SIZE $SOURCE'))
 env.Clean(psize, '*')
-	
+
+# Create hex file
+Delete(TARGET_NAME+'.hex')
+hex_file = env.Command(TARGET_NAME+'.hex', TARGET_NAME+'.elf', Action('$OBJCOPY -O ihex $SOURCE $TARGET', '$OBJCOPYCOMSTR'))
+env.Clean(hex_file, '*')
+
 # Create binary
 Delete(TARGET_NAME+'.bin')
 bin_file = env.Command(TARGET_NAME+'.bin', TARGET_NAME+'.elf', Action('$OBJCOPY -O binary $SOURCE $TARGET', '$OBJCOPYCOMSTR'))

@@ -75,24 +75,24 @@
 /*==============================================================================
                                          MACROS
  =============================================================================*/
-#define     LOGGER_ENABLE        LOGGER_DEMO_EXUDP
+#define     LOGGER_ENABLE        LOGGER_DEMO_UDPIAA
 #if            LOGGER_ENABLE     ==     TRUE
-#define        LOGGER_SUBSYSTEM    "udp_iaa"
+#define        LOGGER_SUBSYSTEM    "dUIAA"
 #endif
 #include    "logger.h"
 
 /** set the send interval */
-#define     SEND_INTERVAL            60
+#define     SEND_INTERVAL               60
 
 /** set the payload length */
-#define     MAX_PAYLOAD_LEN            40
+#define     MAX_PAYLOAD_LEN             40
 
 /** set the communication port (default for 6LBR: 3000) */
-#define     _PORT                     3000
+#define     _PORT                       3000
 /** macro for a half of ipv6 address */
-#define     HALFIP6ADDR             8
+#define     HALFIP6ADDR                 8
 /** macro for a half of ipv6 address */
-#define     IP6ADDRSIZE             16
+#define     IP6ADDRSIZE                 16
 
 /*==============================================================================
                      TYPEDEF'S DECLARATION
@@ -189,50 +189,54 @@ static int8_t _udpAlive_sendMsg(void)
     uint8_t         c_err               = 0;
     uint8_t         c_leaveFSM          = 0;
     uint16_t        i_destPort          = UIP_HTONS(_PORT);
-    uip_ds6_addr_t* ps_destAddrDesc     = uip_ds6_get_global(ADDR_PREFERRED);
-    uip_ipaddr_t*   ps_destAddr         = &ps_destAddrDesc->ipaddr;
+    uip_ds6_addr_t* ps_srcAddr          = uip_ds6_get_global(ADDR_PREFERRED);
     rpl_dag_t*      ps_dagDesc          = rpl_get_any_dag();
     e_udpAlive_t    e_state             = E_UDPALIVE_GETDESTADDR;
 
     while (!c_leaveFSM) {
         switch (e_state) {
         case E_UDPALIVE_GETDESTADDR:
-            if (ps_destAddrDesc != NULL)
+            if (ps_srcAddr != NULL)
             {
                 if(ps_dagDesc) {
-                    uip_ipaddr_copy(&s_destAddr, ps_destAddr);
+                    /* Insert global prefix */
+                    uip_ipaddr_copy(&s_destAddr, &ps_srcAddr->ipaddr);
+                    memcpy(&s_destAddr.u8[8], &ps_dagDesc->dag_id.u8[8], 8);
                     e_state = E_UDPALIVE_CONNECT;
                 }
                 else {
-                    LOG_ERR("Get parent address FAILED");
+                    LOG_ERR("Get destination address FAILED");
                     c_err = -1;
                     e_state = E_UDPALIVE_UNDEF;
                 }
+            } else {
+                e_state = E_UDPALIVE_DONE;
             }
             break;
         case E_UDPALIVE_CONNECT:
-            if (!ps_udpDesc)
+            if (ps_udpDesc == NULL)
             {
-                ps_udpDesc = udp_new(ps_destAddr,i_destPort,NULL);
+                ps_udpDesc = udp_new(&s_destAddr,i_destPort,NULL);
 
             } else {
-                if (memcmp(&ps_udpDesc->ripaddr, ps_destAddr, IP6ADDRSIZE))
+                if (memcmp(&ps_udpDesc->ripaddr, &s_destAddr, IP6ADDRSIZE))
                 {
                     uip_udp_remove(ps_udpDesc);
-                    ps_udpDesc = udp_new(ps_destAddr,i_destPort,NULL);
+                    ps_udpDesc = udp_new(&s_destAddr,i_destPort,NULL);
                     LOG_WARN("Reconnection to server");
                 }
             }
 
-            if (ps_udpDesc) {
-                PRINTF("UDPALIVE: Using destination addr:");
-                PRINT6ADDR(&ps_udpDesc->ripaddr);
-                PRINTF(" local/remote port %u/%u\n",
+            if (ps_udpDesc != NULL) {
+                LOG_RAW("Using destination addr: ");
+#if LOGGER_ENABLE
+                uip_debug_ipaddr_print(&ps_udpDesc->ripaddr);
+#endif
+                LOG_RAW("\n\r local/remote port %u/%u\r\n",
                        UIP_HTONS(ps_udpDesc->lport),
                        UIP_HTONS(ps_udpDesc->rport));
                 e_state = E_UDPALIVE_PREPMSG;
-            }
-            else {
+            }else {
                 e_state = E_UDPALIVE_UNDEF;
                 c_err = -2;
                 LOG_ERR("Get destination address FAILED\n");
@@ -299,6 +303,7 @@ uint8_t demo_udpAliveConf(s_ns_t* pst_netStack)
     if (pst_netStack != NULL) {
         if (!pst_netStack->c_configured) {
             pst_netStack->hc     = &sicslowpan_driver;
+            pst_netStack->llsec  = &nullsec_driver;
             pst_netStack->hmac   = &nullmac_driver;
             pst_netStack->lmac   = &sicslowmac_driver;
             pst_netStack->frame  = &framer_802154;
@@ -307,17 +312,19 @@ uint8_t demo_udpAliveConf(s_ns_t* pst_netStack)
             /* pst_netStack->inif   = $<some_transceiver>;*/
         } else {
             if ((pst_netStack->hc == &sicslowpan_driver)   &&
+                (pst_netStack->llsec == &nullsec_driver)   &&
                 (pst_netStack->hmac == &nullmac_driver)    &&
                 (pst_netStack->lmac == &sicslowmac_driver) &&
                 (pst_netStack->frame == &framer_802154)) {
                 /* right configuration */
             }
             else {
+                pst_netStack = NULL;
                 c_ret = 0;
             }
         }
     }
-    return c_ret;
+    return (c_ret);
 }/* demo_udpAliveConf */
 
 /*---------------------------------------------------------------------------*/

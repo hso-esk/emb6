@@ -52,7 +52,7 @@
 #include "uip-mcast6.h"
 #endif
 
-#define DEBUG DEBUG_NONE
+#define DEBUG DEBUG_PRINT
 #include "uip-debug.h"
 
 #include <limits.h>

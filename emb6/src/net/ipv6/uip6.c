@@ -92,7 +92,7 @@
 /* For Debug, logging, statistics                                            */
 /*---------------------------------------------------------------------------*/
 
-#define DEBUG DEBUG_NONE
+#define DEBUG DEBUG_PRINT
 #include "uip-debug.h"
 
 #if UIP_CONF_IPV6_RPL
@@ -104,7 +104,7 @@
 void uip_log(char *msg);
 #define UIP_LOG(m) uip_log(m)
 #else
-#define UIP_LOG(m)
+#define UIP_LOG(m) printf(m)
 #endif /* UIP_LOGGING == 1 */
 
 #if UIP_STATISTICS == 1

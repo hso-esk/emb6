@@ -113,6 +113,7 @@ uint8_t demo_sniffConf(s_ns_t* pst_netStack)
         else if (pst_netStack->lmac == &nullrdc_driver) {}
         else if (pst_netStack->frame == &no_framer) {}
         else {
+            pst_netStack = NULL;
             c_ret = 0;
         }
 

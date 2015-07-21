@@ -57,7 +57,7 @@
 #include <limits.h>
 #include <string.h>
 
-#define DEBUG DEBUG_NONE
+#define DEBUG DEBUG_PRINT
 #include "uip-debug.h"
 
 /*---------------------------------------------------------------------------*/
@@ -1336,7 +1336,7 @@ rpl_process_dio(uip_ipaddr_t *from, rpl_dio_t *dio)
   PRINTF(", rank %u, min_rank %u, ",
      instance->current_dag->rank, instance->current_dag->min_rank);
   PRINTF("parent rank %u, parent etx %u, link metric %u, instance etx %u\n\r",
-     p->rank, -1/*p->mc.obj.etx*/, p->link_metric, instance->mc.obj.etx);
+     p->rank, -1/*p->mc.obj.etx*/, -1/*p->link_metric*/, instance->mc.obj.etx);
 
   /* We have allocated a candidate parent; process the DIO further. */
 
