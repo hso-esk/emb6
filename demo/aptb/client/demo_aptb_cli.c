@@ -104,6 +104,7 @@
 #define     UIP_IP_BUF              ((struct uip_ip_hdr *)&uip_buf[UIP_LLH_LEN])
 #define     _QUOTEME(x)             #x
 #define     QUOTEME(x)              _QUOTEME(x)
+#define     EMB6_DEMO_APTB_CODE     0x10
 /*==============================================================================
                                          ENUMS
  =============================================================================*/
@@ -115,7 +116,7 @@ static  struct  uip_udp_conn        *pst_conn;
 static          uip_ipaddr_t        un_server_ipaddr = {.u16={SERVER_IP_ADDR} };
         struct  etimer              s_et;
 static          uint32_t            l_lastSeqId = 0;
-                uint32_t            l_expSeqID = 0;
+static          uint32_t            l_expSeqID = 0;
 
 /*==============================================================================
                           LOCAL VARIABLE DECLARATIONS
@@ -128,14 +129,14 @@ static          uint32_t            l_lastSeqId = 0;
                                LOCAL FUNCTION PROTOTYPES
  =============================================================================*/
 static  void        loc_aptb_sendMsg(uint32_t l_seqID);
-static  char*       loc_aptb_addAddr(char * pc_buf,const uip_ipaddr_t* rs_addr);
+//static  char*       loc_aptb_addAddr(char * pc_buf,const uip_ipaddr_t* rs_addr);
 static  uint64_t    loc_aptb_str2Seq(char * pc_str);
 
 /*==============================================================================
                                     LOCAL FUNCTIONS
  =============================================================================*/
 
-static  char*       loc_aptb_addAddr(char * pc_buf,const uip_ipaddr_t* rs_addr)
+/*static  char*       loc_aptb_addAddr(char * pc_buf,const uip_ipaddr_t* rs_addr)
 {
     uint16_t      a;
     uint16_t      i;
@@ -160,7 +161,7 @@ static  char*       loc_aptb_addAddr(char * pc_buf,const uip_ipaddr_t* rs_addr)
     }
     return pc_addr;
 }
-
+*/
 /*----------------------------------------------------------------------------*/
 /** \brief  This function is sending message with a sequence number.
  *
@@ -173,24 +174,20 @@ static  char*       loc_aptb_addAddr(char * pc_buf,const uip_ipaddr_t* rs_addr)
 static  void        loc_aptb_sendMsg(uint32_t l_seqID)
 {
     char         pc_buf[MAX_S_PAYLOAD_LEN];
-    uint32_t     i;
 
-    i = sprintf(pc_buf, "%lu | ", l_seqID);
+    pc_buf[0] = EMB6_DEMO_APTB_CODE;
+
+    sprintf(pc_buf+1, "%lu | ", l_seqID);
 
     if (l_seqID != 0)
         l_expSeqID++;
 
-    LOG_INFO("Lost packets (%lu)\n\r", l_expSeqID - l_seqID);
-    uip_ds6_addr_t *s_gAddr = uip_ds6_get_global(ADDR_PREFERRED);
+    LOG_INFO("Lost packets (%lu)", l_expSeqID - l_seqID);
+    LOG_INFO("Send message: %s",pc_buf);
 
-    if(s_gAddr) {
-        loc_aptb_addAddr(pc_buf + i, &(s_gAddr->ipaddr));
-        LOG_INFO("Send message: %s\n\r",pc_buf);
-
-        uip_udp_packet_sendto(pst_conn,
-                              pc_buf, strlen(pc_buf),
-                              &un_server_ipaddr,UIP_HTONS(__SERVER_PORT));
-    }
+    uip_udp_packet_sendto(pst_conn,
+                          pc_buf, strlen(pc_buf),
+                          &un_server_ipaddr,UIP_HTONS(__SERVER_PORT));
 
 } /* loc_aptb_sendMsg */
 
@@ -230,9 +227,12 @@ static    void      loc_aptb_callback(c_event_t c_event, p_data_t p_data)
     } else if (c_event == EVENT_TYPE_TCPIP) {
         if (uip_newdata()) {
             pc_str = uip_appdata;
-            pc_str[uip_datalen()] = '\0';
-            LOG_INFO("Packet from a server: '%s'\n\r", pc_str);
-            l_lastSeqId = loc_aptb_str2Seq(pc_str);
+            if (pc_str[0] == EMB6_DEMO_APTB_CODE) {
+                pc_str[uip_datalen()] = '\0';
+                pc_str++;
+                LOG_INFO("Packet from a server: '%s'", pc_str);
+                l_lastSeqId = loc_aptb_str2Seq(pc_str);
+            }
         }
     }
 }
@@ -267,13 +267,13 @@ int8_t demo_aptbInit(void)
     LOG_INFO("%s", "Create connection with the server ");
     //uip_debug_ipaddr_print(&un_server_ipaddr);
     LOG_RAW("\n\r");
-    LOG_INFO("local/remote port %u/%u\n\r",
+    LOG_INFO("local/remote port %u/%u",
             UIP_HTONS(pst_conn->lport),
             UIP_HTONS(pst_conn->rport));
     //printf("Set dudp timer %p\n\r",&s_et);
     etimer_set(&s_et, SEND_INTERVAL, loc_aptb_callback);
     evproc_regCallback(EVENT_TYPE_TCPIP,loc_aptb_callback);
-    LOG_INFO("%s\n\r", "APTB demo initialized, Connecting ...");
+    LOG_INFO("APTB demo initialized, Connecting ...");
     return 1;
 }/* demo_aptbInit()  */
 
