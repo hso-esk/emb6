@@ -136,8 +136,8 @@ static uint8_t loc_demoAppsInit(void);
 static void loc_initialConfig(void)
 {
     /* set last byte of mac address */
-    mac_phy_config.mac_address[7] = (uint8_t)MAC_ADR_WORD;            // low byte
-    mac_phy_config.mac_address[6] = (uint8_t)(MAC_ADR_WORD >> 8);     // high byte
+    mac_phy_config.mac_address[7] = (uint8_t)MAC_ADDR_WORD;            // low byte
+    mac_phy_config.mac_address[6] = (uint8_t)(MAC_ADDR_WORD >> 8);     // high byte
 
     /* initial TX Power Output in dBm */
     mac_phy_config.init_power = TX_POWER;
@@ -283,8 +283,9 @@ int main(void)
         /* call process function with delay in us */
         emb6_process(500);  /* default: 500 us delay */
     }
+    bsp_led(E_BSP_LED_RED,E_BSP_LED_ON);
     printf("Program failed.");
-    return 0;
+    while(1);
 }
 /** @} */
 /** @} */
