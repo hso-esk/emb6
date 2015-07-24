@@ -4,9 +4,13 @@ TARGETS = [
 # NAME               APPLICATION & CONFIGURATION     BOARD             		MAC_ADR		TX_POWER(dBm)  RX_SENS(dBm)  Modulation(QPSK100 or BPSK20)
 ['cs_atany2400',     [('coap','server'),
                       ('udp_alive','')],             'atany2400',           '0x10A0',   '4',           '-100',       'MODULATION_QPSK100'],
+                      
 ['cc_atany900',      [('coap','client'),
                       ('udp_alive','')],             'atany900',         	'0x11A1',   '4',           '-100',       'MODULATION_QPSK100'],
-['cs_atany900',      [('coap','server')],             'atany900',         	'0x8888',   '4',           '-100',       'MODULATION_QPSK100'],
+                      
+['cs_atany900',      [('coap','server'),
+                      ('udp_alive','')],             'atany900',         	'0x8888',   '4',           '-100',       'MODULATION_QPSK100'],
+
 ['mq_atany900',      [('mqtt',''),
                       ('udp_alive','')],             'atany900',         	'0x12B2',   '4',           '-100',       'MODULATION_QPSK100'],
                       
@@ -14,7 +18,7 @@ TARGETS = [
 ['ua_atany900',      [('udp_alive','')],             'atany900',         	'0x13A3',   '4',           '-100',       'MODULATION_QPSK100'],
 
 # External Interface
-['if_atany900',      [('extif','')],                 'atany900',         	'0xFFFF',   '-11',          '-80',       'MODULATION_BPSK20'],
+['if_atany900',      [('extif','')],                 'atany900',         	'0xFFFF',   '-11',          '-80',       'MODULATION_QPSK100'],
 
 ['cs_atany900pro3',  [('coap','server'),
                       ('udp_alive','')],             'atany900_pro3',    	'0x15A5',   '11',          '-100',       'MODULATION_QPSK100'],

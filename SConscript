@@ -27,7 +27,7 @@ def add_include(incpath2add):
 		pass
 	includes.append(str(incpath2add))
 
-Import('env', 'TARGET_NAME', 'APPS_NAME', 'BOARD_NAME', 'MAC_ADR', 'TX_POWER', 'RX_SENS', 'RXTX_MODE')
+Import('env', 'TARGET_NAME', 'APPS_NAME', 'BOARD_NAME', 'MAC_ADDR', 'TX_POWER', 'RX_SENS', 'RXTX_MODE')
 env.Append(CPPPATH = ['./'])
 
 
@@ -157,9 +157,9 @@ env.MergeFlags({'CPPPATH' : [os.path.dirname('./target/if/'+board_conf['if']+'/'
 add_sources('./target/if/'+board_conf['if']+'/*.c')
 
 #Define transmitter output power
-if MAC_ADR != '':
-	mac_adr = 'MAC_ADR_WORD='+ MAC_ADR
-	env.MergeFlags({'CPPDEFINES' : mac_adr})
+if MAC_ADDR != '':
+	MAC_ADDR = 'MAC_ADDR_WORD='+ MAC_ADDR
+	env.MergeFlags({'CPPDEFINES' : MAC_ADDR})
 
 #Define transmitter output power
 if TX_POWER != '':

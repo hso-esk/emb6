@@ -10,15 +10,67 @@ num_cpu = int(os.environ.get('NUM_CPU', 4))
 SetOption('num_jobs', num_cpu)
 CacheDir('./build/cache')
 
-#TARGET_NAME = NAME
-TARGET_NAME = ARGUMENTS.get('target', '')
-
 #Parse targets file
 TARGETS_FILE = ARGUMENTS.get('targetfile', 'SConsTargets');
 if not os.path.isfile(TARGETS_FILE):
-    print "Please provide target file (SConsTarget)"
+    print "Error: Please provide correct target file (SConsTarget)"
     exit(1)
 TARGETS = SConscript(TARGETS_FILE)
+
+#Read all supported targets
+target_list = []
+for TARGET in TARGETS:
+	target_list.append(TARGET[0])
+
+#TARGET_NAME = NAME
+AddOption('--target',
+			dest='target',
+			type='string',
+			nargs=1,
+			action='store',
+			metavar='TARGET',
+			help='Specify target name. Supported targets are target=${target_list}')
+TARGET_NAME = GetOption('target')
+			
+AddOption('--mac',
+			dest='mac',
+			type='string',
+			nargs=1,
+			action='store',
+			metavar='MAC_ADDR',
+			help='Specify last two bytes of target mac address e.g. mac=0xffff')
+MAC_ADDR = GetOption('mac')
+
+AddOption('--rx_sens',
+			dest='rx_sens',
+			type='string',
+			nargs=1,
+			action='store',
+			metavar='RX_SENS',
+			help='Specify receiver sensitivity. Target specific.')
+RX_SENS = GetOption('rx_sens')
+
+AddOption('--tx_pwr',
+			dest='tx_pwr',
+			type='string',
+			nargs=1,
+			action='store',
+			metavar='TX_POWER',
+			help='Specify transmitter output power')
+TX_POWER = GetOption('tx_pwr')
+
+#Place Guards
+if not TARGET_NAME:
+	print "Error: Specify target board. Use --target option"
+	exit(1)
+
+if not TARGET_NAME or TARGET_NAME not in target_list:
+	print "Error: target board {0} not in SconsTargets file. Use --help option".format(TARGET_NAME)
+	exit(1)
+
+if MAC_ADDR and len(MAC_ADDR) != 6:
+	print "Error: Specified last two bytes of MAC address are't OK. Should be --mac=0xFFFF"
+	exit(1)
 
 # Get global environment
 genv = Environment(ENV = os.environ, tools=['gcc', 'gnulink'])
@@ -79,29 +131,35 @@ for TARGET in TARGETS:
 	if TARGET_NAME != __TARGET_NAME:                        #If we dont have given name in target array continue
 		continue
 
-	APPS_NAME   = TARGET[1]                             		#Specify application and configuration name
+	APPS_NAME   = TARGET[1]                             	#Specify application and configuration name
 
 	BOARD_NAME  = TARGET[2]                                 #Specify board name
 
-	MAC_ADR     = TARGET[3]                                 #Specify MAC address of the device
-	TX_POWER    = TARGET[4]                                 #Specify transmit power in dBm
-	RX_SENS     = TARGET[5]                                 #Specify receive sensitivity in dBm
+	if not MAC_ADDR:
+		MAC_ADDR    = TARGET[3]                             #Specify MAC address of the device
+	
+	if not TX_POWER:
+		TX_POWER    = TARGET[4]                             #Specify transmit power in dBm
+	
+	if not RX_SENS:
+		RX_SENS     = TARGET[5]                             #Specify receive sensitivity in dBm
+
 	RXTX_MODE   = TARGET[6]
 
 	BUILD_DIR = './build/'+ TARGET_NAME + '/'
-
-	print '=========================================================================' 
+	
+	file = env.SConscript('SConscript', variant_dir=BUILD_DIR, duplicate=0, exports='env TARGET_NAME APPS_NAME BOARD_NAME MAC_ADDR TX_POWER RX_SENS RXTX_MODE')
+	
+	print '====================================================================' 
 	print '> Select configuration parameters...'
 	print '> Target name =                 ' + TARGET_NAME
 	print '> Application and Config =      ' + str(APPS_NAME)
 	print '> Board name =                  ' + BOARD_NAME
-	print '> MAC address =                 ' + MAC_ADR
+	print '> MAC address =                 ' + MAC_ADDR
 	print '> Output power (dBm) =          ' + TX_POWER
 	print '> Receiver\'s sensitivity (dBm) =' + RX_SENS
 	print '> Transmitter\'s modulation =    ' + RXTX_MODE
-	print '=========================================================================' 
-	
-	file = env.SConscript('SConscript', variant_dir=BUILD_DIR, duplicate=0, exports='env TARGET_NAME APPS_NAME BOARD_NAME MAC_ADR TX_POWER RX_SENS RXTX_MODE')
+	print '====================================================================' 
 	
 	# copy bin file to ./bin directory 
 	file = env.Install('./bin/', [file])
