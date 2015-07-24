@@ -292,7 +292,7 @@ typedef const struct netstack_lowMac {
     char *name;
 
     /** Initialize the RDC driver */
-    void (* init)(s_ns_t* p_ns);
+    int8_t (* init)(s_ns_t* p_ns);
 
     /** Send a packet from the Rime buffer  */
     void (* send)(mac_callback_t sent_callback, void *ptr);

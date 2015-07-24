@@ -182,18 +182,20 @@ uint8_t loc_emb6NetstackInit(s_ns_t * ps_ns)
     ctimer_init();
     if ((ps_ns->hc != NULL) && (ps_ns->llsec != NULL) && (ps_ns->hmac != NULL) &&
         (ps_ns->lmac != NULL) && (ps_ns->frame != NULL) && (ps_ns->inif != NULL)) {
-        ps_ns->inif->init(ps_ns);
-        ps_ns->frame->init(ps_ns);
-        ps_ns->lmac->init(ps_ns);
-        ps_ns->hmac->init(ps_ns);
-        ps_ns->llsec->init(ps_ns);
-        ps_ns->hc->init(ps_ns);
-        tcpip_init();
-        c_err = 1;
+        if (ps_ns->inif->init(ps_ns)  && ps_ns->frame->init(ps_ns))
+        {
+            /* This drivers belong to Contiki and retval are't tracked */
+            ps_ns->lmac->init(ps_ns);
+            ps_ns->hmac->init(ps_ns);
+            ps_ns->llsec->init(ps_ns);
+            ps_ns->hc->init(ps_ns);
+            tcpip_init();
+            c_err = 1;
+        }
     }
 
 #if EMB6_INIT_ROOT==TRUE
-    if (!loc_emb6DagRootInit()) {
+    if (!c_err || !loc_emb6DagRootInit()) {
         c_err = 1;
     }
 #endif /* DEMO_USE_DAG_ROOT */
