@@ -548,6 +548,7 @@ void *     hal_spiInit(void)
         /* Configure, initialize and enable SERCOM SPI module */
     //! [conf_defaults]
         spi_get_config_defaults(&st_masterConf);
+
     //! [conf_defaults]
     //! [mux_setting]
         st_masterConf.mux_setting = SAMD20_SPI0_SERCOM_MUX_SETTING;
@@ -568,12 +569,14 @@ void *     hal_spiInit(void)
     //! [sck]
         st_masterConf.pinmux_pad3 = SAMD20_SPI0_SERCOM_PMUX3;
     //! [sck]
+
     //! [init]
         spi_init(&st_masterInst, SAMD20_SPI0_SERCOM, &st_masterConf);
     //! [init]
 
     //! [enable]
         spi_enable(&st_masterInst);
+
     //! [enable]
 
     return ((void *)&st_spi);

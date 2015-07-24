@@ -373,7 +373,7 @@ void    hal_ledOn(uint16_t ui_led)
         hal_enterCritical();
         switch (ui_led) {
         case E_BSP_LED_RED:
-
+            port_pin_set_output_level(LED_1_PIN, LED_1_ACTIVE);
             break;
         case E_BSP_LED_YELLOW:
             port_pin_set_output_level(LED_0_PIN, LED_0_ACTIVE);

@@ -244,7 +244,7 @@ static int8_t _udpAlive_sendMsg(void)
 
             break;
         case E_UDPALIVE_PREPMSG:
-                i = sprintf(ac_buf, "%d | ", ++l_seqId);
+                i = sprintf(ac_buf, "%u | ", ++l_seqId);
                 if(ps_dagDesc && ps_dagDesc->instance->def_route) {
                     _udpAlive_addAddr(ac_buf + i,
                                       &ps_dagDesc->instance->def_route->ipaddr);
@@ -292,7 +292,7 @@ static    void _udpAlive_callback(c_event_t c_event, p_data_t p_data) {
  ============================================================================*/
 
 /*---------------------------------------------------------------------------*/
-/*  demo_udpAliveInit()                                                       /
+/*  demo_udpAliveInit()                                                      */
 /*---------------------------------------------------------------------------*/
 uint8_t demo_udpAliveConf(s_ns_t* pst_netStack)
 {
@@ -328,7 +328,7 @@ uint8_t demo_udpAliveConf(s_ns_t* pst_netStack)
 }/* demo_udpAliveConf */
 
 /*---------------------------------------------------------------------------*/
-/*    demo_udpAliveInit()                                                       /
+/*    demo_udpAliveInit()                                                    */
 /*---------------------------------------------------------------------------*/
 int8_t demo_udpAliveInit(void)
 {
