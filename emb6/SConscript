@@ -1,0 +1,61 @@
+emb6 = {
+	'common' : [
+		'*',
+	],
+	'coap' : [
+		'apl/er-coap/*',
+		'apl/rest-engine/*',
+	],
+	'lwm2m' : [
+		'apl/lwm2m-core/*',
+	],
+	'mqtt' : [
+		'apl/mqtt/*',
+	],	
+	'ipv6' : [
+		'net/ipv6/*',
+	],
+	'ipv6mc' : [
+		'net/ipv6/multicast/*',
+	],
+	'rpl' : [
+		'net/rpl/*',
+	],
+	'sicslowpan':  [
+		'net/sicslowpan/*',
+	],
+	'slip' : [
+		'net/slip/*',
+	],
+	'llsec' : [
+		'mac/llsec/*',
+	],
+	'nullmac' : [
+		'mac/mac',
+		'mac/nullmac',
+	],
+	'802154framer' : [
+		'mac/sicslowmac',
+		'mac/frame802154',
+		'mac/framer',
+		'mac/framer-802154',
+		'mac/linkaddr',
+        'mac/rimestats',
+	],
+	'nullframer'	: [
+		'mac/nullrdc',
+        'mac/no-framer',
+        'mac/framer',
+        'mac/frame802154',
+        'mac/linkaddr',
+        'mac/rimestats',
+	],
+# C global defines
+	'defines' : [
+	],
+# GCC flags
+	'cflags' : [
+	]	
+}
+
+Return('emb6')
