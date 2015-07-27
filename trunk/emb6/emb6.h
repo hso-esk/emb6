@@ -461,11 +461,11 @@ s_ns_t * emb6_get(void);
 #define CLIF
 
 #ifndef	QUEUEBUF_CONF_NUM
-#define QUEUEBUF_CONF_NUM         			1
+#define QUEUEBUF_CONF_NUM         			4
 #endif
 
 #ifndef QUEUEBUF_CONF_REF_NUM
-#define QUEUEBUF_CONF_REF_NUM     			1
+#define QUEUEBUF_CONF_REF_NUM     			4
 #endif
 
 
