@@ -1,0 +1,207 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>emb6 by hso-esk</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-light.css">
+    <script src="javascripts/scale.fix.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1 class="header">emb6</h1>
+        <p class="header">emb6 is a scalable C-based 6LoWPAN stack for embedded devices</p>
+
+        <ul>
+          <li class="download"><a class="buttons" href="https://github.com/hso-esk/emb6/zipball/master">Download ZIP</a></li>
+          <li class="download"><a class="buttons" href="https://github.com/hso-esk/emb6/tarball/master">Download TAR</a></li>
+          <li><a class="buttons github" href="https://github.com/hso-esk/emb6">View On GitHub</a></li>
+        </ul>
+
+        <p class="header">This project is maintained by <a class="header name" href="https://github.com/hso-esk">hso-esk</a></p>
+
+
+      </header>
+      <section>
+        <p><img src="https://raw.github.com/hso-esk/_meta/master/fh-offenburg_schrift_2010_72dpi.png" width="300">
+<img src="https://raw.github.com/hso-esk/_meta/master/ei-fb_rgb_300.jpg" width="300"></p>
+
+<h1>
+<a id="emb6" class="anchor" href="#emb6" aria-hidden="true"><span class="octicon octicon-link"></span></a>emb6</h1>
+
+<p><code>emb6</code> is a scalable C-based 6LoWPAN stack for embedded devices developed by the
+<a href="http://ei.hs-offenburg.de/labore/embedded-systems-und-kommunikationselektronik/"><em>Labratory of Communication Electronics and Embedded Devices (ESK)</em></a> at
+<a href="http://www.hs-offenburg.de/"><em>Offenburg University of Applied Siences (HSO)</em></a> under supervision of <em>Prof. Dr. Axel Sikora</em> (<a href="mailto:axel.sikora@hs-offenburg.de">axel.sikora@hs-offenburg.de</a>).</p>
+
+<p>Originally derived from Contiki several adaptations have been made such as the
+removal of proto-threads. It follows a strict layer based architecture with a
+modular software design allowing it to be used even on very restricted devices.</p>
+
+<h2>
+<a id="introduction" class="anchor" href="#introduction" aria-hidden="true"><span class="octicon octicon-link"></span></a>Introduction</h2>
+
+<p>In the last decade, IPv6 over Low power Wireless Personal Area Networks, also
+known as 6LoWPAN, has well evolved as a primary contender for short range
+wireless communication and holds the promise of an Internet of Things, which is
+completely based on the Internet Protocol. The IEEE 802.15.4 standard specifies
+a maximum frame size of 127 bytes where the IPv6 specification requires a
+minimum MTU of 1280 byte. With the 6LoWPAN adaptation layer it is possible to
+make use of IPv6 in small and constrained wireless networks which follows the
+IEEE 802.15.4 standard. In the meantime, various 6LoWPAN implementations are
+available, be it open source or commercial. One of the open source
+implementations is the C-based <code>emb6</code> stack.</p>
+
+<p>The <code>emb6</code> stack is optimized to be used in constrained devices without an
+operation system. The stack operates event driven with a scalable buffer
+handling for optimization on different platforms. The typical field of
+application is in wireless sensor networks, e.g. for home automation or
+industrial environments.</p>
+
+<h2>
+<a id="getting-started" class="anchor" href="#getting-started" aria-hidden="true"><span class="octicon octicon-link"></span></a>Getting started</h2>
+
+<p>For the best introduction to get started with <code>emb6</code>, please read the
+documentation included. For the code comments you will also find a doxygen
+project file within the doc folder.</p>
+
+<h2>
+<a id="features" class="anchor" href="#features" aria-hidden="true"><span class="octicon octicon-link"></span></a>Features</h2>
+
+<h3>
+<a id="functionality" class="anchor" href="#functionality" aria-hidden="true"><span class="octicon octicon-link"></span></a>Functionality</h3>
+
+<p>There are several IOT capable stacks available may it be on open source or on
+commercial basis. The <code>emb6</code> networking stack provides several salient features
+making it a unique offering. The main features and concepts of the stack are the
+following:</p>
+
+<ul>
+<li>
+<strong>Event Driven Operation</strong> - Very small RAM overhead, one memory stack for the
+whole system.<br>
+</li>
+<li>
+<strong>Scalable Buffer Handling</strong> - A common buffer module is used across layer and
+module boundaries. This decreases memory usage and furthermore provides
+scalability for usage on different hardware configurations and limitations.</li>
+<li>
+<strong>Static memory management</strong> - For additional stability during runtime.</li>
+<li>
+<strong>Compile Time Options</strong> - Usage of different compile-time settings help to
+make an optimum selection regarding to the anticipated use cases as well as to
+the hardware limitations such as memory size or computing performance.</li>
+<li>
+<strong>Run Time Options</strong> - Many stack parameters are accessible and changeable
+during runtime via remote management.</li>
+<li>
+<strong>Full IPv6 support</strong> - The integrated IPv6 protocol is based on the
+uIP-Stack. This provides full IPv6 support and guarantees further support
+and maintenance.</li>
+<li>
+<strong>BSP and HAL Abstraction</strong> - Hardware dependencies are abstracted with a BSP
+which offers an API between the target and the applications and with a hardware
+abstraction layer HAL, which allows independence from the used
+microcontroller IC.</li>
+<li>
+<strong>Optimized for use in constrained devices</strong>- The scalability of the stack
+enables a manifold use in highly diverse embedded systems.</li>
+<li>
+<strong>Routing functionality</strong> - The routing functionality is provided by the RPL
+protocol.</li>
+<li>
+<strong>Layered Architecture</strong> - The design of the software stack follows a strict
+layered architecture.</li>
+<li>
+<strong>Simple Setup and Configuration</strong> - The setup and configuration can be easily
+executed with the help of centralized configuration files.</li>
+<li>
+<strong>Socket Interface</strong>- A BSD like socket API allows easy integration of
+customized applications.</li>
+<li>
+<strong>Set of included Application Layer Protocols</strong> - e.g. COAP (further will follow)</li>
+</ul>
+
+<h3>
+<a id="build-system" class="anchor" href="#build-system" aria-hidden="true"><span class="octicon octicon-link"></span></a>Build System</h3>
+
+<p>The buildsystem of <code>emb6</code> is completely based on SCons as a replacement for make
+with improved features. SCons is based on Python, makeing the tool very powerful
+for the build process. It allows to easily create new configurations e.g. regarding
+MCU/Transceiver or application selection. Furhermore the build-time is decreased
+significantly.</p>
+
+<h3>
+<a id="supported-targets" class="anchor" href="#supported-targets" aria-hidden="true"><span class="octicon octicon-link"></span></a>Supported Targets</h3>
+
+<p><code>emb6</code> is very platform independent since it has no requirements to an OS and
+hardware access is abstracted in a simple "single-file-based" hardware
+abstraction layer. That makes it quite easy to port <code>emb6</code> to other platforms.
+However <code>emb6</code> comes with support of several platforms by default:</p>
+
+<table>
+<thead>
+<tr>
+<th>Target</th>
+<th>MCU</th>
+<th>TRANSCEIVER</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>atany900</strong></td>
+<td>atmega1281</td>
+<td>at86rf212</td>
+</tr>
+<tr>
+<td><strong>atany900pro3</strong></td>
+<td>samd21g18a</td>
+<td>at86rf212b</td>
+</tr>
+<tr>
+<td><strong>atany900pro5</strong></td>
+<td>samd20g18</td>
+<td>at86rf212b</td>
+</tr>
+<tr>
+<td><strong>atany900basic</strong></td>
+<td>samd20g18</td>
+<td>at86rf212b</td>
+</tr>
+<tr>
+<td><strong>xpro_212</strong></td>
+<td>samd20j18</td>
+<td>at86rf212</td>
+</tr>
+<tr>
+<td><strong>xpro_212b</strong></td>
+<td>samd20j18</td>
+<td>at86rf212b</td>
+</tr>
+<tr>
+<td><strong>stk3600</strong></td>
+<td>efm32lg990f256</td>
+<td>at86rf212b</td>
+</tr>
+</tbody>
+</table>
+
+<h2>
+<a id="contact" class="anchor" href="#contact" aria-hidden="true"><span class="octicon octicon-link"></span></a>Contact</h2>
+
+<p>For questions or recommendations don't hesitate to contact <a href="mailto:emb6@hs-offenburg.de">emb6@hs-offenburg.de</a></p>
+      </section>
+      <footer>
+        <p><small>Hosted on <a href="https://pages.github.com">GitHub Pages</a> using the Dinky theme</small></p>
+      </footer>
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+		
+  </body>
+</html>
