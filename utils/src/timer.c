@@ -7,7 +7,8 @@
  * \file
  * Timer library implementation.
  * \author
- * Adam Dunkels <adam@sics.se>
+ *      Adam Dunkels <adam@sics.se>
+ *      Edgar Schmitt <edgar.schmitt@hs-offenburg.de>
  */
 
 /*
@@ -62,8 +63,8 @@
  */
 void timer_set(struct timer *t, clock_time_t interval)
 {
-  t->interval = interval;
-  t->start = bsp_getTick();
+    t->interval = interval;
+    t->start = bsp_getTick();
 }
 /*---------------------------------------------------------------------------*/
 /**
@@ -79,10 +80,9 @@ void timer_set(struct timer *t, clock_time_t interval)
  *
  * \sa timer_restart()
  */
-void
-timer_reset(struct timer *t)
+void timer_reset(struct timer *t)
 {
-  t->start += t->interval;
+    t->start += t->interval;
 }
 /*---------------------------------------------------------------------------*/
 /**
@@ -99,10 +99,9 @@ timer_reset(struct timer *t)
  *
  * \sa timer_reset()
  */
-void
-timer_restart(struct timer *t)
+void timer_restart(struct timer *t)
 {
-  t->start = bsp_getTick();
+    t->start = bsp_getTick();
 }
 /*---------------------------------------------------------------------------*/
 /**
@@ -118,12 +117,21 @@ timer_restart(struct timer *t)
  */
 int timer_expired(struct timer *t)
 {
-  /* Note: Can not return diff >= t->interval so we add 1 to diff and return
-     t->interval < diff - required to avoid an internal error in mspgcc. */
-  clock_time_t diff = (bsp_getTick() - t->start) + 1;
+    clock_time_t expiredtime;
+    /* get the actual time */
+    clock_time_t acttime = bsp_getTick();
 
-  return t->interval < diff;
+    if(acttime >= t->start)
+    {
+        expiredtime = acttime - t->start;
+    }
+    else
+    {
+        // a overflow occured of the timer resolution
+        expiredtime = TMR_OVRFLOW_VAL - t->start + acttime + 1;
+    }
 
+    return t->interval < expiredtime;
 }
 /*---------------------------------------------------------------------------*/
 /**
@@ -136,10 +144,9 @@ int timer_expired(struct timer *t)
  * \return The time until the timer expires
  *
  */
-clock_time_t
-timer_remaining(struct timer *t)
+clock_time_t timer_remaining(struct timer *t)
 {
-  return t->start + t->interval - bsp_getTick();
+    return t->start + t->interval - bsp_getTick();
 }
 /*---------------------------------------------------------------------------*/
 
