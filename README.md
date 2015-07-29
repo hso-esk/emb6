@@ -6,7 +6,7 @@ emb6
 
 `emb6` is a scalable C-based 6LoWPAN stack for embedded devices developed by the
 [*Labratory of Communication Electronics and Embedded Devices (ESK)*](http://ei.hs-offenburg.de/labore/embedded-systems-und-kommunikationselektronik/) at
-[*Offenburg University of Applied Siences (HSO)*](http://www.hs-offenburg.de/) under supervision of *Prof. Dr. Axel Sikora* (axel.sikora@hs-offenburg.de).
+[*Offenburg University of Applied Sciences (HSO)*](http://www.hs-offenburg.de/) under supervision of *Prof. Dr. Axel Sikora* (axel.sikora@hs-offenburg.de).
 
 Originally derived from Contiki several adaptations have been made such as the
 removal of proto-threads. It follows a strict layer based architecture with a
