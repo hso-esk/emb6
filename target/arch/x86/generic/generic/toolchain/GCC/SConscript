@@ -1,0 +1,28 @@
+toolchain = {
+	'AS' : ['as'],
+	'CC' : ['gcc'],
+	'LINK' : ['gcc'],
+	'OBJCOPY' : ['objcopy'],
+	'OBJDUMP' : ['objdump'],
+	'SIZE' : ['size'],
+	'ASFLAGS' : [
+		],
+	'CPPDEFINES' : [
+		],
+	'CFLAGS' :  [
+		'-O0', 
+		'-Wall', 
+		'-fno-strict-aliasing',
+		'-Werror-implicit-function-declaration',
+		'-ffunction-sections', 
+		'-fdata-sections',
+		'-std=c99',
+		'-Wno-format',
+		'-Wno-comment',
+		'-g',
+		],
+	'LINKFLAGS' : [
+		'-Wl,-Map=${TARGET.base}.map,--gc-section,--cref',
+		]
+}
+Return('toolchain')

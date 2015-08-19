@@ -4,12 +4,12 @@
 /**
  * \addtogroup mcu MCU HAL library
  * @{
- * \defgroup native PC emulation HAL library
+ * \defgroup linux PC emulation HAL library
  * @{
  *
  */
 /*============================================================================*/
-/*! \file   native/hwinit.h
+/*! \file   linux/hwinit.h
 
     \author Artem Yushev artem.yushev@hs-offenbrug.de
 
@@ -55,7 +55,7 @@
 #define RIME_CONF_BROADCAST_ANNOUNCEMENT_MAX_TIME INFINITE_TIME/CLOCK_CONF_SECOND /* Default uses 600 */
 #define COLLECT_CONF_BROADCAST_ANNOUNCEMENT_MAX_TIME INFINITE_TIME/CLOCK_CONF_SECOND /* Default uses 600 */
 
-// Macro for delay. It is essential to put some delay in native emulation
+// Macro for delay. It is essential to put some delay in linux emulation
 // as without it program will "eat" all of a process working time
 #define HOWMUCH                                500
 #define BSP_DELAY(a)                        bsp_delay_us(a)

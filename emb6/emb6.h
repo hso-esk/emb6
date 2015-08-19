@@ -406,7 +406,7 @@ extern const s_nsFramer_t     nullframer;
 extern const s_nsIf_t           rf212_driver;
 extern const s_nsIf_t           rf212b_driver;
 extern const s_nsIf_t           rf230_driver;
-extern const s_nsIf_t           fradio_driver;
+extern const s_nsIf_t           tcpip_driver;
 
 
 

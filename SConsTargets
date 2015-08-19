@@ -46,5 +46,7 @@ TARGETS = [
 ['cs_stk3600',       [('coap','server'),
                       ('udp_alive','')],             'efm32stk3600',     	'0x30C0',   '11',          '-100',       'MODULATION_QPSK100'],
 
+['cs_x86',           [('coap','server'),
+                      ('udp_alive','')],             'x86',     			'0xBEAF',   '99',          '-999',       'MODULATION_QPSK100'],
 ] #TARGETS append END
 Return('TARGETS')

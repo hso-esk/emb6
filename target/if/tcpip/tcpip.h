@@ -14,14 +14,14 @@
  * @{
  */
 /*
- * udpdev_radio.h
+ * tcpip.h
  *
- *  Created on: Nov 4, 2013
- *      Author: yushev
+ *  Created on: Aug, 2015
+ *      Author: Artem Yushev artem.yushev@hs-offenburg.de
  */
 
-#ifndef UDPDEV_RADIO_H_
-#define UDPDEV_RADIO_H_
+#ifndef TCPIP_RADIO_H_
+#define TCPIP_RADIO_H_
 
 #include "emb6.h"
 #include "evproc.h"
@@ -38,7 +38,7 @@
 #define UDPDEV_LLADDR_SERVER                "2"
 
 
-#endif /* UDPDEV_RADIO_H_ */
+#endif /* TCPIP_RADIO_H_ */
 /** @} */
 /** @} */
 /** @} */

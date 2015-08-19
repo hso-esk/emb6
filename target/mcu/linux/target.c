@@ -45,13 +45,13 @@
  * @{
  */
 /**
- * \addtogroup native
+ * \addtogroup linux
  * @{
  *
  * This is an PC emulation library for upper layers.
  *
  */
-/*! \file   native/target.c
+/*! \file   linux/target.c
 
     \author Artem Yushev artem.yushev@hs-offenburg.de
 
@@ -157,21 +157,21 @@ void    hal_delay_us(uint32_t l_delay)
 /*==============================================================================
   hal_setPin()
  =============================================================================*/
-void    hal_setPin(pinDesc_t * st_pin)
+void    hal_pinSet(void * p_pin)
 {
 } /* hal_setPin() */
 
 /*==============================================================================
   hal_clrPin()
  =============================================================================*/
-void    hal_clrPin(pinDesc_t * st_pin)
+void    hal_pinClr(void * p_pin)
 {
 } /* hal_clrPin() */
 
 /*==============================================================================
   hal_getPin()
  =============================================================================*/
-uint8_t    hal_getPin(pinDesc_t * st_pin)
+uint8_t    hal_pinGet(void * p_pin)
 {
     return NULL;
 } /* hal_getPin() */

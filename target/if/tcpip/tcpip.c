@@ -1,9 +1,9 @@
 /**
- * \addtogroup fake_radio
+ * \addtogroup tcpip
  * @{
  */
 /*============================================================================*/
-/*! \file   fake_radio.c
+/*! \file   tcpip.c
 
     \author Artem Yushev artem.yushev@hs-offenburg.de
 
@@ -18,17 +18,21 @@
 ==============================================================================*/
 #include "emb6.h"
 #include "emb6_conf.h"
-#include "fake_radio.h"
+#include "tcpip.h"
 #include "evproc.h"
 #include "etimer.h"
 #include <fcntl.h>
 #include <errno.h>
+#include<sys/types.h>
+#include<sys/socket.h>
+#include<netinet/in.h>
+#include<arpa/inet.h>
 /*==============================================================================
                                      MACROS
 ==============================================================================*/
 #define     LOGGER_ENABLE        LOGGER_RADIO
 #if            LOGGER_ENABLE     ==     TRUE
-#define     LOGGER_SUBSYSTEM    "fradio"
+#define     LOGGER_SUBSYSTEM    "tcpip"
 #endif
 #include    "logger.h"
 
@@ -39,16 +43,17 @@
 /*==============================================================================
                           VARIABLE DECLARATIONS
 ==============================================================================*/
-        static    int                     sockfd;
-        static    struct     sockaddr_in     servaddr;
-        static    struct     sockaddr_in     cliaddr;
-        static    uint8_t                 tmp_buf[PACKETBUF_SIZE];
-        static     struct     etimer             tmr;
+static  int                     sockfd;
+static  struct  sockaddr_in     servaddr;
+static  struct  sockaddr_in     cliaddr;
+static  uint8_t                 tmp_buf[PACKETBUF_SIZE];
+static  struct  etimer          tmr;
+/* Pointer to the lmac structure */
+static  s_nsLowMac_t*           p_lmac = NULL;
 
 /*==============================================================================
                                 GLOBAL CONSTANTS
 ==============================================================================*/
-const uint8_t mac_address[8] = {0x00, 0x00, 0x00, 0x00, 0x00, FAKE_MAC_2_BIT, 0x00, 0x00};
 /*==============================================================================
                            LOCAL FUNCTION PROTOTYPES
 ==============================================================================*/
@@ -57,12 +62,12 @@ const uint8_t mac_address[8] = {0x00, 0x00, 0x00, 0x00, 0x00, FAKE_MAC_2_BIT, 0x
         static    int8_t                     _fradio_off(void);
         static    int8_t                     _fradio_init(void);
         static    int8_t                     _fradio_send(const void *pr_payload, uint8_t c_len);
-        static    void                    _fradio_handler(c_event_t ev, p_data_t data);
+        static    void                    	 _fradio_handler(c_event_t ev, p_data_t data);
 
 /*==============================================================================
                          STRUCTURES AND OTHER TYPEDEFS
 ==============================================================================*/
-const struct s_nsIf_t fradio_driver = {
+const struct s_nsIf_t tcpip_driver = {
         _fradio_init,
         _fradio_send,
         _fradio_on,
@@ -71,13 +76,14 @@ const struct s_nsIf_t fradio_driver = {
 /*==============================================================================
                                 LOCAL FUNCTIONS
 ==============================================================================*/
-static int8_t _fradio_init(void)
+static int8_t _fradio_init(s_ns_t* p_netStack)
 {
-    uint32_t    env_s_ip;
-    uint32_t    env_s_port;
-    uint32_t    env_c_ip;
-    uint32_t     env_c_port;
-    linkaddr_t     un_addr;
+    uint32_t        env_s_ip;
+    uint32_t        env_s_port;
+    uint32_t        env_c_ip;
+    uint32_t        env_c_port;
+    linkaddr_t      un_addr;
+    int8_t          c_ret;
 
     env_s_ip = inet_addr(FRADIO_S_IP);
     env_c_ip = inet_addr(FRADIO_C_IP);
@@ -124,15 +130,28 @@ static int8_t _fradio_init(void)
     }
     flags = (flags|O_NONBLOCK);
     fcntl(sockfd, F_SETFL, flags);
-    LOG_INFO("%s\n\r","fake_radio driver was initialized");
-    memcpy((void *)&un_addr.u8,  &mac_address, 8);
-    memcpy(&uip_lladdr.addr, &un_addr.u8, 8);
-    linkaddr_set_node_addr(&un_addr);
-    LOG_INFO("MAC address %x:%x:%x:%x:%x:%x:%x:%x\n",    \
-                            un_addr.u8[0],un_addr.u8[1],\
-                            un_addr.u8[2],un_addr.u8[3],\
-                            un_addr.u8[4],un_addr.u8[5],\
-                            un_addr.u8[6],un_addr.u8[7]);
+    LOG_INFO("%s\n\r","tcpip driver was initialized");
+    if (mac_phy_config.mac_address == NULL) {
+        c_ret = 0;
+    }
+    else {
+        memcpy((void *)&un_addr.u8,  &mac_phy_config.mac_address, 8);
+        memcpy(&uip_lladdr.addr, &un_addr.u8, 8);
+        rimeaddr_emb6_set_node_addr(&un_addr);
+
+        LOG_INFO("MAC address %x:%x:%x:%x:%x:%x:%x:%x",    \
+                un_addr.u8[0],un_addr.u8[1],\
+                un_addr.u8[2],un_addr.u8[3],\
+                un_addr.u8[4],un_addr.u8[5],\
+                un_addr.u8[6],un_addr.u8[7]);
+
+        if (p_netStack->lmac != NULL) {
+            p_lmac = p_netStack->lmac;
+            c_ret = 1;
+        } else {
+            c_ret = 0;
+        }
+    }
     /* Start the packet receive process */
     etimer_set(&tmr, 10, _fradio_handler);
     printf("set %p for %p callback\n\r",&tmr, &_fradio_handler);
@@ -200,11 +219,14 @@ static int8_t _fradio_off(void)
 /*---------------------------------------------------------------------------*/
 static void _fradio_handler(c_event_t ev, p_data_t data)
 {
-    uint8_t len = 0;
+    uint8_t c_len = 0;
     if (etimer_expired(&tmr)) {
-        if ((len = _fradio_read(packetbuf_dataptr(), PACKETBUF_SIZE)) > 0)    {
-            packetbuf_set_datalen(len);
-            //p_ns->lmac->input();
+        if ((c_len = _fradio_read(packetbuf_dataptr(), PACKETBUF_SIZE)) > 0)    {
+            packetbuf_set_datalen(c_len);
+            if((c_len > 0) && (p_lmac != NULL)) {
+                packetbuf_set_datalen(c_len);
+                p_lmac->input();
+            }
         }
         etimer_restart(&tmr);
     }
