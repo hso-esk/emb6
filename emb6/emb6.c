@@ -39,7 +39,7 @@
  */
 /*============================================================================*/
 /**
- *      \addtogroup embetter6
+ *      \addtogroup emb6
  *      @{
  *   \addtogroup stack_API Stack API
  *   @{
@@ -220,14 +220,6 @@ void loc_emb6ToutHandler(c_event_t c_event, p_data_t p_data )
 /*==============================================================================
                                  API FUNCTIONS
  =============================================================================*/
-
-
-
-void rimeaddr_emb6_set_node_addr(linkaddr_t *t)
-{
-    linkaddr_set_node_addr(t);
-}
-
 uint8_t emb6_init(s_ns_t * ps_ns)
 {
     uint8_t c_err = 1;

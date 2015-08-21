@@ -1,7 +1,7 @@
 #ifndef _DEMO_UDP_ALIVE_H_
 #define _DEMO_UDP_ALIVE_H_
 /**
- *      \addtogroup embetter6
+ *      \addtogroup emb6
  *      @{
  *   \defgroup demo
  *

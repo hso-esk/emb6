@@ -38,7 +38,7 @@
  *
  */
 /*============================================================================*/
-/**  \addtogroup embetter6
+/**  \addtogroup emb6
  *      @{
  *      \addtogroup bsp Board Support Package
  *   @{

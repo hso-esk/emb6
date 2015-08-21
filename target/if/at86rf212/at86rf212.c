@@ -1211,7 +1211,7 @@ static int8_t _rf212_init(s_ns_t* p_netStack)
             memcpy((void *)&un_addr.u8,  &mac_phy_config.mac_address, 8);
             memcpy(&uip_lladdr.addr, &un_addr.u8, 8);
             _rf212_setPanAddr(mac_phy_config.pan_id, 0, (uint8_t *)&un_addr.u8);
-            rimeaddr_emb6_set_node_addr(&un_addr);
+            linkaddr_set_node_addr(&un_addr);
             _rf212_setChannel(CHANNEL_802_15_4);
 
             LOG_INFO("MAC address %x:%x:%x:%x:%x:%x:%x:%x",    \

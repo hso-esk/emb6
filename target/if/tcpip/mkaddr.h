@@ -37,51 +37,19 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-/**  \addtogroup emb6
- *      @{
- *      \addtogroup bsp Board Support Package
- *   @{
- *   \addtogroup board
- *   @{
- *      \addtogroup efm32stk3600 Board EFM32 Leopard Gecko Starter Kit specific configuration
- *   @{
+/*============================================================================*/
+/**
+ *  *\addtogroup tcpip_radio
+ * @{
  */
-/*! \file   efm32stk3600/board_conf.h
+/*! \file   mkaddr.h
 
-    \author Artem Yushev, artem.yushev@hs-offenburg.de
-
-    \brief  Board Configuration for EFM32 Leopard Gecko Starter Kit
+    \author Artem Yushev artem.yushev@hs-offenburg.de
 
     \version 0.0.1
 */
-
-#ifndef BOARD_CONF_H_
-#define BOARD_CONF_H_
-
-
-
-#include "emb6.h"
-
-/*==============================================================================
-                                     MACROS
-==============================================================================*/
-
-
-
-#define EFM32_USART                        SPIDRV_MASTER_USART1
-#define EFM32_USART_LOC                    _USART_ROUTE_LOCATION_LOC1
-
-#define EFM32_IO_PORT_USART_CS            gpioPortD
-#define EFM32_IO_PIN_USART_CS            3
-
-#define EFM32_IO_PORT_RF_RST            gpioPortD
-#define EFM32_IO_PIN_RF_RST                4
-
-#define EFM32_IO_PORT_RF_IRQ            gpioPortD
-#define EFM32_IO_PIN_RF_IRQ                5
-
-#define EFM32_IO_PORT_RF_SLP            gpioPortD
-#define EFM32_IO_PIN_RF_SLP                6
+#ifndef MKADDR_H_
+#define MKADDR_H_
 
 /*============================================================================*/
 /*!
@@ -95,10 +63,7 @@
 
 */
 /*============================================================================*/
-uint8_t board_conf(s_ns_t* ps_nStack);
+int mkaddr(void *p_addr,int *pi_addrlen, char *pc_strAddr, char *pc_proto);
 
-#endif /* BOARD_CONF_H_ */
-/** @} */
-/** @} */
-/** @} */
+#endif /* MKADDR_H_ */
 /** @} */

@@ -1,5 +1,5 @@
 /**
- *      \addtogroup embetter6
+ *      \addtogroup emb6
  *      @{
  *      \addtogroup demo
  *      @{

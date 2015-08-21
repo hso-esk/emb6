@@ -278,7 +278,7 @@ static void _hal_clksInit( void )
  */
 static void _hal_tcCb( void )
 {
-    /* Indicate timer update to the emBetter6 timer */
+    /* Indicate timer update to the emb6 timer */
     if( l_hal_tick % CONF_TICK_SEC == 0 )
         l_hal_sec++;
     l_hal_tick++;

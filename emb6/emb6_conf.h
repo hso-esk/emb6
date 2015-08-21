@@ -39,7 +39,7 @@
  */
 /*============================================================================*/
 /**
- *      \addtogroup embetter6
+ *      \addtogroup emb6
  *      @{
  *   \addtogroup stack_API Stack API
  *   @{
@@ -805,19 +805,19 @@ void uip_log(char *msg);
   * (see emb6.c) */
  #define LOGGER_CORE                            TRUE
  /** Hardware abstraction layer functions       (see target.c) */
- #define LOGGER_HAL                             FALSE
+ #define LOGGER_HAL                             TRUE
  /** Board support package                      (see bsp.c) */
- #define LOGGER_BSP                             FALSE
- /** Main functions                             (see embetter6_main.c) */
- #define LOGGER_MAIN                            FALSE
+ #define LOGGER_BSP                             TRUE
+ /** Main functions                             (see emb6_main.c) */
+ #define LOGGER_MAIN                            TRUE
  /** Radio functions                            (see $(IF).c) */
- #define LOGGER_RADIO                           FALSE
+ #define LOGGER_RADIO                           TRUE
  /** DEMO UDP example                           (see demo_exudp.c) */
- #define LOGGER_DEMO_UDPIAA                     FALSE
+ #define LOGGER_DEMO_UDPIAA                     TRUE
  /** DEMO APTB example                           (see demo_aptb_xxx.c) */
  #define LOGGER_DEMO_APTB                       TRUE
  /** DEMO COAP example                           (see demo_coap_*.c) */
- #define LOGGER_DEMO_COAP                       FALSE
+ #define LOGGER_DEMO_COAP                       TRUE
  /** DEMO SNIFFER                               (see demo_sniffer.c) */
  #define LOGGER_DEMO_SNIFFER                    FALSE
  /** Event timer functions                      (see etimer.c) */

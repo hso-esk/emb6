@@ -1,0 +1,19 @@
+bc_server = {
+	'demo' : [
+	],
+	'emb6' : [
+	],
+	'utils' : [
+	],
+# C global defines
+	'defines' : [
+		('EMB6_INIT_ROOT',1),
+		('__TCPIPROLE_BRSERVER__',1),
+		'_BSD_SOURCE',
+	],
+# GCC flags
+	'cflags' : [
+	]	
+}
+
+Return('bc_server')

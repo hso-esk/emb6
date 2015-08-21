@@ -281,7 +281,7 @@ void _hal_ledInit( void )
 
 void _isr_tc_interrupt(    void )
 {
-    /* Indicate timer update to the emBetter6 timer */
+    /* Indicate timer update to the emb6 timer */
     if(l_tick % CONF_TICK_SEC == 0)
         l_sec++;
     l_tick++;
