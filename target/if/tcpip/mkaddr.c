@@ -77,12 +77,12 @@ char *strdup (const char *s)
 int mkaddr(void *p_addr,int *pi_addrlen, char *pc_strAddr, char *pc_proto)
 {
 
-    char*               pc_inpAddr = strdup(pc_strAddr);
+    char*               pc_inpAddr  = strdup(pc_strAddr);
     char*               pc_hostPart = strtok(pc_inpAddr, ":" );
     char*               pc_portPart = strtok(NULL, "\n" );
-    struct sockaddr_in* ps_ap = (struct sockaddr_in *) p_addr;
-    struct hostent*     ps_hp = NULL;
-    struct servent*     ps_sp = NULL;
+    struct sockaddr_in* ps_ap       = (struct sockaddr_in *) p_addr;
+    struct hostent*     ps_hp       = NULL;
+    struct servent*     ps_sp       = NULL;
     char*               pc_cp;
     long                l_tmp;
 
@@ -120,7 +120,9 @@ int mkaddr(void *p_addr,int *pi_addrlen, char *pc_strAddr, char *pc_proto)
         ps_ap->sin_addr.s_addr =
                 inet_addr(pc_hostPart);
         // if ( ap->sin_addr.s_addr == INADDR_NONE ) {
-        if ( !inet_aton(pc_hostPart,&ps_ap->sin_addr) ) {
+        if ( inet_aton(pc_hostPart,&ps_ap->sin_addr) != 1 ) {
+            printf("222inet_aton failed\n\r");
+            printf("pc_hostAddr %s\n\r",pc_hostPart);
             return -1;
         }
     }
@@ -129,14 +131,15 @@ int mkaddr(void *p_addr,int *pi_addrlen, char *pc_strAddr, char *pc_proto)
          * Assume a hostname:
          */
         ps_hp = gethostbyname(pc_hostPart);
-        if ( !ps_hp ) {
+        if ( !ps_hp ) { 
+            printf("gethostbyname\n\r");
             return -1;
         }
-        if ( ps_hp->h_addrtype != AF_INET ) {
+        if ( ps_hp->h_addrtype != AF_INET ) { 
+            printf("ah_init failed\n\r");
             return -1;
         }
-        ps_ap->sin_addr = * (struct in_addr *)
-                                      ps_hp->h_addr_list[0];
+        ps_ap->sin_addr = * (struct in_addr *)ps_hp->h_addr_list[0];
     }
 
     /*

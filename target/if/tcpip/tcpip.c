@@ -151,12 +151,12 @@ static int8_t _tcpip_init(s_ns_t* p_netStack)
     int32_t             l_srvLen;       /* length */
     static int          l_sobr          = TRUE;
     static char*        pc_srvAddrPre   = "127.0.0.1:*";
-    static char*        bc_brAddrPre    = "127.255.255.2 9097";
+    static char*        bc_brAddrPre    = "127.255.255.255:9097";
     linkaddr_t          un_addr;
 
     LOG_INFO("Try to initialize Broadcasting Server for tcpip radio driver");
 
-    /*
+     /*
      * Form the server address:
      */
     l_srvLen = sizeof s_srvAddr;
@@ -174,10 +174,10 @@ static int8_t _tcpip_init(s_ns_t* p_netStack)
      */
     l_bcLen = sizeof s_bcAddr;
 
-    l_error = mkaddr(&s_bcAddr, /* Returned address */
-                     &l_bcLen, /* Returned length */
-                     bc_brAddrPre, /* Input string addr */
-                     "udp"); /* UDP protocol */
+    l_error = mkaddr(&s_bcAddr,     /* Returned address */
+                     &l_bcLen,      /* Returned length */
+                     bc_brAddrPre,  /* Input string addr */
+                     "udp");        /* UDP protocol */
 
     if ( l_error == -1 )
         _printAndExit("Bad broadcast address");
@@ -229,7 +229,7 @@ static int8_t _tcpip_init(s_ns_t* p_netStack)
     LOG_INFO("MAC address %x:%x:%x:%x:%x:%x:%x:%x",    \
             un_addr.u8[0],un_addr.u8[1],\
             un_addr.u8[2],un_addr.u8[3],\
-            un_addr.u8[4],un_addr.u8[5],\
+	    un_addr.u8[4],un_addr.u8[5],	\
             un_addr.u8[6],un_addr.u8[7]);
 
     if (p_netStack->lmac != NULL) {
@@ -263,7 +263,7 @@ static int8_t _tcpip_init(s_ns_t* p_netStack)
     int32_t                 l_inetLen;          /* length */
     char                    ac_dgram[512];      /* Recv buffer */
     static int              l_reuseAddr         = TRUE;
-    static char*            pc_bcAddrPre        = "127.255.255.2:9097";
+    static char*            pc_bcAddrPre        = "127.255.255.255:9097";
     linkaddr_t              un_addr;
 
     /*
