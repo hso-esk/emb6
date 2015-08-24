@@ -60,6 +60,7 @@
 #include "bsp.h"
 #include "packetbuf.h"
 #include "tcpip.h"
+#include "etimer.h"
 /* Ligthweight Communication and Marshalling (LCM) is a library to perform
 communication between processes  */
 #include <lcm/lcm.h>
@@ -69,10 +70,10 @@ communication between processes  */
 ==============================================================================*/
 #define     LOGGER_ENABLE        LOGGER_RADIO
 #if            LOGGER_ENABLE     ==     TRUE
-#define     LOGGER_SUBSYSTEM    "tcpip"
+#define     LOGGER_SUBSYSTEM    "natradio"
 #endif
 #include    "logger.h"
-
+#define     CHANNEL_NAME        "EMB6_NATIVE"
 /*==============================================================================
                                      ENUMS
 ==============================================================================*/
@@ -80,9 +81,6 @@ communication between processes  */
 /*==============================================================================
                           VARIABLE DECLARATIONS
 ==============================================================================*/
-static  int                     l_sockfd;
-        struct sockaddr_in      s_bcAddr;       /* AF_INET */
-static  int32_t                 l_bcLen;        /* length */
 static  uint8_t                 tmp_buf[PACKETBUF_SIZE];
 static  struct  etimer          tmr;
 /* Pointer to the lmac structure */
@@ -101,9 +99,9 @@ static    int8_t    _tcpip_on(void);
 static    int8_t    _tcpip_off(void);
 static    int8_t    _tcpip_init(s_ns_t* p_netStack);
 static    int8_t    _tcpip_send(const void *pr_payload, uint8_t c_len);
-static    void      _tcpip_handler(const lcm_recv_buf_t *rbuf, const char * channel,
-                                   const exlcm_example_t * msg, void * user);
-
+static    int       _tcpip_read(const lcm_recv_buf_t *rbuf, const char * channel,
+                                void * user);
+static    void
 /*==============================================================================
                          STRUCTURES AND OTHER TYPEDEFS
 ==============================================================================*/
@@ -150,7 +148,6 @@ static int8_t _tcpip_init(s_ns_t* p_netStack)
     if(!pgs_lcm)
       return 1;
     
-    
     LOG_INFO("%s\n\r","tcpip driver was initialized");
 
     if (mac_phy_config.mac_address == NULL) {
@@ -179,7 +176,7 @@ static int8_t _tcpip_init(s_ns_t* p_netStack)
     etimer_set(&tmr, 10, _tcpip_handler);
     LOG_INFO("set %p for %p callback\n\r",&tmr, &_tcpip_handler);
 
-    lcm_destroy(lcm);
+    lcm_destroy(pgs_lcm);
     
     return l_error;
 } /* _tcpip_init() */
@@ -195,56 +192,7 @@ static int8_t _tcpip_init(s_ns_t* p_netStack)
 {
     LOG_INFO("Try to initialize Broadcasting Client for tcpip radio driver");
 
-    int32_t                 l_error;
-    int32_t                 l_addrLen;
-    struct sockaddr_in      s_sockAddr;         /* AF_INET */
-    int32_t                 l_inetLen;          /* length */
-    char                    ac_dgram[512];      /* Recv buffer */
-    static int              l_reuseAddr         = TRUE;
-    static char*            pc_bcAddrPre        = "127.255.255.255:9097";
-    linkaddr_t              un_addr;
-
-    /*
-     * Create a UDP socket to use:
-     */
-    l_sockfd = socket(AF_INET,SOCK_DGRAM,0);
-    if ( l_sockfd == -1 )
-        _printAndExit("socket()");
-
-    /*
-     * Form the broadcast address:
-     */
-    l_inetLen = sizeof s_sockAddr;
-
-    l_error = mkaddr(&s_sockAddr, &l_inetLen, pc_bcAddrPre, "udp");
-
-    if ( l_error == -1 )
-        _printAndExit("Bad broadcast address");
-
-    /*
-     * Allow multiple listeners on the broadcast address:
-     */
-    l_error = setsockopt(l_sockfd, SOL_SOCKET, SO_REUSEADDR, &l_reuseAddr,
-                         sizeof l_reuseAddr);
-
-    if ( l_error == -1 )
-        _printAndExit("setsockopt(SO_REUSEADDR)");
-
-    /*
-     * Bind our socket to the broadcast address:
-     */
-    l_error = bind(l_sockfd, (struct sockaddr *)&s_sockAddr, l_inetLen);
-
-    if ( l_error == -1 )
-        _printAndExit("bind(2)");
-
-    int flags = fcntl(l_sockfd, F_GETFL, 0);
-    if (flags < 0){
-        LOG_ERR("%s\n\r","fcntl error");
-        exit(1);
-    }
-    flags = (flags|O_NONBLOCK);
-    fcntl(l_sockfd, F_SETFL, flags);
+    lcm_subscribe (pgs_lcm, CHANNEL_NAME, _tcpip_read, NULL);
 
     LOG_INFO("%s\n\r","tcpip driver was initialized");
 
@@ -308,45 +256,30 @@ static int8_t _tcpip_send(const void *pr_payload, uint8_t c_len)
 
 /*---------------------------------------------------------------------------*/
 static int _tcpip_read(const lcm_recv_buf_t *rbuf, const char * channel,
-                       const exlcm_example_t * msg, void * user)
+		       void * user)
 {
     int i;
     LOG_INFO("Received message on channel \"%s\":", channel);
-    LOG_INFO("  timestamp   = %lu", msg->timestamp);
-    LOG_INFO("  position    = (%f, %f, %f)",
-            msg->position[0], msg->position[1], msg->position[2]);
-    LOG_INFO("  orientation = (%f, %f, %f, %f)",
-            msg->orientation[0], msg->orientation[1], msg->orientation[2],
-            msg->orientation[3]);
-    LOG_INFO("  name        = '%s'", msg->name);
-    LOG_INFO("  enabled     = %d", msg->enabled);
-    uint8_t c_len = 0;
 
-    if ((c_len = _tcpip_read(packetbuf_dataptr(), PACKETBUF_SIZE)) > 0)    {
-                packetbuf_set_datalen(c_len);
-                if((c_len > 0) && (p_lmac != NULL)) {
-                    packetbuf_set_datalen(c_len);
-                    p_lmac->input();
-                }
-            }
-    uint8_t     _ret;
-    uint8_t     i=0;
-    int ret = recv(l_sockfd, tmp_buf, buf_len, 0);
-    if((ret == -1) && (errno != 11)){
-        LOG_ERR( "recv" );
-        return 0;
+    if (rbuf->data_size > PACKETBUF_SIZE) {
+        _printAndExit("Received packet too long");
+    } else {
+        memcpy(packetbuf_dataptr(),rbuf->data, rbuf->data_size);
+	LOG_INFO("receive msg len = %d\n",rbuf->data_size);
+        int32_t _ret = rbuf->data_size;
+        while(_ret--){
+	    LOG_RAW("%02X", (uint8_t)(*((uint8_t *)rbuf->data + i)));
+            i++;
+        }
+        LOG_RAW("\r\n");
+	packetbuf_set_datalen(c_len);
+	if((c_len > 0) && (p_lmac != NULL)) {
+            packetbuf_set_datalen(c_len);
+            p_lmac->input();
+        }
     }
-    if(ret > 0){
-            LOG_INFO("receive msg len = %d\n",ret);
-            memcpy(buf,tmp_buf,ret);
-            _ret = ret;
-            while(_ret--){
-                LOG_RAW("%02X", (uint8_t)(*((uint8_t *)tmp_buf + i)));
-                i++;
-            }
-            LOG_RAW("\r\n");
-        return ret;
-    }    return 0;
+    
+    return rbuf->data_size;
 } /* _tcpip_read() */
 
 /*---------------------------------------------------------------------------*/
