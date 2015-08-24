@@ -60,10 +60,15 @@
 #include "bsp.h"
 #include "packetbuf.h"
 #include "tcpip.h"
-/* Ligthweight Communication and Marshalling (LCM) is a library to perform
-communication between processes  */
-#include <lcm/lcm.h>
-#include "exlcm_example_t.h"
+#include "evproc.h"
+#include "etimer.h"
+#include <fcntl.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include "mkaddr.h"
 /*==============================================================================
                                      MACROS
 ==============================================================================*/
@@ -88,7 +93,6 @@ static  struct  etimer          tmr;
 /* Pointer to the lmac structure */
 static  s_nsLowMac_t*           p_lmac = NULL;
 extern  uip_lladdr_t uip_lladdr;
-static  lcm_t*                  pgs_lcm;
 /*==============================================================================
                                 GLOBAL CONSTANTS
 ==============================================================================*/
@@ -96,13 +100,12 @@ static  lcm_t*                  pgs_lcm;
                            LOCAL FUNCTION PROTOTYPES
 ==============================================================================*/
 /* Radio transceiver local functions */
-static    void      _printAndExit(const char* rpc_reason);
-static    int8_t    _tcpip_on(void);
-static    int8_t    _tcpip_off(void);
-static    int8_t    _tcpip_init(s_ns_t* p_netStack);
-static    int8_t    _tcpip_send(const void *pr_payload, uint8_t c_len);
-static    void      _tcpip_handler(const lcm_recv_buf_t *rbuf, const char * channel,
-                                   const exlcm_example_t * msg, void * user);
+static    void            _printAndExit(const char* rpc_reason);
+static    int8_t          _tcpip_on(void);
+static    int8_t          _tcpip_off(void);
+static    int8_t          _tcpip_init(s_ns_t* p_netStack);
+static    int8_t          _tcpip_send(const void *pr_payload, uint8_t c_len);
+static    void            _tcpip_handler(c_event_t ev, p_data_t data);
 
 /*==============================================================================
                          STRUCTURES AND OTHER TYPEDEFS
@@ -143,14 +146,75 @@ static void _printAndExit(const char* rpc_reason)
 /*----------------------------------------------------------------------------*/
 static int8_t _tcpip_init(s_ns_t* p_netStack)
 {
-    /* Please refer to lcm_create() reference. Deafult parameter is taken 
-       from there */
-    pgs_lcm = lcm_create("udpm://239.255.76.67:7667");
+    int32_t             l_error;        /* Status return code */
+    struct sockaddr_in  s_srvAddr;      /* AF_INET */
+    int32_t             l_srvLen;       /* length */
+    static int          l_sobr          = TRUE;
+    static char*        pc_srvAddrPre   = "127.0.0.1:*";
+    static char*        bc_brAddrPre    = "127.255.255.255:9097";
+    linkaddr_t          un_addr;
 
-    if(!pgs_lcm)
-      return 1;
-    
-    
+    LOG_INFO("Try to initialize Broadcasting Server for tcpip radio driver");
+
+     /*
+     * Form the server address:
+     */
+    l_srvLen = sizeof s_srvAddr;
+
+    l_error = mkaddr(&s_srvAddr,    /* Returned address */
+                     &l_srvLen,     /* Returned length */
+                     pc_srvAddrPre, /* Input string addr */
+                     "udp");        /* UDP protocol */
+
+    if ( l_error == -1 )
+        _printAndExit("Bad server address");
+
+    /*
+     * Form the broadcast address:
+     */
+    l_bcLen = sizeof s_bcAddr;
+
+    l_error = mkaddr(&s_bcAddr,     /* Returned address */
+                     &l_bcLen,      /* Returned length */
+                     bc_brAddrPre,  /* Input string addr */
+                     "udp");        /* UDP protocol */
+
+    if ( l_error == -1 )
+        _printAndExit("Bad broadcast address");
+
+    /*
+     * Create a UDP socket to use:
+     */
+    l_sockfd = socket(AF_INET,SOCK_DGRAM,0);
+    if ( l_sockfd == -1 )
+        _printAndExit("socket()");
+
+    /*
+     * Allow broadcasts:
+     */
+    l_error = setsockopt(l_sockfd, SOL_SOCKET, SO_BROADCAST,
+                         &l_sobr,sizeof l_sobr);
+
+    if ( l_error == -1 )
+        _printAndExit("setsockopt(SO_BROADCAST)");
+
+    /*
+     * Bind an address to our socket, so that client programs can listen to this
+     * server:
+     */
+    l_error = bind(l_sockfd, (struct sockaddr *)&s_srvAddr, l_srvLen);
+
+    if ( l_error == -1 )
+        _printAndExit("bind()");
+
+    int flags = fcntl(l_sockfd, F_GETFL, 0);
+    if (flags < 0){
+        LOG_ERR("%s\n\r","fcntl error");
+        exit(1);
+    }
+    flags = (flags|O_NONBLOCK);
+    fcntl(l_sockfd, F_SETFL, flags);
+
     LOG_INFO("%s\n\r","tcpip driver was initialized");
 
     if (mac_phy_config.mac_address == NULL) {
@@ -179,8 +243,6 @@ static int8_t _tcpip_init(s_ns_t* p_netStack)
     etimer_set(&tmr, 10, _tcpip_handler);
     LOG_INFO("set %p for %p callback\n\r",&tmr, &_tcpip_handler);
 
-    lcm_destroy(lcm);
-    
     return l_error;
 } /* _tcpip_init() */
 #else
@@ -283,18 +345,17 @@ static int8_t _tcpip_send(const void *pr_payload, uint8_t c_len)
 {
     uint8_t _ret;
     uint8_t i = 0;
-
-    int status = lcm_publish (pgs_lcm, CHANNEL_NAME, pr_payload, c_len);
-    
-    if( status == -1 )
+    int ret = sendto( l_sockfd, pr_payload, c_len, 0,
+            (struct sockaddr *)&s_bcAddr, l_bcLen );
+    if( ret == -1 )
     {
         LOG_ERR( "sendto" );
         return RADIO_TX_ERR;
     }
     else
     {
-        _ret = c_len;
-        LOG_INFO( "send msg with len = %d", c_len );
+        _ret = ret;
+        LOG_INFO( "send msg with len = %d\n", ret );
         while( _ret-- )
         {
             printf( "%02X", (uint8_t)( *( (uint8_t *)pr_payload + i ) ) );
@@ -307,28 +368,8 @@ static int8_t _tcpip_send(const void *pr_payload, uint8_t c_len)
 } /* _tcpip_send() */
 
 /*---------------------------------------------------------------------------*/
-static int _tcpip_read(const lcm_recv_buf_t *rbuf, const char * channel,
-                       const exlcm_example_t * msg, void * user)
+static int _tcpip_read(void *buf, unsigned short buf_len)
 {
-    int i;
-    LOG_INFO("Received message on channel \"%s\":", channel);
-    LOG_INFO("  timestamp   = %lu", msg->timestamp);
-    LOG_INFO("  position    = (%f, %f, %f)",
-            msg->position[0], msg->position[1], msg->position[2]);
-    LOG_INFO("  orientation = (%f, %f, %f, %f)",
-            msg->orientation[0], msg->orientation[1], msg->orientation[2],
-            msg->orientation[3]);
-    LOG_INFO("  name        = '%s'", msg->name);
-    LOG_INFO("  enabled     = %d", msg->enabled);
-    uint8_t c_len = 0;
-
-    if ((c_len = _tcpip_read(packetbuf_dataptr(), PACKETBUF_SIZE)) > 0)    {
-                packetbuf_set_datalen(c_len);
-                if((c_len > 0) && (p_lmac != NULL)) {
-                    packetbuf_set_datalen(c_len);
-                    p_lmac->input();
-                }
-            }
     uint8_t     _ret;
     uint8_t     i=0;
     int ret = recv(l_sockfd, tmp_buf, buf_len, 0);
@@ -346,7 +387,8 @@ static int _tcpip_read(const lcm_recv_buf_t *rbuf, const char * channel,
             }
             LOG_RAW("\r\n");
         return ret;
-    }    return 0;
+    }
+    return 0;
 } /* _tcpip_read() */
 
 /*---------------------------------------------------------------------------*/
@@ -362,11 +404,17 @@ static int8_t _tcpip_off(void)
 }  /* _tcpip_off() */
 
 /*---------------------------------------------------------------------------*/
-static void _tcpip_handler(void)
+static void _tcpip_handler(c_event_t ev, p_data_t data)
 {
-
+    uint8_t c_len = 0;
     if (etimer_expired(&tmr)) {
-        lcm_handle(pgs_lcm);
+        if ((c_len = _tcpip_read(packetbuf_dataptr(), PACKETBUF_SIZE)) > 0)    {
+            packetbuf_set_datalen(c_len);
+            if((c_len > 0) && (p_lmac != NULL)) {
+                packetbuf_set_datalen(c_len);
+                p_lmac->input();
+            }
+        }
         etimer_restart(&tmr);
     }
 }

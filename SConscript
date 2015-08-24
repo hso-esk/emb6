@@ -30,7 +30,6 @@ def add_include(incpath2add):
 Import('env', 'TARGET_NAME', 'APPS_NAME', 'BOARD_NAME', 'MAC_ADDR', 'TX_POWER', 'RX_SENS', 'RXTX_MODE')
 env.Append(CPPPATH = ['./'])
 
-
 ################################################################################ 
 ################ DEMO APPLICATION CONFIGURATION ################################
 ################################################################################
@@ -121,8 +120,16 @@ add_sources(mcu_path+'/device/'+board_conf['mcu_cpu']+'/src/*.c')
 
 # Append toolchain configuration
 # Path ./target/arch/<arch>/<family>/<vendor>/SConscript
+
 toolchain = env.SConscript(mcu_path+'/toolchain/'+board_conf['mcu_toolchain']+'/SConscript')
-env['CC'] = toolchain['CC']
+
+conf = Configure(env)
+if not conf.CheckCC():
+	print '> Didn\'t find {0} toolchain, exiting!'.format(toolcahin[''])
+	Exit(1)
+else:
+	conf.env['CC'] = toolchain['CC']
+	env = conf.Finish()
 env['AS'] = toolchain['AS']
 env['LINK'] = toolchain['LINK']
 env['OBJCOPY'] = toolchain['OBJCOPY']
@@ -187,7 +194,19 @@ if 'cflags' in board_conf:
 # Add linker flags
 if 'ldflags' in board_conf:
 	env.MergeFlags({'LINKFLAGS' : board_conf['ldflags']})
-	
+
+# Check libraries and add them
+if 'libs' in board_conf:
+   	conf = Configure(env)
+	libs = board_conf['libs']
+	for lib in libs:
+	    if not conf.CheckLib(lib):
+	       print '> Didn\'t find lib{0}.a ot {0}.lib, exiting!'.format(lib)
+	       Exit(1)
+	    else:
+		conf.env.MergeFlags({'LIBS' : lib})
+	env = conf.Finish()    
+
 ################################################################################ 
 ####################### Final Compilation ######################################
 ################################################################################

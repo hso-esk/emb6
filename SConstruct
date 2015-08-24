@@ -106,7 +106,6 @@ link_program_message = '%sLinking Program %s==> %s$TARGET%s' % \
 link_library_message = '%sLinking Static Library %s==> %s$TARGET%s' % \
    (colors['red'], colors['purple'], colors['yellow'], colors['end'])
 
-
 # Set default values	
 genv['PROGSUFFIX'] = '.elf'
 genv['OBJSUFFIX'] = '.o'
@@ -119,48 +118,42 @@ genv['LINKCOMSTR'] = link_program_message
 
 Export('genv')
 
-# Delete bin directory
-#Execute(Delete("bin"))
-
 #Parse targets
 for TARGET in TARGETS:
 	env = genv.Clone()
 
-	__TARGET_NAME  = TARGET[0]                               #Specify build name
+	__TARGET_NAME  = TARGET[0]                      #Specify build name
 
-	if TARGET_NAME != __TARGET_NAME:                        #If we dont have given name in target array continue
+	if TARGET_NAME != __TARGET_NAME:                #If we dont have given name in target array continue
 		continue
 
-	APPS_NAME   = TARGET[1]                             	#Specify application and configuration name
+	APPS_NAME   = TARGET[1]                         #Specify application and configuration name
 
-	BOARD_NAME  = TARGET[2]                                 #Specify board name
+	BOARD_NAME  = TARGET[2]         	        #Specify board name
 
 	if not MAC_ADDR:
-		MAC_ADDR    = TARGET[3]                             #Specify MAC address of the device
+		MAC_ADDR    = TARGET[3]			#Specify MAC address of the device
 	
 	if not TX_POWER:
-		TX_POWER    = TARGET[4]                             #Specify transmit power in dBm
+		TX_POWER    = TARGET[4]			#Specify transmit power in dBm
 	
 	if not RX_SENS:
-		RX_SENS     = TARGET[5]                             #Specify receive sensitivity in dBm
+		RX_SENS     = TARGET[5]			#Specify receive sensitivity in dBm
 
 	RXTX_MODE   = TARGET[6]
 
 	BUILD_DIR = './build/'+ TARGET_NAME + '/'
 	
 	file = env.SConscript('SConscript', variant_dir=BUILD_DIR, duplicate=0, exports='env TARGET_NAME APPS_NAME BOARD_NAME MAC_ADDR TX_POWER RX_SENS RXTX_MODE')
-	
-	print '====================================================================' 
-	print '> Select configuration parameters...'
-	print '> Target name =                 ' + TARGET_NAME
-	print '> Application and Config =      ' + str(APPS_NAME)
-	print '> Board name =                  ' + BOARD_NAME
-	print '> MAC address =                 ' + MAC_ADDR
-	print '> Output power (dBm) =          ' + TX_POWER
-	print '> Receiver\'s sensitivity (dBm) =' + RX_SENS
-	print '> Transmitter\'s modulation =    ' + RXTX_MODE
-	print '====================================================================' 
-	
-	# copy bin file to ./bin directory 
-	file = env.Install('./bin/', [file])
-	env.Clean(file, '*')
+
+
+print '====================================================================' 
+print '> Select configuration parameters...'
+print '> Target name =                  ' + TARGET_NAME
+print '> Application and Config =       ' + str(APPS_NAME)
+print '> Board name =                   ' + BOARD_NAME
+print '> MAC address =                  ' + MAC_ADDR
+print '> Output power (dBm) =           ' + TX_POWER
+print '> Receiver\'s sensitivity (dBm) =' + RX_SENS
+print '> Transmitter\'s modulation =    ' + RXTX_MODE
+print '====================================================================' 

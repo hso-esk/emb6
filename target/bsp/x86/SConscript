@@ -15,7 +15,10 @@ hardware_config = {
 # C code global defined symbols
 	'defines' : [
 	],
-	
+# Required Libraries
+	'libs' : [
+		'lcm'
+	],
 # GCC flags
 	'cflags' : [
 	],
