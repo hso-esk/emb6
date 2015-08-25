@@ -67,9 +67,6 @@
 #include "demo_coap_srv.h"
 
 #define     LOGGER_ENABLE        LOGGER_DEMO_COAP
-#if            LOGGER_ENABLE     ==     TRUE
-#define        LOGGER_SUBSYSTEM    "dCOAP"
-#endif
 #include    "logger.h"
 
 /*==============================================================================

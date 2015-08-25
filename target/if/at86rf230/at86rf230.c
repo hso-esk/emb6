@@ -69,9 +69,6 @@
                                      MACROS
 ==============================================================================*/
 #define     LOGGER_ENABLE        LOGGER_RADIO
-#if            LOGGER_ENABLE     ==     TRUE
-#define     LOGGER_SUBSYSTEM    "rf230"
-#endif
 #include    "logger.h"
 
 #define     bsp_clrPin(pin)                        bsp_pin(E_BSP_PIN_CLR, pin)

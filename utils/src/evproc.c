@@ -70,9 +70,7 @@
 ==============================================================================*/
 //! Enable or disable logging
 #define     LOGGER_ENABLE        LOGGER_EVPROC
-#if            LOGGER_ENABLE     ==     TRUE
-#define        LOGGER_SUBSYSTEM    "eproc"
-#endif
+
 
 /*==============================================================================
                              LOCAL CONSTANTS

@@ -76,9 +76,6 @@
                                          MACROS
  =============================================================================*/
 #define     LOGGER_ENABLE        LOGGER_DEMO_UDPIAA
-#if            LOGGER_ENABLE     ==     TRUE
-#define        LOGGER_SUBSYSTEM    "dUIAA"
-#endif
 #include    "logger.h"
 
 /** set the send interval */

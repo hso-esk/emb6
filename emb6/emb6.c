@@ -75,9 +75,6 @@
 #endif
 
 #define     LOGGER_ENABLE        LOGGER_CORE
-#if            LOGGER_ENABLE     ==     TRUE
-#define        LOGGER_SUBSYSTEM    "core"
-#endif
 #include    "logger.h"
 
 /*==============================================================================

@@ -73,9 +73,6 @@
                                      MACROS
 ==============================================================================*/
 #define     LOGGER_ENABLE        LOGGER_HAL
-#if            LOGGER_ENABLE==TRUE
-#define     LOGGER_SUBSYSTEM    "hal"
-#endif
 #include    "logger.h"
 
 /*==============================================================================

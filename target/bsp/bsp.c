@@ -69,9 +69,6 @@
                                      MACROS
  =============================================================================*/
 #define     LOGGER_ENABLE        LOGGER_BSP
-#if            LOGGER_ENABLE     ==     TRUE
-#define        LOGGER_SUBSYSTEM    "bsp"
-#endif
 #include    "logger.h"
 
 

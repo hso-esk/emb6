@@ -64,9 +64,6 @@
                                      MACROS
 ==============================================================================*/
 #define     LOGGER_ENABLE        LOGGER_HAL
-#if            LOGGER_ENABLE==TRUE
-#define     LOGGER_SUBSYSTEM    "hal"
-#endif
 #define        _POSIX_C_SOURCE        199309L
 
 /*==============================================================================

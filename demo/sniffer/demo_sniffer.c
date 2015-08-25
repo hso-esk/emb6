@@ -65,9 +65,6 @@
 #include "demo_sniffer.h"
 
 #define     LOGGER_ENABLE        LOGGER_DEMO_SNIFFER
-#if            LOGGER_ENABLE     ==     TRUE
-#define        LOGGER_SUBSYSTEM    "dSNIF"
-#endif
 #include    "logger.h"
 
 /*==============================================================================

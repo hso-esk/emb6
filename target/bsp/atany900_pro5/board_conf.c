@@ -57,8 +57,7 @@
 
 
 /** Enable or disable logging */
-#define        LOGGER_ENABLE          TRUE
-#define        LOGGER_SUBSYSTEM    "brdconf"
+#define        LOGGER_ENABLE          LOGGER_BSP
 
 #include "board_conf.h"
 #include "hwinit.h"

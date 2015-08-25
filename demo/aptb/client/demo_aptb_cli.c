@@ -77,9 +77,6 @@
                                          MACROS
  =============================================================================*/
 #define     LOGGER_ENABLE           LOGGER_DEMO_APTB
-#if         LOGGER_ENABLE   ==  TRUE
-#define     LOGGER_SUBSYSTEM        "dAPTB"
-#endif
 #include    "logger.h"
 
 

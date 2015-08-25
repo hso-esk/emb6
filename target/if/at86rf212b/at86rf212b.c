@@ -72,9 +72,6 @@
                                      MACROS
 ==============================================================================*/
 #define     LOGGER_ENABLE        LOGGER_RADIO
-#if            LOGGER_ENABLE     ==     TRUE
-#define     LOGGER_SUBSYSTEM    "rf212b"
-#endif
 #include    "logger.h"
 
 
