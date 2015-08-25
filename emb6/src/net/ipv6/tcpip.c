@@ -165,13 +165,14 @@ unsigned char tcpip_is_forwarding; /* Forwarding right now? */
 //PROCESS(tcpip_process, "TCP/IP stack");
 
 /*---------------------------------------------------------------------------*/
-static void
-start_periodic_tcp_timer(void)
-{
-  if(etimer_expired(&periodic)) {
-    etimer_restart(&periodic);
-  }
-}
+// not used at the moment
+//static void
+//start_periodic_tcp_timer(void)
+//{
+//  if(etimer_expired(&periodic)) {
+//    etimer_restart(&periodic);
+//  }
+//}
 /*---------------------------------------------------------------------------*/
 static void
 check_for_tcp_syn(void)
@@ -238,7 +239,7 @@ packet_input(void)
 #if UIP_TCP
 #if UIP_ACTIVE_OPEN
 struct uip_conn *
-tcp_connect(uip_ipaddr_t *ripaddr, uint16_t port, void *appstate)
+tcp_connect(const uip_ipaddr_t *ripaddr, uint16_t port, void *appstate)
 {
   struct uip_conn *c;
   
