@@ -48,7 +48,7 @@
 
     \brief  Fake radio transceiver based on UDP loopback.
 
-   \version 0.0.1
+   \version 1.1
 */
 /*============================================================================*/
 
@@ -61,19 +61,17 @@
 #include "packetbuf.h"
 #include "tcpip.h"
 #include "etimer.h"
+#include <errno.h>
+#include <sys/time.h>
 /* Ligthweight Communication and Marshalling (LCM) is a library to perform
 communication between processes  */
 #include <lcm/lcm.h>
-#include "exlcm_example_t.h"
 /*==============================================================================
                                      MACROS
 ==============================================================================*/
 #define     LOGGER_ENABLE        LOGGER_RADIO
-#if            LOGGER_ENABLE     ==     TRUE
-#define     LOGGER_SUBSYSTEM    "natradio"
-#endif
 #include    "logger.h"
-#define     CHANNEL_NAME        "EMB6_NATIVE"
+#define     CHANNEL_NAME  "EMB6_NATIVE"
 /*==============================================================================
                                      ENUMS
 ==============================================================================*/
@@ -81,7 +79,6 @@ communication between processes  */
 /*==============================================================================
                           VARIABLE DECLARATIONS
 ==============================================================================*/
-static  uint8_t                 tmp_buf[PACKETBUF_SIZE];
 static  struct  etimer          tmr;
 /* Pointer to the lmac structure */
 static  s_nsLowMac_t*           p_lmac = NULL;
@@ -99,9 +96,9 @@ static    int8_t    _tcpip_on(void);
 static    int8_t    _tcpip_off(void);
 static    int8_t    _tcpip_init(s_ns_t* p_netStack);
 static    int8_t    _tcpip_send(const void *pr_payload, uint8_t c_len);
-static    int       _tcpip_read(const lcm_recv_buf_t *rbuf, const char * channel,
-                                void * user);
-static    void
+static    void      _tcpip_read(const lcm_recv_buf_t *rbuf, const char * channel,
+                                void * p_macAddr);
+static    void      _tcpip_handler(c_event_t c_event, p_data_t p_data);
 /*==============================================================================
                          STRUCTURES AND OTHER TYPEDEFS
 ==============================================================================*/
@@ -141,9 +138,11 @@ static void _printAndExit(const char* rpc_reason)
 /*----------------------------------------------------------------------------*/
 static int8_t _tcpip_init(s_ns_t* p_netStack)
 {
+    linkaddr_t      un_addr;
+    uint8_t         l_error;
     /* Please refer to lcm_create() reference. Deafult parameter is taken 
        from there */
-    pgs_lcm = lcm_create("udpm://239.255.76.67:7667");
+    pgs_lcm = lcm_create(NULL);
 
     if(!pgs_lcm)
       return 1;
@@ -153,6 +152,9 @@ static int8_t _tcpip_init(s_ns_t* p_netStack)
     if (mac_phy_config.mac_address == NULL) {
         _printAndExit("MAC address is NULL");
     }
+
+    lcm_subscribe (pgs_lcm, CHANNEL_NAME, _tcpip_read,
+                   &mac_phy_config.mac_address);
 
     /* Initialise global lladdr structure with a given mac */
     memcpy((void *)&un_addr.u8,  &mac_phy_config.mac_address, 8);
@@ -175,8 +177,6 @@ static int8_t _tcpip_init(s_ns_t* p_netStack)
     /* Start the packet receive process */
     etimer_set(&tmr, 10, _tcpip_handler);
     LOG_INFO("set %p for %p callback\n\r",&tmr, &_tcpip_handler);
-
-    lcm_destroy(pgs_lcm);
     
     return l_error;
 } /* _tcpip_init() */
@@ -190,7 +190,16 @@ static int8_t _tcpip_init(s_ns_t* p_netStack)
 /*----------------------------------------------------------------------------*/
 static int8_t _tcpip_init(s_ns_t* p_netStack)
 {
+    linkaddr_t      un_addr;
+    uint8_t         l_error;
     LOG_INFO("Try to initialize Broadcasting Client for tcpip radio driver");
+
+    /* Please refer to lcm_create() reference. Deafult parameter is taken
+       from there */
+    pgs_lcm = lcm_create(NULL);
+
+    if(!pgs_lcm)
+      return 1;
 
     lcm_subscribe (pgs_lcm, CHANNEL_NAME, _tcpip_read, NULL);
 
@@ -226,14 +235,23 @@ static int8_t _tcpip_init(s_ns_t* p_netStack)
 } /* _tcpip_init() */
 #endif
 
+#define __ADDRLEN__    2
 /*---------------------------------------------------------------------------*/
 static int8_t _tcpip_send(const void *pr_payload, uint8_t c_len)
 {
     uint8_t _ret;
     uint8_t i = 0;
-
-    int status = lcm_publish (pgs_lcm, CHANNEL_NAME, pr_payload, c_len);
+    LOG_INFO("Try to send packet...");
+    uint8_t* pc_frame = malloc(sizeof(uint8_t)*(c_len + __ADDRLEN__));
+    if (pc_frame == NULL) {
+        LOG_ERR("Insufficient memory");
+        return RADIO_TX_ERR;
+    }
+    memcpy(pc_frame,uip_lladdr.addr + (8 - __ADDRLEN__),__ADDRLEN__);
+    memmove(pc_frame+__ADDRLEN__,pr_payload,c_len);
+    int status = lcm_publish (pgs_lcm, CHANNEL_NAME, pc_frame, c_len);
     
+    free(pc_frame);
     if( status == -1 )
     {
         LOG_ERR( "sendto" );
@@ -243,43 +261,42 @@ static int8_t _tcpip_send(const void *pr_payload, uint8_t c_len)
     {
         _ret = c_len;
         LOG_INFO( "send msg with len = %d", c_len );
-        while( _ret-- )
-        {
-            printf( "%02X", (uint8_t)( *( (uint8_t *)pr_payload + i ) ) );
-            i++;
-        }
-        LOG_RAW( "\n" );
+        LOG2_HEXDUMP(pr_payload,c_len);
 
         return RADIO_TX_OK;
     }
 } /* _tcpip_send() */
 
 /*---------------------------------------------------------------------------*/
-static int _tcpip_read(const lcm_recv_buf_t *rbuf, const char * channel,
-		       void * user)
+static void _tcpip_read(const lcm_recv_buf_t *rbuf, const char * channel,
+		       void * p_macAddr)
 {
-    int i;
-    LOG_INFO("Received message on channel \"%s\":", channel);
-
-    if (rbuf->data_size > PACKETBUF_SIZE) {
-        _printAndExit("Received packet too long");
+    int i = 0;
+    uint16_t  i_dSize = rbuf->data_size;
+    uint8_t*    pc_frame = NULL;
+     packetbuf_clear();
+    if (i_dSize > PACKETBUF_SIZE) {
+        LOG_ERR("Received packet too long");
     } else {
-        memcpy(packetbuf_dataptr(),rbuf->data, rbuf->data_size);
-	LOG_INFO("receive msg len = %d\n",rbuf->data_size);
-        int32_t _ret = rbuf->data_size;
-        while(_ret--){
-	    LOG_RAW("%02X", (uint8_t)(*((uint8_t *)rbuf->data + i)));
-            i++;
-        }
-        LOG_RAW("\r\n");
-	packetbuf_set_datalen(c_len);
-	if((c_len > 0) && (p_lmac != NULL)) {
-            packetbuf_set_datalen(c_len);
-            p_lmac->input();
+        pc_frame = malloc(sizeof(uint8_t)*(i_dSize + __ADDRLEN__));
+        if (pc_frame == NULL) {
+            LOG_ERR("Insufficient memory");
+        } else {
+            memcpy(pc_frame,rbuf->data,i_dSize);
+            if ((*pc_frame != uip_lladdr.addr[6]) &&
+                (*(pc_frame + 1) != uip_lladdr.addr[7]))
+            {
+                LOG_INFO("Sender's MAC %x:%x, message len %d", *pc_frame,*(pc_frame + 1),i_dSize);
+                memcpy(packetbuf_dataptr(),
+                       rbuf->data + __ADDRLEN__, i_dSize - __ADDRLEN__);
+                LOG2_HEXDUMP(packetbuf_dataptr(),i_dSize - __ADDRLEN__);
+                if((rbuf->data_size > 0) && (p_lmac != NULL)) {
+                        packetbuf_set_datalen(i_dSize - __ADDRLEN__);
+                        p_lmac->input();
+                }
+            }
         }
     }
-    
-    return rbuf->data_size;
 } /* _tcpip_read() */
 
 /*---------------------------------------------------------------------------*/
@@ -295,12 +312,28 @@ static int8_t _tcpip_off(void)
 }  /* _tcpip_off() */
 
 /*---------------------------------------------------------------------------*/
-static void _tcpip_handler(void)
+static void _tcpip_handler(c_event_t c_event, p_data_t p_data)
 {
+    if (etimer_expired(&tmr))
+    {
+        /* We can't use lcm_handle trigger every time, as
+         * it's a blocking operation. we should check whether a lcm file
+         * descriptor is available for reading. We put 10 usec as a timeout*/
+        int lcm_fd = lcm_get_fileno(pgs_lcm);
+        struct timeval s_tv;
+        s_tv.tv_sec = 0;
+        s_tv.tv_usec = 10;
+        fd_set fds;
+        FD_ZERO(&fds);
+        FD_SET(lcm_fd, &fds);
 
-    if (etimer_expired(&tmr)) {
-        lcm_handle(pgs_lcm);
+        select(lcm_fd + 1, &fds, 0, 0, &s_tv);
+        if ( FD_ISSET(lcm_fd, &fds)) {
+            lcm_handle(pgs_lcm);
+        }
+
         etimer_restart(&tmr);
+
     }
 }
 
