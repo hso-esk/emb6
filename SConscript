@@ -165,8 +165,8 @@ add_sources('./target/if/'+board_conf['if']+'/*.c')
 
 #Define transmitter output power
 if MAC_ADDR != '':
-	MAC_ADDR = 'MAC_ADDR_WORD='+ MAC_ADDR
-	env.MergeFlags({'CPPDEFINES' : MAC_ADDR})
+	mac = 'MAC_ADDR_WORD='+ MAC_ADDR
+	env.MergeFlags({'CPPDEFINES' : mac})
 
 #Define transmitter output power
 if TX_POWER != '':
@@ -218,7 +218,7 @@ add_sources('./emb6/*.c')
 # Compile program
 env.MergeFlags({'CPPPATH' : includes})
 Delete(TARGET_NAME+'.elf')
-retf = env.Program(target = TARGET_NAME+'.elf', source = sources)
+retf = env.Program(target = TARGET_NAME + '_'  + MAC_ADDR  + '.elf', source = sources)
 env.Clean(retf, '*')
 
 # Show program size
@@ -235,4 +235,4 @@ Delete(TARGET_NAME+'.bin')
 bin_file = env.Command(TARGET_NAME+'.bin', TARGET_NAME+'.elf', Action('$OBJCOPY -O binary $SOURCE $TARGET', '$OBJCOPYCOMSTR'))
 env.Clean(bin_file, '*')
 
-Return('bin_file')
+Return('retf')

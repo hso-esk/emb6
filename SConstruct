@@ -146,6 +146,9 @@ for TARGET in TARGETS:
 	
 	file = env.SConscript('SConscript', variant_dir=BUILD_DIR, duplicate=0, exports='env TARGET_NAME APPS_NAME BOARD_NAME MAC_ADDR TX_POWER RX_SENS RXTX_MODE')
 
+	# copy bin file to ./bin directory 
+	file = env.Install('./bin/', [file])
+	env.Clean(file, '*')
 
 print '====================================================================' 
 print '> Select configuration parameters...'
