@@ -370,7 +370,6 @@ void    hal_ledOn(uint16_t ui_led)
         hal_enterCritical();
         switch (ui_led) {
         case E_BSP_LED_RED:
-            port_pin_set_output_level(LED_1_PIN, LED_1_ACTIVE);
             break;
         case E_BSP_LED_YELLOW:
             port_pin_set_output_level(LED_0_PIN, LED_0_ACTIVE);
@@ -447,7 +446,11 @@ void    hal_delay_us(uint32_t i_delay)
     delay_us(i_delay);
 } /* hal_delay_us() */
 
-void *     hal_pinInit(en_targetExtPin_t e_pinType)
+/*==============================================================================
+  hal_ctrlPinInit()
+ =============================================================================*/
+void *     hal_ctrlPinInit(en_targetExtPin_t e_pinType)
+/*void *     hal_pinInit(en_targetExtPin_t e_pinType)*/
 {
     struct port_config pin_conf;
     port_get_config_defaults(&pin_conf);
