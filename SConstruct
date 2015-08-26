@@ -160,13 +160,9 @@ for TARGET in TARGETS:
 	RXTX_MODE   = TARGET[6]
 	args = args + 'RXTX_MODE '
 
-	print args
-	print LOGGER_LEVEL
 	if LOGGER_LEVEL:
-	   print LOGGER_LEVEL
 	   args = args + 'LOGGER_LEVEL'
 
-	print args
 	BUILD_DIR = './build/'+ TARGET_NAME + '/'
 
 	TARGET_NAME = TARGET_NAME + '_' + MAC_ADDR

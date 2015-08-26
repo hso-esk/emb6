@@ -72,7 +72,7 @@ uint8_t board_conf(s_ns_t* ps_nStack)
     uint8_t c_ret = 0;
 
     if (ps_nStack != NULL) {
-        ps_nStack->inif = &tcpip_driver;
+        ps_nStack->inif = &native_driver;
         c_ret = 1;
     }
     else {

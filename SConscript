@@ -27,7 +27,7 @@ def add_include(incpath2add):
 		pass
 	includes.append(str(incpath2add))
 
-Import('env', 'TARGET_NAME', 'APPS_NAME', 'BOARD_NAME', 'MAC_ADDR', 'TX_POWER', 'RX_SENS', 'RXTX_MODE', 'LOGGER_LEVEL')
+Import('env', 'TARGET_NAME', 'APPS_NAME', 'BOARD_NAME', 'MAC_ADDR', 'TX_POWER', 'RX_SENS', 'RXTX_MODE')
 env.Append(CPPPATH = ['./'])
 
 ################################################################################ 
@@ -216,8 +216,7 @@ try:
 	Import('LOGGER_LEVEL')
 	logger = 'LOGGER_LEVEL='+ LOGGER_LEVEL
 	env.MergeFlags({'CPPDEFINES' : logger})
-except ValueError:
-	print "failed try"
+except:
 	pass
 
 # Add library source files and headers
