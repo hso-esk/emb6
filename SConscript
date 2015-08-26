@@ -218,7 +218,7 @@ add_sources('./emb6/*.c')
 # Compile program
 env.MergeFlags({'CPPPATH' : includes})
 Delete(TARGET_NAME+'.elf')
-retf = env.Program(target = TARGET_NAME + '_'  + MAC_ADDR  + '.elf', source = sources)
+retf = env.Program(target = TARGET_NAME  + '.elf', source = sources)
 env.Clean(retf, '*')
 
 # Show program size

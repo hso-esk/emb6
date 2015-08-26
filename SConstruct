@@ -124,6 +124,7 @@ for TARGET in TARGETS:
 
 	__TARGET_NAME  = TARGET[0]                      #Specify build name
 
+
 	if TARGET_NAME != __TARGET_NAME:                #If we dont have given name in target array continue
 		continue
 
@@ -143,7 +144,9 @@ for TARGET in TARGETS:
 	RXTX_MODE   = TARGET[6]
 
 	BUILD_DIR = './build/'+ TARGET_NAME + '/'
-	
+
+	TARGET_NAME = TARGET_NAME + '_' + MAC_ADDR
+
 	file = env.SConscript('SConscript', variant_dir=BUILD_DIR, duplicate=0, exports='env TARGET_NAME APPS_NAME BOARD_NAME MAC_ADDR TX_POWER RX_SENS RXTX_MODE')
 
 	# copy bin file to ./bin directory 
