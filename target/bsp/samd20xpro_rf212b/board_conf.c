@@ -62,6 +62,7 @@
 #include "board_conf.h"
 #include "hwinit.h"
 #include "emb6.h"
+#include "emb6_conf.h"
 #include "logger.h"
 #include "bsp.h"
 
