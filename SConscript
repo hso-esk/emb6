@@ -27,7 +27,7 @@ def add_include(incpath2add):
 		pass
 	includes.append(str(incpath2add))
 
-Import('env', 'TARGET_NAME', 'APPS_NAME', 'BOARD_NAME', 'MAC_ADDR', 'TX_POWER', 'RX_SENS', 'RXTX_MODE')
+Import('env', 'TARGET_NAME', 'APPS_NAME', 'BOARD_NAME', 'MAC_ADDR', 'TX_POWER', 'RX_SENS', 'RXTX_MODE', 'LOGGER_LEVEL')
 env.Append(CPPPATH = ['./'])
 
 ################################################################################ 
@@ -211,6 +211,15 @@ if 'libs' in board_conf:
 ####################### Final Compilation ######################################
 ################################################################################
 
+#Define logger level
+try:
+	Import('LOGGER_LEVEL')
+	logger = 'LOGGER_LEVEL='+ LOGGER_LEVEL
+	env.MergeFlags({'CPPDEFINES' : logger})
+except ValueError:
+	print "failed try"
+	pass
+
 # Add library source files and headers
 add_include(os.path.dirname('./emb6/'))
 add_sources('./emb6/*.c')
@@ -231,8 +240,8 @@ hex_file = env.Command(TARGET_NAME+'.hex', TARGET_NAME+'.elf', Action('$OBJCOPY 
 env.Clean(hex_file, '*')
 
 # Create binary
-Delete(TARGET_NAME+'.bin')
-bin_file = env.Command(TARGET_NAME+'.bin', TARGET_NAME+'.elf', Action('$OBJCOPY -O binary $SOURCE $TARGET', '$OBJCOPYCOMSTR'))
-env.Clean(bin_file, '*')
+#Delete(TARGET_NAME+'.bin')
+#bin_file = env.Command(TARGET_NAME+'.bin', TARGET_NAME+'.elf', Action('$OBJCOPY -O binary $SOURCE $TARGET', '$OBJCOPYCOMSTR'))
+#env.Clean(bin_file, '*')
 
 Return('retf')

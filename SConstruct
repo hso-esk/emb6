@@ -59,6 +59,15 @@ AddOption('--tx_pwr',
 			help='Specify transmitter output power')
 TX_POWER = GetOption('tx_pwr')
 
+AddOption('--logger',
+			dest='logger',
+			type='string',
+			nargs=1,
+			action='store',
+			metavar='LOGGER_LEVEL',
+			help='Specify level of logger [from 0 to 3]')
+LOGGER_LEVEL = GetOption('logger')
+
 #Place Guards
 if not TARGET_NAME:
 	print "Error: Specify target board. Use --target option"
@@ -118,36 +127,51 @@ genv['LINKCOMSTR'] = link_program_message
 
 Export('genv')
 
+
 #Parse targets
 for TARGET in TARGETS:
 	env = genv.Clone()
 
 	__TARGET_NAME  = TARGET[0]                      #Specify build name
 
-
 	if TARGET_NAME != __TARGET_NAME:                #If we dont have given name in target array continue
 		continue
+	args = 'env '
+	args = args + 'TARGET_NAME '
 
 	APPS_NAME   = TARGET[1]                         #Specify application and configuration name
+	args = args + 'APPS_NAME '
 
 	BOARD_NAME  = TARGET[2]         	        #Specify board name
+	args = args + 'BOARD_NAME '
 
-	if not MAC_ADDR:
+	if MAC_ADDR is None:
 		MAC_ADDR    = TARGET[3]			#Specify MAC address of the device
-	
-	if not TX_POWER:
+	args = args + 'MAC_ADDR '
+
+	if TX_POWER is None:
 		TX_POWER    = TARGET[4]			#Specify transmit power in dBm
-	
-	if not RX_SENS:
+	args = args + 'TX_POWER '
+
+	if RX_SENS is None:
 		RX_SENS     = TARGET[5]			#Specify receive sensitivity in dBm
+	args = args + 'RX_SENS '
 
 	RXTX_MODE   = TARGET[6]
+	args = args + 'RXTX_MODE '
 
+	print args
+	print LOGGER_LEVEL
+	if LOGGER_LEVEL:
+	   print LOGGER_LEVEL
+	   args = args + 'LOGGER_LEVEL'
+
+	print args
 	BUILD_DIR = './build/'+ TARGET_NAME + '/'
 
 	TARGET_NAME = TARGET_NAME + '_' + MAC_ADDR
 
-	file = env.SConscript('SConscript', variant_dir=BUILD_DIR, duplicate=0, exports='env TARGET_NAME APPS_NAME BOARD_NAME MAC_ADDR TX_POWER RX_SENS RXTX_MODE')
+	file = env.SConscript('SConscript', variant_dir=BUILD_DIR, duplicate=0, exports=args)
 
 	# copy bin file to ./bin directory 
 	file = env.Install('./bin/', [file])

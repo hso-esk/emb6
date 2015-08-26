@@ -802,7 +802,9 @@ void uip_log(char *msg);
                                  DEBUG ENABLER SECTION
  =============================================================================*/
  /** Define a deepness of the logger helper (see logger.h)*/
- #define LOGGER_LEVEL                           1
+#ifndef LOGGER_LEVEL
+#define LOGGER_LEVEL                            1
+#endif
  /** Core logging, should be TRUE for almost all cases except for production
   * (see emb6.c) */
  #define LOGGER_CORE                            TRUE
