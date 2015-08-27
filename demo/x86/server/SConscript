@@ -1,4 +1,4 @@
-bc_server = {
+server = {
 	'demo' : [
 	],
 	'emb6' : [
@@ -7,6 +7,8 @@ bc_server = {
 	],
 # C global defines
 	'defines' : [
+		('EMB6_INIT_ROOT',1),
+		('__TCPIPROLE_BRSERVER__',1),
 		'_BSD_SOURCE',
 	],
 # GCC flags
@@ -14,4 +16,4 @@ bc_server = {
 	]	
 }
 
-Return('bc_server')
+Return('server')
