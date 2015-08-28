@@ -188,4 +188,9 @@ int udp_socket_sendto(struct udp_socket *c,
  */
 int udp_socket_close(struct udp_socket *c);
 
+/**
+  * \brief      Close a UDP socket
+*/
+void _udp_sock_callback(c_event_t c_event, p_data_t p_data);
+
 #endif /* UDP_SOCKET_H */

@@ -40,12 +40,9 @@
 
 #include <string.h>
 
-void _udp_sock_callback(c_event_t c_event, p_data_t p_data);
-
 static uint8_t buf[UIP_BUFSIZE];
 
 #define UIP_IP_BUF   ((struct uip_udpip_hdr *)&uip_buf[UIP_LLH_LEN])
-
 
 /*---------------------------------------------------------------------------*/
 static void
@@ -193,5 +190,15 @@ void _udp_sock_callback(c_event_t c_event, p_data_t p_data)
         }
     }
 }
+/*---------------------------------------------------------------------------*/
+const s_nsSocket_t udp_socket_driver = {
+        "udp_bsd_socket",
+        NULL, /* udp_socket_register */
+        NULL, /* udp_socket_connect */
+        NULL, /* udp_socket_bind */
+        NULL, /* udp_socket_send */
+        NULL, /* udp_socket_sendto */
+        NULL, /* udp_socket_close */
+};
 /*---------------------------------------------------------------------------*/
 /** @} */

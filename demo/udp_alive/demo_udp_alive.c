@@ -72,6 +72,8 @@
 #include "uip-debug.h"
 #include "uip-udp-packet.h"
 
+#include "udp-socket.h"
+
 /*==============================================================================
                                          MACROS
  =============================================================================*/
@@ -109,12 +111,12 @@ typedef enum e_udpAliveStateS {
 /*==============================================================================
                           LOCAL VARIABLE DECLARATIONS
  =============================================================================*/
+static  struct  udp_socket          *pst_udp_socket;
+static  struct  uip_udp_conn        *ps_udpDesc = NULL;
 
-static struct uip_udp_conn*  ps_udpDesc = NULL;
+static  uip_ip6addr_t               s_destAddr;
 
-static uip_ip6addr_t         s_destAddr;
-
-struct etimer                e_udpAliveTmr;
+struct  etimer                      e_udpAliveTmr;
 
 /*==============================================================================
                                LOCAL FUNCTION PROTOTYPES
@@ -216,13 +218,19 @@ static int8_t _udpAlive_sendMsg(void)
         case E_UDPALIVE_CONNECT:
             if (ps_udpDesc == NULL)
             {
-                ps_udpDesc = udp_new(&s_destAddr,i_destPort,NULL);
+                udp_socket_register(pst_udp_socket, NULL, NULL);
+                udp_socket_connect(pst_udp_socket, &s_destAddr, i_destPort);
+                //ps_udpDesc = udp_new(&s_destAddr,i_destPort,NULL);
 
             } else {
                 if (memcmp(&ps_udpDesc->ripaddr, &s_destAddr, IP6ADDRSIZE))
                 {
-                    uip_udp_remove(ps_udpDesc);
-                    ps_udpDesc = udp_new(&s_destAddr,i_destPort,NULL);
+                    udp_socket_close(pst_udp_socket);
+                    //uip_udp_remove(ps_udpDesc);
+
+                    udp_socket_register(pst_udp_socket, NULL, NULL);
+                    udp_socket_connect(pst_udp_socket, &s_destAddr, i_destPort);
+                    //ps_udpDesc = udp_new(&s_destAddr,i_destPort,NULL);
                     LOG_WARN("Reconnection to server");
                 }
             }
@@ -255,7 +263,8 @@ static int8_t _udpAlive_sendMsg(void)
                 e_state = E_UDPALIVE_SENDMSG;
             break;
         case E_UDPALIVE_SENDMSG:
-            uip_udp_packet_send(ps_udpDesc, ac_buf, strlen(ac_buf));
+            udp_socket_send(pst_udp_socket, ac_buf, strlen(ac_buf));
+            //uip_udp_packet_send(ps_udpDesc, ac_buf, strlen(ac_buf));
             e_state = E_UDPALIVE_DONE;
             break;
         case E_UDPALIVE_DONE:

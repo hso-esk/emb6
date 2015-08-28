@@ -46,6 +46,7 @@
 static void relisten(struct tcp_socket *s);
 
 LIST(socketlist);
+
 /*---------------------------------------------------------------------------*/
 void _tcp_sock_callback(c_event_t c_event, p_data_t p_data);
 
@@ -394,4 +395,12 @@ tcp_socket_max_sendlen(struct tcp_socket *s)
 {
   return s->output_data_maxlen - s->output_data_len;
 }
+/*---------------------------------------------------------------------------*/
+const s_nsSocket_t tcp_socket_driver = {
+        "tcp_bsd_socket",
+        NULL,
+        NULL,
+        NULL,
+        NULL
+};
 /*---------------------------------------------------------------------------*/
