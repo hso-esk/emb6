@@ -64,8 +64,9 @@
 /*---------------------------------------------------------------------------*/
 /*- Variables ---------------------------------------------------------------*/
 /*---------------------------------------------------------------------------*/
+static  struct  udp_socket          st_udp_socket;
 static  struct  udp_socket          *pst_udp_socket;
-static  struct  uip_udp_conn        *udp_conn = NULL;
+//static  struct  uip_udp_conn        *udp_conn = NULL;
 static          uint16_t            current_mid = 0;
 
 coap_status_t erbium_status_code = NO_ERROR;
@@ -281,12 +282,16 @@ coap_get_variable(const char *buffer, size_t length, const char *name,
 void
 coap_init_connection(uint16_t port)
 {
+    /* set the pointer to the udp-socket */
+    pst_udp_socket = &st_udp_socket;
+
     /* new connection with remote host */
     udp_socket_register(pst_udp_socket, NULL, NULL);
     udp_socket_bind(pst_udp_socket, port);
     //udp_conn = udp_new(NULL, 0, NULL);
     //udp_bind(udp_conn, port);
-    PRINTF("Listening on port %u\n", uip_ntohs(udp_conn->lport));
+    PRINTF("Listening on port %u\n",
+           uip_ntohs(pst_udp_socket->udp_conn->lport));
 
     /* initialize transaction ID */
     current_mid = random_rand();
@@ -430,8 +435,9 @@ coap_send_message(uip_ipaddr_t *addr, uint16_t port, uint8_t *data,
                   uint16_t length)
 {
   /* configure connection to reply to client */
-  uip_ipaddr_copy(&udp_conn->ripaddr, addr);
-  udp_conn->rport = port;
+  udp_socket_connect(pst_udp_socket, addr, port);
+  //uip_ipaddr_copy(&udp_conn->ripaddr, addr);
+  //udp_conn->rport = port;
 
   udp_socket_send(pst_udp_socket, data, length);
   //uip_udp_packet_send(udp_conn, data, length);
@@ -439,8 +445,11 @@ coap_send_message(uip_ipaddr_t *addr, uint16_t port, uint8_t *data,
   PRINTF("-sent UDP datagram (%u)-\n", length);
 
   /* restore server socket to allow data from any node */
-  memset(&udp_conn->ripaddr, 0, sizeof(udp_conn->ripaddr));
-  udp_conn->rport = 0;
+  memset( &pst_udp_socket->udp_conn->ripaddr, 0,
+          sizeof(pst_udp_socket->udp_conn->ripaddr));
+
+  udp_socket_bind(pst_udp_socket, 0);
+  //udp_conn->rport = 0;
 }
 /*---------------------------------------------------------------------------*/
 coap_status_t

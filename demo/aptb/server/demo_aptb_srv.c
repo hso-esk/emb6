@@ -104,8 +104,9 @@
 /*==============================================================================
                           STRUCTURES AND OTHER TYPEDEFS
  =============================================================================*/
-static struct   udp_socket      *pst_udp_socket;
-static struct   uip_udp_conn    *pst_conn;
+static  struct  udp_socket          st_udp_socket;
+static struct   udp_socket          *pst_udp_socket;
+//static struct   uip_udp_conn      *pst_conn;
 /*==============================================================================
                           LOCAL VARIABLE DECLARATIONS
  =============================================================================*/
@@ -137,11 +138,13 @@ static  void        _aptb_sendMsg(uint64_t seqID)
     pc_buf[0] = EMB6_DEMO_APTB_CODE;
     sprintf(pc_buf+1, "%d | OK", seqID);
     LOG_INFO("Respond with message: %s",pc_buf);
-    udp_socket_connect(pst_udp_socket, &UIP_IP_BUF->srcipaddr, UIP_HTONS(__CLIENT_PORT));
+    udp_socket_connect(pst_udp_socket,
+                       &UIP_IP_BUF->srcipaddr,
+                       UIP_HTONS(__CLIENT_PORT));
     udp_socket_send(pst_udp_socket, pc_buf, strlen(pc_buf));
     //uip_ipaddr_copy(&pst_conn->ripaddr, &UIP_IP_BUF->srcipaddr);
     //uip_udp_packet_send(pst_conn, pc_buf, strlen(pc_buf));
-    uip_create_unspecified(&pst_conn->ripaddr);
+    uip_create_unspecified(&pst_udp_socket->udp_conn->ripaddr);
 } /* _aptb_sendMsg */
 
 static  uint64_t    _aptb_str2Seq(char * str)
@@ -194,13 +197,16 @@ static    void _aptb_callback(c_event_t c_event, p_data_t p_data) {
 /*----------------------------------------------------------------------------*/
 int8_t demo_aptbInit(void)
 {
+    /* set the pointer to the udp-socket */
+    pst_udp_socket = &st_udp_socket;
+
     udp_socket_register(pst_udp_socket, NULL, NULL);
     udp_socket_bind(pst_udp_socket, UIP_HTONS(__SERVER_PORT));
     //pst_conn = udp_new(NULL, UIP_HTONS(__CLIENT_PORT), NULL);
     //udp_bind(pst_conn, UIP_HTONS(__SERVER_PORT));
     LOG_INFO("local/remote port %u/%u",
-            UIP_HTONS(pst_conn->lport),
-            UIP_HTONS(pst_conn->rport));
+            UIP_HTONS(pst_udp_socket->udp_conn->lport),
+            UIP_HTONS(pst_udp_socket->udp_conn->rport));
     LOG_INFO("UDP server started");
     evproc_regCallback(EVENT_TYPE_TCPIP,_aptb_callback);
     LOG_INFO("APTB demo initialized, waiting for connection...");

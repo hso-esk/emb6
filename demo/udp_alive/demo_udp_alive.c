@@ -111,6 +111,7 @@ typedef enum e_udpAliveStateS {
 /*==============================================================================
                           LOCAL VARIABLE DECLARATIONS
  =============================================================================*/
+static  struct  udp_socket          st_udp_socket;
 static  struct  udp_socket          *pst_udp_socket;
 static  struct  uip_udp_conn        *ps_udpDesc = NULL;
 
@@ -341,6 +342,9 @@ uint8_t demo_udpAliveConf(s_ns_t* pst_netStack)
 /*---------------------------------------------------------------------------*/
 int8_t demo_udpAliveInit(void)
 {
+    /* set the pointer to the udp-socket */
+    pst_udp_socket = &st_udp_socket;
+
     /* set periodic timer */
     etimer_set( &e_udpAliveTmr,SEND_INTERVAL * bsp_get(E_BSP_GET_TRES),
                 _udpAlive_callback);

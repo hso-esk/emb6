@@ -81,16 +81,16 @@
                             EVENT_TYPE_SLIP_POLL, \
                             EVENT_TYPE_PCK_LL }
 
-#define EVENT_TYPE_NONE            0x00    ///< No event
-#define EVENT_TYPE_TIMER_EXP    0x01    ///< Timer expired event
-#define EVENT_TYPE_TCP_POLL        0x02    ///< TCP poll event
-#define EVENT_TYPE_UDP_POLL        0x03    ///< UDP poll event
-#define EVENT_TYPE_PCK_INPUT    0x04     ///< New packet in buffer event
-#define EVENT_TYPE_ICMP6        0x05    ///< New icmp6 packet event
-#define EVENT_TYPE_TCPIP        0x06    ///< New tcpip event
-#define EVENT_TYPE_SLIP_POLL    0x07    ///< Process slip handler
-#define OBLIG_EVENT_PRIOR        0x0a
-#define EVENT_TYPE_PCK_LL        0x0a    ///< New low level packet received
+#define EVENT_TYPE_NONE             0x00    ///< No event
+#define EVENT_TYPE_TIMER_EXP        0x01    ///< Timer expired event
+#define EVENT_TYPE_TCP_POLL         0x02    ///< TCP poll event
+#define EVENT_TYPE_UDP_POLL         0x03    ///< UDP poll event
+#define EVENT_TYPE_PCK_INPUT        0x04     ///< New packet in buffer event
+#define EVENT_TYPE_ICMP6            0x05    ///< New icmp6 packet event
+#define EVENT_TYPE_TCPIP            0x06    ///< New tcpip event
+#define EVENT_TYPE_SLIP_POLL        0x07    ///< Process slip handler
+#define OBLIG_EVENT_PRIOR           0x0a
+#define EVENT_TYPE_PCK_LL           0x0a    ///< New low level packet received
 
 
 #define EVENT_TYPES_COUNT        8         ///< Counter of events in /ref EVENT_TYPES macro

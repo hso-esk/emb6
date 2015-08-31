@@ -112,9 +112,10 @@
 /*==============================================================================
                           STRUCTURES AND OTHER TYPEDEFS
  =============================================================================*/
+static  struct  udp_socket          st_udp_socket;
 static  struct  udp_socket          *pst_udp_socket;
+//static  struct  uip_udp_conn        *pst_conn;
 
-static  struct  uip_udp_conn        *pst_conn;
 static          uip_ipaddr_t        un_server_ipaddr = {.u16={SERVER_IP_ADDR} };
         struct  etimer              s_et;
 static          uint32_t            l_lastSeqId = 0;
@@ -269,6 +270,8 @@ int8_t demo_aptbInit(void)
                 un_server_ipaddr.u16[4],un_server_ipaddr.u16[5],\
                 un_server_ipaddr.u16[6],un_server_ipaddr.u16[7]);
 
+    /* set the pointer to the udp-socket */
+    pst_udp_socket = &st_udp_socket;
     udp_socket_register(pst_udp_socket, NULL, NULL);
     udp_socket_bind(pst_udp_socket, UIP_HTONS(__CLIENT_PORT));
     //pst_conn = udp_new(NULL, UIP_HTONS(__SERVER_PORT), NULL);
@@ -278,8 +281,8 @@ int8_t demo_aptbInit(void)
     //uip_debug_ipaddr_print(&un_server_ipaddr);
     LOG_RAW("\n\r");
     LOG_INFO("local/remote port %u/%u",
-            UIP_HTONS(pst_conn->lport),
-            UIP_HTONS(pst_conn->rport));
+            UIP_HTONS(pst_udp_socket->udp_conn->lport),
+            UIP_HTONS(pst_udp_socket->udp_conn->rport));
     //printf("Set dudp timer %p\n\r",&s_et);
     etimer_set(&s_et, SEND_INTERVAL, loc_aptb_callback);
     evproc_regCallback(EVENT_TYPE_TCPIP,loc_aptb_callback);

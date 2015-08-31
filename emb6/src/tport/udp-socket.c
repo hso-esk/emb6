@@ -52,6 +52,7 @@ init(void)
   if(!inited) {
     inited = 1;
     //process_start(&udp_socket_process, NULL);
+    evproc_regCallback(EVENT_TYPE_TCPIP,_udp_sock_callback);
   }
 }
 /*---------------------------------------------------------------------------*/
