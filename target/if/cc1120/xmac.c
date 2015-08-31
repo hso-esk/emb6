@@ -5,8 +5,9 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 #include "include.h"
-#include "tmr.h"
+#include "lib_tmr.h"
 
 
 /*
@@ -29,12 +30,14 @@ typedef uint8_t XMAC_TMR_EVENT;
 *                               LOCAL VARIABLES
 ********************************************************************************
 */
-static UTIL_TMR         XMAC_TmrPowerup;
-static UTIL_TMR         XMAC_TmrRx1;
-static UTIL_TMR         XMAC_TmrTx1;
-static XMAC_TMR_EVENT   XMAC_TmrEvent;
-static uint8_t          XMAC_Ack[XMAC_FRAME_ACK_LEN];
-static uint8_t          XMAC_SP [XMAC_FRAME_SP_LEN ];
+static LIB_TMR          Xmac_TmrPowerup;
+static LIB_TMR          Xmac_Tmr1W;
+static LIB_TMR          Xmac_Tmr1Scan;
+static LIB_TMR          Xmac_Tmr1TxSP;
+static STK_ERR          Xmac_LastErrTx;
+static XMAC_TMR_EVENT   Xmac_TmrEvent;
+static uint8_t          Xmac_Ack[XMAC_FRAME_ACK_LEN];
+static uint8_t          Xmac_SP [XMAC_FRAME_SP_LEN ];
 
 
 /*
@@ -56,11 +59,11 @@ static void Xmac_TmrIsr1Scan (void *p_arg);
 static void Xmac_TmrIsr1WFP (void *p_arg);
 static void Xmac_TmrIsr1TxSP (void *p_arg);
 static void Xmac_TmrIsr1WFA (void *p_arg);
-static void Xmac_Tmr1Start (UTIL_TMR *p_tmr, UTIL_TMR_TICK timeout, FNCT_VOID isr_handler);
+static void Xmac_Tmr1Start (LIB_TMR *p_tmr, LIB_TMR_TICK timeout, FNCT_VOID isr_handler);
 static void Xmac_TimestampCreate (void);
 static void Xmac_TimestampProcess (uint8_t *p_data, uint8_t len);
 
-static void Xmac_TaskTx (void);
+static void Xmac_SendPayload (void);
 
 #if 0
 static void Xmac_TaskRx (void);
@@ -74,9 +77,9 @@ static void Xmac_TaskSniff (void);
 */
 STK_DEV_ID  XmacDestId;
 STK_DEV_ID  XmacDevId;
-XMAC_STATE  XmacState = XMAC_STATE_CREATED;
+XMAC_STATE  XmacState = XMAC_STATE_NONE;
 
-const XMAC_DRV_API XmacDrv = {
+XMAC_DRV_API XmacDrv = {
     "XMAC",
     XmacInit,
     XmacOn,
@@ -101,14 +104,14 @@ const XMAC_DRV_API XmacDrv = {
  * @param timeout
  * @param isr_handler
  */
-static void Xmac_Tmr1Start (UTIL_TMR *p_tmr, UTIL_TMR_TICK timeout, FNCT_VOID isr_handler)
+static void Xmac_Tmr1Start (LIB_TMR *p_tmr, LIB_TMR_TICK timeout, FNCT_VOID isr_handler)
 {
+    Tmr_Stop(p_tmr);
     Tmr_Create (p_tmr,
-                UTIL_TMR_TYPE_ONE_SHORT,
+                LIB_TMR_TYPE_ONE_SHOT,
                 timeout,
                 isr_handler,
                 p_tmr);
-
     Tmr_Start (p_tmr);
 }
 
@@ -118,19 +121,11 @@ static void Xmac_Tmr1Start (UTIL_TMR *p_tmr, UTIL_TMR_TICK timeout, FNCT_VOID is
  */
 static void Xmac_TmrIsrPowerup (void *p_arg)
 {
-    RADIO_ERR   radio_err;
-
-
     (void)&p_arg;
 
 
     if (XmacState == XMAC_STATE_SLEEP) {
-        XmacState  = XMAC_STATE_SCAN;
-
-        RadioDrv->On (&radio_err);
-        Xmac_Tmr1Start (&XMAC_TmrRx1,
-                         XMAC_TMR_SCAN_DURATION,
-                         Xmac_TmrIsr1Scan);
+        XmacState = XMAC_STATE_SCAN_STARTED;
     }
 }
 
@@ -140,12 +135,12 @@ static void Xmac_TmrIsrPowerup (void *p_arg)
  */
 static void Xmac_TmrIsr1Scan (void *p_arg)
 {
-    RADIO_ERR   radio_err;
+    (void)&p_arg;
 
 
-    /* Scan timeout expires */
-    RadioDrv->Off (&radio_err);
-    XmacState  = XMAC_STATE_SLEEP;
+    if (XmacState == XMAC_STATE_SCAN_WFSP) {
+        XmacState = XMAC_STATE_SCAN_DONE;
+    }
 }
 
 /**
@@ -154,15 +149,15 @@ static void Xmac_TmrIsr1Scan (void *p_arg)
  */
 static void Xmac_TmrIsr1WFP (void *p_arg)
 {
-    RADIO_IOC_VAL sync;
+    (void)&p_arg;
 
 
-    if (XmacState == XMAC_STATE_RX) {
-        XmacState = XMAC_STATE_SLEEP;
-        sync = RADIO_IOC_VAL_SYNC_SP;
-        RadioDrv->Ioctl (RADIO_IOC_CMD_SYNC_SET, &sync, NULL);
-
-        /* TODO set MCU to sleep mode */
+    /*
+     * As Wait-For-Payload timeout expires, XMAC shall terminate the idle
+     * listening process.
+     */
+    if (XmacState == XMAC_STATE_RX_WFP) {
+        XmacState = XMAC_STATE_SCAN_DONE;
     }
 }
 
@@ -172,11 +167,13 @@ static void Xmac_TmrIsr1WFP (void *p_arg)
  */
 static void Xmac_TmrIsr1WFA (void *p_arg)
 {
-    if (XmacState == XMAC_STATE_TXSPWFA) {
-        XmacState = XMAC_STATE_TXSP;
-    }
+    (void)&p_arg;
 
-    if (XmacState == XMAC_STATE_TXWFA) {
+
+    if (XmacState == XMAC_STATE_TX_SPWFA) {
+        XmacState = XMAC_STATE_TX_SP;
+    }
+    if (XmacState == XMAC_STATE_TX_PWFA) {
         XmacState = XMAC_STATE_SLEEP;
     }
 }
@@ -187,10 +184,11 @@ static void Xmac_TmrIsr1WFA (void *p_arg)
  */
 static void Xmac_TmrIsr1TxSP (void *p_arg)
 {
-    if (XmacState == XMAC_STATE_TXSP) {
-        XmacState  = XMAC_STATE_SLEEP;
-        RadioDrv->Off (NULL);
-    }
+    (void)&p_arg;
+
+
+    XmacState = XMAC_STATE_TX_DONE;
+    Xmac_LastErrTx = STK_ERR_TX_TIMEOUT;
 }
 
 /**
@@ -201,9 +199,18 @@ static void Xmac_TmrIsr1TxSP (void *p_arg)
 static void Xmac_TimestampProcess (uint8_t *p_data, uint8_t len)
 {
     STK_DEV_ID      dev_id;
-    RADIO_IOC_VAL   sync;
 
-    if (XmacState == XMAC_STATE_SCAN) {
+    /*
+     * If the received timestamp is destined to us, XMAC goes to state
+     * XMAC_STATE_RX_SP. Afterwards it replies the packet originator with an ACK.
+     * Upon complete transmission of the ACK, the XMAC goes to state
+     * XMAC_STATE_RX_WFP for a time period of XMAC_TMR_WFP_TIMEOUT
+     *
+     * Otherwise, the received packet shall be discarded. XMAC terminates the
+     * idle listening process, going back to sleep mode.
+     */
+
+    if (XmacState == XMAC_STATE_SCAN_WFSP) {
         dev_id = (STK_DEV_ID) (p_data[0]     ) |
                  (STK_DEV_ID) (p_data[1] << 8);
         if (dev_id == XmacDevId) {
@@ -212,22 +219,10 @@ static void Xmac_TimestampProcess (uint8_t *p_data, uint8_t len)
                  * turning it off */
                 printf ("TODO: calculate sleeping time");
             } else {
-                /* TODO reply with an ACK before going back to sleep
-                 * until payload is completely received or RX timeout
-                 * expires */
-                RadioDrv->Send (XMAC_Ack, XMAC_FRAME_ACK_LEN, NULL);
-
-                XmacState = XMAC_STATE_RX;
-                sync = RADIO_IOC_VAL_SYNC_DATA;
-                RadioDrv->Ioctl (RADIO_IOC_CMD_SYNC_SET, &sync, NULL);
-
-                Xmac_Tmr1Start (&XMAC_TmrRx1,
-                                 XMAC_TMR_WFP_TIMEOUT,
-                                 Xmac_TmrIsr1WFP);
+                XmacState = XMAC_STATE_RX_SP;
             }
-
         } else {
-            printf ("TODO: set MCU to sleep mode");
+            XmacState = XMAC_STATE_SCAN_DONE;
         }
     }
 }
@@ -237,9 +232,92 @@ static void Xmac_TimestampProcess (uint8_t *p_data, uint8_t len)
  */
 static void Xmac_TimestampCreate (void)
 {
-    XMAC_SP[1] = XmacDestId;
-    XMAC_SP[2] = XmacDestId >> 8;
-    XMAC_SP[3] = 0;
+    Xmac_SP[1] = XmacDestId;
+    Xmac_SP[2] = XmacDestId >> 8;
+    Xmac_SP[3] = 0;
+}
+
+
+/**
+ * @brief   XMAC goes to sleep state.
+ */
+static void Xmac_GotoSleep (void)
+{
+    RADIO_ERR       radio_err;
+    RADIO_IOC_VAL   sync_word;
+
+
+    Tmr_Stop (&Xmac_Tmr1W);
+    Tmr_Stop (&Xmac_Tmr1Scan);
+    Tmr_Stop (&Xmac_Tmr1TxSP);
+
+    sync_word = RADIO_IOC_VAL_SYNC_SP;
+    RadioDrv->Ioctl (RADIO_IOC_CMD_SYNC_SET, &sync_word, &radio_err);
+    RadioDrv->Off(&radio_err);
+    XmacState = XMAC_STATE_SLEEP;
+}
+
+
+/**
+ * @brief   Prepare for an idle listening process
+ */
+static void Xmac_PrepareIdleListening (void)
+{
+    RADIO_ERR       radio_err;
+
+
+    /*
+     * Prepare for an idle listening:
+     * (s1) turn RF on
+     * (s2) start scan timer only when the RF is ready, and then XMAC
+     *      goes to state XMAC_STATE_SCAN_WFSP.
+     *      If RF is not ready, the idle listening attempt shall be
+     *      terminated and XMAC goes straightforward to state
+     *      XMAC_STATE_SCAN_DONE
+     *
+     */
+    RadioDrv->On (&radio_err);
+    if (radio_err == RADIO_ERR_NONE) {
+        XmacState = XMAC_STATE_SCAN_WFSP;
+        Xmac_Tmr1Start(&Xmac_Tmr1Scan,
+                        XMAC_TMR_SCAN_DURATION,
+                        Xmac_TmrIsr1Scan);
+    } else {
+        XmacState = XMAC_STATE_SCAN_DONE;
+    }
+}
+
+/**
+ * @brief   Reply the timestamp originator with an ACK
+ */
+static void Xmac_SendSPAck (void)
+{
+    RADIO_ERR       err;
+    RADIO_IOC_VAL   sync_word;
+
+
+    /*
+     * XMAC shall issue the radio transceiver synchronization words upon successful
+     * transmission of the ACK. Scan timer should be terminated here also even
+     * if it probably expires before/while the smart preamble reception.
+     * If the radio fails to change synchronization words, XMAC should terminate
+     * the idle listening process.
+     */
+    RadioDrv->Send (Xmac_Ack, XMAC_FRAME_ACK_LEN, &err);
+    if (err == RADIO_ERR_NONE) {
+        sync_word = RADIO_IOC_VAL_SYNC_DATA;
+        RadioDrv->Ioctl (RADIO_IOC_CMD_SYNC_SET, &sync_word, &err);
+        if (err == RADIO_ERR_NONE) {
+            XmacState = XMAC_STATE_RX_WFP;
+            Xmac_Tmr1Start(&Xmac_Tmr1W,
+                            XMAC_TMR_WFP_TIMEOUT,
+                            Xmac_TmrIsr1WFP);
+        } else {
+            XmacState = XMAC_STATE_SCAN_WFSP;
+        }
+    } else {
+        XmacState = XMAC_STATE_SCAN_WFSP;
+    }
 }
 
 #if 0
@@ -263,18 +341,18 @@ static void Xmac_TaskSniff (void)
 /**
  * @brief Smart preamble transmission handler
  */
-static void Xmac_TaskTxSP (void)
+static void Xmac_SendSmartPreamble (void)
 {
     RADIO_ERR   radio_err;
 
 
-    RadioDrv->Send (XMAC_SP, XMAC_FRAME_SP_LEN, &radio_err);
+    RadioDrv->Send (Xmac_SP, XMAC_FRAME_SP_LEN, &radio_err);
     if (radio_err != RADIO_ERR_NONE) {
-        /* TODO inform upper layer of failed transmission attempt */
-        XmacState = XMAC_STATE_SLEEP;
+        XmacState = XMAC_STATE_TX_DONE;
+        Xmac_LastErrTx = STK_ERR_TX_RADIO_SEND;
     } else {
-        XmacState = XMAC_STATE_TXSPWFA;
-        Xmac_Tmr1Start (&XMAC_TmrRx1,
+        XmacState = XMAC_STATE_TX_SPWFA;
+        Xmac_Tmr1Start (&Xmac_Tmr1W,
                          XMAC_TMR_WFA_TIMEOUT,
                          Xmac_TmrIsr1WFA);
     }
@@ -284,7 +362,7 @@ static void Xmac_TaskTxSP (void)
 /**
  * @brief Packet transmission handler
  */
-static void Xmac_TaskTx (void)
+static void Xmac_SendPayload (void)
 {
     RADIO_ERR       radio_err;
     RADIO_IOC_VAL   sync;
@@ -292,14 +370,15 @@ static void Xmac_TaskTx (void)
 
     sync = RADIO_IOC_VAL_SYNC_DATA;
     RadioDrv->Ioctl (RADIO_IOC_CMD_SYNC_SET, &sync, &radio_err);
-
-    RadioDrv->Send (StkBuf, StkBufLen, &radio_err);
-    if (radio_err != RADIO_ERR_NONE) {
-        /* TODO inform upper layer of failed transmission attempt */
-        XmacState = XMAC_STATE_SLEEP;
-    } else {
-        XmacState = XMAC_STATE_IDLE;
+    if (radio_err == RADIO_ERR_NONE) {
+        RadioDrv->Send (StkBuf, StkBufLen, &radio_err);
+        if (radio_err != RADIO_ERR_NONE) {
+            Xmac_LastErrTx = STK_ERR_TX_RADIO_SEND;
+        } else {
+            Xmac_LastErrTx = STK_ERR_NONE;
+        }
     }
+    XmacState = XMAC_STATE_TX_DONE;
 }
 
 
@@ -319,6 +398,8 @@ static void XmacTask (void *p_arg)
 
     (void)&p_arg;
 
+
+    RadioDrv->Task(NULL);
 
     /*
      * Create TaskTx, TaskRx, TaskSniff
@@ -342,39 +423,62 @@ static void XmacTask (void *p_arg)
      **/
 
     switch (XmacState) {
-        case XMAC_STATE_CREATED:
-            /* TODO XMAC is just created */
+        case XMAC_STATE_NONE:
+            /*
+             * XMAC hasn't been initialized yet
+             */
             break;
 
         case XMAC_STATE_SLEEP:
-            /* TODO turn RF transceiver off */
+            /*
+             * XMAC is sleeping, waiting for packet transmission requests from
+             * the next higher layer or periodic idle listening events.
+             * In this state, the radio transceiver must be switched off
+             */
             break;
 
         case XMAC_STATE_IDLE:
             break;
 
-                                                    /* Idle listening           */
-        case XMAC_STATE_SCAN:
-            break;
 
+        case XMAC_STATE_SCAN_STARTED:
+            Xmac_PrepareIdleListening();
+            LED_RX_ON();
+            break;
         case XMAC_STATE_SCAN_WFSP:
             break;
-
-        case XMAC_STATE_RX:
-            /* TODO receive smart preamble or data payload */
+        case XMAC_STATE_SCAN_DONE:
+            Xmac_GotoSleep();
+            LED_RX_OFF();
             break;
 
-                                                    /* Packet transmission      */
-        case XMAC_STATE_TXSP:
-            Xmac_TaskTxSP ();
+
+        case XMAC_STATE_RX_SP:
+            Xmac_SendSPAck();
+            break;
+        case XMAC_STATE_RX_WFP:
+            break;
+        case XMAC_STATE_RX_P:
+            HighMacDrv->IsrRx (StkBuf, StkBufLen, NULL);
+            Xmac_GotoSleep();
             break;
 
-        case XMAC_STATE_TXSPWFA:
+
+        case XMAC_STATE_TX_SP:
+            LED_TX_ON();
+            Xmac_SendSmartPreamble ();
+            break;
+        case XMAC_STATE_TX_SPWFA:
+            break;
+        case XMAC_STATE_TX_P:
+            Xmac_SendPayload ();
+            break;
+        case XMAC_STATE_TX_DONE:
+            LED_TX_OFF();
+            HighMacDrv->CbTx(Xmac_LastErrTx);
+            Xmac_GotoSleep();
             break;
 
-        case XMAC_STATE_TX:
-            Xmac_TaskTx ();
-            break;
 
         default:
             break;
@@ -391,28 +495,38 @@ static void XmacTask (void *p_arg)
  */
 static void XmacInit (STK_ERR *p_err)
 {
+#if STKCFG_ARG_CHK_EN
+    if (p_err == (STK_ERR *)0) {
+        return;
+    }
+#endif
+
+
+    *p_err = STK_ERR_NONE;
+
     XmacState = XMAC_STATE_SLEEP;
+    Xmac_LastErrTx = STK_ERR_NONE;
+    Xmac_Ack[0] = XMAC_FRAME_TYPE_ACK;
+    Xmac_Ack[1] = XmacDevId;
+    Xmac_Ack[2] = XmacDevId >> 8;
+    Xmac_SP[0]  = XMAC_FRAME_TYPE_TIMESTAMP;
+    Xmac_SP[1]  = 0;
+    Xmac_SP[2]  = 0;
+    Xmac_SP[3]  = 0;
 
-    XMAC_Ack[0] = XMAC_FRAME_TYPE_ACK;
-    XMAC_Ack[1] = XmacDevId;
-    XMAC_Ack[2] = XmacDevId >> 8;
+    memset(&Xmac_Tmr1TxSP, 0, sizeof(Xmac_Tmr1TxSP));
+    memset(&Xmac_Tmr1Scan, 0, sizeof(Xmac_Tmr1Scan));
+    memset(&Xmac_Tmr1W, 0, sizeof(Xmac_Tmr1W));
+    memset(&Xmac_TmrPowerup, 0, sizeof(Xmac_TmrPowerup));
 
-    XMAC_SP[0]  = XMAC_FRAME_TYPE_TIMESTAMP;
-    XMAC_SP[1]  = 0;
-    XMAC_SP[2]  = 0;
-    XMAC_SP[3]  = 0;
-
-    Tmr_Create (&XMAC_TmrPowerup,
-                 UTIL_TMR_TYPE_PERIODIC,
+#ifdef XMAC_RX
+    Tmr_Create (&Xmac_TmrPowerup,
+                 LIB_TMR_TYPE_PERIODIC,
                  XMAC_TMR_POWERUP_INTERVAL,
                  Xmac_TmrIsrPowerup,
-                &XMAC_TmrEvent);
-
-    Tmr_Start (&XMAC_TmrPowerup);
-
-    if (p_err) {
-        *p_err = STK_ERR_NONE;
-    }
+                &Xmac_TmrEvent);
+    Tmr_Start (&Xmac_TmrPowerup);
+#endif
 }
 
 /**
@@ -423,20 +537,37 @@ static void XmacInit (STK_ERR *p_err)
  */
 static void XmacSend (STK_FNCT_VOID fnct, void *arg, STK_ERR *p_err)
 {
-    if (XmacState == XMAC_STATE_SLEEP) {
-        XmacState  = XMAC_STATE_TXSP;
-        /* Transmit smart preamble. Upon complete reception of ACK in
-         * correspond to the smart preamble, data packet is immediately sent */
-        Xmac_Tmr1Start (&XMAC_TmrTx1,
-                         XMAC_TMR_TXSP_TIMEOUT,
-                         Xmac_TmrIsr1TxSP);
-        Xmac_TimestampCreate ();
+    RADIO_ERR   radio_err;
 
-    } else {
-        if (p_err) {
-            *p_err = STK_ERR_BUSY;
-        }
+
+#if STKCFG_ARG_CHK_EN
+    if (p_err == (STK_ERR *)0) {
+        return;
     }
+#endif
+
+
+    /* 
+     * Transmit smart preamble. Upon complete reception of ACK in
+     * correspond to the smart preamble, data packet is immediately sent 
+     */
+    if (XmacState != XMAC_STATE_SLEEP) {
+        *p_err = STK_ERR_BUSY;
+        return;
+    }
+
+    RadioDrv->On(&radio_err);
+    if (radio_err != RADIO_ERR_NONE) {
+        *p_err = STK_ERR_BUSY;
+    }
+
+    XmacState = XMAC_STATE_TX_SP;
+    Xmac_Tmr1Start (&Xmac_Tmr1TxSP,
+                     XMAC_TMR_TXSP_TIMEOUT,
+                     Xmac_TmrIsr1TxSP);
+    Xmac_TimestampCreate ();
+    Xmac_LastErrTx = STK_ERR_NONE;
+    *p_err = STK_ERR_NONE;
 }
 
 /**
@@ -467,32 +598,24 @@ static void XmacIoctl (STK_IOC_CMD cmd, STK_IOC_VAL *p_val, STK_ERR *p_err)
  */
 static void XmacIsrRx (uint8_t *p_data, uint8_t len, STK_ERR *p_err)
 {
-    RADIO_IOC_VAL sync;
-
-
     switch (*p_data) {
         case XMAC_FRAME_TYPE_TIMESTAMP:
             Xmac_TimestampProcess (++p_data, len);
             break;
 
         case XMAC_FRAME_TYPE_ACK:
-            if (XmacState == XMAC_STATE_TXSPWFA) {
-                XmacState  = XMAC_STATE_TX;
+            if (XmacState == XMAC_STATE_TX_SPWFA) {
+                XmacState = XMAC_STATE_TX_P;
+                Tmr_Stop(&Xmac_Tmr1TxSP);
+                Tmr_Stop(&Xmac_Tmr1W);
             }
             break;
 
         default:
-            /* A data packet has arrived */
-
-            if (XmacState == XMAC_STATE_RX) {
-                XmacState = XMAC_STATE_SLEEP;
-                Tmr_Stop (&XMAC_TmrRx1);
-
-                sync = RADIO_IOC_VAL_SYNC_SP;
-                RadioDrv->Ioctl (RADIO_IOC_CMD_SYNC_SET, &sync, NULL);
-                RadioDrv->Off (NULL);
-
-                HighMacDrv->IsrRx (p_data, len, NULL);
+            if (XmacState == XMAC_STATE_RX_WFP) {
+                XmacState = XMAC_STATE_RX_P;
+                StkBufLen = len;
+                memcpy(StkBuf, p_data, len);
             }
 
             break;
