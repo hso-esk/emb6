@@ -38,8 +38,33 @@
  *
  */
 /**
- * \file
- *         A brief description the file
+ * \file   logger.h
+ *
+ * \author Artem Yushev artem.yushev@hs-offenburg.de
+ *
+ * \brief  There are 3 levels of LOG macros. Please try to follow advices
+ *         LOG_XXXX  - to output "MUST HAVE" information. For example errors.
+ *         LOG1_XXXX - to output supplementary information which is usefull
+ *                     for debugging; e.g. entry points to the functions,
+ *                     report about function process execution
+ *         LOG2_XXXX - to output data which normally consumes a lot of space;
+ *                     e.g., to printout packets or raw data and to annotate
+ *                     this output
+ *
+ *         You can control logger behavior combining two methods
+ *         INDIVIDUAL module:
+ *              Following construction for your SOURCE file should be defined:
+ *              #define     LOGGER_ENABLE        LOGGER_MODULENAME
+ *              #include    "logger.h"
+ *              Where <LOGGER_MODULENAME> can be defined externally
+ *              Moreover in that external include you may specify LOGGER_LEVEL,
+ *              which instructs logger
+ *         GLOBAL:
+ *              LOGGER_LEVEL specify up to what level messages will be shown
+ *              for example if in your module you've written
+ *              LOG2_HEXDUMP(<data to output>) and global LOGGER_LEVEL is set
+ *              to 2 then you data won't be shown, but if you used
+ *              LOG1_HEXDUMP(<data to output>) instead data will be printed out
  */
 #ifndef LOGGER_H_
 #define LOGGER_H_
@@ -48,14 +73,6 @@
 #include <stdio.h>
 #include "hexdump.h"
 
-//#define LOG_OK(msg, ...)        do { if (LOGGER_ENABLE) printf("%lu |   ok | %5s | " msg "\r\n",bsp_getSec(), LOGGER_SUBSYSTEM, ##__VA_ARGS__); }while (0)
-//#define LOG_ERR(msg, ...)       do { if (LOGGER_ENABLE) printf("%lu |  err | %5s | " msg "\r\n",bsp_getSec(), LOGGER_SUBSYSTEM, ##__VA_ARGS__); }while (0)
-//#define LOG_INFO(msg, ...)      do { if (LOGGER_ENABLE) printf("%lu | info | %5s | " msg "\r\n",bsp_getSec(), LOGGER_SUBSYSTEM, ##__VA_ARGS__); }while (0)
-//#define LOG_WARN(msg, ...)      do { if (LOGGER_ENABLE) printf("%lu | warn | %5s | " msg "\r\n",bsp_getSec(), LOGGER_SUBSYSTEM, ##__VA_ARGS__); }while (0)
-//#define LOG_FAIL(msg, ...)      do { if (LOGGER_ENABLE) printf("%lu | fail | %5s | " msg "\r\n",bsp_getSec(), LOGGER_SUBSYSTEM, ##__VA_ARGS__); }while (0)
-//#define LOG_DBG(msg, ...)       do { if (LOGGER_ENABLE) printf("%lu |  dbg | %5s | " msg "\r\n",bsp_getSec(), LOGGER_SUBSYSTEM, ##__VA_ARGS__); }while (0)
-//#define LOG_RAW(...)            do { if (LOGGER_ENABLE) printf(__VA_ARGS__);}while (0)
-//#define LOG_HEXDUMP(buf, len)   do { if (LOGGER_ENABLE) hexdump(buf,len);}while (0)
 
 
 

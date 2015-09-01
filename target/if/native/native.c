@@ -44,17 +44,17 @@
 /*============================================================================*/
 /*! \file   native.c
 
-    \author Artem Yushev artem.yushev@hs-offenburg.de
+ \author Artem Yushev artem.yushev@hs-offenburg.de
 
-    \brief  Fake radio transceiver based on LCM IPC.
+ \brief  Fake radio transceiver based on LCM IPC.
 
-   \version 1.1
-*/
+ \version 1.1
+ */
 /*============================================================================*/
 
 /*==============================================================================
-                                 INCLUDE FILES
-==============================================================================*/
+ INCLUDE FILES
+ ==============================================================================*/
 #include "emb6.h"
 #include "emb6_conf.h"
 #include "bsp.h"
@@ -64,54 +64,50 @@
 #include <errno.h>
 #include <sys/time.h>
 /* Ligthweight Communication and Marshalling (LCM) is a library to perform
-communication between processes  */
+ communication between processes  */
 #include <lcm/lcm.h>
 /*==============================================================================
-                                     MACROS
-==============================================================================*/
+ MACROS
+ ==============================================================================*/
 #define     LOGGER_ENABLE        LOGGER_RADIO
 #include    "logger.h"
-#define     CHANNEL_NAME         "EMB6_NATIVE"
+#define     FAKERADIO_CHANNEL         "EMB6_FAKERADIO"
+#define     __ADDRLEN__    2
 /*==============================================================================
-                                     ENUMS
-==============================================================================*/
+ ENUMS
+ ==============================================================================*/
 
 /*==============================================================================
-                          VARIABLE DECLARATIONS
-==============================================================================*/
-static  struct  etimer          tmr;
+ VARIABLE DECLARATIONS
+ ==============================================================================*/
+static struct etimer tmr;
 /* Pointer to the lmac structure */
-static  s_nsLowMac_t*           p_lmac = NULL;
-extern  uip_lladdr_t            uip_lladdr;
-static  lcm_t*                  pgs_lcm;
+static s_nsLowMac_t* p_lmac = NULL;
+extern uip_lladdr_t uip_lladdr;
+static lcm_t* ps_lcm;
 /*==============================================================================
-                                GLOBAL CONSTANTS
-==============================================================================*/
+ GLOBAL CONSTANTS
+ ==============================================================================*/
 /*==============================================================================
-                           LOCAL FUNCTION PROTOTYPES
-==============================================================================*/
+ LOCAL FUNCTION PROTOTYPES
+ ==============================================================================*/
 /* Radio transceiver local functions */
-static    void      _printAndExit(const char* rpc_reason);
-static    int8_t    _native_on(void);
-static    int8_t    _native_off(void);
-static    int8_t    _native_init(s_ns_t* p_netStack);
-static    int8_t    _native_send(const void *pr_payload, uint8_t c_len);
-static    void      _native_read(const lcm_recv_buf_t *rbuf, const char * channel,
-                                void * p_macAddr);
-static    void      _native_handler(c_event_t c_event, p_data_t p_data);
+static void _printAndExit( const char* rpc_reason );
+static int8_t _native_on( void );
+static int8_t _native_off( void );
+static int8_t _native_init( s_ns_t* p_netStack );
+static int8_t _native_send( const void *pr_payload, uint8_t c_len );
+static void _native_read( const lcm_recv_buf_t *rbuf, const char * channel,
+        void * p_macAddr );
+static void _native_handler( c_event_t c_event, p_data_t p_data );
 /*==============================================================================
-                         STRUCTURES AND OTHER TYPEDEFS
-==============================================================================*/
-const s_nsIf_t  native_driver = {
-        "native_driver",
-        _native_init,
-        _native_send,
-        _native_on,
-        _native_off,
-};
+ STRUCTURES AND OTHER TYPEDEFS
+ ==============================================================================*/
+const s_nsIf_t native_driver = { "native_driver", _native_init, _native_send,
+        _native_on, _native_off, };
 /*==============================================================================
-                                LOCAL FUNCTIONS
-==============================================================================*/
+ LOCAL FUNCTIONS
+ ==============================================================================*/
 /*----------------------------------------------------------------------------*/
 /** \brief  This function reports the error and exits back to the shell.
  *
@@ -119,13 +115,13 @@ const s_nsIf_t  native_driver = {
  *  \return Node
  */
 /*----------------------------------------------------------------------------*/
-static void _printAndExit(const char* rpc_reason)
+static void _printAndExit( const char* rpc_reason )
 {
-    fputs(strerror(errno),stderr);
-    fputs(": ",stderr);
-    fputs(rpc_reason, stderr);
-    fputc('\n',stderr);
-    exit(1);
+    fputs( strerror( errno ), stderr );
+    fputs( ": ", stderr );
+    fputs( rpc_reason, stderr );
+    fputc( '\n', stderr );
+    exit( 1 );
 }
 
 #ifdef __NATIVEROLE_BRSERVER__
@@ -138,39 +134,43 @@ static void _printAndExit(const char* rpc_reason)
 /*----------------------------------------------------------------------------*/
 static int8_t _native_init(s_ns_t* p_netStack)
 {
-    linkaddr_t      un_addr;
-    uint8_t         l_error;
+    linkaddr_t un_addr;
+    uint8_t l_error;
     /* Please refer to lcm_create() reference. Deafult parameter is taken 
-       from there */
-    pgs_lcm = lcm_create(NULL);
+     from there */
+    ps_lcm = lcm_create(NULL);
 
-    if(!pgs_lcm)
-      return 1;
-    
+    if(!ps_lcm)
+    return 1;
+
     LOG_INFO("%s\n\r","native driver was initialized");
 
-    if (mac_phy_config.mac_address == NULL) {
+    if (mac_phy_config.mac_address == NULL)
+    {
         _printAndExit("MAC address is NULL");
     }
 
-    lcm_subscribe (pgs_lcm, CHANNEL_NAME, _native_read,
-                   &mac_phy_config.mac_address);
+    lcm_subscribe (ps_lcm, FAKERADIO_CHANNEL, _native_read,
+            NULL);
 
     /* Initialise global lladdr structure with a given mac */
-    memcpy((void *)&un_addr.u8,  &mac_phy_config.mac_address, 8);
+    memcpy((void *)&un_addr.u8, &mac_phy_config.mac_address, 8);
     memcpy(&uip_lladdr.addr, &un_addr.u8, 8);
     linkaddr_set_node_addr(&un_addr);
 
-    LOG_INFO("MAC address %x:%x:%x:%x:%x:%x:%x:%x",    \
-            un_addr.u8[0],un_addr.u8[1],\
-            un_addr.u8[2],un_addr.u8[3],\
-	    un_addr.u8[4],un_addr.u8[5],	\
+    LOG_INFO("MAC address %x:%x:%x:%x:%x:%x:%x:%x",
+            un_addr.u8[0],un_addr.u8[1],
+            un_addr.u8[2],un_addr.u8[3],
+            un_addr.u8[4],un_addr.u8[5],
             un_addr.u8[6],un_addr.u8[7]);
 
-    if (p_netStack->lmac != NULL) {
+    if (p_netStack->lmac != NULL)
+    {
         p_lmac = p_netStack->lmac;
         l_error = 1;
-    } else {
+    }
+    else
+    {
         _printAndExit("Bad lmac pointer");
     }
 
@@ -188,54 +188,55 @@ static int8_t _native_init(s_ns_t* p_netStack)
  *  \return int8_t        Status code.
  */
 /*----------------------------------------------------------------------------*/
-static int8_t _native_init(s_ns_t* p_netStack)
+static int8_t _native_init( s_ns_t* p_netStack )
 {
-    linkaddr_t      un_addr;
-    uint8_t         l_error;
-    LOG_INFO("Try to initialize Broadcasting Client for native radio driver");
+    linkaddr_t un_addr;
+    uint8_t l_error;
+    LOG_INFO( "Try to initialize Broadcasting Client for native radio driver" );
 
     /* Please refer to lcm_create() reference. Deafult parameter is taken
-       from there */
-    pgs_lcm = lcm_create(NULL);
+     from there */
+    ps_lcm = lcm_create( NULL );
 
-    if(!pgs_lcm)
-      return 1;
+    if( !ps_lcm )
+        return 1;
 
-    lcm_subscribe (pgs_lcm, CHANNEL_NAME, _native_read, NULL);
+    lcm_subscribe( ps_lcm, FAKERADIO_CHANNEL, _native_read, NULL );
 
-    LOG_INFO("%s\n\r","native driver was initialized");
+    LOG_INFO( "%s\n\r", "native driver was initialized" );
 
-    if (mac_phy_config.mac_address == NULL) {
-        _printAndExit("MAC address is NULL");
+    if( mac_phy_config.mac_address == NULL )
+    {
+        _printAndExit( "MAC address is NULL" );
     }
 
     /* Initialise global lladdr structure with a given mac */
-    memcpy((void *)&un_addr.u8,  &mac_phy_config.mac_address, 8);
-    memcpy(&uip_lladdr.addr, &un_addr.u8, 8);
-    linkaddr_set_node_addr(&un_addr);
+    memcpy( (void *)&un_addr.u8, &mac_phy_config.mac_address, 8 );
+    memcpy( &uip_lladdr.addr, &un_addr.u8, 8 );
+    linkaddr_set_node_addr( &un_addr );
 
-    LOG_INFO("MAC address %x:%x:%x:%x:%x:%x:%x:%x",    \
-            un_addr.u8[0],un_addr.u8[1],\
-            un_addr.u8[2],un_addr.u8[3],\
-            un_addr.u8[4],un_addr.u8[5],\
-            un_addr.u8[6],un_addr.u8[7]);
+    LOG_INFO( "MAC address %x:%x:%x:%x:%x:%x:%x:%x", un_addr.u8[0],
+            un_addr.u8[1], un_addr.u8[2], un_addr.u8[3], un_addr.u8[4],
+            un_addr.u8[5], un_addr.u8[6], un_addr.u8[7] );
 
-    if (p_netStack->lmac != NULL) {
+    if( p_netStack->lmac != NULL )
+    {
         p_lmac = p_netStack->lmac;
         l_error = 1;
-    } else {
-        _printAndExit("Bad lmac pointer");
+    }
+    else
+    {
+        _printAndExit( "Bad lmac pointer" );
     }
 
     /* Start the packet receive process */
-    etimer_set(&tmr, 10, _native_handler);
-    LOG2_INFO("set %p for %p callback\n\r",&tmr, &_native_handler);
-    LOG_WARN("Don't forget to destroy lcm object!");
+    etimer_set( &tmr, 10, _native_handler );
+    LOG2_INFO( "set %p for %p callback\n\r", &tmr, &_native_handler );
+    LOG_WARN( "Don't forget to destroy lcm object!" );
     return l_error;
 } /* _native_init() */
 #endif
 
-#define __ADDRLEN__    2
 /*----------------------------------------------------------------------------*/
 /** \brief  NATIVE transport message send
  *          Idea behind is that we concatenate to payload last two bytes of a
@@ -245,20 +246,22 @@ static int8_t _native_init(s_ns_t* p_netStack)
  *  \return int8_t        Status code.
  */
 /*----------------------------------------------------------------------------*/
-static int8_t _native_send(const void *pr_payload, uint8_t c_len)
+static int8_t _native_send( const void *pr_payload, uint8_t c_len )
 {
-    uint8_t* pc_frame = malloc(sizeof(uint8_t)*(c_len + __ADDRLEN__));
-    if (pc_frame == NULL) {
-        LOG_ERR("Insufficient memory");
+    uint8_t* pc_frame = malloc( sizeof(uint8_t) * ( c_len + __ADDRLEN__ ) );
+    if( pc_frame == NULL )
+    {
+        LOG_ERR( "Insufficient memory" );
         return RADIO_TX_ERR;
     }
     /* Add two last bytes of MAC address to the beginning of a frame */
     *pc_frame = uip_lladdr.addr[6];
-    *(pc_frame + 1) = uip_lladdr.addr[7];
-    memmove(pc_frame+__ADDRLEN__,pr_payload,c_len);
-    int status = lcm_publish (pgs_lcm, CHANNEL_NAME, pc_frame, c_len + __ADDRLEN__);
+    *( pc_frame + 1 ) = uip_lladdr.addr[7];
+    memmove( pc_frame + __ADDRLEN__, pr_payload, c_len );
+    int status = lcm_publish( ps_lcm, FAKERADIO_CHANNEL, pc_frame,
+            c_len + __ADDRLEN__ );
     /* Free allocated memmory */
-    free(pc_frame);
+    free( pc_frame );
     if( status == -1 )
     {
         LOG_ERR( "Send packet failed" );
@@ -266,8 +269,8 @@ static int8_t _native_send(const void *pr_payload, uint8_t c_len)
     }
     else
     {
-        LOG_OK("TX packet [%d]", c_len );
-        LOG2_HEXDUMP(pr_payload,c_len);
+        LOG_OK( "TX packet [%d]", c_len );
+        LOG2_HEXDUMP( pr_payload, c_len );
 
         return RADIO_TX_OK;
     }
@@ -283,36 +286,42 @@ static int8_t _native_send(const void *pr_payload, uint8_t c_len)
  *  \return void
  */
 /*----------------------------------------------------------------------------*/
-static void _native_read(const lcm_recv_buf_t *rps_rbuf, const char * rpc_channel,
-		       void * userdata)
+static void _native_read( const lcm_recv_buf_t *rps_rbuf,
+        const char * rpc_channel, void * userdata )
 {
-    uint16_t  i_dSize = rps_rbuf->data_size;
+    uint16_t i_dSize = rps_rbuf->data_size;
 
     /* Clear buffer where to store received payload */
     packetbuf_clear();
 
     /* Check whether recieved packet is not too long */
-    if (i_dSize > PACKETBUF_SIZE) {
-        LOG_ERR("Received packet too long");
-    } else {
+    if( i_dSize > PACKETBUF_SIZE )
+    {
+        LOG_ERR( "Received packet too long" );
+    }
+    else
+    {
         /* If first two bytes of the received frame match with our
-	 * MAC address then discard a frame
-	 */
-        if ((*((uint8_t *)rps_rbuf->data) != uip_lladdr.addr[6]) &&
-            (*((uint8_t *)rps_rbuf->data + 1) != uip_lladdr.addr[7]))
+         * MAC address then discard a frame
+         */
+        if( ( *( (uint8_t *)rps_rbuf->data )     != uip_lladdr.addr[6] ) &&
+            ( *( (uint8_t *)rps_rbuf->data + 1 ) != uip_lladdr.addr[7] ) )
         {
-	    memcpy(packetbuf_dataptr(),rps_rbuf->data + __ADDRLEN__, i_dSize - __ADDRLEN__);
-	    LOG_OK("RX packet [%d] from 0x%02X:0x%02X",
-		   i_dSize,
-		   *(uint8_t *)rps_rbuf->data,
-		   *((uint8_t *)rps_rbuf->data + 1));
-            LOG2_HEXDUMP(packetbuf_dataptr(),i_dSize - __ADDRLEN__);
-            if((rps_rbuf->data_size > 0) && (p_lmac != NULL)) {
-                packetbuf_set_datalen(i_dSize - __ADDRLEN__);
+            memcpy( packetbuf_dataptr(), rps_rbuf->data + __ADDRLEN__,
+                    i_dSize - __ADDRLEN__ );
+            LOG_OK( "RX packet [%d] from 0x%02X:0x%02X", i_dSize,
+                    *(uint8_t * )rps_rbuf->data,
+                    *( (uint8_t * )rps_rbuf->data + 1 ) );
+            LOG2_HEXDUMP( packetbuf_dataptr(), i_dSize - __ADDRLEN__ );
+            if( ( rps_rbuf->data_size > 0 ) && ( p_lmac != NULL ) )
+            {
+                packetbuf_set_datalen( i_dSize - __ADDRLEN__ );
                 p_lmac->input();
-            } else {
-	        LOG_ERR("Failed to receive packet");
-	    }
+            }
+            else
+            {
+                LOG_ERR( "Failed to receive packet" );
+            }
         }
     }
 } /* _native_read() */
@@ -322,11 +331,10 @@ static void _native_read(const lcm_recv_buf_t *rps_rbuf, const char * rpc_channe
  *  \return 0
  */
 /*----------------------------------------------------------------------------*/
-static int8_t _native_on(void)
+static int8_t _native_on( void )
 {
-  return 0;
+    return 0;
 } /* _native_on() */
-
 
 /*----------------------------------------------------------------------------*/
 /** \brief  NATIVE transport wrapper function.
@@ -334,11 +342,10 @@ static int8_t _native_on(void)
  *  \return 0
  */
 /*----------------------------------------------------------------------------*/
-static int8_t _native_off(void)
+static int8_t _native_off( void )
 {
-  return 0;
-}  /* _native_off() */
-
+    return 0;
+} /* _native_off() */
 
 /*----------------------------------------------------------------------------*/
 /** \brief  NATIVE transport handler for periodic polling
@@ -348,7 +355,7 @@ static int8_t _native_off(void)
  *  \return void
  */
 /*----------------------------------------------------------------------------*/
-static void _native_handler(c_event_t c_event, p_data_t p_data)
+static void _native_handler( c_event_t c_event, p_data_t p_data )
 {
     int32_t lcm_fd;
     struct timeval s_tv;
@@ -356,33 +363,32 @@ static void _native_handler(c_event_t c_event, p_data_t p_data)
     s_tv.tv_usec = 10;
     fd_set fds;
 
-    if (etimer_expired(&tmr))
+    if( etimer_expired( &tmr ) )
     {
         /* We can't use lcm_handle trigger every time, as
          * it's a blocking operation. We should instead check whether a lcm file
          * descriptor is available for reading. We put 10 usec as a timeout.
-	 */
-        lcm_fd = lcm_get_fileno(pgs_lcm);
-        FD_ZERO(&fds);
-        FD_SET(lcm_fd, &fds);
+         */
+        lcm_fd = lcm_get_fileno( ps_lcm );
+        FD_ZERO( &fds );
+        FD_SET( lcm_fd, &fds );
 
-        select(lcm_fd + 1, &fds, 0, 0, &s_tv);
-	/* If descriptor is available for reading then there is a incoming data
-	 * to read. 
-	 */
-	if ( FD_ISSET(lcm_fd, &fds)) {
-            lcm_handle(pgs_lcm);
+        select( lcm_fd + 1, &fds, 0, 0, &s_tv );
+        /* If descriptor is available for reading then there is a incoming data
+         * to read.
+         */
+        if( FD_ISSET( lcm_fd, &fds ) )
+        {
+            lcm_handle( ps_lcm );
         }
 
-	/* Restart a timer anyway. */
-        etimer_restart(&tmr);
+        /* Restart a timer anyway. */
+        etimer_restart( &tmr );
 
     }
 }
 
-
-
 /*==============================================================================
-                                API FUNCTIONS
-==============================================================================*/
+ API FUNCTIONS
+ ==============================================================================*/
 /** @} */
