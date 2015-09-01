@@ -330,16 +330,17 @@ coap_init_engine(void)
   PRINTF("Starting %s receiver...\n\r", coap_rest_implementation.name);
   rest_activate_resource(&res_well_known_core, ".well-known/core");
 
-  coap_init_connection(SERVER_LISTEN_PORT);
-  evproc_regCallback(EVENT_TYPE_TCPIP, coap_engine_callback);
+  coap_init_connection(SERVER_LISTEN_PORT, coap_receive);
+  //evproc_regCallback(EVENT_TYPE_TCPIP, coap_engine_callback);
 }
 /*---------------------------------------------------------------------------*/
 void 
 coap_engine_callback(c_event_t c_event, p_data_t p_data)
 {
-    if(c_event == EVENT_TYPE_TCPIP) {
-      coap_receive();
-    } else if(c_event == EVENT_TYPE_TIMER_EXP) {
+    //if(c_event == EVENT_TYPE_TCPIP) {
+    //  coap_receive();
+    //} else
+    if(c_event == EVENT_TYPE_TIMER_EXP) {
       /* retransmissions are handled here */
       coap_check_transactions();
     }

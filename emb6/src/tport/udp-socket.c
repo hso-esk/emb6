@@ -40,9 +40,17 @@
 
 #include <string.h>
 
+void _udp_sock_callback(c_event_t c_event, p_data_t p_data);
+
 static uint8_t buf[UIP_BUFSIZE];
 
 #define UIP_IP_BUF   ((struct uip_udpip_hdr *)&uip_buf[UIP_LLH_LEN])
+
+#define     LOGGER_ENABLE        LOGGER_CORE
+#if            LOGGER_ENABLE     ==     TRUE
+#define        LOGGER_SUBSYSTEM    "core"
+#endif
+#include    "logger.h"
 
 /*---------------------------------------------------------------------------*/
 static void
@@ -72,6 +80,7 @@ udp_socket_register(struct udp_socket *c,
   //c->p = PROCESS_CURRENT();
   //PROCESS_CONTEXT_BEGIN(&udp_socket_process);
   c->udp_conn = udp_new(NULL, 0, c);
+  LOG_INFO("socket ptr = %p:%p", c, input_callback);
   //PROCESS_CONTEXT_END();
 
   if(c->udp_conn == NULL) {
@@ -155,7 +164,7 @@ void _udp_sock_callback(c_event_t c_event, p_data_t p_data)
 {
     struct udp_socket *c;
 
-    if(c_event == EVENT_TYPE_TIMER_EXP) {
+    if(c_event == EVENT_TYPE_TCPIP) {
         /* An appstate pointer is passed to use from the IP stack
            through the 'data' pointer. We registered this appstate when
            we did the udp_new() call in udp_socket_register() as the
@@ -166,6 +175,7 @@ void _udp_sock_callback(c_event_t c_event, p_data_t p_data)
         /* Defensive coding: although the appstate *should* be non-null
            here, we make sure to avoid the program crashing on us. */
         if(c != NULL) {
+            LOG_INFO("socket ptr from callback = %p:%p", c, c->input_callback);
             /* If we were called because of incoming data, we should call
                the reception callback. */
             if(uip_newdata()) {

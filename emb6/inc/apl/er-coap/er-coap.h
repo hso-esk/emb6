@@ -43,6 +43,7 @@
 #include "uip.h"
 #include "er-coap-constants.h"
 #include "er-coap-conf.h"
+#include "udp-socket.h"
 
 /* sanity check for configured values */
 #define COAP_MAX_PACKET_SIZE  (COAP_MAX_HEADER_SIZE + REST_MAX_CHUNK_SIZE)
@@ -180,7 +181,7 @@ typedef struct {
 extern coap_status_t erbium_status_code;
 extern char *coap_error_message;
 
-void coap_init_connection(uint16_t port);
+void coap_init_connection(uint16_t port, udp_socket_input_callback_t pf_coap_receive);
 uint16_t coap_get_mid(void);
 
 void coap_init_message(void *packet, coap_message_type_t type, uint8_t code,

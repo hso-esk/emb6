@@ -65,12 +65,13 @@
 /*- Variables ---------------------------------------------------------------*/
 /*---------------------------------------------------------------------------*/
 static  struct  udp_socket          st_udp_socket;
-static  struct  udp_socket          *pst_udp_socket;
-//static  struct  uip_udp_conn        *udp_conn = NULL;
+        struct  udp_socket*         pst_udp_socket;
+
+//static struct   uip_udp_conn*       udp_conn = NULL;
 static          uint16_t            current_mid = 0;
 
-coap_status_t erbium_status_code = NO_ERROR;
-char    *coap_error_message = "";
+                coap_status_t       erbium_status_code = NO_ERROR;
+                char*               coap_error_message = "";
 /*---------------------------------------------------------------------------*/
 /*- Local helper functions --------------------------------------------------*/
 /*---------------------------------------------------------------------------*/
@@ -280,13 +281,13 @@ coap_get_variable(const char *buffer, size_t length, const char *name,
 /*- Internal API ------------------------------------------------------------*/
 /*---------------------------------------------------------------------------*/
 void
-coap_init_connection(uint16_t port)
+coap_init_connection(uint16_t port, udp_socket_input_callback_t pf_coap_receive)
 {
     /* set the pointer to the udp-socket */
     pst_udp_socket = &st_udp_socket;
 
     /* new connection with remote host */
-    udp_socket_register(pst_udp_socket, NULL, NULL);
+    udp_socket_register(pst_udp_socket, NULL, pf_coap_receive);
     udp_socket_bind(pst_udp_socket, port);
     //udp_conn = udp_new(NULL, 0, NULL);
     //udp_bind(udp_conn, port);
@@ -314,19 +315,19 @@ coap_init_message(void *packet, coap_message_type_t type, uint8_t code,
 
     coap_pkt->type = type;
     coap_pkt->code = code;
-        coap_pkt->mid = mid;
+    coap_pkt->mid = mid;
 }
 /*---------------------------------------------------------------------------*/
 size_t
 coap_serialize_message(void *packet, uint8_t *buffer)
 {
-    coap_packet_t *const coap_pkt = (coap_packet_t *)packet;
-    uint8_t *option;
-    unsigned int current_number = 0;
+  coap_packet_t *const coap_pkt = (coap_packet_t *)packet;
+  uint8_t *option;
+  unsigned int current_number = 0;
 
-    /* Initialize */
-    coap_pkt->buffer = buffer;
-    coap_pkt->version = 1;
+  /* Initialize */
+  coap_pkt->buffer = buffer;
+  coap_pkt->version = 1;
 
   PRINTF("-Serializing MID %u to %p, ", coap_pkt->mid, coap_pkt->buffer);
 
@@ -434,22 +435,22 @@ void
 coap_send_message(uip_ipaddr_t *addr, uint16_t port, uint8_t *data,
                   uint16_t length)
 {
-  /* configure connection to reply to client */
-  udp_socket_connect(pst_udp_socket, addr, port);
-  //uip_ipaddr_copy(&udp_conn->ripaddr, addr);
-  //udp_conn->rport = port;
+    /* configure connection to reply to client */
+    udp_socket_connect(pst_udp_socket, addr, port);
+    //uip_ipaddr_copy(&udp_conn->ripaddr, addr);
+    //udp_conn->rport = port;
 
-  udp_socket_send(pst_udp_socket, data, length);
-  //uip_udp_packet_send(udp_conn, data, length);
+    udp_socket_send(pst_udp_socket, data, length);
+    //uip_udp_packet_send(udp_conn, data, length);
 
-  PRINTF("-sent UDP datagram (%u)-\n", length);
+    PRINTF("-sent UDP datagram (%u)-\n", length);
 
-  /* restore server socket to allow data from any node */
-  memset( &pst_udp_socket->udp_conn->ripaddr, 0,
-          sizeof(pst_udp_socket->udp_conn->ripaddr));
+    /* restore server socket to allow data from any node */
+    memset( &pst_udp_socket->udp_conn->ripaddr, 0,
+            sizeof(pst_udp_socket->udp_conn->ripaddr));
 
-  udp_socket_bind(pst_udp_socket, 0);
-  //udp_conn->rport = 0;
+    udp_socket_bind(pst_udp_socket, 0);
+    //udp_conn->rport = 0;
 }
 /*---------------------------------------------------------------------------*/
 coap_status_t
