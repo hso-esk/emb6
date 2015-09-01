@@ -98,6 +98,9 @@
 #include "demo_mqtt.h"
 #endif
 
+#if DEMO_USE_TESTSUITE
+#include "testsuite.h"
+#endif
 
 #if DEMO_USE_EXTIF
 #include "slip_radio.h"
@@ -179,6 +182,10 @@ static uint8_t loc_demoAppsConf(s_ns_t* pst_netStack)
     demo_mqttConf(pst_netStack);
     #endif
 
+    #if DEMO_USE_TESTSUITE
+    demo_testsuiteConf(pst_netStack);
+    #endif
+
     if (pst_netStack == NULL)
         return 0;
     else
@@ -226,6 +233,12 @@ static uint8_t loc_demoAppsInit(void)
 
     #if DEMO_USE_MQTT
     if (!demo_mqttInit()) {
+        return 0;
+    }
+    #endif
+
+    #if DEMO_USE_TESTSUITE
+    if (!demo_testsuiteInit()) {
         return 0;
     }
     #endif

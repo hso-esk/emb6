@@ -7,7 +7,6 @@ client = {
 	],
 # C global defines
 	'defines' : [
-		'_BSD_SOURCE',
 	],
 # GCC flags
 	'cflags' : [
