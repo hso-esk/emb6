@@ -1,5 +1,5 @@
+<img src="https://raw.github.com/hso-esk/_meta/master/emb6.png" width="300">
 <img src="https://raw.github.com/hso-esk/_meta/master/HS-Logo_blau_60.png" width="300">
-<img src="https://raw.github.com/hso-esk/_meta/master/ei-fb_rgb_300.jpg" width="300">
 
 emb6
 ========
