@@ -103,8 +103,12 @@ static void _native_handler( c_event_t c_event, p_data_t p_data );
 /*==============================================================================
  STRUCTURES AND OTHER TYPEDEFS
  ==============================================================================*/
-const s_nsIf_t native_driver = { "native_driver", _native_init, _native_send,
-        _native_on, _native_off, };
+const s_nsIf_t native_driver = {
+        "native_driver",
+        _native_init,
+        _native_send,
+        _native_on,
+        _native_off, };
 /*==============================================================================
  LOCAL FUNCTIONS
  ==============================================================================*/
@@ -199,7 +203,7 @@ static int8_t _native_init( s_ns_t* p_netStack )
     ps_lcm = lcm_create( NULL );
 
     if( !ps_lcm )
-        return 1;
+        return 0;
 
     lcm_subscribe( ps_lcm, FAKERADIO_CHANNEL, _native_read, NULL );
 
