@@ -68,6 +68,7 @@ typedef void (*STK_FNCT_VOID) (void *p_arg);
 #define STK_ERR_BUSY                    (STK_ERR) ( 1u )
 #define STK_ERR_TX_RADIO_SEND           (STK_ERR) ( 2u )
 #define STK_ERR_TX_TIMEOUT              (STK_ERR) ( 3u )
+#define STK_ERR_TX_NOPACK               (STK_ERR) ( 4u )
 
 
 /**
@@ -172,8 +173,10 @@ typedef struct mac_drv_api      MAC_DRV_API;
 
 struct mac_drv_api {
     char     *Name;
+
     void    (*IsrRx) (uint8_t *p_data, uint8_t len, STK_ERR *p_err);            /*!< Packet reception handler   */
-    void    (*CbTx) (STK_ERR err);                                             /*!< Packet reception handler   */
+
+    void    (*CbTx ) (STK_ERR err);                                             /*!< Packet reception handler   */
 };
 
 
@@ -262,8 +265,8 @@ extern  uint8_t StkBufLen;
  */
 #define XMAC_TMR_POWERUP_INTERVAL   (LIB_TMR_TICK) (  500u )    /*!< 500ms */
 #define XMAC_TMR_SCAN_DURATION      (LIB_TMR_TICK) (   25u )    /*!<   5ms */
-#define XMAC_TMR_WFP_TIMEOUT        (LIB_TMR_TICK) (   15u )    /*!<   3ms */
-#define XMAC_TMR_WFA_TIMEOUT        (LIB_TMR_TICK) (   15u )    /*!<   3ms */
+#define XMAC_TMR_WFP_TIMEOUT        (LIB_TMR_TICK) (   20u )    /*!<   3ms */
+#define XMAC_TMR_WFA_TIMEOUT        (LIB_TMR_TICK) (   20u )    /*!<   3ms */
 #define XMAC_TMR_TXSP_TIMEOUT       (LIB_TMR_TICK) (  600u )    /*!< 600ms */
 
 /**

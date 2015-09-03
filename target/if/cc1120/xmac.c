@@ -60,15 +60,15 @@ static void Xmac_TmrIsr1WFP (void *p_arg);
 static void Xmac_TmrIsr1TxSP (void *p_arg);
 static void Xmac_TmrIsr1WFA (void *p_arg);
 static void Xmac_Tmr1Start (LIB_TMR *p_tmr, LIB_TMR_TICK timeout, FNCT_VOID isr_handler);
-static void Xmac_TimestampCreate (void);
-static void Xmac_TimestampProcess (uint8_t *p_data, uint8_t len);
 
+static void Xmac_TimestampProcess (uint8_t *p_data, uint8_t len);
+static void Xmac_TimestampCreate (void);
+static void Xmac_GotoSleep (void);
+static void Xmac_PrepareIdleListening (void);
+static void Xmac_SendSPAck (void);
+static void Xmac_SendSmartPreamble (void);
 static void Xmac_SendPayload (void);
 
-#if 0
-static void Xmac_TaskRx (void);
-static void Xmac_TaskSniff (void);
-#endif
 
 /*
 ********************************************************************************
@@ -119,6 +119,7 @@ static void Xmac_Tmr1Start (LIB_TMR *p_tmr, LIB_TMR_TICK timeout, FNCT_VOID isr_
  * @brief Timer interrupt service routine handler
  * @param p_arg
  */
+#ifdef XMAC_RX
 static void Xmac_TmrIsrPowerup (void *p_arg)
 {
     (void)&p_arg;
@@ -128,6 +129,7 @@ static void Xmac_TmrIsrPowerup (void *p_arg)
         XmacState = XMAC_STATE_SCAN_STARTED;
     }
 }
+#endif
 
 /**
  * @brief Timer interrupt service routine handler
@@ -174,7 +176,8 @@ static void Xmac_TmrIsr1WFA (void *p_arg)
         XmacState = XMAC_STATE_TX_SP;
     }
     if (XmacState == XMAC_STATE_TX_PWFA) {
-        XmacState = XMAC_STATE_SLEEP;
+        XmacState = XMAC_STATE_TX_DONE;
+        Xmac_LastErrTx = STK_ERR_TX_NOPACK;
     }
 }
 
@@ -209,21 +212,20 @@ static void Xmac_TimestampProcess (uint8_t *p_data, uint8_t len)
      * Otherwise, the received packet shall be discarded. XMAC terminates the
      * idle listening process, going back to sleep mode.
      */
-
-    if (XmacState == XMAC_STATE_SCAN_WFSP) {
-        dev_id = (STK_DEV_ID) (p_data[0]     ) |
-                 (STK_DEV_ID) (p_data[1] << 8);
-        if (dev_id == XmacDevId) {
-            if (p_data[2]) {
-                /* TODO calculate sleeping time for the radio before
-                 * turning it off */
-                printf ("TODO: calculate sleeping time");
-            } else {
+    dev_id = (STK_DEV_ID) (p_data[0]     ) |
+             (STK_DEV_ID) (p_data[1] << 8);
+    if (dev_id == XmacDevId) {
+        if (p_data[2]) {
+            /* TODO calculate sleeping time for the radio before
+             * turning it off */
+            printf ("TODO: calculate sleeping time");
+        } else {
+            if (XmacState == XMAC_STATE_SCAN_WFSP) {
                 XmacState = XMAC_STATE_RX_SP;
             }
-        } else {
-            XmacState = XMAC_STATE_SCAN_DONE;
         }
+    } else {
+        XmacState = XMAC_STATE_SCAN_DONE;
     }
 }
 
@@ -278,10 +280,12 @@ static void Xmac_PrepareIdleListening (void)
      */
     RadioDrv->On (&radio_err);
     if (radio_err == RADIO_ERR_NONE) {
-        XmacState = XMAC_STATE_SCAN_WFSP;
-        Xmac_Tmr1Start(&Xmac_Tmr1Scan,
-                        XMAC_TMR_SCAN_DURATION,
-                        Xmac_TmrIsr1Scan);
+        if (XmacState == XMAC_STATE_SCAN_STARTED) {
+            XmacState = XMAC_STATE_SCAN_WFSP;
+            Xmac_Tmr1Start(&Xmac_Tmr1Scan,
+                            XMAC_TMR_SCAN_DURATION,
+                            Xmac_TmrIsr1Scan);
+        }
     } else {
         XmacState = XMAC_STATE_SCAN_DONE;
     }
@@ -308,35 +312,20 @@ static void Xmac_SendSPAck (void)
         sync_word = RADIO_IOC_VAL_SYNC_DATA;
         RadioDrv->Ioctl (RADIO_IOC_CMD_SYNC_SET, &sync_word, &err);
         if (err == RADIO_ERR_NONE) {
-            XmacState = XMAC_STATE_RX_WFP;
-            Xmac_Tmr1Start(&Xmac_Tmr1W,
-                            XMAC_TMR_WFP_TIMEOUT,
-                            Xmac_TmrIsr1WFP);
+            if (XmacState == XMAC_STATE_RX_SP) {
+                XmacState = XMAC_STATE_RX_WFP;
+                Xmac_Tmr1Start(&Xmac_Tmr1W,
+                                XMAC_TMR_WFP_TIMEOUT,
+                                Xmac_TmrIsr1WFP);
+            }
         } else {
             XmacState = XMAC_STATE_SCAN_WFSP;
         }
     } else {
-        XmacState = XMAC_STATE_SCAN_WFSP;
+        XmacState = XMAC_STATE_SCAN_DONE;
     }
 }
 
-#if 0
-/**
- * @brief Packet reception handler
- */
-static void Xmac_TaskRx (void)
-{
-
-}
-
-/**
- * @brief Periodic sniffing handler
- */
-static void Xmac_TaskSniff (void)
-{
-    XmacState = XMAC_STATE_SCAN_WFSP;
-}
-#endif
 
 /**
  * @brief Smart preamble transmission handler
@@ -351,10 +340,12 @@ static void Xmac_SendSmartPreamble (void)
         XmacState = XMAC_STATE_TX_DONE;
         Xmac_LastErrTx = STK_ERR_TX_RADIO_SEND;
     } else {
-        XmacState = XMAC_STATE_TX_SPWFA;
-        Xmac_Tmr1Start (&Xmac_Tmr1W,
-                         XMAC_TMR_WFA_TIMEOUT,
-                         Xmac_TmrIsr1WFA);
+        if (XmacState == XMAC_STATE_TX_SP) {
+            XmacState = XMAC_STATE_TX_SPWFA;
+            Xmac_Tmr1Start (&Xmac_Tmr1W,
+                             XMAC_TMR_WFA_TIMEOUT,
+                             Xmac_TmrIsr1WFA);
+        }
     }
 }
 
@@ -418,7 +409,7 @@ static void XmacTask (void *p_arg)
      * the event to pend and corresponding event handler, i.e
      * evproc_regCallback(EVENT_TYPE_PCK_LL,_rf230_callback);
      *
-     * The question now is: how fast does event process module perform?
+     * The question now is: how fast does event processing module perform?
      *
      **/
 
@@ -443,13 +434,13 @@ static void XmacTask (void *p_arg)
 
         case XMAC_STATE_SCAN_STARTED:
             Xmac_PrepareIdleListening();
-            LED_RX_ON();
+            //LED_RX_ON();
             break;
         case XMAC_STATE_SCAN_WFSP:
             break;
         case XMAC_STATE_SCAN_DONE:
             Xmac_GotoSleep();
-            LED_RX_OFF();
+            //LED_RX_OFF();
             break;
 
 
