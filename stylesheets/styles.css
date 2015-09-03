@@ -1,8 +1,10 @@
-@import url(https://fonts.googleapis.com/css?family=Lato:300italic,700italic,300,700);
+/*@import url(https://fonts.googleapis.com/css?family=Lato:300italic,700italic,300,700);*/
+@import url(https://fonts.googleapis.com/css?family=Cabin:500,500italic,400italic,400,700);
 
 body {
-  padding:50px;
-  font:14px/1.5 Lato, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    padding:50px;
+    font:17px/1.5 Cabin, sans-serif;
+  /*font:14px/1.5 Lato, "Helvetica Neue", Helvetica, Arial, sans-serif;*/
   color:#777;
   font-weight:300;
 }
