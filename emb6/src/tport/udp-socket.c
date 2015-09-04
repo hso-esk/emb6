@@ -109,7 +109,7 @@ udp_socket_bind(struct udp_socket *c,
   if(c == NULL || c->udp_conn == NULL) {
     return -1;
   }
-  udp_bind(c->udp_conn, UIP_HTONS(local_port));
+  udp_bind(c->udp_conn, /*ES UIP_HTONS*/(local_port));
 
   return 1;
 }
@@ -126,7 +126,7 @@ udp_socket_connect(struct udp_socket *c,
   if(remote_addr != NULL) {
     uip_ipaddr_copy(&c->udp_conn->ripaddr, remote_addr);
   }
-  c->udp_conn->rport = UIP_HTONS(remote_port);
+  c->udp_conn->rport = /*ES UIP_HTONS*/(remote_port);
   return 1;
 }
 /*---------------------------------------------------------------------------*/
@@ -154,7 +154,7 @@ udp_socket_sendto(struct udp_socket *c,
 
   if(c->udp_conn != NULL) {
     uip_udp_packet_sendto(c->udp_conn, data, datalen,
-                          to, UIP_HTONS(port));
+                          to, /*ES UIP_HTONS*/(port));
     return datalen;
   }
   return -1;
@@ -191,9 +191,9 @@ void _udp_sock_callback(c_event_t c_event, p_data_t p_data)
                     //PROCESS_CONTEXT_BEGIN(c->p);
                     c->input_callback(c, c->ptr,
                                       &(UIP_IP_BUF->srcipaddr),
-                                      UIP_HTONS(UIP_IP_BUF->srcport),
+                                      /*ES UIP_HTONS*/(UIP_IP_BUF->srcport),
                                       &(UIP_IP_BUF->destipaddr),
-                                      UIP_HTONS(UIP_IP_BUF->destport),
+                                      /*ES UIP_HTONS*/(UIP_IP_BUF->destport),
                                       buf, uip_datalen());
                     //PROCESS_CONTEXT_END();
                 }

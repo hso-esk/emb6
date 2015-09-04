@@ -67,7 +67,7 @@
 static  struct  udp_socket          st_udp_socket;
         struct  udp_socket*         pst_udp_socket;
 
-//static struct   uip_udp_conn*       udp_conn = NULL;
+//ES static struct   uip_udp_conn*       udp_conn = NULL;
 static          uint16_t            current_mid = 0;
 
                 coap_status_t       erbium_status_code = NO_ERROR;
@@ -289,10 +289,11 @@ coap_init_connection(uint16_t port, udp_socket_input_callback_t pf_coap_receive)
     /* new connection with remote host */
     udp_socket_register(pst_udp_socket, NULL, pf_coap_receive);
     udp_socket_bind(pst_udp_socket, port);
+    //udp_conn = pst_udp_socket->udp_conn;
     //udp_conn = udp_new(NULL, 0, NULL);
-    //udp_bind(udp_conn, port);
+    //udp_bind(pst_udp_socket->udp_conn, port); //ES1
     PRINTF("Listening on port %u\n",
-           uip_ntohs(pst_udp_socket->udp_conn->lport));
+           uip_ntohs(pst_udp_socket->udp_conn->lport)); //ES1
 
     /* initialize transaction ID */
     current_mid = random_rand();
@@ -437,20 +438,20 @@ coap_send_message(uip_ipaddr_t *addr, uint16_t port, uint8_t *data,
 {
     /* configure connection to reply to client */
     udp_socket_connect(pst_udp_socket, addr, port);
-    //uip_ipaddr_copy(&udp_conn->ripaddr, addr);
-    //udp_conn->rport = port;
+    //ES uip_ipaddr_copy(&pst_udp_socket->udp_conn->ripaddr, addr); //ES1
+    //ES pst_udp_socket->udp_conn->rport = port; //ES1
 
     udp_socket_send(pst_udp_socket, data, length);
-    //uip_udp_packet_send(udp_conn, data, length);
+    //ES uip_udp_packet_send(pst_udp_socket->udp_conn, data, length); //ES1
 
     PRINTF("-sent UDP datagram (%u)-\n", length);
 
     /* restore server socket to allow data from any node */
     memset( &pst_udp_socket->udp_conn->ripaddr, 0,
-            sizeof(pst_udp_socket->udp_conn->ripaddr));
+             sizeof(pst_udp_socket->udp_conn->ripaddr));
 
-    udp_socket_bind(pst_udp_socket, 0);
-    //udp_conn->rport = 0;
+    udp_socket_connect(pst_udp_socket, NULL, 0);
+    //ES pst_udp_socket->udp_conn->rport = 0; //ES1
 }
 /*---------------------------------------------------------------------------*/
 coap_status_t

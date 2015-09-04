@@ -217,14 +217,19 @@ static int8_t _udpAlive_sendMsg(void)
             }
             break;
         case E_UDPALIVE_CONNECT:
-            if (ps_udpDesc == NULL)
+            /* set the pointer to the udp-socket */
+            pst_udp_socket = &st_udp_socket;
+
+            //ES if (ps_udpDesc == NULL)
+            if (pst_udp_socket->udp_conn == NULL)
             {
                 udp_socket_register(pst_udp_socket, NULL, NULL);
                 udp_socket_connect(pst_udp_socket, &s_destAddr, i_destPort);
                 //ps_udpDesc = udp_new(&s_destAddr,i_destPort,NULL);
 
             } else {
-                if (memcmp(&ps_udpDesc->ripaddr, &s_destAddr, IP6ADDRSIZE))
+                //ES if (memcmp(&ps_udpDesc->ripaddr, &s_destAddr, IP6ADDRSIZE))
+                if (memcmp(&pst_udp_socket->udp_conn->ripaddr, &s_destAddr, IP6ADDRSIZE))
                 {
                     udp_socket_close(pst_udp_socket);
                     //uip_udp_remove(ps_udpDesc);
@@ -236,10 +241,12 @@ static int8_t _udpAlive_sendMsg(void)
                 }
             }
 
-            if (ps_udpDesc != NULL) {
+            //ES if (ps_udpDesc != NULL) {
+            if (pst_udp_socket->udp_conn != NULL) {
                 LOG_RAW("Using destination addr: ");
 #if LOGGER_ENABLE
-                uip_debug_ipaddr_print(&ps_udpDesc->ripaddr);
+                //ES uip_debug_ipaddr_print(&ps_udpDesc->ripaddr);
+                uip_debug_ipaddr_print(&pst_udp_socket->udp_conn->ripaddr);
 #endif
                 LOG_RAW("\n\r local/remote port %u/%u\r\n",
                        UIP_HTONS(ps_udpDesc->lport),
