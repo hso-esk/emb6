@@ -17,5 +17,8 @@ _*/
 *.swp
 *.bin
 
+.sconsign.dblite
+.settings/
+
 doc/html/
 doc/latex/
