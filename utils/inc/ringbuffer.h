@@ -39,7 +39,7 @@
  * can be contained in the buffer.
  * The buffer size must be a power of two.
  */
-#define RB_BLOCKS       6
+#define RB_BLOCKS       8
 #define RB_CLOCK_SIZE   128
 #define RB_SIZE         RB_BLOCKS * RB_CLOCK_SIZE
 
@@ -85,14 +85,14 @@ typedef struct s_ringb
  * This function can also be used to empty/reset the buffer.
  * @param ps_buf The ring buffer to initialize.
  */
-void ringb_init( s_ringb_t *ps_buf );
+void ringb_init( s_ringb_t *ps_rb );
 
 /**
  * Adds a atomic to a ring buffer.
  * @param ps_buf    The buffer in which the data should be placed.
  * @param data      The atomic to place.
  */
-void ringb_pusha( s_ringb_t *ps_buf, ringb_atom_t data );
+void ringb_pusha( s_ringb_t *ps_rb, ringb_atom_t data );
 
 /**
  * Adds an array of atomics to a ring buffer.
@@ -100,7 +100,7 @@ void ringb_pusha( s_ringb_t *ps_buf, ringb_atom_t data );
  * @param p_data    A pointer to the array of atomics to place in the queue.
  * @param sz_len    The size of the array.
  */
-void ringb_push( s_ringb_t *ps_buf, const ringb_atom_t* p_data,
+void ringb_push( s_ringb_t *ps_rb, const ringb_atom_t* p_data,
         ringb_size_t sz_len );
 
 /**
@@ -109,17 +109,17 @@ void ringb_push( s_ringb_t *ps_buf, const ringb_atom_t* p_data,
  * @param p_data A pointer to the location at which the data should be placed.
  * @return 1 if data was returned; 0 otherwise.
  */
-uint8_t ringb_pulla( s_ringb_t *ps_buf, ringb_atom_t* p_data );
+uint8_t ringb_pulla( s_ringb_t *ps_rb, ringb_atom_t* p_data );
 
 /**
- * Returns the <em>len</em> oldest atomic in a ring buffer.
+ * Returns the <em>len</em> oldest atomics from a ring buffer.
  * @param ps_buf The buffer from which the data should be returned.
  * @param p_data A pointer to the array at which the data should be placed.
  * @param sz_len The maximum number of atomics to return.
  * @return The number of atomics returned.
  */
-ringb_size_t ringb_pull( s_ringb_t *ps_buf, ringb_atom_t* p_data,
-        ringb_size_t sz_len );
+ringb_size_t ringb_pull( s_ringb_t *ps_rb, ringb_atom_t* p_data,
+                         ringb_size_t sz_len );
 /**
  * Peeks a ring buffer, i.e. returns an element without removing it.
  * @param ps_buf The buffer from which the data should be returned.
@@ -127,16 +127,16 @@ ringb_size_t ringb_pull( s_ringb_t *ps_buf, ringb_atom_t* p_data,
  * @param index The index to peek.
  * @return 1 if data was returned; 0 otherwise.
  */
-uint8_t ringb_peek( s_ringb_t *ps_buf, ringb_atom_t *data, ringb_size_t index );
+uint8_t ringb_peek( s_ringb_t *ps_rb, ringb_atom_t *data, ringb_size_t index );
 
 /**
  * Returns whether a ring buffer is empty.
  * @param ps_buf The buffer for which it should be returned whether it is empty.
  * @return 1 if empty; 0 otherwise.
  */
-inline uint8_t ringb_empty( s_ringb_t* ps_buf )
+inline uint8_t ringb_empty( s_ringb_t* ps_rb )
 {
-    return ( ps_buf->sz_head == ps_buf->sz_tail );
+    return ( ps_rb->sz_head == ps_rb->sz_tail );
 }
 
 /**
@@ -144,9 +144,9 @@ inline uint8_t ringb_empty( s_ringb_t* ps_buf )
  * @param ps_buf The buffer for which the number of items should be returned.
  * @return The number of items in the ring buffer.
  */
-inline uint8_t ringb_full( s_ringb_t* ps_buf )
+inline uint8_t ringb_full( s_ringb_t* ps_rb )
 {
-    return ( ( ps_buf->sz_head - ps_buf->sz_tail ) & RB_MASK ) == RB_MASK;
+    return ( ( ps_rb->sz_head - ps_rb->sz_tail ) & RB_MASK ) == RB_MASK;
 }
 
 /**
@@ -154,9 +154,9 @@ inline uint8_t ringb_full( s_ringb_t* ps_buf )
  * @param ps_buf The buffer for which it should be returned whether it is full.
  * @return 1 if full; 0 otherwise.
  */
-inline ringb_size_t ringb_items( s_ringb_t* ps_buf )
+inline uint8_t ringb_items( s_ringb_t* ps_rb )
 {
-    return ( ( ps_buf->sz_head - ps_buf->sz_tail ) & RB_MASK );
+    return ( ( ps_rb->sz_head - ps_rb->sz_tail ) & RB_MASK );
 }
 
 #endif /* RINGBUFFER_H */
