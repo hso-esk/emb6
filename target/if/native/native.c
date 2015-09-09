@@ -44,7 +44,7 @@
 /*============================================================================*/
 /*! \file   native.c
 
- \author Artem Yushev artem.yushev@hs-offenburg.de
+ \author Artem Yushev 
 
  \brief  Fake radio transceiver based on LCM IPC.
 

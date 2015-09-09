@@ -50,7 +50,7 @@
 */
 /*! \file   demo_aptb_srv.c
 
- \author Artem Yushev, artem.yushev@hs-offenburg.de
+ \author Artem Yushev, 
 
  \brief  Demo profile for testcases on Automated Physical Testbed (APTB) .
 

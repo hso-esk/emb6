@@ -44,7 +44,7 @@
  */
 /*! \file   target.h
 
-    \author Artem Yushev, artem.yushev@hs-offenburg.de
+    \author Artem Yushev, 
 
     \brief  \brief Hardware initialization API
 

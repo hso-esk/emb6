@@ -44,7 +44,7 @@
  */
 /*! \file   at86rf212.c
 
-    \author Artem Yushev artem.yushev@hs-offenburg.de
+    \author Artem Yushev 
 
     \brief  AT86RF212 Transceiver initialization code.
 

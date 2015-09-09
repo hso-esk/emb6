@@ -48,7 +48,7 @@
 */
 /*! \file   demo_sniffer.c
 
- \author Artem Yushev, artem.yushev@hs-offenburg.de
+ \author Artem Yushev, 
 
  \brief  Sniffer application
 

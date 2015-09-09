@@ -53,7 +53,7 @@
  */
 /*! \file   linux/target.c
 
-    \author Artem Yushev artem.yushev@hs-offenburg.de
+    \author Artem Yushev 
 
     \brief  This is an PC emulation library for upper layers.
 

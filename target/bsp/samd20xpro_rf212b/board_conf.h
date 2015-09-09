@@ -48,7 +48,7 @@
  */
 /*! \file   samd20xpro_rf212b/board_conf.h
 
-    \author Artem Yushev, artem.yushev@hs-offenburg.de
+    \author Artem Yushev, 
 
     \brief  Board Configuration for SAM D20 Xplained Pro Evaluation Kit
 

@@ -45,7 +45,7 @@
  */
 /*! \file   bsp.h
 
-    \author Artem Yushev, artem.yushev@hs-offenburg.de
+    \author Artem Yushev, 
 
     \brief  Definition of the API for board support packaged (BSP) used by
             the embetter_main.c demo implementation.

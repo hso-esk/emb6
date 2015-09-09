@@ -44,7 +44,7 @@
 */
 /*! \file   at86rf212b_regmap.h
 
-    \author Artem Yushev artem.yushev@hs-offenburg.de
+    \author Artem Yushev 
 
     \brief  Register MAP for AT86RF212B Transceiver
 

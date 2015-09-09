@@ -48,7 +48,7 @@
  */
 /*! \file   samd21g18a/target.c
 
-    \author Artem Yushev artem.yushev@hs-offenburg.de
+    \author Artem Yushev 
 
     \brief  Hardware dependent initialization for SAMD21J18A
 

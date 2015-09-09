@@ -50,7 +50,7 @@
 */
 /*! \file   demo_sniffer.h
 
-    \author Artem Yushev, artem.yushev@hs-offenburg.de
+    \author Artem Yushev, 
 
     \brief  This is the header file of the sniffer application
 

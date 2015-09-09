@@ -56,7 +56,7 @@
  * native.h
  *
  *  Created on: Aug, 2015
- *      Author: Artem Yushev artem.yushev@hs-offenburg.de
+ *      Author: Artem Yushev 
  */
 
 #ifndef NATIVE_RADIO_H_

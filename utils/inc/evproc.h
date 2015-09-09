@@ -53,7 +53,7 @@
 /*!
     \file   evproc.h
 
-    \author Artem Yushev (artem.yushev@hs-offenburg.de)
+    \author Artem Yushev 
 
   \version  0.2
 */
@@ -72,7 +72,7 @@
                                  MACROS
  =============================================================================*/
 /// Defines all of the event that functions can operate
-#define EVENT_TYPES        {    EVENT_TYPE_TIMER_EXP, \
+#define EVENT_TYPES        {EVENT_TYPE_TIMER_EXP, \
                             EVENT_TYPE_TCP_POLL, \
                             EVENT_TYPE_UDP_POLL, \
                             EVENT_TYPE_PCK_INPUT, \
@@ -81,21 +81,23 @@
                             EVENT_TYPE_SLIP_POLL, \
                             EVENT_TYPE_PCK_LL }
 
-#define EVENT_TYPE_NONE            0x00    ///< No event
+#define EVENT_TYPE_NONE         0x00    ///< No event
 #define EVENT_TYPE_TIMER_EXP    0x01    ///< Timer expired event
-#define EVENT_TYPE_TCP_POLL        0x02    ///< TCP poll event
-#define EVENT_TYPE_UDP_POLL        0x03    ///< UDP poll event
-#define EVENT_TYPE_PCK_INPUT    0x04     ///< New packet in buffer event
+#define EVENT_TYPE_TCP_POLL     0x02    ///< TCP poll event
+#define EVENT_TYPE_UDP_POLL     0x03    ///< UDP poll event
+#define EVENT_TYPE_PCK_INPUT    0x04    ///< New packet in buffer event
 #define EVENT_TYPE_ICMP6        0x05    ///< New icmp6 packet event
 #define EVENT_TYPE_TCPIP        0x06    ///< New tcpip event
 #define EVENT_TYPE_SLIP_POLL    0x07    ///< Process slip handler
-#define OBLIG_EVENT_PRIOR        0x0a
-#define EVENT_TYPE_PCK_LL        0x0a    ///< New low level packet received
+#define OBLIG_EVENT_PRIOR       0x0a
+#define EVENT_TYPE_PCK_LL       0x0a    ///< New low level packet received
 
 
-#define EVENT_TYPES_COUNT        8         ///< Counter of events in /ref EVENT_TYPES macro
-#define MAX_CALLBACK_COUNT        7        ///< Maximal amount of callbacks in /ref st_funcRegList_t list
-#define EVPROC_QUEUE_SIZE        20        ///< Maximal amount of events in /ref pst_evList queue
+#define EVENT_TYPES_COUNT        8      ///< Counter of events in /ref EVENT_TYPES macro
+#ifndef MAX_CALLBACK_COUNT
+#define MAX_CALLBACK_COUNT       7      ///< Maximal amount of callbacks in /ref st_funcRegList_t list
+#endif
+#define EVPROC_QUEUE_SIZE        20     ///< Maximal amount of events in /ref pst_evList queue
 /*=============================================================================
                                  ENUMS
  =============================================================================*/
@@ -146,16 +148,16 @@ typedef void         (*pfn_callback_t)( c_event_t c_event, p_data_t p_data );
             in list. If it is present there nothing happens, if not it is added
             to the end of a list.
 
-    \param  c_eventType            Type of event on which we want to register callback
-    \param    pfn_callback        Pointer on the function which should be called
-                                whenever c_event_type was generated
+    \param  c_eventType     Type of event on which we want to register callback
+    \param  pfn_callback    Pointer on the function which should be called
+                            whenever c_event_type was generated
 
-    \return    \ref E_UNKNOWN_TYPE        Unknown event type
-    \return    \ref E_INVALID_PARAM    Invalid input parameter
-    \return    \ref E_FUNC_IN_LIST        Callback already exist in the list for this type of
-                                        an event
-    \return \ref E_END_OF_LIST        End of a list has been reached
-    \return \ref E_SUCCESS            Callback successfully registered
+    \return \ref E_UNKNOWN_TYPE     Unknown event type
+    \return \ref E_INVALID_PARAM    Invalid input parameter
+    \return \ref E_FUNC_IN_LIST     Callback already exist in the list for this
+                                    type of an event
+    \return \ref E_END_OF_LIST      End of a list has been reached
+    \return \ref E_SUCCESS          Callback successfully registered
 
     \code
             // This function is called whenever mac layer has already processed
@@ -196,7 +198,8 @@ typedef void         (*pfn_callback_t)( c_event_t c_event, p_data_t p_data );
     \endcode
 */
 /*============================================================================*/
-en_evprocResCode_t evproc_regCallback(c_event_t c_eventType, pfn_callback_t pfn_callback);
+en_evprocResCode_t evproc_regCallback( c_event_t c_eventType,
+                                       pfn_callback_t pfn_callback);
 
 /*============================================================================*/
 /*!
@@ -205,17 +208,17 @@ en_evprocResCode_t evproc_regCallback(c_event_t c_eventType, pfn_callback_t pfn_
          This function searching for a given function pointer in a registration
          list and delete it in case of success.
 
-\param  c_evenType            Type of event on which we want to register callback
-\param    pfn_callback        Pointer on the function which should be called
+\param  c_evenType          Type of event on which we want to register callback
+\param    pfn_callback      Pointer on the function which should be called
                             whenever c_event_type was generated
 
-\return    \ref E_UNKNOWN_TYPE        Unknown event type
-\return    \ref E_NO_SUCH_FUNC        Given function pointer wasn't found in a list
-\return \ref E_SUCCESS            Callback successfully unregistered
+\return \ref E_UNKNOWN_TYPE     Unknown event type
+\return \ref E_NO_SUCH_FUNC     Given function pointer wasn't found in a list
+\return \ref E_SUCCESS          Callback successfully unregistered
 */
 /*============================================================================*/
 en_evprocResCode_t evproc_unregCallback(    c_event_t         c_evenType, \
-                                            pfn_callback_t     pfn_callback);
+                                            pfn_callback_t    pfn_callback);
 
 /*============================================================================*/
 /*!
@@ -224,20 +227,20 @@ en_evprocResCode_t evproc_unregCallback(    c_event_t         c_evenType, \
          The event process route works with FIFO buffer with an ability to add
          new elements not only in a head, but also in a tail of a queue.
 
-\param  e_actType            Action type - what should be done with this event.
-                            See \ref en_evprocAction_t
-\param  c_eventType            Type of event on which we want to register callback.
-\param    p_data                Pointer on the function which should be called
-                            whenever c_event_type was generated.
+\param  e_actType       Action type - what should be done with this event.
+                        See \ref en_evprocAction_t
+\param  c_eventType     Type of event on which we want to register callback.
+\param    p_data        Pointer on the function which should be called
+                        whenever c_event_type was generated.
 
-\return    \ref E_END_OF_LIST        End of a queue has been reached.
-\return    \ref E_UNKNOWN_TYPE        Unknown type of an action.
-\return \ref E_SUCCESS            Event was executed or added to the queue.
+\return \ref E_END_OF_LIST      End of a queue has been reached.
+\return \ref E_UNKNOWN_TYPE     Unknown type of an action.
+\return \ref E_SUCCESS          Event was executed or added to the queue.
 */
 /*============================================================================*/
-en_evprocResCode_t evproc_putEvent(    en_evprocAction_t     e_actType, \
-                                        c_event_t             c_eventType, \
-                                        p_data_t             p_data);
+en_evprocResCode_t evproc_putEvent( en_evprocAction_t   e_actType, \
+                                    c_event_t           c_eventType, \
+                                    p_data_t            p_data);
 
 /*============================================================================*/
 /*!
@@ -246,10 +249,10 @@ en_evprocResCode_t evproc_putEvent(    en_evprocAction_t     e_actType, \
 
          This function takes event only from the head of a queue
 
-\return    \ref E_QUEUE_EMPTY        No events in the queue.
-\return    \ref E_UNKNOWN_TYPE        Input type of an event was not found in the
+\return    \ref E_QUEUE_EMPTY   No events in the queue.
+\return    \ref E_UNKNOWN_TYPE  Input type of an event was not found in the
                                 registration list.
-\return \ref E_SUCCESS            Function executed.
+\return \ref E_SUCCESS          Function executed.
 */
 /*============================================================================*/
 en_evprocResCode_t evproc_nextEvent(void);

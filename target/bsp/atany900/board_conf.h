@@ -51,7 +51,7 @@
  */
 /*! \file   atany900/board_conf.h
 
-    \author Artem Yushev, artem.yushev@hs-offenburg.de
+    \author Artem Yushev, 
 
     \brief  Board Configuration for AT-ANY-900
 

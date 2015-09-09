@@ -48,7 +48,7 @@
  */
 /*! \file   samd20xpro_rf212/board_conf.c
 
-    \author Artem Yushev, artem.yushev@hs-offenburg.de
+    \author Artem Yushev, 
 
     \brief  Board Configuration for SAM D20 Xplained Pro Starter Kit with AT86RF212 Transceiver
 

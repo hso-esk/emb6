@@ -40,7 +40,7 @@
 /**
  * \file   logger.h
  *
- * \author Artem Yushev artem.yushev@hs-offenburg.de
+ * \author Artem Yushev 
  *
  * \brief  There are 3 levels of LOG macros. Please try to follow advices
  *         LOG_XXXX  - to output "MUST HAVE" information. For example errors.

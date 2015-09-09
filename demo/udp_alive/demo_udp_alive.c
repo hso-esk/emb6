@@ -49,7 +49,7 @@
 /*! \file   demo_udp_alive.c
 
  \author Peter Lehmann, peter.lehmann@hs-offenburg.de
- \author Artem Yushev, artem.yushev@hs-offenburg.de
+ \author Artem Yushev, 
 
  \brief  UDP Client Source for DODAG visualization on Cetic 6LBR
 

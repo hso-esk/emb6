@@ -48,7 +48,7 @@
  */
 /*! \file   atany900_pro5/board_conf.c
 
-    \author Artem Yushev, artem.yushev@hs-offenburg.de
+    \author Artem Yushev, 
 
     \brief  Board Configuration for AT-ANY-900-PRO5-BRICK
 

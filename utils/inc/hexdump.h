@@ -48,7 +48,7 @@
 /*! \file   hexdump.h
 
     \author Original-grapsus http://grapsus.net/blog/post/Hexadecimal-dump-in-C
-    \author Updated by: Artem Yushev artem.yushev@hs-offenburg.de
+    \author Updated by: Artem Yushev 
     \breif  Printout data in a standard hex view
 	\version 0.1
 */
