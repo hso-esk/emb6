@@ -57,7 +57,7 @@ typedef uint16_t ringb_size_t;
  * The type which is used to hold atomic size of the ring buffer.
  * Usually it's int8_t
  */
-typedef int8_t ringb_atom_t;
+typedef uint8_t ringb_atom_t;
 
 /**
  * Used as a modulo operator as <tt> a % b = (a & (b − 1)) </tt>
