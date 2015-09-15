@@ -225,9 +225,7 @@ static int8_t _udpAlive_sendMsg(void)
 
             if (pst_udp_socket->udp_conn != NULL) {
                 LOG_RAW("Using destination addr: ");
-#if LOGGER_ENABLE
-                uip_debug_ipaddr_print(&pst_udp_socket->udp_conn->ripaddr);
-#endif
+                LOG_IP6ADDR(&pst_udp_socket->udp_conn->ripaddr.u8);
                 LOG_RAW("\n\r local/remote port %u/%u\r\n",
                        UIP_HTONS(pst_udp_socket->udp_conn->lport),
                        UIP_HTONS(pst_udp_socket->udp_conn->rport));

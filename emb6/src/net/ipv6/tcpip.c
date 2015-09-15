@@ -168,9 +168,11 @@ unsigned char tcpip_is_forwarding; /* Forwarding right now? */
 static void
 start_periodic_tcp_timer(void)
 {
+#if UIP_TCP
   if(etimer_expired(&periodic)) {
     etimer_restart(&periodic);
   }
+#endif /* UIP_TCP */
 }
 /*---------------------------------------------------------------------------*/
 static void

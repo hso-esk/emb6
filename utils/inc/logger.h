@@ -71,9 +71,31 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include "hexdump.h"
+#include <stdint.h>
+#include <ctype.h>
 
+/*!
+\brief   Print out IPv6 address
 
+\param    pc_addr      Pointer to address (16 bytes).
+
+\return   None
+*/
+void log_ip6addr( const uint8_t* pc_addr);
+
+/*!
+\brief   Printout data in a standard hex view
+
+\param    p_buf        Pointer to data which should be printed out.
+\param    l_len        Length of a data
+
+\return   None
+\example
+0x000000: 2e 2f 68 65 78 64 75 6d ./hexdum
+0x000008: 70 00 53 53 48 5f 41 47 p.SSH_AG
+0x000010: 45 4e 54 5f             ENT_
+*/
+void log_hexdump(const void* p_buf, uint32_t l_len);
 
 
 #define LOG2_OK(msg, ...)       LOGGER_OK(2,msg, ##__VA_ARGS__)
@@ -84,6 +106,7 @@
 #define LOG2_DBG(msg, ...)      LOGGER_DBG(2,msg, ##__VA_ARGS__)
 #define LOG2_RAW(...)           LOGGER_RAW(2, __VA_ARGS__)
 #define LOG2_HEXDUMP(buf,len)   LOGGER_HEXDUMP(2, buf,len)
+#define LOG2_IP6ADDR(addr)     LOGGER_IP6ADDR(2, addr)
 
 #define LOG1_OK(msg, ...)       LOGGER_OK(1,msg, ##__VA_ARGS__)
 #define LOG1_ERR(msg, ...)      LOGGER_ERR(1,msg, ##__VA_ARGS__)
@@ -93,6 +116,7 @@
 #define LOG1_DBG(msg, ...)      LOGGER_DBG(1,msg, ##__VA_ARGS__)
 #define LOG1_RAW(...)           LOGGER_RAW(1, __VA_ARGS__)
 #define LOG1_HEXDUMP(buf,len)   LOGGER_HEXDUMP(1, buf,len)
+#define LOG1_IP6ADDR(addr)     LOGGER_IP6ADDR(1, addr)
 
 #define LOG_OK(msg, ...)        LOGGER_OK(0,msg, ##__VA_ARGS__)
 #define LOG_ERR(msg, ...)       LOGGER_ERR(0,msg, ##__VA_ARGS__)
@@ -102,6 +126,7 @@
 #define LOG_DBG(msg, ...)       LOGGER_DBG(0,msg, ##__VA_ARGS__)
 #define LOG_RAW(msg, ...)       LOGGER_RAW(0,msg, ##__VA_ARGS__)
 #define LOG_HEXDUMP(buf,len)    LOGGER_HEXDUMP(0, buf,len)
+#define LOG_IP6ADDR(addr)      LOGGER_IP6ADDR(0, (const uint8_t* )addr)
 
 #define LOGGER_OK(log_lvl, msg, ...)        \
     do { if ((LOGGER_ENABLE) && (LOGGER_LEVEL > log_lvl)) printf("%lu |   ok | %5s (%d)| " msg "\n", bsp_getSec(), __FILE__, __LINE__, ##__VA_ARGS__); }while (0)
@@ -125,5 +150,9 @@
     do { if ((LOGGER_ENABLE) && (LOGGER_LEVEL > log_lvl)) printf(msg , ##__VA_ARGS__); }while (0)
 
 #define LOGGER_HEXDUMP(log_lvl, buf,len)        \
-    do { if ((LOGGER_ENABLE) && (LOGGER_LEVEL > log_lvl)) hexdump(buf,len); }while (0)
+    do { if ((LOGGER_ENABLE) && (LOGGER_LEVEL > log_lvl)) log_hexdump(buf,len); }while (0)
+
+#define LOGGER_IP6ADDR(log_lvl, addr)          \
+    do { if ((LOGGER_ENABLE) && (LOGGER_LEVEL > log_lvl)) log_ip6addr(addr); }while (0)
+
 #endif /* LOGGER_H_ */

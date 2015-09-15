@@ -268,7 +268,7 @@ int8_t demo_aptbInit(void)
     udp_socket_bind(pst_udp_socket, UIP_HTONS(__CLIENT_PORT));
 
     LOG_INFO("%s", "Create connection with the server ");
-    //uip_debug_ipaddr_print(&un_server_ipaddr);
+    LOG_IP6ADDR(&un_server_ipaddr.u8);
     LOG_RAW("\n\r");
     LOG_INFO("local/remote port %u/%u",
             UIP_HTONS(pst_udp_socket->udp_conn->lport),

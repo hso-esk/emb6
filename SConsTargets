@@ -52,5 +52,11 @@ TARGETS = [
 ['cs_x86cli',         [('x86','client'),
                       ('coap','server'),
                       ('udp_alive','')],             'x86',                 '0xBEAF',      '99',          '-125',       'MODULATION_QPSK100'],
+['virtu_srv',         [('testframework_emb6demoapp','server'),
+                      ('coap','server'),
+                      ('udp_alive','')],             'x86',                 '0x2121',      '99',          '-125',       'MODULATION_QPSK100'],
+['virtu_cli',         [('testframework_emb6demoapp','client'),
+                      ('coap','server'),
+                      ('udp_alive','')],             'x86',                 '0x1111',      '99',          '-125',       'MODULATION_QPSK100'],
 ] #TARGETS append END
 Return('TARGETS')
