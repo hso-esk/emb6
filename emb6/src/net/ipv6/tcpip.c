@@ -165,14 +165,13 @@ unsigned char tcpip_is_forwarding; /* Forwarding right now? */
 //PROCESS(tcpip_process, "TCP/IP stack");
 
 /*---------------------------------------------------------------------------*/
-// not used at the moment
-//static void
-//start_periodic_tcp_timer(void)
-//{
-//  if(etimer_expired(&periodic)) {
-//    etimer_restart(&periodic);
-//  }
-//}
+static void
+start_periodic_tcp_timer(void)
+{
+  if(etimer_expired(&periodic)) {
+    etimer_restart(&periodic);
+  }
+}
 /*---------------------------------------------------------------------------*/
 static void
 check_for_tcp_syn(void)
