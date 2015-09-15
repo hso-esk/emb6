@@ -129,7 +129,7 @@ uint8_t demo_coapConf(s_ns_t* pst_netStack)
      */
     if (pst_netStack != NULL) {
         if (!pst_netStack->c_configured) {
-            pst_netStack->sock   = &udp_socket_driver;
+            /*pst_netStack->sock   = &udp_socket_driver;*/
             pst_netStack->hc     = &sicslowpan_driver;
             pst_netStack->llsec  = &nullsec_driver;
             pst_netStack->hmac   = &nullmac_driver;
@@ -140,7 +140,7 @@ uint8_t demo_coapConf(s_ns_t* pst_netStack)
             /*pst_netStack->inif   = $<some_transceiver>;*/
             c_ret = 1;
         } else {
-            if ((pst_netStack->sock == &udp_socket_driver) &&
+            if (/*(pst_netStack->sock == &udp_socket_driver) && */
                 (pst_netStack->hc == &sicslowpan_driver)   &&
                 (pst_netStack->llsec == &nullsec_driver)   &&
                 (pst_netStack->hmac == &nullmac_driver)    &&
