@@ -211,7 +211,7 @@ typedef uip_eth_addr uip_lladdr_t;
  =============================================================================*/
 
 typedef struct netstack {
-    const struct netstack_socket*                   sock;
+        /*const struct netstack_socket*                   sock;*/
 
 	const struct netstack_headerCompression*        hc;
 
