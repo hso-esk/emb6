@@ -296,21 +296,21 @@ coap_init_connection(uint16_t port, udp_socket_input_callback_t pf_coap_receive)
 uint16_t
 coap_get_mid()
 {
-    return ++current_mid;
+  return ++current_mid;
 }
 /*---------------------------------------------------------------------------*/
 void
 coap_init_message(void *packet, coap_message_type_t type, uint8_t code,
                   uint16_t mid)
 {
-    coap_packet_t *const coap_pkt = (coap_packet_t *)packet;
+  coap_packet_t *const coap_pkt = (coap_packet_t *)packet;
 
-    /* Important thing */
-    memset(coap_pkt, 0, sizeof(coap_packet_t));
+  /* Important thing */
+  memset(coap_pkt, 0, sizeof(coap_packet_t));
 
-    coap_pkt->type = type;
-    coap_pkt->code = code;
-    coap_pkt->mid = mid;
+  coap_pkt->type = type;
+  coap_pkt->code = code;
+  coap_pkt->mid = mid;
 }
 /*---------------------------------------------------------------------------*/
 size_t
@@ -428,10 +428,10 @@ coap_serialize_message(void *packet, uint8_t *buffer)
 /*---------------------------------------------------------------------------*/
 void
 coap_send_message(uip_ipaddr_t *addr, uint16_t port, uint8_t *data,
-                  uint16_t length)
+                 uint16_t length)
 {
-    /* configure connection to reply to client */
-    udp_socket_connect(pst_udp_socket, addr, UIP_HTONS(port));
+    pst_udp_socket->udp_conn->ripaddr = *addr;
+    pst_udp_socket->udp_conn->rport   = port;
 
     udp_socket_send(pst_udp_socket, data, length);
 
