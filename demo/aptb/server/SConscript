@@ -3,7 +3,6 @@ aptb_srv = {
 	],
 	'emb6' : [
 		'sock',
-		'sock',
 		'rpl',
 		'ipv6',
 		'sicslowpan',

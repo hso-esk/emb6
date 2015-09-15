@@ -68,10 +68,8 @@
 #include "etimer.h"
 #include "evproc.h"
 #include "tcpip.h"
-#include "uip.h"
+#include "udp-socket.h"
 #include "rpl.h"
-#include "uip-debug.h"
-#include "uip-udp-packet.h"
 
 /*==============================================================================
                                          MACROS
