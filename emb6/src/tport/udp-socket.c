@@ -59,7 +59,6 @@ init(void)
   static uint8_t inited = 0;
   if(!inited) {
     inited = 1;
-    //process_start(&udp_socket_process, NULL);
     evproc_regCallback(EVENT_TYPE_TCPIP,_udp_sock_callback);
   }
 }
@@ -77,11 +76,8 @@ udp_socket_register(struct udp_socket *c,
   c->ptr = ptr;
   c->input_callback = input_callback;
 
-  //c->p = PROCESS_CURRENT();
-  //PROCESS_CONTEXT_BEGIN(&udp_socket_process);
   c->udp_conn = udp_new(NULL, 0, c);
   LOG_INFO("socket ptr = %p:%p", c, input_callback);
-  //PROCESS_CONTEXT_END();
 
   if(c->udp_conn == NULL) {
     return -1;
@@ -109,7 +105,7 @@ udp_socket_bind(struct udp_socket *c,
   if(c == NULL || c->udp_conn == NULL) {
     return -1;
   }
-  udp_bind(c->udp_conn, /*ES UIP_HTONS*/(local_port));
+  udp_bind(c->udp_conn, UIP_HTONS(local_port));
 
   return 1;
 }
@@ -126,7 +122,7 @@ udp_socket_connect(struct udp_socket *c,
   if(remote_addr != NULL) {
     uip_ipaddr_copy(&c->udp_conn->ripaddr, remote_addr);
   }
-  c->udp_conn->rport = /*ES UIP_HTONS*/(remote_port);
+  c->udp_conn->rport = UIP_HTONS(remote_port);
   return 1;
 }
 /*---------------------------------------------------------------------------*/
@@ -154,7 +150,7 @@ udp_socket_sendto(struct udp_socket *c,
 
   if(c->udp_conn != NULL) {
     uip_udp_packet_sendto(c->udp_conn, data, datalen,
-                          to, /*ES UIP_HTONS*/(port));
+                          to, UIP_HTONS(port));
     return datalen;
   }
   return -1;
@@ -188,14 +184,12 @@ void _udp_sock_callback(c_event_t c_event, p_data_t p_data)
                    mechanism to temporarily switch process context to the
                    client process. */
                 if(c->input_callback != NULL) {
-                    //PROCESS_CONTEXT_BEGIN(c->p);
                     c->input_callback(c, c->ptr,
                                       &(UIP_IP_BUF->srcipaddr),
-                                      /*ES UIP_HTONS*/(UIP_IP_BUF->srcport),
+                                      UIP_HTONS(UIP_IP_BUF->srcport),
                                       &(UIP_IP_BUF->destipaddr),
-                                      /*ES UIP_HTONS*/(UIP_IP_BUF->destport),
+                                      UIP_HTONS(UIP_IP_BUF->destport),
                                       buf, uip_datalen());
-                    //PROCESS_CONTEXT_END();
                 }
             }
         }

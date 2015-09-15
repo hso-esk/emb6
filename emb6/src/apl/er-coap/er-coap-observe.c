@@ -71,7 +71,7 @@ coap_add_observer(uip_ipaddr_t *addr, uint16_t port, const uint8_t *token,
 
   if(o) {
     o->url = uri;
-    uip_ipaddr_copy(&o->addr, addr);
+    o->addr = *addr;
     o->port = port;
     o->token_len = token_len;
     memcpy(o->token, token, token_len);

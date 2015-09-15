@@ -45,7 +45,7 @@
 #include "er-coap-observe.h"
 #include "er-coap-separate.h"
 
-#define SERVER_LISTEN_PORT      UIP_HTONS(COAP_SERVER_PORT)
+#define SERVER_LISTEN_PORT  COAP_SERVER_PORT
 
 typedef coap_packet_t rest_request_t;
 typedef coap_packet_t rest_response_t;

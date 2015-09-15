@@ -107,7 +107,7 @@ coap_separate_accept(void *request, coap_separate_t *separate_store)
     }
 
     /* store remote address */
-    uip_ipaddr_copy(&separate_store->addr, &t->addr);
+    separate_store->addr = t->addr;
     separate_store->port = t->port;
 
     /* store correct response type */

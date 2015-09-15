@@ -114,7 +114,6 @@
  =============================================================================*/
 static  struct  udp_socket          st_udp_socket;
 static  struct  udp_socket          *pst_udp_socket;
-//static  struct  uip_udp_conn        *pst_conn;
 
 static          uip_ipaddr_t        un_server_ipaddr = {.u16={SERVER_IP_ADDR} };
         struct  etimer              s_et;
@@ -191,11 +190,7 @@ static  void        loc_aptb_sendMsg(uint32_t l_seqID)
     udp_socket_sendto(pst_udp_socket,
                       pc_buf, strlen(pc_buf),
                       &un_server_ipaddr,
-                      UIP_HTONS(__SERVER_PORT));
-
-    //uip_udp_packet_sendto(pst_conn,
-    //                      pc_buf, strlen(pc_buf),
-    //                      &un_server_ipaddr,UIP_HTONS(__SERVER_PORT));
+                      __SERVER_PORT);
 
 } /* loc_aptb_sendMsg */
 
@@ -274,8 +269,6 @@ int8_t demo_aptbInit(void)
     pst_udp_socket = &st_udp_socket;
     udp_socket_register(pst_udp_socket, NULL, NULL);
     udp_socket_bind(pst_udp_socket, UIP_HTONS(__CLIENT_PORT));
-    //pst_conn = udp_new(NULL, UIP_HTONS(__SERVER_PORT), NULL);
-    //udp_bind(pst_conn, UIP_HTONS(__CLIENT_PORT));
 
     LOG_INFO("%s", "Create connection with the server ");
     //uip_debug_ipaddr_print(&un_server_ipaddr);

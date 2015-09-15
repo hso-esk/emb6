@@ -67,11 +67,7 @@
 #include "etimer.h"
 #include "evproc.h"
 #include "tcpip.h"
-#include "uip.h"
 #include "rpl.h"
-#include "uip-debug.h"
-#include "uip-udp-packet.h"
-
 #include "udp-socket.h"
 
 /*==============================================================================
@@ -113,7 +109,6 @@ typedef enum e_udpAliveStateS {
  =============================================================================*/
 static  struct  udp_socket          st_udp_socket;
 static  struct  udp_socket          *pst_udp_socket;
-static  struct  uip_udp_conn        *ps_udpDesc = NULL;
 
 static  uip_ip6addr_t               s_destAddr;
 
@@ -191,7 +186,7 @@ static int8_t _udpAlive_sendMsg(void)
     uint32_t        i;
     uint8_t         c_err               = 0;
     uint8_t         c_leaveFSM          = 0;
-    uint16_t        i_destPort          = UIP_HTONS(_PORT);
+    uint16_t        i_destPort          = _PORT;
     uip_ds6_addr_t* ps_srcAddr          = uip_ds6_get_global(ADDR_PREFERRED);
     rpl_dag_t*      ps_dagDesc          = rpl_get_any_dag();
     e_udpAlive_t    e_state             = E_UDPALIVE_GETDESTADDR;
@@ -203,7 +198,7 @@ static int8_t _udpAlive_sendMsg(void)
             {
                 if(ps_dagDesc) {
                     /* Insert global prefix */
-                    uip_ipaddr_copy(&s_destAddr, &ps_srcAddr->ipaddr);
+                    s_destAddr = ps_srcAddr->ipaddr;
                     memcpy(&s_destAddr.u8[8], &ps_dagDesc->dag_id.u8[8], 8);
                     e_state = E_UDPALIVE_CONNECT;
                 }
@@ -217,40 +212,28 @@ static int8_t _udpAlive_sendMsg(void)
             }
             break;
         case E_UDPALIVE_CONNECT:
-            /* set the pointer to the udp-socket */
-            pst_udp_socket = &st_udp_socket;
-
-            //ES if (ps_udpDesc == NULL)
             if (pst_udp_socket->udp_conn == NULL)
             {
                 udp_socket_register(pst_udp_socket, NULL, NULL);
                 udp_socket_connect(pst_udp_socket, &s_destAddr, i_destPort);
-                //ps_udpDesc = udp_new(&s_destAddr,i_destPort,NULL);
-
             } else {
-                //ES if (memcmp(&ps_udpDesc->ripaddr, &s_destAddr, IP6ADDRSIZE))
                 if (memcmp(&pst_udp_socket->udp_conn->ripaddr, &s_destAddr, IP6ADDRSIZE))
                 {
                     udp_socket_close(pst_udp_socket);
-                    //uip_udp_remove(ps_udpDesc);
-
                     udp_socket_register(pst_udp_socket, NULL, NULL);
                     udp_socket_connect(pst_udp_socket, &s_destAddr, i_destPort);
-                    //ps_udpDesc = udp_new(&s_destAddr,i_destPort,NULL);
                     LOG_WARN("Reconnection to server");
                 }
             }
 
-            //ES if (ps_udpDesc != NULL) {
             if (pst_udp_socket->udp_conn != NULL) {
                 LOG_RAW("Using destination addr: ");
 #if LOGGER_ENABLE
-                //ES uip_debug_ipaddr_print(&ps_udpDesc->ripaddr);
                 uip_debug_ipaddr_print(&pst_udp_socket->udp_conn->ripaddr);
 #endif
                 LOG_RAW("\n\r local/remote port %u/%u\r\n",
-                       UIP_HTONS(ps_udpDesc->lport),
-                       UIP_HTONS(ps_udpDesc->rport));
+                       UIP_HTONS(pst_udp_socket->udp_conn->lport),
+                       UIP_HTONS(pst_udp_socket->udp_conn->rport));
                 e_state = E_UDPALIVE_PREPMSG;
             }else {
                 e_state = E_UDPALIVE_UNDEF;
@@ -272,7 +255,6 @@ static int8_t _udpAlive_sendMsg(void)
             break;
         case E_UDPALIVE_SENDMSG:
             udp_socket_send(pst_udp_socket, ac_buf, strlen(ac_buf));
-            //uip_udp_packet_send(ps_udpDesc, ac_buf, strlen(ac_buf));
             e_state = E_UDPALIVE_DONE;
             break;
         case E_UDPALIVE_DONE:
