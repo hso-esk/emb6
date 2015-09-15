@@ -401,8 +401,8 @@ typedef const struct netstack_interface {
 }s_nsIf_t;
 
 /*! Supported BSD-like socket interface */
-extern const s_nsSocket_t udp_socket_driver;
-extern const s_nsSocket_t tcp_socket_driver;
+/*extern const s_nsSocket_t udp_socket_driver;
+extern const s_nsSocket_t tcp_socket_driver;*/
 
 /*! Supported headers compression handlers */
 extern const s_nsHeadComp_t     sicslowpan_driver;
@@ -425,9 +425,9 @@ extern const s_nsLowMac_t       nullrdc_driver;
 
 
 /*! Supported framers */
-extern const s_nsFramer_t     framer_802154;
-extern const s_nsFramer_t     no_framer;
-extern const s_nsFramer_t     nullframer;
+extern const s_nsFramer_t       framer_802154;
+extern const s_nsFramer_t       no_framer;
+extern const s_nsFramer_t       nullframer;
 
 
 /*! Supported interfaces */
