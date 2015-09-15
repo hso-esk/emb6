@@ -331,16 +331,12 @@ coap_init_engine(void)
   rest_activate_resource(&res_well_known_core, ".well-known/core");
 
   coap_init_connection(SERVER_LISTEN_PORT,
-                       (udp_socket_input_callback_t)coap_receive);
-  //evproc_regCallback(EVENT_TYPE_TCPIP, coap_engine_callback);
+                      (udp_socket_input_callback_t)coap_receive);
 }
 /*---------------------------------------------------------------------------*/
 void 
 coap_engine_callback(c_event_t c_event, p_data_t p_data)
 {
-    //if(c_event == EVENT_TYPE_TCPIP) {
-    //  coap_receive();
-    //} else
     if(c_event == EVENT_TYPE_TIMER_EXP) {
       /* retransmissions are handled here */
       coap_check_transactions();
