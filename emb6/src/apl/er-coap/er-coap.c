@@ -40,11 +40,11 @@
 #include <stdio.h>
 
 #include "random.h"
-#include "uip-udp-packet.h"
-//#include "uip-debug.h"
 
 #include "er-coap.h"
 #include "er-coap-transactions.h"
+
+#include "udp-socket.h"
 
 #define DEBUG DEBUG_NONE
 #if DEBUG
@@ -62,11 +62,13 @@
 /*---------------------------------------------------------------------------*/
 /*- Variables ---------------------------------------------------------------*/
 /*---------------------------------------------------------------------------*/
-static struct uip_udp_conn *udp_conn = NULL;
-static uint16_t current_mid = 0;
+static  struct  udp_socket          st_udp_socket;
+        struct  udp_socket*         pst_udp_socket;
 
-coap_status_t erbium_status_code = NO_ERROR;
-char *coap_error_message = "";
+static          uint16_t            current_mid = 0;
+
+                coap_status_t       erbium_status_code = NO_ERROR;
+                char*               coap_error_message = "";
 /*---------------------------------------------------------------------------*/
 /*- Local helper functions --------------------------------------------------*/
 /*---------------------------------------------------------------------------*/
@@ -276,15 +278,19 @@ coap_get_variable(const char *buffer, size_t length, const char *name,
 /*- Internal API ------------------------------------------------------------*/
 /*---------------------------------------------------------------------------*/
 void
-coap_init_connection(uint16_t port)
+coap_init_connection(uint16_t port, udp_socket_input_callback_t pf_coap_receive)
 {
-  /* new connection with remote host */
-  udp_conn = udp_new(NULL, 0, NULL);
-  udp_bind(udp_conn, port);
-  PRINTF("Listening on port %u\n", uip_ntohs(udp_conn->lport));
+    /* set the pointer to the udp-socket */
+    pst_udp_socket = &st_udp_socket;
 
-  /* initialize transaction ID */
-  current_mid = random_rand();
+    /* new connection with remote host */
+    udp_socket_register(pst_udp_socket, NULL, pf_coap_receive);
+    udp_socket_bind(pst_udp_socket, port);
+    PRINTF("Listening on port %u\n",
+           uip_ntohs(pst_udp_socket->udp_conn->lport));
+
+    /* initialize transaction ID */
+    current_mid = random_rand();
 }
 /*---------------------------------------------------------------------------*/
 uint16_t
@@ -422,19 +428,20 @@ coap_serialize_message(void *packet, uint8_t *buffer)
 /*---------------------------------------------------------------------------*/
 void
 coap_send_message(uip_ipaddr_t *addr, uint16_t port, uint8_t *data,
-                  uint16_t length)
+                 uint16_t length)
 {
-  /* configure connection to reply to client */
-  uip_ipaddr_copy(&udp_conn->ripaddr, addr);
-  udp_conn->rport = port;
+    pst_udp_socket->udp_conn->ripaddr = *addr;
+    pst_udp_socket->udp_conn->rport   = port;
 
-  uip_udp_packet_send(udp_conn, data, length);
+    udp_socket_send(pst_udp_socket, data, length);
 
-  PRINTF("-sent UDP datagram (%u)-\n", length);
+    PRINTF("-sent UDP datagram (%u)-\n", length);
 
-  /* restore server socket to allow data from any node */
-  memset(&udp_conn->ripaddr, 0, sizeof(udp_conn->ripaddr));
-  udp_conn->rport = 0;
+    /* restore server socket to allow data from any node */
+    memset( &pst_udp_socket->udp_conn->ripaddr, 0,
+             sizeof(pst_udp_socket->udp_conn->ripaddr));
+
+    udp_socket_connect(pst_udp_socket, NULL, UIP_HTONS(0));
 }
 /*---------------------------------------------------------------------------*/
 coap_status_t

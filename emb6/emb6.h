@@ -211,6 +211,8 @@ typedef uip_eth_addr uip_lladdr_t;
  =============================================================================*/
 
 typedef struct netstack {
+        /*const struct netstack_socket*                   sock;*/
+
 	const struct netstack_headerCompression*        hc;
 
 	const struct netstack_llsec*                    llsec;
@@ -225,6 +227,28 @@ typedef struct netstack {
 
 	uint8_t                                         c_configured;
 }s_ns_t;
+
+typedef const struct netstack_socket{
+    char *name;
+
+    /* Initialize the BSD socket driver */
+    void (* create)(s_ns_t* p_ns);
+
+    /* Connect to remote node*/
+    void (* connect)(void);
+
+    void (* bind)(void);
+
+    /* Send data to remote node*/
+    void (* send)(void);
+
+    /* Send data to remote node*/
+    void (* sendto)(void);
+
+    /* Close the BSD socket driver */
+    void (* close)(s_ns_t* p_ns);
+
+}s_nsSocket_t;
 
 typedef const struct netstack_headerCompression {
     char *name;
@@ -375,6 +399,10 @@ typedef const struct netstack_interface {
     void (* set_promisc)(uint8_t c_on_off);
 
 }s_nsIf_t;
+
+/*! Supported BSD-like socket interface */
+/*extern const s_nsSocket_t udp_socket_driver;
+extern const s_nsSocket_t tcp_socket_driver;*/
 
 /*! Supported headers compression handlers */
 extern const s_nsHeadComp_t     sicslowpan_driver;
