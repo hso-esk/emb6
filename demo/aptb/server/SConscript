@@ -2,7 +2,7 @@ aptb_srv = {
 	'demo' : [
 	],
 	'emb6' : [
-	    'sock',
+		'sock',
 		'rpl',
 		'ipv6',
 		'sicslowpan',
