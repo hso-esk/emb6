@@ -122,7 +122,7 @@ int8_t demo_coapInit(void)
 
 uint8_t demo_coapConf(s_ns_t* pst_netStack)
 {
-    uint8_t c_ret = 0;
+    uint8_t c_ret = 1;
 
     /*
      * By default stack
@@ -138,7 +138,6 @@ uint8_t demo_coapConf(s_ns_t* pst_netStack)
             pst_netStack->c_configured = 1;
             /* Transceiver interface is defined by @ref board_conf function*/
             /*pst_netStack->inif   = $<some_transceiver>;*/
-            c_ret = 1;
         } else {
             if (/*(pst_netStack->sock == &udp_socket_driver) && */
                 (pst_netStack->hc == &sicslowpan_driver)   &&
@@ -147,10 +146,10 @@ uint8_t demo_coapConf(s_ns_t* pst_netStack)
                 (pst_netStack->lmac == &sicslowmac_driver) &&
                 (pst_netStack->frame == &framer_802154)) {
                 /* right configuration */
-                c_ret = 1;
             }
             else {
                 pst_netStack = NULL;
+                c_ret = 0;
             }
         }
     }
