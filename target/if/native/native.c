@@ -145,29 +145,29 @@ static int8_t _native_init(s_ns_t* p_netStack)
     ps_lcm = lcm_create(NULL);
 
     if(!ps_lcm)
-    return 1;
+        _printAndExit("LCM init failed");
 
     LOG_INFO("%s\n\r","native driver was initialized");
 
+    /* Mac address should not be NULL pointer, although it can't be, but still
+     *  */
     if (mac_phy_config.mac_address == NULL)
     {
         _printAndExit("MAC address is NULL");
     }
 
-    lcm_subscribe (ps_lcm, FAKERADIO_CHANNEL, _native_read,
-            NULL);
+    lcm_subscribe (ps_lcm, FAKERADIO_CHANNEL, _native_read, NULL);
 
     /* Initialise global lladdr structure with a given mac */
     memcpy((void *)&un_addr.u8, &mac_phy_config.mac_address, 8);
     memcpy(&uip_lladdr.addr, &un_addr.u8, 8);
     linkaddr_set_node_addr(&un_addr);
 
-    LOG_INFO("MAC address %x:%x:%x:%x:%x:%x:%x:%x",
-            un_addr.u8[0],un_addr.u8[1],
-            un_addr.u8[2],un_addr.u8[3],
-            un_addr.u8[4],un_addr.u8[5],
-            un_addr.u8[6],un_addr.u8[7]);
+    LOG_INFO( "MAC address %x:%x:%x:%x:%x:%x:%x:%x", un_addr.u8[0],
+              un_addr.u8[1], un_addr.u8[2], un_addr.u8[3], un_addr.u8[4],
+              un_addr.u8[5], un_addr.u8[6], un_addr.u8[7] );
 
+    /* Low mac layer should be ok, not NULL */
     if (p_netStack->lmac != NULL)
     {
         p_lmac = p_netStack->lmac;
@@ -203,12 +203,14 @@ static int8_t _native_init( s_ns_t* p_netStack )
     ps_lcm = lcm_create( NULL );
 
     if( !ps_lcm )
-        return 0;
+        _printAndExit("LCM init failed");
 
     lcm_subscribe( ps_lcm, FAKERADIO_CHANNEL, _native_read, NULL );
 
     LOG_INFO( "%s\n\r", "native driver was initialized" );
 
+    /* Mac address should not be NULL pointer, although it can't be, but still
+     *  */
     if( mac_phy_config.mac_address == NULL )
     {
         _printAndExit( "MAC address is NULL" );
@@ -237,6 +239,7 @@ static int8_t _native_init( s_ns_t* p_netStack )
     etimer_set( &tmr, 10, _native_handler );
     LOG2_INFO( "set %p for %p callback\n\r", &tmr, &_native_handler );
     LOG_WARN( "Don't forget to destroy lcm object!" );
+
     return l_error;
 } /* _native_init() */
 #endif
@@ -252,20 +255,31 @@ static int8_t _native_init( s_ns_t* p_netStack )
 /*----------------------------------------------------------------------------*/
 static int8_t _native_send( const void *pr_payload, uint8_t c_len )
 {
+    int status;
+    /* We assume that usage of malloc here is ok as it's a simple Linux port
+     * However in the end we do a free() call. Function description expains
+     * why we need to allocate extra 2 bytes here
+     */
     uint8_t* pc_frame = malloc( sizeof(uint8_t) * ( c_len + __ADDRLEN__ ) );
+
+    /* Check malloc result */
     if( pc_frame == NULL )
     {
         LOG_ERR( "Insufficient memory" );
         return RADIO_TX_ERR;
     }
+
     /* Add two last bytes of MAC address to the beginning of a frame */
     *pc_frame = uip_lladdr.addr[6];
     *( pc_frame + 1 ) = uip_lladdr.addr[7];
     memmove( pc_frame + __ADDRLEN__, pr_payload, c_len );
-    int status = lcm_publish( ps_lcm, FAKERADIO_CHANNEL, pc_frame,
-            c_len + __ADDRLEN__ );
+    status = lcm_publish( ps_lcm, FAKERADIO_CHANNEL, pc_frame,
+                          c_len + __ADDRLEN__ );
+
     /* Free allocated memmory */
     free( pc_frame );
+
+    /* Return execution status to a caller */
     if( status == -1 )
     {
         LOG_ERR( "Send packet failed" );
@@ -275,7 +289,6 @@ static int8_t _native_send( const void *pr_payload, uint8_t c_len )
     {
         LOG_OK( "TX packet [%d]", c_len );
         LOG2_HEXDUMP( pr_payload, c_len );
-
         return RADIO_TX_OK;
     }
 } /* _native_send() */
