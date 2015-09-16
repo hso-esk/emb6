@@ -5,6 +5,8 @@
  *      Author: phuongnguyen
  */
 
+#include <stdint.h>
+#include "lib_tmr.h"
 #include "include.h"
 #include "hal_cc1120_io.h"
 #include "rf.h"
@@ -144,7 +146,6 @@ static void cc112x_On (RADIO_ERR *p_err)
     }
 #endif
 
-
     err = PHY_PlmeRfOn(true);
     if (err != PHY_SUCCESS) {
         *p_err = RADIO_ERR_ONOFF;
@@ -164,7 +165,6 @@ static void cc112x_Off (RADIO_ERR *p_err)
     }
 #endif
 
-
     err = PHY_PlmeRfOn(false);
     if (err != PHY_SUCCESS) {
         *p_err = RADIO_ERR_ONOFF;
@@ -180,7 +180,9 @@ static void cc112x_Send (const void         *p_payload,
 {
     int8_t phy_ret;
 
+    LED_TX_ON();
     phy_ret = PHY_PdDataReq((uint8_t *) p_payload, (uint16_t) len);
+    LED_TX_OFF();
     if (phy_ret != PHY_SUCCESS) {
         if (p_err) {
             *p_err = RADIO_ERR_TX;
@@ -238,17 +240,21 @@ static void cc112x_Ioctl (RADIO_IOC_CMD  cmd,
             break;
 
         case RADIO_IOC_CMD_RSSI_GET :
-            CC112x_RssiGet (p_val);
             break;
 
         case RADIO_IOC_CMD_STATE_GET:
-#if 0
-            if (rf_ready() == RF_BUSY) {
-                *p_val = RADIO_IOC_VAL_STATE_BUSY;
-            } else {
-                *p_val = RADIO_IOC_VAL_STATE_IDLE;
+            if (rf_is_rx()) {
+                *p_val = RADIO_IOC_VAL_STATE_RX;
+                return;
             }
-#endif
+
+            if (rf_is_tx()) {
+                *p_val = RADIO_IOC_VAL_STATE_TX;
+                return;
+            }
+
+            *p_val = RADIO_IOC_VAL_STATE_IDLE;
+
             break;
 
         case RADIO_IOC_CMD_RF_SWITCH :
