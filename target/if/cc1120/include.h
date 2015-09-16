@@ -12,6 +12,7 @@
 #include <stddef.h>
 
 
+
 /**
  * @brief   CPU Critical Section
  */
@@ -23,6 +24,8 @@
 #define LED_RX_OFF()                bsp_ledClear(E_BSP_LED_1)
 #define LED_TX_ON()                 bsp_ledSet(E_BSP_LED_2)
 #define LED_TX_OFF()                bsp_ledClear(E_BSP_LED_2)
+#define LED_SCAN_ON()               bsp_ledSet(E_BSP_LED_3)
+#define LED_SCAN_OFF()              bsp_ledClear(E_BSP_LED_3)
 #else
 #define CPU_ENTER_CRITICAL()
 #define CPU_EXIT_CRITICAL()
@@ -30,9 +33,23 @@
 #define LED_RX_OFF()
 #define LED_TX_ON()
 #define LED_TX_OFF()
+#define LED_SCAN_ON()
+#define LED_SCAN_OFF()
 #endif
 
-#define STKCFG_ARG_CHK_EN           0
+
+#define REFACTOR_APSS_EN                    ( 0u )
+#define STKCFG_MEASURE_EN                   ( 1u )
+#define APSS_CCA_BASED_SCAN_EN              ( 0u )
+
+#ifdef TDD_ENABLED
+#define APSS_RX
+#define APSS_TX
+#define STKCFG_ARG_CHK_EN                   ( 1u )
+#else
+#define STKCFG_ARG_CHK_EN                   ( 0u )
+#endif
+
 
 /**
  * @addtogroup  GLOBAL_DATA_TYPES   Global stack data type definitions
@@ -45,8 +62,8 @@ typedef uint8_t     STK_IOC_CMD;
 typedef uint16_t    STK_IOC_VAL;
 typedef uint16_t    STK_DEV_ID;
 
-typedef uint8_t     XMAC_STATE;
-typedef uint8_t     XMAC_FRAME_TYPE;
+typedef uint8_t     APSS_STATE;
+typedef uint8_t     APSS_FRAME_TYPE;
 
 typedef uint8_t     RADIO_STATE;
 typedef uint16_t    RADIO_ERR;
@@ -54,6 +71,12 @@ typedef uint8_t     RADIO_IOC_CMD;
 typedef uint16_t    RADIO_IOC_VAL;
 
 typedef void (*STK_FNCT_VOID) (void *p_arg);
+
+typedef struct mac_drv_api      MAC_DRV_API;
+typedef struct apss_drv_api     APSS_DRV_API;
+typedef struct apss_framer_api  APSS_FRAMER_API;
+typedef struct radio_drv_api    RADIO_DRV_API;
+
 
 /**
  * @}
@@ -69,6 +92,12 @@ typedef void (*STK_FNCT_VOID) (void *p_arg);
 #define STK_ERR_TX_RADIO_SEND           (STK_ERR) ( 2u )
 #define STK_ERR_TX_TIMEOUT              (STK_ERR) ( 3u )
 #define STK_ERR_TX_NOPACK               (STK_ERR) ( 4u )
+#define STK_ERR_NULL_POINTER            (STK_ERR) ( 5u )
+
+#define STK_ERR_APSS_TERMINATED         (STK_ERR) ( 11u )
+#define STK_ERR_APSS_ACK_INVALID        (STK_ERR) ( 12u )
+#define STK_ERR_APSS_FRAME_INVALID      (STK_ERR) ( 13u )
+#define STK_ERR_APSS_BROADCAST          (STK_ERR) ( 14u )
 
 
 /**
@@ -91,40 +120,47 @@ typedef void (*STK_FNCT_VOID) (void *p_arg);
 
 
 /**
- * @addtogroup  XMAC_STATES     XMAC states
+ * @addtogroup  APSS_STATES     APSS states
  * @{
  */
-#define XMAC_STATE_NONE                 (XMAC_STATE) (  0u )
-#define XMAC_STATE_IDLE                 (XMAC_STATE) (  1u )
-#define XMAC_STATE_SLEEP                (XMAC_STATE) (  2u )
+#define APSS_STATE_NONE                 (APSS_STATE) (  0u )
+#define APSS_STATE_IDLE                 (APSS_STATE) (  1u )
+#define APSS_STATE_SLEEP                (APSS_STATE) (  2u )
 
-#define XMAC_STATE_SCAN_STARTED         (XMAC_STATE) ( 10u )
-#define XMAC_STATE_SCAN_WFSP            (XMAC_STATE) ( 11u )
-#define XMAC_STATE_SCAN_DONE            (XMAC_STATE) ( 12u )
+#define APSS_STATE_SCAN_STARTED         (APSS_STATE) ( 10u )
+#define APSS_STATE_SCAN_CCA             (APSS_STATE) ( 11u )
+#define APSS_STATE_SCAN_CCA_SLEEP       (APSS_STATE) ( 12u )
+#define APSS_STATE_SCAN_WFSP            (APSS_STATE) ( 13u )
+#define APSS_STATE_SCAN_WFSPE           (APSS_STATE) ( 14u )
+#define APSS_STATE_SCAN_DONE            (APSS_STATE) ( 15u )
 
-#define XMAC_STATE_TX_SP                (XMAC_STATE) ( 25u )
-#define XMAC_STATE_TX_SPWFA             (XMAC_STATE) ( 26u )
-#define XMAC_STATE_TX_P                 (XMAC_STATE) ( 27u )
-#define XMAC_STATE_TX_PWFA              (XMAC_STATE) ( 28u )
-#define XMAC_STATE_TX_DONE              (XMAC_STATE) ( 29u )
+#define APSS_STATE_TX_SP                (APSS_STATE) ( 20u )
+#define APSS_STATE_TX_SPD               (APSS_STATE) ( 21u )
+#define APSS_STATE_TX_SPWFA             (APSS_STATE) ( 22u )
+#define APSS_STATE_TX_SPWFAE            (APSS_STATE) ( 23u )
+#define APSS_STATE_TX_P                 (APSS_STATE) ( 24u )
+#define APSS_STATE_TX_PWFA              (APSS_STATE) ( 25u )
+#define APSS_STATE_TX_DONE              (APSS_STATE) ( 26u )
 
-#define XMAC_STATE_RX_SP                (XMAC_STATE) ( 30u )
-#define XMAC_STATE_RX_WFP               (XMAC_STATE) ( 31u )
-#define XMAC_STATE_RX_P                 (XMAC_STATE) ( 32u )
+#define APSS_STATE_RX_SP                (APSS_STATE) ( 30u )    /*!< Received a valid Strobe and reply with an ACK immediately  */
+#define APSS_STATE_RX_SPD               (APSS_STATE) ( 31u )    /*!< Received a valid Strobe and reply with an ACK after a Delay */
+#define APSS_STATE_RX_WFP               (APSS_STATE) ( 32u )
+#define APSS_STATE_RX_WFPE              (APSS_STATE) ( 33u )
+#define APSS_STATE_RX_P                 (APSS_STATE) ( 34u )
 
 /**
  * @}
  */
 
 /**
- * @addtogroup  XMAC_FRAME_TYPES    XMAC frame types
- * @note        XMAC frame types use reserved values of frame types specified
+ * @addtogroup  APSS_FRAME_TYPES    APSS frame types
+ * @note        APSS frame types use reserved values of frame types specified
  *              in IEEE802.15.4
  * @{
  */
 
-#define XMAC_FRAME_TYPE_TIMESTAMP           (XMAC_FRAME_TYPE) ( 0x14 )
-#define XMAC_FRAME_TYPE_ACK                 (XMAC_FRAME_TYPE) ( 0x15 )
+#define APSS_FRAME_TYPE_STROBE              (APSS_FRAME_TYPE) ( 0x14 )
+#define APSS_FRAME_TYPE_SACK                (APSS_FRAME_TYPE) ( 0x15 )
 /**
  * @}
  */
@@ -157,11 +193,17 @@ typedef void (*STK_FNCT_VOID) (void *p_arg);
 
 
 /**
- * @addtogroup  RADIO_SYNC
+ * @addtogroup  RADIO_IOC_VAL
  * @{
  */
-#define RADIO_IOC_VAL_SYNC_SP             (RADIO_IOC_VAL) ( 0x930B )
-#define RADIO_IOC_VAL_SYNC_DATA           (RADIO_IOC_VAL) ( 0x51DE )
+#define RADIO_IOC_VAL_SYNC_SP               (RADIO_IOC_VAL) ( 0x930B )
+#define RADIO_IOC_VAL_SYNC_DATA             (RADIO_IOC_VAL) ( 0x51DE )
+
+#define RADIO_IOC_VAL_STATE_NONE            (RADIO_IOC_VAL) ( 0u )
+#define RADIO_IOC_VAL_STATE_IDLE            (RADIO_IOC_VAL) ( 1u )
+#define RADIO_IOC_VAL_STATE_RX              (RADIO_IOC_VAL) ( 2u )
+#define RADIO_IOC_VAL_STATE_TX              (RADIO_IOC_VAL) ( 3u )
+
 /**
  * @}
  */
@@ -169,8 +211,6 @@ typedef void (*STK_FNCT_VOID) (void *p_arg);
 /**
  * @brief   MAC driver API structure declaration
  */
-typedef struct mac_drv_api      MAC_DRV_API;
-
 struct mac_drv_api {
     char     *Name;
 
@@ -182,11 +222,9 @@ struct mac_drv_api {
 
 
 /**
- * @brief   XMAC driver API structure declaration
+ * @brief   APSS driver API structure declaration
  */
-typedef struct xmac_drv_api     XMAC_DRV_API;
-
-struct xmac_drv_api
+struct apss_drv_api
 {
     char     *Name;
 
@@ -209,10 +247,27 @@ struct xmac_drv_api
 
 
 /**
+ * @brief   Asynchronous Power Saving Scheme Framer API
+ */
+struct apss_framer_api
+{
+    char         *Name;
+
+    void        (*Init          ) (STK_ERR *p_err);
+
+    void        (*Deinit        ) (STK_ERR *p_err);
+
+    uint8_t*    (*CreateWakeup  ) (uint16_t *p_len, LIB_TMR_TICK *p_delay, STK_ERR *p_err);
+
+    uint8_t*    (*CreateACK     ) (uint16_t *p_len, LIB_TMR_TICK *p_delay, STK_ERR *p_err);
+
+    void        (*Parse         ) (uint8_t *p_pkt, uint16_t len, STK_ERR *p_err);
+};
+
+
+/**
  * @brief   Radio transceiver driver API
  */
-typedef struct radio_drv_api    RADIO_DRV_API;
-
 struct radio_drv_api
 {
     char     *Name;
@@ -237,17 +292,21 @@ struct radio_drv_api
  * @addtogroup  Global_variables
  * @{
  */
-extern  XMAC_STATE               XmacState;
+extern  APSS_STATE               APSSState;
 extern  RADIO_STATE              Radio_State;
-extern  STK_DEV_ID               XmacDevId;
-extern  STK_DEV_ID               XmacDestId;
+extern  STK_DEV_ID               APSSDevId;
+extern  STK_DEV_ID               APSSDestId;
 extern  MAC_DRV_API             *HighMacDrv;
-extern  XMAC_DRV_API            *LowMacDrv;
+extern  APSS_DRV_API            *LowMacDrv;
+extern  APSS_FRAMER_API         *APSSFramer;
 extern  RADIO_DRV_API           *RadioDrv;
 
-extern  XMAC_DRV_API             XmacDrv;
+extern  APSS_DRV_API             APSSDrv;
+extern  APSS_FRAMER_API          XMACFramer;
+extern  APSS_FRAMER_API          SmartMACFramer;
 extern  RADIO_DRV_API            CC112xDrv;
 extern  RADIO_DRV_API            StubCC112x_Drv;
+
 
 /* TODO this temporary buffer is used for testing purpose and should be replaced
  * with packet_buffer module of the emb6 */
@@ -263,14 +322,43 @@ extern  uint8_t StkBufLen;
  * @addtogroup  Configurations
  * @{
  */
-#define XMAC_TMR_POWERUP_INTERVAL   (LIB_TMR_TICK) (  500u )    /*!< 500ms */
-#define XMAC_TMR_SCAN_DURATION      (LIB_TMR_TICK) (   25u )    /*!<   5ms */
-#define XMAC_TMR_WFP_TIMEOUT        (LIB_TMR_TICK) (   20u )    /*!<   3ms */
-#define XMAC_TMR_WFA_TIMEOUT        (LIB_TMR_TICK) (   20u )    /*!<   3ms */
-#define XMAC_TMR_TXSP_TIMEOUT       (LIB_TMR_TICK) (  600u )    /*!< 600ms */
+#if APSS_CCA_BASED_SCAN_EN
+#define APSS_TMR_SCAN_CCA_INTERVAL  (LIB_TMR_TICK) (   5u )         /*!< minimum    */
+#define APSS_TMR_SCAN_DURATION      (LIB_TMR_TICK) (  30u )         /*!< minimum    */
+#else
+#define APSS_TMR_SCAN_DURATION      (LIB_TMR_TICK) (  25u )         /*!< minimum    */
+#endif
 
+#define APSS_TMR_WFP_TIMEOUT        (LIB_TMR_TICK) (  10u )         /*!< fixed      */
+#define APSS_TMR_WFA_TIMEOUT        (LIB_TMR_TICK) (  10u )         /*!< fixed      */
+#define APSS_TMR_POWERUP_INTERVAL   (LIB_TMR_TICK) ( 1000u )        /*!< variable   */
+#define APSS_TMR_TXSP_TIMEOUT       (APSS_TMR_POWERUP_INTERVAL * 2)
 /**
  * @}
  */
+
+
+
+/*
+********************************************************************************
+*                           CONFIGURATION CHECKING
+********************************************************************************
+*/
+#if     defined(XMAC_TX) | defined(XMAC_RX)
+#define APSS_FRAMER                     XMACFramer
+#elif   defined(SMARTMAC_TX) | defined(SMARTMAC_RX)
+#define APSS_FRAMER                     SmartMACFramer
+#else
+#error  Only XMAC and SmartMAC are supported
+#endif
+
+#if     defined(XMAC_TX) | defined(SMARTMAC_TX)
+#define APSS_TX
+#elif   defined(XMAC_RX) | defined(SMARTMAC_RX)
+#define APSS_RX
+#else
+#error  Only TX or RX operation modes are supported
+#endif
+
 
 #endif /* SOURCE_INCLUDE_H_ */
