@@ -30,6 +30,42 @@ def add_include(incpath2add):
 Import('env', 'TARGET_NAME', 'APPS_NAME', 'BOARD_NAME', 'MAC_ADDR', 'TX_POWER', 'RX_SENS', 'RXTX_MODE')
 env.Append(CPPPATH = ['./'])
 
+def parse_field(scons_conf):
+	global env
+	
+	# Add defines
+	if 'defines' in scons_conf:
+		env.MergeFlags({'CPPDEFINES' : scons_conf['defines']})
+		
+	# Add gcc flags
+	if 'cflags' in scons_conf:
+		env.MergeFlags({'CFLAGS' : scons_conf['cflags']})
+		
+	# Add linker flags
+	if 'ldflags' in scons_conf:
+		env.MergeFlags({'LINKFLAGS' : scons_conf['ldflags']})
+	
+	# Check library path
+	if 'libpath' in scons_conf:
+		env.MergeFlags({'LIBPATH' : scons_conf['libpath']})
+	
+	#Check includes for this library
+	if 'libincs' in scons_conf:
+		for libinc in scons_conf['libincs']:
+			add_include(libinc)
+	
+	# Check libraries and add them
+	if 'libs' in scons_conf:
+	   	conf = Configure(env)
+		libs = scons_conf['libs']
+		for lib in libs:
+		    if not conf.CheckLib(lib):
+		       print '> Didn\'t find lib{0}.a ot {0}.lib, exiting!'.format(lib)
+		       Exit(1)
+		    else:
+			conf.env.MergeFlags({'LIBS' : lib})
+		env = conf.Finish()
+
 ################################################################################ 
 ################ DEMO APPLICATION CONFIGURATION ################################
 ################################################################################
@@ -80,17 +116,7 @@ for app_conf in APPS_NAME:
 			add_include(os.path.dirname('./utils/inc/' + util_file))
 			add_sources('./utils/src/'+util_file+'.c')
 
-	# Add defines
-	if 'defines' in demo_conf:
-		env.MergeFlags({'CPPDEFINES' : demo_conf['defines']})
-	
-	# Add gcc flags
-	if 'cflags' in demo_conf:
-		env.MergeFlags({'CFLAGS' : demo_conf['cflags']})
-	
-	# Add linker flags
-	if 'ldflags' in demo_conf:
-		env.MergeFlags({'LINKFLAGS' : demo_conf['ldflags']})
+	parse_field(demo_conf)
 		
 ################################################################################ 
 #################### TARGET BOARD CONFIGURATION ################################
@@ -183,29 +209,7 @@ if RXTX_MODE != '':
 	rxtx_mode = 'MODULATION='+ RXTX_MODE
 	env.MergeFlags({'CPPDEFINES' : rxtx_mode})
 
-# Add defines
-if 'defines' in board_conf:
-	env.MergeFlags({'CPPDEFINES' : board_conf['defines']})
-	
-# Add gcc flags
-if 'cflags' in board_conf:
-	env.MergeFlags({'CFLAGS' : board_conf['cflags']})
-	
-# Add linker flags
-if 'ldflags' in board_conf:
-	env.MergeFlags({'LINKFLAGS' : board_conf['ldflags']})
-
-# Check libraries and add them
-if 'libs' in board_conf:
-   	conf = Configure(env)
-	libs = board_conf['libs']
-	for lib in libs:
-	    if not conf.CheckLib(lib):
-	       print '> Didn\'t find lib{0}.a ot {0}.lib, exiting!'.format(lib)
-	       Exit(1)
-	    else:
-		conf.env.MergeFlags({'LIBS' : lib})
-	env = conf.Finish()    
+parse_field(board_conf)
 
 ################################################################################ 
 ####################### Final Compilation ######################################
