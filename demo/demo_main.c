@@ -99,7 +99,7 @@
 #endif
 
 #if DEMO_USE_TESTSUITE
-#include "testsuite.h"
+#include "demo_tsemb6.h"
 #endif
 
 #if DEMO_USE_EXTIF

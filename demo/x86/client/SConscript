@@ -1,16 +1,4 @@
 client = {
-	'demo' : [
-	],
-	'emb6' : [
-	],
-	'utils' : [
-	],
-# C global defines
-	'defines' : [
-	],
-# GCC flags
-	'cflags' : [
-	]	
 }
 
 Return('client')

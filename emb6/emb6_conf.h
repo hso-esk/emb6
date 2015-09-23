@@ -819,7 +819,7 @@ void uip_log(char *msg);
  #define LOGGER_MAIN                            TRUE
 
  /** Radio functions                            (see $(IF).c) */
- #define LOGGER_RADIO                           FALSE
+ #define LOGGER_RADIO                           TRUE
 
  /** DEMO UDP example                           (see demo_exudp.c) */
  #define LOGGER_DEMO_UDPIAA                     TRUE

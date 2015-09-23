@@ -207,7 +207,7 @@ static int8_t _native_init( s_ns_t* p_netStack )
 
     lcm_subscribe( ps_lcm, FAKERADIO_CHANNEL, _native_read, NULL );
 
-    LOG_INFO( "%s\n\r", "native driver was initialized" );
+    LOG_INFO( "native driver was initialized" );
 
     /* Mac address should not be NULL pointer, although it can't be, but still
      *  */
@@ -237,8 +237,6 @@ static int8_t _native_init( s_ns_t* p_netStack )
 
     /* Start the packet receive process */
     etimer_set( &tmr, 10, _native_handler );
-    LOG2_INFO( "set %p for %p callback\n\r", &tmr, &_native_handler );
-    LOG_WARN( "Don't forget to destroy lcm object!" );
 
     return l_error;
 } /* _native_init() */
