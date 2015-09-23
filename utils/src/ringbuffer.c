@@ -76,7 +76,7 @@ uint8_t ringb_pulla( s_ringb_t *ps_rb, ringb_atom_t* p_data )
 }
 
 ringb_size_t ringb_pull( s_ringb_t *ps_rb, ringb_atom_t* p_data,
-        ringb_size_t len )
+                         ringb_size_t len )
 {
     if( ringb_empty( ps_rb ) )
     {
