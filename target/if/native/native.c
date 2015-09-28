@@ -319,7 +319,7 @@ static void _native_read( const lcm_recv_buf_t *rps_rbuf,
         /* If first two bytes of the received frame match with our
          * MAC address then discard a frame
          */
-        if( ( *( (uint8_t *)rps_rbuf->data )     != uip_lladdr.addr[6] ) &&
+        if( ( *( (uint8_t *)rps_rbuf->data )     != uip_lladdr.addr[6] ) ||
             ( *( (uint8_t *)rps_rbuf->data + 1 ) != uip_lladdr.addr[7] ) )
         {
             memcpy( packetbuf_dataptr(), rps_rbuf->data + __ADDRLEN__,
