@@ -1,6 +1,7 @@
 .metadata/
 build/
 bin/
+demo/testframework_emb6demoapp/
 .project
 .cproject
 _*/
