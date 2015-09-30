@@ -115,23 +115,29 @@ uip_lladdr_t uip_lladdr = {{0x00,0x06,0x98,0x00,0x02,0x32}};
 
 /** RPL default Configuration */
 s_rpl_conf_t rpl_config = {
-            .DIO_interval_min = 8,
-            .DIO_interval_doublings = 12,
-            .default_instance = 0x1e,                    /* This value decides which DAG instance we should participate in by default. */
-            .init_link_metric = 2,                        /* Initial metric attributed to a link when the ETX is unknown */
-            .default_route_lifetime_unit = 0xffff,
-            .default_route_lifetime = 0xff,
+            .DIOintmin          = 8,
+            .DIOintdoub         = 12,
+            /* This value decides which DAG instance we should
+             * participate in by default. */
+            .defInst            = 0x1e,
+            /* Initial metric attributed to a link when the ETX is unknown */
+            .linkMetric         = 2,
+            .defRouteTimeUnit   = 0xffff,
+            .defRouteTime       = 0xff,
 
 };
 
 /** MAC address default Configuration */
 s_mac_phy_conf_t mac_phy_config = {
 #if DEMO_USE_EXTIF
-        .mac_address =  { 0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff },     /* set extif mac address */
+        /* set extif mac address */
+        .mac_address =  { 0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff },
 #else
-        .mac_address =  { 0x00,0x50,0xc2,0xff,0xfe,0xa8,0xdd,0xdd },     /* set default mac address */
+        /* set default mac address */
+        .mac_address =  { 0x00,0x50,0xc2,0xff,0xfe,0xa8,0xdd,0xdd },
 #endif
-        .pan_id = 0xABCD,                                                /* set default pan id */
+        /* set default pan id */
+        .pan_id = 0xABCD,
         .init_power = 11,
         .init_sensitivity = -100,
         .modulation = MODULATION_BPSK20,

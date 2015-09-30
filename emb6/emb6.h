@@ -98,22 +98,22 @@ typedef uint32_t                            clock_time_t;
 typedef struct rpl_configuration
 {
     /* The DIO interval (n) represents 2^n ms. default value = 8 */
-    uint8_t DIO_interval_min;
+    uint8_t DIOintmin;
     /* Maximum amount of timer doublings. default value = 12 */
-    uint8_t DIO_interval_doublings;
+    uint8_t DIOintdoub;
     /* This value decides which DAG instance we should participate in by def.
      * default value = 0x1e (30) */
-    uint8_t default_instance;
+    uint8_t defInst;
     /* Initial metric attributed to a link when the ETX is unknown.
      * default value = 2 */
-    uint8_t init_link_metric;
+    uint8_t linkMetric;
     /* Default route lifetime unit. This is the granularity of time used in RPL
      * lifetime values, in seconds.
      * default value = 0xffff */
-    uint16_t default_route_lifetime_unit;
+    uint16_t defRouteTimeUnit;
     /* Default route lifetime as a multiple of the lifetime unit.
      * default value = 0xff */
-    uint8_t default_route_lifetime;
+    uint8_t defRouteTime;
 }s_rpl_conf_t;
 
 /*! RPL configuration struct, do not change */
