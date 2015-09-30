@@ -176,7 +176,7 @@ static uint8_t _udpAlive_addAddr(char * pc_buf, const uip_ipaddr_t* rps_addr)
 /*----------------------------------------------------------------------------*/
 static int8_t _udpAlive_sendMsg(void)
 {
-    LOG_INFO("Try to send message...");
+    LOG2_INFO( "Enter _udpAlive_sendMsg() function" );
 
     static uint32_t l_seqId;
     char            ac_buf[MAX_PAYLOAD_LEN];
@@ -224,9 +224,9 @@ static int8_t _udpAlive_sendMsg(void)
             }
 
             if (pst_udp_socket->udp_conn != NULL) {
-                LOG_RAW("Using destination addr: ");
-                LOG_IP6ADDR(&pst_udp_socket->udp_conn->ripaddr.u8);
-                LOG_RAW("\n\r local/remote port %u/%u\r\n",
+                LOG1_RAW("Using destination addr: ");
+                LOG1_IP6ADDR(&pst_udp_socket->udp_conn->ripaddr.u8);
+                LOG1_RAW("\n\r local/remote port %u/%u\r\n",
                        UIP_HTONS(pst_udp_socket->udp_conn->lport),
                        UIP_HTONS(pst_udp_socket->udp_conn->rport));
                 e_state = E_UDPALIVE_PREPMSG;
@@ -245,7 +245,7 @@ static int8_t _udpAlive_sendMsg(void)
                 } else {
                     sprintf(ac_buf + i, "(null)");
                 }
-                LOG_INFO("Payload: %s", ac_buf);
+                LOG1_INFO("Payload: %s", ac_buf);
                 e_state = E_UDPALIVE_SENDMSG;
             break;
         case E_UDPALIVE_SENDMSG:
@@ -259,6 +259,8 @@ static int8_t _udpAlive_sendMsg(void)
             break;
         }
     }
+
+    LOG2_INFO( "Leave _udpAlive_sendMsg() function" );
 
     return (c_err);
 
@@ -291,6 +293,9 @@ static    void _udpAlive_callback(c_event_t c_event, p_data_t p_data) {
 uint8_t demo_udpAliveConf(s_ns_t* pst_netStack)
 {
     uint8_t c_ret = 1;
+
+    LOG2_INFO( "Enter demo_udpAliveConf() function" );
+
     /*
      * By default stack
      */
@@ -318,6 +323,9 @@ uint8_t demo_udpAliveConf(s_ns_t* pst_netStack)
             }
         }
     }
+
+    LOG2_INFO( "Leave demo_udpAliveConf() function" );
+
     return (c_ret);
 }/* demo_udpAliveConf */
 
@@ -326,13 +334,16 @@ uint8_t demo_udpAliveConf(s_ns_t* pst_netStack)
 /*---------------------------------------------------------------------------*/
 int8_t demo_udpAliveInit(void)
 {
+    LOG2_INFO( "Enter demo_udpAliveInit() function" );
+
     /* set the pointer to the udp-socket */
     pst_udp_socket = &st_udp_socket;
 
     /* set periodic timer */
     etimer_set( &e_udpAliveTmr,SEND_INTERVAL * bsp_get(E_BSP_GET_TRES),
                 _udpAlive_callback);
-    /* set udp is running */
+
+    LOG2_INFO( "Leave demo_udpAliveInit() function" );
     return 1;
 }/* demo_udpAliveInit()  */
 /** @} */
