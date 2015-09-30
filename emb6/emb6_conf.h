@@ -803,7 +803,7 @@ void uip_log(char *msg);
  =============================================================================*/
  /** Define a deepness of the logger helper (see logger.h)*/
 #ifndef LOGGER_LEVEL
-#define LOGGER_LEVEL                            0
+#define LOGGER_LEVEL                            1
 #endif
  /** Core logging, should be TRUE for almost all cases except for production
   * (see emb6.c) */
@@ -816,25 +816,25 @@ void uip_log(char *msg);
  #define LOGGER_BSP                             FALSE
 
  /** Main functions                             (see emb6_main.c) */
- #define LOGGER_MAIN                            FALSE
+ #define LOGGER_MAIN                            TRUE
 
  /** Radio functions                            (see $(IF).c) */
- #define LOGGER_RADIO                           FALSE
+ #define LOGGER_RADIO                           TRUE
 
  /** DEMO UDP example                           (see demo_exudp.c) */
- #define LOGGER_DEMO_UDPIAA                     FALSE
+ #define LOGGER_DEMO_UDPIAA                     TRUE
 
  /** DEMO APTB example                           (see demo_aptb_xxx.c) */
- #define LOGGER_DEMO_APTB                       FALSE
+ #define LOGGER_DEMO_APTB                       TRUE
 
  /** DEMO COAP example                           (see demo_coap_*.c) */
- #define LOGGER_DEMO_COAP                       FALSE
+ #define LOGGER_DEMO_COAP                       TRUE
 
  /** DEMO SNIFFER                               (see demo_sniffer.c) */
  #define LOGGER_DEMO_SNIFFER                    FALSE
 
  /** DEMO TESTSUITE                             (see tessuite.c) */
-  #define LOGGER_DEMO_TESTSUITE                 FALSE
+  #define LOGGER_DEMO_TESTSUITE                 TRUE
 
  /** Event timer functions                      (see etimer.c) */
  #define LOGGER_ETIMER                          FALSE
