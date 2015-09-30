@@ -4,7 +4,7 @@ toolchain = {
 	'LINK' : ['avr-gcc'],
 	'OBJCOPY' : ['avr-objcopy'],
 	'OBJDUMP' : ['avr-objdump'],
-	'SIZE' : ['avr-size -c -X'],
+	'SIZE' : ['avr-size'],
 	'ASFLAGS' : [
 		'--traditional-format',
 		],
