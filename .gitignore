@@ -2,6 +2,7 @@
 build/
 bin/
 demo/testframework_emb6demoapp/
+.sconf_temp/
 .project
 .cproject
 _*/
