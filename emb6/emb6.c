@@ -184,8 +184,8 @@ uint8_t loc_emb6NetstackInit(s_ns_t * ps_ns)
     queuebuf_init();
     ctimer_init();
     if ((ps_ns->hc != NULL) && (ps_ns->llsec != NULL) && (ps_ns->hmac != NULL) &&
-        (ps_ns->lmac != NULL) && (ps_ns->frame != NULL)) {
-        if (ps_ns->frame->init(ps_ns))
+        (ps_ns->lmac != NULL) && (ps_ns->frame != NULL) && (ps_ns->inif != NULL)) {
+        if (ps_ns->inif->init(ps_ns)  && ps_ns->frame->init(ps_ns))
         {
             /* This drivers belong to Contiki and retval are't tracked */
             ps_ns->lmac->init(ps_ns);
