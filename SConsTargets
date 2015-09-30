@@ -24,6 +24,8 @@ TARGETS = [
                       ('udp_alive','')],             'atany900_pro3',       '0x15A5',      '-11',         '-100',       'MODULATION_QPSK100'],
 ['cs_atany900pro5',  [('coap','server'),
                       ('udp_alive','')],             'atany900_pro5',       '0x16A6',      '-11',         '-60',        'MODULATION_QPSK100'],
+['cs_worfsw',        [('coap','server'),
+                      ('udp_alive','')],             'atany_worfsw',        '0x1212',      '0',           '-100',       'MODULATION_QPSK100'],
 ['cs_atany900basic', [('coap','server'),
                       ('udp_alive','')],             'atany900_basic',      '0xAAAA',      '-11',         '-90',        'MODULATION_QPSK100'],
                       
