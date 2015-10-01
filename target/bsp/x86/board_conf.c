@@ -73,7 +73,7 @@ uint8_t board_conf(s_ns_t* ps_nStack)
 
     if (ps_nStack != NULL) {
         ps_nStack->inif = &native_driver;
-        c_ret = 1;
+        c_ret = ps_nStack->inif->init(ps_nStack);
     }
     else {
         LOG_ERR("Network stack pointer is NULL");
