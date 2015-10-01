@@ -77,7 +77,7 @@
 #include    "logger.h"
 
 /** set the send interval */
-#define     SEND_INTERVAL               60
+#define     SEND_INTERVAL               5
 
 /** set the payload length */
 #define     MAX_PAYLOAD_LEN             40
@@ -225,7 +225,7 @@ static int8_t _udpAlive_sendMsg(void)
 
             if (pst_udp_socket->udp_conn != NULL) {
                 LOG1_RAW("Using destination addr: ");
-                LOG1_IP6ADDR(&pst_udp_socket->udp_conn->ripaddr.u8);
+                LOG1_IP6ADDR(pst_udp_socket->udp_conn->ripaddr.u8);
                 LOG1_RAW("\n\r local/remote port %u/%u\r\n",
                        UIP_HTONS(pst_udp_socket->udp_conn->lport),
                        UIP_HTONS(pst_udp_socket->udp_conn->rport));
@@ -294,8 +294,6 @@ uint8_t demo_udpAliveConf(s_ns_t* pst_netStack)
 {
     uint8_t c_ret = 1;
 
-    LOG2_INFO( "Enter demo_udpAliveConf() function" );
-
     /*
      * By default stack
      */
@@ -323,8 +321,6 @@ uint8_t demo_udpAliveConf(s_ns_t* pst_netStack)
             }
         }
     }
-
-    LOG2_INFO( "Leave demo_udpAliveConf() function" );
 
     return (c_ret);
 }/* demo_udpAliveConf */
