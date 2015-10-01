@@ -70,6 +70,11 @@ uint8_t board_conf(s_ns_t* ps_nStack)
 {
     uint8_t c_ret = 0;
 
+    hal_gpioPinInit(SAMD20_SPI0_SCK_PIN, BSP_PIN_DIROUTPUT ,BSP_PIN_UP);
+    hal_gpioPinInit(SAMD20_SPI0_MOSI_PIN, BSP_PIN_DIROUTPUT ,BSP_PIN_UP);
+    hal_gpioPinInit(SAMD20_SPI0_MISO_PIN, BSP_PIN_DIRINPUT ,BSP_PIN_UP);
+    hal_gpioPinInit(SAMD20_SPI0_CS_PIN, BSP_PIN_DIROUTPUT ,BSP_PIN_UP);
+
     if (ps_nStack != NULL) {
         ps_nStack->inif = &rf212b_driver;
         c_ret = ps_nStack->inif->init(ps_nStack);
@@ -77,11 +82,6 @@ uint8_t board_conf(s_ns_t* ps_nStack)
     else {
         LOG_ERR("Network stack pointer is NULL");
     }
-
-    hal_gpioPinInit(SAMD20_SPI0_SCK_PIN, BSP_PIN_DIROUTPUT ,BSP_PIN_UP);
-    hal_gpioPinInit(SAMD20_SPI0_MOSI_PIN, BSP_PIN_DIROUTPUT ,BSP_PIN_UP);
-    hal_gpioPinInit(SAMD20_SPI0_MISO_PIN, BSP_PIN_DIRINPUT ,BSP_PIN_UP);
-    hal_gpioPinInit(SAMD20_SPI0_CS_PIN, BSP_PIN_DIROUTPUT ,BSP_PIN_UP);
 
     return c_ret;
 }

@@ -66,45 +66,49 @@
 
 
 
-#define SAMD20_SPI0_SERCOM                        SERCOM0
+#define SAMD20_SPI0_SERCOM                      SERCOM0
 #define SAMD20_SPI0_SERCOM_MUX_SETTING          SPI_SIGNAL_MUX_SETTING_E
-#define SAMD20_SPI0_SERCOM_PMUX0                  PINMUX_PA04D_SERCOM0_PAD0
-#define SAMD20_SPI0_SERCOM_PMUX1                  PINMUX_PA05D_SERCOM0_PAD1
-#define SAMD20_SPI0_SERCOM_PMUX2                  PINMUX_PA06D_SERCOM0_PAD2
-#define SAMD20_SPI0_SERCOM_PMUX3                  PINMUX_PA07D_SERCOM0_PAD3
+#define SAMD20_SPI0_SERCOM_PMUX0                PINMUX_PA04D_SERCOM0_PAD0
+#define SAMD20_SPI0_SERCOM_PMUX1                PINMUX_PA05D_SERCOM0_PAD1
+#define SAMD20_SPI0_SERCOM_PMUX2                PINMUX_PA06D_SERCOM0_PAD2
+#define SAMD20_SPI0_SERCOM_PMUX3                PINMUX_PA07D_SERCOM0_PAD3
 #define SAMD20_SPI0_MOSI_PIN                    PIN_PA06
-#define    SAMD20_SPI0_MISO_PIN                    PIN_PA04
-#define    SAMD20_SPI0_SCK_PIN                        PIN_PA07
-#define    SAMD20_SPI0_CS_PIN                        PIN_PA05
-#define    SAMD20_SPI0_RST_PIN                        PIN_PA20
-#define    SAMD20_SPI0_SLP_PIN                        PIN_PB08
-#define    SAMD20_RADIO_IRQ_PIN                    PIN_PB09
-#define    SAMD20_RADIO_IRQ_PINMUX                    PINMUX_PB09A_EIC_EXTINT9
-#define    SAMD20_RADIO_IRQ_INPUT                    9
+#define SAMD20_SPI0_MISO_PIN                    PIN_PA04
+#define SAMD20_SPI0_SCK_PIN                     PIN_PA07
+#define SAMD20_SPI0_CS_PIN                      PIN_PA05
+#define SAMD20_SPI0_RST_PIN                     PIN_PA20
+#define SAMD20_SPI0_SLP_PIN                     PIN_PB08
+#define SAMD20_RADIO_IRQ_PIN                    PIN_PB09
+#define SAMD20_RADIO_IRQ_PINMUX                 PINMUX_PB09A_EIC_EXTINT9
+#define SAMD20_RADIO_IRQ_INPUT                  9
 
 
 #define SAMD20_USART0_SERCOM                    SERCOM3
-#define SAMD20_USART0_BAUDRATE                    38400
+#define SAMD20_USART0_BAUDRATE                  38400
 #define SAMD20_USART0_SERCOM_MUX_SETTING        USART_RX_3_TX_2_XCK_3
-#define SAMD20_USART0_SERCOM_PMUX0                PINMUX_UNUSED
-#define SAMD20_USART0_SERCOM_PMUX1                PINMUX_UNUSED
-#define SAMD20_USART0_SERCOM_PMUX2                PINMUX_PA24C_SERCOM3_PAD2
-#define SAMD20_USART0_SERCOM_PMUX3                PINMUX_PA25C_SERCOM3_PAD3
-#define SAMD20_FEM_PD_PIN                        PIN_PA10
-#define SAMD20_FEM_LNA_PIN                        PIN_PA11
-#define SAMD20_TXRX_SEL                            PIN_PA19
+#define SAMD20_USART0_SERCOM_PMUX0              PINMUX_UNUSED
+#define SAMD20_USART0_SERCOM_PMUX1              PINMUX_UNUSED
+#define SAMD20_USART0_SERCOM_PMUX2              PINMUX_PA24C_SERCOM3_PAD2
+#define SAMD20_USART0_SERCOM_PMUX3              PINMUX_PA25C_SERCOM3_PAD3
+#define SAMD20_FEM_PD_PIN                       PIN_PA10
+#define SAMD20_FEM_LNA_PIN                      PIN_PA11
+#define SAMD20_TXRX_SEL                         PIN_PA19
 
 
-#if    LEDS_ON_BOARD == TRUE
-#define LED0_PIN                  PIN_PA22
-#define LED0_ACTIVE               false
-#define LED0_INACTIVE             !LED0_ACTIVE
+#define LED_1_NAME                              "YELLOW"
+#define LED_1_PIN                               PIN_PB23
+#define LED_1_ACTIVE                            false
+#define LED_1_INACTIVE                          !LED_0_ACTIVE
 
-#define LED_0_NAME                "LED0 (yellow)"
-#define LED_0_PIN                 LED0_PIN
-#define LED_0_ACTIVE              LED0_ACTIVE
-#define LED_0_INACTIVE            LED0_INACTIVE
-#endif
+#define LED_0_NAME                              "RED"
+#define LED_0_PIN                               PIN_PA23
+#define LED_0_ACTIVE                            false
+#define LED_0_INACTIVE                          !LED_1_ACTIVE
+
+#define LED_2_NAME                              "GREEN"
+#define LED_2_PIN                               PIN_PA22
+#define LED_2_ACTIVE                            false
+#define LED_2_INACTIVE                          !LED_2_ACTIVE
 
 /*============================================================================*/
 /*!

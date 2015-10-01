@@ -178,28 +178,28 @@ static uint8_t                  _rf212b_getState(void);
 static e_rf212b_sm_status_t     _rf212b_setTrxState(uint8_t c_new_state);
 static e_radio_tx_status_t      _rf212b_transmit(uint8_t c_len);
 static void                     _rf212b_callback(c_event_t c_event, p_data_t p_data);
-static    void                  _isr_callback(void *);
+static void                     _isr_callback(void *);
 static int8_t                   _rf212b_prepare(const void * p_payload, uint8_t c_len);
 static int8_t                   _rf212b_read(void *p_buf, uint8_t c_bufsize);
-static    void                  _rf212b_setPanAddr(unsigned pan,unsigned addr,const uint8_t ieee_addr[8]);
-static    int8_t                _rf212b_intON(void);
-static    int8_t                _rf212b_intOFF(void);
-static    int8_t                _rf212b_extON(void);
-static    int8_t                _rf212b_extOFF(void);
-static    uint8_t               _rf212b_getTxPower(void);
-static    void                  _rf212b_setTxPower(uint8_t power);
-static    void                  _rf212b_setPower(int8_t power);
-static  int8_t                  _rf212b_getPower(void);
-static    void                  _rf212b_setSensitivity(int8_t sens);
-static    int8_t                _rf212b_getSensitivity(void);
-static    int8_t                _rf212b_getRSSI(void);
-static    void                  _rf212b_wReset(void);
-static    int8_t                _rf212b_send(const void *pr_payload, uint8_t c_len);
-static    int8_t                _rf212b_init(s_ns_t* p_netStack);
-static    void                  _rf212b_AntDiv(uint8_t value);
-static    void                  _rf212b_AntExtSw(uint8_t value);
-static  void                    _rf212b_promisc(uint8_t value);
-static    void                  _spiBitWrite(void * p_spi, uint8_t c_addr,uint8_t c_mask,
+static void                     _rf212b_setPanAddr(unsigned pan,unsigned addr,const uint8_t ieee_addr[8]);
+static int8_t                   _rf212b_intON(void);
+static int8_t                   _rf212b_intOFF(void);
+static int8_t                   _rf212b_extON(void);
+static int8_t                   _rf212b_extOFF(void);
+static uint8_t                  _rf212b_getTxPower(void);
+static void                     _rf212b_setTxPower(uint8_t power);
+static void                     _rf212b_setPower(int8_t power);
+static int8_t                   _rf212b_getPower(void);
+static void                     _rf212b_setSensitivity(int8_t sens);
+static int8_t                   _rf212b_getSensitivity(void);
+static int8_t                   _rf212b_getRSSI(void);
+static void                     _rf212b_wReset(void);
+static int8_t                   _rf212b_send(const void *pr_payload, uint8_t c_len);
+static int8_t                   _rf212b_init(s_ns_t* p_netStack);
+static void                     _rf212b_AntDiv(uint8_t value);
+static void                     _rf212b_AntExtSw(uint8_t value);
+static void                    _rf212b_promisc(uint8_t value);
+static void                     _spiBitWrite(void * p_spi, uint8_t c_addr,uint8_t c_mask,
                                              uint8_t c_off,uint8_t c_data);
 #if PRINT_PCK_STAT
 static    void                     _show_stat(void *);
@@ -208,19 +208,19 @@ static    void                     _show_stat(void *);
                          STRUCTURES AND OTHER TYPEDEFS
 ==============================================================================*/
 const s_nsIf_t rf212b_driver = {
-        "at86rf212b",
-        _rf212b_init,
-        _rf212b_send,
-        _rf212b_extON,
-        _rf212b_extOFF,
-        _rf212b_setPower,
-        _rf212b_getPower,
-        _rf212b_setSensitivity,
-        _rf212b_getSensitivity,
-        _rf212b_getRSSI,
-        _rf212b_AntDiv,
-        _rf212b_AntExtSw,
-        _rf212b_promisc,
+    .name           = "at86rf212b",
+    .init           = _rf212b_init,
+    .send           = _rf212b_send,
+    .on             = _rf212b_extON,
+    .off            = _rf212b_extOFF,
+    .set_txpower    = _rf212b_setPower,
+    .get_txpower    = _rf212b_getPower,
+    .set_sensitivity= _rf212b_setSensitivity,
+    .get_sensitivity= _rf212b_getSensitivity,
+    .get_rssi       = _rf212b_getRSSI,
+    .ant_div        = _rf212b_AntDiv,
+    .ant_rf_switch  = _rf212b_AntExtSw,
+    .set_promisc    = _rf212b_promisc,
 };
 /*==============================================================================
                                 LOCAL FUNCTIONS
@@ -604,7 +604,6 @@ static e_radio_tx_status_t _rf212b_transmit(uint8_t c_len)
 /* Get the transmission result */
 #if RF212B_CONF_AUTORETRIES
     c_tx_result = bsp_spiBitRead(p_spi, RF212B_READ_COMMAND | RG_TRX_STATE, SR_TRAC_STATUS);
-//    c_tx_result = bsp_spiSubRead(SR_TRAC_STATUS);
 #else
     c_tx_result = RF212B_TX_SUCCESS;
 #endif
@@ -993,9 +992,6 @@ static int8_t _rf212b_getRSSI(void)
 
 static void _rf212b_AntDiv(uint8_t value)
 {
-    //TODO ant diversity
-    _spiBitWrite(p_spi, RG_ANT_DIV, SR_ANT_EXT_SW_EN, 1);
-    _spiBitWrite(p_spi, RG_ANT_DIV, SR_ANT_CTRL, 2);
 }
 
 static void _rf212b_AntExtSw(uint8_t value)
@@ -1060,6 +1056,9 @@ void _rf212b_wReset(void)
       /* set initial sensitivity */
     _rf212b_setSensitivity(mac_phy_config.init_sensitivity);
 
+    //TODO ant diversity
+    _spiBitWrite(p_spi, RG_ANT_DIV, SR_ANT_EXT_SW_EN, 1);
+
   /* CCA energy threshold = -91dB + 2*SR_CCA_ED_THRESH. Reset defaults to -77dB */
   /* Use RF212 base of -91;  RF231 base is -90 according to datasheet */
 #ifdef RF212B_CONF_E_CCA_THRES
@@ -1108,17 +1107,13 @@ void _rf212b_wReset(void)
 static int8_t _rf212b_send(const void *pr_payload, uint8_t c_len)
 {
     int8_t c_ret = 0;
-#ifdef RF212BB_HOOK_IS_SEND_ENABLED
-    if(!RF212BB_HOOK_IS_SEND_ENABLED()) {
-        LOG_ERROR("failed");
-        return c_ret;
-    }
-#endif
+
     if((c_ret = _rf212b_prepare(pr_payload, c_len))) {
         LOG_ERR("_rf212b_send: Unable to send, prep failed (%d)",c_ret);
         return c_ret;
     }
     c_ret = _rf212b_transmit(c_len);
+
     if (c_ret != RADIO_TX_OK) {
         bsp_led(E_BSP_LED_RED,E_BSP_LED_TOGGLE);
         LOG_ERR("Send failed with code %d ",c_ret);

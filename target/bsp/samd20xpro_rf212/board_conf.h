@@ -91,12 +91,19 @@
 #define SAMD20_USART0_SERCOM_PMUX2                PINMUX_PA24C_SERCOM3_PAD2
 #define SAMD20_USART0_SERCOM_PMUX3                PINMUX_PA25C_SERCOM3_PAD3
 
-#if    LEDS_ON_BOARD
 /** \name LED0 definitions
  *  @{ */
 #define LED0_PIN                  PIN_PA14
 #define LED0_ACTIVE               false
 #define LED0_INACTIVE             !LED0_ACTIVE
+
+#define LED1_PIN                  PIN_PA14
+#define LED1_ACTIVE               false
+#define LED1_INACTIVE             !LED0_ACTIVE
+
+#define LED2_PIN                  PIN_PA14
+#define LED2_ACTIVE               false
+#define LED2_INACTIVE             !LED0_ACTIVE
 /** @} */
 
 /**
@@ -110,8 +117,18 @@
 #define LED_0_PIN                 LED0_PIN
 #define LED_0_ACTIVE              LED0_ACTIVE
 #define LED_0_INACTIVE            LED0_INACTIVE
+
+#define LED_1_NAME                "LED0 (yellow)"
+#define LED_1_PIN                 LED0_PIN
+#define LED_1_ACTIVE              LED0_ACTIVE
+#define LED_1_INACTIVE            LED0_INACTIVE
+
+#define LED_2_NAME                "LED0 (yellow)"
+#define LED_2_PIN                 LED0_PIN
+#define LED_2_ACTIVE              LED0_ACTIVE
+#define LED_2_INACTIVE            LED0_INACTIVE
 /** @} */
-#endif
+
 
 /*============================================================================*/
 /*!

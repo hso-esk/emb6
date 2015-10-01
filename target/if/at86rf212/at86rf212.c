@@ -540,7 +540,6 @@ static e_radio_tx_status_t _rf212_transmit(uint8_t c_len)
     /* Toggle the SLP_TR pin to initiate the frame transmission */
     bsp_setPin(p_slpTrig);
     bsp_clrPin(p_slpTrig);
-
     LOG_DBG("_rf212_transmit: %d", (int)c_total_len);
 
     /* We wait until transmission has ended so that we get an
@@ -587,7 +586,6 @@ static e_radio_tx_status_t _rf212_transmit(uint8_t c_len)
         if (!((pc_buffer[5]==0xff) && (pc_buffer[6]==0xff)) && (pc_buffer[0]&(1<<6)))
             ack_pending=1;
 #endif
-        return RADIO_TX_OK;
         return RADIO_TX_OK;
     case RF212_TX_CH_ACCFAIL:
         LOG_ERR("_rf212_transmit: CSMA channel access fail");
