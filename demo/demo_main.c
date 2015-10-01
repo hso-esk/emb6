@@ -122,7 +122,6 @@
 /*==============================================================================
                           LOCAL VARIABLE DECLARATIONS
  =============================================================================*/
-struct     etimer             led_et;
 /*==============================================================================
                                 LOCAL CONSTANTS
  =============================================================================*/
@@ -246,15 +245,6 @@ static uint8_t loc_demoAppsInit(void)
     return 1;
 }
 
-void loc_emb6_running_led_toggle(c_event_t c_event, p_data_t p_data)
-{
-    if (etimer_expired(&led_et))
-    {
-        bsp_led(E_BSP_LED_YELLOW,E_BSP_LED_TOGGLE);
-        etimer_restart(&led_et);
-    }
-}
-
 /*==============================================================================
  main()
 ==============================================================================*/
@@ -290,8 +280,6 @@ int main(void)
         {
             return 0;
         }
-        /* emb6 running LED toggle */
-        etimer_set(&led_et, 1 * bsp_get(E_BSP_GET_TRES), loc_emb6_running_led_toggle);
 
         /* call process function with delay in us */
         emb6_process(500);  /* default: 500 us delay */
