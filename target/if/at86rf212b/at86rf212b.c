@@ -993,7 +993,9 @@ static int8_t _rf212b_getRSSI(void)
 
 static void _rf212b_AntDiv(uint8_t value)
 {
-
+    //TODO ant diversity
+    _spiBitWrite(p_spi, RG_ANT_DIV, SR_ANT_EXT_SW_EN, 1);
+    _spiBitWrite(p_spi, RG_ANT_DIV, SR_ANT_CTRL, 2);
 }
 
 static void _rf212b_AntExtSw(uint8_t value)
@@ -1041,11 +1043,6 @@ void _rf212b_wReset(void)
   /* Carrier sense threshold (not implemented in RF212 or RF231) */
      //bsp_spiSubWrite(SR_CCA_CS_THRES,0x7);
 
-    //TODO ant diversity
-    _spiBitWrite(p_spi, RG_ANT_DIV, SR_ANT_EXT_SW_EN, 1);
-    _spiBitWrite(p_spi, RG_ANT_DIV, SR_ANT_CTRL, 2);
-
-//    bsp_spiRegWrite(p_spi, RF212B_WRITE_COMMAND | RG_ANT_DIV, 0x06);
   /* Receiver sensitivity. If nonzero rf231/128rfa1 saves 0.5ma in rx mode */
   /* Not implemented on rf212 but does not hurt to write to it */
 #ifdef RF212B_MIN_RX_POWER
@@ -1123,13 +1120,12 @@ static int8_t _rf212b_send(const void *pr_payload, uint8_t c_len)
     }
     c_ret = _rf212b_transmit(c_len);
     if (c_ret != RADIO_TX_OK) {
-        //bsp_led(E_BSP_LED_RED,E_BSP_LED_TOGGLE);
+        bsp_led(E_BSP_LED_RED,E_BSP_LED_TOGGLE);
         LOG_ERR("Send failed with code %d ",c_ret);
     }
-    else
-        {
-        //bsp_led(E_BSP_LED_YELLOW,E_BSP_LED_TOGGLE);
-        }
+    else {
+        bsp_led(E_BSP_LED_YELLOW,E_BSP_LED_TOGGLE);
+    }
 #if PRINT_PCK_STAT
     pck_cntr_out++;
 #endif /* PRINT_PCK_STAT */
@@ -1380,7 +1376,7 @@ static void _rf212b_callback(c_event_t c_event, p_data_t p_data)
 #if PRINT_PCK_STAT
     pck_cntr_in++;
 #endif /* PRINT_PCK_STAT */
-   // bsp_led(E_BSP_LED_GREEN,E_BSP_LED_TOGGLE);
+    bsp_led(E_BSP_LED_GREEN,E_BSP_LED_TOGGLE);
 } /*  _rf212b_callback() */
 
 /*==============================================================================
