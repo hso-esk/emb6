@@ -83,10 +83,6 @@
 
 uint8_t loc_emb6NetstackInit(s_ns_t * ps_netstack);
 
-#if EMB6_DEMO_TOT
-void loc_emb6ToutHandler(c_event_t c_event, p_data_t p_data );
-#endif /* #if EMB6_DEMO_TOT */
-
 #ifdef EMB6_INIT_DROOT
 static int8_t   loc_emb6DagRootInit(void);
 #endif
@@ -96,10 +92,6 @@ static int8_t   loc_emb6DagRootInit(void);
  =============================================================================*/
 /* Don't use this variable directly, instead take emb6_get() */
 static s_ns_t*  ps_emb6Stack;
-
-#if EMB6_DEMO_TOT
-struct     etimer             et_timeout;
-#endif /* #if EMB6_DEMO_TOT */
 
 /*---------------------------------------------------------------------------*/
 /** @{ \name Layer 2 variables */
@@ -162,7 +154,7 @@ static int8_t loc_emb6DagRootInit(void)
     root_if = uip_ds6_get_global(-1);
     if(root_if != NULL) {
         rpl_dag_t *dag;
-        dag = rpl_set_root(rpl_config.default_instance,(uip_ip6addr_t *)&un_ipaddr);
+        dag = rpl_set_root(rpl_config.defInst,(uip_ip6addr_t *)&un_ipaddr);
         rpl_set_prefix(dag, &un_ipaddr, 64);
         LOG_INFO("created a new RPL dag");
     } else {
@@ -185,7 +177,7 @@ uint8_t loc_emb6NetstackInit(s_ns_t * ps_ns)
     ctimer_init();
     if ((ps_ns->hc != NULL) && (ps_ns->llsec != NULL) && (ps_ns->hmac != NULL) &&
         (ps_ns->lmac != NULL) && (ps_ns->frame != NULL) && (ps_ns->inif != NULL)) {
-        if (ps_ns->inif->init(ps_ns)  && ps_ns->frame->init(ps_ns))
+        if (ps_ns->frame->init(ps_ns))
         {
             /* This drivers belong to Contiki and retval are't tracked */
             ps_ns->lmac->init(ps_ns);
@@ -203,22 +195,8 @@ uint8_t loc_emb6NetstackInit(s_ns_t * ps_ns)
     }
 #endif /* DEMO_USE_DAG_ROOT */
 
-#if EMB6_DEMO_TOT
-    /* deinit tcpip stack after 30 minutes */
-    etimer_set(&et_timeout, EMB6_DEMO_TOT * bsp_get(E_BSP_GET_TRES), loc_emb6ToutHandler);
-#endif /* #if EMB6_DEMO_TOT */
     return (c_err);
 }
-
-#if EMB6_DEMO_TOT
-void loc_emb6ToutHandler(c_event_t c_event, p_data_t p_data )
-{
-    if (etimer_expired(&et_timeout))
-    {
-        while(1);
-    }
-}
-#endif /* #if EMB6_DEMO_TOT */
 
 /*==============================================================================
                                  API FUNCTIONS
