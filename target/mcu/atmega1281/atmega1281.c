@@ -46,7 +46,7 @@
  * \addtogroup atmega1281
  * @{
  */
-/*! \file   atmega1281/target.c
+/*! \file   atmega1281/atmega1281.c
 
  \author Artem Yushev 
 

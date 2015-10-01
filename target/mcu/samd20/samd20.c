@@ -43,14 +43,14 @@
  * @{
  * \addtogroup mcu MCU HAL library
  * @{
- * \addtogroup samd21g18a
+ * \addtogroup samd20g18
  * @{
  */
-/*! \file   samd21g/samd21.c
+/*! \file   samd20/samd20.c
 
  \author Artem Yushev
 
- \brief  Hardware dependent initialization for SAMD21J18A
+ \brief  Hardware dependent initialization for SAMD20G18
 
  \version 0.0.1
  */
@@ -59,7 +59,6 @@
 /*==============================================================================
  INCLUDE FILES
  ==============================================================================*/
-
 #include "emb6.h"
 #include "emb6_conf.h"
 #include "board_conf.h"
@@ -67,6 +66,7 @@
 #include "target.h"
 #include "hwinit.h"
 #include "bsp.h"
+
 #include "stdio_serial.h"
 
 /*==============================================================================
@@ -118,12 +118,14 @@ typedef struct extInt
     uint32_t l_line;
 } extInt_t;
 
-pinDesc_t st_slp_tr = SAMD21_SPI0_SLP_PIN;
-pinDesc_t st_rst = SAMD21_SPI0_RST_PIN;
-pinDesc_t st_ss = SAMD21_SPI0_CS_PIN;
+//const     uint8_t mac_address[8] = {RADIO_MAC_ADDR};
+
+pinDesc_t st_slp_tr = SAMD20_SPI0_SLP_PIN;
+pinDesc_t st_rst = SAMD20_SPI0_RST_PIN;
+pinDesc_t st_ss = SAMD20_SPI0_CS_PIN;
 /* Definition of a external pin for xplainedpro board and rf212 */
-extInt_t radio_extInt = { { }, SAMD21_RADIO_IRQ_PIN, SAMD21_RADIO_IRQ_PINMUX,
-        EXTINT_PULL_NONE, EXTINT_DETECT_RISING, SAMD21_RADIO_IRQ_INPUT };
+extInt_t radio_extInt = { { }, SAMD20_RADIO_IRQ_PIN, SAMD20_RADIO_IRQ_PINMUX,
+        EXTINT_PULL_NONE, EXTINT_DETECT_RISING, SAMD20_RADIO_IRQ_INPUT };
 /*==============================================================================
  LOCAL CONSTANTS
  ==============================================================================*/
@@ -132,7 +134,7 @@ extInt_t radio_extInt = { { }, SAMD21_RADIO_IRQ_PIN, SAMD21_RADIO_IRQ_PINMUX,
  LOCAL FUNCTIONS
  ==============================================================================*/
 /*----------------------------------------------------------------------------*/
-/** \brief  This function configure timer counter of the atmel samd21 MCU
+/** \brief  This function configure timer counter of the atmel samd20 MCU
  *  \param         none
  *
  *  \return        none
@@ -140,35 +142,35 @@ extInt_t radio_extInt = { { }, SAMD21_RADIO_IRQ_PIN, SAMD21_RADIO_IRQ_PINMUX,
 /*---------------------------------------------------------------------------*/
 static void _hal_tcInit( void )
 {
-//! [init_conf]
+    //! [init_conf]
     struct rtc_count_config config_rtc_count;
     rtc_count_get_config_defaults( &config_rtc_count );
-//! [init_conf]
+    //! [init_conf]
 
-//! [set_config]
+    //! [set_config]
     config_rtc_count.prescaler = RTC_COUNT_PRESCALER_DIV_1;
     config_rtc_count.mode = RTC_COUNT_MODE_16BIT;
     config_rtc_count.continuously_update = true;
-//! [set_config]
-//! [init_rtc]
+    //! [set_config]
+    //! [init_rtc]
     rtc_count_init( &rtc_instance, RTC, &config_rtc_count );
-//! [init_rtc]
+    //! [init_rtc]
 
-//! [period]
+    //! [period]
     rtc_count_set_period( &rtc_instance, 32 );
-//! [period]
+    //! [period]
 
-//! [reg_callback]
+    //! [reg_callback]
     rtc_count_register_callback( &rtc_instance, _isr_tc_interrupt,
             RTC_COUNT_CALLBACK_OVERFLOW );
-//! [reg_callback]
-//! [en_callback]
+    //! [reg_callback]
+    //! [en_callback]
     rtc_count_enable_callback( &rtc_instance, RTC_COUNT_CALLBACK_OVERFLOW );
-//! [en_callback]
+    //! [en_callback]
 
-//! [enable]
+    //! [enable]
     rtc_count_enable( &rtc_instance );
-//! [enable]
+    //! [enable]
 } /* _hal_tcInit() */
 
 /*----------------------------------------------------------------------------*/
@@ -196,16 +198,16 @@ static void _hal_usartInit( void )
 //! [setup_config_defaults]
 
 //! [setup_change_config]
-    config_usart.baudrate = SAMD21_USART0_BAUDRATE;
-    config_usart.mux_setting = SAMD21_USART0_SERCOM_MUX_SETTING;
-    config_usart.pinmux_pad0 = SAMD21_USART0_SERCOM_PMUX0;
-    config_usart.pinmux_pad1 = SAMD21_USART0_SERCOM_PMUX1;
-    config_usart.pinmux_pad2 = SAMD21_USART0_SERCOM_PMUX2;
-    config_usart.pinmux_pad3 = SAMD21_USART0_SERCOM_PMUX3;
+    config_usart.baudrate = SAMD20_USART0_BAUDRATE;
+    config_usart.mux_setting = SAMD20_USART0_SERCOM_MUX_SETTING;
+    config_usart.pinmux_pad0 = SAMD20_USART0_SERCOM_PMUX0;
+    config_usart.pinmux_pad1 = SAMD20_USART0_SERCOM_PMUX1;
+    config_usart.pinmux_pad2 = SAMD20_USART0_SERCOM_PMUX2;
+    config_usart.pinmux_pad3 = SAMD20_USART0_SERCOM_PMUX3;
 //! [setup_change_config]
 
 //! [setup_set_config]
-    while( usart_init( &st_usartInst, SAMD21_USART0_SERCOM, &config_usart )
+    while( usart_init( &st_usartInst, SAMD20_USART0_SERCOM, &config_usart )
             != STATUS_OK )
     {
     }
@@ -215,13 +217,13 @@ static void _hal_usartInit( void )
     usart_enable( &st_usartInst );
 //! [setup_enable]
 
-// Initialize Serial Interface using Stdio Library
-    stdio_serial_init( &st_usartInst, SAMD21_USART0_SERCOM, &config_usart );
+    // Initialize Serial Interface using Stdio Library
+    stdio_serial_init( &st_usartInst, SAMD20_USART0_SERCOM, &config_usart );
     //stdout = &st_usartStdout;
 } /* _hal_usartInit() */
 
 /*----------------------------------------------------------------------------*/
-/** \brief  This function configure watchdog timer of the atmel samd21 MCU
+/** \brief  This function configure watchdog timer of the atmel samd20 MCU
  *  \param         none
  *
  *  \return        none
@@ -256,9 +258,9 @@ void _hal_wdtInit( void )
     //! [setup_5]
 } //! [wdt_setup]
 
-#if    LEDS_ON_BOARD == TRUE
 void _hal_ledInit( void )
 {
+#if    LEDS_ON_BOARD == TRUE
     struct port_config pin_conf;
     port_get_config_defaults(&pin_conf);
 
@@ -270,8 +272,8 @@ void _hal_ledInit( void )
     port_pin_set_output_level(LED_1_PIN, LED_1_INACTIVE);
     port_pin_set_config(LED_2_PIN, &pin_conf);
     port_pin_set_output_level(LED_2_PIN, LED_2_INACTIVE);
-}
 #endif
+}
 
 void _isr_tc_interrupt( void )
 {
@@ -316,9 +318,7 @@ int8_t hal_init( void )
     _hal_usartInit();
     _hal_wdtInit();
     _hal_tcInit();
-#if    LEDS_ON_BOARD == TRUE
     _hal_ledInit();
-#endif
     delay_init();
     system_interrupt_enable_global();
     return 1;
@@ -336,9 +336,9 @@ uint8_t hal_getrand( void )
 /*==============================================================================
  hal_ledOff()
  ==============================================================================*/
-void hal_ledOff( uint16_t ui_led )
-{
 #if    LEDS_ON_BOARD == TRUE
+void hal_ledOff(uint16_t ui_led)
+{
     hal_enterCritical();
     switch (ui_led)
     {
@@ -355,15 +355,14 @@ void hal_ledOff( uint16_t ui_led )
         break;
     }
     hal_exitCritical();
-#endif  /* LEDS_ON_BOARD == TRUE */
 }
-
+#endif  /* LEDS_ON_BOARD == TRUE */
 /*==============================================================================
  hal_ledOn()
  ==============================================================================*/
-void hal_ledOn( uint16_t ui_led )
-{
 #if    LEDS_ON_BOARD == TRUE
+void hal_ledOn(uint16_t ui_led)
+{
     hal_enterCritical();
     switch (ui_led)
     {
@@ -380,9 +379,8 @@ void hal_ledOn( uint16_t ui_led )
         break;
     }
     hal_exitCritical();
-#endif  /* LEDS_ON_BOARD == TRUE */
 }
-
+#endif  /* LEDS_ON_BOARD == TRUE */
 /*==============================================================================
  hal_extIntInit()
  =============================================================================*/
@@ -397,8 +395,7 @@ uint8_t hal_extIntInit( en_targetExtInt_t e_intSource,
         {
             case E_TARGET_RADIO_INT:
                 //! [setup_init]
-                //extint_enable();
-
+                //
                 //! [conf_channel]
                 //! [setup_1]
                 extint_chan_get_config_defaults( &( radio_extInt.st_chan ) );
@@ -452,11 +449,25 @@ void hal_delay_us( uint32_t i_delay )
     delay_us( i_delay );
 } /* hal_delay_us() */
 
+uint8_t hal_gpioPinInit( uint8_t c_pin, uint8_t c_dir, uint8_t c_initState )
+{
+    struct port_config pin_conf;
+    port_get_config_defaults( &pin_conf );
+
+    /* Configure SPI interface */
+    port_get_config_defaults( &pin_conf );
+
+    pin_conf.direction = c_dir;
+    port_pin_set_config( c_pin, &pin_conf );
+    port_pin_set_output_level( c_pin, c_initState );
+
+    return 0;
+}
+
 /*==============================================================================
  hal_ctrlPinInit()
  =============================================================================*/
 void * hal_ctrlPinInit( en_targetExtPin_t e_pinType )
-/*void *     hal_pinInit(en_targetExtPin_t e_pinType)*/
 {
     struct port_config pin_conf;
     port_get_config_defaults( &pin_conf );
@@ -464,21 +475,6 @@ void * hal_ctrlPinInit( en_targetExtPin_t e_pinType )
 
     /* Configure SPI interface */
     port_get_config_defaults( &pin_conf );
-
-    pin_conf.direction = PORT_PIN_DIR_OUTPUT;
-    port_pin_set_config( SAMD21_SPI0_SCK_PIN, &pin_conf );     //     SPI_SCK
-    port_pin_set_config( SAMD21_SPI0_MOSI_PIN, &pin_conf );     //     SPI_MOSI
-    port_pin_set_config( SAMD21_SPI0_CS_PIN, &pin_conf );     //    SPI_CS
-    port_pin_set_config( SAMD21_FEM_PD_PIN, &pin_conf );         //    Power Amp
-    port_pin_set_config( SAMD21_FEM_LNA_PIN, &pin_conf );     //    Power Amp
-    port_pin_set_output_level( SAMD21_SPI0_SCK_PIN, true );    //    SPI_SCK
-    port_pin_set_output_level( SAMD21_SPI0_MOSI_PIN, true );    //    SPI_MOSI
-    port_pin_set_output_level( SAMD21_SPI0_CS_PIN, true );    //    SPI_CS
-    port_pin_set_output_level( SAMD21_FEM_PD_PIN, true );    //    Power Amp
-    port_pin_set_output_level( SAMD21_FEM_LNA_PIN, true );    //    Power Amp
-
-    pin_conf.direction = PORT_PIN_DIR_INPUT;
-    port_pin_set_config( SAMD21_SPI0_MISO_PIN, &pin_conf );    //    SPI_MISO
 
     switch( e_pinType )
     {
@@ -500,7 +496,8 @@ void * hal_ctrlPinInit( en_targetExtPin_t e_pinType )
     }
 
     return p_pin;
-}
+} /* hal_ctrlPinInit */
+
 /*==============================================================================
  hal_pinSet()
  =============================================================================*/
@@ -554,13 +551,14 @@ void * hal_spiInit( void )
     /* Configure, initialize and enable SERCOM SPI module */
     //! [conf_defaults]
     spi_get_config_defaults( &st_masterConf );
+
     //! [conf_defaults]
     //! [mux_setting]
-    st_masterConf.mux_setting = SAMD21_SPI0_SERCOM_MUX_SETTING;
+    st_masterConf.mux_setting = SAMD20_SPI0_SERCOM_MUX_SETTING;
     //! [mux_setting]
     /* Configure pad 0 for data in */
     //! [di]
-    st_masterConf.pinmux_pad0 = SAMD21_SPI0_SERCOM_PMUX0;
+    st_masterConf.pinmux_pad0 = SAMD20_SPI0_SERCOM_PMUX0;
     //! [di]
     /* Configure pad 1 as unused */
     //! [ss]
@@ -568,18 +566,20 @@ void * hal_spiInit( void )
     //! [ss]
     /* Configure pad 2 for data out */
     //! [do]
-    st_masterConf.pinmux_pad2 = SAMD21_SPI0_SERCOM_PMUX2;
+    st_masterConf.pinmux_pad2 = SAMD20_SPI0_SERCOM_PMUX2;
     //! [do]
     /* Configure pad 3 for SCK */
     //! [sck]
-    st_masterConf.pinmux_pad3 = SAMD21_SPI0_SERCOM_PMUX3;
+    st_masterConf.pinmux_pad3 = SAMD20_SPI0_SERCOM_PMUX3;
     //! [sck]
+
     //! [init]
-    spi_init( &st_masterInst, SAMD21_SPI0_SERCOM, &st_masterConf );
+    spi_init( &st_masterInst, SAMD20_SPI0_SERCOM, &st_masterConf );
     //! [init]
 
     //! [enable]
     spi_enable( &st_masterInst );
+
     //! [enable]
 
     return ( (void *)&st_spi );
@@ -593,7 +593,7 @@ uint8_t hal_spiSlaveSel( void * p_spi, bool action )
 {
     if( p_spi == NULL )
     {
-        LOG_ERR( "SPI was not initialized!" );
+//        LOG_ERR("SPI was not initialized!");
         return 0;
     }
     if( action )
@@ -629,7 +629,8 @@ void hal_spiWrite( uint8_t * c_value, uint16_t i_length )
 {
     if( spi_write_buffer_wait( &st_masterInst, c_value, i_length )
             != STATUS_OK )
-        LOG_ERR( "%s\n\r", "SPI write error!" );
+//        LOG_ERR("%s\n\r","SPI write error!");
+        ;
 } /* hal_spiWrite() */
 
 /*==============================================================================

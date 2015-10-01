@@ -51,7 +51,7 @@
  * This is an PC emulation library for upper layers.
  *
  */
-/*! \file   linux/target.c
+/*! \file   linux/linux.c
 
     \author Artem Yushev 
 

@@ -95,17 +95,20 @@
 
 
 
-#if    LEDS_ON_BOARD == TRUE
-#define LED_0_NAME                "LED0 (green1)"
-#define LED_0_PIN                 PIN_PA22
-#define LED_0_ACTIVE              false
-#define LED_0_INACTIVE            !LED_0_ACTIVE
-
-#define LED_1_NAME                "LED0 (green2)"
-#define LED_1_PIN                 PIN_PA23
+#define LED_1_NAME                "YELLOW"
+#define LED_1_PIN                 PIN_PA22
 #define LED_1_ACTIVE              false
-#define LED_1_INACTIVE            !LED_1_ACTIVE
-#endif
+#define LED_1_INACTIVE            !LED_0_ACTIVE
+
+#define LED_0_NAME                "RED"
+#define LED_0_PIN                 PIN_PA23
+#define LED_0_ACTIVE              false
+#define LED_0_INACTIVE            !LED_1_ACTIVE
+
+#define LED_2_NAME                "GREEN"
+#define LED_2_PIN                 PIN_PA15
+#define LED_2_ACTIVE              false
+#define LED_2_INACTIVE            !LED_2_ACTIVE
 
 /*============================================================================*/
 /*!

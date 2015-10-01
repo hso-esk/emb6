@@ -46,7 +46,7 @@
  * \addtogroup efm32
  * @{
  */
-/*! \file   efm32lg990f256/target.c
+/*! \file   efm32lg990f256/efm32lg990.c
 
     \author Manuel Schappacher manuel.schappacher@hs-offenburg.de
 
