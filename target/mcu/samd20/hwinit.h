@@ -8,7 +8,7 @@
 /*============================================================================*/
 /*! \file   samd20g18/hwinit.h
 
-    \author Artem Yushev artem.yushev@hs-offenbrug.de
+    \author Artem Yushev 
 
     \brief  Hardware dependent initialization header file for SAMD20G18.
 

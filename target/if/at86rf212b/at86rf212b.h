@@ -53,95 +53,88 @@
  */
 /*! \file   at86rf212b.h
 
-    \author Artem Yushev artem.yushev@hs-offenbrug.de
+ \author Artem Yushev 
 
-    \brief  Hardware dependent initialization header file for AT86RF212B.
+ \brief  Hardware dependent initialization header file for AT86RF212B.
 
-    \details  For adaptation to another MAC/PHY layer at least 4 functions have
-            to be implemented in accordance to \ref netstack_interface definition. Also
-            after copying frame into the internal buffer and returning from the
-            interrupt service routine \ref netstack_lowMac.input() should be called.
-            See _rf212b_callback() and ISR(INT5_vect) functions.
+ \details  For adaptation to another MAC/PHY layer at least 4 functions have
+ to be implemented in accordance to \ref netstack_interface definition. Also
+ after copying frame into the internal buffer and returning from the
+ interrupt service routine \ref netstack_lowMac.input() should be called.
+ See _rf212b_callback() and ISR(INT5_vect) functions.
 
-    \version 0.0.1
-*/
+ \version 0.0.1
+ */
 /*============================================================================*/
 #ifndef AT86RF212B_H_
 #define AT86RF212B_H_
 
 /*==============================================================================
-                                 INCLUDE FILES
-==============================================================================*/
+ INCLUDE FILES
+ ==============================================================================*/
 #include "emb6.h"
 /*==============================================================================
-                                     MACROS
-==============================================================================*/
-
-
+ MACROS
+ ==============================================================================*/
 
 /*! Defined in the ATMEL documentation.
  Result code for a successful transmitting transaction */
-#define RF212B_TX_SUCCESS                        0
-#define RF212B_TX_SUC_DPEND                        1        ///< Also successful transaction
-#define RF212B_TX_CH_ACCFAIL                    3        ///< Channel access failed
-#define RF212B_TX_NO_ACK                        5        ///< No acknowledgment received
-#define RF212B_TX_INVALID                        7        ///< Invalid transaction
+#define RF212B_TX_SUCCESS                           0
+#define RF212B_TX_SUC_DPEND                         1        ///< Also successful transaction
+#define RF212B_TX_CH_ACCFAIL                        3        ///< Channel access failed
+#define RF212B_TX_NO_ACK                            5        ///< No acknowledgment received
+#define RF212B_TX_INVALID                           7        ///< Invalid transaction
 
-#define BAT_LOW_MASK                               ( 0x80 ) ///< Mask for the BAT_LOW interrupt.
-#define TRX_UR_MASK                                ( 0x40 ) ///< Mask for the TRX_UR interrupt.
-#define TRX_END_MASK                               ( 0x08 ) ///< Mask for the TRX_END interrupt.
-#define RX_START_MASK                              ( 0x04 ) ///< Mask for the RX_START interrupt.
-#define PLL_UNLOCK_MASK                            ( 0x02 ) ///< Mask for the PLL_UNLOCK interrupt.
-#define PLL_LOCK_MASK                              ( 0x01 ) ///< Mask for the PLL_LOCK interrupt.
+#define BAT_LOW_MASK                                ( 0x80 ) ///< Mask for the BAT_LOW interrupt.
+#define TRX_UR_MASK                                 ( 0x40 ) ///< Mask for the TRX_UR interrupt.
+#define TRX_END_MASK                                ( 0x08 ) ///< Mask for the TRX_END interrupt.
+#define RX_START_MASK                               ( 0x04 ) ///< Mask for the RX_START interrupt.
+#define PLL_UNLOCK_MASK                             ( 0x02 ) ///< Mask for the PLL_UNLOCK interrupt.
+#define PLL_LOCK_MASK                               ( 0x01 ) ///< Mask for the PLL_LOCK interrupt.
 
-#define MIN_FRAME_LENGTH                           ( 0x03 ) ///< A frame should be at least 3 bytes.
-#define MAX_FRAME_LENGTH                           ( 0x7F ) ///< A frame should no more than 127 bytes.
+#define MIN_FRAME_LENGTH                            ( 0x03 ) ///< A frame should be at least 3 bytes.
+#define MAX_FRAME_LENGTH                            ( 0x7F ) ///< A frame should no more than 127 bytes.
 
-#define RF212B_CONF_AUTOACK                       TRUE    //!< Define autoacknoledgment
-#define RF212B_CONF_AUTORETRIES                    2        //!< Amount of autoretries after failed transmitting
-#define RF212B_CONF_RX_BUFFERS                     3        //!< Define using of rx buffers
-#define    RF212B_MIN_RX_POWER                        0 //24         // RX sensitivity reduced down to -48 dBm
-#define RF212B_CONF_CHECKSUM                     0        //!< RF212B_CONF_CHECKSUM=0 for automatic hardware checksum
-#define RF212B_CHECKSUM_LEN                     2        //!< Length of a checksum in a frame
-#define RF212B_TIMESTAMP_LEN                    0        //!< Timestamp length if it was defined
+#define RF212B_CONF_AUTOACK                         TRUE    //!< Define autoacknoledgment
+#define RF212B_CONF_AUTORETRIES                     2        //!< Amount of autoretries after failed transmitting
+#define RF212B_CONF_RX_BUFFERS                      3        //!< Define using of rx buffers
+#define RF212B_MIN_RX_POWER                         0 //24         // RX sensitivity reduced down to -48 dBm
+#define RF212B_CONF_CHECKSUM                        0        //!< RF212B_CONF_CHECKSUM=0 for automatic hardware checksum
+#define RF212B_CHECKSUM_LEN                         2        //!< Length of a checksum in a frame
+#define RF212B_TIMESTAMP_LEN                        0        //!< Timestamp length if it was defined
 
 //!< Driver is working with devices which has only this part number
-#define SUPPORTED_PART_NUMBER                  ( 2 )
+#define SUPPORTED_PART_NUMBER                       ( 2 )
 //!< Driver is working with devices which has only this manufacturer id
-#define SUPPORTED_MANUFACTURER_ID              ( 31 )
-#define RF212B_REV                             ( 3 )
+#define SUPPORTED_MANUFACTURER_ID                   ( 31 )
+#define RF212B_REV                                  ( 3 )
 
 /*! RF212 does not support RX_START interrupts in extended mode, but it seems harmless to always enable it.
  In non-extended mode this allows RX_START to sample the RF rssi at the end of the preamble */
-#define RF212B_SUPPORTED_INTERRUPT_MASK        ( 0x08 )  //enable trx end only
+#define RF212B_SUPPORTED_INTERRUPT_MASK             ( 0x08 )  //enable trx end only
 //#define RF212B_SUPPORTED_INTERRUPT_MASK        ( 0x0F ) //disable bat low, trx underrun
 //#define RF212B_SUPPORTED_INTERRUPT_MASK         ( 0x0C )  //!< disable bat low, trx underrun, pll lock/unlock
 //#define RF212B_SUPPORTED_INTERRUPT_MASK         ( 0x2C )
 
 //#define RF212B_MIN_CHANNEL                      ( 11 )
 //#define RF212B_MAX_CHANNEL                      ( 26 )
-#define RF212B_MIN_ED_THRESHOLD                 ( 0 )    //!< Minimum energy threshold level
-#define RF212B_MAX_ED_THRESHOLD                 ( 15 )    //!< Maximum energy threshold level
-#define RF212B_MAX_TX_FRAME_LENGTH              ( 127 ) /**< 127 Byte PSDU. */
+#define RF212B_MIN_ED_THRESHOLD                    ( 0 )    //!< Minimum energy threshold level
+#define RF212B_MAX_ED_THRESHOLD                    ( 15 )    //!< Maximum energy threshold level
+#define RF212B_MAX_TX_FRAME_LENGTH                 ( 127 ) /**< 127 Byte PSDU. */
 //#define RF212B_MAX_PACKET_LEN                   127
 
+#define CHANNEL_802_15_4                           ( 0x00 )    //Define default working channel
 
-#define CHANNEL_802_15_4                          ( 0x00 )    //Define default working channel
-
-#define TXPWR_DBM                                 0
+#define TXPWR_DBM                                  0
 #define TXPWR_BAND                                 1
 #define TXPWR_LIST_LEN                             37
 
-
-
 //!< Define maximum possible transmitting power in dBm
-#define TX_PWR_MAX                                     11
+#define TX_PWR_MAX                                 11
 //!< Define minimum possible transmitting power in dBm
-#define TX_PWR_MIN                                     -25
+#define TX_PWR_MIN                                 -25
 
-
-
-#define TX_PWR_UNDEFINED                               (TX_PWR_MIN+1)
+#define TX_PWR_UNDEFINED                           (TX_PWR_MIN+1)
 //#define BATTERY_MONITOR_HIGHEST_VOLTAGE         ( 15 )
 //#define BATTERY_MONITOR_VOLTAGE_UNDER_THRESHOLD ( 0 )
 //#define BATTERY_MONITOR_HIGH_VOLTAGE            ( 1 )
@@ -154,7 +147,6 @@
 //#define RC_OSC_REFERENCE_COUNT_MAX               (1.005*F_CPU*31250UL/8000000UL)
 //#define RC_OSC_REFERENCE_COUNT_MIN               (0.995*F_CPU*31250UL/8000000UL)
 
-
 #define WITH_SEND_CCA                             0
 #define TIMESTAMP_LEN                             RF212B_TIMESTAMP_LEN
 #define FOOTER_LEN                                 0
@@ -163,11 +155,9 @@
 #define RF212B_CONF_CHECKSUM                     0     //!< RF212B_CONF_CHECKSUM=0 for automatic hardware checksum
 #endif
 
-
 #ifndef RF212B_CONF_AUTOACK
 #define RF212B_CONF_AUTOACK                         1    //!< Autoack setting ignored in non-extended mode
 #endif
-
 
 #if RF212B_CONF_AUTOACK
 //static bool is_promiscuous;                    //!< We need to turn off autoack in promiscuous mode
@@ -219,13 +209,12 @@ uint8_t ack_pending,ack_seqnum;
  */
 #define RADIO_STATUS_START_VALUE                  ( 0x40 )
 
-
 #define RF212B_SPI_TRANSFER(to_write)                    (bsp_spiTranWrite(to_write),    \
                                                 bsp_spiTranWait(), /* gcc extension, alternative inline function */        \
                                                 bsp_spiTranRead() )
 /*==============================================================================
-                                     ENUMS
-==============================================================================*/
+ ENUMS
+ ==============================================================================*/
 /**
  * \enum E_RF212B_E_CCA_MODE
  *
@@ -235,13 +224,13 @@ uint8_t ack_pending,ack_seqnum;
  *          These constants are extracted from the datasheet.
  *
  */
-typedef enum E_RF212B_E_CCA_MODE{
+typedef enum E_RF212B_E_CCA_MODE
+{
 //    E_CCA_ED                   = 0,    /**< Use energy detection above threshold mode. */ conflicts with atmega128rfa1 mcu definition
-    E_CCA_ENERGY_DETECT         = 0,    /**< Use energy detection above threshold mode. */
-    E_CCA_CARRIER_SENSE         = 1,    /**< Use carrier sense mode. */
-    E_CCA_CARRIER_SENSE_WITH_ED = 2     /**< Use a combination of both energy detection and carrier sense. */
-}e_rf212b_cca_mode_t;
-
+    E_CCA_ENERGY_DETECT = 0, /**< Use energy detection above threshold mode. */
+    E_CCA_CARRIER_SENSE = 1, /**< Use carrier sense mode. */
+    E_CCA_CARRIER_SENSE_WITH_ED = 2 /**< Use a combination of both energy detection and carrier sense. */
+} e_rf212b_cca_mode_t;
 
 /**
  * \enum    E_RF212B_E_CLKM_SPEED
@@ -251,14 +240,15 @@ typedef enum E_RF212B_E_CCA_MODE{
  *          These constants are extracted from the RF212 datasheet.
  *
  */
-typedef enum E_RF212B_E_CLKM_SPEED{
-    E_CLKM_DISABLED      = 0, /**< description */
-    E_CLKM_1MHZ          = 1, /**< description */
-    E_CLKM_2MHZ          = 2, /**< description */
-    E_CLKM_4MHZ          = 3, /**< description */
-    E_CLKM_8MHZ          = 4, /**< description */
-    E_CLKM_16MHZ         = 5 /**< description */
-}e_rf212b_clkm_speed_t;
+typedef enum E_RF212B_E_CLKM_SPEED
+{
+    E_CLKM_DISABLED = 0, /**< description */
+    E_CLKM_1MHZ = 1, /**< description */
+    E_CLKM_2MHZ = 2, /**< description */
+    E_CLKM_4MHZ = 3, /**< description */
+    E_CLKM_8MHZ = 4, /**< description */
+    E_CLKM_16MHZ = 5 /**< description */
+} e_rf212b_clkm_speed_t;
 
 /**
  * \enum     E_RF212B_TIMING
@@ -266,21 +256,21 @@ typedef enum E_RF212B_E_CLKM_SPEED{
  * \brief  RF212 hardware delay times, from datasheet
  *
  */
-typedef enum E_RF212B_TIMING{
-    E_TIME_TO_ENTER_P_ON               = 350, /**<  Transition time from VCC is applied to P_ON - most favorable case! */
-    E_TIME_P_ON_TO_TRX_OFF             = 1, /**<  Transition time from P_ON to TRX_OFF. */
-    E_TIME_SLEEP_TO_TRX_OFF            = 380, /**<  Transition time from SLEEP to TRX_OFF. */
-    E_TIME_RESET                       = 1,   /**<  Time to hold the RST pin low during reset */
-    E_TIME_ED_MEASUREMENT              = 140, /**<  Time it takes to do a ED measurement. */
-    E_TIME_CCA                         = 140, /**<  Time it takes to do a CCA. */
-    E_TIME_PLL_LOCK                    = 150, /**<  Maximum time it should take for the PLL to lock. */
-    E_TIME_FTN_TUNING                  = 25,  /**<  Maximum time it should take to do the filter tuning. */
-    E_TIME_NOCLK_TO_WAKE               = 6,   /**<  Transition time from *_NOCLK to being awake. */
-    E_TIME_CMD_FORCE_TRX_OFF           = 1,   /**<  Time it takes to execute the FORCE_TRX_OFF command. */
-    E_TIME_TRX_OFF_TO_PLL_ACTIVE       = 200, /**<  Transition time from TRX_OFF to: RX_ON, PLL_ON, TX_ARET_ON and RX_AACK_ON. */
-    E_TIME_STATE_TRANSITION_PLL_ACTIVE = 1,   /**<  Transition time from PLL active state to another. */
-}e_rf212b_timing_t;
-
+typedef enum E_RF212B_TIMING
+{
+    E_TIME_TO_ENTER_P_ON = 350, /**<  Transition time from VCC is applied to P_ON - most favorable case! */
+    E_TIME_P_ON_TO_TRX_OFF = 1, /**<  Transition time from P_ON to TRX_OFF. */
+    E_TIME_SLEEP_TO_TRX_OFF = 380, /**<  Transition time from SLEEP to TRX_OFF. */
+    E_TIME_RESET = 1, /**<  Time to hold the RST pin low during reset */
+    E_TIME_ED_MEASUREMENT = 140, /**<  Time it takes to do a ED measurement. */
+    E_TIME_CCA = 140, /**<  Time it takes to do a CCA. */
+    E_TIME_PLL_LOCK = 150, /**<  Maximum time it should take for the PLL to lock. */
+    E_TIME_FTN_TUNING = 25, /**<  Maximum time it should take to do the filter tuning. */
+    E_TIME_NOCLK_TO_WAKE = 6, /**<  Transition time from *_NOCLK to being awake. */
+    E_TIME_CMD_FORCE_TRX_OFF = 1, /**<  Time it takes to execute the FORCE_TRX_OFF command. */
+    E_TIME_TRX_OFF_TO_PLL_ACTIVE = 200, /**<  Transition time from TRX_OFF to: RX_ON, PLL_ON, TX_ARET_ON and RX_AACK_ON. */
+    E_TIME_STATE_TRANSITION_PLL_ACTIVE = 1, /**<  Transition time from PLL active state to another. */
+} e_rf212b_timing_t;
 
 /**
  * \enum     E_RF212B_SM_STATUS
@@ -292,38 +282,40 @@ typedef enum E_RF212B_TIMING{
  *          return/status codes defined in the IEEE 802.15.4 standard.
  *
  */
-typedef enum E_RF212B_SM_STATUS{
-    E_RADIO_SUCCESS = RADIO_STATUS_START_VALUE,  /**< The requested service was performed successfully. */
-    E_RADIO_UNSUPPORTED_DEVICE,         /**< The connected device is not an Atmel AT86RF212. */
-    E_RADIO_INVALID_ARGUMENT,           /**< One or more of the supplied function arguments are invalid. */
-    E_RADIO_TIMED_OUT,                  /**< The requested service timed out. */
-    E_RADIO_WRONG_STATE,                /**< The end-user tried to do an invalid state transition. */
-    E_RADIO_BUSY_STATE,                 /**< The radio transceiver is busy receiving or transmitting. */
-    E_RADIO_STATE_TRANSITION_FAILED,    /**< The requested state transition could not be completed. */
-    E_RADIO_E_CCA_IDLE,                   /**< Channel is clear, available to transmit a new frame. */
-    E_RADIO_E_CCA_BUSY,                   /**< Channel busy. */
-    E_RADIO_TRX_BUSY,                   /**< Transceiver is busy receiving or transmitting data. */
-    E_RADIO_BAT_LOW,                    /**< Measured battery voltage is lower than voltage threshold. */
-    E_RADIO_BAT_OK,                     /**< Measured battery voltage is above the voltage threshold. */
-    E_RADIO_CRC_FAILED,                 /**< The CRC failed for the actual frame. */
-    E_RADIO_CHANNEL_ACCESS_FAILURE,     /**< The channel access failed during the auto mode. */
-    E_RADIO_NO_ACK,                     /**< No acknowledge frame was received. */
-}e_rf212b_sm_status_t;
+typedef enum E_RF212B_SM_STATUS
+{
+    E_RADIO_SUCCESS = RADIO_STATUS_START_VALUE, /**< The requested service was performed successfully. */
+    E_RADIO_UNSUPPORTED_DEVICE, /**< The connected device is not an Atmel AT86RF212. */
+    E_RADIO_INVALID_ARGUMENT, /**< One or more of the supplied function arguments are invalid. */
+    E_RADIO_TIMED_OUT, /**< The requested service timed out. */
+    E_RADIO_WRONG_STATE, /**< The end-user tried to do an invalid state transition. */
+    E_RADIO_BUSY_STATE, /**< The radio transceiver is busy receiving or transmitting. */
+    E_RADIO_STATE_TRANSITION_FAILED, /**< The requested state transition could not be completed. */
+    E_RADIO_E_CCA_IDLE, /**< Channel is clear, available to transmit a new frame. */
+    E_RADIO_E_CCA_BUSY, /**< Channel busy. */
+    E_RADIO_TRX_BUSY, /**< Transceiver is busy receiving or transmitting data. */
+    E_RADIO_BAT_LOW, /**< Measured battery voltage is lower than voltage threshold. */
+    E_RADIO_BAT_OK, /**< Measured battery voltage is above the voltage threshold. */
+    E_RADIO_CRC_FAILED, /**< The CRC failed for the actual frame. */
+    E_RADIO_CHANNEL_ACCESS_FAILURE, /**< The channel access failed during the auto mode. */
+    E_RADIO_NO_ACK, /**< No acknowledge frame was received. */
+} e_rf212b_sm_status_t;
 /*==============================================================================
-                         STRUCTURES AND OTHER TYPEDEFS
-==============================================================================*/
+ STRUCTURES AND OTHER TYPEDEFS
+ ==============================================================================*/
 
 /** \struct st_rxframe_t
  *  \brief  This struct defines the rx data container.
  *
  *  \see _rf212b_fRead
  */
-typedef struct {
-    uint8_t length;                           /**< Length of frame. */
-    uint8_t data[ MAX_FRAME_LENGTH ];         /**< Actual frame data. */
-    uint8_t lqi;                              /**< LQI value for received frame. */
-    bool crc;                                 /**< Flag - did CRC pass for received frame? */
-}st_rxframe_t ;
+typedef struct
+{
+    uint8_t length; /**< Length of frame. */
+    uint8_t data[ MAX_FRAME_LENGTH]; /**< Actual frame data. */
+    uint8_t lqi; /**< LQI value for received frame. */
+    bool crc; /**< Flag - did CRC pass for received frame? */
+} st_rxframe_t;
 
 #endif /* AT86RF212B_H_ */
 /** @} */

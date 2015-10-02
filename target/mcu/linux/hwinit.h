@@ -11,7 +11,7 @@
 /*============================================================================*/
 /*! \file   linux/hwinit.h
 
-    \author Artem Yushev artem.yushev@hs-offenbrug.de
+    \author Artem Yushev 
 
     \brief  This is an PC emulation library for upper layers.
 

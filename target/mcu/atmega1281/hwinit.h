@@ -14,7 +14,7 @@
 /*============================================================================*/
 /*! \file   atmega1281/hwinit.h
 
-    \author Artem Yushev artem.yushev@hs-offenbrug.de
+    \author Artem Yushev 
 
     \brief  Hardware dependent initialization header file for ATMega1281.
 
