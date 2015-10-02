@@ -281,6 +281,11 @@ int main(void)
             return 0;
         }
 
+        /* SHow that stack has been launched */
+        bsp_led(E_BSP_LED_GREEN,E_BSP_LED_ON);
+        bsp_delay_us(2000000);
+        bsp_led(E_BSP_LED_GREEN,E_BSP_LED_OFF);
+
         /* call process function with delay in us */
         emb6_process(500);  /* default: 500 us delay */
     }
