@@ -67,6 +67,7 @@
 #include "ctimer.h"
 #include "packetbuf.h"
 
+#include "ringbuffer.h"
 
 /*==============================================================================
                                      MACROS
@@ -82,7 +83,7 @@
 
 
 #define move_ind(a)                            a++; if (a >= RF212B_CONF_RX_BUFFERS) a=0;
-#define    move_head_ind()                        move_ind(c_rxframe_head);
+#define    move_head_ind()                     move_ind(c_rxframe_head);
 #define move_tail_ind()                        move_ind(c_rxframe_tail);
 
 
@@ -111,46 +112,19 @@ static    void *                  p_slpTrig = NULL;
 static    void *                  p_rst = NULL;
 static    s_nsLowMac_t*           p_lmac = NULL;
 
-
-
 /*               Output Power            dBm, Register Mapping */
-static int16_t txpower[TXPWR_LIST_LEN][2] = { {  11, 0xA0 },
-                                 {  10, 0x80 },
-                                 {   9, 0xE4 },
-                                 {   8, 0xE6 },
-                                 {   7, 0xE7 },
-                                 {   6, 0xE8 },
-                                 {   5, 0xE9 },
-                                 {   4, 0xEA },
-                                 {   3, 0xCB },
-                                 {   2, 0xCC },
-                                 {   1, 0xCD },
-                                 {   0, 0xAD },
-                                 {  -1, 0x47 },
-                                 {  -2, 0x48 },
-                                 {  -3, 0x49 },
-                                 {  -4, 0x29 },
-                                 {  -5, 0x90 },
-                                 {  -6, 0x91 },
-                                 {  -7, 0x93 },
-                                 {  -8, 0x94 },
-                                 {  -9, 0x2F },
-                                 { -10, 0x30 },
-                                 { -11, 0x31 },
-                                 { -12, 0x0F },
-                                 { -13, 0x10 },
-                                 { -14, 0x11 },
-                                 { -15, 0x12 },
-                                 { -16, 0x13 },
-                                 { -17, 0x14 },
-                                 { -18, 0x15 },
-                                 { -19, 0x17 },
-                                 { -20, 0x18 },
-                                 { -21, 0x19 },
-                                 { -22, 0x1A },
-                                 { -23, 0x1B },
-                                 { -24, 0x1C },
-                                 { -25, 0x1D }  };
+static int16_t txpower[TXPWR_LIST_LEN][2] = {
+    { 11, 0xA0 },  { 10, 0x80 },  { 9, 0xE4 },  { 8, 0xE6 },
+    { 7, 0xE7 },   { 6, 0xE8 },   { 5, 0xE9 },  { 4, 0xEA },
+    { 3, 0xCB },   { 2, 0xCC },   { 1, 0xCD },  { 0, 0xAD },
+    { -1, 0x47 },  { -2, 0x48 },  { -3, 0x49 }, { -4, 0x29 },
+    { -5, 0x90 },  { -6, 0x91 },  { -7, 0x93 }, { -8, 0x94 },
+    { -9, 0x2F },  { -10, 0x30 }, { -11, 0x31 },{ -12, 0x0F },
+    { -13, 0x10 }, { -14, 0x11 }, { -15, 0x12 },{ -16, 0x13 },
+    { -17, 0x14 }, { -18, 0x15 }, { -19, 0x17 },{ -20, 0x18 },
+    { -21, 0x19 }, { -22, 0x1A }, { -23, 0x1B },{ -24, 0x1C },
+    { -25, 0x1D }
+};
 
 extern uip_lladdr_t uip_lladdr;
 
@@ -197,7 +171,7 @@ static int8_t                   _rf212b_send(const void *pr_payload, uint8_t c_l
 static int8_t                   _rf212b_init(s_ns_t* p_netStack);
 static void                     _rf212b_AntDiv(uint8_t value);
 static void                     _rf212b_AntExtSw(uint8_t value);
-static void                    _rf212b_promisc(uint8_t value);
+static void                     _rf212b_promisc(uint8_t value);
 static void                     _spiBitWrite(void * p_spi, uint8_t c_addr,uint8_t c_mask,
                                              uint8_t c_off,uint8_t c_data);
 #if PRINT_PCK_STAT
@@ -977,21 +951,7 @@ void _rf212b_wReset(void)
     c_tempReg = bsp_spiRegRead(p_spi, RF212B_READ_COMMAND | RG_PHY_RSSI);
     bsp_spiRegWrite(p_spi, RF212B_WRITE_COMMAND | RG_CSMA_SEED_0, c_tempReg); //upper two RSSI reg bits RND_VALUE are random
 
-    /* Receiver sensitivity. If nonzero rf231/128rfa1 saves 0.5ma in rx mode */
-    /* Not implemented on rf212 but does not hurt to write to it */
-#ifdef RF212B_MIN_RX_POWER
-#if RF212B_MIN_RX_POWER > 84
-#warning rf231 power threshold clipped to -48dBm by hardware register
-    bsp_spiRegWrite(p_spi, RF212B_WRITE_COMMAND | RG_RX_SYN, 0xf);
-//    bsp_spiWrite(RG_RX_SYN, 0xf);
-#elif RF212B_MIN_RX_POWER < 0
-#error RF212B_MIN_RX_POWER can not be negative!
-#endif
-    bsp_spiRegWrite(p_spi, RF212B_WRITE_COMMAND | RG_RX_SYN, RF212B_MIN_RX_POWER/6 + 1); //1-15 -> -90 to -48dBm
-//  bsp_spiWrite(RG_RX_SYN, RF212B_MIN_RX_POWER/6 + 1); //1-15 -> -90 to -48dBm
-#endif
-
-      /* set initial sensitivity */
+    /* set initial sensitivity */
     _rf212b_setSensitivity(mac_phy_config.init_sensitivity);
 
     //TODO ant diversity
@@ -1272,8 +1232,10 @@ static void _rf212b_callback(c_event_t c_event, p_data_t p_data)
     /* Turn off interrupts to avoid ISR writing to the same buffers we are reading. */
     bsp_enterCritical();
 
-    LOG1_OK( "RX packet LQI=[%d]; LEN=[%d]",gps_rxframe[c_rxframe_head].lqi,
-                                            gps_rxframe[c_rxframe_head].length);
+    LOG1_OK( "RX packet RSSI=[%d]; LQI=[%d]; LEN=[%d]",
+             c_last_rssi,
+             gps_rxframe[c_rxframe_head].lqi,
+             gps_rxframe[c_rxframe_head].length);
     LOG2_HEXDUMP( gps_rxframe[c_rxframe_head].data,
                   gps_rxframe[c_rxframe_head].length );
 
@@ -1313,38 +1275,27 @@ void _isr_callback(void * p_input)
     c_int_src = bsp_spiRegRead(p_spi, RF212B_READ_COMMAND | RG_IRQ_STATUS);
     /* Note: all IRQ are not always automatically disabled when running in ISR */
     /*Handle the incomming interrupt. Prioritized.*/
-//    printf("Int source = %d\n\r",c_int_src);
     if ((c_int_src & RX_START_MASK)){
 #if !RF212B_CONF_AUTOACK
         bsp_spiTxRx(p_spi, RF212B_READ_COMMAND | SR_RSSI,  &c_last_rssi);
         c_last_rssi *= 3;
-//        c_last_rssi = 3 * bsp_spiSubRead(SR_RSSI);
 #endif
     } else if (c_int_src & TRX_END_MASK){
         c_state = bsp_spiBitRead(p_spi, RF212B_READ_COMMAND | RG_TRX_STATUS, SR_TRX_STATUS);
-//        c_state = bsp_spiSubRead(SR_TRX_STATUS);
-        if( (c_state == BUSY_RX_AACK) || \
-            (c_state == RX_ON) ||          \
-            (c_state == BUSY_RX) ||      \
-            (c_state == RX_AACK_ON))
+        if( (c_state == BUSY_RX_AACK) || (c_state == RX_ON) ||          \
+            (c_state == BUSY_RX) ||      (c_state == RX_AACK_ON))
         {
             /* Received packet interrupt */
             /* Buffer the frame and call _rf212b_int to schedule poll for rf212 receive process */
             /* Save the rssi for printing in the main loop */
-#ifdef RF212B_MIN_RX_POWER
+
 #if RF212B_CONF_AUTOACK
             c_last_rssi = bsp_spiRegRead(p_spi, RF212B_READ_COMMAND | RG_PHY_ED_LEVEL);
-//            c_last_rssi=bsp_spiRead(RG_PHY_ED_LEVEL);
 #endif
-            if (c_last_rssi >= RF212B_MIN_RX_POWER) {
-#endif
-                _rf212b_fRead(&gps_rxframe[c_rxframe_tail]);
-                move_tail_ind();
-                if (c_receive_on /* && (c_pckCounter < RF212B_CONF_RX_BUFFERS) */)
-                    evproc_putEvent(E_EVPROC_HEAD,EVENT_TYPE_PCK_LL,NULL);
-#ifdef RF212B_MIN_RX_POWER
-            }
-#endif
+            _rf212b_fRead(&gps_rxframe[c_rxframe_tail]);
+            move_tail_ind();
+            if (c_receive_on /* && (c_pckCounter < RF212B_CONF_RX_BUFFERS) */)
+                evproc_putEvent(E_EVPROC_HEAD,EVENT_TYPE_PCK_LL,NULL);
         }
     } else if (c_int_src & TRX_UR_MASK){
     } else if (c_int_src & PLL_UNLOCK_MASK){
@@ -1354,10 +1305,8 @@ void _isr_callback(void * p_input)
         /*  will continously be asserted while the supply voltage is less than the */
         /*  user-defined voltage threshold. */
         c_isr_mask = bsp_spiRegRead(p_spi, RF212B_READ_COMMAND | RG_IRQ_MASK);
-//        uint8_t c_isr_mask = bsp_spiRead(RG_IRQ_MASK);
         c_isr_mask &= ~BAT_LOW_MASK;
         bsp_spiRegWrite(p_spi, RF212B_WRITE_COMMAND | RG_IRQ_MASK, c_isr_mask);
-//        bsp_spiWrite(RG_IRQ_MASK, c_isr_mask);
      }
 }
 
