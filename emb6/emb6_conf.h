@@ -832,6 +832,9 @@ void uip_log(char *msg);
  /** DEMO COAP example                      (see demo_coap_*.c) */
  #define LOGGER_DEMO_COAP                   FALSE
 
+ /** DEMO COAP example                      (see demo_dtls_*.c) */
+ #define LOGGER_DEMO_DTLS                   FALSE
+
  /** DEMO SNIFFER                           (see demo_sniffer.c) */
  #define LOGGER_DEMO_SNIFFER                FALSE
 

@@ -58,5 +58,9 @@ TARGETS = [
                                                      'x86',                 '0x2121',      '99',          '-125',       'MODULATION_QPSK100'],
 ['virtu_cli',         [('testframework_emb6demoapp','client')],
                                                      'x86',                 '0x1111',      '99',          '-125',       'MODULATION_QPSK100'],
+['cd_stk3600',        [('dtls','client'),
+                      ('udp_alive','')],             'efm32stk3600',        '0x30D1',      '11',          '-100',       'MODULATION_QPSK100'],
+['sd_stk3600',        [('dtls','server'),
+                      ('udp_alive','')],             'efm32stk3600',        '0x30D2',      '11',          '-100',       'MODULATION_QPSK100'],
 ] #TARGETS append END
 Return('TARGETS')

@@ -12,6 +12,12 @@ emb6 = {
 	'mqtt' : [
 		'apl/mqtt/*',
 	],
+	'dtls' : [
+		'net/dtls/*',
+		'net/dtls/aes/*',
+		'net/dtls/ecc/*',
+		'net/dtls/sha2/*',
+	],
 	'sock' : [
 		'tport/*',
 	],
