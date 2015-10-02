@@ -103,7 +103,6 @@ static    uint8_t                 c_last_correlation;
 static    uint8_t                 c_last_rssi;
 static    uint8_t                 c_smallest_rssi;
 static    int8_t                  c_rssi_base_val = -100;
-static    uint8_t                 c_rf212b_pending;
 static    uint8_t                 c_pckCounter = 0;
 static    uint8_t                 c_power;
 static    uint8_t                 c_sensitivity;
@@ -546,7 +545,7 @@ static e_radio_tx_status_t _rf212b_transmit(uint8_t c_len)
     int8_t                    c_txpower;
     uint8_t                 c_total_len;
     uint8_t                 c_tx_result;
-    uint8_t                 c_ndx;
+
     /* If radio is sleeping we have to turn it on first */
     /* This automatically does the PLL calibrations */
     if (bsp_getPin(p_slpTrig)) {
@@ -595,18 +594,13 @@ static e_radio_tx_status_t _rf212b_transmit(uint8_t c_len)
     /* Toggle the SLP_TR pin to initiate the frame transmission */
     bsp_setPin(p_slpTrig);
     bsp_clrPin(p_slpTrig);
-    LOG_DBG("_rf212b_transmit: %d", (int)c_total_len);
 
     /* We wait until transmission has ended so that we get an
      accurate measurement of the transmission time.*/
     _rf212b_waitIdle();
 
 /* Get the transmission result */
-#if RF212B_CONF_AUTORETRIES
     c_tx_result = bsp_spiBitRead(p_spi, RF212B_READ_COMMAND | RG_TRX_STATE, SR_TRAC_STATUS);
-#else
-    c_tx_result = RF212B_TX_SUCCESS;
-#endif
 
     /* Restore the transmission power */
     if(packetbuf_attr(PACKETBUF_ATTR_RADIO_TXPOWER) > 0) {
@@ -616,31 +610,16 @@ static e_radio_tx_status_t _rf212b_transmit(uint8_t c_len)
     if(c_receive_on) {
         _rf212b_intON();
     } else {
-    #if RADIOALWAYSON
-    /* Enable reception */
-        _rf212b_intON();
-    #else
         LOG_DBG("_rf212b_transmit: turning radio off");
         _rf212b_intOFF();
-    #endif
     }
 
-    LOG_RAW("_rf212b_txFrame: ");
-    for(c_ndx = 0; c_ndx < c_total_len; c_ndx++)
-        LOG_RAW("%02x", pc_buffer[c_ndx]);
-    LOG_RAW("\n\r");
+    LOG1_OK( "TX packet [%d]", c_total_len );
+    LOG2_HEXDUMP( pc_buffer, c_total_len );
 
-#if RF212B_INSERTACK
-   ack_pending = 0;
-#endif
     switch (c_tx_result) {
         case RF212B_TX_SUCCESS:
         case RF212B_TX_SUC_DPEND:
-#if RF212B_INSERTACK
-            /* Not PAN broadcast to FFFF, and ACK was requested and received */
-            if (!((pc_buffer[5]==0xff) && (pc_buffer[6]==0xff)) && (pc_buffer[0]&(1<<6)))
-            ack_pending=1;
-#endif
             return RADIO_TX_OK;
         case RF212B_TX_CH_ACCFAIL:
             LOG_ERR("_rf212b_transmit: CSMA channel access fail");
@@ -669,15 +648,7 @@ static int8_t _rf212b_prepare(const void * p_payload, uint8_t c_len)
     uint8_t     c_flen;
     uint8_t        *pc_buf;
 #if RF212B_CONF_CHECKSUM
-  uint16_t checksum;
-#endif
-#if RF212B_INSERTACK
-/* The sequence number is needed to construct the ack packet */
-  ack_seqnum=*(((uint8_t *)payload)+2);
-#endif
-
-#if RF212B_CONF_CHECKSUM
-  checksum = crc16_data(payload, payload_len, 0);
+  uint16_t checksum = crc16_data(payload, payload_len, 0);
 #endif
 
   /* Copy payload to RAM buffer */
@@ -734,17 +705,6 @@ static int8_t _rf212b_read(void *p_buf, uint8_t c_bufsize)
 #if RF212B_CONF_CHECKSUM
   uint16_t checksum;
 #endif
-#if RF212B_INSERTACK
-/* Return an ACK to the mac layer */
-  if(ack_pending && bufsize == 3){
-    ack_pending=0;
-    uint8_t *buff=(uint8_t *)buf;
-    buff[0]=2;
-    buff[1]=0;
-    buff[2]=ack_seqnum;
-    return bufsize;
- }
-#endif
 
     /* The length includes the twp-byte checksum but not the LQI byte */
     c_len = gps_rxframe[c_rxframe_head].length;
@@ -754,15 +714,11 @@ static int8_t _rf212b_read(void *p_buf, uint8_t c_bufsize)
         return 0;
   }
 
-#if RADIOALWAYSON
-    if (c_receive_on) {
-#else
-        if (!c_receive_on) {
-            LOG_ERR("Radio txrx was switched off.");
-            move_head_ind();
-            return 0;
-        }
-#endif
+    if (!c_receive_on) {
+        LOG_ERR("Radio txrx was switched off.");
+        move_head_ind();
+        return 0;
+    }
 
     if(c_len > RF212B_MAX_TX_FRAME_LENGTH) {
         /* Oops, we must be out of sync. */
@@ -805,9 +761,7 @@ static int8_t _rf212b_read(void *p_buf, uint8_t c_bufsize)
 #endif /* RF212B_CONF_CHECKSUM */
     pc_framep += RF212B_CHECKSUM_LEN;
     pc_framep += RF212B_TIMESTAMP_LEN;
-#if FOOTER_LEN
-    memcpy(footer,framep,FOOTER_LEN);
-#endif
+
 #if RF212B_CONF_CHECKSUM
     if(checksum != crc16_data(p_buf, c_len - RF212B_CHECKSUM_LEN, 0)) {
         //PRINTF("checksum failed 0x%04x != 0x%04x\n\r",
@@ -845,18 +799,8 @@ static int8_t _rf212b_read(void *p_buf, uint8_t c_bufsize)
 #endif
 #endif
 
-#ifdef RF212BB_HOOK_RX_PACKET
-  RF212BB_HOOK_RX_PACKET(buf,len);
-#endif
-
   /* Here return just the data length. The checksum is however still in the buffer for packet sniffing */
   return c_len - RF212B_CHECKSUM_LEN;
-
-#if RADIOALWAYSON
-} else { //Stack thought radio was off
-   return 0;
-}
-#endif
 } /*  _rf212b_read() */
 
 /*----------------------------------------------------------------------------*/
@@ -1033,14 +977,8 @@ void _rf212b_wReset(void)
     c_tempReg = bsp_spiRegRead(p_spi, RF212B_READ_COMMAND | RG_PHY_RSSI);
     bsp_spiRegWrite(p_spi, RF212B_WRITE_COMMAND | RG_CSMA_SEED_0, c_tempReg); //upper two RSSI reg bits RND_VALUE are random
 
-  /* CCA Mode Mode 1=Energy above threshold  2=Carrier sense only  3=Both 0=Either (RF231 only) */
-    //bsp_spiSubWrite(SR_CCA_MODE,1);  //1 is the power-on default
-
-  /* Carrier sense threshold (not implemented in RF212 or RF231) */
-     //bsp_spiSubWrite(SR_CCA_CS_THRES,0x7);
-
-  /* Receiver sensitivity. If nonzero rf231/128rfa1 saves 0.5ma in rx mode */
-  /* Not implemented on rf212 but does not hurt to write to it */
+    /* Receiver sensitivity. If nonzero rf231/128rfa1 saves 0.5ma in rx mode */
+    /* Not implemented on rf212 but does not hurt to write to it */
 #ifdef RF212B_MIN_RX_POWER
 #if RF212B_MIN_RX_POWER > 84
 #warning rf231 power threshold clipped to -48dBm by hardware register
@@ -1095,11 +1033,8 @@ void _rf212b_wReset(void)
             c_rssi_base_val = -98;
         }
 
-
-
         /* set initial tx power */
           _rf212b_setPower(mac_phy_config.init_power);
-
 
 } /* _rf212b_wReset() */
 
@@ -1172,28 +1107,13 @@ static int8_t _rf212b_intON(void)
 static int8_t _rf212b_intOFF(void)
 {
     c_receive_on = 0;
-#if RF212BB_CONF_LEDONPORTE1
-    PORTE&=~(1<<PE1); //ledoff
-#endif
-#ifdef RF212BB_HOOK_RADIO_OFF
-    RF212BB_HOOK_RADIO_OFF();
-#endif
 
     /* Wait for any transmission to end */
     _rf212b_waitIdle();
 
-#if RADIOALWAYSON
-/* Do not transmit autoacks when stack thinks radio is off */
-    _rf212b_setTrxState(RX_ON);
-#else
     /* Force the device into TRX_OFF. */
     _rf212b_smReset();
-#if RADIOSLEEPSWHENOFF
-    /* Sleep Radio */
-    bsp_setPin(SLP_TR_PORT,SLP_TR_PIN);
-    ENERGEST_OFF(ENERGEST_TYPE_LED_RED);
-#endif
-#endif /* RADIOALWAYSON */
+
     return 0;
 } /* _rf212b_off() */
 
@@ -1343,9 +1263,8 @@ static int8_t _rf212b_init(s_ns_t* p_netStack)
 /*---------------------------------------------------------------------------*/
 static void _rf212b_callback(c_event_t c_event, p_data_t p_data)
 {
-    int8_t c_len;
-    uint8_t c_ndx;
-    c_rf212b_pending = 0;
+    int8_t      c_len;
+
     // The case where c_pckCounter is less or equal to 0 is not possible, however...
     c_pckCounter = (c_pckCounter > 0) ? (c_pckCounter - 1) : c_pckCounter;
     packetbuf_clear();
@@ -1353,16 +1272,15 @@ static void _rf212b_callback(c_event_t c_event, p_data_t p_data)
     /* Turn off interrupts to avoid ISR writing to the same buffers we are reading. */
     bsp_enterCritical();
 
-    LOG_RAW("_rf212b_rxFrame: ");
-    for(c_ndx = 0; c_ndx < gps_rxframe[c_rxframe_head].length; c_ndx++)
-        LOG_RAW("%02x", gps_rxframe[c_rxframe_head].data[c_ndx]);
-    LOG_RAW("\n\r");
+    LOG1_OK( "RX packet LQI=[%d]; LEN=[%d]",gps_rxframe[c_rxframe_head].lqi,
+                                            gps_rxframe[c_rxframe_head].length);
+    LOG2_HEXDUMP( gps_rxframe[c_rxframe_head].data,
+                  gps_rxframe[c_rxframe_head].length );
 
     c_len = _rf212b_read(packetbuf_dataptr(), PACKETBUF_SIZE);
 
     /* Restore interrupts. */
     bsp_exitCritical();
-    LOG_DBG("%u bytes lqi %u",c_len,c_last_correlation);
 
     if((c_len > 0) && (p_lmac != NULL)) {
           packetbuf_set_datalen(c_len);
