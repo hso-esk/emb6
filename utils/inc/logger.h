@@ -175,7 +175,7 @@ inline static void log_hexdump(const void* p_buf, uint32_t l_len)
                     putchar( '.' );
                 }
             }
-            putchar( '\n' );
+            putchar( '\r' );putchar( '\n' );
         }
     }
 }
@@ -213,27 +213,27 @@ inline static void log_hexdump(const void* p_buf, uint32_t l_len)
 
 #pragma GCC diagnostic ignored "-Wformat"
 #define LOGGER_OK(log_lvl, msg, ...)        \
-    do { if ((LOGGER_ENABLE) && (LOGGER_LEVEL > log_lvl)) printf("%lu |   ok | %5s (%d)| " msg "\n", bsp_getSec(), __FILE__, __LINE__, ##__VA_ARGS__); }while (0)
+    do { if ((LOGGER_ENABLE) && (LOGGER_LEVEL > log_lvl)) printf("%lu |   ok | %5s (%d)| " msg "\r\n", bsp_getSec(), __FILE__, __LINE__, ##__VA_ARGS__); }while (0)
 
 #pragma GCC diagnostic ignored "-Wformat"
 #define LOGGER_ERR(log_lvl, msg, ...)       \
-    do { if ((LOGGER_ENABLE) && (LOGGER_LEVEL > log_lvl)) printf("%lu |  err | %5s (%d)| " msg "\n", bsp_getSec(), __FILE__, __LINE__, ##__VA_ARGS__); }while (0)
+    do { if ((LOGGER_ENABLE) && (LOGGER_LEVEL > log_lvl)) printf("%lu |  err | %5s (%d)| " msg "\r\n", bsp_getSec(), __FILE__, __LINE__, ##__VA_ARGS__); }while (0)
 
 #pragma GCC diagnostic ignored "-Wformat"
 #define LOGGER_INFO(log_lvl, msg, ...)      \
-    do { if ((LOGGER_ENABLE) && (LOGGER_LEVEL > log_lvl)) printf("%lu | info | %5s (%d)| " msg "\n", bsp_getSec(), __FILE__, __LINE__, ##__VA_ARGS__); }while (0)
+    do { if ((LOGGER_ENABLE) && (LOGGER_LEVEL > log_lvl)) printf("%lu | info | %5s (%d)| " msg "\r\n", bsp_getSec(), __FILE__, __LINE__, ##__VA_ARGS__); }while (0)
 
 #pragma GCC diagnostic ignored "-Wformat"
 #define LOGGER_WARN(log_lvl, msg, ...)      \
-    do { if ((LOGGER_ENABLE) && (LOGGER_LEVEL > log_lvl)) printf("%lu | warn | %5s (%d)| " msg "\n", bsp_getSec(), __FILE__, __LINE__, ##__VA_ARGS__); }while (0)
+    do { if ((LOGGER_ENABLE) && (LOGGER_LEVEL > log_lvl)) printf("%lu | warn | %5s (%d)| " msg "\r\n", bsp_getSec(), __FILE__, __LINE__, ##__VA_ARGS__); }while (0)
 
 #pragma GCC diagnostic ignored "-Wformat"
 #define LOGGER_FAIL(log_lvl, msg, ...)      \
-    do { if ((LOGGER_ENABLE) && (LOGGER_LEVEL > log_lvl)) printf("%lu | fail | %5s (%d)| " msg "\n", bsp_getSec(), __FILE__, __LINE__, ##__VA_ARGS__); }while (0)
+    do { if ((LOGGER_ENABLE) && (LOGGER_LEVEL > log_lvl)) printf("%lu | fail | %5s (%d)| " msg "\r\n", bsp_getSec(), __FILE__, __LINE__, ##__VA_ARGS__); }while (0)
 
 #pragma GCC diagnostic ignored "-Wformat"
 #define LOGGER_DBG(log_lvl, msg, ...)       \
-    do { if ((LOGGER_ENABLE) && (LOGGER_LEVEL > log_lvl)) printf("%lu | dbg  | %5s (%d)| " msg "\n", bsp_getSec(), __FILE__, __LINE__, ##__VA_ARGS__); }while (0)
+    do { if ((LOGGER_ENABLE) && (LOGGER_LEVEL > log_lvl)) printf("%lu | dbg  | %5s (%d)| " msg "\r\n", bsp_getSec(), __FILE__, __LINE__, ##__VA_ARGS__); }while (0)
 
 #pragma GCC diagnostic ignored "-Wformat"
 #define LOGGER_RAW(log_lvl, msg, ...)       \
