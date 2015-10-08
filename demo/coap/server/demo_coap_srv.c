@@ -41,8 +41,6 @@
 /**
  *      \addtogroup emb6
  *      @{
- *      \addtogroup demo
- *      @{
  *      \addtogroup demo_coap
  *      @{
  *      \addtogroup demo_coap_server
@@ -50,7 +48,7 @@
 */
 /*! \file   demo_coap_srv.c
 
- \author Peter Lehmann, peter.lehmann@hs-offenburg.de
+ \author Peter Lehmann
 
  \brief  CoAP Server example application
 
@@ -79,10 +77,10 @@
 */
 extern resource_t
   res_push,
-  res_rf_info,
+  res_radio_info,
+  res_radio_ctrl,
   res_temp,
-  res_toggle,
-  res_led_toggle;
+  res_led;
 
 /*==============================================================================
                                          API FUNCTIONS
@@ -98,17 +96,16 @@ int8_t demo_coapInit(void)
 
     /* Initialize the REST engine. */
     rest_init_engine();
-
 /*
 * Bind the resources to their Uri-Path.
 * WARNING: Activating twice only means alternatle path, not two instances!
 * All static variables are the same for each URI path.
 */
-    rest_activate_resource(&res_temp, "sensors/temperature");
+    rest_activate_resource(&res_temp, "dev/temp");
     rest_activate_resource(&res_push, "test/push");
-    rest_activate_resource(&res_toggle, "actuators/LED");
-    rest_activate_resource(&res_led_toggle, "actuators/LED_toggle");
-    rest_activate_resource(&res_rf_info, "status/rf_info");
+    rest_activate_resource(&res_led, "dev/led");
+    rest_activate_resource(&res_radio_info, "dev/txrx/inf");
+    rest_activate_resource(&res_radio_ctrl, "dev/txrx/ctrl");
 
     return 1;
 }
@@ -153,7 +150,6 @@ uint8_t demo_coapConf(s_ns_t* pst_netStack)
     return (c_ret);
 }
 
-/** @} */
 /** @} */
 /** @} */
 /** @} */

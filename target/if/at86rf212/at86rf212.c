@@ -176,19 +176,19 @@ static    void                     _show_stat(void *);
                          STRUCTURES AND OTHER TYPEDEFS
 ==============================================================================*/
 const s_nsIf_t rf212_driver = {
-        "rf212",
-        _rf212_init,
-        _rf212_send,
-        _rf212_extON,
-        _rf212_extOFF,
-        _rf212_setPower,
-        _rf212_getPower,
-        _rf212_setSensitivity,
-        _rf212_getSensitivity,
-        _rf212_getRSSI,
-        NULL,
-        NULL,
-        _rf212_promisc,
+        .name               = "rf212",
+        .init               = &_rf212_init,
+        .send               = &_rf212_send,
+        .on                 = &_rf212_extON,
+        .off                = &_rf212_extOFF,
+        .set_txpower        = &_rf212_setPower,
+        .get_txpower        = &_rf212_getPower,
+        .set_sensitivity    = &_rf212_setSensitivity,
+        .get_sensitivity    = &_rf212_getSensitivity,
+        .get_rssi           = &_rf212_getRSSI,
+        .ant_div            = NULL,
+        .ant_rf_switch      = NULL,
+        .set_promisc        = &_rf212_promisc,
 };
 /*==============================================================================
                                 LOCAL FUNCTIONS

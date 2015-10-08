@@ -214,9 +214,9 @@ uint8_t emb6_init(s_ns_t * ps_ns)
         ps_ns = NULL;
         LOG_ERR("Failed to initialise emb6 stack");
         c_err = 0;
+    }else {
+        ps_emb6Stack = ps_ns;
     }
-
-    ps_emb6Stack = ps_ns;
 
     return (c_err);
 }

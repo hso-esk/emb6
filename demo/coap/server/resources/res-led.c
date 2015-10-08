@@ -50,8 +50,8 @@ static void res_post_handler(void *request, void *response, uint8_t *buffer, uin
 static void res_get_handler(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset);
 
 /* A simple actuator example. Toggles the Yellow led */
-RESOURCE(res_led_toggle,
-         "title=\"Toggle LED, (POST)\";rt=\"Control\"",
+RESOURCE(res_led,
+         "title=\"Toggle LED: POST\";rt=\"Control\"",
          res_get_handler,
          res_post_handler,
          NULL,
