@@ -118,7 +118,7 @@ static void _res_get_handler(void *request,   void *response,
 {
     uint8_t     c_length = 0;
     const char* p = NULL;
-    char*       rpc_param[64];
+    char        rpc_param[64];
     int8_t      c_success = 1;
 
     LOG2_INFO("Enter _res_get_handler() function");
@@ -131,16 +131,16 @@ static void _res_get_handler(void *request,   void *response,
 
     if((c_length = REST.get_query_variable(request, "p", &p))) {
         if(strncmp(p, "rssi", c_length) == 0) {
-            sprintf(rpc_param, 5, ps_ns->inif->get_rssi());
+            snprintf(rpc_param, 5, "%d", ps_ns->inif->get_rssi());
             LOG1_INFO("GET request for RSSI: %s",rpc_param);
         } else if(strncmp(p, "pwr", c_length) == 0) {
-            sprintf(rpc_param, 5, ps_ns->inif->get_txpower());
+            snprintf(rpc_param, 5, "%d", ps_ns->inif->get_txpower());
             LOG1_INFO("GET request for  TX_PWR: %s",rpc_param);
         } else if(strncmp(p, "sens", c_length) == 0) {
-            sprintf(rpc_param, 5, ps_ns->inif->get_sensitivity());
+            snprintf(rpc_param, 5, "%d", ps_ns->inif->get_sensitivity());
             LOG1_INFO("GET request for  RX_SENS: %s",rpc_param);
         } else {
-            sprintf(rpc_param, 64 ,"RSSI [%]: TX_PWR [%d]: RX_SENS [%d]",
+            snprintf(rpc_param, 64 ,"RSSI [%]: TX_PWR [%d]: RX_SENS [%d]",
                     ps_ns->inif->get_rssi(),ps_ns->inif->get_txpower(),
                     ps_ns->inif->get_sensitivity());
         }

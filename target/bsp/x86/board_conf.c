@@ -64,6 +64,7 @@
 #include "hwinit.h"
 #include "emb6.h"
 #include "emb6_conf.h"
+#include "etimer.h"
 #include "logger.h"
 #include "bsp.h"
 
@@ -73,6 +74,7 @@ uint8_t board_conf(s_ns_t* ps_nStack)
 
     if (ps_nStack != NULL) {
         ps_nStack->inif = &native_driver;
+        etimer_init();
         c_ret = ps_nStack->inif->init(ps_nStack);
     }
     else {
