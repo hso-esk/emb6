@@ -149,13 +149,13 @@ add_sources(mcu_path+'/device/'+board_conf['mcu_cpu']+'/src/*.c')
 
 toolchain = env.SConscript(mcu_path+'/toolchain/'+board_conf['mcu_toolchain']+'/SConscript')
 
-conf = Configure(env)
-if not conf.CheckCC():
-	print '> Didn\'t find {0} toolchain, exiting!'.format(toolcahin[''])
-	Exit(1)
-else:
-	conf.env['CC'] = toolchain['CC']
-	env = conf.Finish()
+#conf = Configure(env)
+#if not conf.CheckCC():
+#	print '> Didn\'t find {0} toolchain, exiting!'.format(toolcahin[''])
+#	Exit(1)
+#else:
+#	env = conf.Finish()
+env['CC'] = toolchain['CC']	
 env['AS'] = toolchain['AS']
 env['LINK'] = toolchain['LINK']
 env['OBJCOPY'] = toolchain['OBJCOPY']
