@@ -69,7 +69,7 @@
 /*==============================================================================
  MACROS
  ==============================================================================*/
-#define     LOGGER_ENABLE        LOGGER_RADIO
+#define     LOGGER_ENABLE             LOGGER_RADIO
 #include    "logger.h"
 #define     FAKERADIO_CHANNEL         "EMB6_FAKERADIO"
 #define     __ADDRLEN__    2
@@ -80,7 +80,7 @@
 /*==============================================================================
  VARIABLE DECLARATIONS
  ==============================================================================*/
-static struct etimer tmr;
+static struct etimer ps_nativeTmr;
 /* Pointer to the lmac structure */
 static s_nsLowMac_t* p_lmac = NULL;
 extern uip_lladdr_t uip_lladdr;
@@ -179,8 +179,8 @@ static int8_t _native_init(s_ns_t* p_netStack)
     }
 
     /* Start the packet receive process */
-    etimer_set(&tmr, 10, _native_handler);
-    LOG1_INFO("set %p for %p callback\n\r",&tmr, &_native_handler);
+    etimer_set(&ps_nativeTmr, 10, _native_handler);
+    LOG1_INFO("set %p for %p callback\n\r",&ps_nativeTmr, &_native_handler);
     LOG_WARN("Don't forget to destroy lcm object!");
     return l_error;
 } /* _native_init() */
@@ -236,7 +236,7 @@ static int8_t _native_init( s_ns_t* p_netStack )
     }
 
     /* Start the packet receive process */
-    etimer_set( &tmr, 10, _native_handler );
+    etimer_set( &ps_nativeTmr, 10, _native_handler );
 
     return l_error;
 } /* _native_init() */
@@ -378,7 +378,7 @@ static void _native_handler( c_event_t c_event, p_data_t p_data )
     s_tv.tv_usec = 10;
     fd_set fds;
 
-    if( etimer_expired( &tmr ) )
+    if( etimer_expired( &ps_nativeTmr ) )
     {
         /* We can't use lcm_handle trigger every time, as
          * it's a blocking operation. We should instead check whether a lcm file
@@ -398,7 +398,7 @@ static void _native_handler( c_event_t c_event, p_data_t p_data )
         }
 
         /* Restart a timer anyway. */
-        etimer_restart( &tmr );
+        etimer_restart( &ps_nativeTmr );
 
     }
 }
