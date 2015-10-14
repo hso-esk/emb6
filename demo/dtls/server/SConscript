@@ -5,6 +5,7 @@ dtls = {
 	'emb6' : [
 		'coap',
 		'dtls',
+		'sock',
 		'rpl',
 		'ipv6',
 		'sicslowpan',

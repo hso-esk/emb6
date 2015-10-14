@@ -108,13 +108,20 @@
  =============================================================================*/
 
 static struct etimer et;
-static coap_packet_t request[1];      /* This way the packet can be treated as pointer as usual. */
 uip_ipaddr_t server_ipaddr;
 
-static struct uip_udp_conn *client_conn;
+static session_t dst;
+static int connected = 0;
+static struct etimer et;
+
+//static struct uip_udp_conn *client_conn;
+
+static  struct  udp_socket          st_udp_socket;
+        struct  udp_socket*         pst_udp_socket;
+
 static dtls_context_t *dtls_context;
-static char buf[200];
-static size_t buflen = 0;
+static char buf[200] = {0x01, 0x2, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09};
+static size_t buflen = 9;
 
 static const unsigned char ecdsa_priv_key[] = {
 			0x41, 0xC1, 0xCB, 0x6B, 0x51, 0x24, 0x7A, 0x14,
@@ -138,7 +145,7 @@ static const unsigned char ecdsa_pub_key_y[] = {
                            LOCAL FUNCTION PROTOTYPES
  =============================================================================*/
 
-void dtls_udp_callback(c_event_t c_event, p_data_t p_data);
+static void dtls_udp_callback(void);
 /*==============================================================================
                                 LOCAL CONSTANTS
  =============================================================================*/
@@ -169,19 +176,24 @@ void _client_chunk_handler(void *response)
 }
 
 static void
-try_send(struct dtls_context_t *ctx, session_t *dst) {
-  int res;
-  res = dtls_write(ctx, dst, (uint8 *)buf, buflen);
-  if (res >= 0) {
-    memmove(buf, buf + res, buflen - res);
-    buflen -= res;
-  }
+try_send(c_event_t c_event, p_data_t p_data) {
+	int res;
+	if (etimer_expired(&et) && (&et == p_data)) {
+		res = dtls_write(dtls_context, &dst, (uint8 *)buf, buflen);
+		if (res >= 0) {
+			PRINTF("Sample data sent.\n");
+//			memmove(buf, buf + res, buflen - res);
+//			buflen -= res;
+		}
+		etimer_reset(&et);
+	}
 }
 
 static int
 read_from_peer(struct dtls_context_t *ctx,
 	       session_t *session, uint8 *data, size_t len) {
   size_t i;
+  PRINTF("Data received: \n");
   for (i = 0; i < len; i++)
     PRINTF("%c", data[i]);
   return 0;
@@ -317,7 +329,7 @@ set_connection_address(uip_ipaddr_t *ipaddr)
   /* todo Set IPv6 address of the DTLS UDP server accordingly. */
   /* 2001:bbbb:dddd:0:d04d:e1d3:4fad:97b8 */
 //  uip_ip6addr(ipaddr,0x2001,0xbbbb,0xdddd,0,0xd04d,0xe1d3,0x4fad,0x97b8);
-  uip_ip6addr(ipaddr,0x2001,0xbbbb,0xdddd,0,0x0250,0xc2ff,0xfea8,0x30c0);
+  uip_ip6addr(ipaddr,0xfe80,0,0,0,0x0250,0xc2ff,0xfea8,0x00FF);
 #else
   uip_ip6addr(ipaddr,0xfe80,0,0,0,0x6466,0x6666,0x6666,0x6666);
 #endif /* UDP_CONNECTION_ADDR */
@@ -337,23 +349,32 @@ init_dtls(session_t *dst) {
     .verify_ecdsa_key = verify_ecdsa_key
 #endif /* DTLS_ECC */
   };
-  PRINTF("DTLS client started\n");
 
   dst->size = sizeof(dst->addr) + sizeof(dst->port);
   /* todo set port address as needed */
   dst->port = UIP_HTONS(20220);
 
   set_connection_address(&dst->addr);
-  client_conn = udp_new(&dst->addr, 0, NULL);
-  udp_bind(client_conn, dst->port);
+//  client_conn = udp_new(&dst->addr, 0, NULL);
+
+//  udp_bind(client_conn, dst->port);
 
   PRINTF("set connection address to ");
   PRINT6ADDR(&dst->addr);
   PRINTF(":%d\n", uip_ntohs(dst->port));
 
+  /* set the pointer to the udp-socket */
+  pst_udp_socket = &st_udp_socket;
+
+  /* new connection with remote host */
+  udp_socket_register(pst_udp_socket, NULL, (udp_socket_input_callback_t)dtls_udp_callback);
+  udp_socket_bind(pst_udp_socket, 20220);
+  PRINTF("Listening on port %u\n", uip_ntohs(pst_udp_socket->udp_conn->lport));
+
+
   dtls_set_log_level(DTLS_LOG_DEBUG);
 
-  dtls_context = dtls_new_context(client_conn);
+  dtls_context = dtls_new_context(pst_udp_socket->udp_conn);
   if (dtls_context)
     dtls_set_handler(dtls_context, &cb);
 }
@@ -364,8 +385,6 @@ init_dtls(session_t *dst) {
 /*==============================================================================
  demo_dtlsInit()
 ==============================================================================*/
-static session_t dst;
-static int connected = 0;
 
 int8_t demo_dtlsInit(void)
 {
@@ -380,17 +399,20 @@ int8_t demo_dtlsInit(void)
 	if (!connected)
 		connected = dtls_connect(dtls_context, &dst) >= 0;
 
-	evproc_regCallback(EVENT_TYPE_TCPIP, dtls_udp_callback);
+//	evproc_regCallback(EVENT_TYPE_TCPIP, dtls_udp_callback);
+
+	etimer_set(&et, 20 * bsp_get(E_BSP_GET_TRES), try_send);
+
 	return 1;
 }
 
-void dtls_udp_callback(c_event_t c_event, p_data_t p_data)
+static void dtls_udp_callback(void)
 {
-	if(c_event == EVENT_TYPE_TCPIP) {
+//	if(c_event == EVENT_TYPE_TCPIP) {
 		dtls_handle_read(dtls_context);
-	} else if(connected && c_event == EVENT_TYPE_TIMER_EXP) {
-		try_send(dtls_context, &dst);
-	}
+//	} else if(connected && c_event == EVENT_TYPE_TIMER_EXP) {
+//		try_send(dtls_context, &dst);
+//	}
 }
 
 /*==============================================================================

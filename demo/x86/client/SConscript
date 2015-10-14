@@ -1,4 +1,4 @@
-client = {
+x86 = {
 }
 
-Return('client')
+Return('x86')

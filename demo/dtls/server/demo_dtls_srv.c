@@ -93,6 +93,9 @@
 
 static struct uip_udp_conn *server_conn;
 
+static  struct  udp_socket          st_udp_socket;
+        struct  udp_socket*         pst_udp_socket;
+
 static dtls_context_t *dtls_context;
 
 static const unsigned char ecdsa_priv_key[] = {
@@ -117,7 +120,7 @@ static const unsigned char ecdsa_pub_key_y[] = {
                            LOCAL FUNCTION PROTOTYPES
  =============================================================================*/
 
-void dtls_udp_callback(c_event_t c_event, p_data_t p_data);
+static void dtls_udp_callback(void);
 
 /*==============================================================================
                                 LOCAL FUNCTIONS
@@ -230,6 +233,7 @@ verify_ecdsa_key(struct dtls_context_t *ctx,
 #endif /* DTLS_ECC */
 
 /*---------------------------------------------------------------------------*/
+/* todo Use BSD sockets */
 static void
 dtls_handle_read(dtls_context_t *ctx) {
   session_t session;
@@ -288,12 +292,18 @@ init_dtls() {
   create_rpl_dag(&ipaddr);
 #endif /* UIP_CONF_ROUTER */
 
-  server_conn = udp_new(NULL, 0, NULL);
-  udp_bind(server_conn, UIP_HTONS(20220));
+  /* set the pointer to the udp-socket */
+  pst_udp_socket = &st_udp_socket;
+
+  /* new connection with remote host */
+  udp_socket_register(pst_udp_socket, NULL, (udp_socket_input_callback_t)dtls_udp_callback);
+  udp_socket_bind(pst_udp_socket, 20220);
+  PRINTF("Listening on port %u\n", uip_ntohs(pst_udp_socket->udp_conn->lport));
 
   dtls_set_log_level(DTLS_LOG_DEBUG);
 
-  dtls_context = dtls_new_context(server_conn);
+  dtls_context = dtls_new_context(pst_udp_socket->udp_conn);
+
   if (dtls_context)
     dtls_set_handler(dtls_context, &cb);
 }
@@ -313,16 +323,13 @@ int8_t demo_dtlsInit(void)
 		dtls_emerg("cannot create context\n");
 	}
 
-	evproc_regCallback(EVENT_TYPE_TCPIP, dtls_udp_callback);
-
 	return 1;
 }
 
-void dtls_udp_callback(c_event_t c_event, p_data_t p_data)
+static void dtls_udp_callback(void)
 {
-	if(c_event == EVENT_TYPE_TCPIP) {
-		dtls_handle_read(dtls_context);
-	}
+	dtls_debug("DTLS callback\r\n");
+	dtls_handle_read(dtls_context);
 }
 
 /*----------------------------------------------------------------------------*/

@@ -3141,7 +3141,7 @@ static int handle_handshake_msg(dtls_context_t *ctx, dtls_peer_t *peer,
 		 a) a valid cookie, or
 		 b) no cookie.
 
-		 Anything else will be rejected. Fragementation is not allowed
+		 Anything else will be rejected. Fragmentation is not allowed
 		 here as it would require peer state as well.
 		 */
 		err = dtls_verify_peer(ctx, peer, session, data, data_length);
@@ -3535,6 +3535,7 @@ int dtls_handle_message(dtls_context_t *ctx, session_t *session, uint8 *msg,
 		dtls_dsrv_log_addr(DTLS_LOG_DEBUG, "peer addr", session);
 	} else {
 		dtls_debug("dtls_handle_message: FOUND PEER\n");
+		dtls_dsrv_log_addr(DTLS_LOG_DEBUG, "peer addr", session);
 	}
 
 	while ((rlen = is_record(msg, msglen))) {
@@ -3905,22 +3906,21 @@ void dtls_retransmit_process(c_event_t c_event, p_data_t p_data)
 	clock_time_t now;
 	netq_t *node;
 
-	dtls_debug("Started DTLS retransmit process\r\n");
 	if(c_event == EVENT_TYPE_TIMER_EXP) {
 		if (etimer_expired(&the_dtls_context.retransmit_timer)) {
 			node = list_head(the_dtls_context.sendqueue);
 			now = bsp_getTick();
 
 			if (node && node->t <= now) {
+				dtls_debug("Started DTLS retransmit process\r\n");
 				dtls_retransmit(&the_dtls_context, list_pop(the_dtls_context.sendqueue));
 				node = list_head(the_dtls_context.sendqueue);
 			}
 			/* need to set timer to some value even if no nextpdu is available */
 			if (node) {
-				etimer_set(&the_dtls_context.retransmit_timer,
-						node->t <= now ? 1 : node->t - now, dtls_retransmit_process);
+				timer_set(&the_dtls_context.retransmit_timer.timer,
+						node->t <= now ? 1 : node->t - now);
 			} else {
-//			  etimer_set(&the_dtls_context.retransmit_timer, 0xFFFF);
 				etimer_stop(&the_dtls_context.retransmit_timer);
 			}
 		}
