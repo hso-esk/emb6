@@ -1,0 +1,70 @@
+[Stack]
+FillEnabled=0
+OverflowWarningsEnabled=1
+WarningThreshold=90
+SpWarningsEnabled=1
+WarnLogOnly=1
+UseTrigger=1
+TriggerName=main
+LimitSize=0
+ByteLimit=50
+[State Storage]
+Control Register=0
+[EEM State Storage]
+Buffer=BAAAAAAADAAAAAAAAAAAAAAA
+[Sequencer]
+Control Register=0
+NextState0=0
+NextState1=0
+[Action Register]
+Break=0
+State Storage=0
+[DebugChecksum]
+Checksum=-791456868
+[CallStack]
+ShowArgs=0
+[Disassembly]
+MixedMode=1
+[watch_formats]
+Fmt0={W}0:APSSDstId	4	0
+Fmt1={W}0:APSSSrcId	4	0
+Fmt2={W}0:APSSState	3	0
+Fmt3={W}0:SmartMAC_StrobeCount	3	0
+Fmt4={W}0:hdr_len	3	0
+Fmt5={W}0:rssi_converted	3	0
+Fmt6={W}0:ts_count	3	0
+Fmt7={W}0:uc_returnValue	1	0
+Fmt8={W}0:uc_status	1	0
+[Log file]
+LoggingEnabled=_ 0
+LogFile=_ ""
+Category=_ 0
+[TermIOLog]
+LoggingEnabled=_ 0
+LogFile=_ ""
+[Breakpoints]
+Bp0=_ "STD_CODE" "{$PROJ_DIR$\..\..\..\..\..\..\..\emb6\src\mac\apss\apss.c}.802.13" 0 0 0 0 "" 0 ""
+Count=1
+[FET]
+Clock mode=14
+Extended Clock mode=-1
+Secure Password=
+Extended Clock Control Enable=1
+Advanced Extended Clock Control=0
+Emulation mode=0
+Free running=0
+Shutting Down=3
+[Memory Dump]
+Start address=
+Lenghth=
+Address info=0
+Format=0
+Dump registers=0
+PC=0
+SP=0
+SR=0
+all registers=0
+File name=
+[Aliases]
+Count=0
+SuppressDialog=0

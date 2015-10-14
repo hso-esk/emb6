@@ -233,7 +233,7 @@ uint16_t bsp_led(en_bspLedColor_t ui_led, en_bspLedAction_t en_ledAction);
  *
  */
 /*============================================================================*/
-#define     bsp_enterCritical()             hal_enterCritical()
+#define        bsp_enterCritical()             hal_enterCritical()
 
 /*============================================================================*/
 /** \brief  This function exits critical section on the target
@@ -250,23 +250,17 @@ uint16_t bsp_led(en_bspLedColor_t ui_led, en_bspLedAction_t en_ledAction);
  *
  */
 /*============================================================================*/
-#define     bsp_extIntEnable(e_intSource, e_edge, fn_p) \
-            hal_extIntEnable(e_intSource, e_edge, fn_p)
+#define        bsp_extIntInit(e_intSource, fn_p) hal_extIntInit(e_intSource,fn_p)
 
-#define     bsp_extIntDisable(e_intSource) \
-            hal_extIntDisable(e_intSource)
-
-#define     bsp_extIntClear(e_intSource) \
-            hal_extIntClear(e_intSource)
 
 /*============================================================================*/
 /** \brief  This function makes a delay on the target
  *
- *  \param  i_delay Delay in microseconds
+ *  \param  i_delay Delay in useconds
  *
  */
 /*============================================================================*/
-#define     bsp_delay_us(i_delay)           hal_delay_us(i_delay)
+#define        bsp_delay_us(i_delay)           hal_delay_us(i_delay)
 
 /*============================================================================*/
 /** \brief  This function initialize a specific pin
@@ -305,14 +299,14 @@ void bsp_wdt(en_bspWdtAction_t wdtAct);
  *
  */
 /*============================================================================*/
-#define     bsp_getTick()               hal_getTick()
+#define     bsp_getTick()              hal_getTick()
 
 /*============================================================================*/
 /** \brief  This function will return seconds
  *
  */
 /*============================================================================*/
-#define     bsp_getSec()                hal_getSec()
+#define     bsp_getSec()               hal_getSec()
 
 /*============================================================================*/
 /** \brief  This function will return parameter specifed by type
@@ -320,18 +314,6 @@ void bsp_wdt(en_bspWdtAction_t wdtAct);
  */
 /*============================================================================*/
 uint32_t         bsp_get(en_bspParams_t en_param);
-
-
-#if STK_CFG_REFACTOR_EN
-/**
- * @brief   This function returns a upper-bounded random number
- * @param   max     Maximum possible value of the returned random number
- * @return
- */
-uint32_t    bsp_getrand(uint32_t max);
-#endif
-
-
 #endif /* __BSP_H__ */
 /** @} */
 /** @} */

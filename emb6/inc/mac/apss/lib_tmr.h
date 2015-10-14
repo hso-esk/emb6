@@ -13,6 +13,7 @@
 #define LIB_TMR_EXT     extern
 #endif
 
+#include "lib_port.h"
 
 /*
 ********************************************************************************
@@ -45,10 +46,12 @@ struct lib_tmr {
 *                                   DEFINES
 ********************************************************************************
 */
-#define LIB_TMR_TICK_FREQ_IN_HZ             (uint16_t) ( 1000u )
+#define LIB_TMR_DEBUG_EN                                    ( 1u )
 
-#define LIB_TMR_TYPE_ONE_SHOT               (LIB_TMR_TYPE) ( 1u )
-#define LIB_TMR_TYPE_PERIODIC               (LIB_TMR_TYPE) ( 2u )
+#define LIB_TMR_TICK_FREQ_IN_HZ             (uint16_t     ) ( 1000u )
+
+#define LIB_TMR_TYPE_ONE_SHOT               (LIB_TMR_TYPE ) ( 1u )
+#define LIB_TMR_TYPE_PERIODIC               (LIB_TMR_TYPE ) ( 2u )
 
 #define LIB_TMR_STATE_INIT                  (LIB_TMR_STATE) ( 0u )
 #define LIB_TMR_STATE_CREATED               (LIB_TMR_STATE) ( 1u )
@@ -67,6 +70,10 @@ extern LIB_TMR         *TmrListTail;
 extern LIB_TMR_TICK     TmrCurTick;
 extern LIB_TMR_QTY      TmrListQty;
 
+#if LIB_TMR_DEBUG_EN
+extern LIB_TMR         *TmrLatestUnlinked;
+#endif
+
 /*
 ********************************************************************************
 *                           API FUNCTIONS DECLARATIONS
@@ -83,6 +90,7 @@ void Tmr_Create     (LIB_TMR      *p_tmr,
 void Tmr_Start      (LIB_TMR *p_tmr);
 void Tmr_Stop       (LIB_TMR *p_tmr);
 void Tmr_Update     (void);
+void Tmr_Delay      (LIB_TMR_TICK  delay);
 
 LIB_TMR_STATE  Tmr_StateGet    (LIB_TMR *p_tmr);
 LIB_TMR_TICK   Tmr_RemainGet   (LIB_TMR *p_tmr);

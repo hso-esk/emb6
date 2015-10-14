@@ -325,24 +325,5 @@ uint32_t         bsp_get(en_bspParams_t en_param)
     return l_ret;
 }
 
-
-#if STK_CFG_REFACTOR_EN
-/**
- * @brief   This function returns a upper-bounded random number
- * @param   max     Maximum possible value of the returned random number
- * @return
- */
-uint32_t bsp_getrand(uint32_t max)
-{
-    uint32_t ret;
-
-    /* generate random number in a range of 0 to max */
-    ret = random_rand();
-    ret = (uint32_t)(ret / 65536) % max;
-    return ret;
-}
-#endif
-
-
 /** @} */
 /** @} */
