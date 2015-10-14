@@ -44,7 +44,7 @@
 */
 /*! \file   at86rf212b.c
 
-    \author Artem Yushev artem.yushev@hs-offenburg.de
+    \author Artem Yushev 
 
     \brief  AT86RF212B Transceiver initialization code.
 
@@ -67,14 +67,12 @@
 #include "ctimer.h"
 #include "packetbuf.h"
 
+#include "ringbuffer.h"
 
 /*==============================================================================
                                      MACROS
 ==============================================================================*/
 #define     LOGGER_ENABLE        LOGGER_RADIO
-#if            LOGGER_ENABLE     ==     TRUE
-#define     LOGGER_SUBSYSTEM    "rf212b"
-#endif
 #include    "logger.h"
 
 
@@ -85,7 +83,7 @@
 
 
 #define move_ind(a)                            a++; if (a >= RF212B_CONF_RX_BUFFERS) a=0;
-#define    move_head_ind()                        move_ind(c_rxframe_head);
+#define    move_head_ind()                     move_ind(c_rxframe_head);
 #define move_tail_ind()                        move_ind(c_rxframe_tail);
 
 
@@ -106,7 +104,6 @@ static    uint8_t                 c_last_correlation;
 static    uint8_t                 c_last_rssi;
 static    uint8_t                 c_smallest_rssi;
 static    int8_t                  c_rssi_base_val = -100;
-static    uint8_t                 c_rf212b_pending;
 static    uint8_t                 c_pckCounter = 0;
 static    uint8_t                 c_power;
 static    uint8_t                 c_sensitivity;
@@ -115,46 +112,19 @@ static    void *                  p_slpTrig = NULL;
 static    void *                  p_rst = NULL;
 static    s_nsLowMac_t*           p_lmac = NULL;
 
-
-
 /*               Output Power            dBm, Register Mapping */
-static int16_t txpower[TXPWR_LIST_LEN][2] = { {  11, 0xA0 },
-                                 {  10, 0x80 },
-                                 {   9, 0xE4 },
-                                 {   8, 0xE6 },
-                                 {   7, 0xE7 },
-                                 {   6, 0xE8 },
-                                 {   5, 0xE9 },
-                                 {   4, 0xEA },
-                                 {   3, 0xCB },
-                                 {   2, 0xCC },
-                                 {   1, 0xCD },
-                                 {   0, 0xAD },
-                                 {  -1, 0x47 },
-                                 {  -2, 0x48 },
-                                 {  -3, 0x49 },
-                                 {  -4, 0x29 },
-                                 {  -5, 0x90 },
-                                 {  -6, 0x91 },
-                                 {  -7, 0x93 },
-                                 {  -8, 0x94 },
-                                 {  -9, 0x2F },
-                                 { -10, 0x30 },
-                                 { -11, 0x31 },
-                                 { -12, 0x0F },
-                                 { -13, 0x10 },
-                                 { -14, 0x11 },
-                                 { -15, 0x12 },
-                                 { -16, 0x13 },
-                                 { -17, 0x14 },
-                                 { -18, 0x15 },
-                                 { -19, 0x17 },
-                                 { -20, 0x18 },
-                                 { -21, 0x19 },
-                                 { -22, 0x1A },
-                                 { -23, 0x1B },
-                                 { -24, 0x1C },
-                                 { -25, 0x1D }  };
+static int16_t txpower[TXPWR_LIST_LEN][2] = {
+    { 11, 0xA0 },  { 10, 0x80 },  { 9, 0xE4 },  { 8, 0xE6 },
+    { 7, 0xE7 },   { 6, 0xE8 },   { 5, 0xE9 },  { 4, 0xEA },
+    { 3, 0xCB },   { 2, 0xCC },   { 1, 0xCD },  { 0, 0xAD },
+    { -1, 0x47 },  { -2, 0x48 },  { -3, 0x49 }, { -4, 0x29 },
+    { -5, 0x90 },  { -6, 0x91 },  { -7, 0x93 }, { -8, 0x94 },
+    { -9, 0x2F },  { -10, 0x30 }, { -11, 0x31 },{ -12, 0x0F },
+    { -13, 0x10 }, { -14, 0x11 }, { -15, 0x12 },{ -16, 0x13 },
+    { -17, 0x14 }, { -18, 0x15 }, { -19, 0x17 },{ -20, 0x18 },
+    { -21, 0x19 }, { -22, 0x1A }, { -23, 0x1B },{ -24, 0x1C },
+    { -25, 0x1D }
+};
 
 extern uip_lladdr_t uip_lladdr;
 
@@ -181,28 +151,28 @@ static uint8_t                  _rf212b_getState(void);
 static e_rf212b_sm_status_t     _rf212b_setTrxState(uint8_t c_new_state);
 static e_radio_tx_status_t      _rf212b_transmit(uint8_t c_len);
 static void                     _rf212b_callback(c_event_t c_event, p_data_t p_data);
-static    void                  _isr_callback(void *);
+static void                     _isr_callback(void *);
 static int8_t                   _rf212b_prepare(const void * p_payload, uint8_t c_len);
 static int8_t                   _rf212b_read(void *p_buf, uint8_t c_bufsize);
-static    void                  _rf212b_setPanAddr(unsigned pan,unsigned addr,const uint8_t ieee_addr[8]);
-static    int8_t                _rf212b_intON(void);
-static    int8_t                _rf212b_intOFF(void);
-static    int8_t                _rf212b_extON(void);
-static    int8_t                _rf212b_extOFF(void);
-static    uint8_t               _rf212b_getTxPower(void);
-static    void                  _rf212b_setTxPower(uint8_t power);
-static    void                  _rf212b_setPower(int8_t power);
-static  int8_t                  _rf212b_getPower(void);
-static    void                  _rf212b_setSensitivity(int8_t sens);
-static    int8_t                _rf212b_getSensitivity(void);
-static    int8_t                _rf212b_getRSSI(void);
-static    void                  _rf212b_wReset(void);
-static    int8_t                _rf212b_send(const void *pr_payload, uint8_t c_len);
-static    int8_t                _rf212b_init(s_ns_t* p_netStack);
-static    void                  _rf212b_AntDiv(uint8_t value);
-static    void                  _rf212b_AntExtSw(uint8_t value);
-static  void                    _rf212b_promisc(uint8_t value);
-static    void                  _spiBitWrite(void * p_spi, uint8_t c_addr,uint8_t c_mask,
+static void                     _rf212b_setPanAddr(unsigned pan,unsigned addr,const uint8_t ieee_addr[8]);
+static int8_t                   _rf212b_intON(void);
+static int8_t                   _rf212b_intOFF(void);
+static int8_t                   _rf212b_extON(void);
+static int8_t                   _rf212b_extOFF(void);
+static uint8_t                  _rf212b_getTxPower(void);
+static void                     _rf212b_setTxPower(uint8_t power);
+static void                     _rf212b_setPower(int8_t power);
+static int8_t                   _rf212b_getPower(void);
+static void                     _rf212b_setSensitivity(int8_t sens);
+static int8_t                   _rf212b_getSensitivity(void);
+static int8_t                   _rf212b_getRSSI(void);
+static void                     _rf212b_wReset(void);
+static int8_t                   _rf212b_send(const void *pr_payload, uint8_t c_len);
+static int8_t                   _rf212b_init(s_ns_t* p_netStack);
+static void                     _rf212b_AntDiv(uint8_t value);
+static void                     _rf212b_AntExtSw(uint8_t value);
+static void                     _rf212b_promisc(uint8_t value);
+static void                     _spiBitWrite(void * p_spi, uint8_t c_addr,uint8_t c_mask,
                                              uint8_t c_off,uint8_t c_data);
 #if PRINT_PCK_STAT
 static    void                     _show_stat(void *);
@@ -211,19 +181,19 @@ static    void                     _show_stat(void *);
                          STRUCTURES AND OTHER TYPEDEFS
 ==============================================================================*/
 const s_nsIf_t rf212b_driver = {
-        "at86rf212b",
-        _rf212b_init,
-        _rf212b_send,
-        _rf212b_extON,
-        _rf212b_extOFF,
-        _rf212b_setPower,
-        _rf212b_getPower,
-        _rf212b_setSensitivity,
-        _rf212b_getSensitivity,
-        _rf212b_getRSSI,
-        _rf212b_AntDiv,
-        _rf212b_AntExtSw,
-        _rf212b_promisc,
+    .name           = "at86rf212b",
+    .init           = _rf212b_init,
+    .send           = _rf212b_send,
+    .on             = _rf212b_extON,
+    .off            = _rf212b_extOFF,
+    .set_txpower    = _rf212b_setPower,
+    .get_txpower    = _rf212b_getPower,
+    .set_sensitivity= _rf212b_setSensitivity,
+    .get_sensitivity= _rf212b_getSensitivity,
+    .get_rssi       = _rf212b_getRSSI,
+    .ant_div        = _rf212b_AntDiv,
+    .ant_rf_switch  = _rf212b_AntExtSw,
+    .set_promisc    = _rf212b_promisc,
 };
 /*==============================================================================
                                 LOCAL FUNCTIONS
@@ -549,7 +519,7 @@ static e_radio_tx_status_t _rf212b_transmit(uint8_t c_len)
     int8_t                    c_txpower;
     uint8_t                 c_total_len;
     uint8_t                 c_tx_result;
-    uint8_t                 c_ndx;
+
     /* If radio is sleeping we have to turn it on first */
     /* This automatically does the PLL calibrations */
     if (bsp_getPin(p_slpTrig)) {
@@ -598,19 +568,13 @@ static e_radio_tx_status_t _rf212b_transmit(uint8_t c_len)
     /* Toggle the SLP_TR pin to initiate the frame transmission */
     bsp_setPin(p_slpTrig);
     bsp_clrPin(p_slpTrig);
-    LOG_DBG("_rf212b_transmit: %d", (int)c_total_len);
 
     /* We wait until transmission has ended so that we get an
      accurate measurement of the transmission time.*/
     _rf212b_waitIdle();
 
 /* Get the transmission result */
-#if RF212B_CONF_AUTORETRIES
     c_tx_result = bsp_spiBitRead(p_spi, RF212B_READ_COMMAND | RG_TRX_STATE, SR_TRAC_STATUS);
-//    c_tx_result = bsp_spiSubRead(SR_TRAC_STATUS);
-#else
-    c_tx_result = RF212B_TX_SUCCESS;
-#endif
 
     /* Restore the transmission power */
     if(packetbuf_attr(PACKETBUF_ATTR_RADIO_TXPOWER) > 0) {
@@ -620,31 +584,16 @@ static e_radio_tx_status_t _rf212b_transmit(uint8_t c_len)
     if(c_receive_on) {
         _rf212b_intON();
     } else {
-    #if RADIOALWAYSON
-    /* Enable reception */
-        _rf212b_intON();
-    #else
         LOG_DBG("_rf212b_transmit: turning radio off");
         _rf212b_intOFF();
-    #endif
     }
 
-    LOG_RAW("_rf212b_txFrame: ");
-    for(c_ndx = 0; c_ndx < c_total_len; c_ndx++)
-        LOG_RAW("%02x", pc_buffer[c_ndx]);
-    LOG_RAW("\n\r");
+    LOG1_OK( "TX packet [%d]", c_total_len );
+    LOG2_HEXDUMP( pc_buffer, c_total_len );
 
-#if RF212B_INSERTACK
-   ack_pending = 0;
-#endif
     switch (c_tx_result) {
         case RF212B_TX_SUCCESS:
         case RF212B_TX_SUC_DPEND:
-#if RF212B_INSERTACK
-            /* Not PAN broadcast to FFFF, and ACK was requested and received */
-            if (!((pc_buffer[5]==0xff) && (pc_buffer[6]==0xff)) && (pc_buffer[0]&(1<<6)))
-            ack_pending=1;
-#endif
             return RADIO_TX_OK;
         case RF212B_TX_CH_ACCFAIL:
             LOG_ERR("_rf212b_transmit: CSMA channel access fail");
@@ -673,15 +622,7 @@ static int8_t _rf212b_prepare(const void * p_payload, uint8_t c_len)
     uint8_t     c_flen;
     uint8_t        *pc_buf;
 #if RF212B_CONF_CHECKSUM
-  uint16_t checksum;
-#endif
-#if RF212B_INSERTACK
-/* The sequence number is needed to construct the ack packet */
-  ack_seqnum=*(((uint8_t *)payload)+2);
-#endif
-
-#if RF212B_CONF_CHECKSUM
-  checksum = crc16_data(payload, payload_len, 0);
+  uint16_t checksum = crc16_data(payload, payload_len, 0);
 #endif
 
   /* Copy payload to RAM buffer */
@@ -738,17 +679,6 @@ static int8_t _rf212b_read(void *p_buf, uint8_t c_bufsize)
 #if RF212B_CONF_CHECKSUM
   uint16_t checksum;
 #endif
-#if RF212B_INSERTACK
-/* Return an ACK to the mac layer */
-  if(ack_pending && bufsize == 3){
-    ack_pending=0;
-    uint8_t *buff=(uint8_t *)buf;
-    buff[0]=2;
-    buff[1]=0;
-    buff[2]=ack_seqnum;
-    return bufsize;
- }
-#endif
 
     /* The length includes the twp-byte checksum but not the LQI byte */
     c_len = gps_rxframe[c_rxframe_head].length;
@@ -758,15 +688,11 @@ static int8_t _rf212b_read(void *p_buf, uint8_t c_bufsize)
         return 0;
   }
 
-#if RADIOALWAYSON
-    if (c_receive_on) {
-#else
-        if (!c_receive_on) {
-            LOG_ERR("Radio txrx was switched off.");
-            move_head_ind();
-            return 0;
-        }
-#endif
+    if (!c_receive_on) {
+        LOG_ERR("Radio txrx was switched off.");
+        move_head_ind();
+        return 0;
+    }
 
     if(c_len > RF212B_MAX_TX_FRAME_LENGTH) {
         /* Oops, we must be out of sync. */
@@ -809,9 +735,7 @@ static int8_t _rf212b_read(void *p_buf, uint8_t c_bufsize)
 #endif /* RF212B_CONF_CHECKSUM */
     pc_framep += RF212B_CHECKSUM_LEN;
     pc_framep += RF212B_TIMESTAMP_LEN;
-#if FOOTER_LEN
-    memcpy(footer,framep,FOOTER_LEN);
-#endif
+
 #if RF212B_CONF_CHECKSUM
     if(checksum != crc16_data(p_buf, c_len - RF212B_CHECKSUM_LEN, 0)) {
         //PRINTF("checksum failed 0x%04x != 0x%04x\n\r",
@@ -849,18 +773,8 @@ static int8_t _rf212b_read(void *p_buf, uint8_t c_bufsize)
 #endif
 #endif
 
-#ifdef RF212BB_HOOK_RX_PACKET
-  RF212BB_HOOK_RX_PACKET(buf,len);
-#endif
-
   /* Here return just the data length. The checksum is however still in the buffer for packet sniffing */
   return c_len - RF212B_CHECKSUM_LEN;
-
-#if RADIOALWAYSON
-} else { //Stack thought radio was off
-   return 0;
-}
-#endif
 } /*  _rf212b_read() */
 
 /*----------------------------------------------------------------------------*/
@@ -996,7 +910,6 @@ static int8_t _rf212b_getRSSI(void)
 
 static void _rf212b_AntDiv(uint8_t value)
 {
-
 }
 
 static void _rf212b_AntExtSw(uint8_t value)
@@ -1038,33 +951,11 @@ void _rf212b_wReset(void)
     c_tempReg = bsp_spiRegRead(p_spi, RF212B_READ_COMMAND | RG_PHY_RSSI);
     bsp_spiRegWrite(p_spi, RF212B_WRITE_COMMAND | RG_CSMA_SEED_0, c_tempReg); //upper two RSSI reg bits RND_VALUE are random
 
-  /* CCA Mode Mode 1=Energy above threshold  2=Carrier sense only  3=Both 0=Either (RF231 only) */
-    //bsp_spiSubWrite(SR_CCA_MODE,1);  //1 is the power-on default
-
-  /* Carrier sense threshold (not implemented in RF212 or RF231) */
-     //bsp_spiSubWrite(SR_CCA_CS_THRES,0x7);
+    /* set initial sensitivity */
+    _rf212b_setSensitivity(mac_phy_config.init_sensitivity);
 
     //TODO ant diversity
     _spiBitWrite(p_spi, RG_ANT_DIV, SR_ANT_EXT_SW_EN, 1);
-    _spiBitWrite(p_spi, RG_ANT_DIV, SR_ANT_CTRL, 2);
-
-//    bsp_spiRegWrite(p_spi, RF212B_WRITE_COMMAND | RG_ANT_DIV, 0x06);
-  /* Receiver sensitivity. If nonzero rf231/128rfa1 saves 0.5ma in rx mode */
-  /* Not implemented on rf212 but does not hurt to write to it */
-#ifdef RF212B_MIN_RX_POWER
-#if RF212B_MIN_RX_POWER > 84
-#warning rf231 power threshold clipped to -48dBm by hardware register
-    bsp_spiRegWrite(p_spi, RF212B_WRITE_COMMAND | RG_RX_SYN, 0xf);
-//    bsp_spiWrite(RG_RX_SYN, 0xf);
-#elif RF212B_MIN_RX_POWER < 0
-#error RF212B_MIN_RX_POWER can not be negative!
-#endif
-    bsp_spiRegWrite(p_spi, RF212B_WRITE_COMMAND | RG_RX_SYN, RF212B_MIN_RX_POWER/6 + 1); //1-15 -> -90 to -48dBm
-//  bsp_spiWrite(RG_RX_SYN, RF212B_MIN_RX_POWER/6 + 1); //1-15 -> -90 to -48dBm
-#endif
-
-      /* set initial sensitivity */
-    _rf212b_setSensitivity(mac_phy_config.init_sensitivity);
 
   /* CCA energy threshold = -91dB + 2*SR_CCA_ED_THRESH. Reset defaults to -77dB */
   /* Use RF212 base of -91;  RF231 base is -90 according to datasheet */
@@ -1102,11 +993,8 @@ void _rf212b_wReset(void)
             c_rssi_base_val = -98;
         }
 
-
-
         /* set initial tx power */
           _rf212b_setPower(mac_phy_config.init_power);
-
 
 } /* _rf212b_wReset() */
 
@@ -1114,25 +1002,20 @@ void _rf212b_wReset(void)
 static int8_t _rf212b_send(const void *pr_payload, uint8_t c_len)
 {
     int8_t c_ret = 0;
-#ifdef RF212BB_HOOK_IS_SEND_ENABLED
-    if(!RF212BB_HOOK_IS_SEND_ENABLED()) {
-        LOG_ERROR("failed");
-        return c_ret;
-    }
-#endif
+
     if((c_ret = _rf212b_prepare(pr_payload, c_len))) {
         LOG_ERR("_rf212b_send: Unable to send, prep failed (%d)",c_ret);
         return c_ret;
     }
     c_ret = _rf212b_transmit(c_len);
+
     if (c_ret != RADIO_TX_OK) {
-        //bsp_led(E_BSP_LED_RED,E_BSP_LED_TOGGLE);
+        bsp_led(E_BSP_LED_RED,E_BSP_LED_TOGGLE);
         LOG_ERR("Send failed with code %d ",c_ret);
     }
-    else
-        {
-        //bsp_led(E_BSP_LED_YELLOW,E_BSP_LED_TOGGLE);
-        }
+    else {
+        bsp_led(E_BSP_LED_YELLOW,E_BSP_LED_TOGGLE);
+    }
 #if PRINT_PCK_STAT
     pck_cntr_out++;
 #endif /* PRINT_PCK_STAT */
@@ -1184,28 +1067,13 @@ static int8_t _rf212b_intON(void)
 static int8_t _rf212b_intOFF(void)
 {
     c_receive_on = 0;
-#if RF212BB_CONF_LEDONPORTE1
-    PORTE&=~(1<<PE1); //ledoff
-#endif
-#ifdef RF212BB_HOOK_RADIO_OFF
-    RF212BB_HOOK_RADIO_OFF();
-#endif
 
     /* Wait for any transmission to end */
     _rf212b_waitIdle();
 
-#if RADIOALWAYSON
-/* Do not transmit autoacks when stack thinks radio is off */
-    _rf212b_setTrxState(RX_ON);
-#else
     /* Force the device into TRX_OFF. */
     _rf212b_smReset();
-#if RADIOSLEEPSWHENOFF
-    /* Sleep Radio */
-    bsp_setPin(SLP_TR_PORT,SLP_TR_PIN);
-    ENERGEST_OFF(ENERGEST_TYPE_LED_RED);
-#endif
-#endif /* RADIOALWAYSON */
+
     return 0;
 } /* _rf212b_off() */
 
@@ -1318,7 +1186,7 @@ static int8_t _rf212b_init(s_ns_t* p_netStack)
             memcpy((void *)&un_addr.u8,  &mac_phy_config.mac_address, 8);
             memcpy(&uip_lladdr.addr, &un_addr.u8, 8);
             _rf212b_setPanAddr(mac_phy_config.pan_id, 0, (uint8_t *)&un_addr.u8);
-            rimeaddr_emb6_set_node_addr(&un_addr);
+            linkaddr_set_node_addr(&un_addr);
             _rf212b_setChannel(CHANNEL_802_15_4);
 
             LOG_INFO("MAC address %x:%x:%x:%x:%x:%x:%x:%x",    \
@@ -1355,9 +1223,8 @@ static int8_t _rf212b_init(s_ns_t* p_netStack)
 /*---------------------------------------------------------------------------*/
 static void _rf212b_callback(c_event_t c_event, p_data_t p_data)
 {
-    int8_t c_len;
-    uint8_t c_ndx;
-    c_rf212b_pending = 0;
+    int8_t      c_len;
+
     // The case where c_pckCounter is less or equal to 0 is not possible, however...
     c_pckCounter = (c_pckCounter > 0) ? (c_pckCounter - 1) : c_pckCounter;
     packetbuf_clear();
@@ -1365,16 +1232,17 @@ static void _rf212b_callback(c_event_t c_event, p_data_t p_data)
     /* Turn off interrupts to avoid ISR writing to the same buffers we are reading. */
     bsp_enterCritical();
 
-    LOG_RAW("_rf212b_rxFrame: ");
-    for(c_ndx = 0; c_ndx < gps_rxframe[c_rxframe_head].length; c_ndx++)
-        LOG_RAW("%02x", gps_rxframe[c_rxframe_head].data[c_ndx]);
-    LOG_RAW("\n\r");
+    LOG1_OK( "RX packet RSSI=[%d]; LQI=[%d]; LEN=[%d]",
+             c_last_rssi,
+             gps_rxframe[c_rxframe_head].lqi,
+             gps_rxframe[c_rxframe_head].length);
+    LOG2_HEXDUMP( gps_rxframe[c_rxframe_head].data,
+                  gps_rxframe[c_rxframe_head].length );
 
     c_len = _rf212b_read(packetbuf_dataptr(), PACKETBUF_SIZE);
 
     /* Restore interrupts. */
     bsp_exitCritical();
-    LOG_DBG("%u bytes lqi %u",c_len,c_last_correlation);
 
     if((c_len > 0) && (p_lmac != NULL)) {
           packetbuf_set_datalen(c_len);
@@ -1383,7 +1251,7 @@ static void _rf212b_callback(c_event_t c_event, p_data_t p_data)
 #if PRINT_PCK_STAT
     pck_cntr_in++;
 #endif /* PRINT_PCK_STAT */
-   // bsp_led(E_BSP_LED_GREEN,E_BSP_LED_TOGGLE);
+    bsp_led(E_BSP_LED_GREEN,E_BSP_LED_TOGGLE);
 } /*  _rf212b_callback() */
 
 /*==============================================================================
@@ -1407,38 +1275,27 @@ void _isr_callback(void * p_input)
     c_int_src = bsp_spiRegRead(p_spi, RF212B_READ_COMMAND | RG_IRQ_STATUS);
     /* Note: all IRQ are not always automatically disabled when running in ISR */
     /*Handle the incomming interrupt. Prioritized.*/
-//    printf("Int source = %d\n\r",c_int_src);
     if ((c_int_src & RX_START_MASK)){
 #if !RF212B_CONF_AUTOACK
         bsp_spiTxRx(p_spi, RF212B_READ_COMMAND | SR_RSSI,  &c_last_rssi);
         c_last_rssi *= 3;
-//        c_last_rssi = 3 * bsp_spiSubRead(SR_RSSI);
 #endif
     } else if (c_int_src & TRX_END_MASK){
         c_state = bsp_spiBitRead(p_spi, RF212B_READ_COMMAND | RG_TRX_STATUS, SR_TRX_STATUS);
-//        c_state = bsp_spiSubRead(SR_TRX_STATUS);
-        if( (c_state == BUSY_RX_AACK) || \
-            (c_state == RX_ON) ||          \
-            (c_state == BUSY_RX) ||      \
-            (c_state == RX_AACK_ON))
+        if( (c_state == BUSY_RX_AACK) || (c_state == RX_ON) ||          \
+            (c_state == BUSY_RX) ||      (c_state == RX_AACK_ON))
         {
             /* Received packet interrupt */
             /* Buffer the frame and call _rf212b_int to schedule poll for rf212 receive process */
             /* Save the rssi for printing in the main loop */
-#ifdef RF212B_MIN_RX_POWER
+
 #if RF212B_CONF_AUTOACK
             c_last_rssi = bsp_spiRegRead(p_spi, RF212B_READ_COMMAND | RG_PHY_ED_LEVEL);
-//            c_last_rssi=bsp_spiRead(RG_PHY_ED_LEVEL);
 #endif
-            if (c_last_rssi >= RF212B_MIN_RX_POWER) {
-#endif
-                _rf212b_fRead(&gps_rxframe[c_rxframe_tail]);
-                move_tail_ind();
-                if (c_receive_on /* && (c_pckCounter < RF212B_CONF_RX_BUFFERS) */)
-                    evproc_putEvent(E_EVPROC_HEAD,EVENT_TYPE_PCK_LL,NULL);
-#ifdef RF212B_MIN_RX_POWER
-            }
-#endif
+            _rf212b_fRead(&gps_rxframe[c_rxframe_tail]);
+            move_tail_ind();
+            if (c_receive_on /* && (c_pckCounter < RF212B_CONF_RX_BUFFERS) */)
+                evproc_putEvent(E_EVPROC_HEAD,EVENT_TYPE_PCK_LL,NULL);
         }
     } else if (c_int_src & TRX_UR_MASK){
     } else if (c_int_src & PLL_UNLOCK_MASK){
@@ -1448,10 +1305,8 @@ void _isr_callback(void * p_input)
         /*  will continously be asserted while the supply voltage is less than the */
         /*  user-defined voltage threshold. */
         c_isr_mask = bsp_spiRegRead(p_spi, RF212B_READ_COMMAND | RG_IRQ_MASK);
-//        uint8_t c_isr_mask = bsp_spiRead(RG_IRQ_MASK);
         c_isr_mask &= ~BAT_LOW_MASK;
         bsp_spiRegWrite(p_spi, RF212B_WRITE_COMMAND | RG_IRQ_MASK, c_isr_mask);
-//        bsp_spiWrite(RG_IRQ_MASK, c_isr_mask);
      }
 }
 

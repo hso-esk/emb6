@@ -39,7 +39,7 @@
  */
 /*============================================================================*/
 /**
- *      \addtogroup embetter6
+ *      \addtogroup emb6
  *      @{
  *   \addtogroup stack_API Stack API
  *   @{
@@ -75,9 +75,6 @@
 #endif
 
 #define     LOGGER_ENABLE        LOGGER_CORE
-#if            LOGGER_ENABLE     ==     TRUE
-#define        LOGGER_SUBSYSTEM    "core"
-#endif
 #include    "logger.h"
 
 /*==============================================================================
@@ -85,10 +82,6 @@
  =============================================================================*/
 
 uint8_t loc_emb6NetstackInit(s_ns_t * ps_netstack);
-
-#if EMB6_DEMO_TOT
-void loc_emb6ToutHandler(c_event_t c_event, p_data_t p_data );
-#endif /* #if EMB6_DEMO_TOT */
 
 #ifdef EMB6_INIT_DROOT
 static int8_t   loc_emb6DagRootInit(void);
@@ -99,10 +92,6 @@ static int8_t   loc_emb6DagRootInit(void);
  =============================================================================*/
 /* Don't use this variable directly, instead take emb6_get() */
 static s_ns_t*  ps_emb6Stack;
-
-#if EMB6_DEMO_TOT
-struct     etimer             et_timeout;
-#endif /* #if EMB6_DEMO_TOT */
 
 /*---------------------------------------------------------------------------*/
 /** @{ \name Layer 2 variables */
@@ -118,23 +107,29 @@ uip_lladdr_t uip_lladdr = {{0x00,0x06,0x98,0x00,0x02,0x32}};
 
 /** RPL default Configuration */
 s_rpl_conf_t rpl_config = {
-            .DIO_interval_min = 8,
-            .DIO_interval_doublings = 12,
-            .default_instance = 0x1e,                    /* This value decides which DAG instance we should participate in by default. */
-            .init_link_metric = 2,                        /* Initial metric attributed to a link when the ETX is unknown */
-            .default_route_lifetime_unit = 0xffff,
-            .default_route_lifetime = 0xff,
+            .DIOintmin          = 8,
+            .DIOintdoub         = 12,
+            /* This value decides which DAG instance we should
+             * participate in by default. */
+            .defInst            = 0x1e,
+            /* Initial metric attributed to a link when the ETX is unknown */
+            .linkMetric         = 2,
+            .defRouteTimeUnit   = 0xffff,
+            .defRouteTime       = 0xff,
 
 };
 
 /** MAC address default Configuration */
 s_mac_phy_conf_t mac_phy_config = {
 #if DEMO_USE_EXTIF
-        .mac_address =  { 0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff },     /* set extif mac address */
+        /* set extif mac address */
+        .mac_address =  { 0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff },
 #else
-        .mac_address =  { 0x00,0x50,0xc2,0xff,0xfe,0xa8,0xdd,0xdd },     /* set default mac address */
+        /* set default mac address */
+        .mac_address =  { 0x00,0x50,0xc2,0xff,0xfe,0xa8,0xdd,0xdd },
 #endif
-        .pan_id = 0xABCD,                                                /* set default pan id */
+        /* set default pan id */
+        .pan_id = 0xABCD,
         .init_power = 11,
         .init_sensitivity = -100,
         .modulation = MODULATION_BPSK20,
@@ -159,7 +154,7 @@ static int8_t loc_emb6DagRootInit(void)
     root_if = uip_ds6_get_global(-1);
     if(root_if != NULL) {
         rpl_dag_t *dag;
-        dag = rpl_set_root(rpl_config.default_instance,(uip_ip6addr_t *)&un_ipaddr);
+        dag = rpl_set_root(rpl_config.defInst,(uip_ip6addr_t *)&un_ipaddr);
         rpl_set_prefix(dag, &un_ipaddr, 64);
         LOG_INFO("created a new RPL dag");
     } else {
@@ -182,7 +177,7 @@ uint8_t loc_emb6NetstackInit(s_ns_t * ps_ns)
     ctimer_init();
     if ((ps_ns->hc != NULL) && (ps_ns->llsec != NULL) && (ps_ns->hmac != NULL) &&
         (ps_ns->lmac != NULL) && (ps_ns->frame != NULL) && (ps_ns->inif != NULL)) {
-        if (ps_ns->inif->init(ps_ns)  && ps_ns->frame->init(ps_ns))
+        if (ps_ns->frame->init(ps_ns))
         {
             /* This drivers belong to Contiki and retval are't tracked */
             ps_ns->lmac->init(ps_ns);
@@ -200,34 +195,12 @@ uint8_t loc_emb6NetstackInit(s_ns_t * ps_ns)
     }
 #endif /* DEMO_USE_DAG_ROOT */
 
-#if EMB6_DEMO_TOT
-    /* deinit tcpip stack after 30 minutes */
-    etimer_set(&et_timeout, EMB6_DEMO_TOT * bsp_get(E_BSP_GET_TRES), loc_emb6ToutHandler);
-#endif /* #if EMB6_DEMO_TOT */
     return (c_err);
 }
-
-#if EMB6_DEMO_TOT
-void loc_emb6ToutHandler(c_event_t c_event, p_data_t p_data )
-{
-    if (etimer_expired(&et_timeout))
-    {
-        while(1);
-    }
-}
-#endif /* #if EMB6_DEMO_TOT */
 
 /*==============================================================================
                                  API FUNCTIONS
  =============================================================================*/
-
-
-
-void rimeaddr_emb6_set_node_addr(linkaddr_t *t)
-{
-    linkaddr_set_node_addr(t);
-}
-
 uint8_t emb6_init(s_ns_t * ps_ns)
 {
     uint8_t c_err = 1;
@@ -241,9 +214,9 @@ uint8_t emb6_init(s_ns_t * ps_ns)
         ps_ns = NULL;
         LOG_ERR("Failed to initialise emb6 stack");
         c_err = 0;
+    }else {
+        ps_emb6Stack = ps_ns;
     }
-
-    ps_emb6Stack = ps_ns;
 
     return (c_err);
 }

@@ -37,7 +37,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-/**  \addtogroup embetter6
+/**  \addtogroup emb6
  *      @{
  *      \addtogroup bsp Board Support Package
  *   @{
@@ -48,29 +48,29 @@
  */
 /*! \file   atany900_pro3/board_conf.c
 
-    \author Artem Yushev, artem.yushev@hs-offenburg.de
+    \author Artem Yushev, 
 
     \brief  Board Configuration for AT-ANY-900-PRO3-BRICK
 
     \version 0.0.1
 */
 
-
-/** Enable or disable logging */
-#define        LOGGER_ENABLE          TRUE
-#define        LOGGER_SUBSYSTEM    "brdconf"
-
 #include "board_conf.h"
+#include "hwinit.h"
 #include "emb6.h"
+#include "emb6_conf.h"
 #include "logger.h"
 #include "bsp.h"
+
+/** Enable or disable logging */
+#define        LOGGER_ENABLE          LOGGER_BSP
 
 uint8_t board_conf(s_ns_t* ps_nStack)
 {
     uint8_t c_ret = 0;
     if (ps_nStack != NULL) {
         ps_nStack->inif = &rf212b_driver;
-        c_ret = 1;
+        c_ret = ps_nStack->inif->init(ps_nStack);
     }
     else {
         LOG_ERR("Network stack pointer is NULL");

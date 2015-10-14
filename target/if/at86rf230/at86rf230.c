@@ -44,7 +44,7 @@
 */
 /*! \file   at86rf230.c
 
-    \author Artem Yushev artem.yushev@hs-offenburg.de
+    \author Artem Yushev 
 
     \brief  AT86RF230 Transceiver initialization code.
 
@@ -69,9 +69,6 @@
                                      MACROS
 ==============================================================================*/
 #define     LOGGER_ENABLE        LOGGER_RADIO
-#if            LOGGER_ENABLE     ==     TRUE
-#define     LOGGER_SUBSYSTEM    "rf230"
-#endif
 #include    "logger.h"
 
 #define     bsp_clrPin(pin)                        bsp_pin(E_BSP_PIN_CLR, pin)
@@ -1156,24 +1153,30 @@ static int8_t _rf230_init(s_ns_t* ns)
     _rf230_wReset();
       /* Leave radio in on state (?)*/
     _rf230_intON();
-    //_spiBitWrite(p_spi, SR_AACK_PROM_MODE, 1);
-    memcpy((void *)&un_addr.u8,  &mac_address, 8);
-    memcpy(&uip_lladdr.addr, &un_addr.u8, 8);
-    _rf230_setPanAddr(mac_config.pan_id, 0, (uint8_t *)&un_addr.u8);
-    _rf230_setChannel(CHANNEL_802_15_4);
-    linkaddr_set_node_addr(&un_addr);
-    LOG_INFO("MAC address %x:%x:%x:%x:%x:%x:%x:%x\n\r",    \
-                            un_addr.u8[0],un_addr.u8[1],\
-                            un_addr.u8[2],un_addr.u8[3],\
-                            un_addr.u8[4],un_addr.u8[5],\
-                            un_addr.u8[6],un_addr.u8[7]);
+    if (mac_phy_config.mac_address == NULL) {
+                c_ret = 0;
+    }
+    else {
+        memcpy((void *)&un_addr.u8,  &mac_phy_config.mac_address, 8);
+        memcpy(&uip_lladdr.addr, &un_addr.u8, 8);
+        _rf212_setPanAddr(mac_phy_config.pan_id, 0, (uint8_t *)&un_addr.u8);
+        linkaddr_set_node_addr(&un_addr);
+        _rf212_setChannel(CHANNEL_802_15_4);
 
-    evproc_regCallback(EVENT_TYPE_PCK_LL,_rf230_callback);
+        LOG_INFO("MAC address %x:%x:%x:%x:%x:%x:%x:%x",    \
+                un_addr.u8[0],un_addr.u8[1],\
+                un_addr.u8[2],un_addr.u8[3],\
+                un_addr.u8[4],un_addr.u8[5],\
+                un_addr.u8[6],un_addr.u8[7]);
 
-    if (ns->lmac != NULL)
-        p_lmac = ns->lmac;
-    else
-        return 0;
+        evproc_regCallback(EVENT_TYPE_PCK_LL,_rf230_callback);
+        if (ns->lmac != NULL) {
+            p_lmac = ns->lmac;
+            c_ret = 1;
+        } else {
+            c_ret = 0;
+        }
+    }
 
     return 1;
 } /* _rf230_init() */

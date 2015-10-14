@@ -39,7 +39,7 @@
  */
 /*============================================================================*/
 /**
- *   \addtogroup embetter6
+ *   \addtogroup emb6
  *      @{
  *      \addtogroup demo
  *      @{
@@ -74,9 +74,6 @@
  =============================================================================*/
 
 #define     LOGGER_ENABLE        LOGGER_DEMO_COAP
-#if            LOGGER_ENABLE     ==     TRUE
-#define        LOGGER_SUBSYSTEM    "dCOAP"
-#endif
 #include    "logger.h"
 
 #define SERVER_NODE(ipaddr)   uip_ip6addr(ipaddr, 0xfe80, 0x0000, 0x0000, 0x0000, 0x0250, 0xc2ff, 0xfea8, 0xdddd)

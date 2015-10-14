@@ -7,7 +7,7 @@ hardware_config = {
 	'mcu_toolchain' : 	'GCC',
 	
 # Device driver description (HEAD/target/mcu folder)
-	'mcu' 			:	'samd20j18',
+	'mcu' 			:	'samd20',
 
 # Transceiver source description (HEAD/target/if folder)
 	'if'			:	'at86rf212b',

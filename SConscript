@@ -30,6 +30,41 @@ def add_include(incpath2add):
 Import('env', 'TARGET_NAME', 'APPS_NAME', 'BOARD_NAME', 'MAC_ADDR', 'TX_POWER', 'RX_SENS', 'RXTX_MODE')
 env.Append(CPPPATH = ['./'])
 
+def parse_field(scons_conf):
+	global env
+	
+	# Add defines
+	if 'defines' in scons_conf:
+		env.MergeFlags({'CPPDEFINES' : scons_conf['defines']})
+		
+	# Add gcc flags
+	if 'cflags' in scons_conf:
+		env.MergeFlags({'CFLAGS' : scons_conf['cflags']})
+		
+	# Add linker flags
+	if 'ldflags' in scons_conf:
+		env.MergeFlags({'LINKFLAGS' : scons_conf['ldflags']})
+	
+	# Check library path
+	if 'libpath' in scons_conf:
+		env.MergeFlags({'LIBPATH' : scons_conf['libpath']})
+	
+	#Check includes for this library
+	if 'libincs' in scons_conf:
+		for libinc in scons_conf['libincs']:
+			add_include(libinc)
+	
+	# Check libraries and add them
+	if 'libs' in scons_conf:
+	   	conf = Configure(env)
+		libs = scons_conf['libs']
+		for lib in libs:
+		    if not conf.CheckLib(lib):
+		       print '> Didn\'t find lib{0}.a ot {0}.lib, exiting!'.format(lib)
+		       Exit(1)
+		    else:
+			conf.env.MergeFlags({'LIBS' : lib})
+		env = conf.Finish()
 
 ################################################################################ 
 ################ DEMO APPLICATION CONFIGURATION ################################
@@ -81,17 +116,7 @@ for app_conf in APPS_NAME:
 			add_include(os.path.dirname('./utils/inc/' + util_file))
 			add_sources('./utils/src/'+util_file+'.c')
 
-	# Add defines
-	if 'defines' in demo_conf:
-		env.MergeFlags({'CPPDEFINES' : demo_conf['defines']})
-	
-	# Add gcc flags
-	if 'cflags' in demo_conf:
-		env.MergeFlags({'CFLAGS' : demo_conf['cflags']})
-	
-	# Add linker flags
-	if 'ldflags' in demo_conf:
-		env.MergeFlags({'LINKFLAGS' : demo_conf['ldflags']})
+	parse_field(demo_conf)
 		
 ################################################################################ 
 #################### TARGET BOARD CONFIGURATION ################################
@@ -121,8 +146,16 @@ add_sources(mcu_path+'/device/'+board_conf['mcu_cpu']+'/src/*.c')
 
 # Append toolchain configuration
 # Path ./target/arch/<arch>/<family>/<vendor>/SConscript
+
 toolchain = env.SConscript(mcu_path+'/toolchain/'+board_conf['mcu_toolchain']+'/SConscript')
-env['CC'] = toolchain['CC']
+
+#conf = Configure(env)
+#if not conf.CheckCC():
+#	print '> Didn\'t find {0} toolchain, exiting!'.format(toolcahin[''])
+#	Exit(1)
+#else:
+#	env = conf.Finish()
+env['CC'] = toolchain['CC']	
 env['AS'] = toolchain['AS']
 env['LINK'] = toolchain['LINK']
 env['OBJCOPY'] = toolchain['OBJCOPY']
@@ -158,8 +191,8 @@ add_sources('./target/if/'+board_conf['if']+'/*.c')
 
 #Define transmitter output power
 if MAC_ADDR != '':
-	MAC_ADDR = 'MAC_ADDR_WORD='+ MAC_ADDR
-	env.MergeFlags({'CPPDEFINES' : MAC_ADDR})
+	mac = 'MAC_ADDR_WORD='+ MAC_ADDR
+	env.MergeFlags({'CPPDEFINES' : mac})
 
 #Define transmitter output power
 if TX_POWER != '':
@@ -176,21 +209,19 @@ if RXTX_MODE != '':
 	rxtx_mode = 'MODULATION='+ RXTX_MODE
 	env.MergeFlags({'CPPDEFINES' : rxtx_mode})
 
-# Add defines
-if 'defines' in board_conf:
-	env.MergeFlags({'CPPDEFINES' : board_conf['defines']})
-	
-# Add gcc flags
-if 'cflags' in board_conf:
-	env.MergeFlags({'CFLAGS' : board_conf['cflags']})
-	
-# Add linker flags
-if 'ldflags' in board_conf:
-	env.MergeFlags({'LINKFLAGS' : board_conf['ldflags']})
-	
+parse_field(board_conf)
+
 ################################################################################ 
 ####################### Final Compilation ######################################
 ################################################################################
+
+#Define logger level
+try:
+	Import('LOGGER_LEVEL')
+	logger = 'LOGGER_LEVEL='+ LOGGER_LEVEL
+	env.MergeFlags({'CPPDEFINES' : logger})
+except:
+	pass
 
 # Add library source files and headers
 add_include(os.path.dirname('./emb6/'))
@@ -199,7 +230,7 @@ add_sources('./emb6/*.c')
 # Compile program
 env.MergeFlags({'CPPPATH' : includes})
 Delete(TARGET_NAME+'.elf')
-retf = env.Program(target = TARGET_NAME+'.elf', source = sources)
+retf = env.Program(target = TARGET_NAME  + '.elf', source = sources)
 env.Clean(retf, '*')
 
 # Show program size
@@ -212,8 +243,8 @@ hex_file = env.Command(TARGET_NAME+'.hex', TARGET_NAME+'.elf', Action('$OBJCOPY 
 env.Clean(hex_file, '*')
 
 # Create binary
-Delete(TARGET_NAME+'.bin')
-bin_file = env.Command(TARGET_NAME+'.bin', TARGET_NAME+'.elf', Action('$OBJCOPY -O binary $SOURCE $TARGET', '$OBJCOPYCOMSTR'))
-env.Clean(bin_file, '*')
+#Delete(TARGET_NAME+'.bin')
+#bin_file = env.Command(TARGET_NAME+'.bin', TARGET_NAME+'.elf', Action('$OBJCOPY -O binary $SOURCE $TARGET', '$OBJCOPYCOMSTR'))
+#env.Clean(bin_file, '*')
 
-Return('bin_file')
+Return('retf')

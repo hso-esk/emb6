@@ -39,9 +39,7 @@
  */
 /*============================================================================*/
 /**
- *      \addtogroup embetter6
- *      @{
- *      \addtogroup demo
+ *      \addtogroup emb6
  *      @{
  *      \addtogroup demo_coap
  *      @{
@@ -50,7 +48,7 @@
 */
 /*! \file   demo_coap_srv.c
 
- \author Peter Lehmann, peter.lehmann@hs-offenburg.de
+ \author Peter Lehmann
 
  \brief  CoAP Server example application
 
@@ -65,11 +63,9 @@
 #include "er-coap.h"
 #include "rest-engine.h"
 #include "demo_coap_srv.h"
+#include "emb6.h"
 
 #define     LOGGER_ENABLE        LOGGER_DEMO_COAP
-#if            LOGGER_ENABLE     ==     TRUE
-#define        LOGGER_SUBSYSTEM    "dCOAP"
-#endif
 #include    "logger.h"
 
 /*==============================================================================
@@ -81,10 +77,10 @@
 */
 extern resource_t
   res_push,
-  res_rf_info,
+  res_radio_info,
+  res_radio_ctrl,
   res_temp,
-  res_toggle,
-  res_led_toggle;
+  res_led;
 
 /*==============================================================================
                                          API FUNCTIONS
@@ -100,17 +96,16 @@ int8_t demo_coapInit(void)
 
     /* Initialize the REST engine. */
     rest_init_engine();
-
 /*
 * Bind the resources to their Uri-Path.
 * WARNING: Activating twice only means alternatle path, not two instances!
 * All static variables are the same for each URI path.
 */
-    rest_activate_resource(&res_temp, "sensors/temperature");
+    rest_activate_resource(&res_temp, "dev/temp");
     rest_activate_resource(&res_push, "test/push");
-    rest_activate_resource(&res_toggle, "actuators/LED");
-    rest_activate_resource(&res_led_toggle, "actuators/LED_toggle");
-    rest_activate_resource(&res_rf_info, "status/rf_info");
+    rest_activate_resource(&res_led, "dev/led");
+    rest_activate_resource(&res_radio_info, "dev/txrx/inf");
+    rest_activate_resource(&res_radio_ctrl, "dev/txrx/ctrl");
 
     return 1;
 }
@@ -128,6 +123,7 @@ uint8_t demo_coapConf(s_ns_t* pst_netStack)
      */
     if (pst_netStack != NULL) {
         if (!pst_netStack->c_configured) {
+            /*pst_netStack->sock   = &udp_socket_driver;*/
             pst_netStack->hc     = &sicslowpan_driver;
             pst_netStack->llsec  = &nullsec_driver;
             pst_netStack->hmac   = &nullmac_driver;
@@ -137,7 +133,8 @@ uint8_t demo_coapConf(s_ns_t* pst_netStack)
             /* Transceiver interface is defined by @ref board_conf function*/
             /*pst_netStack->inif   = $<some_transceiver>;*/
         } else {
-            if ((pst_netStack->hc == &sicslowpan_driver)   &&
+            if (/*(pst_netStack->sock == &udp_socket_driver) && */
+                (pst_netStack->hc == &sicslowpan_driver)   &&
                 (pst_netStack->llsec == &nullsec_driver)   &&
                 (pst_netStack->hmac == &nullmac_driver)    &&
                 (pst_netStack->lmac == &sicslowmac_driver) &&
@@ -153,7 +150,6 @@ uint8_t demo_coapConf(s_ns_t* pst_netStack)
     return (c_ret);
 }
 
-/** @} */
 /** @} */
 /** @} */
 /** @} */

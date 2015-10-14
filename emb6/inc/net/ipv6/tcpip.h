@@ -178,7 +178,7 @@ CCIF void tcp_unlisten(uint16_t port, uint8_t conn_id);
  * memory could not be allocated for the connection.
  *
  */
-CCIF struct uip_conn *tcp_connect(uip_ipaddr_t *ripaddr, uint16_t port,
+CCIF struct uip_conn *tcp_connect(const uip_ipaddr_t *ripaddr, uint16_t port,
                   void *appstate);
 
 /**

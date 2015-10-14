@@ -37,7 +37,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-/**  \addtogroup embetter6
+/**  \addtogroup emb6
  *      @{
  *      \addtogroup bsp Board Support Package
  *   @{
@@ -51,7 +51,7 @@
  */
 /*! \file   atany900/board_conf.h
 
-    \author Artem Yushev, artem.yushev@hs-offenburg.de
+    \author Artem Yushev, 
 
     \brief  Board Configuration for AT-ANY-900
 
@@ -66,24 +66,24 @@
 #include "avr/interrupt.h"
 
 
-#define RESET_DDR                            &(PORTA)
-#define RESET_PORT                            &(PORTA)
-#define RESET_PIN                             0x07
-#define SLP_TR_DDR                            &(DDRB)
-#define SLP_TR_PORT                          &(PORTB)
-#define SLP_TR_PIN                           0x04
-#define RADIO_INT_SOURCE                    0x05
+#define RESET_DDR                               &(PORTA)
+#define RESET_PORT                              &(PORTA)
+#define RESET_PIN                               0x07
+#define SLP_TR_DDR                              &(DDRB)
+#define SLP_TR_PORT                             &(PORTB)
+#define SLP_TR_PIN                              0x04
+#define RADIO_INT_SOURCE                        0x05
 
-#define    HAL_LED_RED_PORT                    B
-#define    HAL_LED_YELLOW_PORT                    B
-#define    HAL_LED_GREEN_PORT                    B
+#define HAL_LED_RED_PORT                        B
+#define HAL_LED_YELLOW_PORT                     B
+#define HAL_LED_GREEN_PORT                      B
 
-#define    HAL_LED_RED_PIN                        5
-#define    HAL_LED_YELLOW_PIN                    6
-#define    HAL_LED_GREEN_PIN                    7
+#define HAL_LED_RED_PIN                         5
+#define HAL_LED_YELLOW_PIN                      6
+#define HAL_LED_GREEN_PIN                       7
 
-#define HAL_LED_SET                            &= ~
-#define HAL_LED_CLR                            |=
+#define HAL_LED_SET                             &= ~
+#define HAL_LED_CLR                             |=
 
 
 /*============================================================================*/

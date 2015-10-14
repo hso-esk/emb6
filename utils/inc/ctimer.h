@@ -54,7 +54,7 @@
 /*!
     \file   ctimer.h
 
-    \author Artem Yushev (artem.yushev@hs-offenburg.de)
+    \author Artem Yushev 
 
     \brief  Functions to manage Contiki timers
             Contiki has two main type of timers callback timers (ctimer) and

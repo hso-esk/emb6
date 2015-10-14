@@ -46,9 +46,6 @@
 #include "random.h"
 
 #include "tcpip.h"
-#include "uip.h"
-#include "uiplib.h"
-#include "uip-udp-packet.h"
 
 #include "er-coap-transactions.h"
 #include "er-coap-observe.h"
@@ -84,7 +81,7 @@ coap_new_transaction(uint16_t mid, uip_ipaddr_t *addr, uint16_t port)
     t->retrans_counter = 0;
 
     /* save client address */
-    uip_ipaddr_copy(&t->addr, addr);
+    t->addr = *addr;
     t->port = port;
 
     list_add(transactions_list, t); /* list itself makes sure same element is not added twice */

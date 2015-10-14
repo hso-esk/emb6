@@ -1,6 +1,8 @@
 .metadata/
 build/
 bin/
+demo/testframework_emb6demoapp/
+.sconf_temp/
 .project
 .cproject
 _*/
@@ -16,6 +18,9 @@ _*/
 *.a
 *.swp
 *.bin
+
+.sconsign.dblite
+.settings/
 
 doc/html/
 doc/latex/

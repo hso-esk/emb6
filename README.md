@@ -1,12 +1,12 @@
-<img src="https://raw.github.com/hso-esk/_meta/master/fh-offenburg_schrift_2010_72dpi.png" width="300">
-<img src="https://raw.github.com/hso-esk/_meta/master/ei-fb_rgb_300.jpg" width="300">
+<img src="https://raw.github.com/hso-esk/_meta/master/emb6.png" width="300">
+<img src="https://raw.github.com/hso-esk/_meta/master/HS-Logo_blau_60.png" width="300">
 
-emb6
+emb::6
 ========
 
-`emb6` is a scalable C-based 6LoWPAN stack for embedded devices developed by the
-[*Labratory of Communication Electronics and Embedded Devices (ESK)*](http://ei.hs-offenburg.de/labore/embedded-systems-und-kommunikationselektronik/) at
-[*Offenburg University of Applied Siences (HSO)*](http://www.hs-offenburg.de/) under supervision of *Prof. Dr. Axel Sikora* (axel.sikora@hs-offenburg.de).
+`emb::6` is a scalable C-based 6LoWPAN stack for embedded devices developed by the
+[*Laboratory of Embedded Systems and Communication Electronics (ESK)*](http://ei.hs-offenburg.de/labore/embedded-systems-und-kommunikationselektronik/) at
+[*Offenburg University of Applied Sciences (HSO)*](http://www.hs-offenburg.de/) under supervision of *Prof. Dr. Axel Sikora* (axel.sikora@hs-offenburg.de).
 
 Originally derived from Contiki several adaptations have been made such as the
 removal of proto-threads. It follows a strict layer based architecture with a
@@ -25,9 +25,9 @@ minimum MTU of 1280 byte. With the 6LoWPAN adaptation layer it is possible to
 make use of IPv6 in small and constrained wireless networks which follows the
 IEEE 802.15.4 standard. In the meantime, various 6LoWPAN implementations are
 available, be it open source or commercial. One of the open source
-implementations is the C-based `emb6` stack.
+implementations is the C-based `emb::6` stack.
 
-The `emb6` stack is optimized to be used in constrained devices without an
+The `emb::6` stack is optimized to be used in constrained devices without an
 operation system. The stack operates event driven with a scalable buffer
 handling for optimization on different platforms. The typical field of
 application is in wireless sensor networks, e.g. for home automation or
@@ -37,7 +37,7 @@ industrial environments.
 Getting started
 ---------------
 
-For the best introduction to get started with `emb6`, please read the
+For the best introduction to get started with `emb::6`, please read the
 documentation included. For the code comments you will also find a doxygen
 project file within the doc folder.
 
@@ -47,7 +47,7 @@ Features
 ### Functionality
 
 There are several IOT capable stacks available may it be on open source or on
-commercial basis. The `emb6` networking stack provides several salient features
+commercial basis. The `emb::6` networking stack provides several salient features
 making it a unique offering. The main features and concepts of the stack are the
 following:
 
@@ -84,7 +84,7 @@ customized applications.
 
 ### Build System
 
-The buildsystem of `emb6` is completely based on SCons as a replacement for make
+The buildsystem of `emb::6` is completely based on SCons as a replacement for make
 with improved features. SCons is based on Python, makeing the tool very powerful
 for the build process. It allows to easily create new configurations e.g. regarding
 MCU/Transceiver or application selection. Furhermore the build-time is decreased
@@ -92,10 +92,10 @@ significantly.
 
 ### Supported Targets
 
-`emb6` is very platform independent since it has no requirements to an OS and
+`emb::6` is very platform independent since it has no requirements to an OS and
 hardware access is abstracted in a simple "single-file-based" hardware
-abstraction layer. That makes it quite easy to port `emb6` to other platforms.
-However `emb6` comes with support of several platforms by default:
+abstraction layer. That makes it quite easy to port `emb::6` to other platforms.
+However `emb::6` comes with support of several platforms by default:
 
 
 Target | MCU | TRANSCEIVER
@@ -107,6 +107,7 @@ Target | MCU | TRANSCEIVER
 **xpro_212** | samd20j18 | at86rf212
 **xpro_212b** | samd20j18 | at86rf212b
 **stk3600** | efm32lg990f256 | at86rf212b
+**native**  | "linux" | [LCM](https://lcm-proj.github.io/)
 
 
 Contact

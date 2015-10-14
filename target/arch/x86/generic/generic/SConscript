@@ -1,0 +1,12 @@
+arch = {
+	'extra' : [
+	],
+# C global defines
+	'defines' : [
+	],
+# GCC flags
+	'cflags' : [
+	]	
+}
+
+Return('arch')

@@ -39,7 +39,7 @@
  */
 /*============================================================================*/
 /**
- *      \addtogroup embetter6
+ *      \addtogroup emb6
  *      @{
  *      \addtogroup demo
  *      @{
@@ -50,7 +50,7 @@
 */
 /*! \file   demo_aptb_cli.c
 
- \author Artem Yushev, artem.yushev@hs-offenburg.de
+ \author Artem Yushev, 
 
  \brief  Demo profile for testcases on Automated Physical Testbed (APTB) .
 
@@ -68,18 +68,13 @@
 #include "etimer.h"
 #include "evproc.h"
 #include "tcpip.h"
-#include "uip.h"
+#include "udp-socket.h"
 #include "rpl.h"
-#include "uip-debug.h"
-#include "uip-udp-packet.h"
 
 /*==============================================================================
                                          MACROS
  =============================================================================*/
 #define     LOGGER_ENABLE           LOGGER_DEMO_APTB
-#if         LOGGER_ENABLE   ==  TRUE
-#define     LOGGER_SUBSYSTEM        "dAPTB"
-#endif
 #include    "logger.h"
 
 
@@ -112,7 +107,9 @@
 /*==============================================================================
                           STRUCTURES AND OTHER TYPEDEFS
  =============================================================================*/
-static  struct  uip_udp_conn        *pst_conn;
+static  struct  udp_socket          st_udp_socket;
+static  struct  udp_socket          *pst_udp_socket;
+
 static          uip_ipaddr_t        un_server_ipaddr = {.u16={SERVER_IP_ADDR} };
         struct  etimer              s_et;
 static          uint32_t            l_lastSeqId = 0;
@@ -185,9 +182,10 @@ static  void        loc_aptb_sendMsg(uint32_t l_seqID)
     LOG_INFO("Lost packets (%lu)", l_expSeqID - l_seqID);
     LOG_INFO("Send message: %s",pc_buf);
 
-    uip_udp_packet_sendto(pst_conn,
-                          pc_buf, strlen(pc_buf),
-                          &un_server_ipaddr,UIP_HTONS(__SERVER_PORT));
+    udp_socket_sendto(pst_udp_socket,
+                      pc_buf, strlen(pc_buf),
+                      &un_server_ipaddr,
+                      __SERVER_PORT);
 
 } /* loc_aptb_sendMsg */
 
@@ -261,15 +259,18 @@ int8_t demo_aptbInit(void)
                 un_server_ipaddr.u16[2],un_server_ipaddr.u16[3],\
                 un_server_ipaddr.u16[4],un_server_ipaddr.u16[5],\
                 un_server_ipaddr.u16[6],un_server_ipaddr.u16[7]);
-    pst_conn = udp_new(NULL, UIP_HTONS(__SERVER_PORT), NULL);
-    udp_bind(pst_conn, UIP_HTONS(__CLIENT_PORT));
+
+    /* set the pointer to the udp-socket */
+    pst_udp_socket = &st_udp_socket;
+    udp_socket_register(pst_udp_socket, NULL, NULL);
+    udp_socket_bind(pst_udp_socket, UIP_HTONS(__CLIENT_PORT));
 
     LOG_INFO("%s", "Create connection with the server ");
-    //uip_debug_ipaddr_print(&un_server_ipaddr);
+    LOG_IP6ADDR(&un_server_ipaddr.u8);
     LOG_RAW("\n\r");
     LOG_INFO("local/remote port %u/%u",
-            UIP_HTONS(pst_conn->lport),
-            UIP_HTONS(pst_conn->rport));
+            UIP_HTONS(pst_udp_socket->udp_conn->lport),
+            UIP_HTONS(pst_udp_socket->udp_conn->rport));
     //printf("Set dudp timer %p\n\r",&s_et);
     etimer_set(&s_et, SEND_INTERVAL, loc_aptb_callback);
     evproc_regCallback(EVENT_TYPE_TCPIP,loc_aptb_callback);

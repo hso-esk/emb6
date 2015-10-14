@@ -39,7 +39,7 @@
  */
 /*============================================================================*/
 /**
- *      \addtogroup embetter6
+ *      \addtogroup emb6
  *      @{
  *      \addtogroup demo
  *      @{
@@ -48,7 +48,7 @@
 */
 /*! \file   demo_sniffer.c
 
- \author Artem Yushev, artem.yushev@hs-offenburg.de
+ \author Artem Yushev, 
 
  \brief  Sniffer application
 
@@ -65,9 +65,6 @@
 #include "demo_sniffer.h"
 
 #define     LOGGER_ENABLE        LOGGER_DEMO_SNIFFER
-#if            LOGGER_ENABLE     ==     TRUE
-#define        LOGGER_SUBSYSTEM    "dSNIF"
-#endif
 #include    "logger.h"
 
 /*==============================================================================

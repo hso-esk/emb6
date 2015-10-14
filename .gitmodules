@@ -1,0 +1,6 @@
+[submodule "tools/lcm"]
+	path = tools/lcm
+	url = https://github.com/lcm-proj/lcm
+[submodule "tools/scpi-parser"]
+	path = tools/scpi-parser
+	url = https://github.com/j123b567/scpi-parser.git

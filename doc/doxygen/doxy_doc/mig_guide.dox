@@ -146,7 +146,7 @@
  */
   //-----------------------------------------------------------
   /*!
- \page mig_guide_p2 Embetter6 events processing
+ \page mig_guide_p2 emb6 events processing
 It was done from the Contiki sources and developers do not intended to change whole architecture of the Contiki network stack. 
 So the goal was just to eliminate dependencies from the Contiki OS.
 Network stack essential files where protohreads were used:

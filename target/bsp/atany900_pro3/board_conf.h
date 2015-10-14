@@ -37,7 +37,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-/**  \addtogroup embetter6
+/**  \addtogroup emb6
  *      @{
  *      \addtogroup bsp Board Support Package
  *   @{
@@ -48,7 +48,7 @@
  */
 /*! \file   atany900_pro3/board_conf.h
 
-    \author Artem Yushev, artem.yushev@hs-offenburg.de
+    \author Artem Yushev, 
 
     \brief  Board Configuration for AT-ANY-900-PRO3-BRICK
 
@@ -94,16 +94,20 @@
 #define SAMD21_FEM_LNA_PIN                        PIN_PA11
 
 
-#if    LEDS_ON_BOARD == TRUE
-#define LED0_PIN                  PIN_PA22
-#define LED0_ACTIVE               false
-#define LED0_INACTIVE             !LED0_ACTIVE
+#define LED_1_NAME                "YELLOW"
+#define LED_1_PIN                 PIN_PA22
+#define LED_1_ACTIVE              false
+#define LED_1_INACTIVE            !LED_0_ACTIVE
 
-#define LED_0_NAME                "LED0 (yellow)"
-#define LED_0_PIN                 LED0_PIN
-#define LED_0_ACTIVE              LED0_ACTIVE
-#define LED_0_INACTIVE            LED0_INACTIVE
-#endif
+#define LED_0_NAME                "RED"
+#define LED_0_PIN                 PIN_PA23
+#define LED_0_ACTIVE              false
+#define LED_0_INACTIVE            !LED_1_ACTIVE
+
+#define LED_2_NAME                "GREEN"
+#define LED_2_PIN                 PIN_PA15
+#define LED_2_ACTIVE              false
+#define LED_2_INACTIVE            !LED_2_ACTIVE
 
 /*============================================================================*/
 /*!

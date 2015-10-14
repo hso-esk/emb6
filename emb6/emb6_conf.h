@@ -39,7 +39,7 @@
  */
 /*============================================================================*/
 /**
- *      \addtogroup embetter6
+ *      \addtogroup emb6
  *      @{
  *   \addtogroup stack_API Stack API
  *   @{
@@ -66,11 +66,11 @@
 ===============================================================================*/
 #ifndef EMB6_INIT_ROOT
 /** Define node act as DAG root */
-#define     EMB6_INIT_ROOT                        FALSE
+#define     EMB6_INIT_ROOT                     FALSE
 #endif
 
 /** Define a network prefix for dag root */
-#define NETWORK_PREFIX_DODAG                    0xaaaa, 0x0000, 0x0000, 0x0000
+#define NETWORK_PREFIX_DODAG                   0xaaaa, 0x0000, 0x0000, 0x0000
 
 /*=============================================================================
                                 TRANSPORT LAYER SECTION
@@ -80,7 +80,7 @@
 #define UIP_CONF_UDP                          TRUE
 
 /** The amount of concurrent UDP connections. */
-#define    UIP_CONF_UDP_CONNS                    4
+#define UIP_CONF_UDP_CONNS                    4
 
 /** Define using of TCP (should not be undefined) */
 #define UIP_CONF_TCP                          FALSE
@@ -90,49 +90,49 @@
 ===============================================================================*/
 
 /** Define IPv6 as based protocol (should not be undefined) */
-#define UIP_CONF_IPV6                          TRUE
+#define UIP_CONF_IPV6                        TRUE
 
 /* NETSTACK_CONF_WITH_IPV6 specifies whether or not IPv6 should be used. If IPv6
     is not used, IPv4 is used instead. */
-#define NETSTACK_CONF_WITH_IPV6                TRUE
+#define NETSTACK_CONF_WITH_IPV6              TRUE
 
 /** Define using of ICMP6 (should not be undefined) */
-#define UIP_CONF_ICMP6                        TRUE
+#define UIP_CONF_ICMP6                       TRUE
 
 /** Define router functionality TRUE by default */
 #ifndef UIP_CONF_ROUTER
-#define UIP_CONF_ROUTER                     TRUE
+#define UIP_CONF_ROUTER                      TRUE
 #endif
 
 /** Neighbor table size */
-#define NBR_TABLE_CONF_MAX_NEIGHBORS          10
+#define NBR_TABLE_CONF_MAX_NEIGHBORS         10
 
 /** Routing table */
-#define UIP_CONF_MAX_ROUTES                    10
+#define UIP_CONF_MAX_ROUTES                  10
 
 /** Unicast address list */
-#define UIP_CONF_DS6_ADDR_NBU                 3
+#define UIP_CONF_DS6_ADDR_NBU                3
 
 /** Should we use LinkLayer acks in NUD ? */
-#define UIP_CONF_DS6_LL_NUD                    TRUE
+#define UIP_CONF_DS6_LL_NUD                  TRUE
 
 /** Force acknowledge from sender (test hardware autoacks) */
-#define SICSLOWPAN_CONF_ACK_ALL                TRUE
+#define SICSLOWPAN_CONF_ACK_ALL              TRUE
 
 /** Do we support 6lowpan fragmentation */
-#define SICSLOWPAN_CONF_FRAG                  TRUE
+#define SICSLOWPAN_CONF_FRAG                 TRUE
 
 /** Most browsers reissue GETs after 3 seconds which stops frag reassembly, longer MAXAGE does no good */
-#define SICSLOWPAN_CONF_MAXAGE                3
+#define SICSLOWPAN_CONF_MAXAGE               3
 
 /** Do we compress the IP header or not */
-#define SICSLOWPAN_CONF_COMPRESSION           SICSLOWPAN_COMPRESSION_HC06
+#define SICSLOWPAN_CONF_COMPRESSION          SICSLOWPAN_COMPRESSION_HC06
 
 /** To avoid unnecessary complexity, we assume the common case of
    a constant LoWPAN-wide IEEE 802.15.4 security level, which
    can be specified by defining LLSEC802154_CONF_SECURITY_LEVEL. */
 #ifndef LLSEC802154_CONF_SECURITY_LEVEL
-#define LLSEC802154_CONF_SECURITY_LEVEL 0
+#define LLSEC802154_CONF_SECURITY_LEVEL      0
 #endif /* LLSEC802154_CONF_SECURITY_LEVEL */
 
 /*==============================================================================
@@ -165,9 +165,9 @@
  * leaf => reduced function device
  */
 #ifdef RPL_CONF_LEAF_ONLY
-#define RPL_LEAF_ONLY RPL_CONF_LEAF_ONLY
+#define RPL_LEAF_ONLY                       RPL_CONF_LEAF_ONLY
 #else
-#define RPL_LEAF_ONLY 0
+#define RPL_LEAF_ONLY                       0
 #endif
 
 /** UIP_CONF_IPV6_RPL     RPL motes use the uip.c link layer address
@@ -180,10 +180,10 @@
 #endif
 
 /** Set to 1 to enable RPL statistics */
-#define    RPL_CONF_STATS                        FALSE
+#define    RPL_CONF_STATS                   FALSE
 
-#define    RPL_CONF_DAO_LATENCY                bsp_get(E_BSP_GET_TRES)
-#define RPL_CONF_DAG_MC                        RPL_DAG_MC_ETX
+#define    RPL_CONF_DAO_LATENCY             bsp_get(E_BSP_GET_TRES)
+#define RPL_CONF_DAG_MC                     RPL_DAG_MC_ETX
 /**
  * Select routing metric supported at runtime. This must be a valid
  * DAG Metric Container Object Type (see below). Currently, we only
@@ -192,9 +192,9 @@
  * be used; instead the rank carries ETX directly.
  */
 #ifdef RPL_CONF_DAG_MC
-#define RPL_DAG_MC RPL_CONF_DAG_MC
+#define RPL_DAG_MC                          RPL_CONF_DAG_MC
 #else
-#define RPL_DAG_MC RPL_DAG_MC_NONE
+#define RPL_DAG_MC                          RPL_DAG_MC_NONE
 #endif /* RPL_CONF_DAG_MC */
 /**
  * The objective function used by RPL is configurable through the
@@ -210,9 +210,9 @@
 
 /** This value decides which DAG instance we should participate in by default. */
 #ifdef RPL_CONF_DEFAULT_INSTANCE
-#define RPL_DEFAULT_INSTANCE RPL_CONF_DEFAULT_INSTANCE
+#define RPL_DEFAULT_INSTANCE                RPL_CONF_DEFAULT_INSTANCE
 #else
-#define RPL_DEFAULT_INSTANCE           rpl_config.default_instance
+#define RPL_DEFAULT_INSTANCE                rpl_config.defInst
 #endif /* RPL_CONF_DEFAULT_INSTANCE */
 
 /**
@@ -224,9 +224,9 @@
  * ContikiRPL thus sets the default to 2^12 ms = 4.096 s.
  */
 #ifdef RPL_CONF_DIO_INTERVAL_MIN
-#define RPL_DIO_INTERVAL_MIN        RPL_CONF_DIO_INTERVAL_MIN
+#define RPL_DIO_INTERVAL_MIN                RPL_CONF_DIO_INTERVAL_MIN
 #else
-#define RPL_DIO_INTERVAL_MIN        rpl_config.DIO_interval_min
+#define RPL_DIO_INTERVAL_MIN                rpl_config.DIOintmin
 #endif
 
 /**
@@ -237,9 +237,9 @@
  * unsuitable when we start with a minimum interval of 2^12.
  */
 #ifdef RPL_CONF_DIO_INTERVAL_DOUBLINGS
-#define RPL_DIO_INTERVAL_DOUBLINGS  RPL_CONF_DIO_INTERVAL_DOUBLINGS
+#define RPL_DIO_INTERVAL_DOUBLINGS          RPL_CONF_DIO_INTERVAL_DOUBLINGS
 #else
-#define RPL_DIO_INTERVAL_DOUBLINGS  rpl_config.DIO_interval_doublings
+#define RPL_DIO_INTERVAL_DOUBLINGS          rpl_config.DIOintdoub
 #endif
 
 /**
@@ -250,25 +250,25 @@
  * operation by tuning this parameter for specific deployments.
  */
 #ifdef RPL_CONF_DIO_REDUNDANCY
-#define RPL_DIO_REDUNDANCY          RPL_CONF_DIO_REDUNDANCY
+#define RPL_DIO_REDUNDANCY                  RPL_CONF_DIO_REDUNDANCY
 #else
-#define RPL_DIO_REDUNDANCY          10
+#define RPL_DIO_REDUNDANCY                  10
 #endif
 
 /**
  * Maximum of concurent RPL instances.
  */
 #ifdef RPL_CONF_MAX_INSTANCES
-#define RPL_MAX_INSTANCES     RPL_CONF_MAX_INSTANCES
+#define RPL_MAX_INSTANCES                   RPL_CONF_MAX_INSTANCES
 #else
-#define RPL_MAX_INSTANCES     1
+#define RPL_MAX_INSTANCES                   1
 #endif /* RPL_CONF_MAX_INSTANCES */
 
 /**
  * Maximum number of DAGs within an instance.
  */
 #ifdef RPL_CONF_MAX_DAG_PER_INSTANCE
-#define RPL_MAX_DAG_PER_INSTANCE     RPL_CONF_MAX_DAG_PER_INSTANCE
+#define RPL_MAX_DAG_PER_INSTANCE            RPL_CONF_MAX_DAG_PER_INSTANCE
 #else
 #define RPL_MAX_DAG_PER_INSTANCE     2
 #endif /* RPL_CONF_MAX_DAG_PER_INSTANCE */
@@ -277,21 +277,21 @@
  * Initial metric attributed to a link when the ETX is unknown
  */
 #ifndef RPL_CONF_INIT_LINK_METRIC
-#define RPL_INIT_LINK_METRIC        rpl_config.init_link_metric
+#define RPL_INIT_LINK_METRIC                rpl_config.linkMetric
 #else
-#define RPL_INIT_LINK_METRIC        RPL_CONF_INIT_LINK_METRIC
+#define RPL_INIT_LINK_METRIC                RPL_CONF_INIT_LINK_METRIC
 #endif
 /**
  *
  */
 #ifndef RPL_CONF_DAO_SPECIFY_DAG
   #if RPL_MAX_DAG_PER_INSTANCE > 1
-    #define RPL_DAO_SPECIFY_DAG 1
+    #define RPL_DAO_SPECIFY_DAG             1
   #else
-    #define RPL_DAO_SPECIFY_DAG 0
+    #define RPL_DAO_SPECIFY_DAG             0
   #endif /* RPL_MAX_DAG_PER_INSTANCE > 1 */
 #else
-  #define RPL_DAO_SPECIFY_DAG RPL_CONF_DAO_SPECIFY_DAG
+  #define RPL_DAO_SPECIFY_DAG               RPL_CONF_DAO_SPECIFY_DAG
 #endif /* RPL_CONF_DAO_SPECIFY_DAG */
 
 /**
@@ -299,27 +299,27 @@
  * used in RPL lifetime values, in seconds.
  */
 #ifndef RPL_CONF_DEFAULT_LIFETIME_UNIT
-#define RPL_DEFAULT_LIFETIME_UNIT       rpl_config.default_route_lifetime_unit
+#define RPL_DEFAULT_LIFETIME_UNIT           rpl_config.defRouteTimeUnit
 #else
-#define RPL_DEFAULT_LIFETIME_UNIT       RPL_CONF_DEFAULT_LIFETIME_UNIT
+#define RPL_DEFAULT_LIFETIME_UNIT           RPL_CONF_DEFAULT_LIFETIME_UNIT
 #endif
 
 /**
  * Default route lifetime as a multiple of the lifetime unit.
  */
 #ifndef RPL_CONF_DEFAULT_LIFETIME
-#define RPL_DEFAULT_LIFETIME            rpl_config.default_route_lifetime
+#define RPL_DEFAULT_LIFETIME                rpl_config.defRouteTime
 #else
-#define RPL_DEFAULT_LIFETIME            RPL_CONF_DEFAULT_LIFETIME
+#define RPL_DEFAULT_LIFETIME                RPL_CONF_DEFAULT_LIFETIME
 #endif
 
 /*
  * DAG preference field
  */
 #ifdef RPL_CONF_PREFERENCE
-#define RPL_PREFERENCE              RPL_CONF_PREFERENCE
+#define RPL_PREFERENCE                      RPL_CONF_PREFERENCE
 #else
-#define RPL_PREFERENCE              0
+#define RPL_PREFERENCE                      0
 #endif
 
 
@@ -330,14 +330,14 @@
 
 /** Should we use LinkLayer acks in NUD ?*/
 #ifndef UIP_CONF_DS6_LL_NUD
-#define UIP_DS6_LL_NUD                     TRUE
+#define UIP_DS6_LL_NUD                      TRUE
 #else
 #define UIP_DS6_LL_NUD UIP_CONF_DS6_LL_NUD
 #endif
 
 #ifndef UIP_CONF_IPV6_QUEUE_PKT
 /** Do we do per %neighbor queuing during address resolution */
-#define UIP_CONF_IPV6_QUEUE_PKT               TRUE
+#define UIP_CONF_IPV6_QUEUE_PKT             TRUE
 #endif
 
 /** Default uip_aligned_buf and sicslowpan_aligned_buf sizes of 1280 overflows RAM */
@@ -355,7 +355,7 @@
  * \hideinitializer
  */
 #ifndef UIP_CONF_MAX_CONNECTIONS
-#define UIP_CONNS       10
+#define UIP_CONNS                           2
 #else /* UIP_CONF_MAX_CONNECTIONS */
 #define UIP_CONNS (UIP_CONF_MAX_CONNECTIONS)
 #endif /* UIP_CONF_MAX_CONNECTIONS */
@@ -364,12 +364,12 @@
 
 #ifndef UIP_CONF_DS6_PREFIX_NBU
 /** Default number of IPv6 prefixes associated to the node's interface */
-#define UIP_CONF_DS6_PREFIX_NBU     3
+#define UIP_CONF_DS6_PREFIX_NBU             2
 #endif
 
 #ifndef UIP_CONF_DS6_DEFRT_NBU
 /** Minimum number of default routers */
-#define UIP_CONF_DS6_DEFRT_NBU       2
+#define UIP_CONF_DS6_DEFRT_NBU              1
 #endif
 
 /**
@@ -379,7 +379,7 @@
 #ifdef SICSLOWPAN_CONF_MAXAGE
 #define SICSLOWPAN_REASS_MAXAGE (SICSLOWPAN_CONF_MAXAGE)
 #else
-#define SICSLOWPAN_REASS_MAXAGE 20
+#define SICSLOWPAN_REASS_MAXAGE             20
 #endif
 
 /**
@@ -391,7 +391,7 @@
  *
  * \hideinitializer
  */
-#define UIP_FIXEDADDR    0
+#define UIP_FIXEDADDR                       0
 
 /**
  * Ping IP address assignment.
@@ -421,7 +421,7 @@
  *
  * \hideinitializer
  */
-#define UIP_FIXEDETHADDR 0
+#define UIP_FIXEDETHADDR                    0
 
 
 /*------------------------------------------------------------------------------*/
@@ -433,7 +433,7 @@
 #ifdef UIP_CONF_TTL
 #define UIP_TTL         UIP_CONF_TTL
 #else /* UIP_CONF_TTL */
-#define UIP_TTL         64
+#define UIP_TTL                             64
 #endif /* UIP_CONF_TTL */
 
 /**
@@ -441,7 +441,7 @@
  * buffer before it is dropped.
  *
  */
-#define UIP_REASS_MAXAGE 60 /*60s*/
+#define UIP_REASS_MAXAGE                    60 /*60s*/
 
 /**
  * Turn on support for IP packet reassembly.
@@ -457,9 +457,9 @@
  * \hideinitializer
  */
 #ifdef UIP_CONF_REASSEMBLY
-#define UIP_REASSEMBLY (UIP_CONF_REASSEMBLY)
+#define UIP_REASSEMBLY                      (UIP_CONF_REASSEMBLY)
 #else /* UIP_CONF_REASSEMBLY */
-#define UIP_REASSEMBLY 0
+#define UIP_REASSEMBLY                      0
 #endif /* UIP_CONF_REASSEMBLY */
 /** @} */
 
@@ -467,26 +467,26 @@
 
 
 /** The maximum transmission unit at the IP Layer*/
-#define UIP_LINK_MTU 1280
+#define UIP_LINK_MTU                        1280
 
 #ifndef UIP_CONF_IPV6_CHECKS
 /** Do we do IPv6 consistency checks (highly recommended, default: yes) */
-#define UIP_CONF_IPV6_CHECKS          1
+#define UIP_CONF_IPV6_CHECKS                1
 #endif
 
 #ifndef UIP_CONF_IPV6_REASSEMBLY
 /** Do we do IPv6 fragmentation (default: no) */
-#define UIP_CONF_IPV6_REASSEMBLY      0
+#define UIP_CONF_IPV6_REASSEMBLY            0
 #endif
 
 #ifndef UIP_CONF_NETIF_MAX_ADDRESSES
 /** Default number of IPv6 addresses associated to the node's interface */
-#define UIP_CONF_NETIF_MAX_ADDRESSES  3
+#define UIP_CONF_NETIF_MAX_ADDRESSES        3
 #endif
 
 #ifndef UIP_CONF_DS6_PREFIX_NBU
 /** Default number of IPv6 prefixes associated to the node's interface */
-#define UIP_CONF_DS6_PREFIX_NBU     2
+#define UIP_CONF_DS6_PREFIX_NBU             2
 #endif
 
 
@@ -507,7 +507,7 @@
 #ifdef UIP_CONF_UDP
 #define UIP_UDP UIP_CONF_UDP
 #else /* UIP_CONF_UDP */
-#define UIP_UDP           1
+#define UIP_UDP                             1
 #endif /* UIP_CONF_UDP */
 
 /**
@@ -519,9 +519,9 @@
  * \hideinitializer
  */
 #ifdef UIP_CONF_UDP_CHECKSUMS
-#define UIP_UDP_CHECKSUMS (UIP_CONF_UDP_CHECKSUMS)
+#define UIP_UDP_CHECKSUMS                   (UIP_CONF_UDP_CHECKSUMS)
 #else
-#define UIP_UDP_CHECKSUMS (UIP_CONF_IPV6)
+#define UIP_UDP_CHECKSUMS                   (UIP_CONF_IPV6)
 #endif
 
 /**
@@ -530,9 +530,9 @@
  * \hideinitializer
  */
 #ifdef UIP_CONF_UDP_CONNS
-#define UIP_UDP_CONNS (UIP_CONF_UDP_CONNS)
+#define UIP_UDP_CONNS                       (UIP_CONF_UDP_CONNS)
 #else /* UIP_CONF_UDP_CONNS */
-#define UIP_UDP_CONNS    10
+#define UIP_UDP_CONNS                       10
 #endif /* UIP_CONF_UDP_CONNS */
 
 
@@ -544,7 +544,7 @@
 #ifdef UIP_CONF_TCP
 #define UIP_TCP (UIP_CONF_TCP)
 #else /* UIP_CONF_TCP */
-#define UIP_TCP           1
+#define UIP_TCP                             1
 #endif /* UIP_CONF_TCP */
 
 /**
@@ -558,9 +558,9 @@
  * \hideinitializer
  */
 #ifndef UIP_CONF_ACTIVE_OPEN
-#define UIP_ACTIVE_OPEN 1
+#define UIP_ACTIVE_OPEN                     1
 #else /* UIP_CONF_ACTIVE_OPEN */
-#define UIP_ACTIVE_OPEN (UIP_CONF_ACTIVE_OPEN)
+#define UIP_ACTIVE_OPEN                     (UIP_CONF_ACTIVE_OPEN)
 #endif /* UIP_CONF_ACTIVE_OPEN */
 
 
@@ -572,9 +572,9 @@
  * \hideinitializer
  */
 #ifndef UIP_CONF_MAX_LISTENPORTS
-#define UIP_LISTENPORTS 20
+#define UIP_LISTENPORTS                     20
 #else /* UIP_CONF_MAX_LISTENPORTS */
-#define UIP_LISTENPORTS (UIP_CONF_MAX_LISTENPORTS)
+#define UIP_LISTENPORTS                     (UIP_CONF_MAX_LISTENPORTS)
 #endif /* UIP_CONF_MAX_LISTENPORTS */
 
 /**
@@ -586,14 +586,14 @@
  *
  * \hideinitializer
  */
-#define UIP_URGDATA      0
+#define UIP_URGDATA                         0
 
 /**
  * The initial retransmission timeout counted in timer pulses.
  *
  * This should not be changed.
  */
-#define UIP_RTO         3
+#define UIP_RTO                             3
 
 /**
  * The maximum number of times a segment should be retransmitted
@@ -601,7 +601,7 @@
  *
  * This should not be changed.
  */
-#define UIP_MAXRTX      8
+#define UIP_MAXRTX                          8
 
 /**
  * The maximum number of times a SYN segment should be retransmitted
@@ -610,7 +610,7 @@
  *
  * This should not need to be changed.
  */
-#define UIP_MAXSYNRTX      5
+#define UIP_MAXSYNRTX                       5
 
 /**
  * The TCP maximum segment size.
@@ -622,9 +622,11 @@
 #if UIP_CONF_TCP_MSS > (UIP_BUFSIZE - UIP_LLH_LEN - UIP_TCPIP_HLEN)
 #error UIP_CONF_TCP_MSS is too large for the current UIP_BUFSIZE
 #endif /* UIP_CONF_TCP_MSS > (UIP_BUFSIZE - UIP_LLH_LEN - UIP_TCPIP_HLEN) */
-#define UIP_TCP_MSS     (UIP_CONF_TCP_MSS)
+#define UIP_TCP_MSS                         (UIP_CONF_TCP_MSS)
 #else /* UIP_CONF_TCP_MSS */
-#define UIP_TCP_MSS     (UIP_BUFSIZE - UIP_LLH_LEN - UIP_TCPIP_HLEN)
+#define UIP_TCP_MSS                         (UIP_BUFSIZE - \
+                                             UIP_LLH_LEN - \
+                                             UIP_TCPIP_HLEN)
 #endif /* UIP_CONF_TCP_MSS */
 
 /**
@@ -637,9 +639,9 @@
  * \hideinitializer
  */
 #ifndef UIP_CONF_RECEIVE_WINDOW
-#define UIP_RECEIVE_WINDOW (UIP_TCP_MSS)
+#define UIP_RECEIVE_WINDOW                  (UIP_TCP_MSS)
 #else
-#define UIP_RECEIVE_WINDOW (UIP_CONF_RECEIVE_WINDOW)
+#define UIP_RECEIVE_WINDOW                  (UIP_CONF_RECEIVE_WINDOW)
 #endif
 
 /**
@@ -648,9 +650,9 @@
  * This can be reduced for faster entry into power saving modes.
  */
 #ifndef UIP_CONF_WAIT_TIMEOUT
-#define UIP_E_TIME_WAIT_TIMEOUT 120
+#define UIP_E_TIME_WAIT_TIMEOUT             120
 #else
-#define UIP_E_TIME_WAIT_TIMEOUT UIP_CONF_WAIT_TIMEOUT
+#define UIP_E_TIME_WAIT_TIMEOUT             UIP_CONF_WAIT_TIMEOUT
 #endif
 
 
@@ -666,9 +668,9 @@
  * \hideinitializer
  */
 #ifdef UIP_CONF_ARPTAB_SIZE
-#define UIP_ARPTAB_SIZE (UIP_CONF_ARPTAB_SIZE)
+#define UIP_ARPTAB_SIZE                     (UIP_CONF_ARPTAB_SIZE)
 #else
-#define UIP_ARPTAB_SIZE 8
+#define UIP_ARPTAB_SIZE                     8
 #endif
 
 /**
@@ -677,14 +679,14 @@
  * An UIP_ARP_MAXAGE of 120 corresponds to 20 minutes (BSD
  * default).
  */
-#define UIP_ARP_MAXAGE 120
+#define UIP_ARP_MAXAGE                      120
 
 
 /*------------------------------------------------------------------------------*/
 
 
 
-#define UIP_DEFAULT_PREFIX_LEN 64
+#define UIP_DEFAULT_PREFIX_LEN              64
 
 /**
  * If we use IPHC compression, how many address contexts do we support
@@ -706,9 +708,9 @@
  * \hideinitializer
  */
 #ifndef UIP_CONF_BUFFER_SIZE
-#define UIP_BUFSIZE (UIP_LINK_MTU + UIP_LLH_LEN)
+#define UIP_BUFSIZE                         (UIP_LINK_MTU + UIP_LLH_LEN)
 #else /* UIP_CONF_BUFFER_SIZE */
-#define UIP_BUFSIZE (UIP_CONF_BUFFER_SIZE)
+#define UIP_BUFSIZE                         (UIP_CONF_BUFFER_SIZE)
 #endif /* UIP_CONF_BUFFER_SIZE */
 
 
@@ -720,9 +722,9 @@
  * \hideinitializer
  */
 #ifndef UIP_CONF_STATISTICS
-#define UIP_STATISTICS  0
+#define UIP_STATISTICS                      0
 #else /* UIP_CONF_STATISTICS */
-#define UIP_STATISTICS (UIP_CONF_STATISTICS)
+#define UIP_STATISTICS                      (UIP_CONF_STATISTICS)
 #endif /* UIP_CONF_STATISTICS */
 
 /**
@@ -735,9 +737,9 @@
  * \hideinitializer
  */
 #ifndef UIP_CONF_LOGGING
-#define UIP_LOGGING     0
+#define UIP_LOGGING                         0
 #else /* UIP_CONF_LOGGING */
-#define UIP_LOGGING     (UIP_CONF_LOGGING)
+#define UIP_LOGGING                         (UIP_CONF_LOGGING)
 #endif /* UIP_CONF_LOGGING */
 
 /**
@@ -750,9 +752,9 @@
  *
  */
 #ifndef UIP_CONF_BROADCAST
-#define UIP_BROADCAST 0
+#define UIP_BROADCAST                       0
 #else /* UIP_CONF_BROADCAST */
-#define UIP_BROADCAST (UIP_CONF_BROADCAST)
+#define UIP_BROADCAST                       (UIP_CONF_BROADCAST)
 #endif /* UIP_CONF_BROADCAST */
 
 /**
@@ -778,9 +780,9 @@ void uip_log(char *msg);
  * \hideinitializer
  */
 #ifdef UIP_CONF_LLH_LEN
-#define UIP_LLH_LEN (UIP_CONF_LLH_LEN)
+#define UIP_LLH_LEN                         (UIP_CONF_LLH_LEN)
 #else /* UIP_LLH_LEN */
-#define UIP_LLH_LEN     0
+#define UIP_LLH_LEN                         0
 #endif /* UIP_CONF_LLH_LEN */
 
 
@@ -793,39 +795,57 @@ void uip_log(char *msg);
  * \hideinitializer
  */
 #ifdef UIP_CONF_BYTE_ORDER
-#define UIP_BYTE_ORDER     (UIP_CONF_BYTE_ORDER)
+#define UIP_BYTE_ORDER                      (UIP_CONF_BYTE_ORDER)
 #else /* UIP_CONF_BYTE_ORDER */
-#define UIP_BYTE_ORDER     (UIP_LITTLE_ENDIAN)
+#define UIP_BYTE_ORDER                      (UIP_LITTLE_ENDIAN)
 #endif /* UIP_CONF_BYTE_ORDER */
 
  /*=============================================================================
                                  DEBUG ENABLER SECTION
  =============================================================================*/
+ /** Define a deepness of the logger helper (see logger.h)*/
+#ifndef LOGGER_LEVEL
+#define LOGGER_LEVEL                        0
+#endif
  /** Core logging, should be TRUE for almost all cases except for production
   * (see emb6.c) */
- #define LOGGER_CORE                            TRUE
- /** Hardware abstraction layer functions       (see target.c) */
- #define LOGGER_HAL                             FALSE
- /** Board support package                      (see bsp.c) */
- #define LOGGER_BSP                             FALSE
- /** Main functions                             (see embetter6_main.c) */
- #define LOGGER_MAIN                            FALSE
- /** Radio functions                            (see $(IF).c) */
- #define LOGGER_RADIO                           FALSE
- /** DEMO UDP example                           (see demo_exudp.c) */
- #define LOGGER_DEMO_UDPIAA                     FALSE
- /** DEMO APTB example                           (see demo_aptb_xxx.c) */
- #define LOGGER_DEMO_APTB                       TRUE
- /** DEMO COAP example                           (see demo_coap_*.c) */
- #define LOGGER_DEMO_COAP                       FALSE
- /** DEMO SNIFFER                               (see demo_sniffer.c) */
- #define LOGGER_DEMO_SNIFFER                    FALSE
- /** Event timer functions                      (see etimer.c) */
- #define LOGGER_ETIMER                          FALSE
- /** Callback timer functions                   (see ctimer.c) */
- #define LOGGER_CTIMER                          FALSE
- /** Event process functions                    (see evproc.c) */
- #define LOGGER_EVPROC                          FALSE
+ #define LOGGER_CORE                        FALSE
+
+ /** Hardware abstraction layer functions   (see target.c) */
+ #define LOGGER_HAL                         FALSE
+
+ /** Board support package                  (see bsp.c) */
+ #define LOGGER_BSP                         FALSE
+
+ /** Main functions                         (see emb6_main.c) */
+ #define LOGGER_MAIN                        FALSE
+
+ /** Radio functions                        (see $(IF).c) */
+ #define LOGGER_RADIO                       FALSE
+
+ /** DEMO UDP example                       (see demo_exudp.c) */
+ #define LOGGER_DEMO_UDPIAA                 FALSE
+
+ /** DEMO APTB example                      (see demo_aptb_xxx.c) */
+ #define LOGGER_DEMO_APTB                   FALSE
+
+ /** DEMO COAP example                      (see demo_coap_*.c) */
+ #define LOGGER_DEMO_COAP                   FALSE
+
+ /** DEMO SNIFFER                           (see demo_sniffer.c) */
+ #define LOGGER_DEMO_SNIFFER                FALSE
+
+ /** DEMO TESTSUITE                         (see tessuite.c) */
+  #define LOGGER_DEMO_TESTSUITE             FALSE
+
+ /** Event timer functions                  (see etimer.c) */
+ #define LOGGER_ETIMER                      FALSE
+
+ /** Callback timer functions               (see ctimer.c) */
+ #define LOGGER_CTIMER                      FALSE
+
+ /** Event process functions                (see evproc.c) */
+ #define LOGGER_EVPROC                      FALSE
 
 
 #endif /* EMB6_CONF_H_ */

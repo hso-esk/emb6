@@ -1,16 +1,16 @@
 /**
  * \addtogroup mcu MCU HAL library
  * @{
- * \defgroup samd20g18 MCU (SAMD20G18) HAL library
+ * \defgroup samd21g18a MCU (SAMD21J18A) HAL library
  * @{
  *
  */
 /*============================================================================*/
-/*! \file   samd20g18/hwinit.h
+/*! \file   samd21g18a/hwinit.h
 
-    \author Artem Yushev artem.yushev@hs-offenbrug.de
+    \author Artem Yushev 
 
-    \brief  Hardware dependent initialization header file for SAMD20G18.
+    \brief  Hardware dependent initialization header file for SAMD21J18A.
 
    \version 0.0.1
 */
@@ -53,7 +53,7 @@
 // From module: SERCOM USART - Serial Communications (Polled APIs)
 #include <usart.h>
 
-// From module: SYSTEM - Clock Management
+// From module: SYSTEM - Clock Management for SAMR21
 #include <clock.h>
 #include <gclk.h>
 
@@ -75,8 +75,10 @@
 /*==============================================================================
                                      MACROS
 ==============================================================================*/
+
 #define HOWMUCH
 #define BSP_DELAY(a)
+
 /* The AVR tick interrupt usually is done with an 8 bit counter around 128 Hz.
  * 125 Hz needs slightly more overhead during the interrupt, as does a 32 bit
  * clock_time_t.
@@ -89,6 +91,7 @@
                                             INFINITE_TIME/CLOCK_CONF_SECOND /* Default uses 600 */
 #define COLLECT_CONF_BROADCAST_ANNOUNCEMENT_MAX_TIME \
                                             INFINITE_TIME/CLOCK_CONF_SECOND /* Default uses 600 */
+
 
 # define EXTINT_CALLBACKS_MAX             10
 # define     CONF_TICK_SEC                CLOCK_SECOND

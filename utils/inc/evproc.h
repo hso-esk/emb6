@@ -72,7 +72,7 @@
                                  MACROS
  =============================================================================*/
 /// Defines all of the event that functions can operate
-#define EVENT_TYPES        {    EVENT_TYPE_TIMER_EXP, \
+#define EVENT_TYPES        {EVENT_TYPE_TIMER_EXP, \
                             EVENT_TYPE_TCP_POLL, \
                             EVENT_TYPE_UDP_POLL, \
                             EVENT_TYPE_PCK_INPUT, \
@@ -81,21 +81,21 @@
                             EVENT_TYPE_SLIP_POLL, \
                             EVENT_TYPE_PCK_LL }
 
-#define EVENT_TYPE_NONE            0x00    ///< No event
-#define EVENT_TYPE_TIMER_EXP    0x01    ///< Timer expired event
-#define EVENT_TYPE_TCP_POLL        0x02    ///< TCP poll event
-#define EVENT_TYPE_UDP_POLL        0x03    ///< UDP poll event
-#define EVENT_TYPE_PCK_INPUT    0x04     ///< New packet in buffer event
-#define EVENT_TYPE_ICMP6        0x05    ///< New icmp6 packet event
-#define EVENT_TYPE_TCPIP        0x06    ///< New tcpip event
-#define EVENT_TYPE_SLIP_POLL    0x07    ///< Process slip handler
-#define OBLIG_EVENT_PRIOR        0x0a
-#define EVENT_TYPE_PCK_LL        0x0a    ///< New low level packet received
+#define EVENT_TYPE_NONE             0x00    ///< No event
+#define EVENT_TYPE_TIMER_EXP        0x01    ///< Timer expired event
+#define EVENT_TYPE_TCP_POLL         0x02    ///< TCP poll event
+#define EVENT_TYPE_UDP_POLL         0x03    ///< UDP poll event
+#define EVENT_TYPE_PCK_INPUT        0x04    ///< New packet in buffer event
+#define EVENT_TYPE_ICMP6            0x05    ///< New icmp6 packet event
+#define EVENT_TYPE_TCPIP            0x06    ///< New tcpip event
+#define EVENT_TYPE_SLIP_POLL        0x07    ///< Process slip handler
+#define OBLIG_EVENT_PRIOR           0x0a
+#define EVENT_TYPE_PCK_LL           0x0a    ///< New low level packet received
 
 
-#define EVENT_TYPES_COUNT        8         ///< Counter of events in /ref EVENT_TYPES macro
-#define MAX_CALLBACK_COUNT        7        ///< Maximal amount of callbacks in /ref st_funcRegList_t list
-#define EVPROC_QUEUE_SIZE        20        ///< Maximal amount of events in /ref pst_evList queue
+#define EVENT_TYPES_COUNT           8       ///< Counter of events in /ref EVENT_TYPES macro
+#define MAX_CALLBACK_COUNT          7       ///< Maximal amount of callbacks in /ref st_funcRegList_t list
+#define EVPROC_QUEUE_SIZE           20      ///< Maximal amount of events in /ref pst_evList queue
 /*=============================================================================
                                  ENUMS
  =============================================================================*/
@@ -103,13 +103,13 @@
  * \brief Result code for event processing library
  * */
 typedef enum {
-    E_UNKNOWN_TYPE = -4,     ///< Unknown type
-    E_NO_SUCH_FUNC = -3,     ///< No such function in the list
-    E_INVALID_PARAM = -2,     ///< Invalid parameter
-    E_END_OF_LIST = -1,        ///< End of a list was reached
-    E_SUCCESS = 1,            ///< Success
-    E_FUNC_IN_LIST = 2,        ///< Function already in the list
-    E_QUEUE_EMPTY = 3        ///< No events in a queue
+    E_UNKNOWN_TYPE   = -4,     ///< Unknown type
+    E_NO_SUCH_FUNC   = -3,     ///< No such function in the list
+    E_INVALID_PARAM  = -2,     ///< Invalid parameter
+    E_END_OF_LIST    = -1,     ///< End of a list was reached
+    E_SUCCESS        = 1,      ///< Success
+    E_FUNC_IN_LIST   = 2,      ///< Function already in the list
+    E_QUEUE_EMPTY    = 3       ///< No events in a queue
 }en_evprocResCode_t;
 
 /*!

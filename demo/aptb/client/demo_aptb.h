@@ -39,7 +39,7 @@
  */
 /*============================================================================*/
 /**
- * \addtogroup embetter6
+ * \addtogroup emb6
  * @{
  * \addtogroup demo
  * @{
@@ -52,7 +52,7 @@
 */
 /*! \file   client/demo_aptb.h
 
-    \author Artem Yushev, artem.yushev@hs-offenburg.de
+    \author Artem Yushev, 
 
     \brief  This is the header file of the demo udp client application
 

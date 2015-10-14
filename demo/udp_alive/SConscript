@@ -2,6 +2,7 @@ udp_alive = {
 	'demo' : [
 	],
 	'emb6' : [
+		'sock',
 		'rpl',
 		'ipv6',
 		'sicslowpan',

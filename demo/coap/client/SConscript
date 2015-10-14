@@ -4,6 +4,7 @@ coap = {
 	],
 	'emb6' : [
 		'coap',
+		'sock',
 		'rpl',
 		'ipv6',
 		'sicslowpan',

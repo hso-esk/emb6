@@ -45,7 +45,7 @@
 /*!
     \file   evproc.c
 
-    \author Artem Yushev (artem.yushev@hs-offenburg.de)
+    \author Artem Yushev 
 
     \brief  Functions for event driver engine. A substitutional lib between
             Contiki engine and new architecture.
@@ -70,9 +70,7 @@
 ==============================================================================*/
 //! Enable or disable logging
 #define     LOGGER_ENABLE        LOGGER_EVPROC
-#if            LOGGER_ENABLE     ==     TRUE
-#define        LOGGER_SUBSYSTEM    "eproc"
-#endif
+
 
 /*==============================================================================
                              LOCAL CONSTANTS

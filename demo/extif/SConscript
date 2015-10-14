@@ -2,6 +2,7 @@ extif = {
 	'demo' : [
 	],
 	'emb6' : [
+		'sock',
 		'ipv6',
 		'slip',
 		'llsec',

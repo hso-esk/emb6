@@ -53,7 +53,7 @@
  */
 /*! \file   at86rf230.h
 
-    \author Artem Yushev artem.yushev@hs-offenbrug.de
+    \author Artem Yushev 
 
     \brief  Hardware dependent initialization header file for AT86RF230.
 

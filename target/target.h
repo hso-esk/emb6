@@ -37,14 +37,14 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-/**  \addtogroup embetter6
+/**  \addtogroup emb6
  *      @{
  *      \addtogroup bsp Board Support Package
  *   @{
  */
 /*! \file   target.h
 
-    \author Artem Yushev, artem.yushev@hs-offenburg.de
+    \author Artem Yushev, 
 
     \brief  \brief Hardware initialization API
 

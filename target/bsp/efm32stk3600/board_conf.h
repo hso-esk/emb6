@@ -37,7 +37,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-/**  \addtogroup embetter6
+/**  \addtogroup emb6
  *      @{
  *      \addtogroup bsp Board Support Package
  *   @{
@@ -48,7 +48,7 @@
  */
 /*! \file   efm32stk3600/board_conf.h
 
-    \author Artem Yushev, artem.yushev@hs-offenburg.de
+    \author Artem Yushev, 
 
     \brief  Board Configuration for EFM32 Leopard Gecko Starter Kit
 

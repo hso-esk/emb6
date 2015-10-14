@@ -37,7 +37,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-/**  \addtogroup embetter6
+/**  \addtogroup emb6
  *      @{
  *      \addtogroup bsp Board Support Package
  *   @{
@@ -45,7 +45,7 @@
 /*============================================================================*/
 /*! \file   bsp.c
 
-    \author Artem Yushev, artem.yushev@hs-offenburg.de
+    \author Artem Yushev, 
 
     \brief  Board support package implementation.
 
@@ -69,9 +69,6 @@
                                      MACROS
  =============================================================================*/
 #define     LOGGER_ENABLE        LOGGER_BSP
-#if            LOGGER_ENABLE     ==     TRUE
-#define        LOGGER_SUBSYSTEM    "bsp"
-#endif
 #include    "logger.h"
 
 

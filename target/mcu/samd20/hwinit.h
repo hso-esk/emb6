@@ -1,16 +1,16 @@
 /**
  * \addtogroup mcu MCU HAL library
  * @{
- * \defgroup samd20j18 MCU (SAMD20J18) HAL library
+ * \defgroup samd20g18 MCU (SAMD20G18) HAL library
  * @{
  *
  */
 /*============================================================================*/
-/*! \file   samd20j18/hwinit.h
+/*! \file   samd20g18/hwinit.h
 
-    \author Artem Yushev artem.yushev@hs-offenbrug.de
+    \author Artem Yushev 
 
-    \brief  Hardware dependent initialization header file for SAMD20J18.
+    \brief  Hardware dependent initialization header file for SAMD20G18.
 
    \version 0.0.1
 */

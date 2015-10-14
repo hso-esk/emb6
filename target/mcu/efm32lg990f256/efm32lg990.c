@@ -46,7 +46,7 @@
  * \addtogroup efm32
  * @{
  */
-/*! \file   efm32lg990f256/target.c
+/*! \file   efm32lg990f256/efm32lg990.c
 
     \author Manuel Schappacher manuel.schappacher@hs-offenburg.de
 
@@ -83,9 +83,6 @@
                                      MACROS
 ==============================================================================*/
 #define     LOGGER_ENABLE        LOGGER_HAL
-#if            LOGGER_ENABLE==TRUE
-#define     LOGGER_SUBSYSTEM    "hal"
-#endif
 #include    "logger.h"
 
 /*==============================================================================
@@ -278,7 +275,7 @@ static void _hal_clksInit( void )
  */
 static void _hal_tcCb( void )
 {
-    /* Indicate timer update to the emBetter6 timer */
+    /* Indicate timer update to the emb6 timer */
     if( l_hal_tick % CONF_TICK_SEC == 0 )
         l_hal_sec++;
     l_hal_tick++;

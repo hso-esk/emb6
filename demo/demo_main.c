@@ -39,7 +39,7 @@
  */
 /*============================================================================*/
 /**
- *      \addtogroup embetter6
+ *      \addtogroup emb6
  *      @{
  *
  *      \defgroup demo Demo applications
@@ -53,7 +53,7 @@
  */
 /*! \file   demo_main.c
 
-    \author Artem Yushev, artem.yushev@hs-offenburg.de
+    \author Artem Yushev, 
 
     \brief  Main function.
 
@@ -98,6 +98,9 @@
 #include "demo_mqtt.h"
 #endif
 
+#if DEMO_USE_TESTSUITE
+#include "demo_tsemb6.h"
+#endif
 
 #if DEMO_USE_EXTIF
 #include "slip_radio.h"
@@ -119,7 +122,6 @@
 /*==============================================================================
                           LOCAL VARIABLE DECLARATIONS
  =============================================================================*/
-struct     etimer             led_et;
 /*==============================================================================
                                 LOCAL CONSTANTS
  =============================================================================*/
@@ -179,6 +181,10 @@ static uint8_t loc_demoAppsConf(s_ns_t* pst_netStack)
     demo_mqttConf(pst_netStack);
     #endif
 
+    #if DEMO_USE_TESTSUITE
+    demo_testsuiteConf(pst_netStack);
+    #endif
+
     if (pst_netStack == NULL)
         return 0;
     else
@@ -230,16 +236,13 @@ static uint8_t loc_demoAppsInit(void)
     }
     #endif
 
-    return 1;
-}
-
-void loc_emb6_running_led_toggle(c_event_t c_event, p_data_t p_data)
-{
-    if (etimer_expired(&led_et))
-    {
-        bsp_led(E_BSP_LED_YELLOW,E_BSP_LED_TOGGLE);
-        etimer_restart(&led_et);
+    #if DEMO_USE_TESTSUITE
+    if (!demo_testsuiteInit()) {
+        return 0;
     }
+    #endif
+
+    return 1;
 }
 
 /*==============================================================================
@@ -277,8 +280,11 @@ int main(void)
         {
             return 0;
         }
-        /* emb6 running LED toggle */
-        etimer_set(&led_et, 1 * bsp_get(E_BSP_GET_TRES), loc_emb6_running_led_toggle);
+
+        /* SHow that stack has been launched */
+        bsp_led(E_BSP_LED_GREEN,E_BSP_LED_ON);
+        bsp_delay_us(2000000);
+        bsp_led(E_BSP_LED_GREEN,E_BSP_LED_OFF);
 
         /* call process function with delay in us */
         emb6_process(500);  /* default: 500 us delay */

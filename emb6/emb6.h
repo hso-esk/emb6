@@ -39,7 +39,7 @@
  */
 /*============================================================================*/
 /**
- * 	 \addtogroup embetter6
+ * 	 \addtogroup emb6
  * 	 @{
  *   \addtogroup stack_API Stack API
  *   @{
@@ -98,22 +98,22 @@ typedef uint32_t                            clock_time_t;
 typedef struct rpl_configuration
 {
     /* The DIO interval (n) represents 2^n ms. default value = 8 */
-    uint8_t DIO_interval_min;
+    uint8_t DIOintmin;
     /* Maximum amount of timer doublings. default value = 12 */
-    uint8_t DIO_interval_doublings;
+    uint8_t DIOintdoub;
     /* This value decides which DAG instance we should participate in by def.
      * default value = 0x1e (30) */
-    uint8_t default_instance;
+    uint8_t defInst;
     /* Initial metric attributed to a link when the ETX is unknown.
      * default value = 2 */
-    uint8_t init_link_metric;
+    uint8_t linkMetric;
     /* Default route lifetime unit. This is the granularity of time used in RPL
      * lifetime values, in seconds.
      * default value = 0xffff */
-    uint16_t default_route_lifetime_unit;
+    uint16_t defRouteTimeUnit;
     /* Default route lifetime as a multiple of the lifetime unit.
      * default value = 0xff */
-    uint8_t default_route_lifetime;
+    uint8_t defRouteTime;
 }s_rpl_conf_t;
 
 /*! RPL configuration struct, do not change */
@@ -211,6 +211,8 @@ typedef uip_eth_addr uip_lladdr_t;
  =============================================================================*/
 
 typedef struct netstack {
+        /*const struct netstack_socket*                   sock;*/
+
 	const struct netstack_headerCompression*        hc;
 
 	const struct netstack_llsec*                    llsec;
@@ -225,6 +227,28 @@ typedef struct netstack {
 
 	uint8_t                                         c_configured;
 }s_ns_t;
+
+typedef const struct netstack_socket{
+    char *name;
+
+    /* Initialize the BSD socket driver */
+    void (* create)(s_ns_t* p_ns);
+
+    /* Connect to remote node*/
+    void (* connect)(void);
+
+    void (* bind)(void);
+
+    /* Send data to remote node*/
+    void (* send)(void);
+
+    /* Send data to remote node*/
+    void (* sendto)(void);
+
+    /* Close the BSD socket driver */
+    void (* close)(s_ns_t* p_ns);
+
+}s_nsSocket_t;
 
 typedef const struct netstack_headerCompression {
     char *name;
@@ -376,6 +400,10 @@ typedef const struct netstack_interface {
 
 }s_nsIf_t;
 
+/*! Supported BSD-like socket interface */
+/*extern const s_nsSocket_t udp_socket_driver;
+extern const s_nsSocket_t tcp_socket_driver;*/
+
 /*! Supported headers compression handlers */
 extern const s_nsHeadComp_t     sicslowpan_driver;
 
@@ -397,16 +425,16 @@ extern const s_nsLowMac_t       nullrdc_driver;
 
 
 /*! Supported framers */
-extern const s_nsFramer_t     framer_802154;
-extern const s_nsFramer_t     no_framer;
-extern const s_nsFramer_t     nullframer;
+extern const s_nsFramer_t       framer_802154;
+extern const s_nsFramer_t       no_framer;
+extern const s_nsFramer_t       nullframer;
 
 
 /*! Supported interfaces */
 extern const s_nsIf_t           rf212_driver;
 extern const s_nsIf_t           rf212b_driver;
 extern const s_nsIf_t           rf230_driver;
-extern const s_nsIf_t           fradio_driver;
+extern const s_nsIf_t           native_driver;
 
 
 
@@ -414,17 +442,6 @@ extern const s_nsIf_t           fradio_driver;
 /*==============================================================================
                                  API FUNCTIONS
  =============================================================================*/
-
-/*============================================================================*/
-/*!
-\brief      Set the address of the current node
-
-\param t The address
-
-            This function sets the Rime address of the node.
-*/
-/*============================================================================*/
-void rimeaddr_emb6_set_node_addr(linkaddr_t *t);
 
 /*============================================================================*/
 /*!

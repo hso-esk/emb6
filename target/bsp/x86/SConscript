@@ -1,0 +1,31 @@
+hardware_config = {
+# Micro Controller Unit description (HEAD/arch/<arch>/<mcu_fam>/<vendor> folder)
+	'mcu_arch'	: 	'x86',
+	'mcu_family' 	: 	'generic',
+	'mcu_vendor' 	: 	'generic',
+	'mcu_cpu' 	: 	'generic',
+	'mcu_toolchain' : 	'GCC',
+	
+# Device driver description (HEAD/target/mcu folder)
+	'mcu' 		:	'linux',
+
+# Transceiver source description (HEAD/target/if folder)
+	'if'		:	'native',
+	
+# C code global defined symbols
+	'defines' : [
+	],
+# Required Libraries
+	'libs' : [
+		'lcm'
+	],
+# GCC flags
+	'cflags' : [
+	],
+	
+# LINKER flags
+	'ldflags' : [
+	],
+}
+
+Return('hardware_config')
