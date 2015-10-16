@@ -62,17 +62,15 @@
  INCLUDE FILES
  =============================================================================*/
 
-#include "er-coap.h"
-#include "rest-engine.h"
+#include "uip.h"
+#include "udp-socket.h"
 #include "demo_dtls_srv.h"
-
-#include "uip-debug.h"
-#include "uip-udp-packet.h"
-#include "evproc.h"
 
 #include "tinydtls.h"
 #include "dtls.h"
 #include "debug.h"
+
+#include "evproc.h"
 
 /*==============================================================================
                                      MACROS
@@ -90,8 +88,6 @@
 /*==============================================================================
                      LOCAL VARIABLE DECLARATIONS
  =============================================================================*/
-
-static struct uip_udp_conn *server_conn;
 
 static  struct  udp_socket          st_udp_socket;
         struct  udp_socket*         pst_udp_socket;
@@ -140,23 +136,12 @@ read_from_peer(struct dtls_context_t *ctx,
 static int
 send_to_peer(struct dtls_context_t *ctx,
 	     session_t *session, uint8 *data, size_t len) {
+  int ret = 0;
+  struct udp_socket *st_udp_socket  = (struct udp_socket *)dtls_get_app_data(ctx);
 
-  struct uip_udp_conn *conn = (struct uip_udp_conn *)dtls_get_app_data(ctx);
+  ret = udp_socket_sendto(st_udp_socket, data, len, &session->addr, session->port);
 
-  uip_ipaddr_copy(&conn->ripaddr, &session->addr);
-  conn->rport = session->port;
-
-  PRINTF("send to ");
-  PRINT6ADDR(&conn->ripaddr);
-  PRINTF(":%u\n", uip_ntohs(conn->rport));
-
-  uip_udp_packet_send(conn, data, len);
-
-  /* Restore server connection to allow data from any node */
-  memset(&conn->ripaddr, 0, sizeof(conn->ripaddr));
-  memset(&conn->rport, 0, sizeof(conn->rport));
-
-  return len;
+  return ret;
 }
 
 #ifdef DTLS_PSK
@@ -302,7 +287,7 @@ init_dtls() {
 
   dtls_set_log_level(DTLS_LOG_DEBUG);
 
-  dtls_context = dtls_new_context(pst_udp_socket->udp_conn);
+  dtls_context = dtls_new_context(pst_udp_socket);
 
   if (dtls_context)
     dtls_set_handler(dtls_context, &cb);
