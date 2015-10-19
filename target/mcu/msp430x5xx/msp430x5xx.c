@@ -43,6 +43,8 @@
 #define TARGET_CFG_ARG_CHK_EN                   ( 1u )
 
 #define TARGET_CFG_SYSTICK_RESOLUTION           (clock_time_t)( 1000u )
+#define TARGET_CFG_SYSTICK_SCALER               (clock_time_t)(    2u )
+
 
 /*
 ********************************************************************************
@@ -81,13 +83,19 @@ static void _hal_isrSysTick( void *p_arg );
 */
 static void _hal_isrSysTick( void *p_arg )
 {
-    Tmr_Update();
+    hal_ticks++;
+
+    if ((hal_ticks % TARGET_CFG_SYSTICK_SCALER) == 0) {
+        Tmr_Update();
+    }
 }
 
 
 static void _hal_systick(void)
 {
-    tmr_config(E_TMR_0, (uint16_t)TARGET_CFG_SYSTICK_RESOLUTION);
+    tmr_config(E_TMR_0,
+               (uint16_t)(TARGET_CFG_SYSTICK_RESOLUTION / TARGET_CFG_SYSTICK_SCALER));
+
     tmr_start(E_TMR_0, _hal_isrSysTick );
 }
 
