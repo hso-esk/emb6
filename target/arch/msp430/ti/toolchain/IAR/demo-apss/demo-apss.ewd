@@ -3,7 +3,7 @@
 <project>
   <fileVersion>2</fileVersion>
   <configuration>
-    <name>SMARTMAC_TX</name>
+    <name>CC1120_TX</name>
     <toolchain>
       <name>MSP430</name>
     </toolchain>
@@ -385,7 +385,7 @@
     </debuggerPlugins>
   </configuration>
   <configuration>
-    <name>SMARTMAC_RX</name>
+    <name>CC1120_RX</name>
     <toolchain>
       <name>MSP430</name>
     </toolchain>

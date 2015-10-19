@@ -20,7 +20,7 @@ NextState1=0
 Break=0
 State Storage=0
 [DebugChecksum]
-Checksum=-791456868
+Checksum=1018148387
 [CallStack]
 ShowArgs=0
 [Disassembly]
@@ -43,8 +43,9 @@ Category=_ 0
 LoggingEnabled=_ 0
 LogFile=_ ""
 [Breakpoints]
-Bp0=_ "STD_CODE" "{$PROJ_DIR$\..\..\..\..\..\..\..\emb6\src\mac\apss\apss.c}.802.13" 0 0 0 0 "" 0 ""
-Count=1
+Bp0=_ "STD_CODE" "{$PROJ_DIR$\..\..\..\..\..\..\..\emb6\src\dll\mac\mac_802154.c}.265.21" 1 0 0 0 "" 0 ""
+Bp1=_ "STD_CODE" "{$PROJ_DIR$\..\..\..\..\..\..\..\emb6\src\dll\mac\mac_802154.c}.406.20" 1 0 0 0 "" 0 ""
+Count=2
 [FET]
 Clock mode=14
 Extended Clock mode=-1
