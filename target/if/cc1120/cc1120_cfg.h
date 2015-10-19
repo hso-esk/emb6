@@ -21,8 +21,8 @@
 /*============================================================================*/
 
 #include <stdint.h>
-#include "rf.h"
-#include "hal_cc1120_io.h"
+#include "cc1120.h"
+#include "cc1120_hal_io.h"
 
 /*============================================================================*/
 /*                                DEFINES                                     */
@@ -31,7 +31,7 @@
 /** Maximum packet length of an RF packet */
 #define RF_MAX_PKT_LEN                255
 
-/** Fixed packet lenth value */
+/** Fixed packet length value */
 #define RF_PKT_MODE_FIXED_LEN         (0x00)
 /** Variable packet length value */
 #define RF_PKT_MODE_VAR_LEN           (0x20)

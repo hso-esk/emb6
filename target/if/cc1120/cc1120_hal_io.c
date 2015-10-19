@@ -9,10 +9,8 @@
 /*                                INCLUDES                                    */
 /*============================================================================*/
 #include "bsp_lums.h"
-#include "hal_cc1120_io.h"
-#include "hal_types.h"
-#include "io.h"
-#include "spi.h"
+#include "cc1120_hal_io.h"
+
 
 /*============================================================================*/
 /*                                DEFINES                                     */

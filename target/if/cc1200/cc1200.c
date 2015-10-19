@@ -1,8 +1,7 @@
-/*
- * cc1120.c
- *
- *  Created on: Aug 18, 2015
- *      Author: phuongnguyen
+/**
+ * @file    cc1200.c
+ * @date    Aug 18, 2015
+ * @author  PN
  */
 
 
@@ -12,7 +11,7 @@
 #include "lib_tmr.h"
 #include "rf.h"
 #include "phy.h"
-#include "cc112x.h"
+#include "cc1200.h"
 
 /*
 ********************************************************************************
@@ -27,13 +26,13 @@ static s_ns_t *RF_Netstack;
 *                       LOCAL FUNCTIONS DECLARATION
 ********************************************************************************
 */
-static void cc112x_Init (s_ns_t *p_netstack, RADIO_ERR *p_err);
-static void cc112x_On (RADIO_ERR *p_err);
-static void cc112x_Off (RADIO_ERR *p_err);
-static void cc112x_Send(const void *p_payload, uint8_t len, RADIO_ERR *p_err);
-static void cc112x_Recv(void *p_buf, uint8_t len, RADIO_ERR *p_err);
-static void cc112x_Ioctl(RADIO_IOC_CMD cmd, RADIO_IOC_VAL *p_val, RADIO_ERR *p_err);
-static void cc112x_Task (void *p_arg);
+static void cc1200_Init (s_ns_t *p_netstack, RADIO_ERR *p_err);
+static void cc1200_On (RADIO_ERR *p_err);
+static void cc1200_Off (RADIO_ERR *p_err);
+static void cc1200_Send(const void *p_payload, uint8_t len, RADIO_ERR *p_err);
+static void cc1200_Recv(void *p_buf, uint8_t len, RADIO_ERR *p_err);
+static void cc1200_Ioctl(RADIO_IOC_CMD cmd, RADIO_IOC_VAL *p_val, RADIO_ERR *p_err);
+static void cc1200_Task (void *p_arg);
 
 
 
@@ -48,7 +47,7 @@ static void cc112x_Task (void *p_arg);
  *
  * @param   p_err   Point to returned error
  */
-static void cc112x_Init (s_ns_t *p_netstack, RADIO_ERR *p_err)
+static void cc1200_Init (s_ns_t *p_netstack, RADIO_ERR *p_err)
 {
     int8_t                    c_txpower = 0;
     e_phy_chpage_t            e_page;
@@ -65,8 +64,8 @@ static void cc112x_Init (s_ns_t *p_netstack, RADIO_ERR *p_err)
         while (phy_init() == PHY_ERROR) {
         };
 
-        c_txpower      = 15;
-        e_mode         = E_PHY_SNIFFMODE_CS;
+        c_txpower      = 14;
+        e_mode         = E_PHY_SNIFFMODE_CS; //E_PHY_SNIFFMODE_OFF
         e_page         = E_PHY_CHPAGE_434MHZ_50KBPS;
         e_cca_mode     = E_PHY_CCA_MODE_CARRIER_OR_ED;
         e_preamble     = E_PHY_PREAMBLE_LEN_191;
@@ -79,7 +78,7 @@ static void cc112x_Init (s_ns_t *p_netstack, RADIO_ERR *p_err)
         PHY_PlmeSetReq (E_PHY_PIB_phyPreambleSymbolLength, &e_preamble);
         PHY_PlmeSetReq (E_PHY_PIB_phyTXPowerTolerance,     &e_txpower_tole);
 
-        cc112x_Off(NULL);
+        cc1200_Off(NULL);
     }
 
 #if 0
@@ -104,7 +103,7 @@ static void cc112x_Init (s_ns_t *p_netstack, RADIO_ERR *p_err)
  *
  * @param   p_err   Point to returned error
  */
-static void cc112x_On (RADIO_ERR *p_err)
+static void cc1200_On (RADIO_ERR *p_err)
 {
     int8_t err;
 
@@ -129,7 +128,7 @@ static void cc112x_On (RADIO_ERR *p_err)
  *
  * @param   p_err   Point to returned error
  */
-static void cc112x_Off (RADIO_ERR *p_err)
+static void cc1200_Off (RADIO_ERR *p_err)
 {
     int8_t err;
 
@@ -156,7 +155,7 @@ static void cc112x_Off (RADIO_ERR *p_err)
  * @param   len         Length of data to send
  * @param   p_err       Point to returned error
  */
-static void cc112x_Send (const void         *p_payload,
+static void cc1200_Send (const void         *p_payload,
                                uint8_t       len,
                                RADIO_ERR    *p_err)
 {
@@ -175,7 +174,7 @@ static void cc112x_Send (const void         *p_payload,
 }
 
 
-static void cc112x_Recv (void       *p_buf,
+static void cc1200_Recv (void       *p_buf,
                          uint8_t     len,
                          RADIO_ERR  *p_err)
 {
@@ -197,7 +196,7 @@ static void cc112x_Recv (void       *p_buf,
  *                  p_val points to storing buffer.
  * @param   p_err   Point to returned error
  */
-static void cc112x_Ioctl (RADIO_IOC_CMD  cmd,
+static void cc1200_Ioctl (RADIO_IOC_CMD  cmd,
                           RADIO_IOC_VAL *p_val,
                           RADIO_ERR     *p_err)
 {
@@ -227,11 +226,11 @@ static void cc112x_Ioctl (RADIO_IOC_CMD  cmd,
             break;
 
         case RADIO_IOC_CMD_SYNC_SET :
-            //CC112x_SyncSet(p_val);
+            //cc1200_SyncSet(p_val);
             break;
 
         case RADIO_IOC_CMD_SYNC_GET :
-            //CC112x_SyncGet(p_val);
+            //cc1200_SyncGet(p_val);
             break;
 
         case RADIO_IOC_CMD_RSSI_GET :
@@ -268,7 +267,7 @@ static void cc112x_Ioctl (RADIO_IOC_CMD  cmd,
  * @brief   Radio transceiver state machine handler
  * @param   p_arg
  */
-static void cc112x_Task (void *p_arg)
+static void cc1200_Task (void *p_arg)
 {
     (void)&p_arg;
     phy_entry();
@@ -297,13 +296,13 @@ int8_t PHY_PdDataInd( uint8_t* puc_data, uint16_t ui_len )
 *                               DRIVER DEFINITION
 ********************************************************************************
 */
-RADIO_DRV_API CC112xDrv = {
-        "CC112x",
-        cc112x_Init,
-        cc112x_On,
-        cc112x_Off,
-        cc112x_Send,
-        cc112x_Recv,
-        cc112x_Ioctl,
-        cc112x_Task
+RADIO_DRV_API CC1200Drv = {
+        "cc1200",
+        cc1200_Init,
+        cc1200_On,
+        cc1200_Off,
+        cc1200_Send,
+        cc1200_Recv,
+        cc1200_Ioctl,
+        cc1200_Task
 };
