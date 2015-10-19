@@ -338,8 +338,9 @@
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\net\ipv6</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\mac</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\mac\llsec</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\dll\llc</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\dll\mac</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\dll\framer</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\phy\lpr</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\utils\inc</state>
         </option>
@@ -1082,7 +1083,7 @@
         </option>
         <option>
           <name>RTConfigPath</name>
-          <state>$TOOLKIT_DIR$\LIB\DLIB\dl430xmfn.h</state>
+          <state>$TOOLKIT_DIR$\LIB\DLIB\dl430xlfn.h</state>
         </option>
         <option>
           <name>RTLibraryPath</name>
@@ -1362,8 +1363,9 @@
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\net\ipv6</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\mac</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\mac\llsec</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\dll\llc</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\dll\mac</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\dll\framer</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\phy\lpr</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\utils\inc</state>
         </option>
