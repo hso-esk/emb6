@@ -60,7 +60,6 @@
 
 #include "emb6.h"
 
-
 /*=============================================================================
                                 APPLICATION LAYER SECTION
 ===============================================================================*/
@@ -851,23 +850,22 @@ void uip_log(char *msg);
  /*=============================================================================
                                  POWER_SAVING SECTION
  =============================================================================*/
-#define EMB6_CFG_APSS_EN                             TRUE
 #define EMB6_CFG_ARG_CHK_EN                         ( 1u )
 
 /**
  * @addtogroup  Configurations
  * @{
  */
-#define APSS_CFG_LOOSE_SYNC_EN                      ( 1u )
-#define APSS_CFG_CCA_BASED_SCAN_EN                  ( 0u )
+#define LPR_CFG_LOOSE_SYNC_EN                      ( 1u )
+#define LPR_CFG_CCA_BASED_SCAN_EN                  ( 0u )
 
-#define APSS_CFG_IDLE_DURATION_IN_MS                (uint32_t)(   10  )
-#define APSS_CFG_POWERUP_INTERVAL_IN_MS             (uint32_t)( 1000u )
-#define APSS_CFG_STROBE_TX_INTERVAL_IN_MS           (APSS_CFG_POWERUP_INTERVAL_IN_MS * 2)
+#define LPR_CFG_IDLE_DURATION_IN_MS                (uint32_t)(   10  )
+#define LPR_CFG_POWERUP_INTERVAL_IN_MS             (uint32_t)( 1000u )
+#define LPR_CFG_STROBE_TX_INTERVAL_IN_MS           (LPR_CFG_POWERUP_INTERVAL_IN_MS * 2)
 
-#if     APSS_CFG_LOOSE_SYNC_EN
-#define APSS_CFG_PWRON_TBL_SIZE                     (uint8_t )(   3u  )
-#define APSS_CFG_QTY_STROBE_SENT_IN_ADVANCE         (uint8_t )(   3u  )      /*!< variable   */
+#if     LPR_CFG_LOOSE_SYNC_EN
+#define LPR_CFG_PWRON_TBL_SIZE                     (uint8_t )(   3u  )
+#define LPR_CFG_QTY_STROBE_SENT_IN_ADVANCE         (uint8_t )(   3u  )      /*!< variable   */
 #endif
  /**
   * @}
@@ -910,38 +908,38 @@ void uip_log(char *msg);
   *              This time addition is usually caused by transition time of RF
   *              driver implementation.
   */
-#if APSS_CFG_CCA_BASED_SCAN_EN
-#define APSS_PORT_SCAN_CCA_INTERVAL_IN_MS           (uint32_t) (  10u )         /*!< fixed, hardware-specific       */
-#define APSS_PORT_SCAN_DURATION_IN_MS               (uint32_t) (  30u )         /*!< fixed, hardware-specific       */
+#if LPR_CFG_CCA_BASED_SCAN_EN
+#define LPR_PORT_SCAN_CCA_INTERVAL_IN_MS           (uint32_t) (  10u )         /*!< fixed, hardware-specific       */
+#define LPR_PORT_SCAN_DURATION_IN_MS               (uint32_t) (  30u )         /*!< fixed, hardware-specific       */
 #else
-#define APSS_PORT_SCAN_DURATION_IN_MS               (uint32_t) (  23u )         /*!< fixed, hardware-specific       */
+#define LPR_PORT_SCAN_DURATION_IN_MS               (uint32_t) (  23u )         /*!< fixed, hardware-specific       */
 #endif
 
-#define APSS_PORT_ON_TO_OFF_TIME_IN_MS              (uint32_t) (   6u )         /*!< fixed, hardware-specific, 06   */
-#define APSS_PORT_OFF_TO_ON_TIME_IN_MS              (uint32_t) (  15u )         /*!< fixed, hardware-specific, 15   */
-#define APSS_PORT_TX_RX_TURNAROUND_IN_MS            (uint32_t) (   1u )         /*!< fixed, hardware-specific, 01   */
-#define APSS_PORT_STROBE_TX_TIME_IN_MS              (uint32_t) (   9u )         /*!< fixed, hardware-specific, 09   */
-#define APSS_PORT_STROBE_TX_GAP_TIME_IN_MS          (uint32_t) (   8u )         /*!< fixed, hardware-specific, 08   */
-#define APSS_PORT_RX_PAYLOAD_OFFSET_IN_MS           (uint32_t) (   2u )         /*!< variable, needed for better performance    */
+#define LPR_PORT_ON_TO_OFF_TIME_IN_MS              (uint32_t) (   6u )         /*!< fixed, hardware-specific, 06   */
+#define LPR_PORT_OFF_TO_ON_TIME_IN_MS              (uint32_t) (  19u )         /*!< fixed, hardware-specific, 15   */
+#define LPR_PORT_TX_RX_TURNAROUND_IN_MS            (uint32_t) (   1u )         /*!< fixed, hardware-specific, 01   */
+#define LPR_PORT_STROBE_TX_TIME_IN_MS              (uint32_t) (   8u )         /*!< fixed, hardware-specific, 08   */
+#define LPR_PORT_STROBE_TX_GAP_TIME_IN_MS          (uint32_t) (  10u )         /*!< fixed, hardware-specific, 09   */
+#define LPR_PORT_RX_PAYLOAD_OFFSET_IN_MS           (uint32_t) (   2u )         /*!< variable, needed for better performance 2   */
 
-#define APSS_PORT_WFA_TIMEOUT_IN_MS                 (APSS_PORT_STROBE_TX_GAP_TIME_IN_MS)
+#define LPR_PORT_WFA_TIMEOUT_IN_MS                 (LPR_PORT_STROBE_TX_GAP_TIME_IN_MS)
 
-#define APSS_PORT_WFP_TIMEOUT_IN_MS                 (APSS_PORT_STROBE_TX_GAP_TIME_IN_MS +   \
-                                                     APSS_PORT_TX_RX_TURNAROUND_IN_MS   +   \
-                                                     APSS_PORT_RX_PAYLOAD_OFFSET_IN_MS)
+#define LPR_PORT_WFP_TIMEOUT_IN_MS                 (LPR_PORT_STROBE_TX_GAP_TIME_IN_MS +   \
+                                                    LPR_PORT_TX_RX_TURNAROUND_IN_MS   +   \
+                                                    LPR_PORT_RX_PAYLOAD_OFFSET_IN_MS)
 
-#define APSS_PORT_STROBE_TX_PERIOD_IN_MS            (APSS_PORT_STROBE_TX_TIME_IN_MS     +   \
-                                                     APSS_PORT_STROBE_TX_GAP_TIME_IN_MS)
+#define LPR_PORT_STROBE_TX_PERIOD_IN_MS            (LPR_PORT_STROBE_TX_TIME_IN_MS     +   \
+                                                     LPR_PORT_STROBE_TX_GAP_TIME_IN_MS)
 
-#define APSS_CFG_STROBE_TX_MAX                      (uint8_t)(APSS_CFG_STROBE_TX_INTERVAL_IN_MS / APSS_PORT_STROBE_TX_PERIOD_IN_MS )
+#define LPR_CFG_STROBE_TX_MAX                      (uint8_t)(LPR_CFG_STROBE_TX_INTERVAL_IN_MS / LPR_PORT_STROBE_TX_PERIOD_IN_MS )
 
 /**
  * @note    Broadcast feature is at the moment only available with SmartMAC
  */
-#define APSS_CFG_BROADCAST_TX_ADDITION              (uint8_t)( 2u )
-#define APSS_CFG_BROADCAST_TX_MAX                   (uint8_t)(APSS_CFG_POWERUP_INTERVAL_IN_MS       /       \
-                                                              APSS_PORT_STROBE_TX_PERIOD_IN_MS      +       \
-                                                              APSS_CFG_BROADCAST_TX_ADDITION)
+#define LPR_CFG_BROADCAST_TX_ADDITION              (uint8_t)( 2u )
+#define LPR_CFG_BROADCAST_TX_MAX                   (uint8_t)(LPR_CFG_POWERUP_INTERVAL_IN_MS       /       \
+                                                              LPR_PORT_STROBE_TX_PERIOD_IN_MS      +       \
+                                                              LPR_CFG_BROADCAST_TX_ADDITION)
 
  /**
   * @}
@@ -949,19 +947,19 @@ void uip_log(char *msg);
 
 
 #if     defined(XMAC_TX) | defined(XMAC_RX)
-#define APSS_XMAC_EN                    TRUE
-#define APSS_FRAMER                     XMACFramer
+#define LPR_XMAC_EN                    TRUE
+#define LPR_FRAMER                     XMACFramer
 #elif   defined(SMARTMAC_TX) | defined(SMARTMAC_RX)
-#define APSS_SMARTMAC_EN                TRUE
-#define APSS_FRAMER                     SmartMACFramer
+#define LPR_SMARTMAC_EN                TRUE
+#define LPR_FRAMER                     SmartMACFramer
 #else
 #error  Only XMAC and SmartMAC are supported
 #endif
 
 #if     defined(XMAC_TX) | defined(SMARTMAC_TX)
-#define APSS_TX
+#define LPR_TX
 #elif   defined(XMAC_RX) | defined(SMARTMAC_RX)
-#define APSS_RX
+#define LPR_RX
 #else
 #error  Only TX or RX operation modes are supported
 #endif

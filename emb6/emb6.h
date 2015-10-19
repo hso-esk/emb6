@@ -66,6 +66,11 @@
 #include <string.h>
 #include <stdbool.h>
 
+#if STK_CFG_REFACTOR_EN
+#include "netstk_cfg.h"
+#include "netstk_def.h"
+#endif
+
 /*=============================================================================
                                 BASIC CONSTANTS
 ==============================================================================*/
@@ -228,7 +233,15 @@ typedef struct netstack {
 	uint8_t                                         c_configured;
 
 #if STK_CFG_REFACTOR_EN
-	const struct radio_drv_api      				*radio;    /* Radio driver with new API */
+	const NETSTK_MODULE_DRV      *llc;           /*!< Pointer to Logical Link Control Driver     */
+
+    const NETSTK_MODULE_DRV      *mac;           /*!< Pointer to Medium Access Control Driver    */
+
+    const NETSTK_MODULE_DRV      *phy;           /*!< Pointer to Physical Driver                 */
+
+    const NETSTK_MODULE_DRV      *lpr;           /*!< Pointer to Low-Power Radio Driver          */
+
+    const NETSTK_MODULE_DRV      *rf;            /*!< Pointer to Radio Frequency Driver          */
 #endif
 
 }s_ns_t;
@@ -408,154 +421,6 @@ typedef const struct netstack_interface {
 /*! Supported BSD-like socket interface */
 /*extern const s_nsSocket_t udp_socket_driver;
 extern const s_nsSocket_t tcp_socket_driver;*/
-
-
-
-typedef uint16_t    STK_ERR;
-typedef uint16_t    STK_DEV_ID;
-typedef uint16_t    RADIO_ERR;
-typedef uint8_t     RADIO_IOC_CMD;
-typedef uint16_t    RADIO_IOC_VAL;
-
-typedef struct apss_framer_api      APSS_FRAMER_DRV;
-typedef struct radio_drv_api        RADIO_DRV_API;
-
-/**
- * @addtogroup  STACK_ERROR_CODES   Stack error codes
- * @{
- */
-#define STK_ERR_NONE                                    (STK_ERR) (  0u )
-#define STK_ERR_BUSY                                    (STK_ERR) (  1u )
-#define STK_ERR_TX_RADIO_SEND                           (STK_ERR) (  2u )
-#define STK_ERR_TX_TIMEOUT                              (STK_ERR) (  3u )
-#define STK_ERR_TX_NOPACK                               (STK_ERR) (  4u )
-#define STK_ERR_INVALID_ARGUMENT                        (STK_ERR) (  5u )
-
-#define STK_ERR_APSS_INVALID_ACK                        (STK_ERR) ( 12u )
-#define STK_ERR_APSS_UNSUPPORTED_FRAME                  (STK_ERR) ( 13u )
-#define STK_ERR_APSS_BROADCAST_LAST_STROBE              (STK_ERR) ( 14u )
-#define STK_ERR_APSS_BROADCAST_NOACK                    (STK_ERR) ( 15u )
-#define STK_ERR_APSS_CHANNEL_ACESS_FAILURE              (STK_ERR) ( 16u )
-#define STK_ERR_APSS_INVALID_ADDR                       (STK_ERR) ( 17u )
-
-#if 1   // Newly added
-#define STK_ERR_APSS_TX_COLLISION_SAME_DEST             (STK_ERR) ( 21u )       /* a waking-up strobe is not destined for us, but aims to same destination  */
-#define STK_ERR_APSS_TX_COLLISION_DIFF_DEST             (STK_ERR) ( 22u )       /* a waking-up strobe is destined neither for us nor our destination node   */
-#endif
-
-#define STK_ERR_CMD_INVALID                             (STK_ERR) ( 31u )
-
-/**
- * @}
- */
-
-#if STK_CFG_REFACTOR_EN
-#define STK_APSS_CMD_NONE               (uint8_t) ( 0u )
-#define STK_APSS_CMD_CSMA               (uint8_t) ( 1u )
-#endif
-
-/**
- * @addtogroup  RADIO_ERROR_CODES  Radio error codes
- * @{
- */
-#define RADIO_ERR_NONE                  (RADIO_ERR) ( 0u )
-#define RADIO_ERR_CMD_UNSUPPORTED       (RADIO_ERR) ( 1u )
-#define RADIO_ERR_TX                    (RADIO_ERR) ( 2u )
-#define RADIO_ERR_ONOFF                 (RADIO_ERR) ( 3u )
-#define RADIO_ERR_INIT                  (RADIO_ERR) ( 4u )
-
-/**
- * @}
- */
-/**
- * @addtogroup  RADIO_IOC_CMD Radio I/O control commands
- * @{
- */
-#define RADIO_IOC_CMD_TXPOWER_SET           (RADIO_IOC_CMD) (  1u )
-#define RADIO_IOC_CMD_TXPOWER_GET           (RADIO_IOC_CMD) (  2u )
-#define RADIO_IOC_CMD_SENS_SET              (RADIO_IOC_CMD) (  3u )
-#define RADIO_IOC_CMD_SENS_GET              (RADIO_IOC_CMD) (  4u )
-#define RADIO_IOC_CMD_RSSI_GET              (RADIO_IOC_CMD) (  5u )
-#define RADIO_IOC_CMD_CCA_GET               (RADIO_IOC_CMD) (  6u )
-#define RADIO_IOC_CMD_ANT_DIV_SET           (RADIO_IOC_CMD) (  7u )
-#define RADIO_IOC_CMD_RF_SWITCH             (RADIO_IOC_CMD) (  8u )
-#define RADIO_IOC_CMD_SYNC_SET              (RADIO_IOC_CMD) (  9u )
-#define RADIO_IOC_CMD_SYNC_GET              (RADIO_IOC_CMD) ( 10u )
-#define RADIO_IOC_CMD_STATE_GET             (RADIO_IOC_CMD) ( 11u )
-
-
-
-
-#if 0 // not needed at the time being
-#define RADIO_IOC_CMD_MACADDR_SET           (RADIO_IOC_CMD) ( 11u )
-#define RADIO_IOC_CMD_MACADDR_GET           (RADIO_IOC_CMD) ( 12u )
-#define RADIO_IOC_CMD_ED_GET                (RADIO_IOC_CMD) ( 20u )
-#endif
-
-/**
- * @}
- */
-
-
-/**
- * @addtogroup  RADIO_IOC_VAL
- * @{
- */
-#define RADIO_IOC_VAL_SYNC_STROBE               (RADIO_IOC_VAL) ( 0x930B )
-#define RADIO_IOC_VAL_SYNC_DATA                 (RADIO_IOC_VAL) ( 0x51DE )
-#define RADIO_IOC_VAL_STATE_NONE                (RADIO_IOC_VAL) ( 0u )
-#define RADIO_IOC_VAL_STATE_IDLE                (RADIO_IOC_VAL) ( 1u )
-#define RADIO_IOC_VAL_STATE_RX                  (RADIO_IOC_VAL) ( 2u )
-#define RADIO_IOC_VAL_STATE_TX                  (RADIO_IOC_VAL) ( 3u )
-/**
- * @}
- */
-
-
-/**
- * @brief   Asynchronous Power Saving Scheme Framer API
- */
-struct apss_framer_api
-{
-    char         *Name;
-
-    void        (*Init        )(STK_ERR *p_err);
-
-    void        (*Deinit      )(STK_ERR *p_err);
-
-    uint8_t*    (*Create      )(uint8_t frame_type, uint16_t *p_len, uint32_t *p_delay, STK_ERR *p_err);
-
-    void        (*Parse       )(uint8_t *p_pkt, uint16_t len, STK_ERR *p_err);
-};
-
-
-/**
- * @brief   Radio transceiver driver API
- */
-struct radio_drv_api
-{
-    char     *Name;
-
-    void    (*Init ) (s_ns_t *p_netstack, RADIO_ERR *p_err);
-
-    void    (*On   ) (RADIO_ERR *p_err);                                            /*!< Open the driver        */
-
-    void    (*Off  ) (RADIO_ERR *p_err);                                            /*!< Close the driver       */
-
-    void    (*Send ) (const void *p_payload, uint8_t len, RADIO_ERR *p_err);        /*!< Write data to radio    */
-
-    void    (*Recv ) (void *p_buf, uint8_t len, RADIO_ERR *p_err);                  /*!< Read data from radio   */
-
-    void    (*Ioctrl)(RADIO_IOC_CMD cmd, RADIO_IOC_VAL *p_val, RADIO_ERR *p_err);   /*!< Input/Output control   */
-
-    void    (*Task ) (void *p_arg);                                                 /*!< State machine handler  */
-};
-
-
-extern       APSS_FRAMER_DRV         XMACFramer;
-extern       APSS_FRAMER_DRV         SmartMACFramer;
-extern       RADIO_DRV_API           CC112xDrv;
-
 
 
 /*! Supported headers compression handlers */
