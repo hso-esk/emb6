@@ -14,7 +14,6 @@
 
 
 #if NETSTK_CFG_LLC_802154_EN
-#include "sicslowmac.h"
 #include "frame802154.h"
 #include "packetbuf.h"
 #include "random.h"
