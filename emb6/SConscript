@@ -30,28 +30,24 @@ emb6 = {
 	'slip' : [
 		'net/slip/*',
 	],
+# new netstack drivers
 	'llsec' : [
-		'mac/llsec/*',
+		'dll/llsec/*',
 	],
-	'nullmac' : [
-		'mac/mac',
-		'mac/nullmac',
+	'llc' : [
+		'dll/llc/*',
 	],
-	'802154framer' : [
-		'mac/sicslowmac',
-		'mac/frame802154',
-		'mac/framer',
-		'mac/framer-802154',
-		'mac/linkaddr',
-        'mac/rimestats',
+	'mac' : [
+		'dll/mac/*',
 	],
-	'nullframer'	: [
-		'mac/nullrdc',
-        'mac/no-framer',
-        'mac/framer',
-        'mac/frame802154',
-        'mac/linkaddr',
-        'mac/rimestats',
+	'framer' : [
+		'dll/framer/*',
+	],
+	'phy' : [
+		'phy/*',
+	],
+	'lpr' : [
+		'phy/lpr/*',
 	],
 # C global defines
 	'defines' : [
