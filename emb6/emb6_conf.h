@@ -847,6 +847,14 @@ void uip_log(char *msg);
  #define LOGGER_EVPROC                      FALSE
 
 
+ /** Event process functions                (see phy_xxx.c) */
+ #define LOGGER_PHY                         FALSE
+
+ /** Event process functions                (see mac_xxx.c) */
+ #define LOGGER_MAC                         FALSE
+
+ /** Event process functions                (see llc_xxx.c) */
+ #define LOGGER_LLC                         FALSE
  /*=============================================================================
                                  POWER_SAVING SECTION
  =============================================================================*/
