@@ -120,6 +120,11 @@ static void _res_get_handler(void *request,   void *response,
     const char* p = NULL;
     char        rpc_param[64];
     int8_t      c_success = 1;
+    NETSTK_ERR  err = NETSTK_ERR_NONE;
+    uint8_t     rssi;
+    uint8_t     txpower;
+    uint8_t     sensitivity;
+
 
     LOG2_INFO("Enter _res_get_handler() function");
 
@@ -130,25 +135,28 @@ static void _res_get_handler(void *request,   void *response,
     REST.get_header_accept(request, &i_accept);
 
     if((c_length = REST.get_query_variable(request, "p", &p))) {
+        ps_ns->rf->ioctrl(NETSTK_CMD_RF_RSSI_GET, &rssi, &err);
+        ps_ns->rf->ioctrl(NETSTK_CMD_RF_SENS_GET, &sensitivity, &err);
+        ps_ns->rf->ioctrl(NETSTK_CMD_RF_TXPOWER_GET, &txpower, &err);
+
         if(strncmp(p, "rssi", c_length) == 0) {
-            snprintf(rpc_param, 5, "%d", ps_ns->inif->get_rssi());
-            LOG1_INFO("GET request for RSSI: %s",rpc_param);
+            snprintf(rpc_param, 5, "%d", rssi);
+            LOG1_INFO("GET request for RSSI: %s", rpc_param);
         } else if(strncmp(p, "pwr", c_length) == 0) {
-            snprintf(rpc_param, 5, "%d", ps_ns->inif->get_txpower());
-            LOG1_INFO("GET request for  TX_PWR: %s",rpc_param);
-        } else if(strncmp(p, "sens", c_length) == 0) {
-            snprintf(rpc_param, 5, "%d", ps_ns->inif->get_sensitivity());
-            LOG1_INFO("GET request for  RX_SENS: %s",rpc_param);
+            snprintf(rpc_param, 5, "%d", txpower);
+            LOG1_INFO("GET request for  TX_PWR: %s", rpc_param);
+        } else if(strncmp(p, "sens", sensitivity) == 0) {
+            snprintf(rpc_param, 5, "%d", txpower);
+            LOG1_INFO("GET request for  RX_SENS: %s", rpc_param);
         } else {
             snprintf(rpc_param, 64 ,"RSSI [%]: TX_PWR [%d]: RX_SENS [%d]",
-                    ps_ns->inif->get_rssi(),ps_ns->inif->get_txpower(),
-                    ps_ns->inif->get_sensitivity());
+                     rssi, txpower, sensitivity);
         }
     } else {
         c_success = 0;
     }
 
-    if (c_success && (ps_ns != NULL) && (ps_ns->inif != NULL))
+    if (c_success && (ps_ns != NULL) && (ps_ns->rf != NULL))
     {
         if(i_accept == -1 || i_accept == REST.type.TEXT_PLAIN)
         {
@@ -174,8 +182,11 @@ static uint8_t _res_setTxPwr(const char* rpc_data, uint8_t c_len, void* p_resp)
     s_ns_t*     ps_ns = emb6_get();
     char        param[6];
     uint8_t     i = 0;
+    NETSTK_ERR  err = NETSTK_ERR_NONE;
+    uint8_t     act_txpower;
 
-    if ((ps_ns == NULL) || (ps_ns->inif == NULL))
+
+    if ((ps_ns == NULL) || (ps_ns->rf == NULL))
     {
         LOG_ERR("POST method failed. Stack pointers NULL");
         REST.set_response_status(p_resp, INTERNAL_SERVER_ERROR_5_00);
@@ -192,11 +203,12 @@ static uint8_t _res_setTxPwr(const char* rpc_data, uint8_t c_len, void* p_resp)
 
         if (tx_pwr > -20) {
             LOG1_INFO("Guards passed, try to change parameters");
-            ps_ns->inif->off();
-            ps_ns->inif->set_txpower(tx_pwr);
-            ps_ns->inif->on();
+            ps_ns->rf->off(&err);
+            ps_ns->rf->ioctrl(NETSTK_CMD_RF_TXPOWER_SET, &tx_pwr, &err);
+            ps_ns->rf->on(&err);
 
-            if ((tx_pwr != ps_ns->inif->get_txpower())) {
+            ps_ns->rf->ioctrl(NETSTK_CMD_RF_TXPOWER_GET, &act_txpower, &err);
+            if (tx_pwr != act_txpower) {
                 LOG_ERR("POST method failed. Value wasn't changed");
                 REST.set_response_status(p_resp, INTERNAL_SERVER_ERROR_5_00);
                 c_ret = 0;
@@ -222,8 +234,11 @@ static uint8_t _res_setRxSens(const char* rpc_data, uint8_t c_len, void* p_resp)
     char        param[6];
     uint8_t     i;
     s_ns_t*     ps_ns = emb6_get();
+    NETSTK_ERR  err = NETSTK_ERR_NONE;
+    uint8_t     act_rx_sens;
 
-    if ((ps_ns == NULL) || (ps_ns->inif == NULL))
+
+    if ((ps_ns == NULL) || (ps_ns->rf == NULL))
     {
         LOG_ERR("POST method failed. Stack pointers NULL");
         REST.set_response_status(p_resp, INTERNAL_SERVER_ERROR_5_00);
@@ -241,11 +256,13 @@ static uint8_t _res_setRxSens(const char* rpc_data, uint8_t c_len, void* p_resp)
 
         if (rx_sens < 0) {
             LOG1_INFO("Guards passed, try to change parameters");
-            ps_ns->inif->off();
-            ps_ns->inif->set_sensitivity(rx_sens);
-            ps_ns->inif->on();
+            ps_ns->rf->off(&err);
+            ps_ns->rf->ioctrl(NETSTK_CMD_RF_SENS_SET, &rx_sens, &err);
+            ps_ns->rf->on(&err);
 
-            if ((rx_sens != ps_ns->inif->get_sensitivity())) {
+
+            ps_ns->rf->ioctrl(NETSTK_CMD_RF_SENS_GET, &act_rx_sens, &err);
+            if (rx_sens != act_rx_sens) {
                 LOG_ERR("POST method failed. Value wasn't changed");
                 REST.set_response_status(p_resp, INTERNAL_SERVER_ERROR_5_00);
                 c_ret = 0;
