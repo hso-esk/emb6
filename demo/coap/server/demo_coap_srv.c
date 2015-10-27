@@ -114,39 +114,41 @@ int8_t demo_coapInit(void)
 /*    demo_coapConf()                                                           */
 /*----------------------------------------------------------------------------*/
 
-uint8_t demo_coapConf(s_ns_t* pst_netStack)
+uint8_t demo_coapConf(s_ns_t* p_netstk)
 {
     uint8_t c_ret = 1;
 
     /*
      * By default stack
      */
-    if (pst_netStack != NULL) {
-        if (!pst_netStack->c_configured) {
-            /*pst_netStack->sock   = &udp_socket_driver;*/
-            pst_netStack->hc     = &sicslowpan_driver;
-            pst_netStack->llsec  = &nullsec_driver;
-            pst_netStack->hmac   = &nullmac_driver;
-            pst_netStack->lmac   = &sicslowmac_driver;
-            pst_netStack->frame  = &framer_802154;
-            pst_netStack->c_configured = 1;
-            /* Transceiver interface is defined by @ref board_conf function*/
-            /*pst_netStack->inif   = $<some_transceiver>;*/
+    if (p_netstk != NULL) {
+        if (!p_netstk->c_configured) {
+            p_netstk->hc    = &sicslowpan_driver;
+            p_netstk->llsec = &nullsec_driver;
+            p_netstk->llc   = &LLCDrv802154;
+            p_netstk->mac   = &MACDrv802154;
+            p_netstk->frame = &framer_802154;
+            p_netstk->phy   = &PHYDrvNull;
+            p_netstk->lpr   = &LPRDrvNull;
+            p_netstk->c_configured = 1;
+
         } else {
-            if (/*(pst_netStack->sock == &udp_socket_driver) && */
-                (pst_netStack->hc == &sicslowpan_driver)   &&
-                (pst_netStack->llsec == &nullsec_driver)   &&
-                (pst_netStack->hmac == &nullmac_driver)    &&
-                (pst_netStack->lmac == &sicslowmac_driver) &&
-                (pst_netStack->frame == &framer_802154)) {
-                /* right configuration */
+            if ((p_netstk->hc    == &sicslowpan_driver) &&
+                (p_netstk->llsec == &nullsec_driver)    &&
+                (p_netstk->llc   == &LLCDrv802154)      &&
+                (p_netstk->frame == &framer_802154)     &&
+                (p_netstk->mac   == &MACDrv802154)      &&
+                (p_netstk->phy   == &PHYDrvNull)        &&
+                (p_netstk->lpr   == &LPRDrvNull)) {
+
             }
             else {
-                pst_netStack = NULL;
+                p_netstk = NULL;
                 c_ret = 0;
             }
         }
     }
+
     return (c_ret);
 }
 
