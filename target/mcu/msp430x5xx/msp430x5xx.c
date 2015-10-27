@@ -99,6 +99,27 @@ static void _hal_systick(void)
     tmr_start(E_TMR_0, _hal_isrSysTick );
 }
 
+static void _hal_uartInit(void)
+{
+    char *p_line = "\r\n\r\n========== BEGIN ===========\r\n\r\n";
+
+    uart_init();
+    uart_config(E_UART_SEL_UART1, 115200, NULL);
+    uart_send(E_UART_SEL_UART1, p_line, strlen(p_line));
+}
+
+
+/*
+********************************************************************************
+*                           GLOBAL FUNCTION DEFINITIONS
+********************************************************************************
+*/
+int putchar(int c)
+{
+    uart_send(E_UART_SEL_UART1, (char *)&c, 1);
+    return c;
+}
+
 
 /*
 ********************************************************************************
@@ -164,7 +185,7 @@ int8_t hal_init(void)
 #endif
 
         /* initialize UART */
-        uart_init();
+        _hal_uartInit();
 
         /* initialize info flash */
         infoflash_init();
