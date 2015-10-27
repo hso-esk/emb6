@@ -6,8 +6,11 @@ extif = {
 		'ipv6',
 		'slip',
 		'llsec',
-		'nullmac',
-		'nullframer',
+		'llc',
+		'mac',
+		'framer',
+		'phy',
+		'lpr',
 	],
 	'utils' : [
 		'*',

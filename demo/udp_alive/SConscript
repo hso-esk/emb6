@@ -7,8 +7,11 @@ udp_alive = {
 		'ipv6',
 		'sicslowpan',
 		'llsec',
-		'nullmac',
-		'802154framer',
+		'llc',
+		'mac',
+		'framer',
+		'phy',
+		'lpr',
 	],
 	'utils' : [
 		'*',

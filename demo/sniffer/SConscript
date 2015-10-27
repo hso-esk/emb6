@@ -6,8 +6,11 @@ sniffer = {
 		'ipv6',
 		'sicslowpan',
 		'llsec',
-		'nullmac',
-		'nullframer',
+		'llc',
+		'mac',
+		'framer',
+		'phy',
+		'lpr',
 	],
 	'utils' : [
 		'*',
