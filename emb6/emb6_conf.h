@@ -949,28 +949,13 @@ void uip_log(char *msg);
                                                               LPR_PORT_STROBE_TX_PERIOD_IN_MS      +       \
                                                               LPR_CFG_BROADCAST_TX_ADDITION)
 
- /**
-  * @}
-  */
 
+#define LPR_CFG_SMARTMAC_EN                 TRUE
+#define LPR_FRAMER                          SmartMACFramer
 
-#if     defined(XMAC_TX) | defined(XMAC_RX)
-#define LPR_XMAC_EN                    TRUE
-#define LPR_FRAMER                     XMACFramer
-#elif   defined(SMARTMAC_TX) | defined(SMARTMAC_RX)
-#define LPR_SMARTMAC_EN                TRUE
-#define LPR_FRAMER                     SmartMACFramer
-#else
-#error  Only XMAC and SmartMAC are supported
-#endif
-
-#if     defined(XMAC_TX) | defined(SMARTMAC_TX)
-#define LPR_TX
-#elif   defined(XMAC_RX) | defined(SMARTMAC_RX)
-#define LPR_RX
-#else
-#error  Only TX or RX operation modes are supported
-#endif
+/**
+ * @}
+ */
 
 
 #endif /* EMB6_CONF_H_ */
