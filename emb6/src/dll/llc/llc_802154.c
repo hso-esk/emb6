@@ -18,6 +18,10 @@
 #include "packetbuf.h"
 #include "random.h"
 
+#include "lib_port.h"
+
+#define     LOGGER_ENABLE        LOGGER_LLC
+#include    "logger.h"
 /*
 ********************************************************************************
 *                          LOCAL FUNCTION DECLARATIONS
@@ -235,6 +239,21 @@ void LLC_Send(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
                         packetbuf_hdrptr());
 
 
+#if LOGGER_ENABLE
+    /*
+     * Logging
+     */
+    uint16_t data_len = packetbuf_totlen();
+    uint8_t *p_dataptr = packetbuf_hdrptr();
+    LOG_RAW("\r\n====================\r\n");
+    LOG_RAW("LLC_TX: ");
+    while (data_len--) {
+        LOG_RAW("%02x", *p_dataptr++);
+    }
+    LOG_RAW("\r\n");
+#endif
+
+
     /*
      * set TX callback function and argument
      */
@@ -331,15 +350,27 @@ void LLC_Recv(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
     /*
      * Signal next higher layer of the valid received frame
      */
-#if 1
-    LLC_CbRxFnct(packetbuf_dataptr(),
-                 packetbuf_datalen(),
-                 p_err);
-#else
-    LLC_Netstk->llc->recv(packetbuf_dataptr(),
-                          packetbuf_datalen(),
-                          p_err);
+    if (LLC_CbRxFnct) {
+#if LOGGER_ENABLE
+        /*
+         * Logging
+         */
+        uint16_t data_len = packetbuf_datalen();
+        uint8_t *p_dataptr = packetbuf_dataptr();
+        LOG_RAW("LLC_RX: ");
+        while (data_len--) {
+            LOG_RAW("%02x", *p_dataptr++);
+        }
+        LOG_RAW("\r\n====================\r\n");
 #endif
+
+        /*
+         * Inform the next higher layer
+         */
+        LLC_CbRxFnct(packetbuf_dataptr(),
+                     packetbuf_datalen(),
+                     p_err);
+    }
 }
 
 
