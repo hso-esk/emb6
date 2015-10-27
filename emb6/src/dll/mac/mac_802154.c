@@ -22,6 +22,8 @@
 #include "lib_tmr.h"
 #define MAC_CFG_REFACTOR_EN                 ( 0u )
 
+#define     LOGGER_ENABLE        LOGGER_MAC
+#include    "logger.h"
 #define MAC_EVENT_TX_ACK                    ( 2u )  /* ACK transmission     */
 #define MAC_EVENT_RX_ACK_TIMEOUT            ( 3u )  /* Wait-For-ACK timeout */
 
@@ -182,6 +184,20 @@ void MAC_Send(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
 #endif
 
 
+#if LOGGER_ENABLE
+    /*
+     * Logging
+     */
+    uint16_t data_len = len;
+    uint8_t *p_dataptr = p_data;
+    LOG_RAW("MAC_TX: ");
+    while (data_len--) {
+        LOG_RAW("%02x", *p_dataptr++);
+    }
+    LOG_RAW("\r\n");
+#endif
+
+
     packetbuf_attr_t is_ack_req;
     is_ack_req = packetbuf_attr(PACKETBUF_ATTR_RELIABLE);
     if (is_ack_req) {
@@ -226,6 +242,20 @@ void MAC_Recv(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
         *p_err = NETSTK_ERR_INVALID_ARGUMENT;
         return;
     }
+#endif
+
+
+#if LOGGER_ENABLE
+    /*
+     * Logging
+     */
+    uint16_t data_len = len;
+    uint8_t *p_dataptr = p_data;
+    LOG_RAW("MAC_RX: ");
+    while (data_len--) {
+        LOG_RAW("%02x", *p_dataptr++);
+    }
+    LOG_RAW("\r\n");
 #endif
 
 
@@ -330,6 +360,20 @@ static void MAC_CbTx(void *p_arg, NETSTK_ERR *p_err)
     if (MAC_ACKReq) {
         Tmr_Stop(&MAC_Tmr1ACK);
         Tmr_Start(&MAC_Tmr1ACK);
+
+#if LOGGER_ENABLE
+        /*
+         * Logging
+         */
+        uint16_t data_len = packetbuf_datalen();
+        uint8_t *p_dataptr = packetbuf_dataptr();
+        LOG_RAW("MAC_RX: ");
+        while (data_len--) {
+            LOG_RAW("%02x", *p_dataptr++);
+        }
+        LOG_RAW("\r\n");
+#endif
+
     }
 }
 
