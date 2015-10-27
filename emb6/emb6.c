@@ -66,6 +66,10 @@
 #include "ctimer.h"
 #include "random.h"
 
+#if STK_CFG_REFACTOR_EN
+#include "lib_tmr.h"
+#endif
+
 #if NETSTACK_CONF_WITH_IPV6
 #include "uip-ds6.h"
 #endif
@@ -172,22 +176,60 @@ static int8_t loc_emb6DagRootInit(void)
 uint8_t loc_emb6NetstackInit(s_ns_t * ps_ns)
 {
     uint8_t     c_err = 0;
+	uint8_t     is_valid;
+    NETSTK_ERR  err;
+
+
     /* Initialize stack protocols */
     queuebuf_init();
     ctimer_init();
-    if ((ps_ns->hc != NULL) && (ps_ns->llsec != NULL) && (ps_ns->hmac != NULL) &&
-        (ps_ns->lmac != NULL) && (ps_ns->frame != NULL) && (ps_ns->inif != NULL)) {
-        if (ps_ns->frame->init(ps_ns))
-        {
-            /* This drivers belong to Contiki and retval are't tracked */
-            ps_ns->lmac->init(ps_ns);
-            ps_ns->hmac->init(ps_ns);
-            ps_ns->llsec->init(ps_ns);
-            ps_ns->hc->init(ps_ns);
-            tcpip_init();
-            c_err = 1;
+    Tmr_Init();
+
+    /*
+     * Verify stack submodule drivers
+     */
+    is_valid = (ps_ns->rf    != NULL) &&
+               (ps_ns->lpr   != NULL) &&
+               (ps_ns->phy   != NULL) &&
+               (ps_ns->mac   != NULL) &&
+               (ps_ns->llc   != NULL) &&
+               (ps_ns->llsec != NULL) &&
+               (ps_ns->hc    != NULL);
+    if (is_valid) {
+        /*
+         * Netstack submodule initializations
+         */
+        ps_ns->lpr->init(ps_ns, &err);
+        if (err != NETSTK_ERR_NONE) {
+            return 0;
         }
+
+        ps_ns->phy->init(ps_ns, &err);
+        if (err != NETSTK_ERR_NONE) {
+            return 0;
+        }
+
+        ps_ns->mac->init(ps_ns, &err);
+        if (err != NETSTK_ERR_NONE) {
+            return 0;
+        }
+
+        ps_ns->llc->init(ps_ns, &err);
+        if (err != NETSTK_ERR_NONE) {
+            return 0;
+        }
+
+        ps_ns->llsec->init(ps_ns);      /* logical link security    */
+        ps_ns->hc->init(ps_ns);         /* header compressor        */
+        ps_ns->frame->init(ps_ns);      /* sicslowpan driver        */
+
+        /*
+         * Initialize TCP/IP stack
+         */
+        tcpip_init();
+        c_err = 1;
     }
+
 
 #if EMB6_INIT_ROOT==TRUE
     if (!c_err || !loc_emb6DagRootInit()) {
@@ -240,3 +282,4 @@ void emb6_process(uint16_t us_delay)
 
 /** @} */
 /** @} */
+
