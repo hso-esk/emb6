@@ -5,6 +5,8 @@
  */
 
 #include <stdint.h>
+#include <string.h>
+
 
 #define LIB_TMR_MODULE
 #include <lib_tmr.h>

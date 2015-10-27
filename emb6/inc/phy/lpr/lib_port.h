@@ -21,7 +21,8 @@
 #define LED_MEAS_ON()               bsp_led(E_BSP_LED_RED, E_BSP_LED_ON)
 #define LED_MEAS_OFF()              bsp_led(E_BSP_LED_RED, E_BSP_LED_OFF)
 #define LED_ERROR()                 bsp_led(E_BSP_LED_RED, E_BSP_LED_ON)
-
+#define LED_ERR_ON()                bsp_led(E_BSP_LED_RED, E_BSP_LED_ON)
+#define LED_ERR_OFF()               bsp_led(E_BSP_LED_RED, E_BSP_LED_OFF)
 
 
 #else
@@ -36,6 +37,9 @@
 #define LED_MEAS_ON()
 #define LED_MEAS_OFF()
 #define LED_ERROR()
+
+#define LED_ERR_ON()
+#define LED_ERR_OFF()
 #endif
 
 
