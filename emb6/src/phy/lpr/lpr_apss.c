@@ -15,16 +15,6 @@
 #include "lib_tmr.h"
 #include "lpr.h"
 
-#if 1   // only used for displaying LCD
-#include "demo.h"
-#endif
-
-#ifdef DEMO_LPR_PRESENT
-#define LCD_UPDATE()                App_LCDUpdate()
-#else
-#define LCD_UPDATE()
-#endif
-
 
 /*
 ********************************************************************************
@@ -33,11 +23,11 @@
 */
 #define LPR_CFG_PKT_RX_QTY_IN_IDLE              (uint8_t)( 1u )
 
+
 #define LPR_WFSE_COUNT_MAX                      (uint8_t)( 2u )
 #define LPR_WFAE_COUNT_MAX                      (uint8_t)( 2u )
 #define LPR_WFPE_COUNT_MAX                      (uint8_t)( 3u )
 
-#define LPR_TASK_EVENT                          (c_event_t) ( 1u )
 
 #if LPR_CFG_CCA_BASED_SCAN_EN
 #define LPR_CCA_COUNT_MAX                       (uint8_t) ( 3u )
@@ -153,8 +143,8 @@ struct netstk_apss
 *                               LOCAL MACROS
 ********************************************************************************
 */
-#define LPR_SEM_POST(_event_)          evproc_putEvent(E_EVPROC_HEAD, _event_, &LPR_Ctx)
-#define LPR_SEM_WAIT(_event_)          evproc_regCallback(_event_, LPR_Task)
+#define LPR_EVENT_PEND(_event_)          evproc_regCallback(_event_, LPR_Task)
+#define LPR_EVENT_POST(_event_)          evproc_putEvent(E_EVPROC_HEAD, _event_, &LPR_Ctx)
 
 
 /*
@@ -201,9 +191,9 @@ static void LPR_PrepareSACK (NETSTK_APSS *p_apss);
 *                               LOCAL VARIABLES
 ********************************************************************************
 */
-static NETSTK_APSS     LPR_Ctx;
-static uint8_t      LPR_TxBuf[128];
-static uint16_t     LPR_TxBufLen;
+static NETSTK_APSS      LPR_Ctx;
+static uint8_t          LPR_TxBuf[128];
+static uint16_t         LPR_TxBufLen;
 
 
 /*
@@ -272,17 +262,22 @@ static void LPR_Init (void *p_netstk, NETSTK_ERR *p_err)
     p_apss->WFSEQty = 0;
     p_apss->IdleQty = 0;
 
+    /*
+     * Configure transmission-related attributes
+     */
 #if LPR_CFG_LOOSE_SYNC_EN
     p_apss->IsTxDelayed = 0;
     memset(&LPRPwrOnTbl, 0, sizeof(LPRPwrOnTbl));
 #endif
-
     memset(LPR_TxBuf, 0, sizeof(LPR_TxBuf));
     p_apss->TxCbArg = 0;
     p_apss->TxCbFnct = 0;
     p_apss->TxPktPtr = NULL;
     p_apss->TxPktLen = 0;
 
+    /*
+     * Configure power-up timer
+     */
     Tmr_Create(&p_apss->TmrPowerup,
                 LIB_TMR_TYPE_PERIODIC,
                 LPR_CFG_POWERUP_INTERVAL_IN_MS,
@@ -299,7 +294,7 @@ static void LPR_Init (void *p_netstk, NETSTK_ERR *p_err)
      * The reason is that both function have different interface, and therefore
      * LPR_Task cannot be registered for event-processing module.
      */
-    LPR_SEM_WAIT(LPR_TASK_EVENT);
+    LPR_EVENT_PEND(NETSTK_LPR_EVENT);
 }
 
 
@@ -308,12 +303,14 @@ static void LPR_Init (void *p_netstk, NETSTK_ERR *p_err)
  * @param   cbsent
  * @param   p_arg
  */
-static void LPR_Send (uint8_t *p_buf, uint16_t len, NETSTK_ERR *p_err)
+static void LPR_Send (uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
 {
-    NETSTK_ERR   radio_err;
     NETSTK_APSS *p_apss = &LPR_Ctx;
     const linkaddr_t *p_dstaddr;
 
+
+
+    LED_TX_ON();
     /*
      * Note(s):
      *
@@ -340,13 +337,20 @@ static void LPR_Send (uint8_t *p_buf, uint16_t len, NETSTK_ERR *p_err)
     }
 
     if (p_apss->State == LPR_STATE_POWER_DOWN) {
-        p_apss->Netstack->rf->on(&radio_err);
-        if (radio_err != NETSTK_ERR_NONE) {
-            *p_err = NETSTK_ERR_BUSY;
+        p_apss->State = LPR_STATE_TX_STARTED;
+
+        /*
+         * Turn RF on
+         */
+        p_apss->Netstack->rf->on(p_err);
+        if (*p_err != NETSTK_ERR_NONE) {
+            p_apss->State = LPR_STATE_POWER_DOWN;
             return;
         }
 
-        p_apss->State = LPR_STATE_TX_STARTED;
+        /*
+         * Category frame to send
+         */
         if (packetbuf_holds_broadcast()) {
             LPRDstId = 0;
             p_apss->BroadcastState = LPR_STATE_TX_BS;
@@ -360,18 +364,23 @@ static void LPR_Send (uint8_t *p_buf, uint16_t len, NETSTK_ERR *p_err)
             p_dstaddr = packetbuf_addr(PACKETBUF_ADDR_RECEIVER);
             memcpy(&LPRDstId, p_dstaddr->u8, 2);
             if (LPRDstId == LPR_INVALID_DEV_ID) {
-                *p_err = NETSTK_ERR_INVALID_ARGUMENT;
-
+                p_apss->Netstack->rf->off(p_err);
                 p_apss->State = LPR_STATE_POWER_DOWN;
-                LPR_SEM_POST(LPR_TASK_EVENT);
+                *p_err = NETSTK_ERR_INVALID_ARGUMENT;
                 return;
             }
 
+            /*
+             * Start transmission timer
+             */
             LPR_Tmr1Start(&p_apss->Tmr1TxStrobe,
                             LPR_CFG_STROBE_TX_INTERVAL_IN_MS,
                             LPR_TmrIsr1TxStrobe);
         }
     } else {
+        /*
+         * If APSS is in state IDLE, frame is transmitted immediately
+         */
         p_apss->State = LPR_STATE_TX_P;
     }
 
@@ -380,7 +389,7 @@ static void LPR_Send (uint8_t *p_buf, uint16_t len, NETSTK_ERR *p_err)
      * Store data to send to TX Buffer of APSS, as Strobe ACK frame to receive
      * is to be written into the common packet buffer by radio driver.
      */
-    memcpy(LPR_TxBuf, p_buf, len);
+    memcpy(LPR_TxBuf, p_data, len);
     LPR_TxBufLen = len;
 
     
@@ -388,7 +397,7 @@ static void LPR_Send (uint8_t *p_buf, uint16_t len, NETSTK_ERR *p_err)
      * Trigger APSS task processing
      */
     *p_err = NETSTK_ERR_NONE;
-    LPR_SEM_POST(LPR_TASK_EVENT);
+    LPR_EVENT_POST(NETSTK_LPR_EVENT);
 }
 
 
@@ -398,7 +407,6 @@ static void LPR_Send (uint8_t *p_buf, uint16_t len, NETSTK_ERR *p_err)
  */
 static void  LPR_Recv (uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
 {
-    NETSTK_ERR  err;
     NETSTK_APSS *p_apss = &LPR_Ctx;
 
 
@@ -411,15 +419,15 @@ static void  LPR_Recv (uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
         return;
     }
 
-
     /*
      * The received frame is passed to the APSS framer for parsing process.
      */
-    p_apss->Framer->Parse(p_data, len, &err);
+    *p_err = NETSTK_ERR_NONE;
+    p_apss->Framer->Parse(p_data, len, p_err);
     switch (p_apss->State) {
         case LPR_STATE_SCAN_WFS:
         case LPR_STATE_SCAN_WFSE:
-            switch (err) {
+            switch (*p_err) {
                 case NETSTK_ERR_NONE:
                     p_apss->State = LPR_STATE_TX_SACK;
                     break;
@@ -439,7 +447,9 @@ static void  LPR_Recv (uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
                 default:
                     break;
             }
+            LPR_EVENT_POST(NETSTK_LPR_EVENT);
             break;
+
 
         case LPR_STATE_TX_LBT_WFA:
             /*
@@ -448,17 +458,19 @@ static void  LPR_Recv (uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
              * If a Strobe ACK isn't arrived before strobe transmission timeout
              * expires, then APSS shall declare failed transmission attempt
              */
-            if (err == NETSTK_ERR_NONE) {
+            if (*p_err == NETSTK_ERR_NONE) {
                 p_apss->State = LPR_STATE_TX_LBT_WFI;
             }
             break;
 
         case LPR_STATE_TX_SWFA:
         case LPR_STATE_TX_SWFAE:
-            if (err == NETSTK_ERR_NONE) {
+            if (*p_err == NETSTK_ERR_NONE) {
                 p_apss->State = LPR_STATE_TX_P;
+                LPR_EVENT_POST(NETSTK_LPR_EVENT);
             }
             break;
+
 
         case LPR_STATE_RX_WFP:
         case LPR_STATE_RX_WFPE:
@@ -474,7 +486,7 @@ static void  LPR_Recv (uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
              * (3)  If a strobe has arrived while APSS is waiting for data
              *      payload, then APSS shall terminate scan process.
              */
-            if (err == NETSTK_ERR_LPR_UNSUPPORTED_FRAME) {
+            if (*p_err == NETSTK_ERR_LPR_UNSUPPORTED_FRAME) {
                 packetbuf_clear();
                 packetbuf_set_datalen(len);
                 memcpy(packetbuf_dataptr(),
@@ -484,10 +496,11 @@ static void  LPR_Recv (uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
             } else {
                 p_apss->State = LPR_STATE_SCAN_DONE;
             }
+            LPR_EVENT_POST(NETSTK_LPR_EVENT);
             break;
 
         case LPR_STATE_IDLE:
-            if (err == NETSTK_ERR_LPR_UNSUPPORTED_FRAME) {
+            if (*p_err == NETSTK_ERR_LPR_UNSUPPORTED_FRAME) {
                 packetbuf_clear();
                 packetbuf_set_datalen(len);
                 memcpy(packetbuf_dataptr(),
@@ -495,26 +508,18 @@ static void  LPR_Recv (uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
                        len);
                 p_apss->State = LPR_STATE_RX_P;
             }
+            LPR_EVENT_POST(NETSTK_LPR_EVENT);
             break;
 
         default:
             break;
     }
-
-
-    /*
-     * Upon complete reception of a frame, the APSS Task shall be called for
-     * further processes if needed.
-     */
-    LPR_SEM_POST(LPR_TASK_EVENT);
 }
 
 
 static void LPR_IOCtrl(NETSTK_IOC_CMD cmd, void *p_val, NETSTK_ERR *p_err)
 {
     *p_err = NETSTK_ERR_NONE;
-
-
     switch (cmd) {
         case NETSTK_CMD_TX_CBFNCT_SET:
             LPR_Ctx.TxCbFnct = (NETSTK_CBFNCT)p_val;
@@ -559,13 +564,11 @@ static void LPR_Off (NETSTK_ERR *p_err)
 static void LPR_Task(c_event_t c_event, p_data_t p_data)
 {
     NETSTK_APSS  *p_apss = &LPR_Ctx;
-    NETSTK_ERR    err;
-    uint8_t       is_done = 0;
+    NETSTK_ERR    err = NETSTK_ERR_NONE;
 
 
     switch (p_apss->State) {
         case LPR_STATE_NONE:
-            is_done = 1;
             break;
         case LPR_STATE_POWER_DOWN:
             /*
@@ -573,7 +576,6 @@ static void LPR_Task(c_event_t c_event, p_data_t p_data)
              * from the next higher layer or periodic idle listening events.
              * In this state, the radio transceiver must be switched off
              */
-            is_done = 1;
             break;
         case LPR_STATE_IDLE:
             break;
@@ -587,7 +589,6 @@ static void LPR_Task(c_event_t c_event, p_data_t p_data)
          */
         case LPR_STATE_SCAN_STARTED:
             LPR_PrepareIdleListening(p_apss);
-            LED_SCAN_ON();
             break;
 #if LPR_CFG_CCA_BASED_SCAN_EN
         case LPR_STATE_SCAN_CCA:
@@ -605,6 +606,7 @@ static void LPR_Task(c_event_t c_event, p_data_t p_data)
             LED_SCAN_OFF();
             if (LPR_IS_PENDING_TX()) {
                 p_apss->State = LPR_STATE_TX_S;
+                LPR_EVENT_POST(NETSTK_LPR_EVENT);
             } else {
                 LPR_GotoPowerDown(p_apss);
             }
@@ -620,7 +622,6 @@ static void LPR_Task(c_event_t c_event, p_data_t p_data)
              * However as timeout expires, APSS should put/raise event at the
              * head of of event-processing list to continue processing its tasks
              */
-            is_done = 1;
             break;
         case LPR_STATE_RX_BSD:
             break;
@@ -676,7 +677,6 @@ static void LPR_Task(c_event_t c_event, p_data_t p_data)
              * However as timeout expires, APSS should put/raise event at the
              * head of of event-processing list to continue processing its tasks
              */
-            is_done = 1;
             break;
         case LPR_STATE_TX_SWFA:
             break;
@@ -693,17 +693,8 @@ static void LPR_Task(c_event_t c_event, p_data_t p_data)
             LPR_GotoIdle(p_apss);
             break;
 
-
         default:
             break;
-    }
-
-
-    /*
-     * If APSS is not done with its task, it should take over other tasks
-     */
-    if (is_done == 0) {
-        LPR_SEM_POST(LPR_TASK_EVENT);
     }
 }
 
@@ -722,13 +713,15 @@ static uint8_t LPR_CCA(NETSTK_APSS *p_apss)
     uint8_t chan_idle;
     uint8_t csma_qty;
     uint8_t is_idle;
-    NETSTK_ERR err;
+    NETSTK_ERR err = NETSTK_ERR_NONE;
     
 
     chan_idle = 1;
     csma_qty = 2;
     while (csma_qty--) {
-        p_apss->Netstack->rf->ioctrl(RADIO_IOC_CMD_CCA_GET, &is_idle, &err);
+        p_apss->Netstack->rf->ioctrl(NETSTK_CMD_RF_CCA_GET,
+                                     &is_idle,
+                                     &err);
         if (is_idle == 0) {
             chan_idle = 0;
             break;
@@ -758,7 +751,7 @@ static uint8_t LPR_CSMA(NETSTK_APSS *p_apss)
     uint32_t max_backoff = 3;
     uint32_t delay = 0;
     uint32_t max_random;
-    NETSTK_ERR err;
+    NETSTK_ERR err = NETSTK_ERR_NONE;
     uint8_t is_idle;
 
 
@@ -777,7 +770,7 @@ static uint8_t LPR_CSMA(NETSTK_APSS *p_apss)
         /*
          * Perform CCA
          */
-        p_apss->Netstack->rf->ioctrl(RADIO_IOC_CMD_CCA_GET,
+        p_apss->Netstack->rf->ioctrl(NETSTK_CMD_RF_CCA_GET,
                                      &is_idle,
                                      &err);
         if (is_idle == 1) {                                         /* Channel idle ?               */
@@ -819,7 +812,8 @@ static void LPR_TmrIsrPowerUp (void *p_arg)
 
     if (p_apss->State == LPR_STATE_POWER_DOWN) {
         p_apss->State = LPR_STATE_SCAN_STARTED;
-        LPR_SEM_POST(LPR_TASK_EVENT);
+        LPR_EVENT_POST(NETSTK_LPR_EVENT);
+        LED_SCAN_ON();
     }
 }
 
@@ -830,7 +824,7 @@ static void LPR_TmrIsrPowerUp (void *p_arg)
  */
 static void LPR_TmrIsr1Scan (void *p_arg)
 {
-    NETSTK_ERR err;
+    NETSTK_ERR err = NETSTK_ERR_NONE;
     uint8_t is_rx_busy;
     NETSTK_APSS *p_apss = (NETSTK_APSS *)p_arg;
 
@@ -839,16 +833,16 @@ static void LPR_TmrIsr1Scan (void *p_arg)
         if (p_apss->WFSEQty > LPR_WFSE_COUNT_MAX) {
             p_apss->WFSEQty = 0;
             p_apss->State = LPR_STATE_SCAN_DONE;
-            LPR_SEM_POST(LPR_TASK_EVENT);
+            LPR_EVENT_POST(NETSTK_LPR_EVENT);
             return;
         }
 
-        p_apss->Netstack->rf->ioctrl(RADIO_IOC_CMD_IS_RX_BUSY,
+        p_apss->Netstack->rf->ioctrl(NETSTK_CMD_RF_IS_RX_BUSY,
                                      &is_rx_busy,
                                      &err);
         if (is_rx_busy != 1) {
             p_apss->State = LPR_STATE_SCAN_DONE;
-            LPR_SEM_POST(LPR_TASK_EVENT);
+            LPR_EVENT_POST(NETSTK_LPR_EVENT);
         } else {
             p_apss->WFSEQty++;
             p_apss->State = LPR_STATE_SCAN_WFSE;
@@ -870,7 +864,7 @@ static void LPR_TmrIsr1Scan (void *p_arg)
 
 static void LPR_TmrIsr1WFP (void *p_arg)
 {
-    NETSTK_ERR err;
+    NETSTK_ERR err = NETSTK_ERR_NONE;
     uint8_t is_rx_busy;
     NETSTK_APSS *p_apss = (NETSTK_APSS *)p_arg;
 
@@ -879,16 +873,16 @@ static void LPR_TmrIsr1WFP (void *p_arg)
         if (p_apss->WFPEQty > LPR_WFPE_COUNT_MAX) {
             p_apss->WFPEQty = 0;
             p_apss->State = LPR_STATE_SCAN_DONE;
-            LPR_SEM_POST(LPR_TASK_EVENT);
+            LPR_EVENT_POST(NETSTK_LPR_EVENT);
             return;
         }
 
-        p_apss->Netstack->rf->ioctrl(RADIO_IOC_CMD_IS_RX_BUSY,
+        p_apss->Netstack->rf->ioctrl(NETSTK_CMD_RF_IS_RX_BUSY,
                                      &is_rx_busy,
                                      &err);
         if (is_rx_busy != 1) {
             p_apss->State = LPR_STATE_SCAN_DONE;
-            LPR_SEM_POST(LPR_TASK_EVENT);
+            LPR_EVENT_POST(NETSTK_LPR_EVENT);
         } else {
             p_apss->WFPEQty++;
             p_apss->State = LPR_STATE_RX_WFPE;
@@ -908,7 +902,7 @@ static void LPR_TmrIsr1TxStrobe (void *p_arg)
 
     p_apss->State = LPR_STATE_TX_DONE;
     p_apss->LastErrTx = NETSTK_ERR_TX_TIMEOUT;
-    LPR_SEM_POST(LPR_TASK_EVENT);
+    LPR_EVENT_POST(NETSTK_LPR_EVENT);
 }
 
 
@@ -923,7 +917,7 @@ static void LPR_TmrIsr1TxSACKD (void *p_arg)
 
     if (p_apss->State == LPR_STATE_TX_SACKD) {
         p_apss->State  = LPR_STATE_TX_SACK;
-        LPR_SEM_POST(LPR_TASK_EVENT);
+        LPR_EVENT_POST(NETSTK_LPR_EVENT);
     }
 }
 
@@ -939,7 +933,7 @@ static void LPR_TmrIsr1RxBSD (void *p_arg)
 
     if (p_apss->State == LPR_STATE_RX_BSD) {
         p_apss->State  = LPR_STATE_RX_B;
-        LPR_SEM_POST(LPR_TASK_EVENT);
+        LPR_EVENT_POST(NETSTK_LPR_EVENT);
     }
 }
 
@@ -950,14 +944,14 @@ static void LPR_TmrIsr1RxBSD (void *p_arg)
  */
 static void LPR_TmrIsr1WFA (void *p_arg)
 {
-    NETSTK_ERR err;
+    NETSTK_ERR err = NETSTK_ERR_NONE;
     uint8_t is_rx_busy;
     NETSTK_APSS *p_apss = (NETSTK_APSS *)p_arg;
 
 
     if (p_apss->BroadcastState == LPR_STATE_TX_B) {
         p_apss->State = LPR_STATE_TX_P;
-        LPR_SEM_POST(LPR_TASK_EVENT);
+        LPR_EVENT_POST(NETSTK_LPR_EVENT);
         return;
     }
 
@@ -965,16 +959,16 @@ static void LPR_TmrIsr1WFA (void *p_arg)
         if (p_apss->WFAEQty > LPR_WFAE_COUNT_MAX) {
             p_apss->WFAEQty = 0;
             p_apss->State = LPR_STATE_TX_S;
-            LPR_SEM_POST(LPR_TASK_EVENT);
+            LPR_EVENT_POST(NETSTK_LPR_EVENT);
             return;
         }
 
-        p_apss->Netstack->rf->ioctrl(RADIO_IOC_CMD_IS_RX_BUSY,
+        p_apss->Netstack->rf->ioctrl(NETSTK_CMD_RF_IS_RX_BUSY,
                                      &is_rx_busy,
                                      &err);
         if (is_rx_busy != 1) {
             p_apss->State = LPR_STATE_TX_S;
-            LPR_SEM_POST(LPR_TASK_EVENT);
+            LPR_EVENT_POST(NETSTK_LPR_EVENT);
         } else {
             p_apss->WFAEQty++;
             p_apss->State = LPR_STATE_TX_SWFAE;
@@ -985,7 +979,7 @@ static void LPR_TmrIsr1WFA (void *p_arg)
     if (p_apss->State == LPR_STATE_TX_PWFA) {
         p_apss->State = LPR_STATE_TX_DONE;
         p_apss->LastErrTx = NETSTK_ERR_TX_NOACK;
-        LPR_SEM_POST(LPR_TASK_EVENT);
+        LPR_EVENT_POST(NETSTK_LPR_EVENT);
     }
 }
 
@@ -1005,7 +999,7 @@ static void LPR_TmrIsr1TxSD (void *p_arg)
      */
     if (p_apss->State == LPR_STATE_TX_SD) {
         p_apss->State  = LPR_STATE_SCAN_STARTED;
-        LPR_SEM_POST(LPR_TASK_EVENT);
+        LPR_EVENT_POST(NETSTK_LPR_EVENT);
     }
 }
 
@@ -1017,7 +1011,7 @@ static void LPR_TmrIsr1TxSD (void *p_arg)
 static void LPR_TmrIsr1Idle(void *p_arg)
 {
     NETSTK_APSS *p_apss = (NETSTK_APSS *)p_arg;
-    NETSTK_ERR err;
+    NETSTK_ERR err = NETSTK_ERR_NONE;
     uint8_t is_rx_busy;
 
 
@@ -1025,16 +1019,16 @@ static void LPR_TmrIsr1Idle(void *p_arg)
         if (p_apss->WFPEQty > LPR_WFPE_COUNT_MAX) {
             p_apss->WFPEQty = 0;
             p_apss->State = LPR_STATE_SLEEP;
-            LPR_SEM_POST(LPR_TASK_EVENT);
+            LPR_EVENT_POST(NETSTK_LPR_EVENT);
             return;
         }
 
-        p_apss->Netstack->rf->ioctrl(RADIO_IOC_CMD_IS_RX_BUSY,
+        p_apss->Netstack->rf->ioctrl(NETSTK_CMD_RF_IS_RX_BUSY,
                                      &is_rx_busy,
                                      &err);
         if (is_rx_busy != 1) {
             p_apss->State = LPR_STATE_SLEEP;
-            LPR_SEM_POST(LPR_TASK_EVENT);
+            LPR_EVENT_POST(NETSTK_LPR_EVENT);
         } else {
             p_apss->WFPEQty++;
             p_apss->State = LPR_STATE_RX_WFPE;
@@ -1049,12 +1043,12 @@ static void LPR_TmrIsr1Idle(void *p_arg)
  */
 static void LPR_GotoPowerDown (NETSTK_APSS *p_apss)
 {
-    NETSTK_ERR       err;
+    NETSTK_ERR err = NETSTK_ERR_NONE;
 
 
     LED_SCAN_OFF();
-    p_apss->Netstack->rf->off(&err);
 
+    p_apss->Netstack->rf->off(&err);
     Tmr_Stop(&p_apss->Tmr1W);
     Tmr_Stop(&p_apss->Tmr1Scan);
     Tmr_Stop(&p_apss->Tmr1TxStrobe);
@@ -1073,7 +1067,6 @@ static void LPR_GotoPowerDown (NETSTK_APSS *p_apss)
 
     p_apss->BroadcastState = LPR_STATE_NONE;
     p_apss->State = LPR_STATE_POWER_DOWN;
-    LCD_UPDATE();
 }
 
 
@@ -1106,7 +1099,7 @@ static void LPR_GotoIdle(NETSTK_APSS *p_apss)
  */
 static void LPR_PrepareIdleListening (NETSTK_APSS *p_apss)
 {
-    NETSTK_ERR       radio_err;
+    NETSTK_ERR err = NETSTK_ERR_NONE;
 
 
     /*
@@ -1126,15 +1119,8 @@ static void LPR_PrepareIdleListening (NETSTK_APSS *p_apss)
         p_apss->State = LPR_STATE_SCAN_DONE;
     }
 #else
-    p_apss->Netstack->rf->on(&radio_err);
-    
-#if 0   // test WOR
-    while (1) {
-        p_apss->Netstack->radio->Task(&radio_err);
-    }
-#endif
-    
-    if (radio_err == NETSTK_ERR_NONE) {
+    p_apss->Netstack->rf->on(&err);
+    if (err == NETSTK_ERR_NONE) {
         if (p_apss->State == LPR_STATE_SCAN_STARTED) {
             p_apss->State = LPR_STATE_SCAN_WFS;
             LPR_Tmr1Start(&p_apss->Tmr1Scan,
@@ -1143,6 +1129,7 @@ static void LPR_PrepareIdleListening (NETSTK_APSS *p_apss)
         }
     } else {
         p_apss->State = LPR_STATE_SCAN_DONE;
+        LPR_EVENT_POST(NETSTK_LPR_EVENT);
     }
 #endif
 }
@@ -1153,7 +1140,7 @@ static void LPR_PrepareIdleListening (NETSTK_APSS *p_apss)
  */
 static void LPR_TxSACK (NETSTK_APSS *p_apss)
 {
-    NETSTK_ERR rf_err;
+    NETSTK_ERR err = NETSTK_ERR_NONE;
 
 
     /*
@@ -1165,7 +1152,7 @@ static void LPR_TxSACK (NETSTK_APSS *p_apss)
          * Turn RF on when required
          */
         if (p_apss->IsTxDelayed) {
-            p_apss->Netstack->rf->on(&rf_err);
+            p_apss->Netstack->rf->on(&err);
             p_apss->IsTxDelayed = 0;
         }
 
@@ -1174,8 +1161,8 @@ static void LPR_TxSACK (NETSTK_APSS *p_apss)
          */
         p_apss->Netstack->rf->send(p_apss->TxPktPtr,
                                    p_apss->TxPktLen,
-                                   &rf_err);
-        if (rf_err == NETSTK_ERR_NONE) {
+                                   &err);
+        if (err == NETSTK_ERR_NONE) {
             p_apss->State = LPR_STATE_RX_WFP;
             LPR_Tmr1Start(&p_apss->Tmr1W,
                             LPR_PORT_WFP_TIMEOUT_IN_MS,
@@ -1196,7 +1183,7 @@ static void LPR_TxSACK (NETSTK_APSS *p_apss)
  */
 static void LPR_TxStrobe (NETSTK_APSS *p_apss)
 {
-    NETSTK_ERR   radio_err;
+    NETSTK_ERR err = NETSTK_ERR_NONE;
     uint8_t is_rx_busy;
 
 
@@ -1204,7 +1191,7 @@ static void LPR_TxStrobe (NETSTK_APSS *p_apss)
      * Turn radio on if required and reset Strobe transmission timer
      */
     if (p_apss->IsTxDelayed) {
-        p_apss->Netstack->rf->on(&radio_err);
+        p_apss->Netstack->rf->on(&err);
         LPR_Tmr1Start (&p_apss->Tmr1TxStrobe,
                          LPR_CFG_STROBE_TX_INTERVAL_IN_MS,
                          LPR_TmrIsr1TxStrobe);
@@ -1214,8 +1201,8 @@ static void LPR_TxStrobe (NETSTK_APSS *p_apss)
 
     p_apss->Netstack->rf->send(p_apss->TxPktPtr,
                                p_apss->TxPktLen,
-                               &radio_err);
-    if (radio_err != NETSTK_ERR_NONE) {
+                               &err);
+    if (err != NETSTK_ERR_NONE) {
         /*
          * Note(s): Strobe has failed to be transmitted
          *
@@ -1227,12 +1214,13 @@ static void LPR_TxStrobe (NETSTK_APSS *p_apss)
          *      where it waits for a corresponding ACK to the sent strobe for a
          *      predefined period of time.
          */
-        p_apss->Netstack->rf->ioctrl(RADIO_IOC_CMD_IS_RX_BUSY,
+        p_apss->Netstack->rf->ioctrl(NETSTK_CMD_RF_IS_RX_BUSY,
                                      &is_rx_busy,
-                                     &radio_err);
+                                     &err);
         if (is_rx_busy != 1) {
             p_apss->State = LPR_STATE_TX_DONE;
             p_apss->LastErrTx = NETSTK_ERR_RF_SEND;
+            LPR_EVENT_POST(NETSTK_LPR_EVENT);
         } else {
             p_apss->State = LPR_STATE_TX_SWFAE;
         }
@@ -1256,9 +1244,6 @@ static void LPR_TxStrobe (NETSTK_APSS *p_apss)
  */
 static void LPR_TxPayload (NETSTK_APSS *p_apss)
 {
-    NETSTK_ERR       err;
-
-
 #if 0 // draft
     uint8_t is_chan_idle;
 
@@ -1276,14 +1261,12 @@ static void LPR_TxPayload (NETSTK_APSS *p_apss)
     }
 
 #else
-    p_apss->Netstack->rf->send(LPR_TxBuf, LPR_TxBufLen, &err);
-    if (err != NETSTK_ERR_NONE) {
-        p_apss->LastErrTx = NETSTK_ERR_RF_SEND;
-    } else {
-        p_apss->LastErrTx = NETSTK_ERR_NONE;
-    }
+    p_apss->Netstack->rf->send(LPR_TxBuf,
+                               LPR_TxBufLen,
+                               &p_apss->LastErrTx);
 #endif
     p_apss->State = LPR_STATE_TX_DONE;
+    LPR_EVENT_POST(NETSTK_LPR_EVENT);
 }
 
 
@@ -1337,7 +1320,7 @@ static void LPR_RxPayload(NETSTK_APSS *p_apss)
  */
 static void LPR_PrepareRxBroadcast (NETSTK_APSS *p_apss)
 {
-    NETSTK_ERR err;
+    NETSTK_ERR err = NETSTK_ERR_NONE;
 
 
     if (p_apss->State == LPR_STATE_RX_B) {
@@ -1356,9 +1339,8 @@ static void LPR_PrepareRxBroadcast (NETSTK_APSS *p_apss)
  */
 static void LPR_PrepareStrobe (NETSTK_APSS *p_apss)
 {
-    NETSTK_ERR         stk_err;
-    NETSTK_ERR       radio_err;
-    LIB_TMR_TICK    delay;
+    NETSTK_ERR     err = NETSTK_ERR_NONE;
+    LIB_TMR_TICK   delay = 0;
 
 
     /*
@@ -1378,15 +1360,15 @@ static void LPR_PrepareStrobe (NETSTK_APSS *p_apss)
         p_apss->TxPktPtr = p_apss->Framer->Create(LPR_FRAME_TYPE_BROADCAST,
                                                   &p_apss->TxPktLen,
                                                   &delay,
-                                                  &stk_err);
-        if (stk_err == NETSTK_ERR_LPR_BROADCAST_LAST_STROBE) {
+                                                  &err);
+        if (err == NETSTK_ERR_LPR_BROADCAST_LAST_STROBE) {
             p_apss->BroadcastState = LPR_STATE_TX_B;
         }
     } else {
         p_apss->TxPktPtr = p_apss->Framer->Create(LPR_FRAME_TYPE_STROBE,
                                                   &p_apss->TxPktLen,
                                                   &delay,
-                                                  &stk_err);
+                                                  &err);
     }
 
 #if LPR_CFG_LOOSE_SYNC_EN
@@ -1402,10 +1384,11 @@ static void LPR_PrepareStrobe (NETSTK_APSS *p_apss)
             LPR_Tmr1Start(&p_apss->Tmr1W,
                             delay,
                             LPR_TmrIsr1TxSD);
-            p_apss->Netstack->rf->off(&radio_err);
+            p_apss->Netstack->rf->off(&err);
             p_apss->IsTxDelayed = 1;
         } else {
             p_apss->State = LPR_STATE_SCAN_STARTED;
+            LPR_EVENT_POST(NETSTK_LPR_EVENT);
         }
     }
 #endif  /* LPR_CFG_LOOSE_SYNC_EN   */
@@ -1418,8 +1401,7 @@ static void LPR_PrepareStrobe (NETSTK_APSS *p_apss)
  */
 static void LPR_PrepareSACK (NETSTK_APSS *p_apss)
 {
-    NETSTK_ERR      stk_err;
-    NETSTK_ERR      rf_err;
+    NETSTK_ERR      err = NETSTK_ERR_NONE;
     LIB_TMR_TICK    delay;
 
 
@@ -1429,9 +1411,9 @@ static void LPR_PrepareSACK (NETSTK_APSS *p_apss)
     p_apss->TxPktPtr = p_apss->Framer->Create(LPR_FRAME_TYPE_SACK,
                                               &p_apss->TxPktLen,
                                               &delay,
-                                              &stk_err);
+                                              &err);
     if ((p_apss->TxPktPtr == NULL) &&
-        (stk_err == NETSTK_ERR_LPR_BROADCAST_NOACK)) {
+        (err == NETSTK_ERR_LPR_BROADCAST_NOACK)) {
         /*
          * ACK is not required when a broadcast strobe is received
          */
@@ -1441,7 +1423,7 @@ static void LPR_PrepareSACK (NETSTK_APSS *p_apss)
             LPR_Tmr1Start(&p_apss->Tmr1WBS,
                            delay,
                            LPR_TmrIsr1RxBSD);
-            p_apss->Netstack->rf->off(&rf_err);
+            p_apss->Netstack->rf->off(&err);
         }
     } else {
         /*
@@ -1456,7 +1438,7 @@ static void LPR_PrepareSACK (NETSTK_APSS *p_apss)
             LPR_Tmr1Start(&p_apss->Tmr1W,
                             delay,
                             LPR_TmrIsr1TxSACKD);
-            p_apss->Netstack->rf->off(&rf_err);
+            p_apss->Netstack->rf->off(&err);
             p_apss->IsTxDelayed = 1;
         }
     }
