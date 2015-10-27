@@ -87,7 +87,7 @@ LPR_FRAMER_DRV SmartMACFramer = {
  */
 static void SmartMAC_CalcStrobeDelay(LPR_PWRON_TBL_ENTRY *p_dev, uint32_t *p_delay)
 {
-    uint8_t n;
+    uint8_t n, i;
     uint32_t t0, t1;
     uint32_t tx_period;
     uint32_t tx_advance;
@@ -95,36 +95,43 @@ static void SmartMAC_CalcStrobeDelay(LPR_PWRON_TBL_ENTRY *p_dev, uint32_t *p_del
 
     if (p_dev->StrobeSentQty == 0) {                                    /* 1st Strobe in strobe stream              */
         t0 = p_dev->LastWakeup;                                         /* Last power-on time interval              */
-        n  = (TmrCurTick - t0) / LPR_CFG_POWERUP_INTERVAL_IN_MS;       /* Number of power-on interval in between   */
-        t1 = t0 + (n + 1) * LPR_CFG_POWERUP_INTERVAL_IN_MS;            /* Predicted next power-on time interval    */
-        *p_delay = (t1 - TmrCurTick);
-
 
         /*
-         * Note(s):
-         *
-         * (1)  Minimum possible delay shall be calculated as following:
-         *      min_delay = T_off_to_on + T_on_to_off + T_scan + T_tx_smartpreamble
+         * Perform prediction on waking-up interval of the intended receiver
          */
-        tx_period = LPR_PORT_STROBE_TX_TIME_IN_MS +
-                    LPR_PORT_STROBE_TX_GAP_TIME_IN_MS;
+        i = 1;
+        do {
+            n  = (TmrCurTick - t0) / LPR_CFG_POWERUP_INTERVAL_IN_MS;        /* Number of power-on interval in between   */
+            t1 = t0 + (n + i) * LPR_CFG_POWERUP_INTERVAL_IN_MS;             /* Predicted next power-on time interval    */
+            *p_delay = (t1 - TmrCurTick);
 
-        tx_advance = LPR_CFG_QTY_STROBE_SENT_IN_ADVANCE * tx_period;
+            /*
+             * Note(s):
+             *
+             * (1)  Minimum possible delay shall be calculated as following:
+             *      min_delay = T_off_to_on + T_on_to_off + T_scan + T_tx_smartpreamble
+             */
+            tx_period = LPR_PORT_STROBE_TX_TIME_IN_MS +
+                        LPR_PORT_STROBE_TX_GAP_TIME_IN_MS;
 
-        min_delay = LPR_PORT_OFF_TO_ON_TIME_IN_MS      +
-                    LPR_PORT_ON_TO_OFF_TIME_IN_MS      +
-                    LPR_PORT_SCAN_DURATION_IN_MS       +
-                    SMARTMAC_CFG_COUNT_MAX * tx_period;
+            tx_advance = LPR_CFG_QTY_STROBE_SENT_IN_ADVANCE * tx_period;
 
-        if (*p_delay < min_delay) {
-            *p_delay = 0;
-        } else {
-            *p_delay -= min_delay;
+            min_delay = LPR_PORT_OFF_TO_ON_TIME_IN_MS      +
+                        LPR_PORT_ON_TO_OFF_TIME_IN_MS      +
+                        LPR_PORT_SCAN_DURATION_IN_MS       +
+                        SMARTMAC_CFG_COUNT_MAX * tx_period +
+                        50; /* reliable coefficient */
 
-            if (*p_delay > tx_advance) {
-                *p_delay -= tx_advance;
+            if (*p_delay < min_delay) {
+                *p_delay = 0;
+            } else {
+                *p_delay -= min_delay;
+                if (*p_delay > tx_advance) {
+                    *p_delay -= tx_advance;
+                }
             }
-        }
+            i++;
+        } while (*p_delay == 0);
 
         SmartMAC_StrobeCnt = SMARTMAC_CFG_COUNT_MAX;
     } else {
