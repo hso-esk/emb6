@@ -41,7 +41,7 @@
 
 //#include "contiki.h"
 #include "linkaddr.h"
-#include "sicslowmac.h"
+#include "sicslowpan.h"
 
 /* Neighbor table size */
 #ifdef NBR_TABLE_CONF_MAX_NEIGHBORS
