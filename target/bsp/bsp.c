@@ -275,6 +275,7 @@ void bsp_spiFrameWrite(void * p_spi, uint8_t c_addr, uint8_t * pc_data, uint8_t 
     hal_spiSlaveSel(p_spi,false);
 }
 
+
 /*============================================================================*/
 /*  bsp_wdt()                                                           */
 /*============================================================================*/
@@ -326,7 +327,6 @@ uint32_t         bsp_get(en_bspParams_t en_param)
 }
 
 
-#if STK_CFG_REFACTOR_EN
 /**
  * @brief   This function returns a upper-bounded random number
  * @param   max     Maximum possible value of the returned random number
@@ -341,7 +341,6 @@ uint32_t bsp_getrand(uint32_t max)
     ret = (uint32_t)(ret / 65536) % max;
     return ret;
 }
-#endif
 
 
 /** @} */
