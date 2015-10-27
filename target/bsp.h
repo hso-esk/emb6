@@ -292,6 +292,12 @@ void bsp_spiRegWrite(void * p_spi, uint8_t c_addr, uint8_t  c_data);
 
 void bsp_spiFrameWrite(void * p_spi, uint8_t c_addr, uint8_t * pc_data, uint8_t c_len);
 
+#define bsp_spiSelect           hal_spiSelect
+#define bsp_spiDeselect         hal_spiDeselect
+#define bsp_spiTxRx             hal_spiTxRx
+#define bsp_spiRead             hal_spiRead
+#define bsp_spiWrite            hal_spiWrite
+
 
 /*============================================================================*/
 /** \brief  This function will manipulate a watchdog timer
@@ -322,14 +328,13 @@ void bsp_wdt(en_bspWdtAction_t wdtAct);
 uint32_t         bsp_get(en_bspParams_t en_param);
 
 
-#if STK_CFG_REFACTOR_EN
+
 /**
  * @brief   This function returns a upper-bounded random number
  * @param   max     Maximum possible value of the returned random number
  * @return
  */
 uint32_t    bsp_getrand(uint32_t max);
-#endif
 
 
 #endif /* __BSP_H__ */

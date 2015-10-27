@@ -431,7 +431,7 @@ void hal_spiSelect(void *p_spi)
     spi_rfSelect();
 }
 
-void hal_spiDeSelect(void *p_spi)
+void hal_spiDeselect(void *p_spi)
 {
     spi_rfDeselect();
 }
