@@ -66,9 +66,7 @@
 #include "ctimer.h"
 #include "random.h"
 
-#if STK_CFG_REFACTOR_EN
 #include "lib_tmr.h"
-#endif
 
 #if NETSTACK_CONF_WITH_IPV6
 #include "uip-ds6.h"
