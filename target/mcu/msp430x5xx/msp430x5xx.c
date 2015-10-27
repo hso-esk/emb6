@@ -341,14 +341,21 @@ uint8_t hal_extIntClear(en_targetExtInt_t e_pin)
 
 void hal_delay_us(uint32_t ul_delay)
 {
-    uint32_t volatile i = ul_delay;
+    /*
+     * Note(s)
+     *
+     * hal_delay_us() is only called by emb6.c to make a delay multiple of 500us,
+     * which is equivalent to 1 systick
+     */
+    uint32_t tick_stop;
 
-    while (i) {
-        i--;
-        NOP();      /* CPU Frequency = 4 MHz     */
-        NOP();      /* 1 cycle delay = 0.25 us   */
-        NOP();      /* 4 cycle delay = 1.00 us   */
-        NOP();
+
+    hal_enterCritical();
+    tick_stop  = hal_ticks;
+    tick_stop += ul_delay / 500;
+    hal_exitCritical();
+    while (tick_stop > hal_ticks) {
+        /* do nothing */
     }
 }
 
