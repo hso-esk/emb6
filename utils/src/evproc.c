@@ -173,29 +173,40 @@ void _evproc_init(void)
 
 */
 /*============================================================================*/
-en_evprocResCode_t    _evproc_pushEvent(c_event_t c_eventType, p_data_t p_data)
+en_evprocResCode_t _evproc_pushEvent(c_event_t c_eventType, p_data_t p_data)
 {
-    uint8_t i,j;
-    // Search for a given event type and try to add given function pointer
-    // to the end of a registration list
-    for(i=0; i<EVENT_TYPES_COUNT; i++)
-    {
-        // Find given c_eventType in registered list. If no event matches
-        // then generate error code
-        if(pst_regList[i].c_event == c_eventType)
-        {
-            // Event type has been found, now search for registered callbacks
-            for (j = 0; j < MAX_CALLBACK_COUNT; j++)
-            {
-                // If points to a NULL pointer the end of a list has been reached
-                if (pst_regList[i].pfn_callbList[j] == NULL)
+    uint8_t i, j;
+
+
+    /*
+     * Search for a given event type and try to add given function pointer
+     * to the end of a registration list
+     */
+    for (i = 0; i < EVENT_TYPES_COUNT; i++) {
+        /*
+         * Find given c_eventType in registered list. If no event matches
+         * then generate error code
+         */
+        if (pst_regList[i].c_event == c_eventType) {
+            /*
+             * Event type has been found, now search for registered callback(s)
+             */
+            for (j = 0; j < MAX_CALLBACK_COUNT; j++) {
+                /*
+                 * If points to a NULL pointer end of the list has been reached
+                 */
+                if (pst_regList[i].pfn_callbList[j] == NULL) {
                     return E_SUCCESS;
-                // In every other cases callback should be called
+                }
                 else {
+                    /*
+                     * In every other cases callback(s) should be called
+                     */
                     pst_regList[i].pfn_callbList[j](c_eventType, p_data);
                 }
             } /* for */
             return E_SUCCESS;
+
         } /* if */
     } /* for */
 
@@ -203,7 +214,7 @@ en_evprocResCode_t    _evproc_pushEvent(c_event_t c_eventType, p_data_t p_data)
     return E_UNKNOWN_TYPE;
 }
 
-uint8_t    _evproc_lookupEvent(c_event_t c_eventType,p_data_t     p_data)
+uint8_t _evproc_lookupEvent(c_event_t c_eventType, p_data_t p_data)
 {
     uint8_t i;
     if (c_queueSize != 0) {
@@ -388,20 +399,25 @@ en_evprocResCode_t evproc_putEvent(        en_evprocAction_t     e_actType, \
 /*============================================================================*/
 en_evprocResCode_t evproc_nextEvent(void)
 {
-    st_eventDisc_t nextEvent = {NULL,0};
+    st_eventDisc_t nextEvent = { NULL, 0 };
     uint8_t i;
+
     if (c_queueSize > 0) {
         bsp_enterCritical();
-        LOG_INFO("%s\n\r","Event queue");
-        for (i=0; i<c_queueSize;i++)
-            LOG_RAW("%d | ev = %d : %p\n\r",i,pst_evList[i].c_event,pst_evList[i].p_data);
-        nextEvent.c_event = pst_evList[c_queueSize-1].c_event;
-        nextEvent.p_data = pst_evList[c_queueSize-1].p_data;
-        pst_evList[c_queueSize-1].c_event = 0;
-        pst_evList[c_queueSize-1].p_data = NULL;
+
+        LOG_INFO("%s\n\r", "Event queue");
+        for (i = 0; i < c_queueSize; i++) {
+            LOG_RAW("%d | ev = %d : %p\n\r", i, pst_evList[i].c_event, pst_evList[i].p_data);
+        }
+
+        nextEvent.c_event = pst_evList[c_queueSize - 1].c_event;
+        nextEvent.p_data = pst_evList[c_queueSize - 1].p_data;
+        pst_evList[c_queueSize - 1].c_event = 0;
+        pst_evList[c_queueSize - 1].p_data = NULL;
         c_queueSize--;
+
         bsp_exitCritical();
-        if (!_evproc_pushEvent(nextEvent.c_event,nextEvent.p_data)) {
+        if (!_evproc_pushEvent(nextEvent.c_event, nextEvent.p_data)) {
             return E_UNKNOWN_TYPE;
         }
         return E_SUCCESS;
