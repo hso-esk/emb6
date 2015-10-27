@@ -1132,7 +1132,7 @@ static int8_t _rf212b_init(s_ns_t* p_netStack)
 
     if ((p_spi != NULL) && (p_rst != NULL) && (p_slpTrig != NULL) && (p_netStack != NULL))
     {
-        bsp_extIntInit(E_TARGET_RADIO_INT, _isr_callback);
+        bsp_extIntEnable(E_TARGET_RADIO_INT, E_TARGET_INT_EDGE_UNKNOWN, _isr_callback);
 
         /* Set receive buffers empty and point to the first */
         for (i=0;i<RF212B_CONF_RX_BUFFERS;i++)
