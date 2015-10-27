@@ -299,20 +299,24 @@ uint8_t demo_udpAliveConf(s_ns_t* pst_netStack)
      */
     if (pst_netStack != NULL) {
         if (!pst_netStack->c_configured) {
-            pst_netStack->hc     = &sicslowpan_driver;
-            pst_netStack->llsec  = &nullsec_driver;
-            pst_netStack->hmac   = &nullmac_driver;
-            pst_netStack->lmac   = &sicslowmac_driver;
-            pst_netStack->frame  = &framer_802154;
+            pst_netStack->hc    = &sicslowpan_driver;
+            pst_netStack->llsec = &nullsec_driver;
+            pst_netStack->llc   = &LLCDrv802154;
+            pst_netStack->mac   = &MACDrv802154;
+            pst_netStack->frame = &framer_802154;
+            pst_netStack->phy   = &PHYDrvNull;
+            pst_netStack->lpr   = &LPRDrvNull;
             pst_netStack->c_configured = 1;
             /* Transceiver interface is defined by @ref board_conf function*/
             /* pst_netStack->inif   = $<some_transceiver>;*/
         } else {
-            if ((pst_netStack->hc == &sicslowpan_driver)   &&
-                (pst_netStack->llsec == &nullsec_driver)   &&
-                (pst_netStack->hmac == &nullmac_driver)    &&
-                (pst_netStack->lmac == &sicslowmac_driver) &&
-                (pst_netStack->frame == &framer_802154)) {
+            if ((pst_netStack->hc    == &sicslowpan_driver) &&
+                (pst_netStack->llsec == &nullsec_driver)    &&
+                (pst_netStack->llc   == &LLCDrv802154)      &&
+                (pst_netStack->frame == &framer_802154)     &&
+                (pst_netStack->mac   == &MACDrv802154)      &&
+                (pst_netStack->phy   == &PHYDrvNull)        &&
+                (pst_netStack->lpr   == &LPRDrvNull)) {
                 /* right configuration */
             }
             else {
