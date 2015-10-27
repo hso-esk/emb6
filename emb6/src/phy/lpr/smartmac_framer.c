@@ -11,7 +11,7 @@
 */
 #include "emb6_conf.h"
 
-#if (LPR_SMARTMAC_EN == TRUE)
+#if (LPR_CFG_SMARTMAC_EN == TRUE)
 #include "lib_tmr.h"
 #include "smartmac_framer.h"
 
@@ -184,9 +184,9 @@ static void SmartMAC_CalcSACKDelay(uint8_t ts_count)
  */
 static void SmartMAC_ParseStrobe (uint8_t *p_pkt, uint16_t len, NETSTK_ERR *p_err)
 {
-#if STK_CFG_ARG_CHK_EN
+#if NETSTK_CFG_ARG_CHK_EN
     if (p_pkt == NULL) {
-        *p_err = NETSTK_ERR_NULL_POINTER;
+        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
         return;
     }
 #endif
@@ -279,9 +279,9 @@ static void SmartMAC_ParseSACK (uint8_t *p_pkt, uint16_t len, NETSTK_ERR *p_err)
  */
 static void SmartMAC_ParseBroadcast (uint8_t *p_pkt, uint16_t len, NETSTK_ERR *p_err)
 {
-#if STK_CFG_ARG_CHK_EN
+#if NETSTK_CFG_ARG_CHK_EN
     if (p_pkt == NULL) {
-        *p_err = NETSTK_ERR_NULL_POINTER;
+        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
         return;
     }
 #endif
@@ -436,10 +436,10 @@ static uint8_t *SmartMAC_CreateACK (uint16_t *p_len, LIB_TMR_TICK *p_delay, NETS
  */
 static uint8_t* SmartMAC_CreateBroadcast (uint16_t *p_len, LIB_TMR_TICK *p_delay, NETSTK_ERR *p_err)
 {
-#if STK_CFG_ARG_CHK_EN
+#if NETSTK_CFG_ARG_CHK_EN
     if (p_len == NULL) {
-        *p_err = NETSTK_ERR_NULL_POINTER;
-        return;
+        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+        return NULL;
     }
 #endif
 
@@ -486,10 +486,10 @@ static uint8_t* SmartMAC_CreateBroadcast (uint16_t *p_len, LIB_TMR_TICK *p_delay
  */
 static uint8_t *SmartMAC_Create (uint8_t frame_type, uint16_t *p_len, uint32_t *p_delay, NETSTK_ERR *p_err)
 {
-#if STK_CFG_ARG_CHK_EN
+#if NETSTK_CFG_ARG_CHK_EN
     if (p_len == NULL) {
-        *p_err = NETSTK_ERR_NULL_POINTER;
-        return;
+        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+        return NULL;
     }
 #endif
 
@@ -530,9 +530,9 @@ static uint8_t *SmartMAC_Create (uint8_t frame_type, uint16_t *p_len, uint32_t *
  */
 static void SmartMAC_Parse (uint8_t *p_pkt, uint16_t len, NETSTK_ERR *p_err)
 {
-#if STK_CFG_ARG_CHK_EN
+#if NETSTK_CFG_ARG_CHK_EN
     if (p_pkt == NULL) {
-        *p_err = NETSTK_ERR_NULL_POINTER;
+        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
         return;
     }
 #endif
