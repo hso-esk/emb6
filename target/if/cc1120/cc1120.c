@@ -45,10 +45,9 @@ extern "C"
 *                               LOCAL MACROS
 ********************************************************************************
 */
-#define RF_TASK_EVENT                         (c_event_t) ( 1u )
-
 #define RF_SEM_POST(_event_)          evproc_putEvent(E_EVPROC_HEAD, _event_, NULL)
 #define RF_SEM_WAIT(_event_)          evproc_regCallback(_event_, cc1120_EventHandler)
+
 
 /*
 ********************************************************************************
@@ -986,7 +985,7 @@ static void _rf_isrRxFifoAbThr( void *p_arg)
         if (_rf_rx() == -1) {
             /* An error occurred. Abort Receive operation. */
             gs_rf_ctx.e_state = E_RF_STATE_RXFIN;
-            RF_SEM_POST(RF_TASK_EVENT);
+            RF_SEM_POST(NETSTK_RF_EVENT);
         }
     }
 }
@@ -1011,7 +1010,6 @@ static void _rf_isrRxStart( void *p_arg)
 
         /* reset RX Context */
         memset((void*) &gs_rf_ctx.s_rx_ctx, 0, sizeof(gs_rf_ctx.s_rx_ctx));
-        //RF_SEM_POST(RF_TASK_EVENT);
     }
 }
 
@@ -1042,7 +1040,7 @@ static void _rf_isrRxFin( void *p_arg)
                 gs_rf_ctx.s_rx_ctx.puc_buf[gs_rf_ctx.s_rx_ctx.ui_len + 1];
 
         gs_rf_ctx.e_state = E_RF_STATE_RXFIN;
-        RF_SEM_POST(RF_TASK_EVENT);
+        RF_SEM_POST(NETSTK_RF_EVENT);
 
         LED_RX_OFF();
     }
@@ -1069,9 +1067,7 @@ static void _rf_isrTxFifoBelThr( void *p_arg)
 static void _rf_isrTxFin( void *p_arg)
 {
     if (gs_rf_ctx.e_state == E_RF_STATE_TXBUSY) {
-        /* TX has finished.*/
         gs_rf_ctx.e_state = E_RF_STATE_TXFIN;
-        RF_SEM_POST(RF_TASK_EVENT);
     }
 }
 
@@ -1327,25 +1323,14 @@ int rf_ed( int16_t* pi_ed )
 } /* rf_ed() */
 
 
-#if 1 // additional functions
 static uint8_t _rf_is_rx(void)
 {
     uint8_t uc_ret = 0;
 
-#if 1
     if ((gs_rf_ctx.e_state == E_RF_STATE_RXBUSY) ||
         (gs_rf_ctx.e_state == E_RF_STATE_RXFIN)) {
         uc_ret = 1;
     }
-#else
-    if( (gs_rf_ctx.e_state == E_RF_STATE_RX) ||
-        (gs_rf_ctx.e_state == E_RF_STATE_RXBUSY) ||
-        (gs_rf_ctx.e_state == E_RF_STATE_RXFIN))
-    {
-      uc_ret = 1;
-    }
-#endif
-
     return uc_ret;
 }
 
@@ -1362,7 +1347,6 @@ static uint8_t _rf_is_tx(void)
     }
     return uc_ret;
 }
-#endif
 
 
 /*
@@ -1402,23 +1386,14 @@ static void cc1120_Init (void *p_netstack, NETSTK_ERR *p_err)
     /* set pointer to netstack structure */
     RF_Netstack = (s_ns_t *)p_netstack;
 
-    RF_SEM_WAIT(RF_TASK_EVENT);
-    
-    
-#if 0
+#if NETSTK_CFG_LPM_EN == 1
     /*
-     * Set MAC address
+     * Turn RF off initially by default
      */
-    if (mac_phy_config.mac_address == NULL) {
-    }
-    else {
-        memcpy((void *)&un_addr.u8,  &mac_phy_config.mac_address, 8);
-        memcpy(&uip_lladdr.addr, &un_addr.u8, 8);
-        _rf212_setPanAddr(mac_phy_config.pan_id, 0, (uint8_t *)&un_addr.u8);
-        rimeaddr_emb6_set_node_addr(&un_addr);
-        _rf212_setChannel(CHANNEL_802_15_4);
-    }
+    cc1120_Off(p_err);
 #endif
+
+    RF_SEM_WAIT(NETSTK_RF_EVENT);
 }
 
 
@@ -1547,6 +1522,14 @@ static void cc1120_Send (uint8_t       *p_data,
         while (gs_rf_ctx.e_state != E_RF_STATE_TXFIN) {
         }
 
+        /*
+         * Set CC1120 to eWOR mode
+         */
+        _rf_restoreMode();
+
+        /*
+         * Set returned error code
+         */
         *p_err = NETSTK_ERR_NONE;
     }
     LED_TX_OFF();
@@ -1579,7 +1562,7 @@ static void cc1120_Ioctl (NETSTK_IOC_CMD    cmd,
                           void             *p_val,
                           NETSTK_ERR       *p_err)
 {
-#if STK_CFG_ARG_CHK_EN
+#if NETSTK_CFG_ARG_CHK_EN
     if (p_err == (NETSTK_ERR *)0) {
         return;
     }
@@ -1592,30 +1575,34 @@ static void cc1120_Ioctl (NETSTK_IOC_CMD    cmd,
 
     *p_err = NETSTK_ERR_NONE;
     switch (cmd) {
-        case RADIO_IOC_CMD_TXPOWER_SET :
+        case NETSTK_CMD_RF_TXPOWER_SET :
             break;
 
-        case RADIO_IOC_CMD_TXPOWER_GET :
+        case NETSTK_CMD_RF_TXPOWER_GET :
             break;
 
-        case RADIO_IOC_CMD_CCA_GET :
+        case NETSTK_CMD_RF_CCA_GET :
+            /*
+             * rf_cca() ~ rf_is_idle?
+             */
+            *((uint8_t *)p_val) = rf_cca();
             break;
 
-        case RADIO_IOC_CMD_RSSI_GET :
+        case NETSTK_CMD_RF_RSSI_GET :
             break;
 
-        case RADIO_IOC_CMD_IS_RX_BUSY:
+        case NETSTK_CMD_RF_IS_RX_BUSY:
             *((uint8_t *)p_val) = _rf_is_rx();
             break;
 
-        case RADIO_IOC_CMD_IS_TX_BUSY:
+        case NETSTK_CMD_RF_IS_TX_BUSY:
             *((uint8_t *)p_val) = _rf_is_tx();
             break;
 
-        case RADIO_IOC_CMD_RF_SWITCH :
-        case RADIO_IOC_CMD_ANT_DIV_SET :
-        case RADIO_IOC_CMD_SENS_SET :
-        case RADIO_IOC_CMD_SENS_GET :
+        case NETSTK_CMD_RF_RF_SWITCH :
+        case NETSTK_CMD_RF_ANT_DIV_SET :
+        case NETSTK_CMD_RF_SENS_SET :
+        case NETSTK_CMD_RF_SENS_GET :
         default:
             /* unsupported commands are treated in same way */
             *p_err = NETSTK_ERR_CMD_UNSUPPORTED;
@@ -1626,22 +1613,16 @@ static void cc1120_Ioctl (NETSTK_IOC_CMD    cmd,
 
 static void cc1120_EventHandler(c_event_t c_event, p_data_t p_data)
 {
-    NETSTK_ERR err;
+    NETSTK_ERR err = NETSTK_ERR_NONE;
 
     (void)&c_event;
     (void)&p_data;
 
-
-    if ((gs_rf_ctx.e_state == E_RF_STATE_TXFIN) ||
-        (gs_rf_ctx.e_state == E_RF_STATE_RXFIN)) {
-
-        if (gs_rf_ctx.e_state == E_RF_STATE_RXFIN) {
-            if (gs_rf_ctx.s_rx_ctx.uc_status & CC1120_LQI_CRC_OK_BM) {
-                CPU_ENTER_CRITICAL();
-                RF_Netstack->lpr->recv(gs_rf_ctx.s_rx_ctx.puc_buf,
-                                       gs_rf_ctx.s_rx_ctx.ui_len,
-                                       &err);
-                CPU_EXIT_CRITICAL();
+    /*
+     * Complete frame reception process
+     */
+    if (gs_rf_ctx.e_state == E_RF_STATE_RXFIN) {
+        if (gs_rf_ctx.s_rx_ctx.uc_status & CC1120_LQI_CRC_OK_BM) {
 #if LOGGER_ENABLE
             /*
              * Logging
@@ -1655,29 +1636,15 @@ static void cc1120_EventHandler(c_event_t c_event, p_data_t p_data)
             LOG_RAW("\n\r\n\r");
 #endif
 
-            /* Flush FIFO set the first RXFIFO Threshold to 1*/
-            RF_RXFIFOFLUSH();
-            RF_REGWR(CC1120_FIFO_CFG, 1);
-        } else {
-            /* write configuration to the chip */
-            _rf_cfgWr(gcs_rf_cfg_ewor2,
-                     (sizeof(gcs_rf_cfg_ewor2) / sizeof(s_rf_register_t)));
+            RF_Netstack->lpr->recv(gs_rf_ctx.s_rx_ctx.puc_buf,
+                                   gs_rf_ctx.s_rx_ctx.ui_len,
+                                   &err);
         }
 
-        /* goto WOR state */
-        cc1120_spiCmdStrobe(CC1120_SWOR);
-
-        /* Connect ISRs */
-        bsp_extIntEnable(E_TARGET_EXT_INT_0, E_TARGET_INT_EDGE_RISING, &_rf_isrRxFifoAbThr);
-        bsp_extIntEnable(E_TARGET_EXT_INT_1, E_TARGET_INT_EDGE_RISING, &_rf_isrRxStart);
-        bsp_extIntEnable(E_TARGET_EXT_INT_2, E_TARGET_INT_EDGE_FALLING, &_rf_isrRxFin);
-
-        /* clear pending flags */
-        bsp_extIntClear(E_TARGET_EXT_INT_0);
-        bsp_extIntClear(E_TARGET_EXT_INT_1);
-        bsp_extIntClear(E_TARGET_EXT_INT_2);
-
-        gs_rf_ctx.e_state = E_RF_STATE_IDLE;
+        /*
+         * Set CC1120 to eWOR mode
+         */
+        _rf_restoreMode();
     }
 }
 
