@@ -22,6 +22,7 @@
 
 #define     LOGGER_ENABLE        LOGGER_LLC
 #include    "logger.h"
+
 /*
 ********************************************************************************
 *                          LOCAL FUNCTION DECLARATIONS
@@ -36,7 +37,8 @@ void LLC_IOCtrl(NETSTK_IOC_CMD cmd, void *p_val, NETSTK_ERR *p_err);
 
 
 static void LLC_CbTx(void *p_arg, NETSTK_ERR *p_err);
-static int LLC_IsBroadcastAddr(uint8_t mode, uint8_t *p_addr);
+static void LLC_VerifyAddr(frame802154_t *p_frame, NETSTK_ERR *p_err);
+static uint8_t LLC_IsBroadcastAddr(uint8_t mode, uint8_t *p_addr);
 
 
 /*
@@ -49,9 +51,9 @@ static int LLC_IsBroadcastAddr(uint8_t mode, uint8_t *p_addr);
  *   the range.
  */
 static uint8_t          LLC_DSN;
-static uint8_t          LLC_TxBusy;
-static NETSTK_CBFNCT    LLC_CbTxFnct;
+static uint8_t          LLC_Busy;
 static void            *LLC_CbTxArg;
+static NETSTK_CBFNCT    LLC_CbTxFnct;
 static NETSTK_CBRXFNCT  LLC_CbRxFnct;
 static s_ns_t          *LLC_Netstk;
 
@@ -100,7 +102,7 @@ void LLC_Init(void *p_netstk, NETSTK_ERR *p_err)
 
 
     LLC_Netstk = (s_ns_t *)p_netstk;
-    LLC_TxBusy = 0;
+    LLC_Busy = 0;
     LLC_CbRxFnct = 0;
     LLC_CbTxFnct = 0;
     LLC_CbTxArg = NULL;
@@ -154,6 +156,11 @@ void LLC_Off(NETSTK_ERR *p_err)
  */
 void LLC_Send(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
 {
+    int             hdralloc;
+    uint8_t         hdr_len;
+    frame802154_t   params;
+
+
 #if NETSTK_CFG_ARG_CHK_EN
     if (p_err == NULL) {
         return;
@@ -166,11 +173,10 @@ void LLC_Send(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
     }
 #endif
 
-
-    int             hdralloc;
-    uint8_t         hdr_len;
-    frame802154_t   params;
-
+    if (LLC_Busy == 1) {
+        *p_err = NETSTK_ERR_BUSY;
+        return;
+    }
 
     /* init to zeros */
     memset(&params, 0, sizeof(params));
@@ -227,7 +233,6 @@ void LLC_Send(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
     hdralloc = packetbuf_hdralloc(hdr_len);
     if (hdralloc == 0) {
         *p_err = NETSTK_ERR_BUF_OVERFLOW;
-        LLC_TxBusy = 0;
         return;
     }
 
@@ -269,14 +274,15 @@ void LLC_Send(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
                             &params.seq,
                             p_err);
 
-
-
     /*
      * Issue next lower layer to transmit the prepared frame
      */
     LLC_Netstk->mac->send(packetbuf_hdrptr(),
                           packetbuf_totlen(),
                           p_err);
+    if (*p_err == NETSTK_ERR_NONE) {
+        LLC_Busy = 1;
+    }
 }
 
 
@@ -321,31 +327,10 @@ void LLC_Recv(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
     /*
      * Check frame addresses
      */
-    if (frame.fcf.dest_addr_mode) {
-        if ((frame.dest_pid != mac_phy_config.pan_id) &&
-            (frame.dest_pid != FRAME802154_BROADCASTPANDID)) {
-            *p_err = NETSTK_ERR_FATAL;
-            return;
-        }
-
-        ret = LLC_IsBroadcastAddr(frame.fcf.dest_addr_mode, frame.dest_addr);
-        if (ret == 0) {
-            packetbuf_set_addr(PACKETBUF_ADDR_RECEIVER,
-                               (linkaddr_t *)&frame.dest_addr);
-
-#if !NETSTACK_CONF_BRIDGE_MODE
-            ret = linkaddr_cmp(packetbuf_addr(PACKETBUF_ADDR_RECEIVER),
-                               &linkaddr_node_addr);
-            if (ret == 0) {
-                *p_err = NETSTK_ERR_FATAL;
-                return;     /* Not for this node */
-            }
-#endif
-        }
+    LLC_VerifyAddr(&frame, p_err);
+    if (*p_err != NETSTK_ERR_NONE) {
+        return;
     }
-    packetbuf_set_addr(PACKETBUF_ADDR_SENDER,
-                       (linkaddr_t *)&frame.src_addr);
-
 
     /*
      * Signal next higher layer of the valid received frame
@@ -430,10 +415,8 @@ void LLC_IOCtrl(NETSTK_IOC_CMD cmd, void *p_val, NETSTK_ERR *p_err)
  */
 static void LLC_CbTx(void *p_arg, NETSTK_ERR *p_err)
 {
-    LLC_TxBusy = 0;
-    if (LLC_CbTxFnct) {
-        LLC_CbTxFnct(LLC_CbTxArg, p_err);
-    }
+    LLC_Busy = 0;
+    LLC_CbTxFnct(LLC_CbTxArg, p_err);
 }
 
 
@@ -443,15 +426,68 @@ static void LLC_CbTx(void *p_arg, NETSTK_ERR *p_err)
  * @param addr
  * @return
  */
-static int LLC_IsBroadcastAddr(uint8_t mode, uint8_t *p_addr)
+static uint8_t LLC_IsBroadcastAddr(uint8_t mode, uint8_t *p_addr)
 {
-    int i = mode == FRAME802154_SHORTADDRMODE ? 2 : 8;
+    uint8_t i = mode == FRAME802154_SHORTADDRMODE ? 2 : 8;
     while (i-- > 0) {
         if (p_addr[i] != 0xff) {
             return 0;
         }
     }
     return 1;
+}
+
+/**
+ * @brief   Verify destination addresses of the received frame
+ */
+static void LLC_VerifyAddr(frame802154_t *p_frame, NETSTK_ERR *p_err)
+{
+    int     is_addr_matched;
+    uint8_t is_broadcast;
+
+
+    /*
+     * Verify destination address
+     */
+    if (p_frame->fcf.dest_addr_mode) {
+        if ((p_frame->dest_pid != mac_phy_config.pan_id) &&
+            (p_frame->dest_pid != FRAME802154_BROADCASTPANDID)) {
+            *p_err = NETSTK_ERR_FATAL;
+            return;
+        }
+
+        /*
+         * Check for broadcast frame
+         */
+        is_broadcast = LLC_IsBroadcastAddr(p_frame->fcf.dest_addr_mode,
+                                           p_frame->dest_addr);
+        if (is_broadcast == 0) {
+            /*
+             * If not a broadcast frame, then store destination address
+             */
+            packetbuf_set_addr(PACKETBUF_ADDR_RECEIVER,
+                               (linkaddr_t *)&p_frame->dest_addr);
+#if !NETSTACK_CONF_BRIDGE_MODE
+            is_addr_matched = linkaddr_cmp((linkaddr_t *)&p_frame->dest_addr,
+                                           &linkaddr_node_addr);
+            if (is_addr_matched == 0) {
+                /*
+                 * Not for this node
+                 */
+                *p_err = NETSTK_ERR_FATAL;
+                return;
+            }
+#endif
+
+
+        }
+    }
+
+    /*
+     * If destination address is valid, then store source address
+     */
+    packetbuf_set_addr(PACKETBUF_ADDR_SENDER,
+                       (linkaddr_t *)&p_frame->src_addr);
 }
 
 
