@@ -84,7 +84,6 @@ static void _hal_isrSysTick( void *p_arg );
 static void _hal_isrSysTick( void *p_arg )
 {
     hal_ticks++;
-
     if ((hal_ticks % TARGET_CFG_SYSTICK_SCALER) == 0) {
         Tmr_Update();
     }
@@ -95,7 +94,6 @@ static void _hal_systick(void)
 {
     tmr_config(E_TMR_0,
                (uint16_t)(TARGET_CFG_SYSTICK_RESOLUTION / TARGET_CFG_SYSTICK_SCALER));
-
     tmr_start(E_TMR_0, _hal_isrSysTick );
 }
 
@@ -217,11 +215,7 @@ int8_t hal_init(void)
 uint8_t hal_getrand(void)
 {
     /*TODO missing implementation */
-#if STK_CFG_REFACTOR_EN
-    return (uint8_t)TmrCurTick;
-#else
-    return 0;
-#endif
+    return (uint8_t)hal_ticks;
 }
 
 
