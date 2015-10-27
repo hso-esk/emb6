@@ -232,7 +232,7 @@ static const s_rf_register_t gcs_rf_cfg_ch_434mhz50bps[] = {
     {CC1120_DEVIATION_M,    0x99},  /* Deviation = 24.963379 kHz */
     {CC1120_MODCFG_DEV_E,   0x0D},  /* Normal modem mode, 2-GFSK, Deviation = 20.019531 kHz */
     {CC1120_DCFILT_CFG,     0x15},
-    {CC1120_PREAMBLE_CFG1,  0x18},
+    {CC1120_PREAMBLE_CFG1,  0x30},  /* 24byte long preamble */
     {CC1120_FREQ_IF_CFG,    0x3A},
     {CC1120_CHAN_BW,        0x02},  /* Channel filter enabled, BW = 100kHz */
 
