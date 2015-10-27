@@ -187,48 +187,16 @@ static const s_rf_register_t gcs_rf_cfg_ch_868mhz50bps[] = {
 /**
  * \brief   Channel related register values.
  */
-static const s_rf_register_t gcs_rf_cfg_ch_434mhz50bps[] = {
-
-#if TDD_SYNC_MODE /* test Sync_mode */
+static const s_rf_register_t gcs_rf_cfg_ch_434mhz50bps[] =
+{
     {CC1120_SYNC_CFG1,      0x08},  /* PQT gating enabled, sync threshold 0x08 */
-    {CC1120_SYNC_CFG0,      0x1B},  /* 16H bits, SYNC31_24 : SYNC23_16*/
+    {CC1120_SYNC_CFG0,      0x17},  /* 32bit Sync */
     {CC1120_SYNC3,          0x93},
     {CC1120_SYNC2,          0x0B},
     {CC1120_SYNC1,          0x51},
     {CC1120_SYNC0,          0xDE},
 
-    {CC1120_DEVIATION_M,    0x99},  /* Deviation = 24.963379 kHz */
-    {CC1120_MODCFG_DEV_E,   0x0D},  /* Normal modem mode, 2-GFSK, Deviation = 24.963379 kHz */
-    {CC1120_DCFILT_CFG,     0x15},
-    {CC1120_PREAMBLE_CFG1,  0x30},  /* 24 bytes preamble */
-    {CC1120_FREQ_IF_CFG,    0x3A},
-    {CC1120_CHAN_BW,        0x02},  /* Channel filter enabled, BW = 100kHz */
 
-    {CC1120_SYMBOL_RATE2,   0x99},  /* Symbol Rate = 50ksps */
-    {CC1120_SYMBOL_RATE1,   0x99},  /* Symbol Rate = 50ksps */
-    {CC1120_SYMBOL_RATE0,   0x99},  /* Symbol Rate = 50ksps */
-
-    /* WOR configuration */
-    {CC1120_WOR_CFG0,       0x24},  /* enable clock division, disable Ev2, disable RCOSC calibration, enable RCOSC */
-    {CC1120_WOR_EVENT0_MSB, 0x00},  /* tEv1 = 3.76ms */
-    {CC1120_WOR_EVENT0_LSB, 0x78},  /* tEv1 = 3.76ms */
-
-    {CC1120_AGC_REF,        0x3C},
-    {CC1120_AGC_CS_THR,     0x00},  /* AGC Carrier Sense Threshold -102 dBm (+102dB offset!!) */
-    {CC1120_AGC_CFG1,       0xA9},
-    {CC1120_AGC_CFG0,       0xC0},
-
-    {CC1120_PA_CFG0,        0x79},
-
-    /* Frequency configuration 434MHz */
-    {CC1120_FS_CFG,         0x14},
-    {CC1120_FREQOFF_CFG,    0x20},
-    {CC1120_FREQ2,          0x6C},
-    {CC1120_FREQ1,          0x80},
-    {CC1120_FREQ0,          0x00},
-
-#else
-    {CC1120_SYNC_CFG1,      0x08},  /* PQT gating enabled, sync threshold 0x08 */
     {CC1120_DEVIATION_M,    0x99},  /* Deviation = 24.963379 kHz */
     {CC1120_MODCFG_DEV_E,   0x0D},  /* Normal modem mode, 2-GFSK, Deviation = 20.019531 kHz */
     {CC1120_DCFILT_CFG,     0x15},
@@ -258,7 +226,6 @@ static const s_rf_register_t gcs_rf_cfg_ch_434mhz50bps[] = {
     {CC1120_FREQ2,          0x6C},
     {CC1120_FREQ1,          0x80},
     {CC1120_FREQ0,          0x00},
-#endif
 };
 
 /**
