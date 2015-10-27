@@ -12,6 +12,11 @@
 */
 #include "emb6_conf.h"
 
+
+#define     LOGGER_ENABLE        LOGGER_PHY
+#include    "logger.h"
+
+
 #if NETSTK_CFG_PHY_NULL_EN
 /*
 ********************************************************************************
@@ -145,6 +150,21 @@ void PHY_Send(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
     }
 #endif
 
+
+#if LOGGER_ENABLE
+    /*
+     * Logging
+     */
+    uint16_t data_len = len;
+    uint8_t *p_dataptr = p_data;
+    LOG_RAW("PHY_TX: ");
+    while (data_len--) {
+        LOG_RAW("%02x", *p_dataptr++);
+    }
+    LOG_RAW("\r\n====================\r\n");
+#endif
+
+
     /*
      * set TX callback function and argument
      */
@@ -185,6 +205,24 @@ void PHY_Recv(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
 #endif
 
 
+#if LOGGER_ENABLE
+    /*
+     * Logging
+     */
+    uint16_t data_len = len;
+    uint8_t *p_dataptr = p_data;
+    LOG_RAW("\r\n====================\r\n");
+    LOG_RAW("PHY_RX: ");
+    while (data_len--) {
+        LOG_RAW("%02x", *p_dataptr++);
+    }
+    LOG_RAW("\n\r");
+#endif
+
+
+    /*
+     * Inform the next higher layer
+     */
     PHY_Netstk->mac->recv(p_data, len, p_err);
 }
 
@@ -199,8 +237,6 @@ void PHY_Recv(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
 void PHY_IOCtrl(NETSTK_IOC_CMD cmd, void *p_val, NETSTK_ERR *p_err)
 {
     *p_err = NETSTK_ERR_NONE;
-
-
     switch (cmd) {
         case NETSTK_CMD_TX_CBFNCT_SET:
             if (p_val == NULL) {
