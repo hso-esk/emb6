@@ -66,10 +66,10 @@
 #include <string.h>
 #include <stdbool.h>
 
-#if STK_CFG_REFACTOR_EN
+
 #include "netstk_cfg.h"
 #include "netstk_def.h"
-#endif
+
 
 /*=============================================================================
                                 BASIC CONSTANTS
@@ -216,33 +216,24 @@ typedef uip_eth_addr uip_lladdr_t;
  =============================================================================*/
 
 typedef struct netstack {
-        /*const struct netstack_socket*                   sock;*/
 
-	const struct netstack_headerCompression*        hc;
+	const struct netstack_headerCompression     *hc;                /*!< Pointer to 6LoWPAN header compressor Driver        */
 
-	const struct netstack_llsec*                    llsec;
+	const struct netstack_llsec                 *llsec;             /*!< Pointer to Logical Link Security Driver            */
 
-	const struct netstack_highMac*                  hmac;
+	const NETSTK_MODULE_DRV                     *llc;               /*!< Pointer to Logical Link Control Driver             */
 
-	const struct netstack_lowMac*                   lmac;
+    const NETSTK_MODULE_DRV                     *mac;               /*!< Pointer to Medium Access Control Driver            */
 
-	const struct netstack_framer*                   frame;
+	const struct netstack_framer                *frame;             /*!< Pointer to DLL framing driver                      */
 
-	const struct netstack_interface*                inif;
+    const NETSTK_MODULE_DRV                     *phy;               /*!< Pointer to Physical Driver                         */
 
-	uint8_t                                         c_configured;
+    const NETSTK_MODULE_DRV                     *lpr;               /*!< Pointer to Low-Power Radio Driver                  */
 
-#if STK_CFG_REFACTOR_EN
-	const NETSTK_MODULE_DRV      *llc;           /*!< Pointer to Logical Link Control Driver     */
+    const NETSTK_MODULE_DRV                     *rf;                /*!< Pointer to Radio Frequency Driver                  */
 
-    const NETSTK_MODULE_DRV      *mac;           /*!< Pointer to Medium Access Control Driver    */
-
-    const NETSTK_MODULE_DRV      *phy;           /*!< Pointer to Physical Driver                 */
-
-    const NETSTK_MODULE_DRV      *lpr;           /*!< Pointer to Low-Power Radio Driver          */
-
-    const NETSTK_MODULE_DRV      *rf;            /*!< Pointer to Radio Frequency Driver          */
-#endif
+	uint8_t                                      c_configured;      /*!< Indicate whether netstack is already configured    */
 
 }s_ns_t;
 
