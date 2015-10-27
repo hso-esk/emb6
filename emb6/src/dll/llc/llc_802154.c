@@ -14,7 +14,7 @@
 
 
 #if NETSTK_CFG_LLC_802154_EN
-#include "frame802154.h"
+#include "framer_802154.h"
 #include "packetbuf.h"
 #include "random.h"
 
