@@ -20,21 +20,11 @@ NextState1=0
 Break=0
 State Storage=0
 [DebugChecksum]
-Checksum=740093883
+Checksum=899571576
 [CallStack]
 ShowArgs=0
 [Disassembly]
 MixedMode=1
-[watch_formats]
-Fmt0={W}0:APSSDstId	4	0
-Fmt1={W}0:APSSSrcId	4	0
-Fmt2={W}0:APSSState	3	0
-Fmt3={W}0:SmartMAC_StrobeCount	3	0
-Fmt4={W}0:hdr_len	3	0
-Fmt5={W}0:rssi_converted	3	0
-Fmt6={W}0:ts_count	3	0
-Fmt7={W}0:uc_returnValue	1	0
-Fmt8={W}0:uc_status	1	0
 [Log file]
 LoggingEnabled=_ 0
 LogFile=_ ""
@@ -43,7 +33,8 @@ Category=_ 0
 LoggingEnabled=_ 0
 LogFile=_ ""
 [Breakpoints]
-Count=0
+Bp0=_ "STD_CODE" "{$PROJ_DIR$\..\..\..\..\..\..\..\emb6\src\dll\mac\mac_802154.c}.260.5" 1 0 0 0 "" 0 ""
+Count=1
 [FET]
 Clock mode=14
 Extended Clock mode=-1
