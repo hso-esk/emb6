@@ -36,6 +36,10 @@ extern "C"
 #include "evproc.h"
 
 
+#define     LOGGER_ENABLE        LOGGER_RADIO
+#include    "logger.h"
+
+
 #if NETSTK_CFG_RF_CC1120_EN
 /*
 ********************************************************************************
@@ -1482,6 +1486,20 @@ static void cc1120_Send (uint8_t       *p_data,
     }
 
 
+#if LOGGER_ENABLE
+    /*
+     * Logging
+     */
+    uint16_t data_len = len;
+    uint8_t *p_dataptr = p_data;
+    LOG_RAW("RADIO_TX: ");
+    while (data_len--) {
+        LOG_RAW("%02x", *p_dataptr++);
+    }
+    LOG_RAW("\n\r\n\r");
+#endif
+
+
     LED_TX_ON();
     {
         /* set RF to idle */
@@ -1625,7 +1643,18 @@ static void cc1120_EventHandler(c_event_t c_event, p_data_t p_data)
                                        gs_rf_ctx.s_rx_ctx.ui_len,
                                        &err);
                 CPU_EXIT_CRITICAL();
+#if LOGGER_ENABLE
+            /*
+             * Logging
+             */
+            uint16_t data_len = gs_rf_ctx.s_rx_ctx.ui_len;
+            uint8_t *p_dataptr = gs_rf_ctx.s_rx_ctx.puc_buf;
+            LOG_RAW("RADIO_RX: ");
+            while (data_len--) {
+                LOG_RAW("%02x", *p_dataptr++);
             }
+            LOG_RAW("\n\r\n\r");
+#endif
 
             /* Flush FIFO set the first RXFIFO Threshold to 1*/
             RF_RXFIFOFLUSH();
