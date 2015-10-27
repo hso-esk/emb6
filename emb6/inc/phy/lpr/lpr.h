@@ -7,8 +7,6 @@
 #ifndef LPR_PRESENT
 #define LPR_PRESENT
 
-#define LPR_CFG_REFACTOR_EN                             ( 0u )
-
 
 typedef struct lpr_framer_api      LPR_FRAMER_DRV;
 
