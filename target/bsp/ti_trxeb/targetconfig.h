@@ -79,7 +79,7 @@
 #define TARGET_CONFIG_KEY5                        TRUE
 
 /* enable LCD */
-#define TARGET_CONFIG_LCD                         TRUE
+#define TARGET_CONFIG_LCD                         FALSE
 
 /* enable RF */
 #define TARGET_CONFIG_RF                          TRUE
