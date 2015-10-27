@@ -56,7 +56,7 @@
 
 //#include "linkaddr.h"
 #include "emb6.h"
-#include "llsec802154.h"
+#include "llsec_802154.h"
 
 /**
  * \brief      The size of the packetbuf, in bytes
