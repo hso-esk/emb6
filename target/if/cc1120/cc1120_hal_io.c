@@ -8,8 +8,12 @@
 /*============================================================================*/
 /*                                INCLUDES                                    */
 /*============================================================================*/
-#include "bsp_lums.h"
+#include <stddef.h>
+#include <stdint.h>
+
+#include "bsp.h"
 #include "cc1120_hal_io.h"
+
 
 
 /*============================================================================*/
@@ -275,10 +279,10 @@ uint8_t cc1120_spiCmdStrobe(uint8_t cmd)
 {
     uint8_t chip_status;
 
+    bsp_spiSelect(NULL);
+    bsp_spiTxRx(&cmd, &chip_status, 1);
+    bsp_spiDeselect(NULL);
 
-    hal_spiSelect(NULL);
-    hal_spiTxRx(&cmd, &chip_status, 1);
-    hal_spiDeSelect(NULL);
     return chip_status;
 }
 
@@ -300,28 +304,29 @@ uint8_t cc1120_spi8bitRegAccess(uint8_t     access,
     uint8_t data;
 
 
-    hal_spiSelect(NULL);
+    bsp_spiSelect(NULL);
     {
         /* Transmit access command */
         data = access | addr;
-        hal_spiTxRx(&data, &chip_status, 1);
+        bsp_spiTxRx(&data, &chip_status, 1);
 
         /* Read/Write data */
         if (data & RADIO_READ_ACCESS) {
             if (data & RADIO_BURST_ACCESS) {        /* Burst  Read Access   */
-                hal_spiRead(p_data, len);
+                bsp_spiRead(p_data, len);
             } else {                                /* Single Read Access   */
-                hal_spiRead(p_data, 1);
+                bsp_spiRead(p_data, 1);
             }
         } else {
             if (data & RADIO_BURST_ACCESS) {        /* Burst Write Access   */
-                hal_spiWrite(p_data, len);
+                bsp_spiWrite(p_data, len);
             } else {                                /* Single Write Access  */
-                hal_spiWrite(p_data, 1);
+                bsp_spiWrite(p_data, 1);
             }
         }
     }
-    hal_spiDeSelect(NULL);
+    bsp_spiDeselect(NULL);
+
 
     return (chip_status);
 }
@@ -346,29 +351,30 @@ uint8_t cc1120_spi16BitRegAccess(uint8_t    access,
     uint8_t data;
 
 
-    hal_spiSelect(NULL);
+    bsp_spiSelect(NULL);
     {
         /* Transmit access command */
         data = access | ext_addr;
-        hal_spiTxRx(&data, &chip_status, 1);
-        hal_spiTxRx(&reg_addr, &chip_status, 1);
+        bsp_spiTxRx(&data, &chip_status, 1);
+        bsp_spiTxRx(&reg_addr, &chip_status, 1);
 
         /* Read/Write data */
         if (data & RADIO_READ_ACCESS) {
             if (data & RADIO_BURST_ACCESS) {        /* Burst  Read Access   */
-                hal_spiRead(p_data, len);
+                bsp_spiRead(p_data, len);
             } else {                                /* Single Read Access   */
-                hal_spiRead(p_data, 1);
+                bsp_spiRead(p_data, 1);
             }
         } else {
             if (data & RADIO_BURST_ACCESS) {        /* Burst Write Access   */
-                hal_spiWrite(p_data, len);
+                bsp_spiWrite(p_data, len);
             } else {                                /* Single Write Access  */
-                hal_spiWrite(p_data, 1);
+                bsp_spiWrite(p_data, 1);
             }
         }
     }
-    hal_spiDeSelect(NULL);
+    bsp_spiDeselect(NULL);
+
 
     return chip_status;
 }
