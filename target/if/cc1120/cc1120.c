@@ -27,7 +27,6 @@ extern "C"
 #include "cc1120.h"
 #include "cc1120_cfg.h"
 #include "cc1120_hal_io.h"
-#include "bsp_lums.h"
 
 #include "lib_port.h"
 
