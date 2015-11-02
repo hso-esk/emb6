@@ -12,7 +12,7 @@
 #include <lib_tmr.h>
 
 #ifdef IAR_COMPILER
-#include "emb6_conf.h"
+#include "emb6.h"
 #endif
 
 LIB_TMR        *TmrListHead;

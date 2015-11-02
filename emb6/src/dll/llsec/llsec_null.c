@@ -42,7 +42,6 @@
  * @{
  */
 
-#include "emb6_conf.h"
 #include "emb6.h"
 #include "llsec_null.h"
 #include "framer_802154.h"

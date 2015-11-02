@@ -55,9 +55,13 @@
     \version 0.0.1
 */
 
-#include "board_conf.h"
+/*
+********************************************************************************
+*                                   INCLUDES
+********************************************************************************
+*/
 #include "emb6.h"
-#include "emb6_conf.h"
+#include "board_conf.h"
 #include "logger.h"
 #include "bsp.h"
 

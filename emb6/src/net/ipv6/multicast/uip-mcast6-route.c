@@ -41,7 +41,6 @@
  */
 
 //#include "contiki.h"
-#include "emb6_conf.h"
 #include "emb6.h"
 #include "clist.h"
 #include "memb.h"

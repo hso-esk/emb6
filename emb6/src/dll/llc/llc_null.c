@@ -10,7 +10,7 @@
 *                                   INCLUDES
 ********************************************************************************
 */
-#include "emb6_conf.h"
+#include "emb6.h"
 
 
 #if NETSTK_CFG_LLC_NULL_EN

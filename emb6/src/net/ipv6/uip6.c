@@ -75,7 +75,6 @@
  *
  * @{
  */
-#include "emb6_conf.h"
 #include "emb6.h"
 #include "uip.h"
 #include "uipopt.h"
@@ -86,7 +85,6 @@
 #include "uip-mcast6.h"
 #endif
 
-#include <string.h>
 
 /*---------------------------------------------------------------------------*/
 /* For Debug, logging, statistics                                            */

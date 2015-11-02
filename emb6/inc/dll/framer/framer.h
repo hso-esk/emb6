@@ -41,7 +41,8 @@
 #ifndef FRAMER_H_
 #define FRAMER_H_
 
-#include "emb6_conf.h"
+
+#include "emb6.h"
 
 #define FRAMER_FAILED -1
 

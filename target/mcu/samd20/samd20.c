@@ -60,7 +60,7 @@
  INCLUDE FILES
  ==============================================================================*/
 #include "emb6.h"
-#include "emb6_conf.h"
+
 #include "board_conf.h"
 #include "math.h"
 #include "target.h"

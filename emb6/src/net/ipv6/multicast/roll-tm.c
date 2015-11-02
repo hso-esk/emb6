@@ -43,7 +43,6 @@
 //#include "contiki.h"
 //#include "contiki-lib.h"
 //#include "contiki-net.h"
-#include "emb6_conf.h"
 #include "emb6.h"
 #include "uip-icmp6.h"
 #include "uip-mcast6.h"

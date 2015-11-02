@@ -60,7 +60,6 @@
  INCLUDE FILES
  =============================================================================*/
 #include "emb6.h"
-#include "emb6_conf.h"
 #include "bsp.h"
 #include "demo_sniffer.h"
 

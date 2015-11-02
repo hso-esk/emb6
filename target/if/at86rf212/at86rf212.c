@@ -55,14 +55,11 @@
 /*==============================================================================
                                  INCLUDE FILES
 ==============================================================================*/
-
 #include "emb6.h"
-#include "emb6_conf.h"
-#include "bsp.h"
 
+#include "bsp.h"
 #include "at86rf212.h"
 #include "at86rf212_regmap.h"
-
 #include "evproc.h"
 #include "packetbuf.h"
 

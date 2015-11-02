@@ -67,8 +67,6 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include "netstk_cfg.h"
-
 /*
 ********************************************************************************
 *                               VERSION DECLARATION
@@ -90,6 +88,14 @@ typedef void                                (*pfn_intCallb_t)(void *);
 typedef uint32_t                            clock_time_t;
 /* linked with clock_time_t, maximum value for clock_time_t variables	      */
 #define TMR_OVRFLOW_VAL                     0xffffffff
+
+
+/*=============================================================================
+                                CONFIGURATIONS
+==============================================================================*/
+#include "emb6_conf.h"
+
+
 
 /*==============================================================================
                                      MACROS

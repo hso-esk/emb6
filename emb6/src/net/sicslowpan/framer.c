@@ -28,9 +28,9 @@
  *
  */
 
+#include "emb6.h"
 #include "framer.h"
 #include "packetbuf.h"
-#include "emb6_conf.h"
 
 /*---------------------------------------------------------------------------*/
 int8_t

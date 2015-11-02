@@ -9,7 +9,8 @@
 *                                  INCLUDES
 ********************************************************************************
 */
-#include "emb6_conf.h"
+#include "emb6.h"
+
 
 #if (LPR_CFG_SMARTMAC_EN == TRUE)
 #include "lib_tmr.h"

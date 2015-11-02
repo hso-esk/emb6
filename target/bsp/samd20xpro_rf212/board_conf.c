@@ -55,16 +55,20 @@
     \version 0.0.1
 */
 
-
-/** Enable or disable logging */
-#define        LOGGER_ENABLE          LOGGER_BSP
+/*
+********************************************************************************
+*                                   INCLUDES
+********************************************************************************
+*/
+#include "emb6.h"
 
 #include "board_conf.h"
 #include "hwinit.h"
-#include "emb6.h"
-#include "emb6_conf.h"
 #include "logger.h"
 #include "bsp.h"
+
+/** Enable or disable logging */
+#define        LOGGER_ENABLE          LOGGER_BSP
 
 uint8_t board_conf(s_ns_t* ps_nStack)
 {

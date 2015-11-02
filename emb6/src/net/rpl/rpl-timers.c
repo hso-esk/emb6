@@ -41,7 +41,6 @@
  */
 
 //#include "contiki-conf.h"
-#include "emb6_conf.h"
 #include "emb6.h"
 #include "rpl-private.h"
 #if UIP_CONF_IPV6_MULTICAST

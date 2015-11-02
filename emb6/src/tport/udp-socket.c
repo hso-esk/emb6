@@ -30,15 +30,14 @@
  */
 
 #include "emb6.h"
+
 #include "bsp.h"
 #include "clist.h"
 #include "etimer.h"
-#include "emb6_conf.h"
 #include "tcpip.h"
 #include "uip-udp-packet.h"
 #include "udp-socket.h"
 
-#include <string.h>
 
 void _udp_sock_callback(c_event_t c_event, p_data_t p_data);
 

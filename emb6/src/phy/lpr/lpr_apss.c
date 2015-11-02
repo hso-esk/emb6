@@ -4,7 +4,12 @@
  * @brief   Asynchronous Power Saving Scheme module
  */
 
-#include "emb6_conf.h"
+/*
+********************************************************************************
+*                                   INCLUDES
+********************************************************************************
+*/
+#include "emb6.h"
 
 
 #if NETSTK_CFG_LPR_APSS_EN

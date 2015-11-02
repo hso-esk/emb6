@@ -9,7 +9,8 @@
 *                                  INCLUDES
 ********************************************************************************
 */
-#include "emb6_conf.h"
+#include "emb6.h"
+
 
 #if (APSS_XMAC_EN == TRUE)
 #include "lib_tmr.h"

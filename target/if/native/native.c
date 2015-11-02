@@ -56,7 +56,7 @@
  INCLUDE FILES
  ==============================================================================*/
 #include "emb6.h"
-#include "emb6_conf.h"
+
 #include "bsp.h"
 #include "packetbuf.h"
 #include "tcpip.h"

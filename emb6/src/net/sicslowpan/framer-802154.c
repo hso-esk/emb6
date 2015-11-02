@@ -37,9 +37,7 @@
  *         Joakim Eriksson <joakime@sics.se>
  */
 
-#include "emb6_conf.h"
 #include "emb6.h"
-
 #include "framer.h"
 #include "framer-802154.h"
 #include "framer_802154.h"

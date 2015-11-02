@@ -19,9 +19,8 @@ extern "C"
 /*============================================================================*/
 /*                                INCLUDES                                    */
 /*============================================================================*/
-#include <stdint.h>
-#include <stdio.h>
-#include <string.h>
+#include "emb6.h"
+
 
 #define __DECL_RF_H__
 #include "cc1120.h"
@@ -29,8 +28,6 @@ extern "C"
 #include "cc1120_hal_io.h"
 
 #include "lib_port.h"
-
-#include "emb6_conf.h"
 #include "packetbuf.h"
 #include "evproc.h"
 

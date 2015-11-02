@@ -60,9 +60,8 @@
                                  INCLUDE FILES
 ==============================================================================*/
 
-
 #include "emb6.h"
-#include "emb6_conf.h"
+
 #include "target.h"
 #include "hwinit.h"
 #include "bsp.h"

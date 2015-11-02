@@ -62,7 +62,6 @@
  */
 
 
-#include "emb6_conf.h"
 #include "emb6.h"
 
 #include "timer.h"

@@ -10,7 +10,7 @@
 *                                   INCLUDES
 ********************************************************************************
 */
-#include "emb6_conf.h"
+#include "emb6.h"
 
 
 #define     LOGGER_ENABLE        LOGGER_PHY

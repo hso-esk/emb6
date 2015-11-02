@@ -6,13 +6,17 @@
  */
 
 
-#include "emb6_conf.h"
+/*
+********************************************************************************
+*                                   INCLUDES
+********************************************************************************
+*/
+#include "emb6.h"
 #include "board_conf.h"
 
 
-
 /** Enable or disable logging */
-#define        LOGGER_ENABLE          LOGGER_BSP
+#define LOGGER_ENABLE       LOGGER_BSP
 #include "logger.h"
 
 
