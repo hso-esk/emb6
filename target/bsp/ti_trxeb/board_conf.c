@@ -29,7 +29,6 @@
 uint8_t board_conf(s_ns_t *p_netstk)
 {
     uint8_t     c_ret = 1;
-    e_nsErr_t   err = NETSTK_ERR_NONE;
 
 
     if (p_netstk != NULL) {
