@@ -992,19 +992,16 @@ void uip_log(char *msg);
                                                      LPR_PORT_TX_RX_TURNAROUND_IN_MS   +   \
                                                      LPR_PORT_RX_PAYLOAD_OFFSET_IN_MS)
 
-#define LPR_PORT_STROBE_TX_PERIOD_IN_MS             (LPR_PORT_STROBE_TX_TIME_IN_MS     +   \
-                                                     LPR_PORT_STROBE_TX_GAP_TIME_IN_MS)
+#define LPR_PORT_STROBE_TX_INTERVAL_IN_MS           (uint32_t)( 20U )
 
-#define LPR_CFG_STROBE_TX_MAX                       (uint8_t)(LPR_CFG_STROBE_TX_INTERVAL_IN_MS / LPR_PORT_STROBE_TX_PERIOD_IN_MS )
-
-#define LPR_CFG_POWERON_OFFSET_IN_MS                (uint32_t)( 0U )
+#define LPR_CFG_STROBE_TX_MAX                       (uint8_t )(LPR_CFG_STROBE_TX_INTERVAL_IN_MS / LPR_PORT_STROBE_TX_INTERVAL_IN_MS )
 
 /**
  * @note    Broadcast feature is at the moment only available with SmartMAC
  */
 #define LPR_CFG_BROADCAST_TX_ADDITION               (uint8_t)( 2u )
 #define LPR_CFG_BROADCAST_TX_MAX                    (uint8_t)(LPR_CFG_POWERUP_INTERVAL_IN_MS       /       \
-                                                              LPR_PORT_STROBE_TX_PERIOD_IN_MS      +       \
+                                                              LPR_PORT_STROBE_TX_INTERVAL_IN_MS    +       \
                                                               LPR_CFG_BROADCAST_TX_ADDITION)
 
 

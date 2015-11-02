@@ -960,26 +960,26 @@ static void LPR_TmrIsr1WFA (void *p_arg)
         return;
     }
 
-    if (p_apss->State == LPR_STATE_TX_SWFA) {
-        if (p_apss->WFAEQty > LPR_WFAE_COUNT_MAX) {
-            p_apss->WFAEQty = 0;
-            p_apss->State = LPR_STATE_TX_S;
-            LPR_EVENT_POST(NETSTK_LPR_EVENT);
-            return;
-        }
 
+    if (p_apss->State == LPR_STATE_TX_SWFA) {
         p_apss->Netstack->rf->ioctrl(NETSTK_CMD_RF_IS_RX_BUSY,
                                      &is_rx_busy,
                                      &err);
         if (is_rx_busy != 1) {
             p_apss->State = LPR_STATE_TX_S;
-            LPR_EVENT_POST(NETSTK_LPR_EVENT);
         } else {
-            p_apss->WFAEQty++;
-            p_apss->State = LPR_STATE_TX_SWFAE;
+            if (p_apss->WFAEQty > LPR_WFAE_COUNT_MAX) {
+                p_apss->WFAEQty = 0;
+                p_apss->State = LPR_STATE_TX_S;
+            } else {
+                p_apss->WFAEQty++;
+                p_apss->State = LPR_STATE_TX_SWFAE;
+            }
         }
+        LPR_EVENT_POST(NETSTK_LPR_EVENT);
         return;
     }
+
 
     if (p_apss->State == LPR_STATE_TX_PWFA) {
         p_apss->State = LPR_STATE_TX_DONE;
@@ -1203,6 +1203,12 @@ static void LPR_TxStrobe (NETSTK_APSS *p_apss)
         p_apss->IsTxDelayed = 0;
     }
 
+    /*
+     * Start Strobe TX interval timer
+     */
+    LPR_Tmr1Start(&p_apss->Tmr1W,
+                   LPR_PORT_STROBE_TX_INTERVAL_IN_MS,
+                   LPR_TmrIsr1WFA);
 
     p_apss->Netstack->rf->send(p_apss->TxPktPtr,
                                p_apss->TxPktLen,
@@ -1219,6 +1225,7 @@ static void LPR_TxStrobe (NETSTK_APSS *p_apss)
          *      where it waits for a corresponding ACK to the sent strobe for a
          *      predefined period of time.
          */
+        Tmr_Stop(&p_apss->Tmr1W);
         p_apss->Netstack->rf->ioctrl(NETSTK_CMD_RF_IS_RX_BUSY,
                                      &is_rx_busy,
                                      &err);
@@ -1233,12 +1240,7 @@ static void LPR_TxStrobe (NETSTK_APSS *p_apss)
         /*
          * Strobe was successfully transmitted
          */
-        if (p_apss->State == LPR_STATE_TX_S) {
-            p_apss->State = LPR_STATE_TX_SWFA;
-            LPR_Tmr1Start (&p_apss->Tmr1W,
-                             LPR_PORT_WFA_TIMEOUT_IN_MS,
-                             LPR_TmrIsr1WFA);
-        }
+        p_apss->State = LPR_STATE_TX_SWFA;
         LPR_PrepareStrobe(p_apss);
     }
 }
@@ -1249,27 +1251,9 @@ static void LPR_TxStrobe (NETSTK_APSS *p_apss)
  */
 static void LPR_TxPayload (NETSTK_APSS *p_apss)
 {
-#if 0 // draft
-    uint8_t is_chan_idle;
-
-
-    is_chan_idle = LPR_CSMA(p_apss);
-    if (is_chan_idle) {
-        p_apss->Netstack->radio->Send (LPR_TxBuf, LPR_TxBufLen, &err);
-        if (err != RADIO_ERR_NONE) {
-            p_apss->LastErrTx = STK_ERR_TX_RADIO_SEND;
-        } else {
-            p_apss->LastErrTx = STK_ERR_NONE;
-        }
-    } else {
-        p_apss->LastErrTx = STK_ERR_LPR_CHANNEL_ACESS_FAILURE;
-    }
-
-#else
     p_apss->Netstack->rf->send(LPR_TxBuf,
                                LPR_TxBufLen,
                                &p_apss->LastErrTx);
-#endif
     p_apss->State = LPR_STATE_TX_DONE;
     LPR_EVENT_POST(NETSTK_LPR_EVENT);
 }

@@ -22,8 +22,7 @@
 *                               LOCAL DEFINES
 ********************************************************************************
 */
-#define SMARTMAC_LEN_STROBE                             (uint8_t ) (   4u )
-#define SMARTMAC_LEN_SACK                               (uint8_t ) (   3u )
+#define SMARTMAC_FRAME_LEN                              (uint8_t)( 5U )
 
 
 /*
@@ -31,9 +30,8 @@
 *                               LOCAL VARIABLES
 ********************************************************************************
 */
-static uint8_t SmartMAC_Strobe [SMARTMAC_LEN_STROBE];
-static uint8_t SmartMAC_SACK   [SMARTMAC_LEN_SACK  ];
-
+static uint8_t SmartMAC_Strobe [SMARTMAC_FRAME_LEN];
+static uint8_t SmartMAC_SACK   [SMARTMAC_FRAME_LEN];
 static uint8_t SmartMAC_StrobeCnt;
 static uint8_t SmartMAC_BroadcastCnt;
 static uint8_t SmartMAC_RxBroadcast;
@@ -196,8 +194,8 @@ static void SmartMAC_ParseStrobe (uint8_t *p_pkt, uint16_t len, e_nsErr_t *p_err
     uint8_t     ts_count;
 
 
-    dev_id = (NETSTK_DEV_ID)(p_pkt[0]     ) |
-             (NETSTK_DEV_ID)(p_pkt[1] << 8);
+    dev_id = (NETSTK_DEV_ID)(p_pkt[3]     ) |
+             (NETSTK_DEV_ID)(p_pkt[4] << 8);
     if (dev_id == LPRSrcId) {
         *p_err = NETSTK_ERR_NONE;
         ts_count = p_pkt[2];
@@ -232,8 +230,8 @@ static void SmartMAC_ParseSACK (uint8_t *p_pkt, uint16_t len, e_nsErr_t *p_err)
     NETSTK_DEV_ID  src_id;
 
 
-    src_id = (NETSTK_DEV_ID)(p_pkt[0]     ) |
-             (NETSTK_DEV_ID)(p_pkt[1] << 8);
+    src_id = (NETSTK_DEV_ID)(p_pkt[3]     ) |
+             (NETSTK_DEV_ID)(p_pkt[4] << 8);
     if (src_id == LPRDstId) {
         *p_err = NETSTK_ERR_NONE;
 
@@ -293,13 +291,18 @@ static void SmartMAC_ParseBroadcast (uint8_t *p_pkt, uint16_t len, e_nsErr_t *p_
  */
 static void SmartMAC_Init (e_nsErr_t *p_err)
 {
-    SmartMAC_SACK[0]      = LPR_FRAME_TYPE_SACK;
-    SmartMAC_SACK[1]      = LPRSrcId;
-    SmartMAC_SACK[2]      = LPRSrcId >> 8;
-    SmartMAC_Strobe[0]    = 0;
-    SmartMAC_Strobe[1]    = 0;
-    SmartMAC_Strobe[2]    = 0;
-    SmartMAC_Strobe[3]    = 0;
+    SmartMAC_SACK[0] = LPR_FRAME_TYPE_SACK;
+    SmartMAC_SACK[1] = 0;
+    SmartMAC_SACK[2] = 0;
+    SmartMAC_SACK[3] = LPRSrcId;
+    SmartMAC_SACK[4] = LPRSrcId >> 8;
+
+    SmartMAC_Strobe[0] = 0;
+    SmartMAC_Strobe[1] = 0;
+    SmartMAC_Strobe[2] = 0;
+    SmartMAC_Strobe[3] = 0;
+    SmartMAC_Strobe[3] = 0;
+
     SmartMAC_SACKDelay    = 0;
     SmartMAC_StrobeCnt    = SMARTMAC_CFG_COUNT_MAX;
     SmartMAC_BroadcastCnt = LPR_CFG_BROADCAST_TX_MAX;
@@ -330,14 +333,15 @@ static uint8_t* SmartMAC_CreateStrobe (uint16_t *p_len, LIB_TMR_TICK *p_delay, e
 {
     uint8_t *p_pkt;
 
-
     SmartMAC_Strobe[0] = LPR_FRAME_TYPE_STROBE;
-    SmartMAC_Strobe[1] = LPRDstId;
-    SmartMAC_Strobe[2] = LPRDstId >> 8;
-    SmartMAC_Strobe[3] = SmartMAC_StrobeCnt;
+    SmartMAC_Strobe[1] = 0;
+    SmartMAC_Strobe[2] = SmartMAC_StrobeCnt;
+    SmartMAC_Strobe[3] = LPRDstId;
+    SmartMAC_Strobe[4] = LPRDstId >> 8;
+
     *p_delay = 0u;
     *p_err   = NETSTK_ERR_NONE;
-    *p_len   = sizeof (SmartMAC_Strobe);
+    *p_len   = sizeof(SmartMAC_Strobe);
      p_pkt   = SmartMAC_Strobe;
 
     if (SmartMAC_StrobeCnt) {
@@ -430,15 +434,16 @@ static uint8_t* SmartMAC_CreateBroadcast (uint16_t *p_len, LIB_TMR_TICK *p_delay
 
     uint8_t *p_pkt;
 
-
     SmartMAC_Strobe[0] = LPR_FRAME_TYPE_BROADCAST;
     SmartMAC_Strobe[1] = 0;
-    SmartMAC_Strobe[2] = 0;
-    SmartMAC_Strobe[3] = SmartMAC_BroadcastCnt;
+    SmartMAC_Strobe[2] = SmartMAC_BroadcastCnt;
+    SmartMAC_Strobe[3] = 0;
+    SmartMAC_Strobe[4] = 0;
     *p_delay = 0u;
     *p_err   = NETSTK_ERR_NONE;
-    *p_len   = sizeof (SmartMAC_Strobe);
+    *p_len   = sizeof(SmartMAC_Strobe);
     p_pkt    = SmartMAC_Strobe;
+
 
     if (SmartMAC_BroadcastCnt) {
         SmartMAC_BroadcastCnt--;
@@ -524,16 +529,16 @@ static void SmartMAC_Parse (uint8_t *p_pkt, uint16_t len, e_nsErr_t *p_err)
 
     switch (*p_pkt) {
         case LPR_FRAME_TYPE_STROBE:
-            SmartMAC_ParseStrobe (++p_pkt, len, p_err);
+            SmartMAC_ParseStrobe(p_pkt, len, p_err);
             break;
 
         case LPR_FRAME_TYPE_SACK:
-            SmartMAC_ParseSACK (++p_pkt, len, p_err);
+            SmartMAC_ParseSACK(p_pkt, len, p_err);
             break;
 
         case LPR_FRAME_TYPE_BROADCAST:
             SmartMAC_RxBroadcast = 1;
-            SmartMAC_ParseBroadcast (++p_pkt, len, p_err);
+            SmartMAC_ParseBroadcast(p_pkt, len, p_err);
             break;
 
         default:
