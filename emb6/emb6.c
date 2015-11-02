@@ -197,6 +197,11 @@ uint8_t loc_emb6NetstackInit(s_ns_t * ps_ns)
         /*
          * Netstack submodule initializations
          */
+        ps_ns->rf->init(ps_ns, &err);
+        if (err != NETSTK_ERR_NONE) {
+            return 0;
+        }
+
         ps_ns->lpr->init(ps_ns, &err);
         if (err != NETSTK_ERR_NONE) {
             return 0;

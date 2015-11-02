@@ -326,6 +326,26 @@ int8_t demo_udpSocketCfg(s_ns_t *p_netstk)
     int8_t i_ret = -1;
 
 
+#if STK_CFG_REFACTOR_EN
+    if (p_netstk != NULL) {
+        if (!p_netstk->c_configured) {
+            p_netstk->hc    = &sicslowpan_driver;
+            p_netstk->frame = &framer_802154;
+            p_netstk->llsec = &nullsec_driver;
+            i_ret = 1;
+        } else {
+            if ((p_netstk->hc    == &sicslowpan_driver) &&
+                (p_netstk->frame == &framer_802154)     &&
+                (p_netstk->llsec == &nullsec_driver)) {
+                i_ret = 1;
+            }
+            else {
+                p_netstk = NULL;
+                i_ret = 0;
+            }
+        }
+    }
+#else
     if (p_netstk != NULL) {
         if (!p_netstk->c_configured) {
             p_netstk->hc    = &sicslowpan_driver;
@@ -355,6 +375,8 @@ int8_t demo_udpSocketCfg(s_ns_t *p_netstk)
             }
         }
     }
+#endif
+
 
     return i_ret;
 }
