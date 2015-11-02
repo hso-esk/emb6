@@ -188,6 +188,9 @@ int frame802154_hdrlen(frame802154_t *p);
 int frame802154_create(frame802154_t *p, uint8_t *buf);
 int frame802154_parse(uint8_t *data, int length, frame802154_t *pf);
 
+void    frame802154_setDSN(uint8_t dsn);
+uint8_t frame802154_getDSN(void);
+
 #endif /* FRAME_802154_H */
 /** @} */
 /** @} */

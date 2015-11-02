@@ -250,6 +250,10 @@ void MAC_Send(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
                             NULL,
                             p_err);
 
+#if STK_CFG_REFACTOR_EN
+    MAC_LastSeq = frame802154_getDSN();
+#endif
+
     /*
      * Issue next lower layer to transmit the prepared frame
      */

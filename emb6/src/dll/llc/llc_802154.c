@@ -240,6 +240,7 @@ void LLC_Send(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
     /*
      * Create frame to send
      */
+    frame802154_setDSN(LLC_DSN);
     frame802154_create(&params,
                         packetbuf_hdrptr());
 
@@ -270,10 +271,6 @@ void LLC_Send(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
                             NULL,
                             p_err);
 
-    LLC_Netstk->mac->ioctrl(NETSTK_CMD_MAC_DSN_SET,
-                            &params.seq,
-                            p_err);
-
     /*
      * Issue next lower layer to transmit the prepared frame
      */
@@ -282,6 +279,7 @@ void LLC_Send(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
                           p_err);
     if (*p_err == NETSTK_ERR_NONE) {
         LLC_Busy = 1;
+        LLC_DSN++;
     }
 }
 
