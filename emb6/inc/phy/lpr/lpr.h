@@ -17,13 +17,13 @@ struct lpr_framer_api
 {
     char         *Name;
 
-    void        (*Init        )(NETSTK_ERR *p_err);
+    void        (*Init        )(e_nsErr_t *p_err);
 
-    void        (*Deinit      )(NETSTK_ERR *p_err);
+    void        (*Deinit      )(e_nsErr_t *p_err);
 
-    uint8_t*    (*Create      )(uint8_t frame_type, uint16_t *p_len, uint32_t *p_delay, NETSTK_ERR *p_err);
+    uint8_t*    (*Create      )(uint8_t frame_type, uint16_t *p_len, uint32_t *p_delay, e_nsErr_t *p_err);
 
-    void        (*Parse       )(uint8_t *p_pkt, uint16_t len, NETSTK_ERR *p_err);
+    void        (*Parse       )(uint8_t *p_pkt, uint16_t len, e_nsErr_t *p_err);
 };
 
 

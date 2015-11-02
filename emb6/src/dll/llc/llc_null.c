@@ -19,12 +19,12 @@
 *                          LOCAL FUNCTION DECLARATIONS
 ********************************************************************************
 */
-void LLC_Init(void *p_netstk, NETSTK_ERR *p_err);
-void LLC_On(NETSTK_ERR *p_err);
-void LLC_Off(NETSTK_ERR *p_err);
-void LLC_Send(NETSTK_ERR *p_err);
-void LLC_Recv(NETSTK_ERR *p_err);
-void LLC_IOCtrl(NETSTK_IOC_CMD cmd, void *p_val, NETSTK_ERR *p_err);
+static void LLC_Init(void *p_netstk, e_nsErr_t *p_err);
+static void LLC_On(e_nsErr_t *p_err);
+static void LLC_Off(e_nsErr_t *p_err);
+static void LLC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
+static void LLC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
+static void LLC_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
 
 
 /*
@@ -32,14 +32,16 @@ void LLC_IOCtrl(NETSTK_IOC_CMD cmd, void *p_val, NETSTK_ERR *p_err);
 *                               LOCAL VARIABLES
 ********************************************************************************
 */
-static s_ns_t *LLC_Netstk;
+static s_ns_t           *LLC_Netstk;
+static nsRxCbFnct_t      LLC_CbRxFnct;
+
 
 /*
 ********************************************************************************
 *                               GLOBAL VARIABLES
 ********************************************************************************
 */
-NETSTK_MODULE_DRV LLCDrvNull =
+const s_nsLLC_t LLCDrvNull =
 {
    "LLC NULL",
     LLC_Init,
@@ -56,7 +58,7 @@ NETSTK_MODULE_DRV LLCDrvNull =
 *                           LOCAL FUNCTION DEFINITIONS
 ********************************************************************************
 */
-void LLC_Init(void *p_netstk, NETSTK_ERR *p_err)
+static void LLC_Init(void *p_netstk, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
     if (p_netstk == NULL) {
@@ -71,35 +73,48 @@ void LLC_Init(void *p_netstk, NETSTK_ERR *p_err)
 }
 
 
-void LLC_On(NETSTK_ERR *p_err)
+static void LLC_On(e_nsErr_t *p_err)
 {
     LLC_Netstk->mac->on(p_err);
 }
 
 
-void LLC_Off(NETSTK_ERR *p_err)
+static void LLC_Off(e_nsErr_t *p_err)
 {
     LLC_Netstk->mac->off(p_err);
 }
 
 
-void LLC_Send(NETSTK_ERR *p_err)
+static void LLC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 {
-    LLC_Netstk->mac->send(p_err);
+    LLC_Netstk->mac->send(p_data, len, p_err);
 }
 
 
-void LLC_Recv(NETSTK_ERR *p_err)
+static void LLC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 {
-
+    if (LLC_CbRxFnct) {
+        /*
+         * Inform the next higher layer
+         */
+        LLC_CbRxFnct(p_data,
+                     len,
+                     p_err);
+    }
 }
 
 
-void LLC_IOCtrl(NETSTK_IOC_CMD cmd, void *p_val, NETSTK_ERR *p_err)
+static void LLC_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
 {
+#if NETSTK_CFG_ARG_CHK_EN
+    if (p_err == NULL) {
+        return;
+    }
+#endif
+
+    *p_err = NETSTK_ERR_NONE;
     switch (cmd) {
-        case NETSTK_CMD_LLC_XXX:
-            *p_err = NETSTK_ERR_NONE;
+        case NETSTK_CMD_LLC_RSVD:
             break;
 
         default:

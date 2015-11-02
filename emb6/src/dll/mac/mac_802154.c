@@ -44,20 +44,20 @@
 *                          LOCAL FUNCTION DECLARATIONS
 ********************************************************************************
 */
-void MAC_Init(void *p_netstk, NETSTK_ERR *p_err);
-void MAC_On(NETSTK_ERR *p_err);
-void MAC_Off(NETSTK_ERR *p_err);
-void MAC_Send(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err);
-void MAC_Recv(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err);
-void MAC_IOCtrl(NETSTK_IOC_CMD cmd, void *p_val, NETSTK_ERR *p_err);
+static void MAC_Init(void *p_netstk, e_nsErr_t *p_err);
+static void MAC_On(e_nsErr_t *p_err);
+static void MAC_Off(e_nsErr_t *p_err);
+static void MAC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
+static void MAC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
+static void MAC_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
 
 
-static void MAC_CbTx(void *p_arg, NETSTK_ERR *p_err);
+static void MAC_CbTx(void *p_arg, e_nsErr_t *p_err);
 static uint8_t MAC_IsAcked(frame802154_t *p_frame);
 static void MAC_TxACK(uint8_t seq);
 static void MAC_EventHandler(c_event_t c_event, p_data_t p_data);
 static void MAC_IsrTmrACK(void *p_arg);
-static void MAC_CSMA(NETSTK_ERR *p_err);
+static void MAC_CSMA(e_nsErr_t *p_err);
 
 
 /*
@@ -76,8 +76,8 @@ static uint8_t          MAC_LastSeq;
 static LIB_TMR          MAC_Tmr1ACK;
 static s_ns_t          *MAC_Netstk;
 static void            *MAC_CbTxArg;
-static NETSTK_CBFNCT    MAC_CbTxFnct;
-static NETSTK_ERR       MAC_LastErr;
+static nsTxCbFnct_t     MAC_CbTxFnct;
+static e_nsErr_t        MAC_LastErr;
 
 
 /*
@@ -85,7 +85,7 @@ static NETSTK_ERR       MAC_LastErr;
 *                               GLOBAL VARIABLES
 ********************************************************************************
 */
-NETSTK_MODULE_DRV MACDrv802154 =
+const s_nsMAC_t MACDrv802154 =
 {
    "MAC 802154",
     MAC_Init,
@@ -111,7 +111,7 @@ extern uip_lladdr_t uip_lladdr;
  * @param   p_netstk    Pointer to netstack structure
  * @param   p_err       Pointer to a variable storing returned error code
  */
-void MAC_Init(void *p_netstk, NETSTK_ERR *p_err)
+void MAC_Init(void *p_netstk, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
     if (p_err == NULL) {
@@ -160,7 +160,7 @@ void MAC_Init(void *p_netstk, NETSTK_ERR *p_err)
  *
  * @param   p_err       Pointer to a variable storing returned error code
  */
-void MAC_On(NETSTK_ERR *p_err)
+void MAC_On(e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
     if (p_err == NULL) {
@@ -178,7 +178,7 @@ void MAC_On(NETSTK_ERR *p_err)
  *
  * @param   p_err       Pointer to a variable storing returned error code
  */
-void MAC_Off(NETSTK_ERR *p_err)
+void MAC_Off(e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
     if (p_err == NULL) {
@@ -198,7 +198,7 @@ void MAC_Off(NETSTK_ERR *p_err)
  * @param   len         Length of frame to send
  * @param   p_err       Pointer to a variable storing returned error code
  */
-void MAC_Send(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
+void MAC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
     if (p_err == NULL) {
@@ -275,7 +275,7 @@ void MAC_Send(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
  * @param   len         Length of frame to receive
  * @param   p_err       Pointer to a variable storing returned error code
  */
-void MAC_Recv(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
+void MAC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
     if (p_err == NULL) {
@@ -365,7 +365,7 @@ void MAC_Recv(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
  * @param   p_val       Pointer to a variable related to the command
  * @param   p_err       Pointer to a variable storing returned error code
  */
-void MAC_IOCtrl(NETSTK_IOC_CMD cmd, void *p_val, NETSTK_ERR *p_err)
+void MAC_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
     if (p_err == NULL) {
@@ -380,16 +380,12 @@ void MAC_IOCtrl(NETSTK_IOC_CMD cmd, void *p_val, NETSTK_ERR *p_err)
             if (p_val == NULL) {
                 *p_err = NETSTK_ERR_INVALID_ARGUMENT;
             } else {
-                MAC_CbTxFnct = (NETSTK_CBFNCT)p_val;
+                MAC_CbTxFnct = (nsTxCbFnct_t)p_val;
             }
             break;
 
         case NETSTK_CMD_TX_CBARG_SET:
             MAC_CbTxArg = p_val;
-            break;
-
-        case NETSTK_CMD_MAC_DSN_SET:
-            MAC_LastSeq = *((uint8_t *)p_val);
             break;
 
         default:
@@ -405,7 +401,7 @@ void MAC_IOCtrl(NETSTK_IOC_CMD cmd, void *p_val, NETSTK_ERR *p_err)
  * @param   p_arg   Pointer to the registered callback argument
  * @param   p_err   Error code that is set by the function caller
  */
-static void MAC_CbTx(void *p_arg, NETSTK_ERR *p_err)
+static void MAC_CbTx(void *p_arg, e_nsErr_t *p_err)
 {
     if (MAC_IsTxAck) {
         /*
@@ -482,7 +478,7 @@ static uint8_t MAC_IsAcked(frame802154_t *p_frame)
  */
 static void MAC_TxACK(uint8_t seq)
 {
-    NETSTK_ERR      err = NETSTK_ERR_NONE;
+    e_nsErr_t      err = NETSTK_ERR_NONE;
     uint8_t         ack[3];
     frame802154_t   params;
 
@@ -586,7 +582,7 @@ static void MAC_IsrTmrACK(void *p_arg)
  *
  * @param   p_err   Pointer to a variable storing returned error code
  */
-static void MAC_CSMA(NETSTK_ERR *p_err)
+static void MAC_CSMA(e_nsErr_t *p_err)
 {
     uint32_t unit_backoff;
     uint32_t nb;

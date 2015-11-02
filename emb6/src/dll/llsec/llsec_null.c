@@ -59,7 +59,7 @@ static void            *LLSec_TxCbArg;
  * @param   p_arg
  * @param   p_err
  */
-static void LLSec_CbTx(void *p_arg, NETSTK_ERR *p_err)
+static void LLSec_CbTx(void *p_arg, e_nsErr_t *p_err)
 {
     int status;
     int transmission = 0;
@@ -93,7 +93,7 @@ static void LLSec_CbTx(void *p_arg, NETSTK_ERR *p_err)
 /*---------------------------------------------------------------------------*/
 static void LLSec_Send(mac_callback_t sent, void *p_arg)
 {
-    NETSTK_ERR err = NETSTK_ERR_NONE;
+    e_nsErr_t err = NETSTK_ERR_NONE;
 
 
     LLSec_TxCbFnct = sent;
@@ -147,7 +147,7 @@ static void LLSec_Init(s_ns_t *p_netstk)
     }
 #endif
 
-    NETSTK_ERR err = NETSTK_ERR_NONE;
+    e_nsErr_t err = NETSTK_ERR_NONE;
 
     LLSec_Netstk = p_netstk;
     LLSec_Netstk->llc->ioctrl(NETSTK_CMD_RX_CBFNT_SET,

@@ -19,12 +19,12 @@
 *                          LOCAL FUNCTION DECLARATIONS
 ********************************************************************************
 */
-static void LPR_Init(void *p_netstk, NETSTK_ERR *p_err);
-static void LPR_On(NETSTK_ERR *p_err);
-static void LPR_Off(NETSTK_ERR *p_err);
-static void LPR_Send(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err);
-static void LPR_Recv(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err);
-static void LPR_IOCtrl(NETSTK_IOC_CMD cmd, void *p_val, NETSTK_ERR *p_err);
+static void LPR_Init(void *p_netstk, e_nsErr_t *p_err);
+static void LPR_On(e_nsErr_t *p_err);
+static void LPR_Off(e_nsErr_t *p_err);
+static void LPR_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
+static void LPR_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
+static void LPR_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
 
 
 /*
@@ -34,7 +34,7 @@ static void LPR_IOCtrl(NETSTK_IOC_CMD cmd, void *p_val, NETSTK_ERR *p_err);
 */
 static s_ns_t       *LPR_Netstk;
 static void         *LPR_CbTxArg;
-static NETSTK_CBFNCT LPR_CbTxFnct;
+static nsTxCbFnct_t LPR_CbTxFnct;
 
 
 /*
@@ -42,9 +42,9 @@ static NETSTK_CBFNCT LPR_CbTxFnct;
 *                               GLOBAL VARIABLES
 ********************************************************************************
 */
-NETSTK_MODULE_DRV LPRDrvNull =
+const s_nsLPR_t LPRDrvNull =
 {
-   "LPR APSS",
+   "LPR NULL",
     LPR_Init,
     LPR_On,
     LPR_Off,
@@ -66,7 +66,7 @@ NETSTK_MODULE_DRV LPRDrvNull =
  * @param   p_netstk    Pointer to netstack structure
  * @param   p_err       Pointer to a variable storing returned error code
  */
-void LPR_Init(void *p_netstk, NETSTK_ERR *p_err)
+void LPR_Init(void *p_netstk, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
     if (p_err == NULL) {
@@ -92,7 +92,7 @@ void LPR_Init(void *p_netstk, NETSTK_ERR *p_err)
  *
  * @param   p_err       Pointer to a variable storing returned error code
  */
-void LPR_On(NETSTK_ERR *p_err)
+void LPR_On(e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
     if (p_err == NULL) {
@@ -110,7 +110,7 @@ void LPR_On(NETSTK_ERR *p_err)
  *
  * @param   p_err       Pointer to a variable storing returned error code
  */
-void LPR_Off(NETSTK_ERR *p_err)
+void LPR_Off(e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
     if (p_err == NULL) {
@@ -130,7 +130,7 @@ void LPR_Off(NETSTK_ERR *p_err)
  * @param   len         Length of frame to send
  * @param   p_err       Pointer to a variable storing returned error code
  */
-void LPR_Send(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
+void LPR_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
     if (p_err == NULL) {
@@ -157,7 +157,7 @@ void LPR_Send(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
  * @param   len         Length of frame to receive
  * @param   p_err       Pointer to a variable storing returned error code
  */
-void LPR_Recv(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
+void LPR_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
     if (p_err == NULL) {
@@ -183,7 +183,7 @@ void LPR_Recv(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
  * @param   p_val       Pointer to a variable related to the command
  * @param   p_err       Pointer to a variable storing returned error code
  */
-void LPR_IOCtrl(NETSTK_IOC_CMD cmd, void *p_val, NETSTK_ERR *p_err)
+void LPR_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
 {
     *p_err = NETSTK_ERR_NONE;
     switch (cmd) {
@@ -191,7 +191,7 @@ void LPR_IOCtrl(NETSTK_IOC_CMD cmd, void *p_val, NETSTK_ERR *p_err)
             if (p_val == NULL) {
                 *p_err = NETSTK_ERR_INVALID_ARGUMENT;
             } else {
-                LPR_CbTxFnct = (NETSTK_CBFNCT)p_val;
+                LPR_CbTxFnct = (nsTxCbFnct_t)p_val;
             }
             break;
 
@@ -199,10 +199,10 @@ void LPR_IOCtrl(NETSTK_IOC_CMD cmd, void *p_val, NETSTK_ERR *p_err)
             LPR_CbTxArg = p_val;
             break;
 
-        case NETSTK_CMD_PHY_XXX:
+        case NETSTK_CMD_PHY_RSVD:
             break;
 
-        case NETSTK_CMD_LPR_XXX:
+        case NETSTK_CMD_LPR_RSVD:
             *p_err = NETSTK_ERR_NONE;
             break;
 

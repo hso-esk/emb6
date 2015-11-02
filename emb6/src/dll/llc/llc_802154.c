@@ -28,16 +28,16 @@
 *                          LOCAL FUNCTION DECLARATIONS
 ********************************************************************************
 */
-void LLC_Init(void *p_netstk, NETSTK_ERR *p_err);
-void LLC_On(NETSTK_ERR *p_err);
-void LLC_Off(NETSTK_ERR *p_err);
-void LLC_Send(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err);
-void LLC_Recv(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err);
-void LLC_IOCtrl(NETSTK_IOC_CMD cmd, void *p_val, NETSTK_ERR *p_err);
+static void LLC_Init(void *p_netstk, e_nsErr_t *p_err);
+static void LLC_On(e_nsErr_t *p_err);
+static void LLC_Off(e_nsErr_t *p_err);
+static void LLC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
+static void LLC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
+static void LLC_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
 
 
-static void LLC_CbTx(void *p_arg, NETSTK_ERR *p_err);
-static void LLC_VerifyAddr(frame802154_t *p_frame, NETSTK_ERR *p_err);
+static void LLC_CbTx(void *p_arg, e_nsErr_t *p_err);
+static void LLC_VerifyAddr(frame802154_t *p_frame, e_nsErr_t *p_err);
 static uint8_t LLC_IsBroadcastAddr(uint8_t mode, uint8_t *p_addr);
 
 
@@ -53,8 +53,8 @@ static uint8_t LLC_IsBroadcastAddr(uint8_t mode, uint8_t *p_addr);
 static uint8_t          LLC_DSN;
 static uint8_t          LLC_Busy;
 static void            *LLC_CbTxArg;
-static NETSTK_CBFNCT    LLC_CbTxFnct;
-static NETSTK_CBRXFNCT  LLC_CbRxFnct;
+static nsTxCbFnct_t     LLC_CbTxFnct;
+static nsRxCbFnct_t     LLC_CbRxFnct;
 static s_ns_t          *LLC_Netstk;
 
 
@@ -63,7 +63,7 @@ static s_ns_t          *LLC_Netstk;
 *                               GLOBAL VARIABLES
 ********************************************************************************
 */
-NETSTK_MODULE_DRV LLCDrv802154 =
+const s_nsLLC_t LLCDrv802154 =
 {
    "LLC 802154",
     LLC_Init,
@@ -87,7 +87,7 @@ NETSTK_MODULE_DRV LLCDrv802154 =
  * @param   p_netstk    Pointer to netstack structure
  * @param   p_err       Pointer to a variable storing returned error code
  */
-void LLC_Init(void *p_netstk, NETSTK_ERR *p_err)
+static void LLC_Init(void *p_netstk, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
     if (p_err == NULL) {
@@ -116,7 +116,7 @@ void LLC_Init(void *p_netstk, NETSTK_ERR *p_err)
  *
  * @param   p_err       Pointer to a variable storing returned error code
  */
-void LLC_On(NETSTK_ERR *p_err)
+static void LLC_On(e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
     if (p_err == NULL) {
@@ -134,7 +134,7 @@ void LLC_On(NETSTK_ERR *p_err)
  *
  * @param   p_err       Pointer to a variable storing returned error code
  */
-void LLC_Off(NETSTK_ERR *p_err)
+static void LLC_Off(e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
     if (p_err == NULL) {
@@ -154,7 +154,7 @@ void LLC_Off(NETSTK_ERR *p_err)
  * @param   len         Length of frame to send
  * @param   p_err       Pointer to a variable storing returned error code
  */
-void LLC_Send(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
+static void LLC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 {
     int             hdralloc;
     uint8_t         hdr_len;
@@ -192,7 +192,7 @@ void LLC_Send(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
     params.fcf.frame_version = FRAME802154_IEEE802154_2003;
 
     /* Increment and set the data sequence number. */
-    params.seq = LLC_DSN++;
+    params.seq = LLC_DSN;
 
     /* Complete the addressing fields. */
     /**
@@ -244,7 +244,6 @@ void LLC_Send(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
     frame802154_create(&params,
                         packetbuf_hdrptr());
 
-
 #if LOGGER_ENABLE
     /*
      * Logging
@@ -291,7 +290,7 @@ void LLC_Send(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
  * @param   len         Length of frame to receive
  * @param   p_err       Pointer to a variable storing returned error code
  */
-void LLC_Recv(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
+static void LLC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
     if (p_err == NULL) {
@@ -364,7 +363,7 @@ void LLC_Recv(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
  * @param   p_val       Pointer to a variable related to the command
  * @param   p_err       Pointer to a variable storing returned error code
  */
-void LLC_IOCtrl(NETSTK_IOC_CMD cmd, void *p_val, NETSTK_ERR *p_err)
+static void LLC_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
     if (p_err == NULL) {
@@ -379,7 +378,7 @@ void LLC_IOCtrl(NETSTK_IOC_CMD cmd, void *p_val, NETSTK_ERR *p_err)
             if (p_val == NULL) {
                 *p_err = NETSTK_ERR_INVALID_ARGUMENT;
             } else {
-                LLC_CbTxFnct = (NETSTK_CBFNCT)p_val;
+                LLC_CbTxFnct = (nsTxCbFnct_t)p_val;
             }
             break;
 
@@ -391,11 +390,11 @@ void LLC_IOCtrl(NETSTK_IOC_CMD cmd, void *p_val, NETSTK_ERR *p_err)
             if (p_val == NULL) {
                 *p_err = NETSTK_ERR_INVALID_ARGUMENT;
             } else {
-                LLC_CbRxFnct = (NETSTK_CBRXFNCT)p_val;
+                LLC_CbRxFnct = (nsRxCbFnct_t)p_val;
             }
             break;
 
-        case NETSTK_CMD_LLC_XXX:
+        case NETSTK_CMD_LLC_RSVD:
             break;
 
         default:
@@ -411,7 +410,7 @@ void LLC_IOCtrl(NETSTK_IOC_CMD cmd, void *p_val, NETSTK_ERR *p_err)
  * @param status
  * @param transmissions
  */
-static void LLC_CbTx(void *p_arg, NETSTK_ERR *p_err)
+static void LLC_CbTx(void *p_arg, e_nsErr_t *p_err)
 {
     LLC_Busy = 0;
     LLC_CbTxFnct(LLC_CbTxArg, p_err);
@@ -438,7 +437,7 @@ static uint8_t LLC_IsBroadcastAddr(uint8_t mode, uint8_t *p_addr)
 /**
  * @brief   Verify destination addresses of the received frame
  */
-static void LLC_VerifyAddr(frame802154_t *p_frame, NETSTK_ERR *p_err)
+static void LLC_VerifyAddr(frame802154_t *p_frame, e_nsErr_t *p_err)
 {
     int     is_addr_matched;
     uint8_t is_broadcast;

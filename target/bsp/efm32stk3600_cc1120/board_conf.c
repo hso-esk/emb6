@@ -69,7 +69,7 @@
 uint8_t board_conf(s_ns_t* ps_ns)
 {
     uint8_t c_ret = 0;
-    NETSTK_ERR  err;
+    e_nsErr_t  err;
 
     if (ps_ns != NULL) {
         ps_ns->rf = &RFDrvCC1120;

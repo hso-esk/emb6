@@ -121,9 +121,9 @@ struct netstk_apss
     LPR_FRAMER_DRV     *Framer;
     LPR_STATE           State;
     LPR_STATE           BroadcastState;
-    NETSTK_ERR          LastErrTx;
+    e_nsErr_t          LastErrTx;
 
-    NETSTK_CBFNCT       TxCbFnct;
+    nsTxCbFnct_t       TxCbFnct;
     void               *TxCbArg;
     uint8_t            *TxPktPtr;
     uint16_t            TxPktLen;
@@ -152,12 +152,12 @@ struct netstk_apss
 *                       LOCAL FUNCTIONS DECLARATION
 ********************************************************************************
 */
-static void LPR_Init (void *p_netstk, NETSTK_ERR *p_err);
-static void LPR_On(NETSTK_ERR *p_err);
-static void LPR_Off(NETSTK_ERR *p_err);
-static void LPR_Send(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err);
-static void LPR_Recv(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err);
-static void LPR_IOCtrl(NETSTK_IOC_CMD cmd, void *p_val, NETSTK_ERR *p_err);
+static void LPR_Init (void *p_netstk, e_nsErr_t *p_err);
+static void LPR_On(e_nsErr_t *p_err);
+static void LPR_Off(e_nsErr_t *p_err);
+static void LPR_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
+static void LPR_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
+static void LPR_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
 
 static void LPR_Task(c_event_t c_event, p_data_t p_data);
 static void LPR_TmrIsrPowerUp(void *p_arg);
@@ -209,7 +209,7 @@ NETSTK_DEV_ID      LPRDstId;
 LPR_PWRON_TBL_ENTRY  LPRPwrOnTbl[LPR_CFG_PWRON_TBL_SIZE];
 #endif
 
-NETSTK_MODULE_DRV LPRDrvAPSS =
+const s_nsLPR_t LPRDrvAPSS =
 {
    "LPR APSS",
     LPR_Init,
@@ -231,7 +231,7 @@ NETSTK_MODULE_DRV LPRDrvAPSS =
  * @brief   Initialize APSS module
  * @param   p_netstack  Point to netstack structure
  */
-static void LPR_Init (void *p_netstk, NETSTK_ERR *p_err)
+static void LPR_Init (void *p_netstk, e_nsErr_t *p_err)
 {
     NETSTK_APSS *p_apss = &LPR_Ctx;
 
@@ -303,7 +303,7 @@ static void LPR_Init (void *p_netstk, NETSTK_ERR *p_err)
  * @param   cbsent
  * @param   p_arg
  */
-static void LPR_Send (uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
+static void LPR_Send (uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 {
     NETSTK_APSS *p_apss = &LPR_Ctx;
     const linkaddr_t *p_dstaddr;
@@ -405,7 +405,7 @@ static void LPR_Send (uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
 /**
  * @brief   Frame reception handler
  */
-static void  LPR_Recv (uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
+static void  LPR_Recv (uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 {
     NETSTK_APSS *p_apss = &LPR_Ctx;
 
@@ -517,12 +517,12 @@ static void  LPR_Recv (uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
 }
 
 
-static void LPR_IOCtrl(NETSTK_IOC_CMD cmd, void *p_val, NETSTK_ERR *p_err)
+static void LPR_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
 {
     *p_err = NETSTK_ERR_NONE;
     switch (cmd) {
         case NETSTK_CMD_TX_CBFNCT_SET:
-            LPR_Ctx.TxCbFnct = (NETSTK_CBFNCT)p_val;
+            LPR_Ctx.TxCbFnct = (nsTxCbFnct_t)p_val;
             break;
 
         case NETSTK_CMD_TX_CBARG_SET:
@@ -539,7 +539,7 @@ static void LPR_IOCtrl(NETSTK_IOC_CMD cmd, void *p_val, NETSTK_ERR *p_err)
  * @brief   Turn APSS on
  * @return
  */
-static void LPR_On (NETSTK_ERR *p_err)
+static void LPR_On (e_nsErr_t *p_err)
 {
     LPR_Ctx.Netstack->rf->on(p_err);
 }
@@ -549,7 +549,7 @@ static void LPR_On (NETSTK_ERR *p_err)
  * @brief   Turn APSS off
  * @return
  */
-static void LPR_Off (NETSTK_ERR *p_err)
+static void LPR_Off (e_nsErr_t *p_err)
 {
     LPR_Ctx.Netstack->rf->off(p_err);
 }
@@ -564,7 +564,7 @@ static void LPR_Off (NETSTK_ERR *p_err)
 static void LPR_Task(c_event_t c_event, p_data_t p_data)
 {
     NETSTK_APSS  *p_apss = &LPR_Ctx;
-    NETSTK_ERR    err = NETSTK_ERR_NONE;
+    e_nsErr_t    err = NETSTK_ERR_NONE;
 
 
     switch (p_apss->State) {
@@ -713,7 +713,7 @@ static uint8_t LPR_CCA(NETSTK_APSS *p_apss)
     uint8_t chan_idle;
     uint8_t csma_qty;
     uint8_t is_idle;
-    NETSTK_ERR err = NETSTK_ERR_NONE;
+    e_nsErr_t err = NETSTK_ERR_NONE;
     
 
     chan_idle = 1;
@@ -751,7 +751,7 @@ static uint8_t LPR_CSMA(NETSTK_APSS *p_apss)
     uint32_t max_backoff = 3;
     uint32_t delay = 0;
     uint32_t max_random;
-    NETSTK_ERR err = NETSTK_ERR_NONE;
+    e_nsErr_t err = NETSTK_ERR_NONE;
     uint8_t is_idle;
 
 
@@ -824,7 +824,7 @@ static void LPR_TmrIsrPowerUp (void *p_arg)
  */
 static void LPR_TmrIsr1Scan (void *p_arg)
 {
-    NETSTK_ERR err = NETSTK_ERR_NONE;
+    e_nsErr_t err = NETSTK_ERR_NONE;
     uint8_t is_rx_busy;
     NETSTK_APSS *p_apss = (NETSTK_APSS *)p_arg;
 
@@ -864,7 +864,7 @@ static void LPR_TmrIsr1Scan (void *p_arg)
 
 static void LPR_TmrIsr1WFP (void *p_arg)
 {
-    NETSTK_ERR err = NETSTK_ERR_NONE;
+    e_nsErr_t err = NETSTK_ERR_NONE;
     uint8_t is_rx_busy;
     NETSTK_APSS *p_apss = (NETSTK_APSS *)p_arg;
 
@@ -944,7 +944,7 @@ static void LPR_TmrIsr1RxBSD (void *p_arg)
  */
 static void LPR_TmrIsr1WFA (void *p_arg)
 {
-    NETSTK_ERR err = NETSTK_ERR_NONE;
+    e_nsErr_t err = NETSTK_ERR_NONE;
     uint8_t is_rx_busy;
     NETSTK_APSS *p_apss = (NETSTK_APSS *)p_arg;
 
@@ -1011,7 +1011,7 @@ static void LPR_TmrIsr1TxSD (void *p_arg)
 static void LPR_TmrIsr1Idle(void *p_arg)
 {
     NETSTK_APSS *p_apss = (NETSTK_APSS *)p_arg;
-    NETSTK_ERR err = NETSTK_ERR_NONE;
+    e_nsErr_t err = NETSTK_ERR_NONE;
     uint8_t is_rx_busy;
 
 
@@ -1043,7 +1043,7 @@ static void LPR_TmrIsr1Idle(void *p_arg)
  */
 static void LPR_GotoPowerDown (NETSTK_APSS *p_apss)
 {
-    NETSTK_ERR err = NETSTK_ERR_NONE;
+    e_nsErr_t err = NETSTK_ERR_NONE;
 
 
     LED_SCAN_OFF();
@@ -1099,7 +1099,7 @@ static void LPR_GotoIdle(NETSTK_APSS *p_apss)
  */
 static void LPR_PrepareIdleListening (NETSTK_APSS *p_apss)
 {
-    NETSTK_ERR err = NETSTK_ERR_NONE;
+    e_nsErr_t err = NETSTK_ERR_NONE;
 
 
     /*
@@ -1140,7 +1140,7 @@ static void LPR_PrepareIdleListening (NETSTK_APSS *p_apss)
  */
 static void LPR_TxSACK (NETSTK_APSS *p_apss)
 {
-    NETSTK_ERR err = NETSTK_ERR_NONE;
+    e_nsErr_t err = NETSTK_ERR_NONE;
 
 
     /*
@@ -1183,7 +1183,7 @@ static void LPR_TxSACK (NETSTK_APSS *p_apss)
  */
 static void LPR_TxStrobe (NETSTK_APSS *p_apss)
 {
-    NETSTK_ERR err = NETSTK_ERR_NONE;
+    e_nsErr_t err = NETSTK_ERR_NONE;
     uint8_t is_rx_busy;
 
 
@@ -1320,7 +1320,7 @@ static void LPR_RxPayload(NETSTK_APSS *p_apss)
  */
 static void LPR_PrepareRxBroadcast (NETSTK_APSS *p_apss)
 {
-    NETSTK_ERR err = NETSTK_ERR_NONE;
+    e_nsErr_t err = NETSTK_ERR_NONE;
 
 
     if (p_apss->State == LPR_STATE_RX_B) {
@@ -1339,7 +1339,7 @@ static void LPR_PrepareRxBroadcast (NETSTK_APSS *p_apss)
  */
 static void LPR_PrepareStrobe (NETSTK_APSS *p_apss)
 {
-    NETSTK_ERR     err = NETSTK_ERR_NONE;
+    e_nsErr_t     err = NETSTK_ERR_NONE;
     LIB_TMR_TICK   delay = 0;
 
 
@@ -1401,7 +1401,7 @@ static void LPR_PrepareStrobe (NETSTK_APSS *p_apss)
  */
 static void LPR_PrepareSACK (NETSTK_APSS *p_apss)
 {
-    NETSTK_ERR      err = NETSTK_ERR_NONE;
+    e_nsErr_t      err = NETSTK_ERR_NONE;
     LIB_TMR_TICK    delay;
 
 

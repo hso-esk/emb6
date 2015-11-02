@@ -59,6 +59,7 @@
 #define EMB6_CONF_H_
 
 #include "emb6.h"
+#include "netstk_cfg.h"
 
 /*=============================================================================
                                 APPLICATION LAYER SECTION
@@ -853,8 +854,67 @@ void uip_log(char *msg);
  /** Event process functions                (see mac_xxx.c) */
  #define LOGGER_MAC                         FALSE
 
- /** Event process functions                (see llc_xxx.c) */
- #define LOGGER_LLC                         FALSE
+/** Event process functions                (see llc_xxx.c) */
+#define LOGGER_LLC                         FALSE
+
+/*
+********************************************************************************
+*                          NETSTACK CONFIGURATIONS
+********************************************************************************
+*/
+
+/*
+********************************************************************************
+*                           PARAMETER ASSERTION
+********************************************************************************
+*/
+#define NETSTK_CFG_ARG_CHK_EN               ( 1u )
+
+
+/*
+********************************************************************************
+*                           LLC DRIVER SELECTION
+********************************************************************************
+*/
+#define NETSTK_CFG_LLC_802154_EN            ( 1u )
+#define NETSTK_CFG_LLC_NULL_EN              ( 1u )
+
+
+/*
+********************************************************************************
+*                           MAC DRIVER SELECTION
+********************************************************************************
+*/
+#define NETSTK_CFG_MAC_802154_EN            ( 1u )
+#define NETSTK_CFG_MAC_NULL_EN              ( 1u )
+
+/*
+********************************************************************************
+*                           PHY DRIVER SELECTION
+********************************************************************************
+*/
+#define NETSTK_CFG_PHY_802154_EN            ( 1u )
+#define NETSTK_CFG_PHY_NULL_EN              ( 1u )
+
+
+/*
+********************************************************************************
+*                           LPR DRIVER SELECTION
+********************************************************************************
+*/
+#define NETSTK_CFG_LPR_APSS_EN              ( 1u )
+#define NETSTK_CFG_LPR_NULL_EN              ( 1u )
+
+
+/*
+********************************************************************************
+*                           RF DRIVER SELECTION
+********************************************************************************
+*/
+#define NETSTK_CFG_RF_CC1120_EN             ( 1u )
+#define NETSTK_CFG_RF_NULL_EN               ( 1u )
+
+
  /*=============================================================================
                                  POWER_SAVING SECTION
  =============================================================================*/
@@ -918,14 +978,14 @@ void uip_log(char *msg);
 #define LPR_PORT_SCAN_CCA_INTERVAL_IN_MS            (uint32_t)(  10u )          /*!< fixed, hardware-specific       */
 #define LPR_PORT_SCAN_DURATION_IN_MS                (uint32_t)(  30u )          /*!< fixed, hardware-specific       */
 #else
-#define LPR_PORT_SCAN_DURATION_IN_MS                (uint32_t)(  23u )          /*!< fixed, hardware-specific       */
+#define LPR_PORT_SCAN_DURATION_IN_MS                (uint32_t)(  25u )          /*!< fixed, hardware-specific       */
 #endif
 
 #define LPR_PORT_MIN_DELAY_IN_MS                    (uint32_t)(  50U )          /*!< fixed, hardware-specific, 50   */
 #define LPR_PORT_ON_TO_OFF_TIME_IN_MS               (uint32_t)(   8u )          /*!< fixed, hardware-specific, 06   */
 #define LPR_PORT_OFF_TO_ON_TIME_IN_MS               (uint32_t)(  20u )          /*!< fixed, hardware-specific, 15   */
 #define LPR_PORT_TX_RX_TURNAROUND_IN_MS             (uint32_t)(   1u )          /*!< fixed, hardware-specific, 01   */
-#define LPR_PORT_STROBE_TX_TIME_IN_MS               (uint32_t)(   8u )          /*!< fixed, hardware-specific, 08   */
+#define LPR_PORT_STROBE_TX_TIME_IN_MS               (uint32_t)(  10u )          /*!< fixed, hardware-specific, 08   */
 #define LPR_PORT_STROBE_TX_GAP_TIME_IN_MS           (uint32_t)(  10u )          /*!< fixed, hardware-specific, 09   */
 #define LPR_PORT_RX_PAYLOAD_OFFSET_IN_MS            (uint32_t)(   2u )          /*!< variable, needed for better performance 2   */
 #define LPR_PORT_WFA_TIMEOUT_IN_MS                  (LPR_PORT_STROBE_TX_GAP_TIME_IN_MS)

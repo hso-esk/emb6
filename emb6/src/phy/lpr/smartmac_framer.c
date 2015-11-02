@@ -43,17 +43,17 @@ static LIB_TMR_TICK SmartMAC_SACKDelay;
 *                       LOCAL FUNCTIONS DECLARATION
 ********************************************************************************
 */
-static void SmartMAC_Init (NETSTK_ERR *p_err);
-static void SmartMAC_Deinit (NETSTK_ERR *p_err);
-static uint8_t* SmartMAC_CreateStrobe (uint16_t *p_len, LIB_TMR_TICK *p_delay, NETSTK_ERR *p_err);
-static uint8_t* SmartMAC_CreateACK (uint16_t *p_len, LIB_TMR_TICK *p_delay, NETSTK_ERR *p_err);
-static uint8_t* SmartMAC_CreateBroadcast (uint16_t *p_len, LIB_TMR_TICK *p_delay, NETSTK_ERR *p_err);
-static uint8_t* SmartMAC_Create (uint8_t frame_type, uint16_t *p_len, uint32_t *p_delay, NETSTK_ERR *p_err);
-static void SmartMAC_Parse (uint8_t *p_pkt, uint16_t len, NETSTK_ERR *p_err);
+static void SmartMAC_Init (e_nsErr_t *p_err);
+static void SmartMAC_Deinit (e_nsErr_t *p_err);
+static uint8_t* SmartMAC_CreateStrobe (uint16_t *p_len, LIB_TMR_TICK *p_delay, e_nsErr_t *p_err);
+static uint8_t* SmartMAC_CreateACK (uint16_t *p_len, LIB_TMR_TICK *p_delay, e_nsErr_t *p_err);
+static uint8_t* SmartMAC_CreateBroadcast (uint16_t *p_len, LIB_TMR_TICK *p_delay, e_nsErr_t *p_err);
+static uint8_t* SmartMAC_Create (uint8_t frame_type, uint16_t *p_len, uint32_t *p_delay, e_nsErr_t *p_err);
+static void SmartMAC_Parse (uint8_t *p_pkt, uint16_t len, e_nsErr_t *p_err);
 
-static void SmartMAC_ParseStrobe (uint8_t *p_pkt, uint16_t len, NETSTK_ERR *p_err);
-static void SmartMAC_ParseSACK (uint8_t *p_pkt, uint16_t len, NETSTK_ERR *p_err);
-static void SmartMAC_ParseBroadcast (uint8_t *p_pkt, uint16_t len, NETSTK_ERR *p_err);
+static void SmartMAC_ParseStrobe (uint8_t *p_pkt, uint16_t len, e_nsErr_t *p_err);
+static void SmartMAC_ParseSACK (uint8_t *p_pkt, uint16_t len, e_nsErr_t *p_err);
+static void SmartMAC_ParseBroadcast (uint8_t *p_pkt, uint16_t len, e_nsErr_t *p_err);
 
 static void SmartMAC_CalcSACKDelay(uint8_t ts_count);
 static void SmartMAC_CalcStrobeDelay(LPR_PWRON_TBL_ENTRY *p_dev, uint32_t *p_delay);
@@ -182,7 +182,7 @@ static void SmartMAC_CalcSACKDelay(uint8_t ts_count)
  * @param   len     Length of the strobe payload
  * @param   p_err   Pointer to variable that stores the return error code
  */
-static void SmartMAC_ParseStrobe (uint8_t *p_pkt, uint16_t len, NETSTK_ERR *p_err)
+static void SmartMAC_ParseStrobe (uint8_t *p_pkt, uint16_t len, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
     if (p_pkt == NULL) {
@@ -227,7 +227,7 @@ static void SmartMAC_ParseStrobe (uint8_t *p_pkt, uint16_t len, NETSTK_ERR *p_er
  * @param   len     Length of the ACK payload
  * @param   p_err   Pointer to variable that stores the return error code
  */
-static void SmartMAC_ParseSACK (uint8_t *p_pkt, uint16_t len, NETSTK_ERR *p_err)
+static void SmartMAC_ParseSACK (uint8_t *p_pkt, uint16_t len, e_nsErr_t *p_err)
 {
     NETSTK_DEV_ID  src_id;
 
@@ -277,7 +277,7 @@ static void SmartMAC_ParseSACK (uint8_t *p_pkt, uint16_t len, NETSTK_ERR *p_err)
  * @param   len     Length of the strobe payload
  * @param   p_err   Pointer to variable that stores the return error code
  */
-static void SmartMAC_ParseBroadcast (uint8_t *p_pkt, uint16_t len, NETSTK_ERR *p_err)
+static void SmartMAC_ParseBroadcast (uint8_t *p_pkt, uint16_t len, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
     if (p_pkt == NULL) {
@@ -307,7 +307,7 @@ static void SmartMAC_ParseBroadcast (uint8_t *p_pkt, uint16_t len, NETSTK_ERR *p
  *
  * @param   p_err   Pointer to a variable that stores a return error code
  */
-static void SmartMAC_Init (NETSTK_ERR *p_err)
+static void SmartMAC_Init (e_nsErr_t *p_err)
 {
     SmartMAC_SACK[0]      = LPR_FRAME_TYPE_SACK;
     SmartMAC_SACK[1]      = LPRSrcId;
@@ -329,7 +329,7 @@ static void SmartMAC_Init (NETSTK_ERR *p_err)
  *
  * @param   p_err   Pointer to a variable that stores a return error code
  */
-static void SmartMAC_Deinit (NETSTK_ERR *p_err)
+static void SmartMAC_Deinit (e_nsErr_t *p_err)
 {
     *p_err = NETSTK_ERR_NONE;
 }
@@ -342,7 +342,7 @@ static void SmartMAC_Deinit (NETSTK_ERR *p_err)
  * @param   p_err
  * @return
  */
-static uint8_t* SmartMAC_CreateStrobe (uint16_t *p_len, LIB_TMR_TICK *p_delay, NETSTK_ERR *p_err)
+static uint8_t* SmartMAC_CreateStrobe (uint16_t *p_len, LIB_TMR_TICK *p_delay, e_nsErr_t *p_err)
 {
     uint8_t *p_pkt;
 
@@ -405,7 +405,7 @@ static uint8_t* SmartMAC_CreateStrobe (uint16_t *p_len, LIB_TMR_TICK *p_delay, N
  * @param   p_err
  * @return
  */
-static uint8_t *SmartMAC_CreateACK (uint16_t *p_len, LIB_TMR_TICK *p_delay, NETSTK_ERR *p_err)
+static uint8_t *SmartMAC_CreateACK (uint16_t *p_len, LIB_TMR_TICK *p_delay, e_nsErr_t *p_err)
 {
     uint8_t *p_pkt;
 
@@ -434,7 +434,7 @@ static uint8_t *SmartMAC_CreateACK (uint16_t *p_len, LIB_TMR_TICK *p_delay, NETS
  * @param   p_err
  * @return
  */
-static uint8_t* SmartMAC_CreateBroadcast (uint16_t *p_len, LIB_TMR_TICK *p_delay, NETSTK_ERR *p_err)
+static uint8_t* SmartMAC_CreateBroadcast (uint16_t *p_len, LIB_TMR_TICK *p_delay, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
     if (p_len == NULL) {
@@ -484,7 +484,7 @@ static uint8_t* SmartMAC_CreateBroadcast (uint16_t *p_len, LIB_TMR_TICK *p_delay
  *          the waking-up procedure is over and the module caller should start
  *          sending to broadcast frame(s)
  */
-static uint8_t *SmartMAC_Create (uint8_t frame_type, uint16_t *p_len, uint32_t *p_delay, NETSTK_ERR *p_err)
+static uint8_t *SmartMAC_Create (uint8_t frame_type, uint16_t *p_len, uint32_t *p_delay, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
     if (p_len == NULL) {
@@ -528,7 +528,7 @@ static uint8_t *SmartMAC_Create (uint8_t frame_type, uint16_t *p_len, uint32_t *
  *                  @ref NETSTK_ERR_NULL_POINTER if one of parameters is null
  *                  @ref NETSTK_ERR_NONE if the frame is well-formated.
  */
-static void SmartMAC_Parse (uint8_t *p_pkt, uint16_t len, NETSTK_ERR *p_err)
+static void SmartMAC_Parse (uint8_t *p_pkt, uint16_t len, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
     if (p_pkt == NULL) {

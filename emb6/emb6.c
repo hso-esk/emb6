@@ -175,7 +175,7 @@ uint8_t loc_emb6NetstackInit(s_ns_t * ps_ns)
 {
     uint8_t     c_err = 0;
 	uint8_t     is_valid;
-    NETSTK_ERR  err;
+    e_nsErr_t  err;
 
 
     /* Initialize stack protocols */

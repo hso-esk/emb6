@@ -120,7 +120,7 @@ static void _res_get_handler(void *request,   void *response,
     const char* p = NULL;
     char        rpc_param[64];
     int8_t      c_success = 1;
-    NETSTK_ERR  err = NETSTK_ERR_NONE;
+    e_nsErr_t  err = NETSTK_ERR_NONE;
     uint8_t     rssi;
     uint8_t     txpower;
     uint8_t     sensitivity;
@@ -182,7 +182,7 @@ static uint8_t _res_setTxPwr(const char* rpc_data, uint8_t c_len, void* p_resp)
     s_ns_t*     ps_ns = emb6_get();
     char        param[6];
     uint8_t     i = 0;
-    NETSTK_ERR  err = NETSTK_ERR_NONE;
+    e_nsErr_t  err = NETSTK_ERR_NONE;
     uint8_t     act_txpower;
 
 
@@ -234,7 +234,7 @@ static uint8_t _res_setRxSens(const char* rpc_data, uint8_t c_len, void* p_resp)
     char        param[6];
     uint8_t     i;
     s_ns_t*     ps_ns = emb6_get();
-    NETSTK_ERR  err = NETSTK_ERR_NONE;
+    e_nsErr_t  err = NETSTK_ERR_NONE;
     uint8_t     act_rx_sens;
 
 

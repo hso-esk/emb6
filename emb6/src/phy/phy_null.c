@@ -23,14 +23,13 @@
 *                          LOCAL FUNCTION DECLARATIONS
 ********************************************************************************
 */
-void PHY_Init(void *p_netstk, NETSTK_ERR *p_err);
-void PHY_On(NETSTK_ERR *p_err);
-void PHY_Off(NETSTK_ERR *p_err);
-void PHY_Send(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err);
-void PHY_Recv(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err);
-void PHY_IOCtrl(NETSTK_IOC_CMD cmd, void *p_val, NETSTK_ERR *p_err);
-
-static void PHY_CbTx(void *p_arg, NETSTK_ERR *p_err);
+static void PHY_Init(void *p_netstk, e_nsErr_t *p_err);
+static void PHY_On(e_nsErr_t *p_err);
+static void PHY_Off(e_nsErr_t *p_err);
+static void PHY_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
+static void PHY_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
+static void PHY_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
+static void PHY_CbTx(void *p_arg, e_nsErr_t *p_err);
 
 
 /*
@@ -40,7 +39,7 @@ static void PHY_CbTx(void *p_arg, NETSTK_ERR *p_err);
 */
 static s_ns_t *PHY_Netstk;
 static void *PHY_CbTxArg;
-static NETSTK_CBFNCT PHY_CbTxFnct;
+static nsTxCbFnct_t PHY_CbTxFnct;
 
 
 /*
@@ -48,7 +47,7 @@ static NETSTK_CBFNCT PHY_CbTxFnct;
 *                               GLOBAL VARIABLES
 ********************************************************************************
 */
-NETSTK_MODULE_DRV PHYDrvNull =
+const s_nsPHY_t PHYDrvNull =
 {
    "PHY NULL",
     PHY_Init,
@@ -72,7 +71,7 @@ NETSTK_MODULE_DRV PHYDrvNull =
  * @param   p_netstk    Pointer to netstack structure
  * @param   p_err       Pointer to a variable storing returned error code
  */
-void PHY_Init(void *p_netstk, NETSTK_ERR *p_err)
+static void PHY_Init(void *p_netstk, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
     if (p_err == NULL) {
@@ -98,7 +97,7 @@ void PHY_Init(void *p_netstk, NETSTK_ERR *p_err)
  *
  * @param   p_err       Pointer to a variable storing returned error code
  */
-void PHY_On(NETSTK_ERR *p_err)
+static void PHY_On(e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
     if (p_err == NULL) {
@@ -116,7 +115,7 @@ void PHY_On(NETSTK_ERR *p_err)
  *
  * @param   p_err       Pointer to a variable storing returned error code
  */
-void PHY_Off(NETSTK_ERR *p_err)
+static void PHY_Off(e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
     if (p_err == NULL) {
@@ -136,7 +135,7 @@ void PHY_Off(NETSTK_ERR *p_err)
  * @param   len         Length of frame to send
  * @param   p_err       Pointer to a variable storing returned error code
  */
-void PHY_Send(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
+static void PHY_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
     if (p_err == NULL) {
@@ -190,7 +189,7 @@ void PHY_Send(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
  * @param   len         Length of frame to receive
  * @param   p_err       Pointer to a variable storing returned error code
  */
-void PHY_Recv(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
+static void PHY_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
     if (p_err == NULL) {
@@ -234,7 +233,7 @@ void PHY_Recv(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
  * @param   p_val       Pointer to a variable related to the command
  * @param   p_err       Pointer to a variable storing returned error code
  */
-void PHY_IOCtrl(NETSTK_IOC_CMD cmd, void *p_val, NETSTK_ERR *p_err)
+static void PHY_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
 {
     *p_err = NETSTK_ERR_NONE;
     switch (cmd) {
@@ -242,7 +241,7 @@ void PHY_IOCtrl(NETSTK_IOC_CMD cmd, void *p_val, NETSTK_ERR *p_err)
             if (p_val == NULL) {
                 *p_err = NETSTK_ERR_INVALID_ARGUMENT;
             } else {
-                PHY_CbTxFnct = (NETSTK_CBFNCT)p_val;
+                PHY_CbTxFnct = (nsTxCbFnct_t)p_val;
             }
             break;
 
@@ -250,7 +249,7 @@ void PHY_IOCtrl(NETSTK_IOC_CMD cmd, void *p_val, NETSTK_ERR *p_err)
             PHY_CbTxArg = p_val;
             break;
 
-        case NETSTK_CMD_PHY_XXX:
+        case NETSTK_CMD_PHY_RSVD:
             break;
 
         default:
@@ -263,7 +262,7 @@ void PHY_IOCtrl(NETSTK_IOC_CMD cmd, void *p_val, NETSTK_ERR *p_err)
 /**
  * @brief   Callback transmission handler
  */
-static void PHY_CbTx(void *p_arg, NETSTK_ERR *p_err)
+static void PHY_CbTx(void *p_arg, e_nsErr_t *p_err)
 {
     if (PHY_CbTxFnct) {
         PHY_CbTxFnct(PHY_CbTxArg, p_err);

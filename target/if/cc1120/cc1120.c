@@ -62,12 +62,12 @@ static s_ns_t *RF_Netstack;
 *                       LOCAL FUNCTIONS DECLARATION
 ********************************************************************************
 */
-static void cc1120_Init (void *p_netstack, NETSTK_ERR *p_err);
-static void cc1120_On (NETSTK_ERR *p_err);
-static void cc1120_Off (NETSTK_ERR *p_err);
-static void cc1120_Send(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err);
-static void cc1120_Recv(uint8_t *p_buf, uint16_t len, NETSTK_ERR *p_err);
-static void cc1120_Ioctl(NETSTK_IOC_CMD cmd, void *p_val, NETSTK_ERR *p_err);
+static void cc1120_Init (void *p_netstack, e_nsErr_t *p_err);
+static void cc1120_On (e_nsErr_t *p_err);
+static void cc1120_Off (e_nsErr_t *p_err);
+static void cc1120_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
+static void cc1120_Recv(uint8_t *p_buf, uint16_t len, e_nsErr_t *p_err);
+static void cc1120_Ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
 static void cc1120_EventHandler(c_event_t c_event, p_data_t p_data);
 
 static int _rf_setChannel( e_rf_channel_t e_ch );
@@ -1360,7 +1360,7 @@ static uint8_t _rf_is_tx(void)
  *
  * @param   p_err   Point to returned error
  */
-static void cc1120_Init (void *p_netstack, NETSTK_ERR *p_err)
+static void cc1120_Init (void *p_netstack, e_nsErr_t *p_err)
 {
     if (p_netstack == NULL) {
         *p_err = NETSTK_ERR_INIT;
@@ -1402,7 +1402,7 @@ static void cc1120_Init (void *p_netstack, NETSTK_ERR *p_err)
  *
  * @param   p_err   Point to returned error
  */
-static void cc1120_On (NETSTK_ERR *p_err)
+static void cc1120_On (e_nsErr_t *p_err)
 {
     if (_rf_is_ready() != RF_READY) {
         *p_err = NETSTK_ERR_BUSY;
@@ -1420,7 +1420,7 @@ static void cc1120_On (NETSTK_ERR *p_err)
  *
  * @param   p_err   Point to returned error
  */
-static void cc1120_Off (NETSTK_ERR *p_err)
+static void cc1120_Off (e_nsErr_t *p_err)
 {
     if (_rf_is_ready() != RF_READY) {
         *p_err = NETSTK_ERR_BUSY;
@@ -1442,7 +1442,7 @@ static void cc1120_Off (NETSTK_ERR *p_err)
  */
 static void cc1120_Send (uint8_t       *p_data,
                          uint16_t       len,
-                         NETSTK_ERR    *p_err)
+                         e_nsErr_t    *p_err)
 {
     int err;
     uint8_t uc_writeByte = 0;
@@ -1538,7 +1538,7 @@ static void cc1120_Send (uint8_t       *p_data,
 
 static void cc1120_Recv (uint8_t    *p_buf,
                          uint16_t    len,
-                         NETSTK_ERR *p_err)
+                         e_nsErr_t *p_err)
 {
     (void)&p_buf;
     (void)&len;
@@ -1558,12 +1558,12 @@ static void cc1120_Recv (uint8_t    *p_buf,
  *                  p_val points to storing buffer.
  * @param   p_err   Point to returned error
  */
-static void cc1120_Ioctl (NETSTK_IOC_CMD    cmd,
+static void cc1120_Ioctl (e_nsIocCmd_t    cmd,
                           void             *p_val,
-                          NETSTK_ERR       *p_err)
+                          e_nsErr_t       *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
-    if (p_err == (NETSTK_ERR *)0) {
+    if (p_err == (e_nsErr_t *)0) {
         return;
     }
 
@@ -1613,7 +1613,7 @@ static void cc1120_Ioctl (NETSTK_IOC_CMD    cmd,
 
 static void cc1120_EventHandler(c_event_t c_event, p_data_t p_data)
 {
-    NETSTK_ERR err = NETSTK_ERR_NONE;
+    e_nsErr_t err = NETSTK_ERR_NONE;
 
     (void)&c_event;
     (void)&p_data;
@@ -1654,7 +1654,7 @@ static void cc1120_EventHandler(c_event_t c_event, p_data_t p_data)
 *                               DRIVER DEFINITION
 ********************************************************************************
 */
-NETSTK_MODULE_DRV RFDrvCC1120 =
+const s_nsRF_t RFDrvCC1120 =
 {
     "CC112x",
     cc1120_Init,

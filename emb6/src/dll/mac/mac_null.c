@@ -18,12 +18,12 @@
 *                          LOCAL FUNCTION DECLARATIONS
 ********************************************************************************
 */
-void MAC_Init(void *p_netstk, NETSTK_ERR *p_err);
-void MAC_On(NETSTK_ERR *p_err);
-void MAC_Off(NETSTK_ERR *p_err);
-void MAC_Send(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err);
-void MAC_Recv(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err);
-void MAC_IOCtrl(NETSTK_IOC_CMD cmd, NETSTK_CMD_VAL *p_val, NETSTK_ERR *p_err);
+static void MAC_Init(void *p_netstk, e_nsErr_t *p_err);
+static void MAC_On(e_nsErr_t *p_err);
+static void MAC_Off(e_nsErr_t *p_err);
+static void MAC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
+static void MAC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
+static void MAC_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
 
 
 /*
@@ -38,7 +38,7 @@ static s_ns_t *MAC_Netstk;
 *                               GLOBAL VARIABLES
 ********************************************************************************
 */
-NETSTK_MODULE_DRV MACDrvNull =
+const s_nsMAC_t MACDrvNull =
 {
    "MAC NULL",
     MAC_Init,
@@ -55,7 +55,7 @@ NETSTK_MODULE_DRV MACDrvNull =
 *                           LOCAL FUNCTION DEFINITIONS
 ********************************************************************************
 */
-void MAC_Init(void *p_netstk, NETSTK_ERR *p_err)
+static void MAC_Init(void *p_netstk, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
     if (p_netstk == NULL) {
@@ -70,35 +70,42 @@ void MAC_Init(void *p_netstk, NETSTK_ERR *p_err)
 }
 
 
-void MAC_On(NETSTK_ERR *p_err)
+static void MAC_On(e_nsErr_t *p_err)
 {
     MAC_Netstk->phy->on(p_err);
 }
 
 
-void MAC_Off(NETSTK_ERR *p_err)
+static void MAC_Off(e_nsErr_t *p_err)
 {
     MAC_Netstk->phy->off(p_err);
 }
 
 
-void MAC_Send(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
+static void MAC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 {
     MAC_Netstk->phy->send(p_data, len, p_err);
 }
 
 
-void MAC_Recv(uint8_t *p_data, uint16_t len, NETSTK_ERR *p_err)
+static void MAC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 {
     MAC_Netstk->llc->recv(p_data, len, p_err);
 }
 
 
-void MAC_IOCtrl(NETSTK_IOC_CMD cmd, NETSTK_CMD_VAL *p_val, NETSTK_ERR *p_err)
+static void MAC_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
 {
+#if NETSTK_CFG_ARG_CHK_EN
+    if (p_err == NULL) {
+        return;
+    }
+#endif
+
+
+    *p_err = NETSTK_ERR_NONE;
     switch (cmd) {
-        case NETSTK_CMD_MAC_XXX:
-            *p_err = NETSTK_ERR_NONE;
+        case NETSTK_CMD_MAC_RSVD:
             break;
 
         default:
