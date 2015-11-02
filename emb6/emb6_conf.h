@@ -58,8 +58,6 @@
 #ifndef EMB6_CONF_H_
 #define EMB6_CONF_H_
 
-#include "emb6.h"
-#include "netstk_cfg.h"
 
 /*=============================================================================
                                 APPLICATION LAYER SECTION
