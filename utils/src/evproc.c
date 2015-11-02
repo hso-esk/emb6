@@ -263,7 +263,7 @@ en_evprocResCode_t evproc_regCallback(c_event_t c_eventType, pfn_callback_t pfn_
                 // it means that end of a list has been reached.
                 if(pst_regList[i].pfn_callbList[j] == NULL) {
                     // Given function pointer for a given event type has been added
-                    LOG_INFO("new callback for (%d) event with callback %p\n\r", c_eventType, pfn_callback);
+                    LOG_INFO("new callback for (%d) event with callback %p\n\r", c_eventType, (void*)pfn_callback);
                     pst_regList[i].pfn_callbList[j] = pfn_callback;
                     return E_SUCCESS;
                 } /* if */
