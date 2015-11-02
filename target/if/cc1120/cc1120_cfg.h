@@ -190,7 +190,7 @@ static const s_rf_register_t gcs_rf_cfg_ch_868mhz50bps[] = {
 static const s_rf_register_t gcs_rf_cfg_ch_434mhz50bps[] =
 {
     {CC1120_SYNC_CFG1,      0x08},  /* PQT gating enabled, sync threshold 0x08 */
-    {CC1120_SYNC_CFG0,      0x17},  /* 32bit Sync */
+    {CC1120_SYNC_CFG0,      0x1B},  /* 1B: 16H bit, 17: 32bit Sync */
     {CC1120_SYNC3,          0x93},
     {CC1120_SYNC2,          0x0B},
     {CC1120_SYNC1,          0x51},
