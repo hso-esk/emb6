@@ -780,7 +780,7 @@ void uip_log(char *msg);
 #ifdef UIP_CONF_LLH_LEN
 #define UIP_LLH_LEN                         (UIP_CONF_LLH_LEN)
 #else /* UIP_LLH_LEN */
-#define UIP_LLH_LEN                         0
+#define UIP_LLH_LEN                         0UL
 #endif /* UIP_CONF_LLH_LEN */
 
 

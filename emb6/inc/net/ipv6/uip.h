@@ -56,7 +56,6 @@
 #ifndef UIP_H_
 #define UIP_H_
 
-#include "emb6_conf.h"
 #include "emb6.h"
 
 /* Header sizes. */
@@ -1222,8 +1221,8 @@ struct uip_udp_conn *uip_udp_new(const uip_ipaddr_t *ripaddr, uint16_t rport);
 #      define UIP_HTONS(n) (n)
 #      define UIP_HTONL(n) (n)
 #   else /* UIP_BYTE_ORDER == UIP_BIG_ENDIAN */
-#      define UIP_HTONS(n) (uint16_t)((((uint16_t) (n)) << 8) | (((uint16_t) (n)) >> 8))
-#      define UIP_HTONL(n) (((uint32_t)UIP_HTONS(n) << 16) | UIP_HTONS((uint32_t)(n) >> 16))
+#      define UIP_HTONS(n)  (uint16_t)(((n) <<  8) | ((n) >>  8))
+#      define UIP_HTONL(n)  (uint32_t)(((n) << 16) | ((n) >> 16))
 #   endif /* UIP_BYTE_ORDER == UIP_BIG_ENDIAN */
 #else
 #error "UIP_HTONS already defined!"
@@ -1989,18 +1988,18 @@ CCIF extern uip_lladdr_t uip_lladdr;
    (a)->u8[1] == 0x80)
 
 /** \brief set IP address a to unspecified */
-#define uip_create_unspecified(a) uip_ip6addr(a, 0, 0, 0, 0, 0, 0, 0, 0)
+#define uip_create_unspecified(a) uip_ip6addr(a, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL)
 
 /** \brief set IP address a to the link local all-nodes multicast address */
-#define uip_create_linklocal_allnodes_mcast(a) uip_ip6addr(a, 0xff02, 0, 0, 0, 0, 0, 0, 0x0001)
+#define uip_create_linklocal_allnodes_mcast(a) uip_ip6addr(a, 0xff02UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0x0001UL)
 
 /** \brief set IP address a to the link local all-routers multicast address */
-#define uip_create_linklocal_allrouters_mcast(a) uip_ip6addr(a, 0xff02, 0, 0, 0, 0, 0, 0, 0x0002)
-#define uip_create_linklocal_prefix(addr) do { \
-    (addr)->u16[0] = UIP_HTONS(0xfe80);            \
-    (addr)->u16[1] = 0;                        \
-    (addr)->u16[2] = 0;                        \
-    (addr)->u16[3] = 0;                        \
+#define uip_create_linklocal_allrouters_mcast(a) uip_ip6addr(a, 0xff02UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0x0002UL)
+#define uip_create_linklocal_prefix(addr) do {  \
+    (addr)->u16[0] = UIP_HTONS(0xfe80UL);       \
+    (addr)->u16[1] = 0UL;                       \
+    (addr)->u16[2] = 0UL;                       \
+    (addr)->u16[3] = 0UL;                       \
   } while(0)
 
 /**
