@@ -174,7 +174,7 @@
           <name>CCDefines</name>
           <state>NETSTK_CFG_LPM_EN=1</state>
           <state>STK_CFG_REFACTOR_EN=1</state>
-          <state>SMARTMAC_TX</state>
+          <state>LPR_TX</state>
           <state>IAR_COMPILER</state>
           <state>RF_CCA_ON_TX= FALSE</state>
           <state>TDD_SYNC_MODE=1</state>
@@ -1202,7 +1202,7 @@
           <name>CCDefines</name>
           <state>NETSTK_CFG_LPM_EN=1</state>
           <state>STK_CFG_REFACTOR_EN=1</state>
-          <state>SMARTMAC_RX</state>
+          <state>LPR_RX</state>
           <state>IAR_COMPILER</state>
           <state>RF_CCA_ON_TX= FALSE</state>
           <state>TDD_SYNC_MODE=1</state>
@@ -4157,9 +4157,6 @@
           <group>
             <name>lpr</name>
             <file>
-              <name>$PROJ_DIR$\..\..\..\..\..\..\..\emb6\src\phy\lpr\lib_tmr.c</name>
-            </file>
-            <file>
               <name>$PROJ_DIR$\..\..\..\..\..\..\..\emb6\src\phy\lpr\lpr_apss.c</name>
             </file>
             <file>
@@ -4328,6 +4325,9 @@
         </file>
         <file>
           <name>$PROJ_DIR$\..\..\..\..\..\..\..\utils\src\evproc.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\..\..\..\..\..\utils\src\lib_tmr.c</name>
         </file>
         <file>
           <name>$PROJ_DIR$\..\..\..\..\..\..\..\utils\src\list.c</name>

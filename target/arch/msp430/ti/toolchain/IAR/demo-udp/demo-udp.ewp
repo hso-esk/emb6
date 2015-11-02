@@ -6367,9 +6367,6 @@
           <group>
             <name>lpr</name>
             <file>
-              <name>$PROJ_DIR$\..\..\..\..\..\..\..\emb6\src\phy\lpr\lib_tmr.c</name>
-            </file>
-            <file>
               <name>$PROJ_DIR$\..\..\..\..\..\..\..\emb6\src\phy\lpr\lpr_apss.c</name>
             </file>
             <file>
@@ -6549,6 +6546,9 @@
         </file>
         <file>
           <name>$PROJ_DIR$\..\..\..\..\..\..\..\utils\src\evproc.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\..\..\..\..\..\utils\src\lib_tmr.c</name>
         </file>
         <file>
           <name>$PROJ_DIR$\..\..\..\..\..\..\..\utils\src\list.c</name>
