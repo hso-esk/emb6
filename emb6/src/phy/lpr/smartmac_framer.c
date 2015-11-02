@@ -161,10 +161,9 @@ static void SmartMAC_CalcSACKDelay(uint8_t ts_count)
          * sleep. Instead the receive should replay with an ACK immediately
          * as in SmartMAC framer.
          */
+        SmartMAC_SACKDelay = ts_count * LPR_PORT_STROBE_TX_INTERVAL_IN_MS;
         min_delay = LPR_PORT_ON_TO_OFF_TIME_IN_MS +
                     LPR_PORT_OFF_TO_ON_TIME_IN_MS;
-        SmartMAC_SACKDelay = ts_count * LPR_PORT_STROBE_TX_PERIOD_IN_MS;
-
         if (SmartMAC_SACKDelay <= min_delay) {
             SmartMAC_SACKDelay = 0;
         } else {
@@ -237,22 +236,6 @@ static void SmartMAC_ParseSACK (uint8_t *p_pkt, uint16_t len, e_nsErr_t *p_err)
              (NETSTK_DEV_ID)(p_pkt[1] << 8);
     if (src_id == LPRDstId) {
         *p_err = NETSTK_ERR_NONE;
-
-
-#if 0
-        /*
-         * Note:
-         *
-         * If calculated waiting time before sending an ACK is smaller than
-         * or equal to minimum offset in the receiver caused by off-to-on
-         * and on-to-off transition time, there is no need to go back to
-         * sleep. Instead the receive should replay with an ACK immediately
-         * as in XMAC framer.
-         */
-        if (SmartMAC_StrobeCnt != SMARTMAC_CFG_COUNT_MAX) {
-            *p_err = NETSTK_ERR_LPR_INVALID_ACK;
-        }
-#endif
 
 #if LPR_CFG_LOOSE_SYNC_EN
         uint8_t ix;
