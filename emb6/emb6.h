@@ -322,10 +322,6 @@ typedef enum netstk_ioc_cmd
      * MAC command codes
      */
     NETSTK_CMD_MAC_RSVD = 200U,
-#if STK_CFG_REFACTOR_EN
-#else
-    NETSTK_CMD_MAC_DSN_SET,
-#endif
 
     /*
      * PHY command codes

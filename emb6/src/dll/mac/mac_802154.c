@@ -238,6 +238,7 @@ void MAC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
         MAC_IsAckReq = 1;
     }
     MAC_TxRetries = 0;
+    MAC_LastSeq = frame802154_getDSN();
 
     /*
      * set TX callback function and argument
@@ -249,10 +250,6 @@ void MAC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     MAC_Netstk->phy->ioctrl(NETSTK_CMD_TX_CBARG_SET,
                             NULL,
                             p_err);
-
-#if STK_CFG_REFACTOR_EN
-    MAC_LastSeq = frame802154_getDSN();
-#endif
 
     /*
      * Issue next lower layer to transmit the prepared frame
