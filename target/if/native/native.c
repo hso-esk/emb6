@@ -1,5 +1,5 @@
 /*
- * emb6 is licensed under the 3-clause BSD license. This license gives everyone
+l * emb6 is licensed under the 3-clause BSD license. This license gives everyone
  * the right to use and distribute the code, either in binary or source code
  * format, as long as the copyright license is retained in the source code.
  *
@@ -45,81 +45,111 @@
 /*! \file   native.c
 
  \author Artem Yushev 
+         Phuong Nguyen
 
  \brief  Fake radio transceiver based on LCM IPC.
 
- \version 1.1
+ \version 1.02.01
  */
 /*============================================================================*/
 
-/*==============================================================================
- INCLUDE FILES
- ==============================================================================*/
+
+/*
+********************************************************************************
+*                                   INCLUDES
+********************************************************************************
+*/
 #include "emb6.h"
 
+
+#ifdef NETSTK_CFG_RF_NATIVE_EN
 #include "bsp.h"
 #include "packetbuf.h"
 #include "tcpip.h"
 #include "etimer.h"
 #include <errno.h>
 #include <sys/time.h>
-/* Ligthweight Communication and Marshalling (LCM) is a library to perform
- communication between processes  */
 #include <lcm/lcm.h>
-/*==============================================================================
- MACROS
- ==============================================================================*/
+
+/*
+********************************************************************************
+*                                   VERSION
+********************************************************************************
+*/
+#define NATIVE_RF_VERSION       0x10201UL     /* Version Vx.yy.zz */
+
+/*
+********************************************************************************
+*                               LOCAL DEFINES
+********************************************************************************
+*/
 #define     LOGGER_ENABLE             LOGGER_RADIO
 #include    "logger.h"
 #define     FAKERADIO_CHANNEL         "EMB6_FAKERADIO"
 #define     __ADDRLEN__    2
-/*==============================================================================
- ENUMS
- ==============================================================================*/
 
-/*==============================================================================
- VARIABLE DECLARATIONS
- ==============================================================================*/
-static struct etimer ps_nativeTmr;
-/* Pointer to the lmac structure */
-static s_nsLowMac_t* p_lmac = NULL;
+
+/*
+********************************************************************************
+*                          LOCAL FUNCTION DECLARATIONS
+********************************************************************************
+*/
+static void RF_Init (void *p_netstk, e_nsErr_t *p_err);
+static void RF_On (e_nsErr_t *p_err);
+static void RF_Off (e_nsErr_t *p_err);
+static void RF_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
+static void RF_Recv(uint8_t *p_buf, uint16_t len, e_nsErr_t *p_err);
+static void RF_Ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
+static void RF_EventHandler(c_event_t c_event, p_data_t p_data);
+
+static void RF_Read(const lcm_recv_buf_t *rps_rbuf, const char *rpc_channel, void *userdata );
+static void RF_PrintAndExit(const char *rpc_reason);
+
+
+/*
+********************************************************************************
+*                               LOCAL VARIABLES
+********************************************************************************
+*/
+static struct etimer RF_EventTmr;
+
+static lcm_t    *RF_LCM;
+static s_ns_t   *RF_Netstack;
+
+
+/*
+********************************************************************************
+*                               GLOBAL VARIABLES
+********************************************************************************
+*/
 extern uip_lladdr_t uip_lladdr;
-static lcm_t* ps_lcm;
-/*==============================================================================
- GLOBAL CONSTANTS
- ==============================================================================*/
-/*==============================================================================
- LOCAL FUNCTION PROTOTYPES
- ==============================================================================*/
-/* Radio transceiver local functions */
-static void _printAndExit( const char* rpc_reason );
-static int8_t _native_on( void );
-static int8_t _native_off( void );
-static int8_t _native_init( s_ns_t* p_netStack );
-static int8_t _native_send( const void *pr_payload, uint8_t c_len );
-static void _native_read( const lcm_recv_buf_t *rbuf, const char * channel,
-        void * p_macAddr );
-static void _native_handler( c_event_t c_event, p_data_t p_data );
-/*==============================================================================
- STRUCTURES AND OTHER TYPEDEFS
- ==============================================================================*/
-const s_nsIf_t native_driver = {
-        "native_driver",
-        _native_init,
-        _native_send,
-        _native_on,
-        _native_off, };
-/*==============================================================================
- LOCAL FUNCTIONS
- ==============================================================================*/
-/*----------------------------------------------------------------------------*/
+
+
+const s_nsRF_t RFDrvNative =
+{
+   "RF Native",
+    RF_Init,
+    RF_On,
+    RF_Off,
+    RF_Send,
+    RF_Recv,
+    RF_Ioctl,
+};
+
+
+/*
+********************************************************************************
+*                           LOCAL FUNCTION DEFINITIONS
+********************************************************************************
+*/
+
 /** \brief  This function reports the error and exits back to the shell.
  *
  *  \param  rpc_reason  Error to show
  *  \return Node
  */
 /*----------------------------------------------------------------------------*/
-static void _printAndExit( const char* rpc_reason )
+static void RF_PrintAndExit(const char *rpc_reason)
 {
     fputs( strerror( errno ), stderr );
     fputs( ": ", stderr );
@@ -136,55 +166,65 @@ static void _printAndExit( const char* rpc_reason )
  *  \return int8_t        Status code.
  */
 /*----------------------------------------------------------------------------*/
-static int8_t _native_init(s_ns_t* p_netStack)
+static void RF_Init (void *p_netstk, e_nsErr_t *p_err)
 {
     linkaddr_t un_addr;
     uint8_t l_error;
-    /* Please refer to lcm_create() reference. Deafult parameter is taken 
-     from there */
-    ps_lcm = lcm_create(NULL);
 
-    if(!ps_lcm)
-        _printAndExit("LCM init failed");
 
-    LOG_INFO("%s\n\r","native driver was initialized");
-
-    /* Mac address should not be NULL pointer, although it can't be, but still
-     *  */
-    if (mac_phy_config.mac_address == NULL)
-    {
-        _printAndExit("MAC address is NULL");
+    /*
+     * Store pointer to netstack structure
+     */
+    RF_Netstack = (s_ns_t *)p_netstk;
+    if (RF_Netstack->phy == NULL) {
+        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+        RF_PrintAndExit("Bad PHY driver pointer");
     }
 
-    lcm_subscribe (ps_lcm, FAKERADIO_CHANNEL, _native_read, NULL);
 
-    /* Initialise global lladdr structure with a given mac */
-    memcpy((void *)&un_addr.u8, &mac_phy_config.mac_address, 8);
+    /*
+     * Please refer to lcm_create() reference. Default parameter is taken
+     * from there */
+    RF_LCM = lcm_create(NULL);
+    if (!RF_LCM) {
+        RF_PrintAndExit("LCM init failed");
+    }
+
+    LOG_INFO("%s\n\r", "native driver was initialized");
+
+    /*
+     * MAC address should not be NULL pointer, although it can't be, but still
+     */
+    if (mac_phy_config.mac_address == NULL) {
+        RF_PrintAndExit("MAC address is NULL");
+    }
+
+    lcm_subscribe(RF_LCM,
+                  FAKERADIO_CHANNEL,
+                  RF_Read,
+                  NULL);
+
+    /* Initialize global logical link address structure with a given MAC */
+    memcpy((void *) &un_addr.u8, &mac_phy_config.mac_address, 8);
     memcpy(&uip_lladdr.addr, &un_addr.u8, 8);
     linkaddr_set_node_addr(&un_addr);
 
-    LOG_INFO( "MAC address %x:%x:%x:%x:%x:%x:%x:%x", un_addr.u8[0],
-              un_addr.u8[1], un_addr.u8[2], un_addr.u8[3], un_addr.u8[4],
-              un_addr.u8[5], un_addr.u8[6], un_addr.u8[7] );
+    LOG_INFO("MAC address %x:%x:%x:%x:%x:%x:%x:%x", un_addr.u8[0],
+            un_addr.u8[1], un_addr.u8[2], un_addr.u8[3], un_addr.u8[4],
+            un_addr.u8[5], un_addr.u8[6], un_addr.u8[7]);
 
-    /* Low mac layer should be ok, not NULL */
-    if (p_netStack->lmac != NULL)
-    {
-        p_lmac = p_netStack->lmac;
-        l_error = 1;
-    }
-    else
-    {
-        _printAndExit("Bad lmac pointer");
-    }
+    /*
+     * Start the packet receive process
+     */
+    etimer_set(&RF_EventTmr,
+                10,
+                RF_EventHandler);
 
-    /* Start the packet receive process */
-    etimer_set(&ps_nativeTmr, 10, _native_handler);
-    LOG1_INFO("set %p for %p callback\n\r",&ps_nativeTmr, &_native_handler);
+    LOG1_INFO("set %p for %p callback\n\r", &RF_EventTmr, &RF_EventHandler);
     LOG_WARN("Don't forget to destroy lcm object!");
-    return l_error;
-} /* _native_init() */
+}
 #else
+
 /*----------------------------------------------------------------------------*/
 /** \brief  NATIVE transport initialization for IPC
  *
@@ -192,57 +232,90 @@ static int8_t _native_init(s_ns_t* p_netStack)
  *  \return int8_t        Status code.
  */
 /*----------------------------------------------------------------------------*/
-static int8_t _native_init( s_ns_t* p_netStack )
+static void RF_Init (void *p_netstk, e_nsErr_t *p_err)
 {
     linkaddr_t un_addr;
-    uint8_t l_error;
-    LOG_INFO( "Try to initialize Broadcasting Client for native radio driver" );
 
-    /* Please refer to lcm_create() reference. Deafult parameter is taken
-     from there */
-    ps_lcm = lcm_create( NULL );
 
-    if( !ps_lcm )
-        _printAndExit("LCM init failed");
-
-    lcm_subscribe( ps_lcm, FAKERADIO_CHANNEL, _native_read, NULL );
-
-    LOG_INFO( "native driver was initialized" );
-
-    /* Mac address should not be NULL pointer, although it can't be, but still
-     *  */
-    if( mac_phy_config.mac_address == NULL )
-    {
-        _printAndExit( "MAC address is NULL" );
+#if NETSTK_CFG_ARG_CHK_EN
+    if (p_err == NULL) {
+        return;
     }
 
-    /* Initialise global lladdr structure with a given mac */
-    memcpy( (void *)&un_addr.u8, &mac_phy_config.mac_address, 8 );
-    memcpy( &uip_lladdr.addr, &un_addr.u8, 8 );
-    linkaddr_set_node_addr( &un_addr );
-
-    LOG_INFO( "MAC address %x:%x:%x:%x:%x:%x:%x:%x", un_addr.u8[0],
-            un_addr.u8[1], un_addr.u8[2], un_addr.u8[3], un_addr.u8[4],
-            un_addr.u8[5], un_addr.u8[6], un_addr.u8[7] );
-
-    if( p_netStack->lmac != NULL )
-    {
-        p_lmac = p_netStack->lmac;
-        l_error = 1;
+    if (p_netstk == NULL) {
+        *p_err = NETSTK_ERR_INIT;
+        return;
     }
-    else
-    {
-        _printAndExit( "Bad lmac pointer" );
-    }
-
-    /* Start the packet receive process */
-    etimer_set( &ps_nativeTmr, 10, _native_handler );
-
-    return l_error;
-} /* _native_init() */
 #endif
 
-/*----------------------------------------------------------------------------*/
+
+    /*
+     * Store pointer to netstack structure
+     */
+    RF_Netstack = (s_ns_t *)p_netstk;
+    if (RF_Netstack->phy == NULL) {
+        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+        RF_PrintAndExit("Bad PHY driver pointer");
+    }
+
+    LOG_INFO("Try to initialize Broadcasting Client for native radio driver");
+
+    /*
+     * Please refer to lcm_create() reference. Default parameter is taken
+     * from there
+     */
+
+    /*
+     * Instantiate a LCM object
+     */
+    RF_LCM = lcm_create(NULL);
+    if (!RF_LCM) {
+        RF_PrintAndExit("LCM init failed");
+        return;
+    }
+
+    /*
+     * Subscribe to a channel
+     */
+    lcm_subscribe(RF_LCM,
+                  FAKERADIO_CHANNEL,
+                  RF_Read,
+                  NULL);
+    LOG_INFO("native driver was initialized");
+
+    /*
+     * Mac address should not be NULL pointer, although it can't be, but still
+     */
+    if (mac_phy_config.mac_address == NULL) {
+        RF_PrintAndExit("MAC address is NULL");
+        return;
+    }
+
+    /*
+     * Initialize global logical link address structure with a given MAC
+     */
+    memcpy((void *)&un_addr.u8, &mac_phy_config.mac_address, 8);
+    memcpy(&uip_lladdr.addr, &un_addr.u8, 8);
+    linkaddr_set_node_addr(&un_addr);
+
+    LOG_INFO("MAC address %x:%x:%x:%x:%x:%x:%x:%x", un_addr.u8[0],
+            un_addr.u8[1], un_addr.u8[2], un_addr.u8[3], un_addr.u8[4],
+            un_addr.u8[5], un_addr.u8[6], un_addr.u8[7]);
+
+
+    /*
+     * Start the packet receive process
+     */
+    etimer_set(&RF_EventTmr,
+                10,
+                RF_EventHandler);
+
+    /* set returned error code */
+    *p_err = NETSTK_ERR_NONE;
+}
+#endif
+
+
 /** \brief  NATIVE transport message send
  *          Idea behind is that we concatenate to payload last two bytes of a
  *          MAC address in order to filter our own packets on a receiving side
@@ -250,48 +323,52 @@ static int8_t _native_init( s_ns_t* p_netStack )
  *  \param  c_len         Length of a payload
  *  \return int8_t        Status code.
  */
-/*----------------------------------------------------------------------------*/
-static int8_t _native_send( const void *pr_payload, uint8_t c_len )
+static void RF_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 {
     int status;
-    /* We assume that usage of malloc here is ok as it's a simple Linux port
+    uint8_t *pc_frame;
+
+    /*
+     * We assume that usage of malloc here is ok as it's a simple Linux port
      * However in the end we do a free() call. Function description expains
      * why we need to allocate extra 2 bytes here
      */
-    uint8_t* pc_frame = malloc( sizeof(uint8_t) * ( c_len + __ADDRLEN__ ) );
+    pc_frame = malloc(sizeof(uint8_t) * (len + __ADDRLEN__));
 
     /* Check malloc result */
-    if( pc_frame == NULL )
-    {
-        LOG_ERR( "Insufficient memory" );
-        return RADIO_TX_ERR;
+    if (pc_frame == NULL) {
+        LOG_ERR("Insufficient memory");
+        *p_err = NETSTK_ERR_BUF_OVERFLOW;
     }
 
     /* Add two last bytes of MAC address to the beginning of a frame */
     *pc_frame = uip_lladdr.addr[6];
-    *( pc_frame + 1 ) = uip_lladdr.addr[7];
-    memmove( pc_frame + __ADDRLEN__, pr_payload, c_len );
-    status = lcm_publish( ps_lcm, FAKERADIO_CHANNEL, pc_frame,
-                          c_len + __ADDRLEN__ );
+    *(pc_frame + 1) = uip_lladdr.addr[7];
+    memmove(pc_frame + __ADDRLEN__, p_data, len);
+    status = lcm_publish(RF_LCM,
+                         FAKERADIO_CHANNEL,
+                         pc_frame,
+                         len + __ADDRLEN__);
 
-    /* Free allocated memmory */
-    free( pc_frame );
+    /*
+     * Free allocated memory
+     */
+    free(pc_frame);
 
-    /* Return execution status to a caller */
-    if( status == -1 )
-    {
-        LOG_ERR( "Send packet failed" );
-        return RADIO_TX_ERR;
+    /*
+     * Return execution status to a caller
+     */
+    if (status == -1) {
+        LOG_ERR("Send packet failed");
+        *p_err = NETSTK_ERR_FATAL;
+    } else {
+        LOG_OK("TX packet [%d]", len);
+        LOG2_HEXDUMP(p_data, len);
+        *p_err = NETSTK_ERR_NONE;
     }
-    else
-    {
-        LOG_OK( "TX packet [%d]", c_len );
-        LOG2_HEXDUMP( pr_payload, c_len );
-        return RADIO_TX_OK;
-    }
-} /* _native_send() */
+}
 
-/*----------------------------------------------------------------------------*/
+
 /** \brief  NATIVE transport message reception
  *          Idea behind is that we concatenate to payload last two bytes of a
  *          MAC address in order to filter our own packets on a receiving side
@@ -300,77 +377,90 @@ static int8_t _native_send( const void *pr_payload, uint8_t c_len )
  *  \param  userdata      Not used.
  *  \return void
  */
-/*----------------------------------------------------------------------------*/
-static void _native_read( const lcm_recv_buf_t *rps_rbuf,
-        const char * rpc_channel, void * userdata )
+static void RF_Read(const lcm_recv_buf_t *rps_rbuf,
+                    const char           *rpc_channel,
+                    void                 *userdata )
 {
-    uint16_t i_dSize = rps_rbuf->data_size;
+    e_nsErr_t   err = NETSTK_ERR_NONE;
+    uint16_t    i_dSize = rps_rbuf->data_size;
+    uint8_t    *p_data;
+    uint16_t    len;
 
-    /* Clear buffer where to store received payload */
+    /*
+     * Clear buffer where to store received payload
+     */
     packetbuf_clear();
 
-    /* Check whether recieved packet is not too long */
-    if( i_dSize > PACKETBUF_SIZE )
-    {
-        LOG_ERR( "Received packet too long" );
-    }
-    else
-    {
-        /* If first two bytes of the received frame match with our
+    /*
+     * Check whether recieved packet is not too long
+     */
+    if (i_dSize > PACKETBUF_SIZE) {
+        LOG_ERR("Received packet too long");
+    } else {
+        /*
+         * If first two bytes of the received frame match with our
          * MAC address then discard a frame
          */
-        if( ( *( (uint8_t *)rps_rbuf->data )     != uip_lladdr.addr[6] ) ||
-            ( *( (uint8_t *)rps_rbuf->data + 1 ) != uip_lladdr.addr[7] ) )
-        {
-            memcpy( packetbuf_dataptr(), rps_rbuf->data + __ADDRLEN__,
-                    i_dSize - __ADDRLEN__ );
-            LOG_OK( "RX packet [%d] from 0x%02X:0x%02X", i_dSize,
+        if ((*((uint8_t *)rps_rbuf->data    ) != uip_lladdr.addr[6]) ||
+            (*((uint8_t *)rps_rbuf->data + 1) != uip_lladdr.addr[7])) {
+
+            /*
+             * Logging
+             */
+            LOG_OK("RX packet [%d] from 0x%02X:0x%02X", i_dSize,
                     *(uint8_t * )rps_rbuf->data,
-                    *( (uint8_t * )rps_rbuf->data + 1 ) );
-            LOG2_HEXDUMP( packetbuf_dataptr(), i_dSize - __ADDRLEN__ );
-            if( ( rps_rbuf->data_size > 0 ) && ( p_lmac != NULL ) )
-            {
-                packetbuf_set_datalen( i_dSize - __ADDRLEN__ );
-                p_lmac->input();
-            }
-            else
-            {
-                LOG_ERR( "Failed to receive packet" );
-            }
+                    *((uint8_t * )rps_rbuf->data + 1));
+            LOG2_HEXDUMP(packetbuf_dataptr(), i_dSize - __ADDRLEN__);
+
+            /*
+             * Signal the next higher layer of the received frame
+             */
+            len    = i_dSize - __ADDRLEN__;
+            p_data = rps_rbuf->data + __ADDRLEN__;
+            RF_Netstack->phy->recv(p_data, len, &err);
         }
     }
-} /* _native_read() */
+}
 
-/*----------------------------------------------------------------------------*/
+
 /** \brief  NATIVE transport wrapper function
  *  \return 0
  */
-/*----------------------------------------------------------------------------*/
-static int8_t _native_on( void )
+static void RF_On (e_nsErr_t *p_err)
 {
-    return 0;
-} /* _native_on() */
+#if NETSTK_CFG_ARG_CHK_EN
+    if (p_err == NULL) {
+        return;
+    }
+#endif
 
-/*----------------------------------------------------------------------------*/
+    *p_err = NETSTK_ERR_NONE;
+}
+
+
 /** \brief  NATIVE transport wrapper function.
  *          lcm structure destroy can be invoked here
  *  \return 0
  */
-/*----------------------------------------------------------------------------*/
-static int8_t _native_off( void )
+static void RF_Off (e_nsErr_t *p_err)
 {
-    return 0;
-} /* _native_off() */
+#if NETSTK_CFG_ARG_CHK_EN
+    if (p_err == NULL) {
+        return;
+    }
+#endif
 
-/*----------------------------------------------------------------------------*/
+    *p_err = NETSTK_ERR_NONE;
+}
+
+
 /** \brief  NATIVE transport handler for periodic polling
  *          triggered every 10 msec
  *  \param  c_event       Source of an event.
  *  \param  p_data        Pointer to a data
  *  \return void
  */
-/*----------------------------------------------------------------------------*/
-static void _native_handler( c_event_t c_event, p_data_t p_data )
+static void RF_EventHandler( c_event_t c_event, p_data_t p_data )
 {
     int32_t lcm_fd;
     struct timeval s_tv;
@@ -378,32 +468,62 @@ static void _native_handler( c_event_t c_event, p_data_t p_data )
     s_tv.tv_usec = 10;
     fd_set fds;
 
-    if( etimer_expired( &ps_nativeTmr ) )
-    {
-        /* We can't use lcm_handle trigger every time, as
+
+    if (etimer_expired(&RF_EventTmr)) {
+        /*
+         * We can't use lcm_handle trigger every time, as
          * it's a blocking operation. We should instead check whether a lcm file
          * descriptor is available for reading. We put 10 usec as a timeout.
          */
-        lcm_fd = lcm_get_fileno( ps_lcm );
-        FD_ZERO( &fds );
-        FD_SET( lcm_fd, &fds );
+        lcm_fd = lcm_get_fileno(RF_LCM);
+        FD_ZERO(&fds);
+        FD_SET(lcm_fd, &fds);
 
-        select( lcm_fd + 1, &fds, 0, 0, &s_tv );
+        select(lcm_fd + 1, &fds, 0, 0, &s_tv);
         /* If descriptor is available for reading then there is a incoming data
          * to read.
          */
-        if( FD_ISSET( lcm_fd, &fds ) )
-        {
-            lcm_handle( ps_lcm );
+        if (FD_ISSET(lcm_fd, &fds)) {
+            lcm_handle(RF_LCM);
         }
 
         /* Restart a timer anyway. */
-        etimer_restart( &ps_nativeTmr );
-
+        etimer_restart(&RF_EventTmr);
     }
 }
 
-/*==============================================================================
- API FUNCTIONS
- ==============================================================================*/
+
+static void RF_Recv(uint8_t *p_buf, uint16_t len, e_nsErr_t *p_err)
+{
+#ifdef NETSTK_CFG_ARG_CHK_EN
+    if (p_err == NULL) {
+        return;
+    }
+#endif
+
+    /* default returned error code for fake radio transceiver */
+    *p_err = NETSTK_ERR_NONE;
+}
+
+
+static void RF_Ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
+{
+#ifdef NETSTK_CFG_ARG_CHK_EN
+    if (p_err == NULL) {
+        return;
+    }
+#endif
+
+    /* default returned error code for fake radio transceiver */
+    *p_err = NETSTK_ERR_NONE;
+}
+
+
+/*
+********************************************************************************
+*                               END OF FILE
+********************************************************************************
+*/
+#endif /* NETSTK_CFG_RF_NATIVE_EN */
+
 /** @} */

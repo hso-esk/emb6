@@ -911,7 +911,7 @@ void uip_log(char *msg);
 */
 #define NETSTK_CFG_RF_CC1120_EN             ( 1u )
 #define NETSTK_CFG_RF_NULL_EN               ( 1u )
-
+#define NETSTK_CFG_RF_NATIVE_EN             ( 1u )
 
  /*=============================================================================
                                  POWER_SAVING SECTION
