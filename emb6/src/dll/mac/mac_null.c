@@ -14,6 +14,9 @@
 
 
 #if NETSTK_CFG_MAC_NULL_EN
+#include "packetbuf.h"
+
+
 /*
 ********************************************************************************
 *                          LOCAL FUNCTION DECLARATIONS
@@ -91,6 +94,12 @@ static void MAC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 
 static void MAC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 {
+    packetbuf_clear();
+    packetbuf_set_datalen(len);
+    memcpy(packetbuf_dataptr(),
+           p_data,
+           len);
+
     MAC_Netstk->llc->recv(p_data, len, p_err);
 }
 
