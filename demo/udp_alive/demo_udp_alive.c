@@ -290,37 +290,27 @@ static    void _udpAlive_callback(c_event_t c_event, p_data_t p_data) {
 /*---------------------------------------------------------------------------*/
 /*  demo_udpAliveInit()                                                      */
 /*---------------------------------------------------------------------------*/
-uint8_t demo_udpAliveConf(s_ns_t* pst_netStack)
+uint8_t demo_udpAliveConf(s_ns_t* p_netstk)
 {
     uint8_t c_ret = 1;
 
     /*
      * By default stack
      */
-    if (pst_netStack != NULL) {
-        if (!pst_netStack->c_configured) {
-            pst_netStack->hc    = &sicslowpan_driver;
-            pst_netStack->llsec = &nullsec_driver;
-            pst_netStack->llc   = &LLCDrv802154;
-            pst_netStack->mac   = &MACDrv802154;
-            pst_netStack->frame = &framer_802154;
-            pst_netStack->phy   = &PHYDrvNull;
-            pst_netStack->lpr   = &LPRDrvNull;
-            pst_netStack->c_configured = 1;
-            /* Transceiver interface is defined by @ref board_conf function*/
-            /* pst_netStack->inif   = $<some_transceiver>;*/
+    if (p_netstk != NULL) {
+        if (!p_netstk->c_configured) {
+            p_netstk->hc    = &sicslowpan_driver;
+            p_netstk->frame = &framer_802154;
+            p_netstk->llsec = &nullsec_driver;
+            p_netstk->c_configured = 1;
+
         } else {
-            if ((pst_netStack->hc    == &sicslowpan_driver) &&
-                (pst_netStack->llsec == &nullsec_driver)    &&
-                (pst_netStack->llc   == &LLCDrv802154)      &&
-                (pst_netStack->frame == &framer_802154)     &&
-                (pst_netStack->mac   == &MACDrv802154)      &&
-                (pst_netStack->phy   == &PHYDrvNull)        &&
-                (pst_netStack->lpr   == &LPRDrvNull)) {
-                /* right configuration */
+            if ((p_netstk->hc    == &sicslowpan_driver) &&
+                (p_netstk->frame == &framer_802154)    	&&
+                (p_netstk->llsec == &nullsec_driver)) {
             }
             else {
-                pst_netStack = NULL;
+                p_netstk = NULL;
                 c_ret = 0;
             }
         }

@@ -124,23 +124,14 @@ uint8_t demo_coapConf(s_ns_t* p_netstk)
     if (p_netstk != NULL) {
         if (!p_netstk->c_configured) {
             p_netstk->hc    = &sicslowpan_driver;
-            p_netstk->llsec = &nullsec_driver;
-            p_netstk->llc   = &LLCDrv802154;
-            p_netstk->mac   = &MACDrv802154;
             p_netstk->frame = &framer_802154;
-            p_netstk->phy   = &PHYDrvNull;
-            p_netstk->lpr   = &LPRDrvNull;
+            p_netstk->llsec = &nullsec_driver;
             p_netstk->c_configured = 1;
 
         } else {
             if ((p_netstk->hc    == &sicslowpan_driver) &&
-                (p_netstk->llsec == &nullsec_driver)    &&
-                (p_netstk->llc   == &LLCDrv802154)      &&
-                (p_netstk->frame == &framer_802154)     &&
-                (p_netstk->mac   == &MACDrv802154)      &&
-                (p_netstk->phy   == &PHYDrvNull)        &&
-                (p_netstk->lpr   == &LPRDrvNull)) {
-
+                (p_netstk->frame == &framer_802154)    	&&
+                (p_netstk->llsec == &nullsec_driver)) {
             }
             else {
                 p_netstk = NULL;

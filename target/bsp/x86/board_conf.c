@@ -72,19 +72,24 @@
 /** Enable or disable logging */
 #define        LOGGER_ENABLE          LOGGER_BSP
 
-uint8_t board_conf(s_ns_t* ps_nStack)
+uint8_t board_conf(s_ns_t* p_netstk)
 {
-    uint8_t c_ret = 0;
+    uint8_t 	c_ret = 0;
+    e_nsErr_t   err = 0;
 
-    if (ps_nStack != NULL) {
-        ps_nStack->inif = &native_driver;
-        etimer_init();
-        c_ret = ps_nStack->inif->init(ps_nStack);
+
+    if (p_netstk != NULL) {
+		p_netstk->llc = &LLCDrvNull;
+		p_netstk->mac = &MACDrvNull;
+		p_netstk->phy = &PHYDrvNull;
+		p_netstk->lpr = &LPRDrvNull;
+		p_netstk->rf  = &RFDrvNative;
+		etimer_init();
+		c_ret = 1;
     }
     else {
-        LOG_ERR("Network stack pointer is NULL");
+            LOG_ERR("Network stack pointer is NULL");
     }
-
 
     return c_ret;
 }

@@ -254,7 +254,7 @@ static void UDPSocket_EventHandler(c_event_t c_event, p_data_t p_data)
             /*
              * Increase sequence number of UDP message
              */
-            if (++UDPSocket_CurrSeqTx >= 0xFFFFFFFFF) {
+            if (++UDPSocket_CurrSeqTx >= 1000) {
                 UDPSocket_CurrSeqTx = 0;
             }
         }
@@ -326,7 +326,6 @@ int8_t demo_udpSocketCfg(s_ns_t *p_netstk)
     int8_t i_ret = -1;
 
 
-#if STK_CFG_REFACTOR_EN
     if (p_netstk != NULL) {
         if (!p_netstk->c_configured) {
             p_netstk->hc    = &sicslowpan_driver;
@@ -345,38 +344,5 @@ int8_t demo_udpSocketCfg(s_ns_t *p_netstk)
             }
         }
     }
-#else
-    if (p_netstk != NULL) {
-        if (!p_netstk->c_configured) {
-            p_netstk->hc    = &sicslowpan_driver;
-            p_netstk->llsec = &nullsec_driver;
-            p_netstk->llc   = &LLCDrv802154;
-            p_netstk->mac   = &MACDrv802154;
-            p_netstk->frame = &framer_802154;
-            p_netstk->phy   = &PHYDrvNull;
-            p_netstk->lpr   = &LPRDrvNull;
-            p_netstk->rf    = &RFDrvCC1120;
-            p_netstk->c_configured = 1;
-
-        } else {
-            if ((p_netstk->hc    == &sicslowpan_driver) &&
-                (p_netstk->llsec == &nullsec_driver)    &&
-                (p_netstk->llc   == &LLCDrv802154)      &&
-                (p_netstk->frame == &framer_802154)     &&
-                (p_netstk->mac   == &MACDrv802154)      &&
-                (p_netstk->phy   == &PHYDrvNull)        &&
-                (p_netstk->lpr   == &LPRDrvNull)        &&
-                (p_netstk->rf    == &RFDrvCC1120)) {
-
-            }
-            else {
-                p_netstk = NULL;
-                i_ret = 0;
-            }
-        }
-    }
-#endif
-
-
     return i_ret;
 }
