@@ -805,55 +805,55 @@ void uip_log(char *msg);
 #ifndef LOGGER_LEVEL
 #define LOGGER_LEVEL                        0
 #endif
- /** Core logging, should be TRUE for almost all cases except for production
-  * (see emb6.c) */
- #define LOGGER_CORE                        FALSE
+/** Core logging, should be TRUE for almost all cases except for production
+* (see emb6.c) */
+#define LOGGER_CORE                        	FALSE
 
- /** Hardware abstraction layer functions   (see target.c) */
- #define LOGGER_HAL                         FALSE
+/** Hardware abstraction layer functions   	(see target.c) */
+#define LOGGER_HAL                         	FALSE
 
- /** Board support package                  (see bsp.c) */
- #define LOGGER_BSP                         FALSE
+/** Board support package                  	(see bsp.c) */
+#define LOGGER_BSP                        	FALSE
 
- /** Main functions                         (see emb6_main.c) */
- #define LOGGER_MAIN                        FALSE
+/** Main functions                         	(see emb6_main.c) */
+#define LOGGER_MAIN                        	FALSE
 
- /** Radio functions                        (see $(IF).c) */
- #define LOGGER_RADIO                       FALSE
+/** Event process functions                	(see llc_xxx.c) */
+#define LOGGER_LLC                         	FALSE
 
- /** DEMO UDP example                       (see demo_exudp.c) */
- #define LOGGER_DEMO_UDPIAA                 FALSE
+/** Event process functions                	(see mac_xxx.c) */
+#define LOGGER_MAC                         	FALSE
 
- /** DEMO APTB example                      (see demo_aptb_xxx.c) */
- #define LOGGER_DEMO_APTB                   FALSE
+/** Event process functions                	(see phy_xxx.c) */
+#define LOGGER_PHY                         	FALSE
 
- /** DEMO COAP example                      (see demo_coap_*.c) */
- #define LOGGER_DEMO_COAP                   FALSE
+/** Radio functions                        	(see $(IF).c) */
+#define LOGGER_RADIO                       	FALSE
 
- /** DEMO SNIFFER                           (see demo_sniffer.c) */
- #define LOGGER_DEMO_SNIFFER                FALSE
+/** DEMO UDP example                       	(see demo_exudp.c) */
+#define LOGGER_DEMO_UDPIAA                 	FALSE
 
- /** DEMO TESTSUITE                         (see tessuite.c) */
-  #define LOGGER_DEMO_TESTSUITE             FALSE
+/** DEMO APTB example                      	(see demo_aptb_xxx.c) */
+#define LOGGER_DEMO_APTB                   	FALSE
 
- /** Event timer functions                  (see etimer.c) */
- #define LOGGER_ETIMER                      FALSE
+/** DEMO COAP example                      	(see demo_coap_*.c) */
+#define LOGGER_DEMO_COAP                   	FALSE
 
- /** Callback timer functions               (see ctimer.c) */
- #define LOGGER_CTIMER                      FALSE
+/** DEMO SNIFFER                           	(see demo_sniffer.c) */
+#define LOGGER_DEMO_SNIFFER                	FALSE
 
- /** Event process functions                (see evproc.c) */
- #define LOGGER_EVPROC                      FALSE
+/** DEMO TESTSUITE                         	(see tessuite.c) */
+#define LOGGER_DEMO_TESTSUITE             	FALSE
 
+/** Event timer functions                  	(see etimer.c) */
+#define LOGGER_ETIMER                      	FALSE
 
- /** Event process functions                (see phy_xxx.c) */
- #define LOGGER_PHY                         FALSE
+/** Callback timer functions               	(see ctimer.c) */
+#define LOGGER_CTIMER                      	FALSE
 
- /** Event process functions                (see mac_xxx.c) */
- #define LOGGER_MAC                         FALSE
+/** Event process functions                	(see evproc.c) */
+#define LOGGER_EVPROC                      	FALSE
 
-/** Event process functions                (see llc_xxx.c) */
-#define LOGGER_LLC                         FALSE
 
 /*
 ********************************************************************************
