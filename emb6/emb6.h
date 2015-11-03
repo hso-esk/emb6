@@ -229,13 +229,6 @@ typedef uip_eth_addr uip_lladdr_t;
  *                                                                             *
  =============================================================================*/
 
-/*
-********************************************************************************
-*                            DATA TYPES DECLARATIONS
-********************************************************************************
-*/
-typedef uint16_t        NETSTK_DEV_ID;
-
 
 /*
 ********************************************************************************
@@ -356,11 +349,25 @@ typedef enum netstk_ioc_cmd
 
 /*
 ********************************************************************************
+*                            DATA TYPES DECLARATIONS
+********************************************************************************
+*/
+typedef uint16_t        NETSTK_DEV_ID;
+
+typedef void (* mac_callback_t)(void *ptr, int status, int transmissions);
+
+typedef void (*nsTxCbFnct_t) (void *p_arg, e_nsErr_t *p_err);
+
+typedef void (*nsRxCbFnct_t) (uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
+
+
+/*
+********************************************************************************
 *                           STRUCTURE DECLARATIONS
 ********************************************************************************
 */
 typedef struct netstack                     s_ns_t;
-
+typedef struct netstack_socket              s_nsSocket_t;
 typedef struct netstack_headerCompression   s_nsHeadComp_t;
 typedef struct netstack_llsec               s_nsllsec_t;
 typedef struct netstack_framer              s_nsFramer_t;
@@ -408,7 +415,7 @@ struct netstk_module_api
 /**
  * @brief   Netstack socket driver structure declaration
  */
-typedef const struct netstack_socket
+struct netstack_socket
 {
     char *name;
 
@@ -429,12 +436,11 @@ typedef const struct netstack_socket
     /* Close the BSD socket driver */
     void (* close)(s_ns_t* p_ns);
 
-}s_nsSocket_t;
+};
 
-#if STK_CFG_REFACTOR_EN
-typedef void (* mac_callback_t)(void *ptr, int status, int transmissions);
 
-struct netstack_headerCompression {
+struct netstack_headerCompression
+{
     char *name;
 
     /** Initialize the network driver */
@@ -448,7 +454,8 @@ struct netstack_headerCompression {
 /**
  * The structure of a link layer security driver.
  */
-struct netstack_llsec {
+struct netstack_llsec
+{
     char *name;
 
     /** Initializes link layer security and thereafter starts upper layers. */
@@ -474,7 +481,8 @@ struct netstack_llsec {
     uint8_t (* get_overhead)(void);
 };
 
-struct netstack_framer {
+struct netstack_framer
+{
     char *name;
 
     int8_t (* init)(s_ns_t* p_ns);
@@ -488,166 +496,22 @@ struct netstack_framer {
     int8_t (* parse)(void);
 };
 
-#else /* Legacy code segments */
 
-typedef const struct netstack_headerCompression {
-    char *name;
-
-    /** Initialize the network driver */
-    void (* init)(s_ns_t* p_ns);
-
-    /** Callback for getting notified of incoming packet. */
-    void (* input)(void);
-}s_nsHeadComp_t;
-
-typedef void (* mac_callback_t)(void *ptr, int status, int transmissions);
-
-/**
- * The structure of a link layer security driver.
- */
-typedef const struct netstack_llsec {
-    char *name;
-
-    /** Initializes link layer security and thereafter starts upper layers. */
-    void (* init)(s_ns_t* p_ns);
-
-    /** Secures outgoing frames before passing them to NETSTACK_MAC. */
-    void (* send)(mac_callback_t sent_callback, void *ptr);
-
-    /**
-     * Once the netstack_framer wrote the headers, the llsec driver
-     * can generate a MIC over the entire frame.
-     * \return Returns != 0 <-> success
-     */
-    int (* on_frame_created)(void);
-
-    /**
-     * Decrypts incoming frames;
-     * filters out injected or replayed frames.
-     */
-    void (* input)(void);
-
-    /** Returns the security-related overhead per frame in bytes */
-    uint8_t (* get_overhead)(void);
-}s_nsllsec_t;
-
-
-typedef const struct netstack_highMac {
-    char *name;
-
-    /** Initialize the MAC driver */
-    void (* init)(s_ns_t* p_ns);
-
-    /** Send a packet from the Rime buffer  */
-    void (* send)(mac_callback_t sent_callback, void *ptr);
-
-    /** Callback for getting notified of incoming packet. */
-    void (* input)(void);
-
-    /** Turn the MAC layer on. */
-    int8_t (* on)(void);
-
-    /** Turn the MAC layer off. */
-    int8_t (* off)(int keep_radio_on);
-
-    /** Returns the channel check interval, expressed in clock_time_t ticks. */
-    unsigned short (* channel_check_interval)(void);
-}s_nsHighMac_t;
-
-/* List of packets to be sent by LMAC layer */
-typedef struct lmac_buf_list {
-    struct lmac_buf_list    *next;
-    struct queuebuf         *buf;
-    void                    *ptr;
-}s_nsLmacBufList_t;
-
-typedef const struct netstack_lowMac {
-    char *name;
-
-    /** Initialize the RDC driver */
-    void (* init)(s_ns_t* p_ns);
-
-    /** Send a packet from the Rime buffer  */
-    void (* send)(mac_callback_t sent_callback, void *ptr);
-
-    /** Send a packet list */
-    void (* send_list)(mac_callback_t sent_callback, void *ptr,
-                       s_nsLmacBufList_t *list);
-
-    /** Callback for getting notified of incoming packet. */
-    void (* input)(void);
-
-    /** Turn the MAC layer on. */
-    int8_t (* on)(void);
-
-    /** Turn the MAC layer off. */
-    int8_t (* off)(int keep_radio_on);
-
-    /** Returns the channel check interval, expressed in clock_time_t ticks. */
-    unsigned short (* channel_check_interval)(void);
-}s_nsLowMac_t;
-
-typedef const struct netstack_framer {
-    char *name;
-
-    int8_t (* init)(s_ns_t* p_ns);
-
-    int8_t (* length)(void);
-
-    int8_t (* create)(void);
-
-    int8_t (* create_and_secure)(s_ns_t* p_ns);
-
-    int8_t (* parse)(void);
-}s_nsFramer_t;
-
-typedef const struct netstack_interface {
-    char *name;
-
-    int8_t (* init)(s_ns_t* p_ns);
-
-    /** Prepare & transmit a packet. */
-    int8_t (* send)(const void *pr_payload, uint8_t c_len);
-
-    /** Turn the radio on. */
-    int8_t (* on)(void);
-
-    /** Turn the radio off. */
-    int8_t (* off)(void);
-
-    /** Set TX-Power */
-    void (* set_txpower)(int8_t power);
-
-    /** Get TX-Power */
-    int8_t (* get_txpower)(void);
-
-    /** Set Sensitivity */
-    void (* set_sensitivity)(int8_t sens);
-
-    /** Get Sensitivity */
-    int8_t (* get_sensitivity)(void);
-
-    /** Get RSSI Value */
-    int8_t (* get_rssi)(void);
-
-    /** Set Antenna Diversity */
-    void (* ant_div)(uint8_t value);
-
-    /** Set RF Switch*/
-    void (* ant_rf_switch)(uint8_t value);
-
-    /** Set promiscuous mode */
-    void (* set_promisc)(uint8_t c_on_off);
-
-}s_nsIf_t;
-#endif
-
-
+/*
+********************************************************************************
+*                           SOCKET DRIVERS DECLARATIONS
+********************************************************************************
+*/
 /*! Supported BSD-like socket interface */
 /*extern const s_nsSocket_t udp_socket_driver;
 extern const s_nsSocket_t tcp_socket_driver;*/
 
 
+/*
+********************************************************************************
+*                       HEADER COMPRESSOR DRIVERS DECLARATIONS
+********************************************************************************
+*/
 /*! Supported headers compression handlers */
 extern const s_nsHeadComp_t     sicslowpan_driver;
 
@@ -657,21 +521,23 @@ extern const s_nsHeadComp_t     sicslowpan_driver;
 extern const s_nsHeadComp_t     slipnet_driver;
 
 
+/*
+********************************************************************************
+*                           LLSEC DRIVERS DECLARATIONS
+********************************************************************************
+*/
 /*! Supported link layer security handlers */
 extern const s_nsllsec_t        nullsec_driver;
 
+
+/*
+********************************************************************************
+*                   6LOWPAN FRAMER DRIVERS DECLARATIONS
+********************************************************************************
+*/
 /*! Supported framers */
 extern const s_nsFramer_t       framer_802154;
 
-#if STK_CFG_REFACTOR_EN
-/*
-********************************************************************************
-*                           STRUCTURE DECLARATIONS
-********************************************************************************
-*/
-typedef void (*nsTxCbFnct_t) (void *p_arg, e_nsErr_t *p_err);
-
-typedef void (*nsRxCbFnct_t) (uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
 
 /*
 ********************************************************************************
@@ -738,33 +604,9 @@ extern  const s_nsRF_t      RFDrvCC1120;
 extern  const s_nsRF_t      RFDrvNull;
 #endif
 
-extern  e_nsErr_t  NetstkLastErr;
-
-
-#else
-/*! Supported high mac handlers */
-extern const s_nsHighMac_t      nullmac_driver;
-extern const s_nsHighMac_t      simplemac_driver;
-
-/*! Supported low mac handlers */
-extern const s_nsLowMac_t       sicslowmac_driver;
-extern const s_nsLowMac_t       nullrdc_driver;
-extern const s_nsLowMac_t       apss_driver;
-
-
-/*! Supported framers */
-extern const s_nsFramer_t       framer_802154;
-extern const s_nsFramer_t       no_framer;
-extern const s_nsFramer_t       nullframer;
-
-
-/*! Supported interfaces */
-extern const s_nsIf_t           rf212_driver;
-extern const s_nsIf_t           rf212b_driver;
-extern const s_nsIf_t           rf230_driver;
-extern const s_nsIf_t           native_driver;
-extern const s_nsIf_t           fradio_driver;
+extern  const s_nsRF_t      RFDrvNative;
 #endif
+
 
 /*==============================================================================
                                  API FUNCTIONS
@@ -819,7 +661,6 @@ s_ns_t * emb6_get(void);
 
 #ifndef QUEUEBUF_CONF_REF_NUM
 #define QUEUEBUF_CONF_REF_NUM               4
-#endif
 
 
 #endif /* EMB6_H_ */
