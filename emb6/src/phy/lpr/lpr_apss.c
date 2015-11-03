@@ -123,7 +123,7 @@ struct netstk_apss
     uint8_t             IdleQty;
 
     s_ns_t             *Netstack;
-    LPR_FRAMER_DRV     *Framer;
+    s_nsLPRFramerDrv_t     *Framer;
     LPR_STATE           State;
     LPR_STATE           BroadcastState;
     e_nsErr_t          LastErrTx;
@@ -211,7 +211,7 @@ NETSTK_DEV_ID      LPRDstId;
 
 
 #if LPR_CFG_LOOSE_SYNC_EN
-LPR_PWRON_TBL_ENTRY  LPRPwrOnTbl[LPR_CFG_PWRON_TBL_SIZE];
+s_nsLprPwrOnTblEntry_t  LPRPwrOnTbl[LPR_CFG_PWRON_TBL_SIZE];
 #endif
 
 const s_nsLPR_t LPRDrvAPSS =

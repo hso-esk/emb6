@@ -55,7 +55,7 @@ static void SmartMAC_ParseSACK (uint8_t *p_pkt, uint16_t len, e_nsErr_t *p_err);
 static void SmartMAC_ParseBroadcast (uint8_t *p_pkt, uint16_t len, e_nsErr_t *p_err);
 
 static void SmartMAC_CalcSACKDelay(uint8_t ts_count);
-static void SmartMAC_CalcStrobeDelay(LPR_PWRON_TBL_ENTRY *p_dev, uint32_t *p_delay);
+static void SmartMAC_CalcStrobeDelay(s_nsLprPwrOnTblEntry_t *p_dev, uint32_t *p_delay);
 
 
 /*
@@ -63,7 +63,7 @@ static void SmartMAC_CalcStrobeDelay(LPR_PWRON_TBL_ENTRY *p_dev, uint32_t *p_del
 *                               GLOBAL VARIABLES
 ********************************************************************************
 */
-LPR_FRAMER_DRV SmartMACFramer = {
+s_nsLPRFramerDrv_t SmartMACFramer = {
     "APSS SmartMAC",
      SmartMAC_Init,
      SmartMAC_Deinit,
@@ -84,7 +84,7 @@ LPR_FRAMER_DRV SmartMACFramer = {
  * @param   p_dev   Pointer to a structure holding power-on information of a
  *                  device
  */
-static void SmartMAC_CalcStrobeDelay(LPR_PWRON_TBL_ENTRY *p_dev, uint32_t *p_delay)
+static void SmartMAC_CalcStrobeDelay(s_nsLprPwrOnTblEntry_t *p_dev, uint32_t *p_delay)
 {
     uint8_t n, i;
     uint32_t t0, t1;

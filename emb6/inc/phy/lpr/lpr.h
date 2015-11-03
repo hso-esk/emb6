@@ -8,7 +8,7 @@
 #define LPR_PRESENT
 
 
-typedef struct lpr_framer_api      LPR_FRAMER_DRV;
+typedef struct lpr_framer_api      s_nsLPRFramerDrv_t;
 
 /**
  * @brief   Asynchronous Power Saving Scheme Framer API
@@ -49,7 +49,7 @@ typedef uint8_t LPR_FRAME_TYPE;
 
 
 #if     LPR_CFG_LOOSE_SYNC_EN
-typedef struct lpr_pwron_tbl_entry     LPR_PWRON_TBL_ENTRY;
+typedef struct lpr_pwron_tbl_entry     s_nsLprPwrOnTblEntry_t;
 
 /**
  * @brief   Power-On table structure declaration
@@ -63,12 +63,12 @@ struct lpr_pwron_tbl_entry
     uint16_t    StrobeSentQty;  /*!< Quantity of sent strobes as waking-up signal   */
 };
 
-extern LPR_PWRON_TBL_ENTRY LPRPwrOnTbl[LPR_CFG_PWRON_TBL_SIZE];
+extern s_nsLprPwrOnTblEntry_t LPRPwrOnTbl[LPR_CFG_PWRON_TBL_SIZE];
 #endif
 
 extern NETSTK_DEV_ID LPRSrcId;
 extern NETSTK_DEV_ID LPRDstId;
-extern LPR_FRAMER_DRV XMACFramer;
-extern LPR_FRAMER_DRV SmartMACFramer;
+extern s_nsLPRFramerDrv_t XMACFramer;
+extern s_nsLPRFramerDrv_t SmartMACFramer;
 
 #endif /* LPR_PRESENT */
