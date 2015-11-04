@@ -11,7 +11,7 @@ ByteLimit=50
 [State Storage]
 Control Register=0
 [EEM State Storage]
-Buffer=BAAAAAAADAAAAAAAAAAAAAAA
+Buffer=AAAAAAAAAAAAAAAAAAAAAAAA
 [Sequencer]
 Control Register=0
 NextState0=0
@@ -20,7 +20,7 @@ NextState1=0
 Break=0
 State Storage=0
 [DebugChecksum]
-Checksum=1770244376
+Checksum=-20631227
 [CallStack]
 ShowArgs=0
 [Disassembly]

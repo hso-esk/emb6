@@ -20,7 +20,7 @@ NextState1=0
 Break=0
 State Storage=0
 [DebugChecksum]
-Checksum=-1077324235
+Checksum=586916125
 [CallStack]
 ShowArgs=0
 [Disassembly]
@@ -33,8 +33,7 @@ Category=_ 0
 LoggingEnabled=_ 0
 LogFile=_ ""
 [Breakpoints]
-Bp0=_ "STD_CODE" "{$PROJ_DIR$\..\..\..\..\..\..\..\emb6\src\dll\mac\mac_802154.c}.260.5" 1 0 0 0 "" 0 ""
-Count=1
+Count=0
 [FET]
 Clock mode=14
 Extended Clock mode=-1
