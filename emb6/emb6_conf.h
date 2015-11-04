@@ -830,6 +830,9 @@ void uip_log(char *msg);
 /** Radio functions                        	(see $(IF).c) */
 #define LOGGER_RADIO                       	FALSE
 
+/** DEMO UDP socket example                 (see demo_udp_socket.c) */
+#define LOGGER_DEMO_UDP_SOCKET              FALSE
+
 /** DEMO UDP example                       	(see demo_exudp.c) */
 #define LOGGER_DEMO_UDPIAA                 	FALSE
 

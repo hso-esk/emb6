@@ -11,8 +11,9 @@
 *                                   INCLUDES
 ********************************************************************************
 */
-#include "bsp.h"
 #include "emb6.h"
+
+#include "bsp.h"
 #include "etimer.h"
 #include "evproc.h"
 
@@ -41,9 +42,9 @@
 #endif
 
 
-#define     LOGGER_ENABLE       LOGGER_DEMO_EXUDP
+#define     LOGGER_ENABLE       LOGGER_DEMO_UDP_SOCKET
 #if         LOGGER_ENABLE   ==  TRUE
-#define     LOGGER_SUBSYSTEM    "dUDP"
+#define     LOGGER_SUBSYSTEM    "UDP Socket"
 #endif
 #include    "logger.h"
 
@@ -60,7 +61,7 @@
 #endif
 
 
-#define DEF_UDP_SEND_INTERVAL           (clock_time_t)( 5U )
+#define DEF_UDP_SEND_INTERVAL           (clock_time_t)( 1U )
 
 
 /*
