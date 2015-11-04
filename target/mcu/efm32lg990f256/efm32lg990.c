@@ -600,6 +600,38 @@ void hal_spiWrite(uint8_t * c_value, uint16_t i_length)
         USART_SpiTransfer( s_hal_spi.pHndl->initData.port, c_value[i] );
 } /* hal_spiWrite() */
 
+void hal_spiSelect(void *p_spi)
+{
+    /* TODO missing implementation */
+}
+
+void hal_spiDeselect(void *p_spi)
+{
+    /* TODO missing implementation */
+}
+
+void hal_spiTxRx(uint8_t *p_tx, uint8_t *p_rx, uint16_t len)
+{
+    /* TODO missing implementation */
+}
+
+uint8_t hal_extIntEnable(en_targetExtInt_t e_extInt, en_targetIntEdge_t e_edge, pfn_intCallb_t pfn_intCallback)
+{
+    /* TODO missing implementation */
+    return 0;
+}
+
+uint8_t hal_extIntDisable(en_targetExtInt_t e_extInt)
+{
+    /* TODO missing implementation */
+    return 0;
+}
+
+uint8_t hal_extIntClear(en_targetExtInt_t e_extInt)
+{
+    /* TODO missing implementation */
+    return 0;
+}
 /*==============================================================================
   hal_spiTranRead()
  =============================================================================*/
