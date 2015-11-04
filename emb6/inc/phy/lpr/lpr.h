@@ -27,9 +27,9 @@ struct lpr_framer_api
 };
 
 
-
-#define LPR_INVALID_DEV_ID                 (NETSTK_DEV_ID)( 0xffff )
-#define LPR_IS_PENDING_TX()                (LPRDstId < LPR_INVALID_DEV_ID)
+#define LPR_DEV_ID_BROADCAST                (NETSTK_DEV_ID)( 0xFFFF )
+#define LPR_DEV_ID_INVALID                  (NETSTK_DEV_ID)( 0x0000 )
+#define LPR_IS_PENDING_TX()                 (LPRDstId > LPR_DEV_ID_INVALID)
 
 /**
  * @addtogroup  LPR_FRAME_TYPES    APSS frame types

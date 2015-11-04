@@ -250,7 +250,7 @@ static void LPR_Init (void *p_netstk, e_nsErr_t *p_err)
     /*
      * Initialize APSS framer
      */
-    LPRDstId = LPR_INVALID_DEV_ID;
+    LPRDstId = LPR_DEV_ID_INVALID;
     memcpy(&LPRSrcId, mac_phy_config.mac_address, 2);
     p_apss->Framer = &LPR_FRAMER;
     p_apss->Framer->Init(p_err);
@@ -357,18 +357,18 @@ static void LPR_Send (uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
          * Category frame to send
          */
         if (packetbuf_holds_broadcast()) {
-            LPRDstId = 0;
+            LPRDstId = LPR_DEV_ID_BROADCAST;
             p_apss->BroadcastState = LPR_STATE_TX_BS;
         } else {
             /*
              * Note(s):
              *
-             * (1)  A destination ID of 0xFFFF is not allowed in unicast
+             * (1)  A destination ID of 0x0000 is not allowed in unicast
              *      transmission and and must be checked
              */
             p_dstaddr = packetbuf_addr(PACKETBUF_ADDR_RECEIVER);
             memcpy(&LPRDstId, p_dstaddr->u8, 2);
-            if (LPRDstId == LPR_INVALID_DEV_ID) {
+            if (LPRDstId == LPR_DEV_ID_INVALID) {
                 p_apss->Netstack->rf->off(p_err);
                 p_apss->State = LPR_STATE_POWER_DOWN;
                 *p_err = NETSTK_ERR_INVALID_ARGUMENT;
@@ -1068,7 +1068,7 @@ static void LPR_GotoPowerDown (NETSTK_APSS *p_apss)
     p_apss->WFPEQty = 0;
     p_apss->WFSEQty = 0;
     p_apss->IdleQty  = 0;
-    LPRDstId = LPR_INVALID_DEV_ID;
+    LPRDstId = LPR_DEV_ID_INVALID;
 
     p_apss->BroadcastState = LPR_STATE_NONE;
     p_apss->State = LPR_STATE_POWER_DOWN;
