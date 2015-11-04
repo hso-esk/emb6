@@ -13,11 +13,12 @@
 #include "emb6.h"
 
 
+#if NETSTK_CFG_PHY_NULL_EN
+#include "lib_tmr.h"
+
 #define     LOGGER_ENABLE        LOGGER_PHY
 #include    "logger.h"
 
-
-#if NETSTK_CFG_PHY_NULL_EN
 /*
 ********************************************************************************
 *                          LOCAL FUNCTION DECLARATIONS
@@ -178,7 +179,11 @@ static void PHY_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     /*
      * Issue next lower layer to transmit the prepared frame
      */
+    LED_TX_ON();
     PHY_Netstk->lpr->send(p_data, len, p_err);
+    if (*p_err != NETSTK_ERR_NONE) {
+        LED_TX_OFF();
+    }
 }
 
 
