@@ -261,6 +261,11 @@ void MAC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     if (*p_err != NETSTK_ERR_CHANNEL_ACESS_FAILURE) {
         MAC_Netstk->phy->send(p_data, len, p_err);
     }
+
+    if (*p_err != NETSTK_ERR_NONE) {
+        MAC_LastErr = *p_err;
+        MAC_EVENT_POST(NETSTK_MAC_EVENT_TX_DONE);
+    }
 #endif
 }
 
