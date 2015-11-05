@@ -123,7 +123,7 @@ struct netstk_apss
     uint8_t             IdleQty;
 
     s_ns_t             *Netstack;
-    s_nsLPRFramerDrv_t     *Framer;
+    s_nsLPRFramerDrv_t *Framer;
     LPR_STATE           State;
     LPR_STATE           BroadcastState;
     e_nsErr_t          LastErrTx;
@@ -315,7 +315,6 @@ static void LPR_Send (uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 
 
 
-    LED_TX_ON();
     /*
      * Note(s):
      *
@@ -467,17 +466,19 @@ static void  LPR_Recv (uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
              * If a Strobe ACK isn't arrived before strobe transmission timeout
              * expires, then APSS shall declare failed transmission attempt
              */
-            if (*p_err == NETSTK_ERR_NONE) {
+            if ((frame_type == LPR_FRAME_TYPE_SACK) &&
+                (*p_err     == NETSTK_ERR_NONE)) {
                 p_apss->State = LPR_STATE_TX_LBT_WFI;
             }
             break;
 
         case LPR_STATE_TX_SWFA:
         case LPR_STATE_TX_SWFAE:
-            if (*p_err == NETSTK_ERR_NONE) {
+            if ((frame_type == LPR_FRAME_TYPE_SACK) &&
+                (*p_err     == NETSTK_ERR_NONE)) {
                 p_apss->State = LPR_STATE_TX_P;
-                LPR_EVENT_POST(NETSTK_LPR_EVENT);
             }
+            LPR_EVENT_POST(NETSTK_LPR_EVENT);
             break;
 
 
@@ -842,32 +843,19 @@ static void LPR_TmrIsr1Scan (void *p_arg)
         if (p_apss->WFSEQty > LPR_WFSE_COUNT_MAX) {
             p_apss->WFSEQty = 0;
             p_apss->State = LPR_STATE_SCAN_DONE;
-            LPR_EVENT_POST(NETSTK_LPR_EVENT);
-            return;
-        }
-
-        p_apss->Netstack->rf->ioctrl(NETSTK_CMD_RF_IS_RX_BUSY,
-                                     &is_rx_busy,
-                                     &err);
-        if (is_rx_busy != 1) {
-            p_apss->State = LPR_STATE_SCAN_DONE;
-            LPR_EVENT_POST(NETSTK_LPR_EVENT);
         } else {
-            p_apss->WFSEQty++;
-            p_apss->State = LPR_STATE_SCAN_WFSE;
+            p_apss->Netstack->rf->ioctrl(NETSTK_CMD_RF_IS_RX_BUSY,
+                                         &is_rx_busy,
+                                         &err);
+            if (is_rx_busy != 1) {
+                p_apss->State = LPR_STATE_SCAN_DONE;
+            } else {
+                p_apss->WFSEQty++;
+                p_apss->State = LPR_STATE_SCAN_WFSE;
+            }
         }
+        LPR_EVENT_POST(NETSTK_LPR_EVENT);
     }
-#if LPR_CFG_CCA_BASED_SCAN_EN
-    if (p_apss->State == LPR_STATE_SCAN_CCA_SLEEP) {
-        if (p_apss->CCAQty > LPR_CCA_COUNT_MAX) {
-            p_apss->CCAQty = 0;
-            p_apss->State = LPR_STATE_SCAN_DONE;
-            return;
-        }
-
-        p_apss->State = LPR_STATE_SCAN_CCA;
-    }
-#endif
 }
 
 
@@ -882,20 +870,19 @@ static void LPR_TmrIsr1WFP (void *p_arg)
         if (p_apss->WFPEQty > LPR_WFPE_COUNT_MAX) {
             p_apss->WFPEQty = 0;
             p_apss->State = LPR_STATE_SCAN_DONE;
-            LPR_EVENT_POST(NETSTK_LPR_EVENT);
-            return;
-        }
-
-        p_apss->Netstack->rf->ioctrl(NETSTK_CMD_RF_IS_RX_BUSY,
-                                     &is_rx_busy,
-                                     &err);
-        if (is_rx_busy != 1) {
-            p_apss->State = LPR_STATE_SCAN_DONE;
-            LPR_EVENT_POST(NETSTK_LPR_EVENT);
         } else {
-            p_apss->WFPEQty++;
-            p_apss->State = LPR_STATE_RX_WFPE;
+            p_apss->Netstack->rf->ioctrl(NETSTK_CMD_RF_IS_RX_BUSY,
+                                         &is_rx_busy,
+                                         &err);
+            if (is_rx_busy != 1) {
+                p_apss->State = LPR_STATE_SCAN_DONE;
+                LPR_EVENT_POST(NETSTK_LPR_EVENT);
+            } else {
+                p_apss->WFPEQty++;
+                p_apss->State = LPR_STATE_RX_WFPE;
+            }
         }
+        LPR_EVENT_POST(NETSTK_LPR_EVENT);
     }
 }
 
@@ -960,36 +947,24 @@ static void LPR_TmrIsr1WFA (void *p_arg)
 
     if (p_apss->BroadcastState == LPR_STATE_TX_B) {
         p_apss->State = LPR_STATE_TX_P;
-        LPR_EVENT_POST(NETSTK_LPR_EVENT);
-        return;
-    }
-
-
-    if (p_apss->State == LPR_STATE_TX_SWFA) {
-        p_apss->Netstack->rf->ioctrl(NETSTK_CMD_RF_IS_RX_BUSY,
-                                     &is_rx_busy,
-                                     &err);
-        if (is_rx_busy != 1) {
-            p_apss->State = LPR_STATE_TX_S;
-        } else {
-            if (p_apss->WFAEQty > LPR_WFAE_COUNT_MAX) {
-                p_apss->WFAEQty = 0;
+    } else {
+        if (p_apss->State == LPR_STATE_TX_SWFA) {
+            p_apss->Netstack->rf->ioctrl(NETSTK_CMD_RF_IS_RX_BUSY,
+                                         &is_rx_busy,
+                                         &err);
+            if (is_rx_busy != 1) {
                 p_apss->State = LPR_STATE_TX_S;
             } else {
-                p_apss->WFAEQty++;
-                p_apss->State = LPR_STATE_TX_SWFAE;
+                if (p_apss->WFAEQty > LPR_WFAE_COUNT_MAX) {
+                    p_apss->State = LPR_STATE_TX_S;
+                } else {
+                    p_apss->WFAEQty++;
+                    p_apss->State = LPR_STATE_TX_SWFAE;
+                }
             }
         }
-        LPR_EVENT_POST(NETSTK_LPR_EVENT);
-        return;
     }
-
-
-    if (p_apss->State == LPR_STATE_TX_PWFA) {
-        p_apss->State = LPR_STATE_TX_DONE;
-        p_apss->LastErrTx = NETSTK_ERR_TX_NOACK;
-        LPR_EVENT_POST(NETSTK_LPR_EVENT);
-    }
+    LPR_EVENT_POST(NETSTK_LPR_EVENT);
 }
 
 
@@ -1026,22 +1001,20 @@ static void LPR_TmrIsr1Idle(void *p_arg)
 
     if (p_apss->State == LPR_STATE_IDLE) {
         if (p_apss->WFPEQty > LPR_WFPE_COUNT_MAX) {
-            p_apss->WFPEQty = 0;
             p_apss->State = LPR_STATE_SLEEP;
-            LPR_EVENT_POST(NETSTK_LPR_EVENT);
-            return;
-        }
-
-        p_apss->Netstack->rf->ioctrl(NETSTK_CMD_RF_IS_RX_BUSY,
-                                     &is_rx_busy,
-                                     &err);
-        if (is_rx_busy != 1) {
-            p_apss->State = LPR_STATE_SLEEP;
-            LPR_EVENT_POST(NETSTK_LPR_EVENT);
         } else {
-            p_apss->WFPEQty++;
-            p_apss->State = LPR_STATE_RX_WFPE;
+            p_apss->Netstack->rf->ioctrl(NETSTK_CMD_RF_IS_RX_BUSY,
+                                         &is_rx_busy,
+                                         &err);
+            if (is_rx_busy != 1) {
+                p_apss->State = LPR_STATE_SLEEP;
+                LPR_EVENT_POST(NETSTK_LPR_EVENT);
+            } else {
+                p_apss->WFPEQty++;
+                p_apss->State = LPR_STATE_RX_WFPE;
+            }
         }
+        LPR_EVENT_POST(NETSTK_LPR_EVENT);
     }
 }
 
