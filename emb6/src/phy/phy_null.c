@@ -87,8 +87,21 @@ static void PHY_Init(void *p_netstk, e_nsErr_t *p_err)
 
 
     PHY_Netstk = (s_ns_t *)p_netstk;
-    PHY_CbTxFnct = 0;
     PHY_CbTxArg = NULL;
+    PHY_CbTxFnct = 0;
+
+    /*
+     * set TX callback function and argument
+     */
+    PHY_Netstk->lpr->ioctrl(NETSTK_CMD_TX_CBFNCT_SET,
+                            (void *)PHY_CbTx,
+                            p_err);
+
+    PHY_Netstk->lpr->ioctrl(NETSTK_CMD_TX_CBARG_SET,
+                            NULL,
+                            p_err);
+
+
     *p_err = NETSTK_ERR_NONE;
 }
 
@@ -163,18 +176,6 @@ static void PHY_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     }
     LOG_RAW("\r\n====================\r\n");
 #endif
-
-
-    /*
-     * set TX callback function and argument
-     */
-    PHY_Netstk->lpr->ioctrl(NETSTK_CMD_TX_CBFNCT_SET,
-                            (void *)PHY_CbTx,
-                            p_err);
-
-    PHY_Netstk->lpr->ioctrl(NETSTK_CMD_TX_CBARG_SET,
-                            NULL,
-                            p_err);
 
     /*
      * Issue next lower layer to transmit the prepared frame
