@@ -77,7 +77,7 @@ static void LLSec_CbTx(void *p_arg, e_nsErr_t *p_err)
             break;
 
         case NETSTK_ERR_BUSY:
-            status = MAC_TX_ERR;
+            status = MAC_TX_DEFERRED;
             break;
 
         default:
