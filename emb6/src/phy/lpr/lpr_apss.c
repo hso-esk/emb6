@@ -413,7 +413,7 @@ static void LPR_Send (uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 static void  LPR_Recv (uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 {
     NETSTK_APSS *p_apss = &LPR_Ctx;
-
+    uint8_t      frame_type;
 
     /*
      * All received frames shall be discarded as APSS is processing a broadcast
@@ -428,29 +428,33 @@ static void  LPR_Recv (uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
      * The received frame is passed to the APSS framer for parsing process.
      */
     *p_err = NETSTK_ERR_NONE;
-    p_apss->Framer->Parse(p_data, len, p_err);
+    p_apss->Framer->Parse(&frame_type, p_data, len, p_err);
     switch (p_apss->State) {
         case LPR_STATE_SCAN_WFS:
         case LPR_STATE_SCAN_WFSE:
-            switch (*p_err) {
-                case NETSTK_ERR_NONE:
-                    p_apss->State = LPR_STATE_TX_SACK;
-                    break;
+            if (frame_type == LPR_FRAME_TYPE_STROBE) {
+                switch (*p_err) {
+                    case NETSTK_ERR_NONE:
+                        p_apss->State = LPR_STATE_TX_SACK;
+                        break;
 
-                case NETSTK_ERR_LPR_INVALID_ADDR:
-                    p_apss->State = LPR_STATE_SCAN_DONE;
-                    break;
+                    case NETSTK_ERR_LPR_INVALID_ADDR:
+                        p_apss->State = LPR_STATE_SCAN_DONE;
+                        break;
 
-                case NETSTK_ERR_LPR_TX_COLLISION_SAME_DEST:
-                    p_apss->State = LPR_STATE_TX_LBT_WFA;
-                    break;
+                    case NETSTK_ERR_LPR_TX_COLLISION_SAME_DEST:
+                        p_apss->State = LPR_STATE_TX_LBT_WFA;
+                        break;
 
-                case NETSTK_ERR_LPR_TX_COLLISION_DIFF_DEST:
-                    p_apss->State = LPR_STATE_TX_DONE;
-                    break;
+                    case NETSTK_ERR_LPR_TX_COLLISION_DIFF_DEST:
+                        p_apss->State = LPR_STATE_TX_DONE;
+                        break;
 
-                default:
-                    break;
+                    default:
+                        break;
+                }
+            } else {
+                p_apss->State = LPR_STATE_SCAN_DONE;
             }
             LPR_EVENT_POST(NETSTK_LPR_EVENT);
             break;

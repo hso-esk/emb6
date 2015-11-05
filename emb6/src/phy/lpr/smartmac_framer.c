@@ -48,7 +48,7 @@ static uint8_t* SmartMAC_CreateStrobe (uint16_t *p_len, LIB_TMR_TICK *p_delay, e
 static uint8_t* SmartMAC_CreateACK (uint16_t *p_len, LIB_TMR_TICK *p_delay, e_nsErr_t *p_err);
 static uint8_t* SmartMAC_CreateBroadcast (uint16_t *p_len, LIB_TMR_TICK *p_delay, e_nsErr_t *p_err);
 static uint8_t* SmartMAC_Create (uint8_t frame_type, uint16_t *p_len, uint32_t *p_delay, e_nsErr_t *p_err);
-static void SmartMAC_Parse (uint8_t *p_pkt, uint16_t len, e_nsErr_t *p_err);
+static void SmartMAC_Parse (uint8_t *p_frame_type, uint8_t *p_pkt, uint16_t len, e_nsErr_t *p_err);
 
 static void SmartMAC_ParseStrobe (uint8_t *p_pkt, uint16_t len, e_nsErr_t *p_err);
 static void SmartMAC_ParseSACK (uint8_t *p_pkt, uint16_t len, e_nsErr_t *p_err);
@@ -517,7 +517,7 @@ static uint8_t *SmartMAC_Create (uint8_t frame_type, uint16_t *p_len, uint32_t *
  *                  @ref NETSTK_ERR_NULL_POINTER if one of parameters is null
  *                  @ref NETSTK_ERR_NONE if the frame is well-formated.
  */
-static void SmartMAC_Parse (uint8_t *p_pkt, uint16_t len, e_nsErr_t *p_err)
+static void SmartMAC_Parse (uint8_t *p_frame_type, uint8_t *p_pkt, uint16_t len, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
     if (p_pkt == NULL) {
@@ -526,8 +526,8 @@ static void SmartMAC_Parse (uint8_t *p_pkt, uint16_t len, e_nsErr_t *p_err)
     }
 #endif
 
-
-    switch (*p_pkt) {
+    *p_frame_type = *p_pkt;
+    switch (*p_frame_type) {
         case LPR_FRAME_TYPE_STROBE:
             SmartMAC_ParseStrobe(p_pkt, len, p_err);
             break;
