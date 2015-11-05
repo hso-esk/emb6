@@ -413,7 +413,9 @@ static void LLC_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
 static void LLC_CbTx(void *p_arg, e_nsErr_t *p_err)
 {
     LLC_Busy = 0;
-    LLC_CbTxFnct(LLC_CbTxArg, p_err);
+    if (LLC_CbTxFnct) {
+        LLC_CbTxFnct(LLC_CbTxArg, p_err);
+    }
 }
 
 
