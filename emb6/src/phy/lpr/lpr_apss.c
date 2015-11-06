@@ -343,7 +343,39 @@ static void LPR_Send (uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
      */
     if ((p_apss->State != LPR_STATE_IDLE) &&
         (p_apss->State != LPR_STATE_POWER_DOWN)) {
+        /*
+         * Packet to send should be stored in TX buffer as LPR performs channel
+         * scan
+         */
         *p_err = NETSTK_ERR_BUSY;
+        if ((p_apss->State == LPR_STATE_SCAN_STARTED) ||
+            (p_apss->State == LPR_STATE_SCAN_WFS)     ||
+            (LPR_IS_PENDING_TX() == 0)) {
+            if (packetbuf_holds_broadcast()) {
+                LPRDstId = LPR_DEV_ID_BROADCAST;
+                p_apss->BroadcastState = LPR_STATE_TX_BS;
+                p_apss->IsTxPended = 1;
+            } else {
+                /*
+                 * Note(s):
+                 *
+                 * (1)  A destination ID of 0x0000 is not allowed in unicast
+                 *      transmission and and must be checked
+                 */
+                p_dstaddr = packetbuf_addr(PACKETBUF_ADDR_RECEIVER);
+                memcpy(&LPRDstId, p_dstaddr->u8, 2);
+                if (LPRDstId == LPR_DEV_ID_INVALID) {
+                    *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+                } else {
+                    p_apss->IsTxPended = 1;
+                }
+            }
+
+            if (p_apss->IsTxPended == 1) {
+                memcpy(LPR_TxBuf, p_data, len);
+                LPR_TxBufLen = len;
+            }
+        }
         return;
     }
 
@@ -380,13 +412,6 @@ static void LPR_Send (uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
                 *p_err = NETSTK_ERR_INVALID_ARGUMENT;
                 return;
             }
-
-            /*
-             * Start transmission timer
-             */
-            LPR_Tmr1Start(&p_apss->Tmr1TxStrobe,
-                            LPR_CFG_STROBE_TX_INTERVAL_IN_MS,
-                            LPR_TmrIsr1TxStrobe);
         }
     } else {
         /*
@@ -616,7 +641,19 @@ static void LPR_Task(c_event_t c_event, p_data_t p_data)
         case LPR_STATE_SCAN_DONE:
             LED_SCAN_OFF();
             if (LPR_IS_PENDING_TX()) {
-                p_apss->State = LPR_STATE_TX_S;
+                /*
+                 * Start transmission timer
+                 */
+                LPR_Tmr1Start(&p_apss->Tmr1TxStrobe,
+                                LPR_CFG_STROBE_TX_INTERVAL_IN_MS,
+                                LPR_TmrIsr1TxStrobe);
+
+                if (p_apss->IsTxPended) {
+                    p_apss->IsTxPended = 0;
+                    p_apss->State = LPR_STATE_TX_STARTED;
+                } else {
+                    p_apss->State = LPR_STATE_TX_S;
+                }
                 LPR_EVENT_POST(NETSTK_LPR_EVENT);
             } else {
                 LPR_GotoPowerDown(p_apss);
