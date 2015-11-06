@@ -126,12 +126,15 @@ struct netstk_apss
     s_nsLPRFramerDrv_t *Framer;
     LPR_STATE           State;
     LPR_STATE           BroadcastState;
-    e_nsErr_t          LastErrTx;
+    e_nsErr_t           LastErrTx;
 
-    nsTxCbFnct_t       TxCbFnct;
+    nsTxCbFnct_t        TxCbFnct;
     void               *TxCbArg;
     uint8_t            *TxPktPtr;
     uint16_t            TxPktLen;
+    uint8_t            *RxPktPtr;
+    uint16_t            RxPktLen;
+    uint8_t             IsTxPended;
 
 #if LPR_CFG_LOOSE_SYNC_EN
     uint8_t             IsTxDelayed;
@@ -190,6 +193,7 @@ static void LPR_RxPayload(NETSTK_APSS *p_apss);
 static void LPR_PrepareRxBroadcast(NETSTK_APSS *p_apss);
 static void LPR_PrepareStrobe(NETSTK_APSS *p_apss);
 static void LPR_PrepareSACK (NETSTK_APSS *p_apss);
+
 
 /*
 ********************************************************************************
@@ -279,6 +283,9 @@ static void LPR_Init (void *p_netstk, e_nsErr_t *p_err)
     p_apss->TxCbFnct = 0;
     p_apss->TxPktPtr = NULL;
     p_apss->TxPktLen = 0;
+
+    p_apss->RxPktPtr = NULL;
+    p_apss->RxPktLen = 0;
 
     /*
      * Configure power-up timer
@@ -497,11 +504,8 @@ static void  LPR_Recv (uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
              *      payload, then APSS shall terminate scan process.
              */
             if (*p_err == NETSTK_ERR_LPR_UNSUPPORTED_FRAME) {
-                packetbuf_clear();
-                packetbuf_set_datalen(len);
-                memcpy(packetbuf_dataptr(),
-                       p_data,
-                       len);
+                p_apss->RxPktPtr = p_data;
+                p_apss->RxPktLen = len;
                 p_apss->State = LPR_STATE_RX_P;
             } else {
                 p_apss->State = LPR_STATE_SCAN_DONE;
@@ -511,11 +515,8 @@ static void  LPR_Recv (uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 
         case LPR_STATE_IDLE:
             if (*p_err == NETSTK_ERR_LPR_UNSUPPORTED_FRAME) {
-                packetbuf_clear();
-                packetbuf_set_datalen(len);
-                memcpy(packetbuf_dataptr(),
-                       p_data,
-                       len);
+                p_apss->RxPktPtr = p_data;
+                p_apss->RxPktLen = len;
                 p_apss->State = LPR_STATE_RX_P;
             }
             LPR_EVENT_POST(NETSTK_LPR_EVENT);
@@ -644,8 +645,8 @@ static void LPR_Task(c_event_t c_event, p_data_t p_data)
             LPR_RxPayload(p_apss);
             break;
         case LPR_STATE_RX_P:
-            p_apss->Netstack->phy->recv(packetbuf_dataptr(),
-                                        packetbuf_datalen(),
+            p_apss->Netstack->phy->recv(p_apss->RxPktPtr,
+                                        p_apss->RxPktLen,
                                         &err);
             LPR_GotoIdle(p_apss);
             break;
@@ -1039,6 +1040,8 @@ static void LPR_GotoPowerDown (NETSTK_APSS *p_apss)
     LPR_TxBufLen = 0;
     p_apss->TxPktPtr = NULL;
     p_apss->TxPktLen = 0;
+    p_apss->RxPktPtr = NULL;
+    p_apss->RxPktLen = 0;
     p_apss->IsTxDelayed = 0;
 
     p_apss->WFAEQty = 0;
