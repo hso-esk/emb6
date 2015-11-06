@@ -463,7 +463,9 @@ static void  LPR_Recv (uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     switch (p_apss->State) {
         case LPR_STATE_SCAN_WFS:
         case LPR_STATE_SCAN_WFSE:
-            if (frame_type == LPR_FRAME_TYPE_STROBE) {
+            if ((frame_type == LPR_FRAME_TYPE_STROBE) ||
+                (frame_type == LPR_FRAME_TYPE_BROADCAST)) {
+
                 switch (*p_err) {
                     case NETSTK_ERR_NONE:
                         p_apss->State = LPR_STATE_TX_SACK;
