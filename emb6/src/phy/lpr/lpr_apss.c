@@ -508,11 +508,12 @@ static void  LPR_Recv (uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
         case LPR_STATE_TX_SWFAE:
             if ((frame_type == LPR_FRAME_TYPE_SACK) &&
                 (*p_err     == NETSTK_ERR_NONE)) {
+                p_apss->TxPktPtr = LPR_TxBuf;
+                p_apss->TxPktLen = LPR_TxBufLen;
                 p_apss->State = LPR_STATE_TX_P;
             }
             LPR_EVENT_POST(NETSTK_LPR_EVENT);
             break;
-
 
         case LPR_STATE_RX_WFP:
         case LPR_STATE_RX_WFPE:
