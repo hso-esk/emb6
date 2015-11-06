@@ -945,8 +945,8 @@ static void LPR_TmrIsr1WFA (void *p_arg)
     NETSTK_APSS *p_apss = (NETSTK_APSS *)p_arg;
 
 
-    if (p_apss->BroadcastState == LPR_STATE_TX_B) {
-        p_apss->State = LPR_STATE_TX_P;
+    if (p_apss->BroadcastState == LPR_STATE_TX_BS) {
+        p_apss->State = LPR_STATE_TX_S;
     } else {
         if (p_apss->State == LPR_STATE_TX_SWFA) {
             p_apss->Netstack->rf->ioctrl(NETSTK_CMD_RF_IS_RX_BUSY,
@@ -1217,8 +1217,15 @@ static void LPR_TxStrobe (NETSTK_APSS *p_apss)
         /*
          * Strobe was successfully transmitted
          */
-        p_apss->State = LPR_STATE_TX_SWFA;
-        LPR_PrepareStrobe(p_apss);
+        if (p_apss->BroadcastState == LPR_STATE_TX_B) {
+            p_apss->BroadcastState = LPR_STATE_NONE;
+            p_apss->TxPktPtr = LPR_TxBuf;
+            p_apss->TxPktLen = LPR_TxBufLen;
+            p_apss->State = LPR_STATE_TX_P;
+        } else {
+            p_apss->State = LPR_STATE_TX_SWFA;
+            LPR_PrepareStrobe(p_apss);
+        }
     }
 }
 
@@ -1383,13 +1390,15 @@ static void LPR_PrepareSACK (NETSTK_APSS *p_apss)
         /*
          * ACK is not required when a broadcast strobe is received
          */
-        p_apss->State = LPR_STATE_RX_BSD;
         p_apss->BroadcastState = LPR_STATE_RX_B;
         if (delay) {
             LPR_Tmr1Start(&p_apss->Tmr1WBS,
                            delay,
                            LPR_TmrIsr1RxBSD);
             p_apss->Netstack->rf->off(&err);
+            p_apss->State = LPR_STATE_RX_BSD;
+        } else {
+            p_apss->State = LPR_STATE_RX_B;
         }
     } else {
         /*
