@@ -282,7 +282,7 @@ typedef enum netstk_err
     NETSTK_ERR_LPR_TX_COLLISION_SAME_DEST   = 405U,
     NETSTK_ERR_LPR_TX_COLLISION_DIFF_DEST   = 406U,
     NETSTK_ERR_LPR_INVALID_ACK              = 407U,
-
+    NETSTK_ERR_LPR_NO_STROBE,
 
     /*
      * RF error codes
