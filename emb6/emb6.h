@@ -376,7 +376,6 @@ typedef struct netstk_module_api            s_nsModuleDrv_t;
 typedef s_nsModuleDrv_t   s_nsLLC_t;
 typedef s_nsModuleDrv_t   s_nsMAC_t;
 typedef s_nsModuleDrv_t   s_nsPHY_t;
-typedef s_nsModuleDrv_t   s_nsLPR_t;
 typedef s_nsModuleDrv_t   s_nsRF_t;
 
 
@@ -391,7 +390,6 @@ struct netstack
     const s_nsLLC_t         *llc;               /*!< Pointer to Logical Link Control Driver             */
     const s_nsMAC_t         *mac;               /*!< Pointer to Medium Access Control Driver            */
     const s_nsPHY_t         *phy;               /*!< Pointer to Physical Driver                         */
-    const s_nsLPR_t         *lpr;               /*!< Pointer to Low-Power Radio Driver                  */
     const s_nsRF_t          *rf;                /*!< Pointer to Radio Frequency Driver                  */
     uint8_t                 c_configured;       /*!< Indicate whether netstack is already configured    */
 };
