@@ -51,8 +51,6 @@ static void MAC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
 static void MAC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
 static void MAC_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
 
-
-static void MAC_CbTx(void *p_arg, e_nsErr_t *p_err);
 static uint8_t MAC_IsAcked(frame802154_t *p_frame);
 static void MAC_TxACK(uint8_t seq);
 static void MAC_EventHandler(c_event_t c_event, p_data_t p_data);
@@ -149,7 +147,7 @@ void MAC_Init(void *p_netstk, e_nsErr_t *p_err)
     /*
      * Register events
      */
-    MAC_EVENT_PEND(NETSTK_MAC_EVENT_ACK_TX);
+    MAC_EVENT_PEND(NETSTK_MAC_EVENT_RX);
     MAC_EVENT_PEND(NETSTK_MAC_EVENT_TX_DONE);
     MAC_EVENT_PEND(NETSTK_MAC_EVENT_ACK_TIMEOUT);
 }
@@ -241,31 +239,23 @@ void MAC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     MAC_LastSeq = frame802154_getDSN();
 
     /*
-     * set TX callback function and argument
-     */
-    MAC_Netstk->phy->ioctrl(NETSTK_CMD_TX_CBFNCT_SET,
-                            (void *)MAC_CbTx,
-                            p_err);
-
-    MAC_Netstk->phy->ioctrl(NETSTK_CMD_TX_CBARG_SET,
-                            NULL,
-                            p_err);
-
-    /*
      * Issue next lower layer to transmit the prepared frame
      */
-#if NETSTK_CFG_LPM_EN
-    MAC_Netstk->phy->send(p_data, len, p_err);
-#else
-    MAC_CSMA(p_err);
+    MAC_CSMA(&MAC_LastErr);
     if (*p_err != NETSTK_ERR_CHANNEL_ACESS_FAILURE) {
-        MAC_Netstk->phy->send(p_data, len, p_err);
+        MAC_Netstk->phy->send(p_data, len, &MAC_LastErr);
     }
-#endif
 
-    if (*p_err != NETSTK_ERR_NONE) {
-        MAC_LastErr = *p_err;
+    if (MAC_LastErr != NETSTK_ERR_NONE) {
         MAC_EVENT_POST(NETSTK_MAC_EVENT_TX_DONE);
+    } else {
+        /* check if ACK is required */
+        if (MAC_IsAckReq) {
+            Tmr_Stop(&MAC_Tmr1ACK);
+            Tmr_Start(&MAC_Tmr1ACK);
+        } else {
+            MAC_EVENT_POST(NETSTK_MAC_EVENT_TX_DONE);
+        }
     }
 }
 
@@ -323,24 +313,18 @@ void MAC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     switch (frame.fcf.frame_type) {
         case FRAME802154_DATAFRAME:
         case FRAME802154_CMDFRAME:
+            if (frame.fcf.ack_required) {
+                MAC_IsTxAck = 1;
+                MAC_LastSeq = frame.seq;
+            }
+
+            /* store the received packet into the common packet buffer */
             packetbuf_clear();
             packetbuf_set_datalen(len);
             memcpy(packetbuf_dataptr(),
                    p_data,
                    len);
-
-            if (frame.fcf.ack_required) {
-                MAC_IsTxAck = 1;
-                MAC_LastSeq = frame.seq;
-                MAC_EVENT_POST(NETSTK_MAC_EVENT_ACK_TX);
-            } else {
-                /*
-                 * Inform the next higher layer
-                 */
-                MAC_Netstk->llc->recv(packetbuf_dataptr(),
-                                      packetbuf_datalen(),
-                                      p_err);
-            }
+            MAC_EVENT_POST(NETSTK_MAC_EVENT_RX);
             break;
 
         case FRAME802154_ACKFRAME:
@@ -398,63 +382,6 @@ void MAC_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
 
 
 /**
- * @brief   Transmission callback function handler
- *
- * @param   p_arg   Pointer to the registered callback argument
- * @param   p_err   Error code that is set by the function caller
- */
-static void MAC_CbTx(void *p_arg, e_nsErr_t *p_err)
-{
-    if (MAC_IsTxAck) {
-        /*
-         * Callback in response to ACK transmission request
-         * Signal the higher layer of the received frame
-         */
-        MAC_IsTxAck = 0;
-        *p_err = NETSTK_ERR_NONE;
-
-#if LOGGER_ENABLE
-        /*
-         * Logging
-         */
-        uint16_t data_len = packetbuf_datalen();
-        uint8_t *p_dataptr = packetbuf_dataptr();
-        LOG_RAW("MAC_RX: ");
-        while (data_len--) {
-            LOG_RAW("%02x", *p_dataptr++);
-        }
-        LOG_RAW("\r\n");
-#endif
-
-        /*
-         * Inform the next higher layer
-         */
-        MAC_Netstk->llc->recv(packetbuf_dataptr(),
-                              packetbuf_datalen(),
-                              p_err);
-        return;
-    }
-
-    /*
-     * Callback in response to payload packet transmission request
-     * Start Wait-For-ACK timer when the transmission status is
-     * successful
-     */
-    MAC_LastErr = *p_err;
-    if (MAC_LastErr != NETSTK_ERR_NONE) {
-        MAC_EVENT_POST(NETSTK_MAC_EVENT_TX_DONE);
-    } else {
-        if (MAC_IsAckReq) {
-            Tmr_Stop(&MAC_Tmr1ACK);
-            Tmr_Start(&MAC_Tmr1ACK);
-        } else {
-            MAC_EVENT_POST(NETSTK_MAC_EVENT_TX_DONE);
-        }
-    }
-}
-
-
-/**
  * @brief   Verifying received frame for ACK
  *
  * @param   p_frame     Pointer to structure holding information of the received
@@ -481,8 +408,8 @@ static uint8_t MAC_IsAcked(frame802154_t *p_frame)
 static void MAC_TxACK(uint8_t seq)
 {
     e_nsErr_t      err = NETSTK_ERR_NONE;
-    uint8_t         ack[3];
-    frame802154_t   params;
+    uint8_t        ack[3];
+    frame802154_t  params;
 
 
     /* init to zeros */
@@ -505,20 +432,10 @@ static void MAC_TxACK(uint8_t seq)
     params.fcf.src_addr_mode = FRAME802154_NOADDR;
     params.fcf.dest_addr_mode = FRAME802154_NOADDR;
 
-    /*
-     * Create frame to send
-     */
+    /* Create frame to send */
     frame802154_create(&params, ack);
 
-    /*
-     * set TX callback function and argument
-     */
-    MAC_Netstk->phy->ioctrl(NETSTK_CMD_TX_CBFNCT_SET,
-                            (void *)MAC_CbTx,
-                            &err);
-    /*
-     * Issue next lower layer to transmit ACK
-     */
+    /* Issue next lower layer to transmit ACK */
     MAC_Netstk->phy->send(ack, sizeof(ack), &err);
 }
 
@@ -532,9 +449,20 @@ static void MAC_TxACK(uint8_t seq)
  */
 static void MAC_EventHandler(c_event_t c_event, p_data_t p_data)
 {
+    e_nsErr_t err = NETSTK_ERR_NONE;
+
+
     switch (c_event) {
-        case NETSTK_MAC_EVENT_ACK_TX:
-            MAC_TxACK(MAC_LastSeq);
+        case NETSTK_MAC_EVENT_RX:
+            if (MAC_IsTxAck) {
+                MAC_IsTxAck = 0;
+                MAC_TxACK(MAC_LastSeq);
+            }
+
+            /* Inform the next higher layer of the received packet */
+            MAC_Netstk->llc->recv(packetbuf_dataptr(),
+                                  packetbuf_datalen(),
+                                  &err);
             break;
 
         case NETSTK_MAC_EVENT_TX_DONE:
@@ -557,8 +485,16 @@ static void MAC_EventHandler(c_event_t c_event, p_data_t p_data)
                 MAC_Netstk->phy->send(packetbuf_hdrptr(),
                                       packetbuf_totlen(),
                                       &MAC_LastErr);
+
                 if (MAC_LastErr != NETSTK_ERR_NONE) {
                     MAC_EVENT_POST(NETSTK_MAC_EVENT_TX_DONE);
+                } else {
+                    if (MAC_IsAckReq) {
+                        Tmr_Stop(&MAC_Tmr1ACK);
+                        Tmr_Start(&MAC_Tmr1ACK);
+                    } else {
+                        MAC_EVENT_POST(NETSTK_MAC_EVENT_TX_DONE);
+                    }
                 }
             }
             break;
