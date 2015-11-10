@@ -73,9 +73,9 @@
 #define     LOGGER_ENABLE                 LOGGER_RADIO
 #include    "logger.h"
 #define     __ADDRLEN__                    2
-#define     NUMBER_OF_FAKERADIO_CHANNEL    2
-#define     LENGTH_OF_NAME                10
-#define     LENGTH_OF_INFO                (NUMBER_OF_FAKERADIO_CHANNEL*(LENGTH_OF_NAME+1)+10)
+#define     NUMBER_OF_NODE                 4
+#define     LENGTH_OF_NAME                 15
+#define     LENGTH_OF_INFO                (NUMBER_OF_NODE*(LENGTH_OF_NAME+1)+10)
 
 /*==============================================================================
  ENUMS
@@ -88,8 +88,9 @@ static struct etimer ps_nativeTmr;
 /* Pointer to the lmac structure */
 static s_nsLowMac_t* p_lmac = NULL;
 extern uip_lladdr_t uip_lladdr;
-static lcm_t* ps_lcm[NUMBER_OF_FAKERADIO_CHANNEL];
-static char FAKERADIO_CHANNEL[NUMBER_OF_FAKERADIO_CHANNEL][LENGTH_OF_NAME];
+static lcm_t *ps_lcm;
+static char PUBLIC_CHANNEL[LENGTH_OF_NAME * (NUMBER_OF_NODE - 1)];
+static char SUBSCRIBE_CHANNEL[LENGTH_OF_NAME];
 /*==============================================================================
  GLOBAL CONSTANTS
  ==============================================================================*/
@@ -206,23 +207,21 @@ static int8_t _native_init( s_ns_t* p_netStack )
     char node_info[LENGTH_OF_INFO];
 
     uint16_t addr;    // mac address of node read from configuration file
-    uint8_t     addr_6;// high byte of two last parts of mac address
-    uint8_t  addr_7;// low byte of two last parts of mac address
+    uint8_t  addr_6;  // high byte of two last parts of mac address
+    uint8_t  addr_7;  // low byte of two last parts of mac address
 
     LOG_INFO( "Try to initialize Broadcasting Client for native radio driver" );
 
     /* Please refer to lcm_create() reference. Default parameter is taken
      from there */
-    for( i = 0; i < NUMBER_OF_FAKERADIO_CHANNEL; i++ )
-    {
-        ps_lcm[i] = lcm_create( NULL );
+    ps_lcm = lcm_create( NULL );
 
-        if( !ps_lcm[i] )
-            _printAndExit("LCM init failed");
+    if( !ps_lcm )
+        _printAndExit("LCM init failed");
 
-        /* reset channel name */
-        memset( FAKERADIO_CHANNEL[i], 0, LENGTH_OF_NAME );
-    }
+    /* reset channel name */
+    memset( PUBLIC_CHANNEL, 0, LENGTH_OF_NAME*(NUMBER_OF_NODE - 1) );
+    memset( SUBSCRIBE_CHANNEL, 0, LENGTH_OF_NAME );
 
     /* Read configuration file */
     fp = fopen( "lcmnetwork.conf", "r" );
@@ -237,13 +236,11 @@ static int8_t _native_init( s_ns_t* p_netStack )
     while( !feof(fp) )
     {
         char* pch;
-        int j = 0;
-        i = 0;
 
         fgets( node_info, LENGTH_OF_INFO, fp );
         if( node_info[0] == '#' ) continue;
 
-        pch = strtok (node_info," \t\n");
+        pch = strtok (node_info," \t\n,");
         if( pch == NULL ) continue;
 
         /* get address */
@@ -253,41 +250,36 @@ static int8_t _native_init( s_ns_t* p_netStack )
         addr_7 = (uint8_t)addr;
         addr_6 = (uint8_t)(addr >> 8);
 
-        if(addr_6 != mac_phy_config.mac_address[6] ||
-           addr_7 != mac_phy_config.mac_address[7])
+        if( addr_6 != mac_phy_config.mac_address[6] ||
+            addr_7 != mac_phy_config.mac_address[7] )
             continue;
+        fprintf( stderr, "\n addr=0x%04X", addr );
 
-        while ((pch != NULL) && (j < NUMBER_OF_FAKERADIO_CHANNEL))
+        /* read for the subscribe channel */
+        if ( pch != NULL )
         {
-            pch = strtok (NULL, " \t\n");
+            snprintf( SUBSCRIBE_CHANNEL, LENGTH_OF_NAME,
+                                    ".*_%s_.*", pch );
+            lcm_subscribe( ps_lcm, SUBSCRIBE_CHANNEL, _native_read, NULL );
+            pch = strtok ( NULL, " \t\n," );
+            fprintf( stderr,"\n subscribe channel =  %s", SUBSCRIBE_CHANNEL );
+        }
+
+        /* read for the public channel */
+        while ( pch != NULL )
+        {
             if( pch != NULL )
-                snprintf( FAKERADIO_CHANNEL[j++], LENGTH_OF_NAME,
-                  "%s", pch );
+            snprintf( PUBLIC_CHANNEL + strlen(PUBLIC_CHANNEL),
+                     LENGTH_OF_NAME*(NUMBER_OF_NODE-1), "_%s_", pch );
+            pch = strtok ( NULL, " \t\n," );
         }
-
-        fprintf(stderr, "\n addr=0x%04X", addr );
-        for( i = 0; i < NUMBER_OF_FAKERADIO_CHANNEL; i++ )
-        {
-            if( strlen( FAKERADIO_CHANNEL[i] ) != 0)
-            {
-                fprintf(stderr," ch[%d]=%s", i, FAKERADIO_CHANNEL[i]);
-            }
-        }
-
-        fprintf(stderr, "\n +++++++++++ ");
+        fprintf( stderr,"\n public channel = %s", PUBLIC_CHANNEL );
+        fprintf( stderr, "\n +++++++++++ " );
     }
 
     /* Close the file */
     fclose(fp);
 
-    for(i = 0; i < NUMBER_OF_FAKERADIO_CHANNEL; i++)
-    {
-        if( (strlen( FAKERADIO_CHANNEL[i] ) != 0) &&
-            ( FAKERADIO_CHANNEL[i][0] != '\0'))
-        {
-            lcm_subscribe( ps_lcm[i], FAKERADIO_CHANNEL[i], _native_read, NULL );
-        }
-    }
 
     LOG_INFO( "native driver was initialized" );
 
@@ -341,7 +333,7 @@ static int8_t _native_send( const void *pr_payload, uint8_t c_len )
      * why we need to allocate extra 2 bytes here
      */
     uint8_t* pc_frame = malloc( sizeof(uint8_t) * ( c_len + __ADDRLEN__ ) );
-    uint8_t i;
+
     /* Check malloc result */
     if( pc_frame == NULL )
     {
@@ -353,15 +345,8 @@ static int8_t _native_send( const void *pr_payload, uint8_t c_len )
     *pc_frame = uip_lladdr.addr[6];
     *( pc_frame + 1 ) = uip_lladdr.addr[7];
     memmove( pc_frame + __ADDRLEN__, pr_payload, c_len );
-
-    for(i = 0; i < NUMBER_OF_FAKERADIO_CHANNEL; i++)
-    {
-        if( (strlen( FAKERADIO_CHANNEL[i] ) != 0) &&
-            (FAKERADIO_CHANNEL[i][0] != '\0'))
-                status = lcm_publish( ps_lcm[i], FAKERADIO_CHANNEL[i], pc_frame,
-                                                                  c_len + __ADDRLEN__ );
-    }
-
+    status = lcm_publish( ps_lcm, PUBLIC_CHANNEL, pc_frame,
+                          c_len + __ADDRLEN__ );
     /* Free allocated memmory */
     free( pc_frame );
 
@@ -460,11 +445,11 @@ static int8_t _native_off( void )
 /*----------------------------------------------------------------------------*/
 static void _native_handler( c_event_t c_event, p_data_t p_data )
 {
-    int32_t lcm_fd[NUMBER_OF_FAKERADIO_CHANNEL];
+    int32_t lcm_fd;
     struct timeval s_tv;
     s_tv.tv_sec = 0;
     s_tv.tv_usec = 10;
-    fd_set fds[NUMBER_OF_FAKERADIO_CHANNEL];
+    fd_set fds;
     uint8_t i;
 
     if( etimer_expired( &ps_nativeTmr ) )
@@ -473,21 +458,17 @@ static void _native_handler( c_event_t c_event, p_data_t p_data )
          * it's a blocking operation. We should instead check whether a lcm file
          * descriptor is available for reading. We put 10 usec as a timeout.
          */
-        for( i = 0; i < NUMBER_OF_FAKERADIO_CHANNEL; i++)
+        lcm_fd = lcm_get_fileno( ps_lcm );
+        FD_ZERO( &fds );
+        FD_SET( lcm_fd, &fds );
+
+        select( lcm_fd + 1, &fds, 0, 0, &s_tv );
+        /* If descriptor is available for reading then there is a incoming data
+         * to read.
+         */
+        if( FD_ISSET( lcm_fd, &fds ) )
         {
-            lcm_fd[i] = lcm_get_fileno( ps_lcm[i] );
-
-            FD_ZERO( &fds[i] );
-            FD_SET( lcm_fd[i], &fds[i] );
-
-            select( lcm_fd[i] + 1, &fds[i], 0, 0, &s_tv );
-            /* If descriptor is available for reading then there is a incoming data
-             * to read.
-             */
-            if( FD_ISSET( lcm_fd[i], &fds[i] ) )
-            {
-                lcm_handle( ps_lcm[i] );
-            }
+            lcm_handle( ps_lcm );
         }
         /* Restart a timer anyway. */
         etimer_restart( &ps_nativeTmr );
