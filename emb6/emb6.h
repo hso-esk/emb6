@@ -566,6 +566,10 @@ extern  const s_nsMAC_t   MACDrvNull;
 extern  const s_nsMAC_t   MACDrv802154;
 #endif
 
+#if NETSTK_CFG_MAC_802154_ULE_EN
+extern  const s_nsMAC_t   MACDrv802154ULE;
+#endif
+
 
 /*
 ********************************************************************************
