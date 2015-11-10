@@ -80,7 +80,7 @@
                             EVENT_TYPE_TCPIP,               \
                             EVENT_TYPE_SLIP_POLL,           \
                             NETSTK_APP_EVENT_TX,            \
-                            NETSTK_MAC_EVENT_ACK_TX,        \
+                            NETSTK_MAC_EVENT_RX,            \
                             NETSTK_MAC_EVENT_ACK_TIMEOUT,   \
                             NETSTK_MAC_EVENT_TX_DONE,       \
                             NETSTK_LPR_EVENT,               \
@@ -100,7 +100,7 @@
  * New event defines
  */
 #define NETSTK_APP_EVENT_TX                 (  8U )
-#define NETSTK_MAC_EVENT_ACK_TX             (  9U )
+#define NETSTK_MAC_EVENT_RX                 (  9U )
 #define NETSTK_MAC_EVENT_ACK_TIMEOUT        ( 10U )
 #define NETSTK_MAC_EVENT_TX_DONE            ( 11U )
 #define NETSTK_LPR_EVENT                    ( 12U )
