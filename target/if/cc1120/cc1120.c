@@ -1401,11 +1401,6 @@ static void cc1120_Init (void *p_netstack, e_nsErr_t *p_err)
  */
 static void cc1120_On (e_nsErr_t *p_err)
 {
-    if (_rf_is_ready() != RF_READY) {
-        *p_err = NETSTK_ERR_BUSY;
-        return;
-    }
-
     /* Turn RF on in Power-Saving mode by default */
     _rf_setMode(E_RF_MODE_PWRSAVE);
     *p_err = NETSTK_ERR_NONE;
@@ -1419,10 +1414,9 @@ static void cc1120_On (e_nsErr_t *p_err)
  */
 static void cc1120_Off (e_nsErr_t *p_err)
 {
-    if (_rf_is_ready() != RF_READY) {
-        *p_err = NETSTK_ERR_BUSY;
-        return;
-    }
+    LED_TX_OFF();
+    LED_RX_OFF();
+    gs_rf_ctx.e_state = E_RF_STATE_OFF;
 
     /* Turn RF on in Power-Saving mode by default */
     _rf_setMode(E_RF_MODE_TRXOFF);
@@ -1633,7 +1627,7 @@ static void cc1120_EventHandler(c_event_t c_event, p_data_t p_data)
             LOG_RAW("\n\r\n\r");
 #endif
 
-            RF_Netstack->lpr->recv(gs_rf_ctx.s_rx_ctx.puc_buf,
+            RF_Netstack->phy->recv(gs_rf_ctx.s_rx_ctx.puc_buf,
                                    gs_rf_ctx.s_rx_ctx.ui_len,
                                    &err);
         }
