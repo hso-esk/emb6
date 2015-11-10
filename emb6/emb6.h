@@ -579,20 +579,6 @@ extern  const s_nsPHY_t   PHYDrvNull;
 
 /*
 ********************************************************************************
-*                           LPR DRIVERS DECLARATIONS
-********************************************************************************
-*/
-#if NETSTK_CFG_LPR_APSS_EN
-extern  const s_nsLPR_t   LPRDrvAPSS;
-#endif
-
-#if NETSTK_CFG_LPR_NULL_EN
-extern  const s_nsLPR_t   LPRDrvNull;
-#endif
-
-
-/*
-********************************************************************************
 *                           RF DRIVERS DECLARATIONS
 ********************************************************************************
 */

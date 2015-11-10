@@ -186,7 +186,6 @@ uint8_t loc_emb6NetstackInit(s_ns_t * ps_ns)
      * Verify stack submodule drivers
      */
     is_valid = (ps_ns->rf    != NULL) &&
-               (ps_ns->lpr   != NULL) &&
                (ps_ns->phy   != NULL) &&
                (ps_ns->mac   != NULL) &&
                (ps_ns->llc   != NULL) &&
@@ -197,11 +196,6 @@ uint8_t loc_emb6NetstackInit(s_ns_t * ps_ns)
          * Netstack submodule initializations
          */
         ps_ns->rf->init(ps_ns, &err);
-        if (err != NETSTK_ERR_NONE) {
-            return 0;
-        }
-
-        ps_ns->lpr->init(ps_ns, &err);
         if (err != NETSTK_ERR_NONE) {
             return 0;
         }
