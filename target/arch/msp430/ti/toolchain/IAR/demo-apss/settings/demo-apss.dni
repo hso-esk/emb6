@@ -20,7 +20,7 @@ NextState1=0
 Break=0
 State Storage=0
 [DebugChecksum]
-Checksum=-20631227
+Checksum=-1172073063
 [CallStack]
 ShowArgs=0
 [Disassembly]
@@ -29,12 +29,13 @@ MixedMode=1
 Fmt0={W}0:APSSDstId	4	0
 Fmt1={W}0:APSSSrcId	4	0
 Fmt2={W}0:APSSState	3	0
-Fmt3={W}0:SmartMAC_StrobeCount	3	0
-Fmt4={W}0:hdr_len	3	0
-Fmt5={W}0:rssi_converted	3	0
-Fmt6={W}0:ts_count	3	0
-Fmt7={W}0:uc_returnValue	1	0
-Fmt8={W}0:uc_status	1	0
+Fmt3={W}0:LPRDstId	4	0
+Fmt4={W}0:SmartMAC_StrobeCount	3	0
+Fmt5={W}0:hdr_len	3	0
+Fmt6={W}0:rssi_converted	3	0
+Fmt7={W}0:ts_count	3	0
+Fmt8={W}0:uc_returnValue	1	0
+Fmt9={W}0:uc_status	1	0
 [Log file]
 LoggingEnabled=_ 0
 LogFile=_ ""

@@ -4148,27 +4148,18 @@
               <name>$PROJ_DIR$\..\..\..\..\..\..\..\emb6\src\dll\mac\mac_802154.c</name>
             </file>
             <file>
+              <name>$PROJ_DIR$\..\..\..\..\..\..\..\emb6\src\dll\mac\mac_802154_ule.c</name>
+            </file>
+            <file>
               <name>$PROJ_DIR$\..\..\..\..\..\..\..\emb6\src\dll\mac\mac_null.c</name>
+            </file>
+            <file>
+              <name>$PROJ_DIR$\..\..\..\..\..\..\..\emb6\src\dll\mac\smartmac_framer.c</name>
             </file>
           </group>
         </group>
         <group>
           <name>phy</name>
-          <group>
-            <name>lpr</name>
-            <file>
-              <name>$PROJ_DIR$\..\..\..\..\..\..\..\emb6\src\phy\lpr\lpr_apss.c</name>
-            </file>
-            <file>
-              <name>$PROJ_DIR$\..\..\..\..\..\..\..\emb6\src\phy\lpr\lpr_null.c</name>
-            </file>
-            <file>
-              <name>$PROJ_DIR$\..\..\..\..\..\..\..\emb6\src\phy\lpr\smartmac_framer.c</name>
-            </file>
-            <file>
-              <name>$PROJ_DIR$\..\..\..\..\..\..\..\emb6\src\phy\lpr\xmac_framer.c</name>
-            </file>
-          </group>
           <file>
             <name>$PROJ_DIR$\..\..\..\..\..\..\..\emb6\src\phy\phy_null.c</name>
           </file>
