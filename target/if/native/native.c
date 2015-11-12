@@ -73,9 +73,7 @@
 #define     LOGGER_ENABLE                 LOGGER_RADIO
 #include    "logger.h"
 #define     __ADDRLEN__                    2
-#define     NUMBER_OF_NODE                 4
-#define     LENGTH_OF_NAME                 15
-#define     LENGTH_OF_INFO                (NUMBER_OF_NODE*(LENGTH_OF_NAME+1)+10)
+#define     NODE_INFO_MAX                   2048
 
 /*==============================================================================
  ENUMS
@@ -89,8 +87,7 @@ static struct etimer ps_nativeTmr;
 static s_nsLowMac_t* p_lmac = NULL;
 extern uip_lladdr_t uip_lladdr;
 static lcm_t *ps_lcm;
-static char PUBLIC_CHANNEL[LENGTH_OF_NAME * (NUMBER_OF_NODE - 1)];
-static char SUBSCRIBE_CHANNEL[LENGTH_OF_NAME];
+static char pc_publish_ch[NODE_INFO_MAX];
 /*==============================================================================
  GLOBAL CONSTANTS
  ==============================================================================*/
@@ -202,9 +199,8 @@ static int8_t _native_init( s_ns_t* p_netStack )
 {
     linkaddr_t un_addr;
     uint8_t l_error;
-    uint8_t i;
     FILE* fp;
-    char node_info[LENGTH_OF_INFO];
+    char pc_node_info[NODE_INFO_MAX];
 
     uint16_t addr;    // mac address of node read from configuration file
     uint8_t  addr_6;  // high byte of two last parts of mac address
@@ -220,16 +216,14 @@ static int8_t _native_init( s_ns_t* p_netStack )
         _printAndExit("LCM init failed");
 
     /* reset channel name */
-    memset( PUBLIC_CHANNEL, 0, LENGTH_OF_NAME*(NUMBER_OF_NODE - 1) );
-    memset( SUBSCRIBE_CHANNEL, 0, LENGTH_OF_NAME );
+    memset( pc_publish_ch, 0, NODE_INFO_MAX );
 
     /* Read configuration file */
     fp = fopen( "lcmnetwork.conf", "r" );
 
     if( fp == NULL )
     {
-        fprintf( stderr, "Can't open this file\n" );
-        exit(1);
+        _printAndExit( "Can't open this file\n" );
     }
 
     /* assemble the parser command */
@@ -237,10 +231,10 @@ static int8_t _native_init( s_ns_t* p_netStack )
     {
         char* pch;
 
-        fgets( node_info, LENGTH_OF_INFO, fp );
-        if( node_info[0] == '#' ) continue;
+        fgets( pc_node_info, NODE_INFO_MAX, fp );
+        if( pc_node_info[0] == '#' ) continue;
 
-        pch = strtok (node_info," \t\n,");
+        pch = strtok (pc_node_info," \t\n,");
         if( pch == NULL ) continue;
 
         /* get address */
@@ -258,22 +252,32 @@ static int8_t _native_init( s_ns_t* p_netStack )
         /* read for the subscribe channel */
         if ( pch != NULL )
         {
-            snprintf( SUBSCRIBE_CHANNEL, LENGTH_OF_NAME,
-                                    ".*_%s_.*", pch );
-            lcm_subscribe( ps_lcm, SUBSCRIBE_CHANNEL, _native_read, NULL );
+            int tmpChLen = strlen(pch) + 10;
+            char* tmpCh = malloc( tmpChLen );
+            if( tmpCh != NULL )
+            {
+                snprintf( tmpCh, tmpChLen, ".*_%s_.*", pch );
+                lcm_subscribe( ps_lcm, tmpCh, _native_read, NULL );
+                fprintf( stderr,"\n subscribe channel =  %s", tmpCh );
+                free( tmpCh );
+            }
+            else
+            {
+                _printAndExit( "Can't create virtual channel.\n" );
+            }
+
             pch = strtok ( NULL, " \t\n," );
-            fprintf( stderr,"\n subscribe channel =  %s", SUBSCRIBE_CHANNEL );
         }
 
         /* read for the public channel */
         while ( pch != NULL )
         {
             if( pch != NULL )
-            snprintf( PUBLIC_CHANNEL + strlen(PUBLIC_CHANNEL),
-                     LENGTH_OF_NAME*(NUMBER_OF_NODE-1), "_%s_", pch );
+            snprintf( pc_publish_ch + strlen(pc_publish_ch),
+                    (NODE_INFO_MAX-strlen(pc_publish_ch)), "_%s_", pch );
             pch = strtok ( NULL, " \t\n," );
         }
-        fprintf( stderr,"\n public channel = %s", PUBLIC_CHANNEL );
+        fprintf( stderr,"\n public channel = %s", pc_publish_ch );
         fprintf( stderr, "\n +++++++++++ " );
     }
 
@@ -345,7 +349,7 @@ static int8_t _native_send( const void *pr_payload, uint8_t c_len )
     *pc_frame = uip_lladdr.addr[6];
     *( pc_frame + 1 ) = uip_lladdr.addr[7];
     memmove( pc_frame + __ADDRLEN__, pr_payload, c_len );
-    status = lcm_publish( ps_lcm, PUBLIC_CHANNEL, pc_frame,
+    status = lcm_publish( ps_lcm, pc_publish_ch, pc_frame,
                           c_len + __ADDRLEN__ );
     /* Free allocated memmory */
     free( pc_frame );
