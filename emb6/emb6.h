@@ -584,15 +584,20 @@ extern  const s_nsPHY_t   PHYDrvNull;
 *                           RF DRIVERS DECLARATIONS
 ********************************************************************************
 */
-#if NETSTK_CFG_RF_CC1120_EN
-extern  const s_nsRF_t      RFDrvCC1120;
-#endif
-
 #if NETSTK_CFG_RF_NULL_EN
 extern  const s_nsRF_t      RFDrvNull;
 #endif
 
+#if NETSTK_CFG_RF_NATIVE_EN
 extern  const s_nsRF_t      RFDrvNative;
+#endif
+
+#if NETSTK_CFG_RF_CC1120_EN
+extern  const s_nsRF_t      RFDrvCC1120;
+#endif
+
+#if NETSTK_CFG_RF_CC120X_EN
+extern  const s_nsRF_t      RFDrvCC120x;
 #endif
 
 
@@ -649,7 +654,7 @@ s_ns_t * emb6_get(void);
 
 #ifndef QUEUEBUF_CONF_REF_NUM
 #define QUEUEBUF_CONF_REF_NUM               4
-
+#endif
 
 #endif /* EMB6_H_ */
 
