@@ -83,7 +83,7 @@
                             NETSTK_MAC_EVENT_RX,            \
                             NETSTK_MAC_EVENT_ACK_TIMEOUT,   \
                             NETSTK_MAC_EVENT_TX_DONE,       \
-                            NETSTK_LPR_EVENT,               \
+                            NETSTK_MAC_ULE_EVENT,           \
                             NETSTK_RF_EVENT,                \
                             EVENT_TYPE_PCK_LL}
 
@@ -103,7 +103,7 @@
 #define NETSTK_MAC_EVENT_RX                 (  9U )
 #define NETSTK_MAC_EVENT_ACK_TIMEOUT        ( 10U )
 #define NETSTK_MAC_EVENT_TX_DONE            ( 11U )
-#define NETSTK_LPR_EVENT                    ( 12U )
+#define NETSTK_MAC_ULE_EVENT                ( 12U )
 #define NETSTK_RF_EVENT                     ( 13U )
 
 #define OBLIG_EVENT_PRIOR                   ( 15U )
