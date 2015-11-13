@@ -1,7 +1,7 @@
 /**
- * @file    lpr_apss.c
+ * @file    mac_802154_ule.c
  * @author  PN
- * @brief   Asynchronous Power Saving Scheme module
+ * @brief   IEEE802.15.4 Ultra-Low Energy MAC
  */
 
 /*
@@ -26,7 +26,8 @@
 *                               LOCAL DEFINES
 ********************************************************************************
 */
-#define NETSTK_LPM_EVENT    NETSTK_LPR_EVENT
+#define MAC_ULE_CFG_REFACTOR_EN             ( 1u )
+
 
 /*
 ********************************************************************************
@@ -89,6 +90,7 @@ typedef enum
 #define MAC_ULE_IS_FREE()                   ((MAC_ULE_State==MAC_ULE_STATE_SLEEP) ||   \
                                              (MAC_ULE_State==MAC_ULE_STATE_IDLE))
 
+
 /*
 ********************************************************************************
 *                       LOCAL FUNCTIONS DECLARATION
@@ -102,6 +104,11 @@ static void MAC_ULE_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
 static void MAC_ULE_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
 
 static void MAC_ULE_ProcessCmd(c_event_t c_event, p_data_t p_data);
+static void MAC_ULE_ProcessIdle(e_nsErr_t *p_err);
+static void MAC_ULE_ProcessSleep(e_nsErr_t *p_err);
+static void MAC_ULE_ProcessScan(e_nsErr_t *p_err);
+static void MAC_ULE_ProcessTx(e_nsErr_t *p_err);
+static void MAC_ULE_ProcessRx(e_nsErr_t *p_err);
 
 static void MAC_ULE_Tmr1Start(LIB_TMR *p_tmr, LIB_TMR_TICK timeout, FNCT_VOID isr_handler);
 static void MAC_ULE_TmrIsrPowerUp(void *p_arg);
@@ -110,42 +117,26 @@ static void MAC_ULE_TmrIsr1WFS(void *p_arg);
 static void MAC_ULE_TmrIsr1Delay(void *p_arg);
 static void MAC_ULE_TmrIsr1Idle(void *p_arg);
 
-static void MAC_ULE_ProcessIdle(e_nsErr_t *p_err);
-static void MAC_ULE_ProcessSleep(e_nsErr_t *p_err);
-static void MAC_ULE_ProcessScan(e_nsErr_t *p_err);
-static void MAC_ULE_ProcessTx(e_nsErr_t *p_err);
-static void MAC_ULE_ProcessRx(e_nsErr_t *p_err);
-
 static void MAC_ULE_RxStrobe(e_nsErr_t *p_err);
 static void MAC_ULE_RxPayload(e_nsErr_t *p_err);
-
 static void MAC_ULE_TxStrobe(e_nsErr_t *p_err);
 static void MAC_ULE_TxPayload(e_nsErr_t *p_err);
-static void MAC_ULE_TxACK(e_nsErr_t *p_err);
+static void MAC_ULE_TxACK(e_nsErr_t *p_err, uint8_t seq);
 static void MAC_ULE_CSMA(e_nsErr_t *p_err);
-static uint8_t MAC_ULE_IsAcked(frame802154_t *p_frame);
+
 
 /*
 ********************************************************************************
 *                               LOCAL VARIABLES
 ********************************************************************************
 */
-static  uint8_t         MAC_ULE_LastSeq;
-static  uint8_t         MAC_ULE_ACKReq;
-static  uint8_t         MAC_ULE_TxRetries;
-
-#if 0
-static  uint8_t         MAC_ULE_TxBuf[128];
-static  uint16_t        MAC_ULE_TxBufLen;
-#endif
-
-static  nsTxCbFnct_t    MAC_ULE_TxCbFnct;
+static  s_ns_t         *MAC_ULE_Netstk;
 static  void           *MAC_ULE_TxCbArg;
+static  nsTxCbFnct_t    MAC_ULE_TxCbFnct;
 static  uint8_t        *MAC_ULE_TxPktPtr;
 static  uint16_t        MAC_ULE_TxPktLen;
 static  uint8_t        *MAC_ULE_RxPktPtr;
 static  uint16_t        MAC_ULE_RxPktLen;
-static  s_ns_t         *MAC_ULE_Netstk;
 
 static  MAC_ULE_CMD     MAC_ULE_Cmd;
 static  MAC_ULE_STATE   MAC_ULE_State;
@@ -172,7 +163,7 @@ s_nsLprPwrOnTblEntry_t  LPRPwrOnTbl[LPR_CFG_PWRON_TBL_SIZE];
 
 const s_nsMAC_t MACDrv802154ULE =
 {
-   "MAC 802.15.4 Ultra-Low Energy",
+   "MAC IEEE802.15.4 Ultra-Low Energy",
     MAC_ULE_Init,
     MAC_ULE_On,
     MAC_ULE_Off,
@@ -212,15 +203,6 @@ static void MAC_ULE_Init (void *p_netstk, e_nsErr_t *p_err)
      * Initialize internal attributes
      */
     MAC_ULE_Netstk = (s_ns_t *)p_netstk;
-
-#if 0
-    memset(MAC_ULE_TxBuf, 0, sizeof(MAC_ULE_TxBuf));
-#endif
-
-    MAC_ULE_ACKReq = 0;
-    MAC_ULE_LastSeq = 0xff;
-    MAC_ULE_TxRetries = 0;
-
     MAC_ULE_TxCbArg = 0;
     MAC_ULE_TxCbFnct = 0;
     MAC_ULE_TxPktPtr = NULL;
@@ -253,19 +235,18 @@ static void MAC_ULE_Init (void *p_netstk, e_nsErr_t *p_err)
     /* Register event handler */
     MAC_ULE_EVENT_PEND(NETSTK_LPM_EVENT);
 
-    /* start power-up intervals */
-    Tmr_Start(&MAC_ULE_TmrPowerUp);
-
     /* State transitions */
     MAC_ULE_Cmd = MAC_ULE_CMD_SLEEP;
     MAC_ULE_State = MAC_ULE_STATE_SLEEP;
+
+    /* start power-up intervals */
+    Tmr_Start(&MAC_ULE_TmrPowerUp);
 }
 
 
 static void MAC_ULE_On(e_nsErr_t *p_err)
 {
     MAC_ULE_Netstk->phy->on(p_err);
-
 }
 
 
@@ -275,10 +256,39 @@ static void MAC_ULE_Off(e_nsErr_t *p_err)
 }
 
 
+/**
+ * @brief   Transmission request handling
+ *
+ * @note    (1) A transmission request is accepted only if one of following
+ *          conditions is met
+ *            (a) MAC_ULE_State == MAC_ULE_STATE_IDLE, or
+ *            (b) MAC_ULE_State == MAC_ULE_STATE_SLEEP
+ *
+ *          (2) In case MAC ULE in state MAC_ULE_STATE_IDLE, if the destination
+ *          node is not the node with which the device is exchanging data (i.e.
+ *          some local variables could be used to temporarily store those info),
+ *          then the MAC ULE shall start the low-power transmission procedure
+ *          over.
+ *
+ *          (3) While MAC ULE stay in sleep mode, waiting for the 'right' time
+ *          from when it starts sending wake-up frames, it shall neither enable
+ *          the transceiver nor perform channel scan. This allows simplicity in
+ *          implementation.
+ *          The simplicity, nevertheless, comes at costs of losing advantage of
+ *          the loosely-synchronization feature in congested network. The
+ *          problem occurs when the device is waiting until the moment it thinks
+ *          the node of interest wakes up. Simultaneously another node desires
+ *          to communicate with the device, and therefore it misses the 'right'
+ *          time as the device is not able to receive any frames during this
+ *          time.
+ *          This problem could be solved via an appropriate retransmission
+ *          operation.
+ *
+ */
 static void MAC_ULE_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 {
     const linkaddr_t *p_dstaddr;
-    packetbuf_attr_t is_ack_req;
+
 
 #if NETSTK_CFG_ARG_CHK_EN
     if (p_err == NULL) {
@@ -292,70 +302,31 @@ static void MAC_ULE_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     }
 #endif
 
-
-    if (MAC_ULE_IS_FREE() == 0) {
+    if (MAC_ULE_IS_SLEEP() == FALSE) {
         *p_err = NETSTK_ERR_BUSY;
         return;
     }
 
+
     /* set the returned error code to default */
     *p_err = NETSTK_ERR_NONE;
 
-    /* obtain information of the packet to send */
-    if (MAC_ULE_State != MAC_ULE_STATE_IDLE) {
-        if (packetbuf_holds_broadcast()) {
-            NetstkDstId = LPR_DEV_ID_BROADCAST;
-
-            LED_ERR_ON();
-            while (1) {
-                /* TODO missing implementation */
-            }
-        } else {
-            /*
-             * Note(s):
-             *
-             * (1)  A destination ID of 0x0000 is not allowed in unicast
-             *      transmission and and must be checked
-             */
-            p_dstaddr = packetbuf_addr(PACKETBUF_ADDR_RECEIVER);
-            memcpy(&NetstkDstId, p_dstaddr->u8, 2);
-            if (NetstkDstId == LPR_DEV_ID_INVALID) {
-                *p_err = NETSTK_ERR_INVALID_ARGUMENT;
-            }
+    /* obtain destination addressing information */
+    if (packetbuf_holds_broadcast()) {
+        NetstkDstId = LPR_DEV_ID_BROADCAST;
+    } else {
+        p_dstaddr = packetbuf_addr(PACKETBUF_ADDR_RECEIVER);
+        memcpy(&NetstkDstId, p_dstaddr->u8, 2);
+        if (NetstkDstId == LPR_DEV_ID_INVALID) {
+            *p_err = NETSTK_ERR_INVALID_ARGUMENT;
         }
     }
 
     /* Issue transmission command */
     if (*p_err == NETSTK_ERR_NONE) {
-        /*
-         * Collect information required for Auto-ACK as well as Auto-Retransmission
-         * mechanisms.
-         */
-        is_ack_req = packetbuf_attr(PACKETBUF_ATTR_RELIABLE);
-        if (is_ack_req) {
-            MAC_ULE_ACKReq = 1;
-        }
-        MAC_ULE_TxRetries = 0;
-        MAC_ULE_LastSeq = frame802154_getDSN();
-
-#if 0
-        MAC_ULE_TxBufLen = len;
-        memcpy(MAC_ULE_TxBuf, p_data, len);
-#endif
-
-        if (MAC_ULE_State != MAC_ULE_STATE_IDLE) {
-            MAC_ULE_State = MAC_ULE_STATE_TX_STARTED;
-        } else {
-            MAC_ULE_State = MAC_ULE_STATE_TX_DATA;
-        }
-
         MAC_ULE_Cmd = MAC_ULE_CMD_TX;
+        MAC_ULE_State = MAC_ULE_STATE_TX_STARTED;
         MAC_ULE_EVENT_POST(NETSTK_LPM_EVENT);
-    } else {
-        LED_ERR_ON();
-        while (1) {
-            /* TODO missing implementation */
-        }
     }
 }
 
@@ -363,8 +334,9 @@ static void MAC_ULE_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 static void MAC_ULE_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 {
     /* store information regarding the received packet */
-    MAC_ULE_RxPktPtr = p_data;
     MAC_ULE_RxPktLen = len;
+    MAC_ULE_RxPktPtr = p_data;
+
 
     if (MAC_ULE_RxPktLen == 0) {
         MAC_ULE_Cmd = MAC_ULE_CMD_SLEEP;
@@ -409,27 +381,22 @@ static void MAC_ULE_ProcessCmd(c_event_t c_event, p_data_t p_data)
             break;
 
         case MAC_ULE_CMD_SLEEP:
-            /* goto sleep */
             MAC_ULE_ProcessSleep(&err);
             break;
 
         case MAC_ULE_CMD_IDLE:
-            /* goto idle */
             MAC_ULE_ProcessIdle(&err);
             break;
 
         case MAC_ULE_CMD_SCAN:
-            /* channel scan handling */
             MAC_ULE_ProcessScan(&err);
             break;
 
         case MAC_ULE_CMD_TX:
-            /* transmission handling */
             MAC_ULE_ProcessTx(&err);
             break;
 
         case MAC_ULE_CMD_RX:
-            /* reception handling */
             MAC_ULE_ProcessRx(&err);
             break;
 
@@ -489,7 +456,6 @@ static void MAC_ULE_ProcessScan(e_nsErr_t *p_err)
 #endif
 
     uint8_t is_done = 0;
-    uint8_t is_rx_busy = 0;
     LIB_TMR_STATE tmr_state;
 
 
@@ -506,20 +472,22 @@ static void MAC_ULE_ProcessScan(e_nsErr_t *p_err)
 
     /* #3 check scan termination conditions */
     do {
+        *p_err = NETSTK_ERR_NONE;
         tmr_state = Tmr_StateGet(&MAC_ULE_Tmr1Scan);
         MAC_ULE_Netstk->phy->ioctrl(NETSTK_CMD_RF_IS_RX_BUSY,
-                                    &is_rx_busy,
+                                    NULL,
                                     p_err);
 
-        is_done = (is_rx_busy) ||
+        is_done = (*p_err != NETSTK_ERR_NONE) ||
                   (tmr_state != LIB_TMR_STATE_RUNNING);
     } while (!is_done);
     LED_SCAN_OFF();
 
     /* #4 Instruct LPMAC according to result of the channel scan */
-    if (is_rx_busy) {
-        Tmr_Stop(&MAC_ULE_Tmr1Scan);
+    if (*p_err == NETSTK_ERR_BUSY) {
+        *p_err = NETSTK_ERR_NONE;
 
+        Tmr_Stop(&MAC_ULE_Tmr1Scan);
         MAC_ULE_Cmd = MAC_ULE_CMD_RX;
         MAC_ULE_State = MAC_ULE_STATE_RX_PARSING;
         MAC_ULE_Tmr1Start(&MAC_ULE_Tmr1W,
@@ -560,24 +528,12 @@ static void MAC_ULE_ProcessRx(e_nsErr_t *p_err)
             break;
 
         case MAC_ULE_STATE_RX_WFP:
-#if 1
             MAC_ULE_RxPayload(p_err);
 
             /* goto state idle */
             MAC_ULE_Cmd = MAC_ULE_CMD_IDLE;
             MAC_ULE_State = MAC_ULE_STATE_IDLE;
             MAC_ULE_EVENT_POST(NETSTK_LPM_EVENT);
-#else
-            /* signal the next higher layer of the received data packet */
-            MAC_ULE_Netstk->llc->recv(MAC_ULE_RxPktPtr,
-                                      MAC_ULE_RxPktLen,
-                                      p_err);
-
-            /* goto state idle */
-            MAC_ULE_Cmd = MAC_ULE_CMD_IDLE;
-            MAC_ULE_State = MAC_ULE_STATE_IDLE;
-            MAC_ULE_EVENT_POST(NETSTK_LPM_EVENT);
-#endif
             break;
 
         case MAC_ULE_STATE_RX_FINISHED:
@@ -642,6 +598,7 @@ static void MAC_ULE_ProcessTx(e_nsErr_t *p_err)
             break;
 
         case MAC_ULE_STATE_TX_CSMA:
+            LED_TX_ON();
             MAC_ULE_CSMA(p_err);
             if (*p_err != NETSTK_ERR_NONE) {
                 /*
@@ -672,6 +629,7 @@ static void MAC_ULE_ProcessTx(e_nsErr_t *p_err)
                 (frame_type != LPR_FRAME_TYPE_SACK)) {
                 has_tx_finished = 1;
             } else {
+                Tmr_Stop(&MAC_ULE_Tmr1W);
                 MAC_ULE_State = MAC_ULE_STATE_TX_DATA;
                 MAC_ULE_EVENT_POST(NETSTK_LPM_EVENT);
             }
@@ -679,30 +637,14 @@ static void MAC_ULE_ProcessTx(e_nsErr_t *p_err)
 
 
         case MAC_ULE_STATE_TX_DATA:
-#if 1
             MAC_ULE_TxPayload(p_err);
-#else
-            /* data packet transmission request */
-            MAC_ULE_TxPktPtr = packetbuf_hdrptr();
-            MAC_ULE_TxPktLen = packetbuf_totlen();
-
-            MAC_ULE_Netstk->phy->send(MAC_ULE_TxPktPtr,
-                                      MAC_ULE_TxPktLen,
-                                      p_err);
-
-            /* TODO missing implementation of Auto-ACK */
-            if (MAC_ULE_ACKReq) {
-
-            } else {
-                has_tx_finished = 1;
-            }
-#endif
             if (*p_err != NETSTK_ERR_NONE) {
                 has_tx_finished = 1;
             }
             break;
 
         case MAC_ULE_STATE_TX_WFA:
+            Tmr_Stop(&MAC_ULE_Tmr1W);
             MAC_ULE_RxPayload(p_err);
             if (*p_err != NETSTK_ERR_NONE) {
                 MAC_ULE_State = MAC_ULE_STATE_TX_DATA;
@@ -747,8 +689,8 @@ static void MAC_ULE_ProcessTx(e_nsErr_t *p_err)
  * @param isr_handler
  */
 static void MAC_ULE_Tmr1Start (LIB_TMR      *p_tmr,
-                           LIB_TMR_TICK  timeout,
-                           FNCT_VOID     isr_handler)
+                               LIB_TMR_TICK  timeout,
+                               FNCT_VOID     isr_handler)
 {
     Tmr_Stop(p_tmr);
     Tmr_Create(p_tmr,
@@ -760,6 +702,9 @@ static void MAC_ULE_Tmr1Start (LIB_TMR      *p_tmr,
 }
 
 
+/**
+ * @brief   Power-Up timer interrupt handler
+ */
 static void MAC_ULE_TmrIsrPowerUp(void *p_arg)
 {
     if (MAC_ULE_IS_SLEEP()) {
@@ -769,6 +714,9 @@ static void MAC_ULE_TmrIsrPowerUp(void *p_arg)
 }
 
 
+/**
+ * @brief   Wait-For-Strobe timer interrupt handler
+ */
 static void MAC_ULE_TmrIsr1WFS(void *p_arg)
 {
     /*
@@ -783,6 +731,9 @@ static void MAC_ULE_TmrIsr1WFS(void *p_arg)
 }
 
 
+/**
+ * @brief   Wait-For-ACK timer interrupt handler
+ */
 static void MAC_ULE_TmrIsr1WFA(void *p_arg)
 {
     if (MAC_ULE_State == MAC_ULE_STATE_TX_WFSA) {
@@ -796,7 +747,9 @@ static void MAC_ULE_TmrIsr1WFA(void *p_arg)
     }
 }
 
-
+/**
+ * @brief   TX delay timer interrupt handler
+ */
 static void MAC_ULE_TmrIsr1Delay(void *p_arg)
 {
     if (MAC_ULE_State == MAC_ULE_STATE_TX_DELAYED) {
@@ -805,7 +758,9 @@ static void MAC_ULE_TmrIsr1Delay(void *p_arg)
     }
 }
 
-
+/**
+ * @brief   Idle timer interrupt handler
+ */
 static void MAC_ULE_TmrIsr1Idle(void *p_arg)
 {
     if (MAC_ULE_State == MAC_ULE_STATE_IDLE) {
@@ -825,7 +780,6 @@ static void MAC_ULE_CSMA(e_nsErr_t *p_err)
 {
     uint8_t is_done;
     uint8_t cca_attempt;
-    uint8_t is_chan_idle;
     LIB_TMR_STATE tmr_state;
 
 
@@ -833,20 +787,21 @@ static void MAC_ULE_CSMA(e_nsErr_t *p_err)
     *p_err = NETSTK_ERR_NONE;
     is_done = 0;
     cca_attempt = 0;
-    is_chan_idle = 0;
 
-    /* perform CSMA */
+    /* #2 perform CSMA */
     MAC_ULE_On(p_err);
     do {
         MAC_ULE_Tmr1Start(&MAC_ULE_Tmr1W,
                            8,
                            0);
 
+        *p_err = NETSTK_ERR_NONE;
         tmr_state = Tmr_StateGet(&MAC_ULE_Tmr1W);
         MAC_ULE_Netstk->phy->ioctrl(NETSTK_CMD_RF_CCA_GET,
-                                    &is_chan_idle,
+                                    NULL,
                                     p_err);
-        if (is_chan_idle) {
+
+        if (*p_err == NETSTK_ERR_NONE) {
             cca_attempt++;
             while (tmr_state != LIB_TMR_STATE_RUNNING) {
                 /* wait for a certain period of time before performing the next
@@ -856,39 +811,19 @@ static void MAC_ULE_CSMA(e_nsErr_t *p_err)
 
         /* check CSMA termination conditions */
         is_done = (cca_attempt > 4) ||
-                  (is_chan_idle == 0);
+                  (*p_err != NETSTK_ERR_NONE);
     } while (!is_done);
 
-    if (is_chan_idle == 0) {
+    if (*p_err != NETSTK_ERR_NONE) {
         /* switch to SCAN mode */
         MAC_ULE_Off(p_err);
         MAC_ULE_Cmd = MAC_ULE_CMD_SCAN;
         MAC_ULE_EVENT_POST(NETSTK_LPM_EVENT);
 
-        *p_err = NETSTK_ERR_CHANNEL_ACESS_FAILURE;
         if (MAC_ULE_TxCbFnct) {
             MAC_ULE_TxCbFnct(MAC_ULE_TxCbArg, p_err);
         }
     }
-}
-
-
-/**
- * @brief   Verifying received frame for ACK
- *
- * @param   p_frame     Pointer to structure holding information of the received
- *                      frame
- */
-static uint8_t MAC_ULE_IsAcked(frame802154_t *p_frame)
-{
-    uint8_t is_acked = 0;
-
-    if ((p_frame->fcf.frame_type == FRAME802154_ACKFRAME) &&
-        (p_frame->seq == MAC_ULE_LastSeq)) {
-        is_acked = 1;
-    }
-
-    return is_acked;
 }
 
 
@@ -899,7 +834,6 @@ static void MAC_ULE_RxStrobe(e_nsErr_t *p_err)
 {
     uint8_t is_done;
     uint8_t frame_type;
-    uint8_t is_rx_busy;
     LIB_TMR_TICK tx_delay;
     LIB_TMR_STATE tmr_state;
 
@@ -918,9 +852,9 @@ static void MAC_ULE_RxStrobe(e_nsErr_t *p_err)
      } else {
          /* #2 Create a Strobe ACK */
          MAC_ULE_TxPktPtr = SmartMACFramer.Create(LPR_FRAME_TYPE_SACK,
-                                              &MAC_ULE_TxPktLen,
-                                              &tx_delay,
-                                              p_err);
+                                                  &MAC_ULE_TxPktLen,
+                                                  &tx_delay,
+                                                  p_err);
          /* #3 reply with an ACK */
          MAC_ULE_Netstk->phy->send(MAC_ULE_TxPktPtr,
                                    MAC_ULE_TxPktLen,
@@ -930,27 +864,30 @@ static void MAC_ULE_RxStrobe(e_nsErr_t *p_err)
              MAC_ULE_RxPktLen = 0;
              MAC_ULE_RxPktPtr = NULL;
              MAC_ULE_Tmr1Start(&MAC_ULE_Tmr1W,
-                            LPR_PORT_WFP_TIMEOUT_IN_MS,
+                            LPR_PORT_WFP_TIMEOUT_IN_MS * 2,
                             MAC_ULE_TmrIsr1WFS);
 
              do {
+                 *p_err = NETSTK_ERR_NONE;
                  tmr_state = Tmr_StateGet(&MAC_ULE_Tmr1W);
                  MAC_ULE_Netstk->phy->ioctrl(NETSTK_CMD_RF_IS_RX_BUSY,
-                                             &is_rx_busy,
+                                             NULL,
                                              p_err);
 
-                 is_done = (is_rx_busy) ||
+                 is_done = (*p_err != NETSTK_ERR_NONE) ||
                            (tmr_state != LIB_TMR_STATE_RUNNING);
              } while (!is_done);
 
-             if (is_rx_busy) {
+             if (*p_err == NETSTK_ERR_BUSY) {
+                 *p_err = NETSTK_ERR_NONE;
+
                  /* wait for a time period until the packet is totally
                   * received */
                  MAC_ULE_Cmd = MAC_ULE_CMD_RX;
                  MAC_ULE_State = MAC_ULE_STATE_RX_WFP;
                  MAC_ULE_Tmr1Start(&MAC_ULE_Tmr1W,
-                                LPR_PORT_WFP_TIMEOUT_IN_MS * 2,
-                                MAC_ULE_TmrIsr1WFS);
+                                    LPR_PORT_WFP_TIMEOUT_IN_MS * 2,
+                                    MAC_ULE_TmrIsr1WFS);
 
              } else {
                  *p_err = NETSTK_ERR_LPR_NO_STROBE;
@@ -965,8 +902,9 @@ static void MAC_ULE_RxStrobe(e_nsErr_t *p_err)
  */
 static void MAC_ULE_TxStrobe(e_nsErr_t *p_err)
 {
+    int is_broadcast;
     uint8_t is_done;
-    uint8_t is_rx_busy;
+    uint8_t is_last_strobe;
     LIB_TMR_TICK tx_delay;
     LIB_TMR_STATE tmr_wfa_state;
     LIB_TMR_STATE tmr_tx_state;
@@ -974,44 +912,55 @@ static void MAC_ULE_TxStrobe(e_nsErr_t *p_err)
 
     /* set returned error code to default */
     *p_err = NETSTK_ERR_NONE;
+    MAC_ULE_RxPktLen = 0;
+    MAC_ULE_RxPktPtr = NULL;
 
+    is_last_strobe = FALSE;
+    is_broadcast = packetbuf_holds_broadcast();
+    if (is_broadcast == FALSE) {
+        /* Start strobe transmission timer only for unicasts */
+        MAC_ULE_Tmr1Start(&MAC_ULE_Tmr1Tx,
+                           LPR_CFG_STROBE_TX_INTERVAL_IN_MS,
+                           0);
+    }
 
-    /* Start Strobe transmission timer */
-    MAC_ULE_Tmr1Start(&MAC_ULE_Tmr1Tx,
-                       LPR_CFG_STROBE_TX_INTERVAL_IN_MS,
-                       0);
-
+    /*
+     * Send a series of wake-up preamble frames
+     */
     do {
+        /* start strobe transmission interval timer */
+        MAC_ULE_Tmr1Start(&MAC_ULE_Tmr1W,
+                           LPR_PORT_STROBE_TX_INTERVAL_IN_MS,
+                           0);
+
         /* transmit strobes */
         MAC_ULE_Netstk->phy->send(MAC_ULE_TxPktPtr,
                                   MAC_ULE_TxPktLen,
                                   p_err);
         if (*p_err == NETSTK_ERR_NONE) {
-            /*
-             * Wait for Strobe ACK
-             */
-            is_rx_busy = 0;
-            MAC_ULE_RxPktLen = 0;
-            MAC_ULE_RxPktPtr = NULL;
-            MAC_ULE_Tmr1Start(&MAC_ULE_Tmr1W,
-                               LPR_PORT_WFA_TIMEOUT_IN_MS,
-                               MAC_ULE_TmrIsr1WFA);
             do {
+                /* check conditions for strobe transmission termination */
+                *p_err = NETSTK_ERR_NONE;
                 tmr_wfa_state = Tmr_StateGet(&MAC_ULE_Tmr1W);
-                MAC_ULE_Netstk->phy->ioctrl(NETSTK_CMD_RF_IS_RX_BUSY,
-                                            &is_rx_busy,
-                                            p_err);
-
-                is_done = (is_rx_busy) ||
-                          (tmr_wfa_state != LIB_TMR_STATE_RUNNING);
+                if (is_broadcast == FALSE) {
+                    MAC_ULE_Netstk->phy->ioctrl(NETSTK_CMD_RF_IS_RX_BUSY,
+                                                NULL,
+                                                p_err);
+                    is_done = (*p_err != NETSTK_ERR_NONE) ||
+                              (tmr_wfa_state != LIB_TMR_STATE_RUNNING );
+                } else {
+                    is_done = (tmr_wfa_state != LIB_TMR_STATE_RUNNING );
+                }
             } while (!is_done);
-
             /*
-             * Strobe ACK waiting timeout
+             * Strobe ACK waiting timeout.
+             * It should be noted that the variable is_rx_busy is always set to
+             * FALSE in case of broadcasting
              */
-            if (is_rx_busy) {
-                /* wait for a time period until the packet is totally
-                 * received */
+            if (*p_err == NETSTK_ERR_BUSY) {
+                *p_err = NETSTK_ERR_NONE;
+
+                /* wait for a time period until the packet is totally received */
                 MAC_ULE_State = MAC_ULE_STATE_TX_WFSA;
                 MAC_ULE_Tmr1Start(&MAC_ULE_Tmr1W,
                                    LPR_PORT_WFA_TIMEOUT_IN_MS,
@@ -1023,18 +972,34 @@ static void MAC_ULE_TxStrobe(e_nsErr_t *p_err)
                                                          &tx_delay,
                                                          p_err);
             }
+        } else {
+            if (is_broadcast == FALSE) {
+                Tmr_Stop(&MAC_ULE_Tmr1W);
+            }
         }
 
-        tmr_tx_state = Tmr_StateGet(&MAC_ULE_Tmr1Tx);
-
-        is_done = (tmr_tx_state  != LIB_TMR_STATE_RUNNING) ||
-                  (MAC_ULE_State == MAC_ULE_STATE_TX_WFSA) ||
-                  (*p_err        != NETSTK_ERR_NONE);
+        /*
+         * check conditions for strobe transmission termination
+         */
+        if (is_broadcast == FALSE) {
+            tmr_tx_state = Tmr_StateGet(&MAC_ULE_Tmr1Tx);
+            is_done = (*p_err        != NETSTK_ERR_NONE)        ||
+                      (tmr_tx_state  != LIB_TMR_STATE_RUNNING)  ||
+                      (MAC_ULE_State == MAC_ULE_STATE_TX_WFSA);
+        } else {
+            is_done = (is_last_strobe == TRUE);
+        }
     } while (!is_done);
 
 
-    if (tmr_tx_state != LIB_TMR_STATE_RUNNING) {
-        *p_err = NETSTK_ERR_TX_TIMEOUT;
+    if (is_broadcast == FALSE) {
+        /*
+         * if the strobe transmission was terminated due to strobe transmission
+         * timeout, then MAC ULE shall conclude the transmission process has failed
+         */
+        if (tmr_tx_state != LIB_TMR_STATE_RUNNING) {
+            *p_err = NETSTK_ERR_TX_TIMEOUT;
+        }
     }
 }
 
@@ -1045,8 +1010,9 @@ static void MAC_ULE_TxStrobe(e_nsErr_t *p_err)
 static void MAC_ULE_RxPayload(e_nsErr_t *p_err)
 {
     int hdrlen;
-    uint8_t is_acked;
+    uint8_t last_dsn;
     frame802154_t frame;
+    packetbuf_attr_t is_ack_req;
 
 
     /* #0 set returned error code to default */
@@ -1067,8 +1033,7 @@ static void MAC_ULE_RxPayload(e_nsErr_t *p_err)
         case FRAME802154_CMDFRAME:
             /* Auto ACK */
             if (frame.fcf.ack_required) {
-                MAC_ULE_LastSeq = frame.seq;
-                MAC_ULE_TxACK(p_err);
+                MAC_ULE_TxACK(p_err, frame.seq);
             }
 
             /* Store the received frame into the common packet buffer */
@@ -1085,11 +1050,12 @@ static void MAC_ULE_RxPayload(e_nsErr_t *p_err)
             break;
 
         case FRAME802154_ACKFRAME:
-            if (MAC_ULE_ACKReq) {
-                is_acked = MAC_ULE_IsAcked(&frame);
-                if (!is_acked) {
-                    *p_err = NETSTK_ERR_TX_NOACK;
-                }
+            last_dsn = frame802154_getDSN();
+            is_ack_req = packetbuf_attr(PACKETBUF_ATTR_RELIABLE);
+
+            if ((is_ack_req == TRUE) &&
+                (frame.seq  != last_dsn)) {
+                *p_err = NETSTK_ERR_TX_NOACK;
             }
             break;
 
@@ -1102,10 +1068,10 @@ static void MAC_ULE_RxPayload(e_nsErr_t *p_err)
 /**
  * @brief   IEEE802154 ACK transmission handling
  */
-static void MAC_ULE_TxACK(e_nsErr_t *p_err)
+static void MAC_ULE_TxACK(e_nsErr_t *p_err, uint8_t seq)
 {
-    uint8_t        ack[3];
-    frame802154_t  params;
+    uint8_t ack[3] = {0};
+    frame802154_t params;
 
 
     /* Initialize local variables */
@@ -1122,8 +1088,8 @@ static void MAC_ULE_TxACK(e_nsErr_t *p_err)
     /* Insert IEEE 802.15.4 (2003) version bits. */
     params.fcf.frame_version = FRAME802154_IEEE802154_2003;
 
-    /* Increment and set the data sequence number. */
-    params.seq = MAC_ULE_LastSeq;
+    /* set the sequence number. */
+    params.seq = seq;
 
     /* Complete the addressing fields. */
     params.fcf.src_addr_mode = FRAME802154_NOADDR;
@@ -1142,16 +1108,19 @@ static void MAC_ULE_TxACK(e_nsErr_t *p_err)
  */
 static void MAC_ULE_TxPayload(e_nsErr_t *p_err)
 {
-    uint8_t is_rx_busy;
     uint8_t is_tx_done;
     uint8_t is_wfa_done;
+    uint8_t tx_retries;
+    packetbuf_attr_t is_ack_req;
     LIB_TMR_STATE tmr_wfa_state;
 
 
     /* preparation */
     MAC_ULE_TxPktPtr = packetbuf_hdrptr();
     MAC_ULE_TxPktLen = packetbuf_totlen();
-    MAC_ULE_TxRetries = 0;
+    is_ack_req = packetbuf_attr(PACKETBUF_ATTR_RELIABLE);
+    tx_retries = 0;
+
 
     /* data packet transmission handling */
     do {
@@ -1160,30 +1129,32 @@ static void MAC_ULE_TxPayload(e_nsErr_t *p_err)
                                   MAC_ULE_TxPktLen,
                                   p_err);
         if (*p_err == NETSTK_ERR_NONE) {
-            if (MAC_ULE_ACKReq) {
+            if (is_ack_req) {
                 /*
                  * Wait for ACK in response to the sent data packet
                  */
-                is_rx_busy = 0;
                 MAC_ULE_RxPktLen = 0;
                 MAC_ULE_RxPktPtr = NULL;
                 MAC_ULE_Tmr1Start(&MAC_ULE_Tmr1W,
-                                   LPR_PORT_WFA_TIMEOUT_IN_MS,
+                                   LPR_PORT_WFA_TIMEOUT_IN_MS * 2,
                                    0);
                 do {
+                    *p_err = NETSTK_ERR_NONE;
                     tmr_wfa_state = Tmr_StateGet(&MAC_ULE_Tmr1W);
                     MAC_ULE_Netstk->phy->ioctrl(NETSTK_CMD_RF_IS_RX_BUSY,
-                                                &is_rx_busy,
+                                                NULL,
                                                 p_err);
 
-                    is_wfa_done = (is_rx_busy) ||
+                    is_wfa_done = (*p_err != NETSTK_ERR_NONE) ||
                                   (tmr_wfa_state != LIB_TMR_STATE_RUNNING);
                 } while (!is_wfa_done);
 
                 /*
                  * Strobe ACK waiting timeout
                  */
-                if (is_rx_busy) {
+                if (*p_err == NETSTK_ERR_BUSY) {
+                    *p_err = NETSTK_ERR_NONE;
+
                     /* wait for a time period until the packet is totally
                      * received */
                     MAC_ULE_State = MAC_ULE_STATE_TX_WFA;
@@ -1197,11 +1168,11 @@ static void MAC_ULE_TxPayload(e_nsErr_t *p_err)
         }
 
         /* increase transmission attempt by one */
-        MAC_ULE_TxRetries++;
+        tx_retries++;
 
         /* check retransmission conditions */
         is_tx_done = (*p_err == NETSTK_ERR_NONE) ||
-                     (MAC_ULE_TxRetries > 3);
+                     (tx_retries > 3);
     } while (!is_tx_done);
 }
 
@@ -1219,4 +1190,4 @@ static void MAC_ULE_TxPayload(e_nsErr_t *p_err)
 *                                   END OF FILE
 ********************************************************************************
 */
-#endif /* NETSTK_CFG_LPM_APSS_EN */
+#endif /* NETSTK_CFG_MAC_802154_ULE_EN */

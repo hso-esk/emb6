@@ -23,7 +23,7 @@
 ********************************************************************************
 */
 #define SMARTMAC_FRAME_LEN                              (uint8_t)( 5U )
-
+#define SMARTMAC_CFG_REFACTOR_EN                        ( 0u )
 
 /*
 ********************************************************************************
@@ -115,11 +115,9 @@ static void SmartMAC_CalcStrobeDelay(s_nsLprPwrOnTblEntry_t *p_dev, uint32_t *p_
 
             tx_advance = LPR_CFG_QTY_STROBE_SENT_IN_ADVANCE * tx_period;
 
-            min_delay = LPR_PORT_OFF_TO_ON_TIME_IN_MS      +
-                        LPR_PORT_ON_TO_OFF_TIME_IN_MS      +
-                        LPR_PORT_SCAN_DURATION_IN_MS       +
-                        SMARTMAC_CFG_COUNT_MAX * tx_period +
-                        50; /* reliable coefficient */
+            min_delay = LPR_PORT_OFF_TO_ON_TIME_IN_MS +
+                        LPR_PORT_ON_TO_OFF_TIME_IN_MS +
+                        LPR_PORT_SCAN_DURATION_IN_MS;
 
             if (*p_delay < min_delay) {
                 *p_delay = 0;
@@ -132,7 +130,8 @@ static void SmartMAC_CalcStrobeDelay(s_nsLprPwrOnTblEntry_t *p_dev, uint32_t *p_
             i++;
         } while (*p_delay == 0);
 
-        SmartMAC_StrobeCnt = SMARTMAC_CFG_COUNT_MAX;
+        /* set strobe counter to default */
+        SmartMAC_StrobeCnt = LPR_CFG_STROBE_TX_MAX;
     } else {
         *p_delay = 0;
     }
@@ -200,6 +199,11 @@ static void SmartMAC_ParseStrobe (uint8_t *p_pkt, uint16_t len, e_nsErr_t *p_err
         *p_err = NETSTK_ERR_NONE;
         ts_count = p_pkt[2];
         SmartMAC_CalcSACKDelay(ts_count);
+
+        /* set sequence number of the corresponding ACK equal to that in the
+         * received strobe. This value is then used to improve the prediction
+         * mechanism */
+        SmartMAC_SACK[2] = ts_count;
         return;
     }
 
@@ -303,10 +307,10 @@ static void SmartMAC_Init (e_nsErr_t *p_err)
     SmartMAC_Strobe[3] = 0;
     SmartMAC_Strobe[3] = 0;
 
-    SmartMAC_SACKDelay    = 0;
-    SmartMAC_StrobeCnt    = SMARTMAC_CFG_COUNT_MAX;
+    SmartMAC_SACKDelay = 0;
+    SmartMAC_StrobeCnt = LPR_CFG_STROBE_TX_MAX;
+    SmartMAC_RxBroadcast = 0;
     SmartMAC_BroadcastCnt = LPR_CFG_BROADCAST_TX_MAX;
-    SmartMAC_RxBroadcast  = 0;
     *p_err = NETSTK_ERR_NONE;
 }
 
@@ -347,7 +351,7 @@ static uint8_t* SmartMAC_CreateStrobe (uint16_t *p_len, LIB_TMR_TICK *p_delay, e
     if (SmartMAC_StrobeCnt) {
         SmartMAC_StrobeCnt--;
     } else {
-        SmartMAC_StrobeCnt = SMARTMAC_CFG_COUNT_MAX;
+        SmartMAC_StrobeCnt = LPR_CFG_STROBE_TX_MAX;
     }
 
 #if LPR_CFG_LOOSE_SYNC_EN
@@ -437,8 +441,8 @@ static uint8_t* SmartMAC_CreateBroadcast (uint16_t *p_len, LIB_TMR_TICK *p_delay
     SmartMAC_Strobe[0] = LPR_FRAME_TYPE_BROADCAST;
     SmartMAC_Strobe[1] = 0;
     SmartMAC_Strobe[2] = SmartMAC_BroadcastCnt;
-    SmartMAC_Strobe[3] = 0;
-    SmartMAC_Strobe[4] = 0;
+    SmartMAC_Strobe[3] = 0xFF;
+    SmartMAC_Strobe[4] = 0xFF;
     *p_delay = 0u;
     *p_err   = NETSTK_ERR_NONE;
     *p_len   = sizeof(SmartMAC_Strobe);
