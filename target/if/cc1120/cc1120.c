@@ -24,8 +24,8 @@ extern "C"
 
 #define __DECL_RF_H__
 #include "cc1120.h"
-#include "cc1120_cfg.h"
 #include "cc1120_hal_io.h"
+#include "cc1120_cfg.h"
 
 #include "lib_port.h"
 #include "packetbuf.h"
@@ -59,7 +59,7 @@ static s_ns_t *RF_Netstack;
 *                       LOCAL FUNCTIONS DECLARATION
 ********************************************************************************
 */
-static void cc1120_Init (void *p_netstack, e_nsErr_t *p_err);
+static void cc1120_Init (void *p_netstk, e_nsErr_t *p_err);
 static void cc1120_On (e_nsErr_t *p_err);
 static void cc1120_Off (e_nsErr_t *p_err);
 static void cc1120_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
@@ -307,7 +307,7 @@ static int _rf_tx( void );
 static int _rf_setTxPower( int8_t c_power );
 
 /* Run CCA */
-static uint8_t _rf_ccaRun( void );
+static void _rf_ccaRun(e_nsErr_t *p_err);
 
 /* Run ED */
 static int16_t _rf_edRun( void );
@@ -849,54 +849,53 @@ static int _rf_setTxPower( int8_t c_power )
 }
 
 
-/*============================================================================*/
-/**
- * \brief   Run CCA.
- *
- * \return  0 if channel is busy, 1 if channel is idle.
- */
-/*============================================================================*/
-static uint8_t _rf_ccaRun( void )
+static void _rf_ccaRun(e_nsErr_t *p_err)
 {
-  uint8_t uc_ret = 0;
-  uint8_t uc_state = 0;
-  uint8_t uc_ccaAttmpt = 0;
-
-  /* go to RX state */
-  _rf_gotoRx();
-
-  /* connect IRQs */
-  bsp_extIntEnable( E_TARGET_EXT_INT_0, E_TARGET_INT_EDGE_FALLING, &_rf_isrTxFifoBelThr);
-  bsp_extIntEnable( E_TARGET_EXT_INT_1, E_TARGET_INT_EDGE_RISING, &_rf_isrCCADone);
-  bsp_extIntEnable( E_TARGET_EXT_INT_2, E_TARGET_INT_EDGE_FALLING, &_rf_isrTxFin);
-
-  /* set IRQ to CCA done */
-  RF_REGWR( CC1120_IOCFG2, 0x0F );
-
-  while( (uc_ret == 0) && (uc_ccaAttmpt++ < RF_CCA_ATTEMPTS_MAX) )
-  {
-    /* we try to switch to FSTX to check CCA state */
-    gs_rf_ctx.s_tx_ctx.uc_ccaDone = 0;
-    cc1120_spiCmdStrobe( CC1120_SFSTXON );
-
-    /* wait until CCA completed */
-    while( gs_rf_ctx.s_tx_ctx.uc_ccaDone == 0);
-
-    /* get MARC state */
-    RF_REGRD( CC1120_MARC_STATUS0, uc_state );
-
-    if( uc_state & RF_PKT_MARC_STATUS0_CCA_FAIL )
-    {
-      /* CCA failed */
-      uc_ret = 0;
+#if NETSTK_CFG_ARG_CHK_EN
+    if (p_err == NULL) {
+        return;
     }
-    else
-      /* CCA succeeded */
-      uc_ret = 1;
-  }
+#endif
 
-  return uc_ret;
+
+    uint8_t uc_state = 0;
+    uint8_t uc_ccaAttmpt = 0;
+
+
+    /* set the returned error code to default */
+    *p_err = NETSTK_ERR_NONE;
+
+    /* go to RX state */
+    _rf_gotoRx();
+
+    /* connect IRQs */
+    bsp_extIntEnable( E_TARGET_EXT_INT_0, E_TARGET_INT_EDGE_FALLING, &_rf_isrTxFifoBelThr);
+    bsp_extIntEnable( E_TARGET_EXT_INT_1, E_TARGET_INT_EDGE_RISING, &_rf_isrCCADone);
+    bsp_extIntEnable( E_TARGET_EXT_INT_2, E_TARGET_INT_EDGE_FALLING, &_rf_isrTxFin);
+
+    /* set IRQ to CCA done */
+    RF_REGWR( CC1120_IOCFG2, 0x0F );
+
+    while ((*p_err != NETSTK_ERR_NONE) &&
+           (uc_ccaAttmpt++ < RF_CCA_ATTEMPTS_MAX) )
+    {
+      /* we try to switch to FSTX to check CCA state */
+      gs_rf_ctx.s_tx_ctx.uc_ccaDone = 0;
+      cc1120_spiCmdStrobe( CC1120_SFSTXON );
+
+      /* wait until CCA completed */
+      while( gs_rf_ctx.s_tx_ctx.uc_ccaDone == 0);
+
+      /* get MARC state */
+      RF_REGRD( CC1120_MARC_STATUS0, uc_state );
+
+      if( uc_state & RF_PKT_MARC_STATUS0_CCA_FAIL )
+      {
+        *p_err = NETSTK_ERR_CHANNEL_ACESS_FAILURE;
+      }
+    }
 }
+
 
 /*============================================================================*/
 /**
@@ -1260,35 +1259,34 @@ static int _rf_setCCAMode( e_rf_cca_mode_t e_cca )
 
 } /* _rf_setCCAMode() */
 
-/*=============================================================================
- * rf_tx()
- *============================================================================*/
-uint8_t rf_cca( void )
+
+static void rf_cca(e_nsErr_t *p_err)
 {
-  uint8_t uc_ret = 0;
+#if NETSTK_CFG_ARG_CHK_EN
+    if (*p_err == NULL) {
+        return;
+    }
+#endif
 
-  e_rf_state_t e_stateSave = gs_rf_ctx.e_state;
+    e_rf_state_t e_stateSave = gs_rf_ctx.e_state;
 
-  if( (gs_rf_ctx.e_state != E_RF_STATE_IDLE) &&
-     (gs_rf_ctx.e_state != E_RF_STATE_RX) &&
-     (gs_rf_ctx.e_state != E_RF_STATE_TXSTART))
-  {
-    /* invalid state to perform CCA */
-    uc_ret = 0;
-  }
-  else
-  {
-    /* perform CCA */
-    uc_ret = _rf_ccaRun();
-    /* restore the configured mode */
-    _rf_restoreMode();
+    if ((gs_rf_ctx.e_state != E_RF_STATE_IDLE)  &&
+        (gs_rf_ctx.e_state != E_RF_STATE_RX)    &&
+        (gs_rf_ctx.e_state != E_RF_STATE_TXSTART)) {
+        /* invalid state to perform CCA */
+        *p_err = NETSTK_ERR_BUSY;
+    }
+    else {
+      /* perform CCA */
+      _rf_ccaRun(p_err);
 
-    if( e_stateSave == E_RF_STATE_TXSTART )
-      gs_rf_ctx.e_state = E_RF_STATE_TXSTART;
-  }
+      /* restore the configured mode */
+      _rf_restoreMode();
 
-  return uc_ret;
-} /* rf_cca() */
+      if( e_stateSave == E_RF_STATE_TXSTART )
+        gs_rf_ctx.e_state = E_RF_STATE_TXSTART;
+    }
+}
 
 
 /*=============================================================================
@@ -1320,29 +1318,15 @@ int rf_ed( int16_t* pi_ed )
 } /* rf_ed() */
 
 
-static uint8_t _rf_is_rx(void)
+static void _rf_is_rx(e_nsErr_t *p_err)
 {
-    uint8_t uc_ret = 0;
+    /* set the returned error code to default */
+    *p_err = NETSTK_ERR_NONE;
 
     if ((gs_rf_ctx.e_state == E_RF_STATE_RXBUSY) ||
         (gs_rf_ctx.e_state == E_RF_STATE_RXFIN)) {
-        uc_ret = 1;
+        *p_err = NETSTK_ERR_BUSY;
     }
-    return uc_ret;
-}
-
-
-static uint8_t _rf_is_tx(void)
-{
-    uint8_t uc_ret = 0;
-
-    if( (gs_rf_ctx.e_state == E_RF_STATE_TXSTART) ||
-        (gs_rf_ctx.e_state == E_RF_STATE_TXBUSY) ||
-        (gs_rf_ctx.e_state == E_RF_STATE_TXFIN) )
-    {
-      uc_ret = 1;
-    }
-    return uc_ret;
 }
 
 
@@ -1357,12 +1341,17 @@ static uint8_t _rf_is_tx(void)
  *
  * @param   p_err   Point to returned error
  */
-static void cc1120_Init (void *p_netstack, e_nsErr_t *p_err)
+static void cc1120_Init (void *p_netstk, e_nsErr_t *p_err)
 {
-    if (p_netstack == NULL) {
-        *p_err = NETSTK_ERR_INIT;
+#if NETSTK_CFG_ARG_CHK_EN
+    if (p_err == NULL) {
         return;
     }
+
+    if (p_netstk == NULL) {
+        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+    }
+#endif
 
 
     /* Initialize RF TI CC1120 */
@@ -1381,7 +1370,7 @@ static void cc1120_Init (void *p_netstack, e_nsErr_t *p_err)
     _rf_setCCAMode(E_RF_CCA_MODE_CARRIER_OR_ED);
 
     /* set pointer to netstack structure */
-    RF_Netstack = (s_ns_t *)p_netstack;
+    RF_Netstack = (s_ns_t *)p_netstk;
 
 #if NETSTK_CFG_LPM_EN == 1
     /*
@@ -1557,10 +1546,6 @@ static void cc1120_Ioctl (e_nsIocCmd_t    cmd,
     if (p_err == (e_nsErr_t *)0) {
         return;
     }
-
-    if (p_val == (void *)0) {
-        return;
-    }
 #endif
 
 
@@ -1573,21 +1558,14 @@ static void cc1120_Ioctl (e_nsIocCmd_t    cmd,
             break;
 
         case NETSTK_CMD_RF_CCA_GET :
-            /*
-             * rf_cca() ~ rf_is_idle?
-             */
-            *((uint8_t *)p_val) = rf_cca();
+            rf_cca(p_err);
             break;
 
         case NETSTK_CMD_RF_RSSI_GET :
             break;
 
         case NETSTK_CMD_RF_IS_RX_BUSY:
-            *((uint8_t *)p_val) = _rf_is_rx();
-            break;
-
-        case NETSTK_CMD_RF_IS_TX_BUSY:
-            *((uint8_t *)p_val) = _rf_is_tx();
+            _rf_is_rx(p_err);
             break;
 
         case NETSTK_CMD_RF_RF_SWITCH :
