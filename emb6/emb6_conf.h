@@ -928,9 +928,7 @@ void uip_log(char *msg);
  * @{
  */
 #define LPR_CFG_LOOSE_SYNC_EN                      ( 1u )
-#define LPR_CFG_CCA_BASED_SCAN_EN                  ( 0u )
-
-#define LPR_CFG_IDLE_DURATION_IN_MS                (uint32_t)(   20  )
+#define LPR_CFG_IDLE_DURATION_IN_MS                (uint32_t)(   20u )
 #define LPR_CFG_POWERUP_INTERVAL_IN_MS             (uint32_t)( 1000u )
 #define LPR_CFG_STROBE_TX_INTERVAL_IN_MS           (LPR_CFG_POWERUP_INTERVAL_IN_MS * 2)
 
@@ -979,13 +977,7 @@ void uip_log(char *msg);
   *              This time addition is usually caused by transition time of RF
   *              driver implementation.
   */
-#if LPR_CFG_CCA_BASED_SCAN_EN
-#define LPR_PORT_SCAN_CCA_INTERVAL_IN_MS            (uint32_t)(  10u )          /*!< fixed, hardware-specific       */
-#define LPR_PORT_SCAN_DURATION_IN_MS                (uint32_t)(  30u )          /*!< fixed, hardware-specific       */
-#else
 #define LPR_PORT_SCAN_DURATION_IN_MS                (uint32_t)(  25u )          /*!< fixed, hardware-specific       */
-#endif
-
 #define LPR_PORT_MIN_DELAY_IN_MS                    (uint32_t)(  50U )          /*!< fixed, hardware-specific, 50   */
 #define LPR_PORT_ON_TO_OFF_TIME_IN_MS               (uint32_t)(   8u )          /*!< fixed, hardware-specific, 06   */
 #define LPR_PORT_OFF_TO_ON_TIME_IN_MS               (uint32_t)(  20u )          /*!< fixed, hardware-specific, 15   */
