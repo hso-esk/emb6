@@ -16,9 +16,9 @@ extern "C"
 /*============================================================================*/
 /*                                  INCLUDES                                  */
 /*============================================================================*/
-//#include <stdint.h>
-//#include "hal_trx.h"
 
+
+#if NETSTK_CFG_RF_CC1120_EN
 /*============================================================================*/
 /*                                  DEFINES                                   */
 /*============================================================================*/
@@ -431,10 +431,8 @@ static const registerSetting_t preferredSettings2[] = {
 /*============================================================================*/
 
 /* */
-trxStatus_t cc1120_spiReadReg( uint16_t i_addr, uint8_t *pc_data,
-    uint8_t c_len );
-trxStatus_t cc1120_spiWriteReg( uint16_t i_addr, uint8_t *pc_data,
-    uint8_t c_len );
+trxStatus_t cc1120_spiReadReg( uint16_t i_addr, uint8_t *pc_data, uint8_t c_len );
+trxStatus_t cc1120_spiWriteReg( uint16_t i_addr, uint8_t *pc_data, uint8_t c_len );
 trxStatus_t cc1120_spiWriteTxFifo( uint8_t *pc_writeData, uint8_t c_len );
 trxStatus_t cc1120_spiReadRxFifo( uint8_t *pc_readData, uint8_t c_len );
 trxStatus_t cc1120_getTxStatus( void );
@@ -458,4 +456,6 @@ uint8_t cc1120_spi16BitRegAccess(uint8_t uc_accessType, uint8_t uc_extendedAddr,
 }
 #endif
 
+
+#endif /* NETSTK_CFG_RF_CC1120_EN */
 #endif /* HAL_CC1120_IO_H_ */
