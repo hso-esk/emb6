@@ -28,7 +28,7 @@
  */
 uint8_t board_conf(s_ns_t *p_netstk)
 {
-    uint8_t     c_ret = 1;
+    uint8_t c_ret = 1;
 
 
     if (p_netstk != NULL) {
@@ -39,6 +39,7 @@ uint8_t board_conf(s_ns_t *p_netstk)
     }
     else {
         LOG_ERR("Network stack pointer is NULL");
+        c_ret = 0;
     }
 
     return c_ret;
