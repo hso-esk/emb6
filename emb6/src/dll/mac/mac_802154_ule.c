@@ -233,7 +233,7 @@ static void MAC_ULE_Init (void *p_netstk, e_nsErr_t *p_err)
                NULL);
 
     /* Register event handler */
-    MAC_ULE_EVENT_PEND(NETSTK_LPM_EVENT);
+    MAC_ULE_EVENT_PEND(NETSTK_MAC_ULE_EVENT);
 
     /* State transitions */
     MAC_ULE_Cmd = MAC_ULE_CMD_SLEEP;
@@ -326,7 +326,7 @@ static void MAC_ULE_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     if (*p_err == NETSTK_ERR_NONE) {
         MAC_ULE_Cmd = MAC_ULE_CMD_TX;
         MAC_ULE_State = MAC_ULE_STATE_TX_STARTED;
-        MAC_ULE_EVENT_POST(NETSTK_LPM_EVENT);
+        MAC_ULE_EVENT_POST(NETSTK_MAC_ULE_EVENT);
     }
 }
 
@@ -343,7 +343,7 @@ static void MAC_ULE_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     } else {
 
     }
-    MAC_ULE_EVENT_POST(NETSTK_LPM_EVENT);
+    MAC_ULE_EVENT_POST(NETSTK_MAC_ULE_EVENT);
 }
 
 
@@ -497,7 +497,7 @@ static void MAC_ULE_ProcessScan(e_nsErr_t *p_err)
         MAC_ULE_Off(p_err);
         MAC_ULE_Cmd = MAC_ULE_CMD_SLEEP;
         MAC_ULE_State = MAC_ULE_STATE_SLEEP;
-        MAC_ULE_EVENT_POST(NETSTK_LPM_EVENT);
+        MAC_ULE_EVENT_POST(NETSTK_MAC_ULE_EVENT);
     }
 }
 
@@ -533,7 +533,7 @@ static void MAC_ULE_ProcessRx(e_nsErr_t *p_err)
             /* goto state idle */
             MAC_ULE_Cmd = MAC_ULE_CMD_IDLE;
             MAC_ULE_State = MAC_ULE_STATE_IDLE;
-            MAC_ULE_EVENT_POST(NETSTK_LPM_EVENT);
+            MAC_ULE_EVENT_POST(NETSTK_MAC_ULE_EVENT);
             break;
 
         case MAC_ULE_STATE_RX_FINISHED:
@@ -548,7 +548,7 @@ static void MAC_ULE_ProcessRx(e_nsErr_t *p_err)
         MAC_ULE_Off(p_err);
         MAC_ULE_Cmd = MAC_ULE_CMD_SLEEP;
         MAC_ULE_State = MAC_ULE_STATE_SLEEP;
-        MAC_ULE_EVENT_POST(NETSTK_LPM_EVENT);
+        MAC_ULE_EVENT_POST(NETSTK_MAC_ULE_EVENT);
     }
 }
 
@@ -590,7 +590,7 @@ static void MAC_ULE_ProcessTx(e_nsErr_t *p_err)
                                    MAC_ULE_TmrIsr1Delay);
             } else {
                 MAC_ULE_State = MAC_ULE_STATE_TX_CSMA;
-                MAC_ULE_EVENT_POST(NETSTK_LPM_EVENT);
+                MAC_ULE_EVENT_POST(NETSTK_MAC_ULE_EVENT);
             }
             break;
 
@@ -607,7 +607,7 @@ static void MAC_ULE_ProcessTx(e_nsErr_t *p_err)
                  */
             } else {
                 MAC_ULE_State = MAC_ULE_STATE_TX_STROBE;
-                MAC_ULE_EVENT_POST(NETSTK_LPM_EVENT);
+                MAC_ULE_EVENT_POST(NETSTK_MAC_ULE_EVENT);
             }
             break;
 
@@ -631,7 +631,7 @@ static void MAC_ULE_ProcessTx(e_nsErr_t *p_err)
             } else {
                 Tmr_Stop(&MAC_ULE_Tmr1W);
                 MAC_ULE_State = MAC_ULE_STATE_TX_DATA;
-                MAC_ULE_EVENT_POST(NETSTK_LPM_EVENT);
+                MAC_ULE_EVENT_POST(NETSTK_MAC_ULE_EVENT);
             }
             break;
 
@@ -648,7 +648,7 @@ static void MAC_ULE_ProcessTx(e_nsErr_t *p_err)
             MAC_ULE_RxPayload(p_err);
             if (*p_err != NETSTK_ERR_NONE) {
                 MAC_ULE_State = MAC_ULE_STATE_TX_DATA;
-                MAC_ULE_EVENT_POST(NETSTK_LPM_EVENT);                
+                MAC_ULE_EVENT_POST(NETSTK_MAC_ULE_EVENT);
             } else {
                 has_tx_finished = 1;
             }
@@ -673,7 +673,7 @@ static void MAC_ULE_ProcessTx(e_nsErr_t *p_err)
 
         MAC_ULE_Cmd = MAC_ULE_CMD_SLEEP;
         MAC_ULE_State = MAC_ULE_STATE_SLEEP;
-        MAC_ULE_EVENT_POST(NETSTK_LPM_EVENT);
+        MAC_ULE_EVENT_POST(NETSTK_MAC_ULE_EVENT);
     }
 }
 
@@ -709,7 +709,7 @@ static void MAC_ULE_TmrIsrPowerUp(void *p_arg)
 {
     if (MAC_ULE_IS_SLEEP()) {
         MAC_ULE_Cmd = MAC_ULE_CMD_SCAN;
-        MAC_ULE_EVENT_POST(NETSTK_LPM_EVENT);
+        MAC_ULE_EVENT_POST(NETSTK_MAC_ULE_EVENT);
     }
 }
 
@@ -726,7 +726,7 @@ static void MAC_ULE_TmrIsr1WFS(void *p_arg)
         (MAC_ULE_RxPktLen   == 0)) {
         MAC_ULE_Cmd = MAC_ULE_CMD_SLEEP;
         MAC_ULE_State = MAC_ULE_STATE_SLEEP;
-        MAC_ULE_EVENT_POST(NETSTK_LPM_EVENT);
+        MAC_ULE_EVENT_POST(NETSTK_MAC_ULE_EVENT);
     }
 }
 
@@ -738,12 +738,12 @@ static void MAC_ULE_TmrIsr1WFA(void *p_arg)
 {
     if (MAC_ULE_State == MAC_ULE_STATE_TX_WFSA) {
         MAC_ULE_State = MAC_ULE_STATE_TX_STROBE;
-        MAC_ULE_EVENT_POST(NETSTK_LPM_EVENT);
+        MAC_ULE_EVENT_POST(NETSTK_MAC_ULE_EVENT);
     }
 
     if (MAC_ULE_State == MAC_ULE_STATE_TX_WFA) {
         MAC_ULE_State = MAC_ULE_STATE_TX_FINISHED;
-        MAC_ULE_EVENT_POST(NETSTK_LPM_EVENT);
+        MAC_ULE_EVENT_POST(NETSTK_MAC_ULE_EVENT);
     }
 }
 
@@ -754,7 +754,7 @@ static void MAC_ULE_TmrIsr1Delay(void *p_arg)
 {
     if (MAC_ULE_State == MAC_ULE_STATE_TX_DELAYED) {
         MAC_ULE_State = MAC_ULE_STATE_TX_CSMA;
-        MAC_ULE_EVENT_POST(NETSTK_LPM_EVENT);
+        MAC_ULE_EVENT_POST(NETSTK_MAC_ULE_EVENT);
     }
 }
 
@@ -766,7 +766,7 @@ static void MAC_ULE_TmrIsr1Idle(void *p_arg)
     if (MAC_ULE_State == MAC_ULE_STATE_IDLE) {
         MAC_ULE_Cmd = MAC_ULE_CMD_SLEEP;
         MAC_ULE_State = MAC_ULE_STATE_SLEEP;
-        MAC_ULE_EVENT_POST(NETSTK_LPM_EVENT);
+        MAC_ULE_EVENT_POST(NETSTK_MAC_ULE_EVENT);
     }
 }
 
@@ -818,7 +818,7 @@ static void MAC_ULE_CSMA(e_nsErr_t *p_err)
         /* switch to SCAN mode */
         MAC_ULE_Off(p_err);
         MAC_ULE_Cmd = MAC_ULE_CMD_SCAN;
-        MAC_ULE_EVENT_POST(NETSTK_LPM_EVENT);
+        MAC_ULE_EVENT_POST(NETSTK_MAC_ULE_EVENT);
 
         if (MAC_ULE_TxCbFnct) {
             MAC_ULE_TxCbFnct(MAC_ULE_TxCbArg, p_err);
