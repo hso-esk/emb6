@@ -886,8 +886,8 @@ void uip_log(char *msg);
 *                           LLC DRIVER SELECTION
 ********************************************************************************
 */
-#define NETSTK_CFG_LLC_802154_EN            ( 1u )
 #define NETSTK_CFG_LLC_NULL_EN              ( 1u )
+#define NETSTK_CFG_LLC_802154_EN            ( 1u )
 
 
 /*
@@ -895,9 +895,9 @@ void uip_log(char *msg);
 *                           MAC DRIVER SELECTION
 ********************************************************************************
 */
+#define NETSTK_CFG_MAC_NULL_EN              ( 1u )
 #define NETSTK_CFG_MAC_802154_EN            ( 1u )
 #define NETSTK_CFG_MAC_802154_ULE_EN        ( 1u )
-#define NETSTK_CFG_MAC_NULL_EN              ( 1u )
 
 
 /*
@@ -905,8 +905,8 @@ void uip_log(char *msg);
 *                           PHY DRIVER SELECTION
 ********************************************************************************
 */
-#define NETSTK_CFG_PHY_802154_EN            ( 1u )
 #define NETSTK_CFG_PHY_NULL_EN              ( 1u )
+#define NETSTK_CFG_PHY_802154_EN            ( 0u )
 
 
 /*
