@@ -87,10 +87,10 @@ void Tmr_Create     (LIB_TMR      *p_tmr,
                      FNCT_VOID      fnct,
                      void          *p_cb);
 
-void Tmr_Start      (LIB_TMR *p_tmr);
 void Tmr_Stop       (LIB_TMR *p_tmr);
-void Tmr_Update     (void);
+void Tmr_Start      (LIB_TMR *p_tmr);
 void Tmr_Delay      (LIB_TMR_TICK  delay);
+void Tmr_Update     (void);
 
 LIB_TMR_STATE  Tmr_StateGet    (LIB_TMR *p_tmr);
 LIB_TMR_TICK   Tmr_RemainGet   (LIB_TMR *p_tmr);
