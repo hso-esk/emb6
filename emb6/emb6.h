@@ -542,41 +542,25 @@ extern const s_nsFramer_t       framer_802154;
 *                           LLC DRIVERS DECLARATIONS
 ********************************************************************************
 */
-#if NETSTK_CFG_LLC_NULL_EN
 extern  const s_nsLLC_t   LLCDrvNull;
-#endif
-
-#if NETSTK_CFG_LLC_802154_EN
 extern  const s_nsLLC_t   LLCDrv802154;
-#endif
-
 
 /*
 ********************************************************************************
 *                           MAC DRIVERS DECLARATIONS
 ********************************************************************************
 */
-#if NETSTK_CFG_MAC_NULL_EN
 extern  const s_nsMAC_t   MACDrvNull;
-#endif
-
-#if NETSTK_CFG_MAC_802154_EN
 extern  const s_nsMAC_t   MACDrv802154;
-#endif
-
-#if NETSTK_CFG_MAC_802154_ULE_EN
 extern  const s_nsMAC_t   MACDrv802154ULE;
-#endif
-
 
 /*
 ********************************************************************************
 *                           PHY DRIVERS DECLARATIONS
 ********************************************************************************
 */
-#if NETSTK_CFG_PHY_NULL_EN
 extern  const s_nsPHY_t   PHYDrvNull;
-#endif
+
 
 
 /*
@@ -584,21 +568,14 @@ extern  const s_nsPHY_t   PHYDrvNull;
 *                           RF DRIVERS DECLARATIONS
 ********************************************************************************
 */
-#if NETSTK_CFG_RF_NULL_EN
-extern  const s_nsRF_t      RFDrvNull;
-#endif
 
-#if NETSTK_CFG_RF_NATIVE_EN
-extern  const s_nsRF_t      RFDrvNative;
-#endif
-
-#if NETSTK_CFG_RF_CC1120_EN
 extern  const s_nsRF_t      RFDrvCC1120;
-#endif
-
-#if NETSTK_CFG_RF_CC120X_EN
+extern  const s_nsRF_t      RFDrvNull;
+extern  const s_nsRF_t      RFDrvNative;
+extern  const s_nsRF_t      rf212_driver;
+extern  const s_nsRF_t      rf212b_driver;
+extern  const s_nsRF_t      RFDrvCC1120;
 extern  const s_nsRF_t      RFDrvCC120x;
-#endif
 
 
 /*==============================================================================

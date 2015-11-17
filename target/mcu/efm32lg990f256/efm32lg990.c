@@ -364,9 +364,10 @@ void hal_ledOn(uint16_t ui_led)
 }/* hal_ledOn() */
 
 /*==============================================================================
-  hal_extIntInit()
+  hal_extIntEnable()
  =============================================================================*/
-uint8_t hal_extIntInit(en_targetExtInt_t e_intSource, pfn_intCallb_t pfn_intCallback)
+uint8_t hal_extIntEnable(en_targetExtInt_t e_extInt, en_targetIntEdge_t e_edge,
+        pfn_intCallb_t pfn_intCallback)
 {
     int8_t    c_ret = 0;
     s_hal_gpio_pin_t* p_gpioPin = NULL;
@@ -376,7 +377,7 @@ uint8_t hal_extIntInit(en_targetExtInt_t e_intSource, pfn_intCallb_t pfn_intCall
       /* Initialize GPIO interrupt dispatcher */
       GPIOINT_Init();
 
-      switch( e_intSource ){
+      switch( e_extInt ){
         case E_TARGET_RADIO_INT:
 
             pf_hal_radioCb = pfn_intCallback;
@@ -615,23 +616,6 @@ void hal_spiTxRx(uint8_t *p_tx, uint8_t *p_rx, uint16_t len)
     /* TODO missing implementation */
 }
 
-uint8_t hal_extIntEnable(en_targetExtInt_t e_extInt, en_targetIntEdge_t e_edge, pfn_intCallb_t pfn_intCallback)
-{
-    /* TODO missing implementation */
-    return 0;
-}
-
-uint8_t hal_extIntDisable(en_targetExtInt_t e_extInt)
-{
-    /* TODO missing implementation */
-    return 0;
-}
-
-uint8_t hal_extIntClear(en_targetExtInt_t e_extInt)
-{
-    /* TODO missing implementation */
-    return 0;
-}
 /*==============================================================================
   hal_spiTranRead()
  =============================================================================*/

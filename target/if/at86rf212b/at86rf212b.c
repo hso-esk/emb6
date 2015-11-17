@@ -109,7 +109,9 @@ static    uint8_t                 c_sensitivity;
 static    void *                  p_spi = NULL;
 static    void *                  p_slpTrig = NULL;
 static    void *                  p_rst = NULL;
-static    s_nsLowMac_t*           p_lmac = NULL;
+
+/* Pointer to the PHY structure */
+static  const s_nsPHY_t*          p_phy = NULL;
 
 /*               Output Power            dBm, Register Mapping */
 static int16_t txpower[TXPWR_LIST_LEN][2] = {
@@ -154,10 +156,11 @@ static void                     _isr_callback(void *);
 static int8_t                   _rf212b_prepare(const void * p_payload, uint8_t c_len);
 static int8_t                   _rf212b_read(void *p_buf, uint8_t c_bufsize);
 static void                     _rf212b_setPanAddr(unsigned pan,unsigned addr,const uint8_t ieee_addr[8]);
+static void                     _rf212b_Ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
 static int8_t                   _rf212b_intON(void);
 static int8_t                   _rf212b_intOFF(void);
-static int8_t                   _rf212b_extON(void);
-static int8_t                   _rf212b_extOFF(void);
+static  void                    _rf212b_extON(e_nsErr_t *p_err);
+static  void                    _rf212b_extOFF(e_nsErr_t *p_err);
 static uint8_t                  _rf212b_getTxPower(void);
 static void                     _rf212b_setTxPower(uint8_t power);
 static void                     _rf212b_setPower(int8_t power);
@@ -166,8 +169,8 @@ static void                     _rf212b_setSensitivity(int8_t sens);
 static int8_t                   _rf212b_getSensitivity(void);
 static int8_t                   _rf212b_getRSSI(void);
 static void                     _rf212b_wReset(void);
-static int8_t                   _rf212b_send(const void *pr_payload, uint8_t c_len);
-static int8_t                   _rf212b_init(s_ns_t* p_netStack);
+static  void                    _rf212b_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
+static  void                    _rf212b_init(void *p_netstk, e_nsErr_t *p_err);
 static void                     _rf212b_AntDiv(uint8_t value);
 static void                     _rf212b_AntExtSw(uint8_t value);
 static void                     _rf212b_promisc(uint8_t value);
@@ -179,20 +182,13 @@ static    void                     _show_stat(void *);
 /*==============================================================================
                          STRUCTURES AND OTHER TYPEDEFS
 ==============================================================================*/
-const s_nsIf_t rf212b_driver = {
-    .name           = "at86rf212b",
-    .init           = _rf212b_init,
-    .send           = _rf212b_send,
-    .on             = _rf212b_extON,
-    .off            = _rf212b_extOFF,
-    .set_txpower    = _rf212b_setPower,
-    .get_txpower    = _rf212b_getPower,
-    .set_sensitivity= _rf212b_setSensitivity,
-    .get_sensitivity= _rf212b_getSensitivity,
-    .get_rssi       = _rf212b_getRSSI,
-    .ant_div        = _rf212b_AntDiv,
-    .ant_rf_switch  = _rf212b_AntExtSw,
-    .set_promisc    = _rf212b_promisc,
+const s_nsRF_t rf212b_driver = {
+        .name               = "rf212",
+        .init               = &_rf212b_init,
+        .send               = &_rf212b_send,
+        .on                 = &_rf212b_extON,
+        .off                = &_rf212b_extOFF,
+        .ioctrl             = &_rf212b_Ioctl,
 };
 /*==============================================================================
                                 LOCAL FUNCTIONS
@@ -998,15 +994,34 @@ void _rf212b_wReset(void)
 } /* _rf212b_wReset() */
 
 /*---------------------------------------------------------------------------*/
-static int8_t _rf212b_send(const void *pr_payload, uint8_t c_len)
+static void _rf212b_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 {
     int8_t c_ret = 0;
 
-    if((c_ret = _rf212b_prepare(pr_payload, c_len))) {
-        LOG_ERR("_rf212b_send: Unable to send, prep failed (%d)",c_ret);
-        return c_ret;
+    if( len > 255 ) {
+            *p_err = NETSTK_ERR_RF_SEND;
+            return;
     }
-    c_ret = _rf212b_transmit(c_len);
+
+
+    if((c_ret = _rf212b_prepare(p_data, len))) {
+        LOG_ERR("_rf212b_send: Unable to send, prep failed (%d)",c_ret);
+        *p_err = NETSTK_ERR_RF_SEND;
+    }
+
+    switch( c_ret = _rf212b_transmit(len) ) {
+        case RADIO_TX_OK:
+            *p_err = NETSTK_ERR_NONE;
+            break;
+
+        case RADIO_TX_NOACK:
+            *p_err = NETSTK_ERR_TX_NOACK;
+            break;
+
+        default:
+            *p_err = NETSTK_ERR_RF_SEND;
+            break;
+    }
 
     if (c_ret != RADIO_TX_OK) {
         bsp_led(E_BSP_LED_RED,E_BSP_LED_TOGGLE);
@@ -1018,9 +1033,55 @@ static int8_t _rf212b_send(const void *pr_payload, uint8_t c_len)
 #if PRINT_PCK_STAT
     pck_cntr_out++;
 #endif /* PRINT_PCK_STAT */
-    return c_ret;
+    return;
 } /* _rf212b_send() */
 
+static void _rf212b_Ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
+{
+#if NETSTK_CFG_ARG_CHK_EN
+    if (p_err == (e_nsErr_t *)0) {
+        return;
+    }
+
+    if (p_val == (void *)0) {
+        return;
+    }
+#endif
+
+
+    *p_err = NETSTK_ERR_NONE;
+    switch (cmd) {
+        case NETSTK_CMD_RF_TXPOWER_SET:
+            _rf212b_setPower( *(int8_t*)p_val );
+            break;
+
+        case NETSTK_CMD_RF_TXPOWER_GET:
+            *(int8_t*)p_val = _rf212b_getPower();
+            break;
+
+        case NETSTK_CMD_RF_RSSI_GET:
+            *((int8_t *)p_val) = _rf212b_getRSSI();
+            break;
+
+        case NETSTK_CMD_RF_IS_RX_BUSY:
+        case NETSTK_CMD_RF_IS_TX_BUSY:
+        case NETSTK_CMD_RF_CCA_GET:
+        case NETSTK_CMD_RF_RF_SWITCH :
+        case NETSTK_CMD_RF_ANT_DIV_SET :
+        case NETSTK_CMD_RF_SENS_SET:
+            _rf212b_setSensitivity( *(uint8_t*)p_val );
+            break;
+
+        case NETSTK_CMD_RF_SENS_GET:
+            *((int8_t *)p_val) = _rf212b_getSensitivity();
+            break;
+
+        default:
+            /* unsupported commands are treated in same way */
+            *p_err = NETSTK_ERR_CMD_UNSUPPORTED;
+            break;
+    }
+}
 
 /*----------------------------------------------------------------------------*/
 /** \brief  This function turns on the radio transceiver
@@ -1076,18 +1137,20 @@ static int8_t _rf212b_intOFF(void)
     return 0;
 } /* _rf212b_off() */
 
-static int8_t _rf212b_extON(void)
+static void _rf212b_extON(e_nsErr_t *p_err)
 {
+    *p_err = NETSTK_ERR_NONE;
     if (c_receive_on)
         return 1;
     _rf212b_intON();
     return 1;
 } /* _rf212b_extON() */
 
-static int8_t _rf212b_extOFF(void)
+static void _rf212b_extOFF(e_nsErr_t *p_err)
 {
+    *p_err = NETSTK_ERR_NONE;
     if (c_receive_on == 0)
-        return 0;
+        return;
 
     /*
      * If we are currently receiving a packet, we still call off(),
@@ -1099,7 +1162,7 @@ static int8_t _rf212b_extOFF(void)
         LOG_INFO("_rf212b_extOFF: busy receiving.");
     }
     _rf212b_intOFF();
-    return 0;
+    return;
 } /* _rf212b_extON() */
 
 #if PRINT_PCK_STAT
@@ -1115,13 +1178,15 @@ static void _show_stat(void * ptr)
 /*==============================================================================
   _rf212b_init()
  =============================================================================*/
-static int8_t _rf212b_init(s_ns_t* p_netStack)
+static void _rf212b_init(void *p_netstk, e_nsErr_t *p_err)
 {
     uint8_t     i;
-    uint8_t        c_ret = 0;
     uint8_t     c_tvers;
     uint8_t     c_tmanu;
     linkaddr_t     un_addr;
+
+    *p_err = NETSTK_ERR_NONE;
+
     /* Wait in case VCC just applied */
     bsp_delay_us(E_TIME_TO_ENTER_P_ON);
     /* Init spi interface and transceiver. Transceiver utilize spi interface. */
@@ -1129,9 +1194,10 @@ static int8_t _rf212b_init(s_ns_t* p_netStack)
     p_slpTrig = bsp_pinInit( E_TARGET_RADIO_SLPTR);
     p_spi = bsp_spiInit();
 
-    if ((p_spi != NULL) && (p_rst != NULL) && (p_slpTrig != NULL) && (p_netStack != NULL))
+    if ((p_spi != NULL) && (p_rst != NULL) && (p_slpTrig != NULL) && (p_netstk != NULL))
     {
-        bsp_extIntEnable(E_TARGET_RADIO_INT, E_TARGET_INT_EDGE_UNKNOWN, _isr_callback);
+        bsp_extIntEnable(E_TARGET_RADIO_INT, E_TARGET_INT_EDGE_RISING,
+                _isr_callback);
 
         /* Set receive buffers empty and point to the first */
         for (i=0;i<RF212B_CONF_RX_BUFFERS;i++)
@@ -1164,12 +1230,12 @@ static int8_t _rf212b_init(s_ns_t* p_netStack)
 
         if (c_tvers != RF212B_REV) {
             LOG_INFO("Unsupported version %u",c_tvers);
-            c_ret = 0;
+            *p_err = NETSTK_ERR_INIT;
             goto error;
         }
         if (c_tmanu != SUPPORTED_MANUFACTURER_ID) {
             LOG_INFO("Unsupported manufacturer ID %u",c_tmanu);
-            c_ret = 0;
+            *p_err = NETSTK_ERR_INIT;
             goto error;
         }
 
@@ -1179,7 +1245,7 @@ static int8_t _rf212b_init(s_ns_t* p_netStack)
           /* Leave radio in on state (?)*/
         _rf212b_intON();
         if (mac_phy_config.mac_address == NULL) {
-            c_ret = 0;
+            *p_err = NETSTK_ERR_INIT;
         }
         else {
             memcpy((void *)&un_addr.u8,  &mac_phy_config.mac_address, 8);
@@ -1195,11 +1261,11 @@ static int8_t _rf212b_init(s_ns_t* p_netStack)
                                 un_addr.u8[6],un_addr.u8[7]);
 
             evproc_regCallback(EVENT_TYPE_PCK_LL,_rf212b_callback);
-            if (p_netStack->lmac != NULL) {
-                p_lmac = p_netStack->lmac;
-                c_ret = 1;
+            if (((s_ns_t*)p_netstk)->phy != NULL) {
+                p_phy = ((s_ns_t*)p_netstk)->phy;
+                *p_err = NETSTK_ERR_NONE;
             } else {
-                c_ret = 0;
+                *p_err = NETSTK_ERR_INIT;
             }
         }
     #if PRINT_PCK_STAT
@@ -1208,7 +1274,7 @@ static int8_t _rf212b_init(s_ns_t* p_netStack)
     #endif /* PRINT_PCK_STAT */
     }
     error:
-    return c_ret;
+    return;
 } /* _rf212b_init() */
 
 /*----------------------------------------------------------------------------*/
@@ -1223,6 +1289,7 @@ static int8_t _rf212b_init(s_ns_t* p_netStack)
 static void _rf212b_callback(c_event_t c_event, p_data_t p_data)
 {
     int8_t      c_len;
+    e_nsErr_t   s_err;
 
     // The case where c_pckCounter is less or equal to 0 is not possible, however...
     c_pckCounter = (c_pckCounter > 0) ? (c_pckCounter - 1) : c_pckCounter;
@@ -1243,9 +1310,9 @@ static void _rf212b_callback(c_event_t c_event, p_data_t p_data)
     /* Restore interrupts. */
     bsp_exitCritical();
 
-    if((c_len > 0) && (p_lmac != NULL)) {
+    if((c_len > 0) && (p_phy != NULL)) {
           packetbuf_set_datalen(c_len);
-          p_lmac->input();
+          p_phy->recv( packetbuf_dataptr(), c_len, &s_err );
     }
 #if PRINT_PCK_STAT
     pck_cntr_in++;
