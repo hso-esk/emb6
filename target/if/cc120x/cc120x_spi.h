@@ -1,8 +1,8 @@
-/*
- * cc120x_spi.h
- *
- *  Created on: 12.11.2015
- *      Author: nphuong
+/**
+ * @file    cc120x_spi.h
+ * @date    12.11.2015
+ * @author  PN
+ * @brief   CC120X SPI HAL
  */
 
 #ifndef CC120X_SPI_PRESENT
