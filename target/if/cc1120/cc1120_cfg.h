@@ -151,6 +151,65 @@ static const s_rf_register_t gcs_rf_cfg_ch_test[] = {
  * \brief   Channel related register values.
  */
 static const s_rf_register_t gcs_rf_cfg_ch_868mhz50bps[] = {
+#if 1
+    {CC1120_SYNC3,              0x93},
+    {CC1120_SYNC2,              0x0B},
+    {CC1120_SYNC1,              0x51},
+    {CC1120_SYNC0,              0xDE},
+    {CC1120_SYNC_CFG1,          0x08},  /* PQT gating enabled, sync threshold 0x08 */
+    {CC1120_SYNC_CFG0,          0x1B},  /* 1B: 16H bit, 17: 32bit Sync */
+
+    {CC1120_DEVIATION_M,        0x99},  /* Deviation = 24.963379 kHz */
+    {CC1120_MODCFG_DEV_E,       0x0D},  /* Mormal modem mode, 2-GFSK, Deviation = 20.019531 kHz */
+    {CC1120_DCFILT_CFG,         0x15},
+    {CC1120_PREAMBLE_CFG1,      0x30},  /* 24byte long preamble */
+    {CC1120_FREQ_IF_CFG,        0x3A},
+    {CC1120_CHAN_BW,            0x02},  /* Channel filter enabled, BW = 100kHz */
+
+    {CC1120_SYMBOL_RATE2,       0x99},  /* Symbol Rate = 50ksps */
+    {CC1120_SYMBOL_RATE1,       0x99},  /* Symbol Rate = 50ksps */
+    {CC1120_SYMBOL_RATE0,       0x99},  /* Symbol Rate = 50ksps */
+
+    {CC1120_AGC_REF,            0x3C},
+    {CC1120_AGC_CS_THR,         0x0C},  /* AGC Carrier Sense Threshold -102 dBm (+102dB offset!!) */
+    {CC1120_AGC_CFG1,           0xA0},
+    {CC1120_AGC_CFG0,           0xC0},
+    {CC1120_SETTLING_CFG,       0x03},
+    {CC1120_FS_CFG,             0x12},
+
+    /* WOR configuration */
+    {CC1120_WOR_CFG0,           0x20},  /* ??? enable clock division, disable Ev2, disable RCOSC calibration, enable RCOSC */
+    {CC1120_WOR_EVENT0_MSB,     0x00},  /* tEv1 = 3.76ms */
+    {CC1120_WOR_EVENT0_LSB,     0x78},  /* tEv1 = 3.76ms */
+
+    {CC1120_PKT_CFG0,           0x20},
+    {CC1120_RFEND_CFG0,         0x09},
+    {CC1120_PA_CFG0,            0x79},
+    {CC1120_PKT_LEN,            0xFF},
+    {CC1120_IF_MIX_CFG,         0x00},
+    {CC1120_TOC_CFG,            0x0A},
+
+    /* Frequency configuration 863.125MHz */
+    {CC1120_FREQ2,              0x6B},
+    {CC1120_FREQ1,              0xE4},
+    {CC1120_FREQ0,              0x00},
+
+    {CC1120_FS_DIG1,            0x00},
+    {CC1120_FS_DIG0,            0x5F},
+    {CC1120_FS_CAL1,            0x40},
+    {CC1120_FS_CAL0,            0x0E},
+    {CC1120_FS_DIVTWO,          0x03},
+    {CC1120_FS_DSM0,            0x33},
+    {CC1120_FS_DVC0,            0x17},
+    {CC1120_FS_PFD,             0x50},
+    {CC1120_FS_PRE,             0x6E},
+    {CC1120_FS_REG_DIV_CML,     0x14},
+    {CC1120_FS_SPARE,           0xAC},
+    {CC1120_FS_VCO0,            0xB4},
+    {CC1120_XOSC5,              0x0E},
+    {CC1120_XOSC2,              0x00},
+    {CC1120_XOSC1,              0x03},
+#else
     {CC1120_SYNC_CFG1,      0x08},  /* PQT gating enabled, sync theshold 0x08 */
     {CC1120_DEVIATION_M,    0x99},  /* Deviation = 24.963379 kHz */
     {CC1120_MODCFG_DEV_E,   0x0D},  /* Mormal modem mode, 2-GFSK, Deviation = 20.019531 kHz */
@@ -181,6 +240,7 @@ static const s_rf_register_t gcs_rf_cfg_ch_868mhz50bps[] = {
     {CC1120_FREQ2,          0x6C},
     {CC1120_FREQ1,          0x80},
     {CC1120_FREQ0,          0x00},
+#endif
 };
 
 /**
