@@ -158,13 +158,8 @@ static void cc112x_Init (void *p_netstk, e_nsErr_t *p_err)
     rf_reset();
 
     /* configure RF register in eWOR mode by default */
-#if NETSTK_CFG_REFACTOR_RF_EN
     uint8_t len = sizeof(rf_cfg_ieee802154g_chan0) / sizeof(s_regSettings_t);
     rf_configureRegs(rf_cfg_ieee802154g_chan0, len);
-#else
-    uint8_t len = sizeof(rf_cfg_ch_434mhz50bps) / sizeof(s_regSettings_t);
-    rf_configureRegs(rf_cfg_ch_434mhz50bps, len);
-#endif
 
     /* calibrate radio */
     rf_calibrateRF();

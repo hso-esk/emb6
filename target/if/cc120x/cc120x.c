@@ -157,8 +157,8 @@ static void cc120x_Init (void *p_netstk, e_nsErr_t *p_err)
     cc120x_spiCmdStrobe(CC120X_SRES);
 
     /* configure RF register in eWOR mode by default */
-    uint8_t len = sizeof(rf_cfg_ch_434mhz50bps) / sizeof(s_regSettings_t);
-    rf_configureRegs(rf_cfg_ch_434mhz50bps, len);
+    uint8_t len = sizeof(rf_cfg_ieee802154g_chan0) / sizeof(s_regSettings_t);
+    rf_configureRegs(rf_cfg_ieee802154g_chan0, len);
 
     /* calibrate radio */
     rf_calibrateRF();

@@ -1364,7 +1364,7 @@ static void cc1120_Init (void *p_netstk, e_nsErr_t *p_err)
     _rf_setMode(E_RF_MODE_PWRSAVE);
 
     /* set current page */
-    _rf_setChannel(E_RF_CHANNEL_434MHZ_50KBPS);
+    _rf_setChannel(E_RF_CHANNEL_868MHZ_50KBPS);
 
     /* set CCA mode */
     _rf_setCCAMode(E_RF_CCA_MODE_CARRIER_OR_ED);
