@@ -85,6 +85,7 @@ typedef enum rf_state
 #define RF_CCA_MODE_RSSI_BELOW_THR      (uint8_t)( 0x24 )
 
 
+
 /*
 ********************************************************************************
 *                                LOCAL VARIABLES
@@ -119,12 +120,11 @@ static void rf_calibrateRF(void);
 static void rf_calibrateRCOsc(void);
 static void rf_cca(e_nsErr_t *p_err);
 
+static void rf_reset(void);
+static void rf_waitRdy(void);
 static void rf_gotoSleep(void);
 static void rf_gotoSniff(void);
 static void rf_gotoIdle(void);
-
-
-
 
 /*
 ********************************************************************************
@@ -154,7 +154,7 @@ static void cc120x_Init (void *p_netstk, e_nsErr_t *p_err)
     RF_Netstk = (s_ns_t *)p_netstk;
 
     /* reset the transceiver */
-    cc120x_spiCmdStrobe(CC120X_SRES);
+    rf_reset();
 
     /* configure RF register in eWOR mode by default */
     uint8_t len = sizeof(rf_cfg_ieee802154g_chan0) / sizeof(s_regSettings_t);
@@ -326,6 +326,10 @@ static void cc120x_Ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
              }
              break;
 
+         case NETSTK_CMD_RF_802154G_EU_CHAN_0:
+             /* TODO missing implementation */
+             break;
+
          case NETSTK_CMD_RF_RF_SWITCH :
          case NETSTK_CMD_RF_ANT_DIV_SET :
          case NETSTK_CMD_RF_SENS_SET :
@@ -346,36 +350,58 @@ static void cc120x_Ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
 */
 static void rf_gotoSleep(void)
 {
-    /* the radio is put into state sleep when received strobe PowerDown */
-    cc120x_spiCmdStrobe(CC120X_SPWD);
-    RF_State = RF_STATE_SLEEP;
+    /* clear interrupts */
+    bsp_extIntClear(RF_INT_TX_FINI);
+    bsp_extIntClear(RF_INT_RX_BUSY);
+    bsp_extIntClear(RF_INT_CCA_STATUS);
 
     /* disable external interrupts */
     bsp_extIntDisable(RF_INT_TX_FINI);
     bsp_extIntDisable(RF_INT_RX_BUSY);
     bsp_extIntDisable(RF_INT_CCA_STATUS);
+
+    /* the radio is put into state sleep when received strobe PowerDown */
+    rf_waitRdy();
+    cc120x_spiCmdStrobe(CC120X_SPWD);
+    RF_State = RF_STATE_SLEEP;
 }
 
 
 static void rf_gotoSniff(void)
 {
+    /* clear interrupts */
+    bsp_extIntClear(RF_INT_RX_BUSY);
+
+    /* enable interrupts */
+    bsp_extIntEnable(RF_INT_RX_BUSY, RF_INT_EDGE_RX_BUSY, rf_isrRxStarted);
+
+    /* strobe WOR */
+    rf_waitRdy();
     cc120x_spiCmdStrobe(CC120X_SWOR);
     RF_State = RF_STATE_SNIFF;
-
-    bsp_extIntClear(RF_INT_RX_BUSY);
-    bsp_extIntEnable(RF_INT_RX_BUSY, RF_INT_EDGE_RX_BUSY, rf_isrRxStarted);
 }
 
 
 static void rf_gotoIdle(void)
 {
+    rf_waitRdy();
     cc120x_spiCmdStrobe(CC120X_SIDLE);
 }
 
 
-static void rf_gotoReset(void)
+static void rf_reset(void)
 {
+    rf_waitRdy();
+    cc120x_spiCmdStrobe(CC120X_SRES);
+}
 
+
+static void rf_waitRdy(void)
+{
+    rf_status_t chip_status;
+    do {
+        chip_status = cc120x_spiCmdStrobe(CC120X_SNOP);
+    } while (chip_status & CC120X_STATE_CHIP_RDYn);
 }
 
 
@@ -423,9 +449,9 @@ static void rf_istTxFinished(void *p_arg)
 static void rf_isrRxStarted(void *p_arg)
 {
     if (RF_State == RF_STATE_SNIFF) {
-        LED_RX_ON();
         RF_State = RF_STATE_RX_BUSY;
         RF_SEM_POST(NETSTK_RF_EVENT);
+        LED_RX_ON();
     }
 }
 
@@ -459,13 +485,13 @@ static void rf_eventHandler(c_event_t c_event, p_data_t p_data)
          * (2)  Signal the next higher layer of the received frame
          */
         rf_rxFifoRead();
-        LED_RX_OFF();
         RF_Netstk->phy->recv(RF_RxBuf, RF_RxBufLen, &err);
 
         /*
          * exit actions
          */
         rf_gotoSniff();
+        LED_RX_OFF();
     }
 }
 
