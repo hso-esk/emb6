@@ -1,5 +1,5 @@
 /**
- * @file    cc1200.h
+ * @file    cc120x.h
  * @date    12.11.2015
  * @author  PN
  * @brief   Header file of TI transceiver CC120X
@@ -280,7 +280,18 @@
 #define CC120X_STATE_SETTLING           0x50
 #define CC120X_STATE_RXFIFO_ERROR       0x60
 #define CC120X_STATE_TXFIFO_ERROR       0x70
+#define CC120X_STATE_CHIP_RDYn          0x80
 
 
+/**
+ * @brief   RF register setting structure declaration
+ */
+typedef struct register_settings s_regSettings_t;
+
+struct register_settings
+{
+    uint16_t  addr;
+    uint8_t   data;
+};
 
 #endif /* CC120X_PRESENT */
