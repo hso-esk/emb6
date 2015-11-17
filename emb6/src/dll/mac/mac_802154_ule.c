@@ -952,30 +952,27 @@ static void MAC_ULE_TxStrobe(e_nsErr_t *p_err)
                     is_done = (tmr_wfa_state != LIB_TMR_STATE_RUNNING );
                 }
             } while (!is_done);
-            /*
-             * Strobe ACK waiting timeout.
-             * It should be noted that the variable is_rx_busy is always set to
-             * FALSE in case of broadcasting
-             */
-            if (*p_err == NETSTK_ERR_BUSY) {
-                *p_err = NETSTK_ERR_NONE;
+        }
 
-                /* wait for a time period until the packet is totally received */
-                MAC_ULE_State = MAC_ULE_STATE_TX_WFSA;
-                MAC_ULE_Tmr1Start(&MAC_ULE_Tmr1W,
-                                   LPR_PORT_WFA_TIMEOUT_IN_MS,
-                                   MAC_ULE_TmrIsr1WFA);
-            } else {
-                /* Create a Strobe */
-                MAC_ULE_TxPktPtr = SmartMACFramer.Create(LPR_FRAME_TYPE_STROBE,
-                                                         &MAC_ULE_TxPktLen,
-                                                         &tx_delay,
-                                                         p_err);
-            }
+        /*
+         * Strobe ACK waiting timeout.
+         * It should be noted that the variable is_rx_busy is always set to
+         * FALSE in case of broadcasting
+         */
+        if (*p_err == NETSTK_ERR_BUSY) {
+            *p_err = NETSTK_ERR_NONE;
+
+            /* wait for a time period until the packet is totally received */
+            MAC_ULE_State = MAC_ULE_STATE_TX_WFSA;
+            MAC_ULE_Tmr1Start(&MAC_ULE_Tmr1W,
+                               LPR_PORT_WFA_TIMEOUT_IN_MS,
+                               MAC_ULE_TmrIsr1WFA);
         } else {
-            if (is_broadcast == FALSE) {
-                Tmr_Stop(&MAC_ULE_Tmr1W);
-            }
+            /* Create a Strobe */
+            MAC_ULE_TxPktPtr = SmartMACFramer.Create(LPR_FRAME_TYPE_STROBE,
+                                                     &MAC_ULE_TxPktLen,
+                                                     &tx_delay,
+                                                     p_err);
         }
 
         /*
