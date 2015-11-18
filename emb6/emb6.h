@@ -344,6 +344,8 @@ typedef enum netstk_ioc_cmd
     NETSTK_CMD_RF_SYNC_SET,         /*!< Set SYNC words                 */
     NETSTK_CMD_RF_SYNC_GET,         /*!< Get SYNC words                 */
 
+    NETSTK_CMD_RF_802154G_EU_CHAN,  /*!< Channel center for IEEE802.15.4 in Europe  */
+
 }e_nsIocCmd_t;
 
 
