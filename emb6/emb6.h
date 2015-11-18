@@ -338,11 +338,12 @@ typedef enum netstk_ioc_cmd
     NETSTK_CMD_RF_RSSI_GET,         /*!< Get RSSI                       */
     NETSTK_CMD_RF_CCA_GET,          /*!< Get CCA                        */
     NETSTK_CMD_RF_ANT_DIV_SET,      /*!< Set Antenna Div.               */
-    NETSTK_CMD_RF_RF_SWITCH,        /*!< */
+    NETSTK_CMD_RF_RF_SWITCH_SET,    /*!< */
     NETSTK_CMD_RF_IS_RX_BUSY,       /*!< Indicate if RF is in RX state  */
     NETSTK_CMD_RF_IS_TX_BUSY,       /*!< Indicate if RF is in TX state  */
     NETSTK_CMD_RF_SYNC_SET,         /*!< Set SYNC words                 */
     NETSTK_CMD_RF_SYNC_GET,         /*!< Get SYNC words                 */
+    NETSTK_CMD_RF_PROMISC_SET,      /*!< Set promisc mode                */
 
     NETSTK_CMD_RF_802154G_EU_CHAN,  /*!< Channel center for IEEE802.15.4 in Europe  */
 
