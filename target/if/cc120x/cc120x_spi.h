@@ -10,6 +10,7 @@
 
 typedef uint8_t rf_status_t;
 
+void cc120x_spiInit(void);
 
 rf_status_t cc120x_spiRegRead(uint16_t addr, uint8_t *data, uint8_t len);
 rf_status_t cc120x_statusTxGet(void);
@@ -17,7 +18,6 @@ rf_status_t cc120x_statusRxGet(void);
 rf_status_t cc120x_spiRegWrite(uint16_t addr, uint8_t *data, uint8_t len);
 rf_status_t cc120x_spiTxFifoWrite(uint8_t *pWriteData, uint8_t len);
 rf_status_t cc120x_spiRxFifoRead(uint8_t *pReadData, uint8_t len);
-
 
 rf_status_t cc120x_spiCmdStrobe(uint8_t cmd);
 

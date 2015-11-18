@@ -153,6 +153,9 @@ static void cc120x_Init (void *p_netstk, e_nsErr_t *p_err)
     /* store pointer to global netstack structure */
     RF_Netstk = (s_ns_t *)p_netstk;
 
+    /* initialize SPI handle */
+    cc120x_spiInit();
+
     /* reset the transceiver */
     rf_reset();
 

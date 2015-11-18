@@ -280,23 +280,12 @@ uint16_t bsp_led(en_bspLedColor_t ui_led, en_bspLedAction_t en_ledAction);
 uint8_t bsp_pin(en_bspPinAction_t e_pinAct, void * p_pin);
 
 
-#define     bsp_spiInit()                   hal_spiInit()
+#define     bsp_spiInit             hal_spiInit
+#define     bsp_spiSlaveSel         hal_spiSlaveSel
+#define     bsp_spiRead             hal_spiRead
+#define     bsp_spiWrite            hal_spiWrite
+#define     bsp_spiTxRx             hal_spiTxRx
 
-uint8_t bsp_spiRegRead(void * p_spi, uint8_t c_addr);
-
-void bsp_spiFrameRead(void * p_spi,uint8_t c_addr, uint8_t * pc_data, uint16_t * pi_len);
-
-uint8_t bsp_spiBitRead(void * p_spi, uint8_t c_addr, uint8_t c_mask, uint8_t c_pos );
-
-void bsp_spiRegWrite(void * p_spi, uint8_t c_addr, uint8_t  c_data);
-
-void bsp_spiFrameWrite(void * p_spi, uint8_t c_addr, uint8_t * pc_data, uint8_t c_len);
-
-#define bsp_spiSelect           hal_spiSelect
-#define bsp_spiDeselect         hal_spiDeselect
-#define bsp_spiTxRx             hal_spiTxRx
-#define bsp_spiRead             hal_spiRead
-#define bsp_spiWrite            hal_spiWrite
 
 
 /*============================================================================*/

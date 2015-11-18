@@ -29,12 +29,17 @@
 #define RADIO_READ_ACCESS       (uint8_t)( 0x80 )
 #define RADIO_WRITE_ACCESS      (uint8_t)( 0x00 )
 
+#define CC112X_SPI_ON()         do {bsp_spiSlaveSel(cc112x_spiHandle, TRUE );} while(0)
+#define CC112X_SPI_OFF()        do {bsp_spiSlaveSel(cc112x_spiHandle, FALSE);} while(0)
+
 
 /*
 ********************************************************************************
 *                                LOCAL VARIABLES
 ********************************************************************************
 */
+static void *cc112x_spiHandle;
+
 
 
 /*
@@ -72,7 +77,7 @@ static uint8_t cc112x_spi8bitRegAccess(uint8_t     access,
     uint8_t data;
 
 
-    bsp_spiSelect(NULL);
+    CC112X_SPI_ON();
     {
         /* Transmit access command */
         data = access | addr;
@@ -93,7 +98,7 @@ static uint8_t cc112x_spi8bitRegAccess(uint8_t     access,
             }
         }
     }
-    bsp_spiDeselect(NULL);
+    CC112X_SPI_OFF();
 
 
     return (chip_status);
@@ -119,7 +124,7 @@ static uint8_t cc112x_spi16BitRegAccess(uint8_t    access,
     uint8_t data;
 
 
-    bsp_spiSelect(NULL);
+    CC112X_SPI_ON();
     {
         /* Transmit access command */
         data = access | ext_addr;
@@ -141,8 +146,7 @@ static uint8_t cc112x_spi16BitRegAccess(uint8_t    access,
             }
         }
     }
-    bsp_spiDeselect(NULL);
-
+    CC112X_SPI_OFF();
 
     return chip_status;
 }
@@ -238,6 +242,12 @@ rf_status_t cc112x_statusRxGet(void)
 }
 
 
+void cc112x_spiInit(void)
+{
+    cc112x_spiHandle = bsp_spiInit();
+}
+
+
 /**
  *
  * @param uc_cmd
@@ -247,9 +257,9 @@ rf_status_t cc112x_spiCmdStrobe(uint8_t cmd)
 {
     rf_status_t chip_status;
 
-    bsp_spiSelect(NULL);
+    CC112X_SPI_ON();
     bsp_spiTxRx(&cmd, &chip_status, 1);
-    bsp_spiDeselect(NULL);
+    CC112X_SPI_OFF();
 
     return chip_status;
 }

@@ -1353,6 +1353,8 @@ static void cc1120_Init (void *p_netstk, e_nsErr_t *p_err)
     }
 #endif
 
+    /* initialize SPI handle */
+    cc1120_spiInit();
 
     /* Initialize RF TI CC1120 */
     _rf_init();

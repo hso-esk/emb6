@@ -10,6 +10,7 @@
 
 typedef uint8_t rf_status_t;
 
+void cc112x_spiInit(void);
 
 rf_status_t cc112x_spiRegRead(uint16_t addr, uint8_t *data, uint8_t len);
 rf_status_t cc112x_statusTxGet(void);

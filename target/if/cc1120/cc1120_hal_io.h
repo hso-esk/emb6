@@ -431,6 +431,8 @@ static const registerSetting_t preferredSettings2[] = {
 /*============================================================================*/
 
 /* */
+void cc1120_spiInit(void);
+
 trxStatus_t cc1120_spiReadReg( uint16_t i_addr, uint8_t *pc_data, uint8_t c_len );
 trxStatus_t cc1120_spiWriteReg( uint16_t i_addr, uint8_t *pc_data, uint8_t c_len );
 trxStatus_t cc1120_spiWriteTxFifo( uint8_t *pc_writeData, uint8_t c_len );

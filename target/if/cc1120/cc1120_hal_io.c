@@ -21,6 +21,12 @@
 
 
 /*============================================================================*/
+/*                            LOCAL VARIABLES                                 */
+/*============================================================================*/
+static void *cc1120_spiHandle;
+
+
+/*============================================================================*/
 /*                                DEFINES                                     */
 /*============================================================================*/
 /* Bit fields in the chip status byte */
@@ -31,10 +37,21 @@
 #define RADIO_READ_ACCESS    (uint8_t)( 0x80 )
 #define RADIO_WRITE_ACCESS   (uint8_t)( 0x00 )
 
+#define CC1120_SPI_ON()         do {bsp_spiSlaveSel(cc1120_spiHandle, TRUE );} while(0)
+#define CC1120_SPI_OFF()        do {bsp_spiSlaveSel(cc1120_spiHandle, FALSE);} while(0)
 
 /*============================================================================*/
 /*                              FUNCTIONS                                     */
 /*============================================================================*/
+
+/*=============================================================================
+ * cc1120_spiInit()
+ *============================================================================*/
+void cc1120_spiInit(void)
+{
+    cc1120_spiHandle = bsp_spiInit();
+}
+
 /*=============================================================================
  * cc1120_spiReadReg()
  *============================================================================*/
@@ -283,9 +300,10 @@ uint8_t cc1120_spiCmdStrobe(uint8_t cmd)
 {
     uint8_t chip_status;
 
-    bsp_spiSelect(NULL);
+
+    CC1120_SPI_ON();
     bsp_spiTxRx(&cmd, &chip_status, 1);
-    bsp_spiDeselect(NULL);
+    CC1120_SPI_OFF();
 
     return chip_status;
 }
@@ -308,7 +326,7 @@ uint8_t cc1120_spi8bitRegAccess(uint8_t     access,
     uint8_t data;
 
 
-    bsp_spiSelect(NULL);
+    CC1120_SPI_ON();
     {
         /* Transmit access command */
         data = access | addr;
@@ -329,7 +347,7 @@ uint8_t cc1120_spi8bitRegAccess(uint8_t     access,
             }
         }
     }
-    bsp_spiDeselect(NULL);
+    CC1120_SPI_OFF();
 
 
     return (chip_status);
@@ -355,7 +373,7 @@ uint8_t cc1120_spi16BitRegAccess(uint8_t    access,
     uint8_t data;
 
 
-    bsp_spiSelect(NULL);
+    CC1120_SPI_ON();
     {
         /* Transmit access command */
         data = access | ext_addr;
@@ -377,7 +395,7 @@ uint8_t cc1120_spi16BitRegAccess(uint8_t    access,
             }
         }
     }
-    bsp_spiDeselect(NULL);
+    CC1120_SPI_OFF();
 
 
     return chip_status;
