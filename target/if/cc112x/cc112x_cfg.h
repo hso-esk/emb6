@@ -26,7 +26,7 @@
  *          Preamble length:    24bytes
  *          RX termination:     Carrier Sense with threshold of -90dBm
  */
-static const s_regSettings_t rf_cfg_ieee802154g_chan0[] =
+static const s_regSettings_t cc112x_cfg_ieee802154g_chan0[] =
 {
     {CC112X_IOCFG3,             0x0F},  /* CCA_STATUS */
     {CC112X_IOCFG2,             0x13},
@@ -116,7 +116,7 @@ static const s_regSettings_t rf_cfg_ieee802154g_chan0[] =
  *          Preamble length:    24bytes
  *          RX termination:     Carrier Sense with threshold of -90dBm
  */
-static const s_regSettings_t rf_cfg_ch_434mhz50bps[] =
+static const s_regSettings_t cc112x_cfg_ch_434mhz50bps[] =
 {
     {CC112X_IOCFG3,             0x0F},  /* CCA_STATUS */
     {CC112X_IOCFG2,             0x13},

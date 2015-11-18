@@ -62,7 +62,7 @@ typedef enum rf_state
 ********************************************************************************
 */
 #define RF_SEM_POST(_event_)          evproc_putEvent(E_EVPROC_HEAD, _event_, NULL)
-#define RF_SEM_WAIT(_event_)          evproc_regCallback(_event_, rf_eventHandler)
+#define RF_SEM_WAIT(_event_)          evproc_regCallback(_event_, cc112x_eventHandler)
 
 #define RF_ISR_ACTION_NONE                  (uint8_t)( 0u )
 #define RF_ISR_ACTION_TX_FINISHED           (uint8_t)( 1u )
@@ -74,7 +74,7 @@ typedef enum rf_state
 #define RF_IS_IN_TX(_chip_status)       ((_chip_status) & 0x20)
 
 #define RF_INT_TX_FINI                  E_TARGET_EXT_INT_0
-#define RF_INT_RX_BUSY                  E_TARGET_EXT_INT_1
+#define RF_INT_RX_STARTED               E_TARGET_EXT_INT_1
 #define RF_INT_CCA_STATUS               E_TARGET_EXT_INT_2
 
 #define RF_INT_EDGE_TX_FINI             E_TARGET_INT_EDGE_FALLING
@@ -83,6 +83,8 @@ typedef enum rf_state
 
 #define RF_CCA_MODE_NONE                (uint8_t)( 0x00 )
 #define RF_CCA_MODE_RSSI_BELOW_THR      (uint8_t)( 0x24 )
+
+#define RF_MARC_STATUS_1_RX_FINI        (uint8_t)( 0x80 )
 
 
 /*
@@ -107,25 +109,27 @@ static void cc112x_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
 static void cc112x_Recv(uint8_t *p_buf, uint16_t len, e_nsErr_t *p_err);
 static void cc112x_Ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
 
-static void rf_rxFifoRead(void);
+static void cc112x_rxFifoRead(void);
 
-static void rf_istTxFinished(void *p_arg);
-static void rf_isrRxStarted(void *p_arg);
-static void rf_isrCCADone(void *p_arg);
-static void rf_eventHandler(c_event_t c_event, p_data_t p_data);
+static void cc112x_istTxFinished(void *p_arg);
+static void cc112x_isrRxStarted(void *p_arg);
+static void cc112x_isrCCADone(void *p_arg);
+static void cc112x_eventHandler(c_event_t c_event, p_data_t p_data);
 
-static void rf_configureRegs(const s_regSettings_t *p_regs, uint8_t len);
-static void rf_calibrateRF(void);
-static void rf_calibrateRCOsc(void);
-static void rf_cca(e_nsErr_t *p_err);
+static void cc112x_configureRegs(const s_regSettings_t *p_regs, uint8_t len);
+static void cc112x_calibrateRF(void);
+static void cc112x_calibrateRCOsc(void);
+static void cc112x_cca(e_nsErr_t *p_err);
 
-static void rf_reset(void);
-static void rf_waitRdy(void);
-static void rf_gotoSleep(void);
-static void rf_gotoSniff(void);
-static void rf_gotoIdle(void);
+static void cc112x_reset(void);
+static void cc112x_waitRdy(void);
+static void cc112x_gotoSleep(void);
+static void cc112x_gotoSniff(void);
+static void cc112x_gotoIdle(void);
 
-
+static void cc112x_txPowerSet(uint8_t power, e_nsErr_t *p_err);
+static void cc112x_txPowerGet(uint8_t *p_power, e_nsErr_t *p_err);
+static void cc112x_chanlSet(uint8_t chan, e_nsErr_t *p_err);
 
 /*
 ********************************************************************************
@@ -148,6 +152,8 @@ static void cc112x_Init (void *p_netstk, e_nsErr_t *p_err)
     }
 #endif
 
+    uint8_t len;
+
     /* indicates radio is in state initialization */
     RF_State = RF_STATE_INIT;
 
@@ -158,26 +164,24 @@ static void cc112x_Init (void *p_netstk, e_nsErr_t *p_err)
     cc112x_spiInit();
 
     /* reset the transceiver */
-    rf_reset();
+    cc112x_reset();
 
     /* configure RF register in eWOR mode by default */
-    uint8_t len = sizeof(rf_cfg_ieee802154g_chan0) / sizeof(s_regSettings_t);
-    rf_configureRegs(rf_cfg_ieee802154g_chan0, len);
+    len = sizeof(cc112x_cfg_ieee802154g_chan0) / sizeof(s_regSettings_t);
+    cc112x_configureRegs(cc112x_cfg_ieee802154g_chan0, len);
 
     /* calibrate radio */
-    rf_calibrateRF();
+    cc112x_calibrateRF();
 
     /* calibrate RC oscillator */
-    rf_calibrateRCOsc();
+    cc112x_calibrateRCOsc();
 
-    /*
-     * configure RF to go to state Sniff
-     */
+    /* disable external interrupts */
+    bsp_extIntDisable(RF_INT_TX_FINI);
+    bsp_extIntDisable(RF_INT_RX_STARTED);
+
     bsp_extIntClear(RF_INT_TX_FINI);
-    bsp_extIntClear(RF_INT_RX_BUSY);
-
-    bsp_extIntEnable(RF_INT_TX_FINI, RF_INT_EDGE_TX_FINI, rf_istTxFinished);
-    bsp_extIntEnable(RF_INT_RX_BUSY, RF_INT_EDGE_RX_BUSY, rf_isrRxStarted);
+    bsp_extIntClear(RF_INT_RX_STARTED);
 
     /* initialize local variables */
     RF_SEM_WAIT(NETSTK_RF_EVENT);
@@ -185,7 +189,7 @@ static void cc112x_Init (void *p_netstk, e_nsErr_t *p_err)
     RF_RxBufLen = 0;
 
     /* goto state sleep */
-    rf_gotoSleep();
+    cc112x_gotoSleep();
 }
 
 
@@ -199,11 +203,11 @@ static void cc112x_On (e_nsErr_t *p_err)
 
     /* if currently in state sleep, then must move on state idle first */
     if (RF_State == RF_STATE_SLEEP) {
-        rf_gotoIdle();
+        cc112x_gotoIdle();
     }
 
     /* go to state sniff */
-    rf_gotoSniff();
+    cc112x_gotoSniff();
 
     /* indicate successful operation */
     *p_err = NETSTK_ERR_NONE;
@@ -224,7 +228,7 @@ static void cc112x_Off (e_nsErr_t *p_err)
     }
 
     /* go to state sleep */
-    rf_gotoSleep();
+    cc112x_gotoSleep();
 
     /* indicate successful operation */
     *p_err = NETSTK_ERR_NONE;
@@ -254,10 +258,16 @@ static void cc112x_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
          * entry actions
          */
         RF_State = RF_STATE_TX_STARTED;
-        rf_gotoIdle();
-        rf_calibrateRF();
+        cc112x_gotoIdle();
+        cc112x_calibrateRF();
+
+        bsp_extIntDisable(RF_INT_RX_STARTED);
+        bsp_extIntDisable(RF_INT_TX_FINI);
+
+        bsp_extIntClear(RF_INT_RX_STARTED);
         bsp_extIntClear(RF_INT_TX_FINI);
-        bsp_extIntEnable(RF_INT_TX_FINI, RF_INT_EDGE_TX_FINI, rf_istTxFinished);
+
+        bsp_extIntEnable(RF_INT_TX_FINI, RF_INT_EDGE_TX_FINI, cc112x_istTxFinished);
 
         /*
          * do actions
@@ -284,7 +294,7 @@ static void cc112x_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
         /*
          * Exit actions
          */
-        rf_gotoSniff();
+        cc112x_gotoSniff();
     }
 }
 
@@ -311,38 +321,38 @@ static void cc112x_Ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
 
     *p_err = NETSTK_ERR_NONE;
     switch (cmd) {
-         case NETSTK_CMD_RF_TXPOWER_SET :
-             break;
+        case NETSTK_CMD_RF_TXPOWER_SET:
+            cc112x_txPowerSet(*((uint8_t *) p_val), p_err);
+            break;
 
-         case NETSTK_CMD_RF_TXPOWER_GET :
-             break;
+        case NETSTK_CMD_RF_TXPOWER_GET:
+            cc112x_txPowerGet(p_val, p_err);
+            break;
 
-         case NETSTK_CMD_RF_CCA_GET :
-             rf_cca(p_err);
-             break;
+        case NETSTK_CMD_RF_CCA_GET:
+            cc112x_cca(p_err);
+            break;
 
-         case NETSTK_CMD_RF_RSSI_GET :
-             break;
+        case NETSTK_CMD_RF_IS_RX_BUSY:
+            if (RF_IS_RX_BUSY()) {
+                *p_err = NETSTK_ERR_BUSY;
+            }
+            break;
 
-         case NETSTK_CMD_RF_IS_RX_BUSY:
-             if (RF_IS_RX_BUSY()) {
-                 *p_err = NETSTK_ERR_BUSY;
-             }
-             break;
+        case NETSTK_CMD_RF_802154G_EU_CHAN:
+            cc112x_chanlSet(*((uint8_t *) p_val), p_err);
+            break;
 
-         case NETSTK_CMD_RF_802154G_EU_CHAN_0:
-             /* TODO missing implementation */
-             break;
-
-         case NETSTK_CMD_RF_RF_SWITCH :
-         case NETSTK_CMD_RF_ANT_DIV_SET :
-         case NETSTK_CMD_RF_SENS_SET :
-         case NETSTK_CMD_RF_SENS_GET :
-         default:
-             /* unsupported commands are treated in same way */
-             *p_err = NETSTK_ERR_CMD_UNSUPPORTED;
-             break;
-     }
+        case NETSTK_CMD_RF_RSSI_GET:
+        case NETSTK_CMD_RF_RF_SWITCH:
+        case NETSTK_CMD_RF_ANT_DIV_SET:
+        case NETSTK_CMD_RF_SENS_SET:
+        case NETSTK_CMD_RF_SENS_GET:
+        default:
+            /* unsupported commands are treated in same way */
+            *p_err = NETSTK_ERR_CMD_UNSUPPORTED;
+            break;
+    }
 }
 
 
@@ -352,52 +362,53 @@ static void cc112x_Ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
 *                           STATE TRANSITION HANDLERS
 ********************************************************************************
 */
-static void rf_gotoSleep(void)
+static void cc112x_gotoSleep(void)
 {
-    /* clear interrupts */
-    bsp_extIntClear(RF_INT_TX_FINI);
-    bsp_extIntClear(RF_INT_RX_BUSY);
-    bsp_extIntClear(RF_INT_CCA_STATUS);
-
     /* disable external interrupts */
     bsp_extIntDisable(RF_INT_TX_FINI);
-    bsp_extIntDisable(RF_INT_RX_BUSY);
+    bsp_extIntDisable(RF_INT_RX_STARTED);
     bsp_extIntDisable(RF_INT_CCA_STATUS);
 
+    /* clear interrupts */
+    bsp_extIntClear(RF_INT_TX_FINI);
+    bsp_extIntClear(RF_INT_RX_STARTED);
+    bsp_extIntClear(RF_INT_CCA_STATUS);
+
     /* the radio is put into state sleep when received strobe PowerDown */
-    rf_waitRdy();
+    cc112x_waitRdy();
     cc112x_spiCmdStrobe(CC112X_SPWD);
     RF_State = RF_STATE_SLEEP;
 }
 
 
-static void rf_gotoSniff(void)
+static void cc112x_gotoSniff(void)
 {
-    bsp_extIntClear(RF_INT_RX_BUSY);
-    bsp_extIntEnable(RF_INT_RX_BUSY, RF_INT_EDGE_RX_BUSY, rf_isrRxStarted);
+    bsp_extIntDisable(RF_INT_RX_STARTED);
+    bsp_extIntClear(RF_INT_RX_STARTED);
+    bsp_extIntEnable(RF_INT_RX_STARTED, RF_INT_EDGE_RX_BUSY, cc112x_isrRxStarted);
 
-    rf_waitRdy();
+    cc112x_waitRdy();
     cc112x_spiCmdStrobe(CC112X_SWOR);
     RF_State = RF_STATE_SNIFF;
 }
 
 
-static void rf_gotoIdle(void)
+static void cc112x_gotoIdle(void)
 {
-    rf_waitRdy();
+    cc112x_waitRdy();
     cc112x_spiCmdStrobe(CC112X_SIDLE);
 }
 
 
-static void rf_reset(void)
+static void cc112x_reset(void)
 {
-    rf_waitRdy();
+    cc112x_waitRdy();
     cc112x_spiCmdStrobe(CC112X_SRES);
 }
 
 
 
-static void rf_waitRdy(void)
+static void cc112x_waitRdy(void)
 {
     rf_status_t chip_status;
     do {
@@ -411,7 +422,7 @@ static void rf_waitRdy(void)
 *                           TRANSMISSION HANDLERS
 ********************************************************************************
 */
-static void rf_rxFifoRead(void)
+static void cc112x_rxFifoRead(void)
 {
     /* Read number of bytes in RX FIFO*/
     cc112x_spiRegRead(CC112X_NUM_RXBYTES, &RF_RxBufLen, 1);
@@ -439,7 +450,7 @@ static void rf_rxFifoRead(void)
 *                       INTERRUPT SUBROUTINE HANDLERS
 ********************************************************************************
 */
-static void rf_istTxFinished(void *p_arg)
+static void cc112x_istTxFinished(void *p_arg)
 {
     if (RF_State == RF_STATE_TX_BUSY) {
         RF_State = RF_STATE_TX_FINI;
@@ -447,17 +458,24 @@ static void rf_istTxFinished(void *p_arg)
 }
 
 
-static void rf_isrRxStarted(void *p_arg)
+static void cc112x_isrRxStarted(void *p_arg)
 {
-    if (RF_State == RF_STATE_SNIFF) {
+    LED_RX_ON();
+
+    uint8_t marc_status;
+    cc112x_spiRegRead(CC112X_MARC_STATUS1, &marc_status, 1);
+
+    if ((RF_State == RF_STATE_SNIFF) &&
+        (marc_status == RF_MARC_STATUS_1_RX_FINI)) {
         RF_State = RF_STATE_RX_BUSY;
+        bsp_extIntDisable(RF_INT_RX_STARTED);
+        bsp_extIntClear(RF_INT_RX_STARTED);
         RF_SEM_POST(NETSTK_RF_EVENT);
-        LED_RX_ON();
     }
 }
 
 
-static void rf_isrCCADone(void *p_arg)
+static void cc112x_isrCCADone(void *p_arg)
 {
     if (RF_State == RF_STATE_CCA_BUSY) {
         RF_State = RF_STATE_CCA_FINI;
@@ -465,7 +483,7 @@ static void rf_isrCCADone(void *p_arg)
 }
 
 
-static void rf_eventHandler(c_event_t c_event, p_data_t p_data)
+static void cc112x_eventHandler(c_event_t c_event, p_data_t p_data)
 {
     e_nsErr_t err;
 
@@ -485,13 +503,13 @@ static void rf_eventHandler(c_event_t c_event, p_data_t p_data)
          *      be trimmed.
          * (2)  Signal the next higher layer of the received frame
          */
-        rf_rxFifoRead();
+        cc112x_rxFifoRead();
         RF_Netstk->phy->recv(RF_RxBuf, RF_RxBufLen, &err);
 
         /*
          * exit actions
          */
-        rf_gotoSniff();
+        cc112x_gotoSniff();
         LED_RX_OFF();
     }
 }
@@ -503,7 +521,7 @@ static void rf_eventHandler(c_event_t c_event, p_data_t p_data)
 *                               MISCELLANEOUS
 ********************************************************************************
 */
-static void rf_configureRegs(const s_regSettings_t *p_regs, uint8_t len)
+static void cc112x_configureRegs(const s_regSettings_t *p_regs, uint8_t len)
 {
     uint8_t ix;
     uint8_t data;
@@ -515,7 +533,7 @@ static void rf_configureRegs(const s_regSettings_t *p_regs, uint8_t len)
 }
 
 
-static void rf_calibrateRF(void)
+static void cc112x_calibrateRF(void)
 {
     uint8_t marc_state;
 
@@ -528,7 +546,7 @@ static void rf_calibrateRF(void)
 }
 
 
-static void rf_calibrateRCOsc(void)
+static void cc112x_calibrateRCOsc(void)
 {
     uint8_t temp;
 
@@ -550,7 +568,7 @@ static void rf_calibrateRCOsc(void)
 }
 
 
-static void rf_cca(e_nsErr_t *p_err)
+static void cc112x_cca(e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
     if (p_err == NULL) {
@@ -592,8 +610,9 @@ static void rf_cca(e_nsErr_t *p_err)
         /*
          * Do actions
          */
+        bsp_extIntDisable(RF_INT_CCA_STATUS);
         bsp_extIntClear(RF_INT_CCA_STATUS);
-        bsp_extIntEnable(RF_INT_CCA_STATUS, RF_INT_EDGE_CCA_STATUS, rf_isrCCADone);
+        bsp_extIntEnable(RF_INT_CCA_STATUS, RF_INT_EDGE_CCA_STATUS, cc112x_isrCCADone);
 
         cca_mode = RF_CCA_MODE_RSSI_BELOW_THR;
         cc112x_spiRegWrite(CC112X_PKT_CFG2, &cca_mode, 1);
@@ -630,10 +649,84 @@ static void rf_cca(e_nsErr_t *p_err)
          */
         cca_mode = RF_CCA_MODE_NONE;
         cc112x_spiRegWrite(CC112X_PKT_CFG2, &cca_mode, 1);
-        rf_gotoSniff();
+        cc112x_gotoSniff();
     }
 }
 
+
+static void cc112x_txPowerSet(uint8_t power, e_nsErr_t *p_err)
+{
+#if NETSTK_CFG_ARG_CHK_EN
+    if (p_err == NULL) {
+        return;
+    }
+#endif
+
+    uint8_t pa_power_ramp;
+
+    /*
+     * Output power = (PA_POWER_RAMP+1)/2 - 18 [dBm]
+     * PA_POWER_RAMP = PA_CFG1[5:0] ~> PA_POWER_RAMP_MASK = 0x3F
+     */
+    pa_power_ramp = ((power + 18) * 2 - 1) & 0x3Fu;
+    cc112x_spiRegWrite(CC112X_PA_CFG1, &pa_power_ramp, 1);
+    cc112x_waitRdy();
+    *p_err = NETSTK_ERR_NONE;
+}
+
+static void cc112x_txPowerGet(uint8_t *p_power, e_nsErr_t *p_err)
+{
+#if NETSTK_CFG_ARG_CHK_EN
+    if (p_err == NULL) {
+        return;
+    }
+
+    if (p_power == NULL) {
+        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+        return;
+    }
+#endif
+
+    uint8_t pa_power_ramp;
+
+    /*
+     * Output power = (PA_POWER_RAMP+1)/2 - 18 [dBm]
+     */
+    cc112x_spiRegRead(CC112X_PA_CFG1, &pa_power_ramp, 1);
+    pa_power_ramp &= 0x3F;
+    *p_power = ((pa_power_ramp + 1) / 2) - 18;
+    *p_err = NETSTK_ERR_NONE;
+}
+
+static void cc112x_chanlSet(uint8_t chan, e_nsErr_t *p_err)
+{
+#if NETSTK_CFG_ARG_CHK_EN
+    if (p_err == NULL) {
+        return;
+    }
+#endif
+
+    uint8_t len;
+
+    if (chan == 0) {
+        /* reset the transceiver */
+        cc112x_reset();
+
+        /* configure RF register in eWOR mode by default */
+        len = sizeof(cc112x_cfg_ieee802154g_chan0) / sizeof(s_regSettings_t);
+        cc112x_configureRegs(cc112x_cfg_ieee802154g_chan0, len);
+
+        /* calibrate radio */
+        cc112x_calibrateRF();
+
+        /* calibrate RC oscillator */
+        cc112x_calibrateRCOsc();
+
+        *p_err = NETSTK_ERR_NONE;
+    } else {
+        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+    }
+}
 
 
 /*
