@@ -8,6 +8,9 @@
 #include "bsp.h"
 #include "at86rf_hal_spi.h"
 
+#define     LOGGER_ENABLE        LOGGER_HAL
+#include    "logger.h"
+
 static void *p_at86RfSpi;
 
 void at86rf_halSpiInit(void)
