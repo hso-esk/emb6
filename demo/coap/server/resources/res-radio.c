@@ -149,7 +149,7 @@ static void _res_get_handler(void *request,   void *response,
             snprintf(rpc_param, 5, "%d", txpower);
             LOG1_INFO("GET request for  RX_SENS: %s", rpc_param);
         } else {
-            snprintf(rpc_param, 64 ,"RSSI [%]: TX_PWR [%d]: RX_SENS [%d]",
+            snprintf(rpc_param, 64 ,"RSSI [%d]: TX_PWR [%d]: RX_SENS [%d]",
                      rssi, txpower, sensitivity);
         }
     } else {
