@@ -1570,10 +1570,10 @@ static void cc1120_Ioctl (e_nsIocCmd_t    cmd,
             _rf_is_rx(p_err);
             break;
 
-        case NETSTK_CMD_RF_RF_SWITCH :
-        case NETSTK_CMD_RF_ANT_DIV_SET :
-        case NETSTK_CMD_RF_SENS_SET :
-        case NETSTK_CMD_RF_SENS_GET :
+        case NETSTK_CMD_RF_RF_SWITCH_SET:
+        case NETSTK_CMD_RF_ANT_DIV_SET:
+        case NETSTK_CMD_RF_SENS_SET:
+        case NETSTK_CMD_RF_SENS_GET:
         default:
             /* unsupported commands are treated in same way */
             *p_err = NETSTK_ERR_CMD_UNSUPPORTED;

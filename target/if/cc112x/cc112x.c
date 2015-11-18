@@ -344,7 +344,7 @@ static void cc112x_Ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
             break;
 
         case NETSTK_CMD_RF_RSSI_GET:
-        case NETSTK_CMD_RF_RF_SWITCH:
+        case NETSTK_CMD_RF_RF_SWITCH_SET:
         case NETSTK_CMD_RF_ANT_DIV_SET:
         case NETSTK_CMD_RF_SENS_SET:
         case NETSTK_CMD_RF_SENS_GET:

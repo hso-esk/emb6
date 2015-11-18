@@ -79,11 +79,14 @@ uint8_t board_conf(s_ns_t* ps_nStack)
     hal_gpioPinInit(SAMD20_SPI0_CS_PIN, BSP_PIN_DIROUTPUT ,BSP_PIN_UP);
 
     if (ps_nStack != NULL) {
-        ps_nStack->inif = &rf212b_driver;
-        c_ret = ps_nStack->inif->init(ps_nStack);
+        ps_nStack->llc  = &LLCDrv802154;
+        ps_nStack->mac  = &MACDrvNull;
+        ps_nStack->phy  = &PHYDrvNull;
+        ps_nStack->rf   = &rf212b_driver;
     }
     else {
         LOG_ERR("Network stack pointer is NULL");
+        c_ret = 0;
     }
 
     return c_ret;

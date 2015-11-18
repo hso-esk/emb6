@@ -346,11 +346,11 @@ static void cc120x_Ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
              cc120x_chanlSet(*((uint8_t *)p_val), p_err);
              break;
 
-         case NETSTK_CMD_RF_RSSI_GET :
-         case NETSTK_CMD_RF_RF_SWITCH :
-         case NETSTK_CMD_RF_ANT_DIV_SET :
-         case NETSTK_CMD_RF_SENS_SET :
-         case NETSTK_CMD_RF_SENS_GET :
+         case NETSTK_CMD_RF_RSSI_GET:
+         case NETSTK_CMD_RF_RF_SWITCH_SET:
+         case NETSTK_CMD_RF_ANT_DIV_SET:
+         case NETSTK_CMD_RF_SENS_SET:
+         case NETSTK_CMD_RF_SENS_GET:
          default:
              /* unsupported commands are treated in same way */
              *p_err = NETSTK_ERR_CMD_UNSUPPORTED;

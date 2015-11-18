@@ -187,7 +187,7 @@ const s_nsRF_t rf212_driver = {
 ==============================================================================*/
 static void _spiBitWrite(uint8_t c_addr, uint8_t c_mask, uint8_t c_off, uint8_t c_data)
 {
-    uint8_t c_value = at86rf_halSpiRegRead(p_spi,RF212_READ_COMMAND | c_addr);
+    uint8_t c_value = at86rf_halSpiRegRead(RF212_READ_COMMAND | c_addr);
     c_value &= ~c_mask;
     c_data <<= c_off;
     c_data &= c_mask;
@@ -1064,11 +1064,6 @@ static void _rf212_Ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
             *((int8_t *)p_val) = _rf212_getRSSI();
             break;
 
-        case NETSTK_CMD_RF_IS_RX_BUSY:
-        case NETSTK_CMD_RF_IS_TX_BUSY:
-        case NETSTK_CMD_RF_CCA_GET:
-        case NETSTK_CMD_RF_RF_SWITCH :
-        case NETSTK_CMD_RF_ANT_DIV_SET :
         case NETSTK_CMD_RF_SENS_SET:
             _rf212_setSensitivity( *(int8_t*)p_val );
             break;
@@ -1077,6 +1072,15 @@ static void _rf212_Ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
             *((int8_t *)p_val) = _rf212_getSensitivity();
             break;
 
+        case NETSTK_CMD_RF_PROMISC_SET:
+            _rf212_promisc( *(uint8_t*)p_val );
+            break;
+
+        case NETSTK_CMD_RF_IS_RX_BUSY:
+        case NETSTK_CMD_RF_IS_TX_BUSY:
+        case NETSTK_CMD_RF_CCA_GET:
+        case NETSTK_CMD_RF_RF_SWITCH_SET:
+        case NETSTK_CMD_RF_ANT_DIV_SET:
         default:
             /* unsupported commands are treated in same way */
             *p_err = NETSTK_ERR_CMD_UNSUPPORTED;

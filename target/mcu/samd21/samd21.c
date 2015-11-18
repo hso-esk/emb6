@@ -385,14 +385,14 @@ void hal_ledOn( uint16_t ui_led )
 /*==============================================================================
  hal_extIntInit()
  =============================================================================*/
-uint8_t hal_extIntInit( en_targetExtInt_t e_intSource,
+uint8_t hal_extIntEnable( en_targetExtInt_t e_extInt, en_targetIntEdge_t e_edge,
         pfn_intCallb_t pfn_intCallback )
 {
     int8_t c_ret = 0;
 
     if( pfn_intCallback != NULL )
     {
-        switch( e_intSource )
+        switch( e_extInt )
         {
             case E_TARGET_RADIO_INT:
                 //! [setup_init]

@@ -74,7 +74,7 @@ uint8_t board_conf(s_ns_t* ps_nStack)
 
 
     if (ps_nStack != NULL) {
-        ps_nStack->llc  = &LLCDrvNull;
+        ps_nStack->llc  = &LLCDrv802154;
         ps_nStack->mac  = &MACDrvNull;
         ps_nStack->phy  = &PHYDrvNull;
         ps_nStack->rf   = &rf212_driver;

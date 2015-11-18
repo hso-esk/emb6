@@ -1047,6 +1047,7 @@ static void _rf212b_Ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
 
 
     *p_err = NETSTK_ERR_NONE;
+
     switch (cmd) {
         case NETSTK_CMD_RF_TXPOWER_SET:
             _rf212b_setPower( *(int8_t*)p_val );
@@ -1060,19 +1061,29 @@ static void _rf212b_Ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
             *((int8_t *)p_val) = _rf212b_getRSSI();
             break;
 
-        case NETSTK_CMD_RF_IS_RX_BUSY:
-        case NETSTK_CMD_RF_IS_TX_BUSY:
-        case NETSTK_CMD_RF_CCA_GET:
-        case NETSTK_CMD_RF_RF_SWITCH :
-        case NETSTK_CMD_RF_ANT_DIV_SET :
+        case NETSTK_CMD_RF_RF_SWITCH_SET:
+            _rf212b_AntExtSw( *(uint8_t*)p_val );
+            break;
+
+        case NETSTK_CMD_RF_ANT_DIV_SET:
+            _rf212b_AntDiv( *(uint8_t*)p_val );
+            break;
+
         case NETSTK_CMD_RF_SENS_SET:
-            _rf212b_setSensitivity( *(uint8_t*)p_val );
+            _rf212b_setSensitivity( *(int8_t*)p_val );
             break;
 
         case NETSTK_CMD_RF_SENS_GET:
             *((int8_t *)p_val) = _rf212b_getSensitivity();
             break;
 
+        case NETSTK_CMD_RF_PROMISC_SET:
+            _rf212b_promisc( *(uint8_t*)p_val );
+            break;
+
+        case NETSTK_CMD_RF_IS_RX_BUSY:
+        case NETSTK_CMD_RF_IS_TX_BUSY:
+        case NETSTK_CMD_RF_CCA_GET:
         default:
             /* unsupported commands are treated in same way */
             *p_err = NETSTK_ERR_CMD_UNSUPPORTED;
@@ -1138,9 +1149,9 @@ static void _rf212b_extON(e_nsErr_t *p_err)
 {
     *p_err = NETSTK_ERR_NONE;
     if (c_receive_on)
-        return 1;
+        return;
     _rf212b_intON();
-    return 1;
+    return;
 } /* _rf212b_extON() */
 
 static void _rf212b_extOFF(e_nsErr_t *p_err)
