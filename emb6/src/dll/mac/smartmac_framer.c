@@ -504,7 +504,7 @@ static uint8_t *SmartMAC_Create (uint8_t frame_type, uint16_t *p_len, uint32_t *
             break;
 
         default:
-            *p_pkt = NULL;
+            p_pkt = NULL;
             break;
     }
     return p_pkt;
