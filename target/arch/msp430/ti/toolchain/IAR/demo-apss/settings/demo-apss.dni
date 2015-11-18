@@ -20,7 +20,7 @@ NextState1=0
 Break=0
 State Storage=0
 [DebugChecksum]
-Checksum=419444060
+Checksum=-1762333135
 [CallStack]
 ShowArgs=0
 [Disassembly]
@@ -47,7 +47,7 @@ Category=_ 0
 LoggingEnabled=_ 0
 LogFile=_ ""
 [Breakpoints]
-Bp0=_ "STD_CODE" "{$PROJ_DIR$\..\..\..\..\..\..\if\cc120x\cc120x_spi.c}.75.5" 0 0 0 0 "" 0 ""
+Bp0=_ "STD_CODE" "{$PROJ_DIR$\..\..\..\..\..\..\if\cc120x\cc120x_spi.c}.80.5" 0 0 0 0 "" 0 ""
 Count=1
 [FET]
 Clock mode=14
