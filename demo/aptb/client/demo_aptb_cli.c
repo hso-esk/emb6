@@ -83,23 +83,20 @@
 #define     MAX_C_PAYLOAD_LEN       40
 
 /** Communication port for client (not for CoAP) */
-#define     __CLIENT_PORT           4124
+#define     _LOCAL_PORT             4124
 /** Communication port for server (not for CoAP) */
-#define     __SERVER_PORT           4123
+#define     _REMOTE_PORT            4123
 
 /** Define a network prefix for all addresses */
-#define     NETWORK_PREFIX          0x2001, 0xbbbb, 0xdddd, 0x0000
+#define     NETWORK_PREFIX          0xaaaa, 0x0000, 0x0000, 0x0000
 /** Mode 3 - derived from server link-local (MAC) address */
 #define     SERVER_IP_ADDR80        0x0250, 0xc2ff, 0xfea8, 0xbabe
 /** Server IP address consist of network prefix and 64 bit of mac address */
 #define     SERVER_IP_ADDR          NETWORK_PREFIX,SERVER_IP_ADDR80
 
 
-/* External global buffer for data for packet storing (why not use packetbuf.c?)*/
-#define     UIP_IP_BUF              ((struct uip_ip_hdr *)&uip_buf[UIP_LLH_LEN])
-#define     _QUOTEME(x)             #x
-#define     QUOTEME(x)              _QUOTEME(x)
-#define     EMB6_DEMO_APTB_CODE     0x10
+#define     EMB6_APTB_REQUEST       0x10
+#define     EMB6_APTB_RESPONSE      0x11
 /*==============================================================================
                                          ENUMS
  =============================================================================*/
@@ -108,7 +105,6 @@
                           STRUCTURES AND OTHER TYPEDEFS
  =============================================================================*/
 static  struct  udp_socket          st_udp_socket;
-static  struct  udp_socket          *pst_udp_socket;
 
 static          uip_ipaddr_t        un_server_ipaddr = {.u16={SERVER_IP_ADDR} };
         struct  etimer              s_et;
@@ -125,40 +121,17 @@ static          uint32_t            l_expSeqID = 0;
 /*==============================================================================
                                LOCAL FUNCTION PROTOTYPES
  =============================================================================*/
-static  void        loc_aptb_sendMsg(uint32_t l_seqID);
-//static  char*       loc_aptb_addAddr(char * pc_buf,const uip_ipaddr_t* rs_addr);
-static  uint64_t    loc_aptb_str2Seq(char * pc_str);
+static  void        _aptb_sendMsg(uint32_t l_seqID);
+static  void        _send_msg_tout(c_event_t c_event, p_data_t p_data);
+static  void        _aptb_callback(struct udp_socket *c, void *ptr,
+                    const uip_ipaddr_t *source_addr, uint16_t source_port,
+                    const uip_ipaddr_t *dest_addr,   uint16_t dest_port,
+                    const uint8_t *data,             uint16_t datalen);
 
 /*==============================================================================
                                     LOCAL FUNCTIONS
  =============================================================================*/
 
-/*static  char*       loc_aptb_addAddr(char * pc_buf,const uip_ipaddr_t* rs_addr)
-{
-    uint16_t      a;
-    uint16_t      i;
-    int16_t       f;
-
-    char *pc_addr = pc_buf;
-
-    for(i = 0, f = 0; i < sizeof(uip_ipaddr_t); i += 2) {
-    a = (rs_addr->u8[i] << 8) + rs_addr->u8[i + 1];
-    if(a == 0 && f >= 0) {
-      if(f++ == 0) {
-          pc_addr += sprintf(pc_addr, "::");
-      }
-    } else {
-      if(f > 0) {
-        f = -1;
-      } else if(i > 0) {
-          pc_addr += sprintf(pc_addr, ":");
-      }
-      pc_addr += sprintf(pc_addr, "%04x", a);
-    }
-    }
-    return pc_addr;
-}
-*/
 /*----------------------------------------------------------------------------*/
 /** \brief  This function is sending message with a sequence number.
  *
@@ -168,71 +141,70 @@ static  uint64_t    loc_aptb_str2Seq(char * pc_str);
  *  \returns none
  */
 /*----------------------------------------------------------------------------*/
-static  void        loc_aptb_sendMsg(uint32_t l_seqID)
+static  void        _aptb_sendMsg(uint32_t l_seqID)
 {
     char         pc_buf[MAX_S_PAYLOAD_LEN];
 
-    pc_buf[0] = EMB6_DEMO_APTB_CODE;
-
-    sprintf(pc_buf+1, "%lu | ", l_seqID);
+    pc_buf[0] = EMB6_APTB_REQUEST;
+    pc_buf[1] = l_seqID >> (24);
+    pc_buf[2] = (l_seqID & 0x00ff0000) >> (16);
+    pc_buf[3] = (l_seqID & 0x0000ff00) >> (8);
+    pc_buf[4] = (l_seqID & 0xff);
 
     if (l_seqID != 0)
         l_expSeqID++;
 
-    LOG_INFO("Lost packets (%lu)", l_expSeqID - l_seqID);
-    LOG_INFO("Send message: %s",pc_buf);
+    LOG_INFO("Lost packets [%lu]", l_expSeqID - l_seqID);
+    LOG_INFO("Request sequence: [%lu]", l_seqID);
 
-    udp_socket_sendto(pst_udp_socket,
-                      pc_buf, strlen(pc_buf),
-                      &un_server_ipaddr,
-                      __SERVER_PORT);
+    udp_socket_send(&st_udp_socket, pc_buf, 5);
 
-} /* loc_aptb_sendMsg */
-
-static  uint64_t    loc_aptb_str2Seq(char * str)
-{
-    char temp[20];
-    uint8_t i = 0;
-    //uint8_t j = 0;
-
-    for (i=uip_datalen();i>0;i--) {
-        if (str[i] == '|' ) {
-            i--;
-            memcpy(temp,str,i);
-            temp[i] = '\0';
-            break;
-        }
-    }
-    return atol(temp);
-} /* loc_aptb_str2Seq() */
+} /* _aptb_sendMsg */
 
 /*----------------------------------------------------------------------------*/
-/** \brief  This function is called whenever a tcpip event occurs or
- *             one of a timers are expired.
+/** \brief  This function is called if a timer expired.
  *
  *  \param  event     Event type
- *  \param    data    Pointer to data
+ *  \param  data      Pointer to data
  *
  *  \returns none
  */
 /*----------------------------------------------------------------------------*/
-static    void      loc_aptb_callback(c_event_t c_event, p_data_t p_data)
+static void  _send_msg_tout(c_event_t c_event, p_data_t p_data)
 {
-    char *pc_str;
     if (etimer_expired(&s_et)) {
-        loc_aptb_sendMsg(l_lastSeqId);
+        _aptb_sendMsg(l_lastSeqId);
         etimer_restart(&s_et);
-    } else if (c_event == EVENT_TYPE_TCPIP) {
-        if (uip_newdata()) {
-            pc_str = uip_appdata;
-            if (pc_str[0] == EMB6_DEMO_APTB_CODE) {
-                pc_str[uip_datalen()] = '\0';
-                pc_str++;
-                LOG_INFO("Packet from a server: '%s'", pc_str);
-                l_lastSeqId = loc_aptb_str2Seq(pc_str);
-            }
-        }
     }
+}
+
+/*----------------------------------------------------------------------------*/
+/** \brief  This function is called if a new packet was received. Format is the
+ *          the same as @ref udp_socket_input_callback_t
+ *  \returns none
+ */
+/*----------------------------------------------------------------------------*/
+static void  _aptb_callback(struct udp_socket *c, void *ptr,
+             const uip_ipaddr_t *source_addr, uint16_t source_port,
+             const uip_ipaddr_t *dest_addr,   uint16_t dest_port,
+             const uint8_t *data,             uint16_t datalen)
+{
+    if (data != NULL)
+    {
+        if (data[0] == EMB6_APTB_RESPONSE) {
+            /* Skip packet type header */
+            l_lastSeqId = (data[1] << 24) +
+                          (data[2] << 16) +
+                          (data[3] << 8) +
+                          data[4];
+            LOG_INFO("Response from a server: [%lu]", l_lastSeqId);
+        } else {
+            LOG_ERR("Error in parsing: invalid packet format");
+        }
+    } else {
+        LOG_ERR("Error in reception: data is NULL");
+    }
+
 }
 
 /*==============================================================================
@@ -260,20 +232,18 @@ int8_t demo_aptbInit(void)
                 un_server_ipaddr.u16[4],un_server_ipaddr.u16[5],\
                 un_server_ipaddr.u16[6],un_server_ipaddr.u16[7]);
 
-    /* set the pointer to the udp-socket */
-    pst_udp_socket = &st_udp_socket;
-    udp_socket_register(pst_udp_socket, NULL, NULL);
-    udp_socket_bind(pst_udp_socket, UIP_HTONS(__CLIENT_PORT));
+    udp_socket_register(&st_udp_socket, NULL, _aptb_callback);
+    udp_socket_bind(&st_udp_socket, _LOCAL_PORT);
+    udp_socket_connect(&st_udp_socket,&un_server_ipaddr, _REMOTE_PORT);
 
     LOG_INFO("%s", "Create connection with the server ");
     LOG_IP6ADDR(&un_server_ipaddr.u8);
     LOG_RAW("\n\r");
     LOG_INFO("local/remote port %u/%u",
-            UIP_HTONS(pst_udp_socket->udp_conn->lport),
-            UIP_HTONS(pst_udp_socket->udp_conn->rport));
+            UIP_HTONS(st_udp_socket.udp_conn->lport),
+            UIP_HTONS(st_udp_socket.udp_conn->rport));
     //printf("Set dudp timer %p\n\r",&s_et);
-    etimer_set(&s_et, SEND_INTERVAL, loc_aptb_callback);
-    evproc_regCallback(EVENT_TYPE_TCPIP,loc_aptb_callback);
+    etimer_set(&s_et, SEND_INTERVAL, _send_msg_tout);
     LOG_INFO("APTB demo initialized, Connecting ...");
     return 1;
 }/* demo_aptbInit()  */
