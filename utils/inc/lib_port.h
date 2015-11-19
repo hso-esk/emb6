@@ -9,7 +9,7 @@
 #define LIB_PORT_H_
 
 #ifdef IAR_COMPILER
-#include "bsp_lums.h"
+#include "bsp.h"
 #define CPU_ENTER_CRITICAL()        bsp_enterCritical()
 #define CPU_EXIT_CRITICAL()         bsp_exitCritical()
 #define LED_RX_ON()                 bsp_led(E_BSP_LED_ORANGE, E_BSP_LED_ON)
