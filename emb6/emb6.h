@@ -572,12 +572,11 @@ extern  const s_nsPHY_t   PHYDrvNull;
 ********************************************************************************
 */
 
-extern  const s_nsRF_t      RFDrvCC1120;
 extern  const s_nsRF_t      RFDrvNull;
 extern  const s_nsRF_t      RFDrvNative;
 extern  const s_nsRF_t      rf212_driver;
 extern  const s_nsRF_t      rf212b_driver;
-extern  const s_nsRF_t      RFDrvCC1120;
+extern  const s_nsRF_t      RFDrvCC112x;
 extern  const s_nsRF_t      RFDrvCC120x;
 
 

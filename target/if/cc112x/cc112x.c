@@ -14,7 +14,7 @@
 #include "emb6.h"
 
 
-#if NETSTK_CFG_RF_CC112X_EN
+
 #include "cc112x.h"
 #include "cc112x_cfg.h"
 #include "cc112x_spi.h"
@@ -734,7 +734,7 @@ static void cc112x_chanlSet(uint8_t chan, e_nsErr_t *p_err)
 *                               DRIVER DEFINITION
 ********************************************************************************
 */
-const s_nsRF_t RFDrvCC1120 =
+const s_nsRF_t RFDrvCC112x =
 {
    "CC112X",
     cc112x_Init,
@@ -745,10 +745,10 @@ const s_nsRF_t RFDrvCC1120 =
     cc112x_Ioctl,
 };
 
+int a;
 
 /*
 ********************************************************************************
 *                                   END OF FILE
 ********************************************************************************
 */
-#endif /* NETSTK_CFG_RF_CC112X_EN */

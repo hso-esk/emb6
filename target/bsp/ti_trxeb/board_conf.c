@@ -35,7 +35,7 @@ uint8_t board_conf(s_ns_t *p_netstk)
         p_netstk->llc   = &LLCDrv802154;
         p_netstk->mac   = &MACDrv802154;
         p_netstk->phy   = &PHYDrvNull;
-        p_netstk->rf    = &RFDrvCC1120;
+        p_netstk->rf    = &RFDrvCC112x;
     }
     else {
         LOG_ERR("Network stack pointer is NULL");

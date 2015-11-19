@@ -112,11 +112,14 @@ static void _hal_uartInit(void)
 *                           GLOBAL FUNCTION DEFINITIONS
 ********************************************************************************
 */
+
+#ifndef GCC_COMPILER
 int putchar(int c)
 {
     uart_send(E_UART_SEL_UART1, (char *)&c, 1);
     return c;
 }
+#endif /* #ifndef GCC_COMPILER */
 
 
 /*

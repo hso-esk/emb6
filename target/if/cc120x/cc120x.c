@@ -14,7 +14,6 @@
 #include "emb6.h"
 
 
-#if NETSTK_CFG_RF_CC120X_EN
 #include "cc120x.h"
 #include "cc120x_cfg.h"
 #include "cc120x_spi.h"
@@ -754,4 +753,3 @@ const s_nsRF_t RFDrvCC120x =
 *                                   END OF FILE
 ********************************************************************************
 */
-#endif /* NETSTK_CFG_RF_CC120X_EN */
