@@ -254,6 +254,22 @@ static void cc112x_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     } else {
         LED_TX_ON();
 
+
+
+#if LOGGER_ENABLE
+        /*
+         * Logging
+         */
+        uint16_t data_len = len;
+        uint8_t *p_dataptr = p_data;
+        LOG_RAW("RADIO_TX: ");
+        while (data_len--) {
+            LOG_RAW("%02x", *p_dataptr++);
+        }
+        LOG_RAW("\n\r\n\r");
+#endif
+
+
         /*
          * entry actions
          */
@@ -504,6 +520,21 @@ static void cc112x_eventHandler(c_event_t c_event, p_data_t p_data)
          * (2)  Signal the next higher layer of the received frame
          */
         cc112x_rxFifoRead();
+
+
+#if LOGGER_ENABLE
+        /*
+         * Logging
+         */
+        uint16_t data_len = RF_RxBufLen;
+        uint8_t *p_dataptr = RF_RxBuf;
+        LOG_RAW("RADIO_RX: ");
+        while (data_len--) {
+            LOG_RAW("%02x", *p_dataptr++);
+        }
+        LOG_RAW("\n\r\n\r");
+#endif
+
         RF_Netstk->phy->recv(RF_RxBuf, RF_RxBufLen, &err);
 
         /*
