@@ -8,7 +8,7 @@ hardware_config = {
 
 
 # Device driver description (HEAD/target/mcu folder)
-	'mcu' 			:	'msp430f5348a',
+	'mcu' 			:	'msp430f5438a',
 
 # Transceiver source description (HEAD/target/if folder)
 	'if'			:	'cc112x',
