@@ -219,6 +219,9 @@ uint8_t loc_emb6NetstackInit(s_ns_t * ps_ns)
         ps_ns->hc->init(ps_ns);         /* header compressor        */
         ps_ns->frame->init(ps_ns);      /* sicslowpan driver        */
 
+        /* turn the netstack on */
+        ps_ns->llc->on(&err);
+
         /*
          * Initialize TCP/IP stack
          */
