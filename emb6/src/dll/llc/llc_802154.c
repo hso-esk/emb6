@@ -12,7 +12,6 @@
 */
 #include "emb6.h"
 
-
 #include "framer_802154.h"
 #include "packetbuf.h"
 #include "random.h"
@@ -124,7 +123,7 @@ static void LLC_On(e_nsErr_t *p_err)
 #endif
 
 
-    LLC_Netstk->phy->on(p_err);
+    LLC_Netstk->mac->on(p_err);
 }
 
 
@@ -142,7 +141,7 @@ static void LLC_Off(e_nsErr_t *p_err)
 #endif
 
 
-    LLC_Netstk->phy->off(p_err);
+    LLC_Netstk->mac->off(p_err);
 }
 
 
@@ -397,7 +396,7 @@ static void LLC_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
             break;
 
         default:
-            LLC_Netstk->phy->ioctrl(cmd, p_val, p_err);
+            LLC_Netstk->mac->ioctrl(cmd, p_val, p_err);
             break;
     }
 }
