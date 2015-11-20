@@ -4280,13 +4280,8 @@
         <debug>1</debug>
         <option>
           <name>CCDefines</name>
-          <state>NETSTK_CFG_LPM_EN=1</state>
-          <state>STK_CFG_REFACTOR_EN=1</state>
           <state>LPR_RX</state>
-          <state>CC1200</state>
           <state>IAR_COMPILER</state>
-          <state>RF_CCA_ON_TX= FALSE</state>
-          <state>TDD_SYNC_MODE=1</state>
         </option>
         <option>
           <name>CCPreprocFile</name>
@@ -4439,22 +4434,22 @@
         </option>
         <option>
           <name>newCCIncludePaths</name>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\target</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\target\arch\msp430\ti\msp430x5xx</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\target\bsp\ti_trxeb</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\target\mcu\msp430x5xx</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\target\if\cc120x</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\net\ipv6</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\net\sicslowpan</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\dll\llsec</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\dll\llc</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\dll\mac</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\dll\framer</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\phy\lpr</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\utils\inc</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\target</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\target\arch\msp430\msp430f5\ti\device\msp430f5xxx\inc</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\target\bsp\ti_trxeb_cc120x_ule</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\target\mcu\msp430x5xx</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\target\if\cc120x</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\net\ipv6</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\net\sicslowpan</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\llsec</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\llc</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\mac</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\framer</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\phy\lpr</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\utils\inc</state>
         </option>
         <option>
           <name>CCStdIncCheck</name>
@@ -5309,13 +5304,8 @@
         <debug>1</debug>
         <option>
           <name>CCDefines</name>
-          <state>NETSTK_CFG_LPM_EN=1</state>
-          <state>STK_CFG_REFACTOR_EN=1</state>
           <state>LPR_TX</state>
-          <state>CC1200</state>
           <state>IAR_COMPILER</state>
-          <state>RF_CCA_ON_TX= FALSE</state>
-          <state>TDD_SYNC_MODE=1</state>
         </option>
         <option>
           <name>CCPreprocFile</name>
@@ -5468,22 +5458,22 @@
         </option>
         <option>
           <name>newCCIncludePaths</name>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\target</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\target\arch\msp430\ti\msp430x5xx</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\target\bsp\ti_trxeb</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\target\mcu\msp430x5xx</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\target\if\cc120x</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\net\ipv6</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\net\sicslowpan</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\dll\llsec</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\dll\llc</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\dll\mac</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\dll\framer</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\phy\lpr</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\utils\inc</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\target</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\target\arch\msp430\msp430f5\ti\device\msp430f5xxx\inc</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\target\bsp\ti_trxeb_cc120x</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\target\if\cc120x</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\target\mcu\msp430x5xx</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\net\ipv6</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\net\sicslowpan</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\llsec</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\llc</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\mac</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\framer</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\phy\lpr</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\utils\inc</state>
         </option>
         <option>
           <name>CCStdIncCheck</name>
@@ -6338,12 +6328,8 @@
         <debug>1</debug>
         <option>
           <name>CCDefines</name>
-          <state>NETSTK_CFG_LPM_EN=1</state>
-          <state>STK_CFG_REFACTOR_EN=1</state>
           <state>LPR_TX</state>
           <state>IAR_COMPILER</state>
-          <state>RF_CCA_ON_TX= FALSE</state>
-          <state>TDD_SYNC_MODE=1</state>
         </option>
         <option>
           <name>CCPreprocFile</name>
@@ -6496,22 +6482,22 @@
         </option>
         <option>
           <name>newCCIncludePaths</name>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\target</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\target\arch\msp430\ti\msp430x5xx</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\target\bsp\ti_trxeb</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\target\mcu\msp430x5xx</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\target\if\cc112x</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\net\ipv6</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\net\sicslowpan</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\dll\llsec</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\dll\llc</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\dll\mac</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\dll\framer</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\phy\lpr</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\utils\inc</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\target</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\target\arch\msp430\msp430f5\ti\device\msp430f5xxx\inc</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\target\bsp\ti_trxeb_cc112x_ule</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\target\if\cc112x</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\target\mcu\msp430x5xx</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\net\ipv6</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\net\sicslowpan</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\llsec</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\llc</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\mac</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\framer</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\phy\lpr</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\utils\inc</state>
         </option>
         <option>
           <name>CCStdIncCheck</name>
@@ -7366,12 +7352,8 @@
         <debug>1</debug>
         <option>
           <name>CCDefines</name>
-          <state>NETSTK_CFG_LPM_EN=1</state>
-          <state>STK_CFG_REFACTOR_EN=1</state>
           <state>LPR_RX</state>
           <state>IAR_COMPILER</state>
-          <state>RF_CCA_ON_TX= FALSE</state>
-          <state>TDD_SYNC_MODE=1</state>
         </option>
         <option>
           <name>CCPreprocFile</name>
@@ -7524,22 +7506,22 @@
         </option>
         <option>
           <name>newCCIncludePaths</name>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\target</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\target\arch\msp430\ti\msp430x5xx</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\target\bsp\ti_trxeb</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\target\mcu\msp430x5xx</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\target\if\cc112x</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\net\ipv6</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\net\sicslowpan</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\dll\llsec</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\dll\llc</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\dll\mac</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\dll\framer</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\emb6\inc\phy\lpr</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\src\emb6\utils\inc</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\target</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\target\arch\msp430\msp430f5\ti\device\msp430f5xxx\inc</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\target\bsp\ti_trxeb_cc112x_ule</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\target\if\cc112x</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\target\mcu\msp430x5xx</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\net\ipv6</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\net\sicslowpan</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\llsec</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\llc</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\mac</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\framer</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\phy\lpr</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\utils\inc</state>
         </option>
         <option>
           <name>CCStdIncCheck</name>
@@ -8227,7 +8209,7 @@
   <group>
     <name>demo</name>
     <file>
-      <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\demo-netstk.c</name>
+      <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\demo\demo-netstk.c</name>
     </file>
   </group>
   <group>
@@ -8241,46 +8223,46 @@
           <group>
             <name>framer</name>
             <file>
-              <name>$PROJ_DIR$\..\..\..\..\..\..\..\emb6\src\dll\framer\framer_802154.c</name>
+              <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\dll\framer\framer_802154.c</name>
             </file>
           </group>
           <group>
             <name>llc</name>
             <file>
-              <name>$PROJ_DIR$\..\..\..\..\..\..\..\emb6\src\dll\llc\linkaddr.c</name>
+              <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\dll\llc\linkaddr.c</name>
             </file>
             <file>
-              <name>$PROJ_DIR$\..\..\..\..\..\..\..\emb6\src\dll\llc\llc_802154.c</name>
+              <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\dll\llc\llc_802154.c</name>
             </file>
             <file>
-              <name>$PROJ_DIR$\..\..\..\..\..\..\..\emb6\src\dll\llc\llc_null.c</name>
+              <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\dll\llc\llc_null.c</name>
             </file>
           </group>
           <group>
             <name>mac</name>
             <file>
-              <name>$PROJ_DIR$\..\..\..\..\..\..\..\emb6\src\dll\mac\mac_802154.c</name>
+              <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\dll\mac\mac_802154.c</name>
             </file>
             <file>
-              <name>$PROJ_DIR$\..\..\..\..\..\..\..\emb6\src\dll\mac\mac_802154_ule.c</name>
+              <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\dll\mac\mac_802154_ule.c</name>
             </file>
             <file>
-              <name>$PROJ_DIR$\..\..\..\..\..\..\..\emb6\src\dll\mac\mac_null.c</name>
+              <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\dll\mac\mac_null.c</name>
             </file>
             <file>
-              <name>$PROJ_DIR$\..\..\..\..\..\..\..\emb6\src\dll\mac\smartmac_framer.c</name>
+              <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\dll\mac\smartmac_framer.c</name>
             </file>
           </group>
         </group>
         <group>
           <name>phy</name>
           <file>
-            <name>$PROJ_DIR$\..\..\..\..\..\..\..\emb6\src\phy\phy_null.c</name>
+            <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\phy\phy_null.c</name>
           </file>
         </group>
       </group>
       <file>
-        <name>$PROJ_DIR$\..\..\..\..\..\..\..\emb6\emb6.c</name>
+        <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\emb6.c</name>
       </file>
     </group>
     <group>
@@ -8290,48 +8272,57 @@
         <group>
           <name>msp430</name>
           <group>
-            <name>ti</name>
+            <name>msp430x5</name>
             <group>
-              <name>msp430x5xx</name>
-              <file>
-                <name>$PROJ_DIR$\..\..\..\msp430x5xx\infoflash.c</name>
-              </file>
-              <file>
-                <name>$PROJ_DIR$\..\..\..\msp430x5xx\int.c</name>
-              </file>
-              <file>
-                <name>$PROJ_DIR$\..\..\..\msp430x5xx\io.c</name>
-              </file>
-              <file>
-                <name>$PROJ_DIR$\..\..\..\msp430x5xx\key.c</name>
-              </file>
-              <file>
-                <name>$PROJ_DIR$\..\..\..\msp430x5xx\lcd.c</name>
-              </file>
-              <file>
-                <name>$PROJ_DIR$\..\..\..\msp430x5xx\lcd_dogm128_6_alphabet.c</name>
-              </file>
-              <file>
-                <name>$PROJ_DIR$\..\..\..\msp430x5xx\led.c</name>
-              </file>
-              <file>
-                <name>$PROJ_DIR$\..\..\..\msp430x5xx\low_level_init.c</name>
-              </file>
-              <file>
-                <name>$PROJ_DIR$\..\..\..\msp430x5xx\mcu.c</name>
-              </file>
-              <file>
-                <name>$PROJ_DIR$\..\..\..\msp430x5xx\rtc.c</name>
-              </file>
-              <file>
-                <name>$PROJ_DIR$\..\..\..\msp430x5xx\spi.c</name>
-              </file>
-              <file>
-                <name>$PROJ_DIR$\..\..\..\msp430x5xx\tmr.c</name>
-              </file>
-              <file>
-                <name>$PROJ_DIR$\..\..\..\msp430x5xx\uart.c</name>
-              </file>
+              <name>ti</name>
+              <group>
+                <name>device</name>
+                <group>
+                  <name>msp430f5xxx</name>
+                  <group>
+                    <name>src</name>
+                    <file>
+                      <name>$PROJ_DIR$\..\..\..\device\msp430f5xxx\src\infoflash.c</name>
+                    </file>
+                    <file>
+                      <name>$PROJ_DIR$\..\..\..\device\msp430f5xxx\src\int.c</name>
+                    </file>
+                    <file>
+                      <name>$PROJ_DIR$\..\..\..\device\msp430f5xxx\src\io.c</name>
+                    </file>
+                    <file>
+                      <name>$PROJ_DIR$\..\..\..\device\msp430f5xxx\src\key.c</name>
+                    </file>
+                    <file>
+                      <name>$PROJ_DIR$\..\..\..\device\msp430f5xxx\src\lcd.c</name>
+                    </file>
+                    <file>
+                      <name>$PROJ_DIR$\..\..\..\device\msp430f5xxx\src\lcd_dogm128_6_alphabet.c</name>
+                    </file>
+                    <file>
+                      <name>$PROJ_DIR$\..\..\..\device\msp430f5xxx\src\led.c</name>
+                    </file>
+                    <file>
+                      <name>$PROJ_DIR$\..\..\..\device\msp430f5xxx\src\low_level_init.c</name>
+                    </file>
+                    <file>
+                      <name>$PROJ_DIR$\..\..\..\device\msp430f5xxx\src\mcu.c</name>
+                    </file>
+                    <file>
+                      <name>$PROJ_DIR$\..\..\..\device\msp430f5xxx\src\rtc.c</name>
+                    </file>
+                    <file>
+                      <name>$PROJ_DIR$\..\..\..\device\msp430f5xxx\src\spi.c</name>
+                    </file>
+                    <file>
+                      <name>$PROJ_DIR$\..\..\..\device\msp430f5xxx\src\tmr.c</name>
+                    </file>
+                    <file>
+                      <name>$PROJ_DIR$\..\..\..\device\msp430f5xxx\src\uart.c</name>
+                    </file>
+                  </group>
+                </group>
+              </group>
             </group>
           </group>
         </group>
@@ -8339,14 +8330,28 @@
       <group>
         <name>bsp</name>
         <group>
-          <name>ti_trxeb</name>
+          <name>ti_trxeb_cc112x_ule</name>
+          <excluded>
+            <configuration>CC1200_RX</configuration>
+            <configuration>CC1200_TX</configuration>
+          </excluded>
           <file>
-            <name>$PROJ_DIR$\..\..\..\..\..\..\bsp\ti_trxeb\board_conf.c</name>
-          </file>
-          <file>
-            <name>$PROJ_DIR$\..\..\..\..\..\..\bsp\ti_trxeb\bsp_lums.c</name>
+            <name>$PROJ_DIR$\..\..\..\..\..\..\..\bsp\ti_trxeb_cc112x_ule\board_conf.c</name>
           </file>
         </group>
+        <group>
+          <name>ti_trxeb_cc120x_ule</name>
+          <excluded>
+            <configuration>CC112X_TX</configuration>
+            <configuration>CC112X_RX</configuration>
+          </excluded>
+          <file>
+            <name>$PROJ_DIR$\..\..\..\..\..\..\..\bsp\ti_trxeb_cc120x_ule\board_conf.c</name>
+          </file>
+        </group>
+        <file>
+          <name>$PROJ_DIR$\..\..\..\..\..\..\..\bsp\bsp.c</name>
+        </file>
       </group>
       <group>
         <name>if</name>
@@ -8371,10 +8376,10 @@
             <configuration>CC1200_RX</configuration>
           </excluded>
           <file>
-            <name>$PROJ_DIR$\..\..\..\..\..\..\if\cc112x\cc112x.c</name>
+            <name>$PROJ_DIR$\..\..\..\..\..\..\..\if\cc112x\cc112x.c</name>
           </file>
           <file>
-            <name>$PROJ_DIR$\..\..\..\..\..\..\if\cc112x\cc112x_spi.c</name>
+            <name>$PROJ_DIR$\..\..\..\..\..\..\..\if\cc112x\cc112x_spi.c</name>
           </file>
         </group>
         <group>
@@ -8384,56 +8389,68 @@
             <configuration>CC112X_RX</configuration>
           </excluded>
           <file>
-            <name>$PROJ_DIR$\..\..\..\..\..\..\if\cc120x\cc120x.c</name>
+            <name>$PROJ_DIR$\..\..\..\..\..\..\..\if\cc120x\cc120x.c</name>
           </file>
           <file>
-            <name>$PROJ_DIR$\..\..\..\..\..\..\if\cc120x\cc120x_spi.c</name>
+            <name>$PROJ_DIR$\..\..\..\..\..\..\..\if\cc120x\cc120x_spi.c</name>
           </file>
         </group>
       </group>
       <group>
         <name>mcu</name>
         <group>
-          <name>msp430x5xx</name>
+          <name>msp430f5438</name>
           <file>
-            <name>$PROJ_DIR$\..\..\..\..\..\..\mcu\msp430x5xx\msp430x5xx.c</name>
+            <name>$PROJ_DIR$\..\..\..\..\..\..\..\mcu\msp430f5438a\msp430x5xx.c</name>
           </file>
         </group>
       </group>
-      <file>
-        <name>$PROJ_DIR$\..\..\..\..\..\..\bsp\bsp.c</name>
-      </file>
     </group>
     <group>
       <name>utils</name>
       <group>
         <name>src</name>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\..\..\..\utils\src\ctimer.c</name>
+          <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\utils\src\ctimer.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\..\..\..\utils\src\etimer.c</name>
+          <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\utils\src\etimer.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\..\..\..\utils\src\evproc.c</name>
+          <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\utils\src\evproc.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\..\..\..\utils\src\lib_crc.c</name>
+          <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\utils\src\lib_crc.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\..\..\..\utils\src\lib_tmr.c</name>
+          <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\utils\src\lib_tmr.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\..\..\..\utils\src\list.c</name>
+          <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\utils\src\list.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\..\..\..\utils\src\packetbuf.c</name>
+          <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\utils\src\memb.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\..\..\..\utils\src\random.c</name>
+          <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\utils\src\mmem.c</name>
         </file>
         <file>
-          <name>$PROJ_DIR$\..\..\..\..\..\..\..\utils\src\timer.c</name>
+          <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\utils\src\packetbuf.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\utils\src\queuebuf.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\utils\src\random.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\utils\src\ringbuffer.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\utils\src\stimer.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\utils\src\timer.c</name>
         </file>
       </group>
     </group>
