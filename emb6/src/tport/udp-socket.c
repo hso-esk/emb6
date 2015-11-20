@@ -76,7 +76,7 @@ udp_socket_register(struct udp_socket *c,
   c->input_callback = input_callback;
 
   c->udp_conn = udp_new(NULL, 0, c);
-  LOG_INFO("socket ptr = %p:%p", c, input_callback);
+  LOG_INFO("socket ptr = %p:%p", c, (void *)input_callback);
 
   if(c->udp_conn == NULL) {
     return -1;
@@ -170,7 +170,7 @@ void _udp_sock_callback(c_event_t c_event, p_data_t p_data)
         /* Defensive coding: although the appstate *should* be non-null
            here, we make sure to avoid the program crashing on us. */
         if(c != NULL) {
-            LOG_INFO("socket ptr from callback = %p:%p", c, c->input_callback);
+            LOG_INFO("socket ptr from callback = %p:%p", c, (void *)(c->input_callback));
             /* If we were called because of incoming data, we should call
                the reception callback. */
             if(uip_newdata()) {
