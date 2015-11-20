@@ -8,7 +8,6 @@
 #ifndef CC120X_CFG_PRESENT
 #define CC120X_CFG_PRESENT
 
-#if NETSTK_CFG_RF_CC120X_EN
 
 /**
  * @brief   IEEE802.15.4g first channel center (channel 0)
@@ -204,5 +203,4 @@ static const s_regSettings_t cc120x_cfg_ch_434mhz50bps[] =
     {CC120X_XOSC1,          0x03},
 };
 
-#endif /* NETSTK_CFG_RF_CC120X_EN */
 #endif /* CC120X_CFG_PRESENT */

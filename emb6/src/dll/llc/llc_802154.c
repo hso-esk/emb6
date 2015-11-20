@@ -13,7 +13,6 @@
 #include "emb6.h"
 
 
-#if NETSTK_CFG_LLC_802154_EN
 #include "framer_802154.h"
 #include "packetbuf.h"
 #include "random.h"
@@ -495,4 +494,3 @@ static void LLC_VerifyAddr(frame802154_t *p_frame, e_nsErr_t *p_err)
 *                               END OF FILE
 ********************************************************************************
 */
-#endif /* NETSTK_CFG_LLC_802154_EN */

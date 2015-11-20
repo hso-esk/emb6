@@ -12,8 +12,6 @@
 */
 #include "emb6.h"
 
-
-#if NETSTK_CFG_PHY_NULL_EN
 #include "lib_tmr.h"
 
 #define     LOGGER_ENABLE        LOGGER_PHY
@@ -234,4 +232,3 @@ static void PHY_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
 *                               END OF FILE
 ********************************************************************************
 */
-#endif /* #if NETSTK_PHY_NULL_EN */

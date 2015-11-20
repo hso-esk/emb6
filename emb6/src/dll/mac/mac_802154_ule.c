@@ -11,8 +11,6 @@
 */
 #include "emb6.h"
 
-
-#if NETSTK_CFG_MAC_802154_ULE_EN
 #include "evproc.h"
 #include "packetbuf.h"
 #include "bsp.h"
@@ -1187,4 +1185,3 @@ static void MAC_ULE_TxPayload(e_nsErr_t *p_err)
 *                                   END OF FILE
 ********************************************************************************
 */
-#endif /* NETSTK_CFG_MAC_802154_ULE_EN */

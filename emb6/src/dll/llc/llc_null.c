@@ -13,7 +13,6 @@
 #include "emb6.h"
 
 
-#if NETSTK_CFG_LLC_NULL_EN
 /*
 ********************************************************************************
 *                          LOCAL FUNCTION DECLARATIONS
@@ -130,4 +129,3 @@ static void LLC_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
 *                               END OF FILE
 ********************************************************************************
 */
-#endif /* #if NETSTK_CFG_LLC_NULL_EN */

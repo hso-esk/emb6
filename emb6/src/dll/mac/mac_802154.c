@@ -13,7 +13,6 @@
 #include "emb6.h"
 
 
-#if NETSTK_CFG_MAC_802154_EN
 #include "evproc.h"
 #include "framer_802154.h"
 #include "packetbuf.h"
@@ -571,4 +570,3 @@ static void MAC_CSMA(e_nsErr_t *p_err)
 *                               END OF FILE
 ********************************************************************************
 */
-#endif /* #if NETSTK_MAC_802154_EN */

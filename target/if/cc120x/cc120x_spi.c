@@ -11,8 +11,6 @@
 */
 #include "emb6.h"
 
-
-#if NETSTK_CFG_RF_CC120X_EN
 #include "bsp.h"
 #include "cc120x.h"
 #include "cc120x_spi.h"
@@ -262,4 +260,3 @@ rf_status_t cc120x_spiCmdStrobe(uint8_t cmd)
 
     return chip_status;
 }
-#endif /* NETSTK_CFG_RF_CC120X_EN */

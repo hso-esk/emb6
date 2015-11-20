@@ -7,7 +7,7 @@
 #ifndef CC112X_CFG_PRESENT
 #define CC112X_CFG_PRESENT
 
-#if NETSTK_CFG_RF_CC112X_EN
+
 /**
  * @brief   IEEE802.15.4g first channel center (channel 0)
  *          See also IEEE802.15.4g-2012, table 68d
@@ -178,5 +178,3 @@ static const s_regSettings_t cc112x_cfg_ch_434mhz50bps[] =
 };
 
 #endif
-
-#endif /* CC112X_CFG_PRESENT */

@@ -11,8 +11,6 @@
 */
 #include "emb6.h"
 
-
-#if NETSTK_CFG_RF_CC112X_EN
 #include "bsp.h"
 #include "cc112x.h"
 #include "cc112x_spi.h"
@@ -263,4 +261,3 @@ rf_status_t cc112x_spiCmdStrobe(uint8_t cmd)
 
     return chip_status;
 }
-#endif /* NETSTK_CFG_RF_CC112X_EN */

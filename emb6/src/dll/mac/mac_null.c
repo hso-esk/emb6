@@ -11,9 +11,6 @@
 ********************************************************************************
 */
 #include "emb6.h"
-
-
-#if NETSTK_CFG_MAC_NULL_EN
 #include "packetbuf.h"
 
 
@@ -131,4 +128,3 @@ static void MAC_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
 *                               END OF FILE
 ********************************************************************************
 */
-#endif /* #if NETSTK_MAC_DRV_NULL_EN */
