@@ -27,42 +27,33 @@
 
 #include "demo_udp_socket.h"
 
-
-/*
-********************************************************************************
-*                               LOCAL MACROS
-********************************************************************************
-*/
-#if !defined(IAR_COMPILER)
-#undef SMARTMAC_TX
-#undef SMARTMAC_RX
-
-#define SMARTMAC_TX
-#define SMARTMAC_RX
-#endif
-
-
 #define     LOGGER_ENABLE       LOGGER_DEMO_UDP_SOCKET
 #if         LOGGER_ENABLE   ==  TRUE
 #define     LOGGER_SUBSYSTEM    "UDP Socket"
 #endif
 #include    "logger.h"
 
+
+/*
+********************************************************************************
+*                               LOCAL MACROS
+********************************************************************************
+*/
 #define DEF_UDP_MAX_PAYLOAD_LEN         40U
 
-#ifdef  SMARTMAC_RX
+#ifdef  DEMO_UDP_SOCKET_ROLE_SERVER
 #define DEF_UDP_DEVPORT                 4211UL
 #define DEF_UDP_REMPORT                 4233UL
 #endif
 
-#ifdef  SMARTMAC_TX
+#ifdef  DEMO_UDP_SOCKET_ROLE_CLIENT
 #define DEF_UDP_DEVPORT                 4233UL
 #define DEF_UDP_REMPORT                 4211UL
 #endif
 
+#define DEF_UDP_SEND_INTERVAL           (clock_time_t)( 500u )
 
-#define DEF_UDP_SEND_INTERVAL           (clock_time_t)( 1U )
-
+#define UIP_IP_BUF                      ((struct uip_ip_hdr *)&uip_buf[UIP_LLH_LEN])
 
 /*
 ********************************************************************************
@@ -71,12 +62,12 @@
 */
 static struct uip_udp_conn *UDPSocket_Conn = (struct uip_udp_conn *) 0;
 
-#ifdef  SMARTMAC_TX
+#ifdef  DEMO_UDP_SOCKET_ROLE_CLIENT
 static uint32_t UDPSocket_CurrSeqTx;
 static uint32_t UDPSocket_LastSeqRx;
 static uint32_t UDPSocket_LostPktQty;
 static struct etimer UDPSocket_Etimer;
-#endif
+#endif /* DEMO_UDP_SOCKET_ROLE_CLIENT */
 
 
 /*=============================================================================
@@ -132,7 +123,7 @@ static void UDPSocket_Tx(uint32_t seq)
      */
     memcpy(payload, &seq, seq_size);
 
-#ifdef SMARTMAC_TX
+#ifdef DEMO_UDP_SOCKET_ROLE_CLIENT
     /*
      * Get Server IP address
      */
@@ -143,13 +134,15 @@ static void UDPSocket_Tx(uint32_t seq)
             /*
              * Logging
              */
-            printf("UDP Sending...  : ");
+#if LOGGER_ENABLE
+            LOG_RAW("UDP Sending...  : ");
             uint16_t len = payload_len;
             uint8_t *p_data = payload;
             while (len--) {
-                printf("%02x ", *p_data++);
+                LOG_RAW("%02x ", *p_data++);
             }
-            printf("\r\n");
+            LOG_RAW("\r\n");
+#endif
 
 
             /*
@@ -165,8 +158,20 @@ static void UDPSocket_Tx(uint32_t seq)
 #endif
 
 
-#if 0   /* echoed-message transmission from UDP server */
-#ifdef SMARTMAC_RX
+#ifdef DEMO_UDP_SOCKET_ROLE_SERVER
+    /*
+     *
+     */
+#if 1
+    uip_ipaddr_copy(&UDPSocket_Conn->ripaddr,
+                    &UIP_IP_BUF->srcipaddr);
+
+    uip_udp_packet_send(UDPSocket_Conn,
+                        payload,
+                        payload_len);
+
+    uip_create_unspecified(&UDPSocket_Conn->ripaddr);
+#else
     uip_udp_packet_sendto(UDPSocket_Conn, payload, payload_len, &remipaddr,
             UIP_HTONS(DEF_UDP_REMPORT));
 
@@ -187,8 +192,9 @@ static void UDPSocket_Tx(uint32_t seq)
         UDPSocket_LostPktQty++;
     }
     printf("Lost packets: %lu / %lu\r\n\r\n", UDPSocket_LostPktQty, UDPSocket_CurrSeqTx);
-#endif /* MAC_MODE_DEVICE */
 #endif
+
+#endif /* DEMO_UDP_SOCKET_ROLE_SERVER */
 }
 
 
@@ -216,27 +222,28 @@ static void UDPSocket_EventHandler(c_event_t c_event, p_data_t p_data)
             p_dataptr = (uint8_t *)uip_appdata;
             len = (uint16_t)uip_datalen();
 
+#if LOGGER_ENABLE
             /*
              * Logging
              */
-            printf("UDP Receiving...  : ");
+            LOG_RAW("UDP Receiving...  : ");
             while (len--) {
-                printf("%02x ", *p_dataptr++);
+                LOG_RAW("%02x ", *p_dataptr++);
             }
-            printf("\r\n");
-
+            LOG_RAW("\r\n");
+#endif
             /*
              * Obtain sequence number of the received message
              */
             seq = UDPSocket_GetSeq(p_dataptr, len);
-#ifdef SMARTMAC_RX
+#ifdef DEMO_UDP_SOCKET_ROLE_SERVER
             UDPSocket_Tx(seq);
 #else
-            UDPSocket_LastSeqRx = seq;
-#endif
+            /* TODO compare sequence number */
+#endif /* DEMO_UDP_SOCKET_ROLE_SERVER */
         }
     }
-#ifdef SMARTMAC_TX
+#ifdef DEMO_UDP_SOCKET_ROLE_CLIENT
     else {
         int err = 0;
 
@@ -293,12 +300,12 @@ int8_t demo_udpSocketInit(void)
     evproc_regCallback(EVENT_TYPE_TCPIP,
                        UDPSocket_EventHandler);
 
-#ifdef SMARTMAC_TX
+#ifdef DEMO_UDP_SOCKET_ROLE_CLIENT
     clock_time_t interval = 0;
 
     /* set UDP event timer interval */
     interval  = DEF_UDP_SEND_INTERVAL;
-    interval *= bsp_get(E_BSP_GET_TRES);
+    interval *= bsp_get(E_BSP_GET_TRES)/1000;
 
     /* Set event timer for periodic data process */
     etimer_set(&UDPSocket_Etimer,
