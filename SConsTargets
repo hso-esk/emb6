@@ -48,8 +48,7 @@ TARGETS = [
 ['cs_stk3600',       [('coap','server'),
                       ('udp_alive','')],             'efm32stk3600',        '0x30C0',      '11',          '-100',       'MODULATION_QPSK100'],
 
-['cs_stk3600_cc1120',[('coap','server'),
-                      ('udp_alive','')],             'efm32stk3600_cc1120', '0x30C0',      '11',          '-100',       'MODULATION_QPSK100'],
+['cs_stk3600_cc112x',[('udp_socket','')],            'efm32stk3600_cc112x', '0x30C0',      '11',          '-100',       'MODULATION_QPSK100'],
 
 ['cs_ti_trxeb_cc112x',[('coap','server'),
                       ('udp_alive','')],             'ti_trxeb_cc112x',      '0x30C0',      '11',          '-100',       'MODULATION_QPSK100'],
