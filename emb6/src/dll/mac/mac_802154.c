@@ -482,9 +482,12 @@ static void MAC_EventHandler(c_event_t c_event, p_data_t p_data)
                 /*
                  * retransmission
                  */
-                MAC_Netstk->phy->send(packetbuf_hdrptr(),
-                                      packetbuf_totlen(),
-                                      &MAC_LastErr);
+                MAC_CSMA(&MAC_LastErr);
+                if (MAC_LastErr != NETSTK_ERR_CHANNEL_ACESS_FAILURE) {
+                    MAC_Netstk->phy->send(packetbuf_hdrptr(),
+                                          packetbuf_totlen(),
+                                          &MAC_LastErr);
+                }
 
                 if (MAC_LastErr != NETSTK_ERR_NONE) {
                     MAC_EVENT_POST(NETSTK_MAC_EVENT_TX_DONE);
