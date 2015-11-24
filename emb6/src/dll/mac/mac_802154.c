@@ -532,11 +532,13 @@ static void MAC_CSMA(e_nsErr_t *p_err)
     uint32_t max_backoff = 3;
     uint32_t delay = 0;
     uint32_t max_random;
-    uint8_t is_idle;
+
 
     nb = 0;
     be = min_be;
     unit_backoff = 20 * 20; /* Unit backoff period = 20 * symbol periods [us] */
+    *p_err = NETSTK_ERR_NONE;
+
     while (nb <= max_backoff) {                                     /* NB > MaxBackoff: Failure     */
         /*
          * Delay for random (2^BE - 1) unit backoff periods
@@ -550,21 +552,13 @@ static void MAC_CSMA(e_nsErr_t *p_err)
         /*
          * Perform CCA
          */
-        MAC_Netstk->phy->ioctrl(NETSTK_CMD_RF_CCA_GET,
-                                &is_idle,
-                                p_err);
-        if (is_idle == 1) {                                         /* Channel idle ?               */
+        MAC_Netstk->phy->ioctrl(NETSTK_CMD_RF_CCA_GET, 0, p_err);
+        if (*p_err == NETSTK_ERR_NONE) {                            /* Channel idle ?               */
             break;                                                  /*   Success                    */
         } else {                                                    /* Else                         */
             nb++;                                                   /*   NB = NB + 1                */
             be = ((be + 1) < min_be) ? (be + 1) : (min_be);         /*   BE = min(BE + 1, MinBE)    */
         }
-    }
-
-    if (is_idle) {
-        *p_err = NETSTK_ERR_NONE;
-    } else {
-        *p_err = NETSTK_ERR_CHANNEL_ACESS_FAILURE;
     }
 }
 
