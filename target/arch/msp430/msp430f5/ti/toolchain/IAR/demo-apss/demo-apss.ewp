@@ -8209,7 +8209,7 @@
   <group>
     <name>demo</name>
     <file>
-      <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\demo\demo-netstk.c</name>
+      <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\demo\netstk\demo-netstk.c</name>
     </file>
   </group>
   <group>
