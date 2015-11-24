@@ -11,7 +11,7 @@ hardware_config = {
 	'mcu' 			:	'efm32lg990f256',
 
 # Transceiver source description (HEAD/target/if folder)
-	'if'			:	'cc1120',
+	'if'			:	'cc112x',
 
 # C code global defined symbols
 	'defines' : [

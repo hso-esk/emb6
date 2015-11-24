@@ -37,67 +37,56 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-/**  \addtogroup emb6
- *      @{
- *      \addtogroup bsp Board Support Package
+/**  	\addtogroup emb6
  *   @{
- *   \addtogroup board
+ *   	\addtogroup bsp Board Support Package
+ *   @{
+ *   	\addtogroup board
  *   @{
  *      \addtogroup efm32stk3600 Board EFM32 Leopard Gecko Starter Kit specific configuration
  *   @{
  */
-/*! \file   efm32stk3600/board_conf.h
+/*! \file   efm32stk3600/board_conf.c
 
-    \author Artem Yushev, 
+    \author Phuong Nguyen,
 
     \brief  Board Configuration for EFM32 Leopard Gecko Starter Kit
 
     \version 0.0.1
 */
 
-#ifndef BOARD_CONF_H_
-#define BOARD_CONF_H_
-
-
-
-#include "emb6.h"
-
-/*==============================================================================
-                                     MACROS
-==============================================================================*/
-
-
-
-#define EFM32_USART                        SPIDRV_MASTER_USART1
-#define EFM32_USART_LOC                    _USART_ROUTE_LOCATION_LOC1
-
-#define EFM32_IO_PORT_USART_CS            gpioPortD
-#define EFM32_IO_PIN_USART_CS            3
-
-#define EFM32_IO_PORT_RF_RST            gpioPortD
-#define EFM32_IO_PIN_RF_RST                4
-
-#define EFM32_IO_PORT_RF_IRQ            gpioPortD
-#define EFM32_IO_PIN_RF_IRQ                5
-
-#define EFM32_IO_PORT_RF_SLP            gpioPortD
-#define EFM32_IO_PIN_RF_SLP                6
-
-/*============================================================================*/
-/*!
-\brief    emb6 board configuration fuction
-
-        This function chooses the transceiver driver for the specific board.
-
-\param    ps_nStack pointer to global netstack struct
-
-\return  success 1, failure 0
-
+/*
+********************************************************************************
+*                                   INCLUDES
+********************************************************************************
 */
-/*============================================================================*/
-uint8_t board_conf(s_ns_t* ps_nStack);
+#include "board_conf.h"
+#include "hwinit.h"
+#include "emb6.h"
+#include "logger.h"
+#include "bsp.h"
 
-#endif /* BOARD_CONF_H_ */
+/** Enable or disable logging */
+#define        LOGGER_ENABLE          LOGGER_BSP
+
+uint8_t board_conf(s_ns_t *p_netstk)
+{
+    uint8_t c_ret = 1;
+
+
+    if (p_netstk != NULL) {
+        p_netstk->llc   = &LLCDrv802154;
+        p_netstk->mac   = &MACDrv802154;
+        p_netstk->phy   = &PHYDrvNull;
+        p_netstk->rf    = &RFDrvCC112x;
+    }
+    else {
+        LOG_ERR("Network stack pointer is NULL");
+        c_ret = 0;
+    }
+
+    return c_ret;
+}
 /** @} */
 /** @} */
 /** @} */
