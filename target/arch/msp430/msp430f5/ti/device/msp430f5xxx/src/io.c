@@ -615,72 +615,84 @@ int8_t io_get( s_io_pin_desc_t* ps_pin )
 
 
 /*=============================================================================
- *  io_irqEnable()
+ *  io_extiRegister()
  *============================================================================*/
-int8_t io_irqEnable( s_io_pin_desc_t* ps_pin, uint8_t uc_edge, pf_io_cb pf_cb )
+void io_extiRegister(s_io_pin_desc_t *ps_pin, uint8_t uc_edge, pf_io_cb pf_cb)
 {
-  uint8_t uc_state = 0U;
+    uint8_t uc_state = 0U;
 
-  HAL_INT_LOCK( uc_state );
+    HAL_INT_LOCK(uc_state);
 
-  /* Check for a valid parameters */
-  if( (pf_cb != NULL) && (ps_pin != NULL) )
-  {
-    /* A valid callback was given. Now check if the port is able
-     to handle interrupts */
-    if( (*ps_pin->PORT->pf_isr != NULL) && (ps_pin->PORT->e_port < E_IO_PORT_MAX)  )
-    {
-      /* Port is able to handle interrupts. Now activate the interrupt and
-       set the according callback function */
-      int_irqRegister( ps_pin->PORT->e_irqSrc, ps_pin->PORT->pf_isr );
+    /* check for a valid parameters */
+    if ((pf_cb != NULL) && (ps_pin != NULL)) {
 
-      /* Set the callback function */
-      gpf_io_irq_cb[ps_pin->PORT->e_port][ps_pin->PIN] = pf_cb;
-      /* Set edge and interrupt enable */
-      if (uc_edge == INT_EDGE_FALLING)
-        *ps_pin->PORT->PIES |= ps_pin->MSK;
-      else
-        *ps_pin->PORT->PIES &= ~ps_pin->MSK;
-      *ps_pin->PORT->PIE |= ps_pin->MSK;
+        /* A valid callback was given. Now check if the port is able
+         to handle interrupts */
+        if ((*ps_pin->PORT->pf_isr != NULL) &&
+            (ps_pin->PORT->e_port < E_IO_PORT_MAX)) {
 
-      /* clear the interrupt */
-      io_irqClear( ps_pin );
+            /* Port is able to handle interrupts. Now activate the interrupt and
+             set the according callback function */
+            int_irqRegister(ps_pin->PORT->e_irqSrc, ps_pin->PORT->pf_isr);
+
+            /* Set the callback function */
+            gpf_io_irq_cb[ps_pin->PORT->e_port][ps_pin->PIN] = pf_cb;
+
+            /* Set edge and interrupt enable */
+            if (uc_edge == INT_EDGE_FALLING) {
+                *ps_pin->PORT->PIES |= ps_pin->MSK;
+            } else {
+                *ps_pin->PORT->PIES &= ~ps_pin->MSK;
+            }
+
+            /* disable the interrupt by default */
+            io_extiDisable(ps_pin);
+
+            /* clear the interrupt */
+            io_extiClear(ps_pin);
+        }
     }
-  }
 
-  HAL_INT_UNLOCK(uc_state);
-  
-  (void)&uc_state;      /* Prevent warning of unused variable */
-  
-  return 0;
-}/* io_irqEnable() */
+    HAL_INT_UNLOCK(uc_state);
+
+    (void)&uc_state; /* Prevent warning of unused variable */
+} /* io_extiRegister() */
+
 
 /*=============================================================================
- *  io_irqClear()
+ *  io_extiClear()
  *============================================================================*/
-int8_t io_irqClear( s_io_pin_desc_t* ps_pin )
+void io_extiClear(s_io_pin_desc_t *ps_pin)
 {
-  /* Check for a valid parameters */
-  if( ps_pin != NULL )
-  {
-    /* clear the interrupt */
-    *ps_pin->PORT->PIFG &= ~ps_pin->MSK;
-  }
+    /* check for a valid parameters */
+    if (ps_pin != NULL) {
+        /* clear the interrupt */
+        *ps_pin->PORT->PIFG &= ~ps_pin->MSK;
+    }
+} /* io_extiClear() */
 
-  return 0;
-}/* io_irqClear() */
 
 /*=============================================================================
- *  io_irqDisable()
+ *  io_extiEnable()
  *============================================================================*/
-int8_t io_irqDisable( s_io_pin_desc_t* ps_pin )
+void io_extiEnable(s_io_pin_desc_t *ps_pin)
 {
-  /* Check for a valid parameters */
-  if( ps_pin != NULL )
-  {
-    /* disable the interrupt */
-    *ps_pin->PORT->PIE &= ~ps_pin->MSK;
-  }
+    /* check for a valid parameters */
+    if (ps_pin != NULL) {
+        /* enable the interrupt */
+        *ps_pin->PORT->PIE |= ps_pin->MSK;
+    }
+} /* io_extiEnable() */
 
-  return 0;
-}/* io_irqDisable() */
+
+/*=============================================================================
+ *  io_extiDisable()
+ *============================================================================*/
+void io_extiDisable(s_io_pin_desc_t *ps_pin)
+{
+    /* check for a valid parameters */
+    if (ps_pin != NULL) {
+        /* disable the interrupt */
+        *ps_pin->PORT->PIE &= ~ps_pin->MSK;
+    }
+} /* io_extiDisable() */

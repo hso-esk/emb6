@@ -226,10 +226,10 @@ int8_t io_get( s_io_pin_desc_t* ps_pin );
  *                      values are @ref INT_EDGE_FALLING and @ref INT_EDGE_RISING.
  * @param    pf_cb      Callback to register for the interrupt
  *
- * @return   0 on success or -1 on error.
+ * @return   none
  */
 /*============================================================================*/
-int8_t io_irqEnable( s_io_pin_desc_t* ps_pin, uint8_t uc_edge, pf_io_cb pf_cb );
+void io_extiRegister(s_io_pin_desc_t *ps_pin, uint8_t uc_edge, pf_io_cb pf_cb);
 
 
 /*============================================================================*/
@@ -241,10 +241,24 @@ int8_t io_irqEnable( s_io_pin_desc_t* ps_pin, uint8_t uc_edge, pf_io_cb pf_cb );
  *
  * @param    ps_pin     Struct with port and pin of the interrupt to be cleared.
  *
- * @return   0 on success or -1 on error.
+ * @return   none
  */
 /*============================================================================*/
-int8_t io_irqClear( s_io_pin_desc_t* ps_pin );
+void io_extiClear(s_io_pin_desc_t *ps_pin);
+
+
+/*============================================================================*/
+/**
+ * @brief    Function clear an interrupt.
+ *
+ *           Used to clear the interrupt for a specific pin.
+ *
+ * @param    ps_pin     Struct with port and pin of the interrupt to be disabled.
+ *
+ * @return   none
+ */
+/*============================================================================*/
+void io_extiEnable(s_io_pin_desc_t *ps_pin);
 
 
 /*============================================================================*/
@@ -255,9 +269,10 @@ int8_t io_irqClear( s_io_pin_desc_t* ps_pin );
  *
  * @param    ps_pin     Struct with port and pin of the interrupt to be disabled.
  *
- * @return   0 on success or -1 on error.
+ * @return   none
  */
 /*============================================================================*/
-int8_t io_irqDisable( s_io_pin_desc_t* ps_pin );
+void io_extiDisable(s_io_pin_desc_t *ps_pin);
+
 
 #endif /* #ifndef __IO_H__ */
