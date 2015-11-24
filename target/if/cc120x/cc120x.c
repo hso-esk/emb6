@@ -60,30 +60,36 @@ typedef enum rf_state
 *                                LOCAL DEFINES
 ********************************************************************************
 */
-#define RF_SEM_POST(_event_)          evproc_putEvent(E_EVPROC_HEAD, _event_, NULL)
-#define RF_SEM_WAIT(_event_)          evproc_regCallback(_event_, cc120x_eventHandler)
+#define RF_SEM_POST(_event_)                evproc_putEvent(E_EVPROC_HEAD, _event_, NULL)
+#define RF_SEM_WAIT(_event_)                evproc_regCallback(_event_, cc120x_eventHandler)
 
 #define RF_ISR_ACTION_NONE                  (uint8_t)( 0u )
 #define RF_ISR_ACTION_TX_FINISHED           (uint8_t)( 1u )
 #define RF_ISR_ACTION_RX_FINISHED           (uint8_t)( 2u )
 
-#define RF_IS_RX_BUSY()                 ((RF_State == RF_STATE_RX_BUSY) ||  \
-                                         (RF_State == RF_STATE_RX_FINI))
+#define RF_IS_RX_BUSY()                    ((RF_State == RF_STATE_RX_BUSY) ||  \
+                                            (RF_State == RF_STATE_RX_FINI))
 
-#define RF_IS_IN_TX(_chip_status)       ((_chip_status) & 0x20)
+#define RF_IS_IN_TX(_chip_status)           ((_chip_status) & 0x20)
+#define RF_IS_IN_RX(_chip_status)           ((_chip_status) & 0x10)
 
-#define RF_INT_TX_FINI                  E_TARGET_EXT_INT_0
-#define RF_INT_RX_STARTED               E_TARGET_EXT_INT_1
-#define RF_INT_CCA_STATUS               E_TARGET_EXT_INT_2
-
-#define RF_INT_EDGE_TX_FINI             E_TARGET_INT_EDGE_FALLING
-#define RF_INT_EDGE_RX_BUSY             E_TARGET_INT_EDGE_RISING
-#define RF_INT_EDGE_CCA_STATUS          E_TARGET_INT_EDGE_RISING
+#define RF_INT_CCA_FINI                     E_TARGET_EXT_INT_2
+#define RF_INT_RX_STARTED                   E_TARGET_EXT_INT_1
+#define RF_INT_TX_FINI                      E_TARGET_EXT_INT_0
+#define RF_INT_EDGE_CCA_FINI                E_TARGET_INT_EDGE_RISING
+#define RF_INT_EDGE_RX_STARTED              E_TARGET_INT_EDGE_RISING
+#define RF_INT_EDGE_TX_FINI                 E_TARGET_INT_EDGE_FALLING
 
 #define RF_CCA_MODE_NONE                (uint8_t)( 0x00 )
 #define RF_CCA_MODE_RSSI_BELOW_THR      (uint8_t)( 0x24 )
 
-#define RF_MARC_STATUS_1_RX_FINI        (uint8_t)( 0x80 )
+#define RF_GET_CHIP_STATE(_chip_status)     (uint8_t)((_chip_status) & 0x70)
+#define RF_CHIP_STATE_IDLE                  (uint8_t)( 0x00 )
+#define RF_CHIP_STATE_RX                    (uint8_t)( 0x10 )
+#define RF_CHIP_STATE_TX                    (uint8_t)( 0x20 )
+
+#define RF_MARC_STATUS_TX_FINI              (uint8_t)( 0x40 )
+#define RF_MARC_STATUS_RX_FINI              (uint8_t)( 0x80 )
 
 
 /*
@@ -109,6 +115,7 @@ static void cc120x_Recv(uint8_t *p_buf, uint16_t len, e_nsErr_t *p_err);
 static void cc120x_Ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
 
 static void cc120x_reset(void);
+static void cc120x_chkPartnumber(e_nsErr_t *p_err);
 static void cc120x_waitRdy(void);
 static void cc120x_gotoSleep(void);
 static void cc120x_gotoSniff(void);
@@ -116,7 +123,7 @@ static void cc120x_gotoIdle(void);
 
 static void cc120x_rxFifoRead(void);
 
-static void cc120x_istTxFinished(void *p_arg);
+static void cc120x_isrTxFinished(void *p_arg);
 static void cc120x_isrRxStarted(void *p_arg);
 static void cc120x_isrCCADone(void *p_arg);
 static void cc120x_eventHandler(c_event_t c_event, p_data_t p_data);
@@ -166,6 +173,12 @@ static void cc120x_Init (void *p_netstk, e_nsErr_t *p_err)
     /* reset the transceiver */
     cc120x_reset();
 
+    /* check part number */
+    cc120x_chkPartnumber(p_err);
+    if (*p_err != NETSTK_ERR_NONE) {
+        return;
+    }
+
     /* configure RF register in eWOR mode by default */
     len = sizeof(cc120x_cfg_ieee802154g_chan0) / sizeof(s_regSettings_t);
     cc120x_configureRegs(cc120x_cfg_ieee802154g_chan0, len);
@@ -176,14 +189,10 @@ static void cc120x_Init (void *p_netstk, e_nsErr_t *p_err)
     /* calibrate RC oscillator */
     cc120x_calibrateRCOsc();
 
-    /*
-     * configure RF to go to state Sniff
-     */
-    bsp_extIntDisable(RF_INT_TX_FINI);
-    bsp_extIntDisable(RF_INT_RX_STARTED);
-
-    bsp_extIntClear(RF_INT_TX_FINI);
-    bsp_extIntClear(RF_INT_RX_STARTED);
+    /* configure RF to go to state Sniff */
+    bsp_extIntRegister(RF_INT_CCA_FINI, RF_INT_EDGE_CCA_FINI, cc120x_isrCCADone);
+    bsp_extIntRegister(RF_INT_RX_STARTED, RF_INT_EDGE_RX_STARTED, cc120x_isrRxStarted);
+    bsp_extIntRegister(RF_INT_TX_FINI, RF_INT_EDGE_TX_FINI, cc120x_isrTxFinished);
 
     /* initialize local variables */
     RF_SEM_WAIT(NETSTK_RF_EVENT);
@@ -224,10 +233,12 @@ static void cc120x_Off (e_nsErr_t *p_err)
     }
 #endif
 
-    /* if currently not in state sniff, then must move on state idle first */
-    if (RF_State != RF_STATE_SNIFF) {
-        /* TODO missing implementation */
-    }
+    /* put transceiver to state idle */
+    cc120x_gotoIdle();
+
+    /* flush TXFIFO, RXFIFO */
+    cc120x_spiCmdStrobe(CC120X_SFRX);
+    cc120x_spiCmdStrobe(CC120X_SFTX);
 
     /* go to state sleep */
     cc120x_gotoSleep();
@@ -273,15 +284,11 @@ static void cc120x_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
          */
         RF_State = RF_STATE_TX_STARTED;
         cc120x_gotoIdle();
-        cc120x_calibrateRF();
 
+        /* configure external interrupts */
         bsp_extIntDisable(RF_INT_RX_STARTED);
-        bsp_extIntDisable(RF_INT_TX_FINI);
-
-        bsp_extIntClear(RF_INT_RX_STARTED);
         bsp_extIntClear(RF_INT_TX_FINI);
-
-        bsp_extIntEnable(RF_INT_TX_FINI, RF_INT_EDGE_TX_FINI, cc120x_istTxFinished);
+        bsp_extIntEnable(RF_INT_TX_FINI);
 
         /*
          * do actions
@@ -381,46 +388,67 @@ static void cc120x_gotoSleep(void)
     /* disable external interrupts */
     bsp_extIntDisable(RF_INT_TX_FINI);
     bsp_extIntDisable(RF_INT_RX_STARTED);
-    bsp_extIntDisable(RF_INT_CCA_STATUS);
 
     /* clear interrupts */
     bsp_extIntClear(RF_INT_TX_FINI);
     bsp_extIntClear(RF_INT_RX_STARTED);
-    bsp_extIntClear(RF_INT_CCA_STATUS);
 
-    /* the radio is put into state sleep when received strobe PowerDown */
-    cc120x_waitRdy();
-    cc120x_spiCmdStrobe(CC120X_SPWD);
+    /* enter state Sleep */
     RF_State = RF_STATE_SLEEP;
+    cc120x_spiCmdStrobe(CC120X_SPWD);
 }
 
 
 static void cc120x_gotoSniff(void)
 {
-    /* clear interrupts */
+    /* configure external interrupts */
     bsp_extIntClear(RF_INT_RX_STARTED);
+    bsp_extIntEnable(RF_INT_RX_STARTED);
 
-    /* enable interrupts */
-    bsp_extIntEnable(RF_INT_RX_STARTED, RF_INT_EDGE_RX_BUSY, cc120x_isrRxStarted);
-
-    /* strobe WOR */
-    cc120x_waitRdy();
-    cc120x_spiCmdStrobe(CC120X_SWOR);
+    /* enter state Sniff */
     RF_State = RF_STATE_SNIFF;
+    cc120x_spiCmdStrobe(CC120X_SWOR);
 }
 
 
 static void cc120x_gotoIdle(void)
 {
-    cc120x_waitRdy();
-    cc120x_spiCmdStrobe(CC120X_SIDLE);
+    uint8_t chip_status;
+
+    do {
+        chip_status = cc120x_spiCmdStrobe(CC120X_SIDLE);
+    } while (RF_GET_CHIP_STATE(chip_status) != RF_CHIP_STATE_IDLE);
 }
 
 
 static void cc120x_reset(void)
 {
-    cc120x_waitRdy();
     cc120x_spiCmdStrobe(CC120X_SRES);
+    cc120x_waitRdy();
+}
+
+
+static void cc120x_chkPartnumber(e_nsErr_t *p_err)
+{
+    uint8_t part_number;
+    uint8_t part_version;
+
+    /* set returned error to default */
+    *p_err = NETSTK_ERR_NONE;
+
+    /* get part number */
+    cc120x_spiRegRead(CC120X_PARTNUMBER, &part_number, 1);
+    if (part_number != 0x20) {
+        *p_err = NETSTK_ERR_INIT;
+        return;
+    }
+
+    /* get part version */
+    cc120x_spiRegRead(CC120X_PARTVERSION, &part_version, 1);
+    if (part_version != 0x11) {
+        *p_err = NETSTK_ERR_INIT;
+        return;
+    }
 }
 
 
@@ -466,35 +494,77 @@ static void cc120x_rxFifoRead(void)
 *                       INTERRUPT SUBROUTINE HANDLERS
 ********************************************************************************
 */
-static void cc120x_istTxFinished(void *p_arg)
+static void cc120x_isrTxFinished(void *p_arg)
 {
-    if (RF_State == RF_STATE_TX_BUSY) {
+    uint8_t marc_status;
+    uint8_t is_tx_ok;
+    e_nsErr_t err;
+
+    /* achieve MARC_STATUS to determine what caused the interrupt */
+    cc120x_spiRegRead(CC120X_MARC_STATUS1, &marc_status, 1);
+
+    /* check TX process result */
+    is_tx_ok = (marc_status == RF_MARC_STATUS_TX_FINI) &&
+               (RF_State == RF_STATE_TX_BUSY);
+    if (is_tx_ok) {
+        bsp_extIntDisable(RF_INT_TX_FINI);
+        bsp_extIntClear(RF_INT_TX_FINI);
+
         RF_State = RF_STATE_TX_FINI;
+    } else {
+        /* todo flush TX FIFO */
+        err = NETSTK_ERR_FATAL;
+        emb6_errorHandler(&err);
     }
 }
 
 
 static void cc120x_isrRxStarted(void *p_arg)
 {
-    LED_RX_ON();
-
     uint8_t marc_status;
+    uint8_t is_rx_ok;
+    e_nsErr_t err;
+
+    /* achieve MARC_STATUS to determine what caused the interrupt */
     cc120x_spiRegRead(CC120X_MARC_STATUS1, &marc_status, 1);
-    
-    if ((RF_State == RF_STATE_SNIFF) &&
-        (marc_status == RF_MARC_STATUS_1_RX_FINI)) {
-        RF_State = RF_STATE_RX_BUSY;
+
+    /* check reception process result */
+    is_rx_ok = (RF_State == RF_STATE_SNIFF) &&
+               (marc_status == RF_MARC_STATUS_RX_FINI);
+    if (is_rx_ok) {
         bsp_extIntDisable(RF_INT_RX_STARTED);
         bsp_extIntClear(RF_INT_RX_STARTED);
+
+        RF_State = RF_STATE_RX_BUSY;
         RF_SEM_POST(NETSTK_RF_EVENT);
+        LED_RX_ON();
+    } else {
+        err = NETSTK_ERR_FATAL;
+        emb6_errorHandler(&err);
     }
 }
 
 
 static void cc120x_isrCCADone(void *p_arg)
 {
-    if (RF_State == RF_STATE_CCA_BUSY) {
+    uint8_t marc_status;
+    uint8_t is_cca_ok;
+    e_nsErr_t err;
+
+
+    /* achieve MARC_STATUS to determine what caused the interrupt */
+    cc120x_spiRegRead(CC120X_MARC_STATUS1, &marc_status, 1);
+
+    /* check reception process result */
+    is_cca_ok = (RF_State == RF_STATE_CCA_BUSY);
+    if (is_cca_ok) {
+        bsp_extIntDisable(RF_INT_CCA_FINI);
+        bsp_extIntClear(RF_INT_CCA_FINI);
+
         RF_State = RF_STATE_CCA_FINI;
+    } else {
+        err = NETSTK_ERR_FATAL;
+        emb6_errorHandler(&err);
     }
 }
 
@@ -608,7 +678,6 @@ static void cc120x_cca(e_nsErr_t *p_err)
 
 
     uint8_t is_done;
-    uint8_t attempt;
     uint8_t marc_status0;
     rf_status_t chip_status;
     uint8_t cca_mode;
@@ -637,48 +706,60 @@ static void cc120x_cca(e_nsErr_t *p_err)
          */
         RF_State = RF_STATE_CCA_BUSY;
 
+
         /*
          * Do actions
          */
-        bsp_extIntDisable(RF_INT_CCA_STATUS);
-        bsp_extIntClear(RF_INT_CCA_STATUS);
-        bsp_extIntEnable(RF_INT_CCA_STATUS, RF_INT_EDGE_CCA_STATUS, cc120x_isrCCADone);
-
+        /* enter CCA operation */
         cca_mode = RF_CCA_MODE_RSSI_BELOW_THR;
-        cc120x_spiRegWrite(CC120X_PKT_CFG2, &cca_mode, 1);
 
-        attempt = 0;
-        is_done = FALSE;
+
+        /* Strobe RX */
         do {
-            /* Strobe TX to assert CCA */
-            cc120x_spiCmdStrobe(CC120X_STX);
+            chip_status = cc120x_spiCmdStrobe(CC120X_SRX);
+        } while (RF_GET_CHIP_STATE(chip_status) != RF_CHIP_STATE_RX);
 
-            do {
-                /* poll for radio status */
-                chip_status = cc120x_spiCmdStrobe(CC120X_SNOP);
+        /* configure external interrupts */
+        bsp_extIntClear(RF_INT_CCA_FINI);
+        bsp_extIntEnable(RF_INT_CCA_FINI);
 
-                /* check CCA attempt termination conditions */
-                is_done = (RF_State != RF_STATE_CCA_FINI) ||
-                          (RF_IS_IN_TX(chip_status));
-            } while (is_done == FALSE);
+        /* Strobe TX to assert CCA */
+        chip_status = cc120x_spiCmdStrobe(CC120X_STX);
 
+        is_done = FALSE;
+        marc_status0 = 0;
+        do {
             /* read CCA_STATUS from the register MARC_STATUS0
-             * MAC_STATUS0 = 0x0B indicates TX ON CCA failed */
+             * (MAC_STATUS0 & 0x04) indicates value of TXONCCA_FAILED */
             cc120x_spiRegRead(CC120X_MARC_STATUS0, &marc_status0, 1);
-            if (marc_status0 == 0x0B) {
-                *p_err = NETSTK_ERR_CHANNEL_ACESS_FAILURE;
-            }
 
-            /* check CCA process termination conditions */
-            is_done = (++attempt > 3) ||
-                      (*p_err != NETSTK_ERR_NONE);
+            /* poll for radio status */
+            chip_status = cc120x_spiCmdStrobe(CC120X_SNOP);
+
+            /* check CCA attempt termination conditions */
+            is_done = (RF_State != RF_STATE_CCA_BUSY) |         /* CCA_STATUS   */
+                      (RF_IS_IN_TX(chip_status))      |         /* Channel free */
+                      (marc_status0 & 0x04);                    /* Channel busy */
         } while (is_done == FALSE);
+
+        /* clear TXONCCA_DONE interrupt */
+        bsp_extIntDisable(RF_INT_CCA_FINI);
+        bsp_extIntClear(RF_INT_CCA_FINI);
+
+        /* get result of CCA process */
+        cc120x_spiRegRead(CC120X_MARC_STATUS0, &marc_status0, 1);
+        if ((marc_status0 & 0x04)) {
+            *p_err = NETSTK_ERR_CHANNEL_ACESS_FAILURE;
+        }
 
         /*
          * Exit actions
          */
+        /* reset CCA_MODE */
         cca_mode = RF_CCA_MODE_NONE;
         cc120x_spiRegWrite(CC120X_PKT_CFG2, &cca_mode, 1);
+
+        /* put transceiver to state WOR */
         cc120x_gotoSniff();
     }
 }
