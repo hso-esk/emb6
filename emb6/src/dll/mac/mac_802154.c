@@ -224,13 +224,15 @@ void MAC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 
 
     packetbuf_attr_t is_ack_req;
+    int is_broadcast;
 
     /*
      * Collect information required for Auto-ACK as well as Auto-Retransmission
      * mechanisms.
      */
+    is_broadcast = packetbuf_holds_broadcast();
     is_ack_req = packetbuf_attr(PACKETBUF_ATTR_RELIABLE);
-    if (is_ack_req) {
+    if (is_ack_req && !is_broadcast) {
         MAC_IsAckReq = 1;
     }
     MAC_TxRetries = 0;
