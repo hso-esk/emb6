@@ -778,6 +778,7 @@ static void MAC_ULE_CSMA(e_nsErr_t *p_err)
 {
     uint8_t is_done;
     uint8_t cca_attempt;
+    e_nsErr_t err;
     LIB_TMR_STATE tmr_state;
 
 
@@ -814,7 +815,7 @@ static void MAC_ULE_CSMA(e_nsErr_t *p_err)
 
     if (*p_err != NETSTK_ERR_NONE) {
         /* switch to SCAN mode */
-        MAC_ULE_Off(p_err);
+        MAC_ULE_Off(&err);
         MAC_ULE_Cmd = MAC_ULE_CMD_SCAN;
         MAC_ULE_EVENT_POST(NETSTK_MAC_ULE_EVENT);
 
