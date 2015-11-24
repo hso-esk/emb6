@@ -229,9 +229,6 @@ void * hal_spiInit(void);
 /*---------------------------------------------------------------------------*/
 uint8_t hal_spiSlaveSel(void * p_spi, bool action);
 
-
-void hal_spiSelect(void *p_spi);
-void hal_spiDeselect(void *p_spi);
 void hal_spiTxRx(uint8_t *p_tx, uint8_t *p_rx, uint16_t len);
 
 /*----------------------------------------------------------------------------*/

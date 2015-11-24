@@ -601,15 +601,6 @@ void hal_spiWrite(uint8_t * c_value, uint16_t i_length)
         USART_SpiTransfer( s_hal_spi.pHndl->initData.port, c_value[i] );
 } /* hal_spiWrite() */
 
-void hal_spiSelect(void *p_spi)
-{
-    /* TODO missing implementation */
-}
-
-void hal_spiDeselect(void *p_spi)
-{
-    /* TODO missing implementation */
-}
 
 void hal_spiTxRx(uint8_t *p_tx, uint8_t *p_rx, uint16_t len)
 {

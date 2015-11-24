@@ -422,18 +422,6 @@ uint8_t hal_spiSlaveSel(void *p_spi, bool action)
     return 1;
 }
 
-
-void hal_spiSelect(void *p_spi)
-{
-    spi_rfSelect();
-}
-
-void hal_spiDeselect(void *p_spi)
-{
-    spi_rfDeselect();
-}
-
-
 void hal_spiTxRx(uint8_t *p_tx, uint8_t *p_rx, uint16_t len)
 {
     spi_rfTxRx(p_tx, p_rx, len);
