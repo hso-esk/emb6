@@ -444,18 +444,17 @@ void hal_ledOff( uint16_t ui_led )
 }
 
 /*==============================================================================
- hal_extIntEnable()
+ hal_extiRegister()
  =============================================================================*/
-uint8_t hal_extIntEnable( en_targetExtInt_t e_extInt, en_targetIntEdge_t e_edge,
+void hal_extiRegister( en_targetExtInt_t e_extInt, en_targetIntEdge_t e_edge,
         pfn_intCallb_t pfn_intCallback )
 {
-    int8_t c_ret = 0;
     hal_enterCritical();
 
     if( pfn_intCallback == NULL )
     {
         //        LOG_ERR("You are tying to initialise NULL pointer function.");
-        return 0;
+        return;
     }
 
     switch( e_extInt )
@@ -466,19 +465,47 @@ uint8_t hal_extIntEnable( en_targetExtInt_t e_extInt, en_targetIntEdge_t e_edge,
             PORTE &= ~( 1 << PE5 );
             DDRE &= ~( 1 << DDE5 );
             isr_radioCallb = pfn_intCallback;
-            c_ret = 1;
+
+            hal_extiDisable(e_extInt);
             break;
         case E_TARGET_USART_INT:
             isr_rxCallb = pfn_intCallback;
             break;
         default:
-            c_ret = 0;
             break;
     }
     hal_exitCritical();
-    return c_ret;
+    return;
 
 } /* hal_extIntInit() */
+
+
+
+/*==============================================================================
+  hal_extiClear()
+ =============================================================================*/
+void hal_extiClear(en_targetExtInt_t e_extInt)
+{
+    /* TODO missing implementation */
+} /* hal_extiClear() */
+
+
+/*==============================================================================
+  hal_extiEnable()
+ =============================================================================*/
+void hal_extiEnable(en_targetExtInt_t e_extInt)
+{
+    /* TODO missing implementation */
+} /* hal_extiEnable() */
+
+/*==============================================================================
+  hal_extiDisable()
+ =============================================================================*/
+void hal_extiDisable(en_targetExtInt_t e_extInt)
+{
+    /* TODO missing implementation */
+} /* hal_extiDisable() */
+
 
 /*==============================================================================
  hal_delay_us()

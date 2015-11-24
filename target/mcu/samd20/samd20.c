@@ -384,11 +384,9 @@ void hal_ledOn(uint16_t ui_led)
 /*==============================================================================
  hal_extIntInit()
  =============================================================================*/
-uint8_t hal_extIntEnable( en_targetExtInt_t e_extInt, en_targetIntEdge_t e_edge,
+void hal_extiRegister( en_targetExtInt_t e_extInt, en_targetIntEdge_t e_edge,
         pfn_intCallb_t pfn_intCallback )
 {
-    int8_t c_ret = 0;
-
     if( pfn_intCallback != NULL )
     {
         switch( e_extInt )
@@ -429,7 +427,7 @@ uint8_t hal_extIntEnable( en_targetExtInt_t e_extInt, en_targetIntEdge_t e_edge,
                 //! [conf_channel]
                 //! [setup_init]
                 system_interrupt_enable_global();
-                c_ret = 1;
+                hal_extiDisable(e_extInt);
                 break;
             case E_TARGET_USART_INT:
                 break;
@@ -437,9 +435,36 @@ uint8_t hal_extIntEnable( en_targetExtInt_t e_extInt, en_targetIntEdge_t e_edge,
                 break;
         }
     }
-    return c_ret;
+    return;
 
 } /* hal_extIntInit() */
+
+
+/*==============================================================================
+  hal_extiClear()
+ =============================================================================*/
+void hal_extiClear(en_targetExtInt_t e_extInt)
+{
+    /* TODO missing implementation */
+} /* hal_extiClear() */
+
+
+/*==============================================================================
+  hal_extiEnable()
+ =============================================================================*/
+void hal_extiEnable(en_targetExtInt_t e_extInt)
+{
+    /* TODO missing implementation */
+} /* hal_extiEnable() */
+
+/*==============================================================================
+  hal_extiDisable()
+ =============================================================================*/
+void hal_extiDisable(en_targetExtInt_t e_extInt)
+{
+    /* TODO missing implementation */
+} /* hal_extiDisable() */
+
 
 /*==============================================================================
  hal_delay_us()

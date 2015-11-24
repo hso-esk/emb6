@@ -296,11 +296,13 @@ uint8_t hal_extIntEnable(en_targetExtInt_t      e_pin,
          */
         switch (e_edge) {
             case E_TARGET_INT_EDGE_FALLING:
-                io_irqEnable( ps_desc, INT_EDGE_FALLING, pf_cb );
+                io_extiRegister( ps_desc, INT_EDGE_FALLING, pf_cb );
+                io_extiEnable(ps_desc);
                 break;
 
             case E_TARGET_INT_EDGE_RISING:
-                io_irqEnable( ps_desc, INT_EDGE_RISING, pf_cb );
+                io_extiRegister( ps_desc, INT_EDGE_RISING, pf_cb );
+                io_extiEnable(ps_desc);
                 break;
 
             default:
@@ -318,7 +320,7 @@ uint8_t hal_extIntDisable(en_targetExtInt_t e_pin)
 
 
     if (ps_desc->PORT != NULL) {
-        io_irqDisable(ps_desc);
+        io_extiDisable(ps_desc);
     }
     return 0;
 }
@@ -330,7 +332,7 @@ uint8_t hal_extIntClear(en_targetExtInt_t e_pin)
 
 
     if (ps_desc->PORT != NULL) {
-        io_irqClear(ps_desc);
+        io_extiClear(ps_desc);
     }
     return 0;
 }

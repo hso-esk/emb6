@@ -84,7 +84,8 @@ uint8_t key_pushed( e_key_t e_key )
 void key_intRegister( e_key_t e_key, pf_key_cb pf_cb )
 {
   /* enable IO interrupt for the rising edge */
-  io_irqEnable( &ps_key_pin[e_key], INT_EDGE_RISING, pf_cb );
+    io_extiRegister( &ps_key_pin[e_key], INT_EDGE_RISING, pf_cb );
+    io_extiEnable(&ps_key_pin[e_key]);
 } /* key_intRegister() */
 
 /*=============================================================================
@@ -93,7 +94,7 @@ void key_intRegister( e_key_t e_key, pf_key_cb pf_cb )
 void key_intUnregister( e_key_t e_key )
 {
   /* Disable IRQ */
-  io_irqDisable( &ps_key_pin[e_key] );
+    io_extiDisable( &ps_key_pin[e_key] );
 } /* key_intUnregister() */
 
 
@@ -103,6 +104,6 @@ void key_intUnregister( e_key_t e_key )
 void key_intClear( e_key_t e_key )
 {
   /* clear IRQ */
-  io_irqClear( &ps_key_pin[e_key] );
+    io_extiClear( &ps_key_pin[e_key] );
 } /* key_intClear() */
 
