@@ -65,9 +65,6 @@
 /*==============================================================================
                                      MACROS
 ==============================================================================*/
-
-
-
 #define EFM32_USART                         SPIDRV_MASTER_USART1
 #define EFM32_USART_LOC                     _USART_ROUTE_LOCATION_LOC1
 
@@ -84,7 +81,6 @@
 #define EFM32_IO_PIN_RF_SLP                 6
 
 
-#if NETSTK_CFG_REFACTOR_EFM32LG_EN
 /*
  * TI transceiver CC112x/CC120x pins
  */
@@ -96,8 +92,6 @@
 
 #define EFM32_IO_PORT_RF_IRQ_3              gpioPortC
 #define EFM32_IO_PIN_RF_IRQ_3               5
-
-#endif /* NETSTK_CFG_REFACTOR_EFM32LG_EN */
 
 
 /*============================================================================*/

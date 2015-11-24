@@ -78,6 +78,8 @@
 #include "em_timer.h"
 #include "gpiointerrupt.h"
 
+#include "lib_tmr.h"
+
 /*==============================================================================
                                      MACROS
 ==============================================================================*/
@@ -137,6 +139,13 @@ typedef enum
     /** RF slp pin */
     e_hal_gpios_rf_slp,
 
+    /** RF CC112x/CC120x GPIO0 pin */
+    e_hal_gpios_rf_isq_0,
+    /** RF CC112x/CC120x GPIO2 pin */
+    e_hal_gpios_rf_isq_1,
+    /** RF CC112x/CC120x GPIO3 pin */
+    e_hal_gpios_rf_isq_2,
+
     e_hal_gpios_max
 
 }e_hal_gpios_t;
@@ -175,14 +184,28 @@ static s_hal_spiDrv s_hal_spi = {
         .csPin = {EFM32_IO_PORT_USART_CS, EFM32_IO_PIN_USART_CS, gpioModePushPull, 0}
 };
 
-s_hal_gpio_pin_t s_hal_gpio[e_hal_gpios_max] = {
-        {EFM32_IO_PORT_RF_RST, EFM32_IO_PIN_RF_RST, gpioModePushPull, 0},    /* e_hal_gpios_rf_rst */
-        {EFM32_IO_PORT_RF_IRQ, EFM32_IO_PIN_RF_IRQ, gpioModeInputPull, 0},    /* e_hal_gpios_rf_irq */
-        {EFM32_IO_PORT_RF_SLP, EFM32_IO_PIN_RF_SLP, gpioModePushPull, 0}    /* e_hal_gpios_rf_slp */
+s_hal_gpio_pin_t s_hal_gpio[e_hal_gpios_max] =
+{
+    {EFM32_IO_PORT_RF_RST, EFM32_IO_PIN_RF_RST, gpioModePushPull,  0},  /* e_hal_gpios_rf_rst */
+    {EFM32_IO_PORT_RF_IRQ, EFM32_IO_PIN_RF_IRQ, gpioModeInputPull, 0},  /* e_hal_gpios_rf_irq */
+    {EFM32_IO_PORT_RF_SLP, EFM32_IO_PIN_RF_SLP, gpioModePushPull,  0},  /* e_hal_gpios_rf_slp */
 };
 
 /** registered callback function for the radio interrupt */
 pfn_intCallb_t pf_hal_radioCb = NULL;
+
+/** External interrupt GPIOs table */
+s_hal_gpio_pin_t s_hal_exti_gpio[E_TARGET_EXT_INT_MAX] =
+{
+    {EFM32_IO_PORT_RF_IRQ_0, EFM32_IO_PIN_RF_IRQ_0, gpioModeInputPull, 0},  /* E_TARGET_EXT_INT_0 */
+    {EFM32_IO_PORT_RF_IRQ_2, EFM32_IO_PIN_RF_IRQ_2, gpioModeInputPull, 0},  /* E_TARGET_EXT_INT_1 */
+    {EFM32_IO_PORT_RF_IRQ_3, EFM32_IO_PIN_RF_IRQ_3, gpioModeInputPull, 0},  /* E_TARGET_EXT_INT_2 */
+
+    {0, 0, 0, 0},  /* E_TARGET_EXT_INT_3 is not supported */
+};
+
+/** External interrupt handler table */
+pfn_intCallb_t pf_hal_exti[E_TARGET_EXT_INT_MAX] = {0};
 
 /*==============================================================================
                                 LOCAL CONSTANTS
@@ -216,8 +239,8 @@ void TIMER1_IRQHandler()
 static void _hal_wdcInit(void)
 {
     WDOG_Init_TypeDef wd = {
-            false, false, false, false, false,
-            false, wdogClkSelLFRCO, wdogPeriod_256k
+            FALSE, FALSE, FALSE, FALSE, FALSE,
+            FALSE, wdogClkSelLFRCO, wdogPeriod_256k
     };
 
     /* disable watchdog at initialization*/
@@ -240,7 +263,7 @@ static void _hal_tcInit(void)
     s_timerInit.prescale = timerPrescale2;
     s_timerInit.riseAction = timerInputActionReloadStart;
 
-    /* caluclate ticks */
+    /* Calculate ticks */
     l_ticks = SystemHFClockGet() / 2 / 1000;
 
     /* configure timer for 1ms */
@@ -278,6 +301,8 @@ static void _hal_tcCb( void )
     if( l_hal_tick % CONF_TICK_SEC == 0 )
         l_hal_sec++;
     l_hal_tick++;
+
+    Tmr_Update();
 } /* _isr_tc_interrupt() */
 
 
@@ -289,6 +314,24 @@ static void _hal_radioCb( uint8_t pin )
     if( pf_hal_radioCb != NULL )
         pf_hal_radioCb( NULL );
 }
+
+/**
+ * \brief   External interrupt handler
+ */
+static void _hal_extiCb(uint8_t pin)
+{
+    uint8_t ix;
+
+    for (ix = 0; ix < E_TARGET_EXT_INT_MAX; ix++) {
+        if (s_hal_exti_gpio[ix].pin == pin) {
+            if (pf_hal_exti[ix]) {
+                pf_hal_exti[ix](NULL);
+            }
+            break;
+        }
+    }
+}
+
 
 /*==============================================================================
                                  API FUNCTIONS
@@ -319,8 +362,13 @@ void hal_exitCritical( void )
 ==============================================================================*/
 int8_t hal_init (void)
 {
+    uint8_t ix;
+
     /* reset callback */
     pf_hal_radioCb = NULL;
+    for (ix = 0; ix < E_TARGET_EXT_INT_MAX; ix++) {
+        pf_hal_exti[ix] = 0;
+    }
 
     /* initialize Chip */
     CHIP_Init();
@@ -338,14 +386,16 @@ int8_t hal_init (void)
     return 1;
 }/* hal_init() */
 
+
 /*==============================================================================
   hal_getrand()
 ==============================================================================*/
-uint8_t    hal_getrand(void)
+uint8_t hal_getrand(void)
 {
     // TODO implement this function
     return 0;
 }/* hal_getrand() */
+
 
 /*==============================================================================
   hal_ledOff()
@@ -353,7 +403,8 @@ uint8_t    hal_getrand(void)
 void hal_ledOff(uint16_t ui_led)
 {
     // Nothing to do
-}/* hal_ledOff() */
+} /* hal_ledOff() */
+
 
 /*==============================================================================
   hal_ledOn()
@@ -361,7 +412,8 @@ void hal_ledOff(uint16_t ui_led)
 void hal_ledOn(uint16_t ui_led)
 {
     // Nothing to do
-}/* hal_ledOn() */
+} /* hal_ledOn() */
+
 
 /*==============================================================================
   hal_extiClear()
@@ -622,6 +674,9 @@ void* hal_spiInit(void)
     spiInit.portLocation = EFM32_USART_LOC;
     spiInit.csControl = spidrvCsControlApplication;
 
+    /* configure SPI clock frequency of 4MHz */
+    spiInit.bitRate = 4000000;
+
     /* initialize SPI */
     s_hal_spi.pHndl = &s_hal_spi.hndl;
     SPIDRV_Init( s_hal_spi.pHndl, &spiInit );
@@ -671,7 +726,7 @@ uint8_t hal_spiRead(uint8_t * p_reg, uint16_t i_length)
 {
     //SPIDRV_MReceiveB( s_hal_spi.pHndl, p_reg, i_length );
     for( int i = 0; i < i_length; i++ )
-        p_reg[i] = USART_SpiTransfer( s_hal_spi.pHndl->initData.port, 0 );
+        p_reg[i] = USART_SpiTransfer( s_hal_spi.pHndl->initData.port, 0xff );
     return *p_reg;
 } /* hal_spiRead() */
 
@@ -688,7 +743,12 @@ void hal_spiWrite(uint8_t * c_value, uint16_t i_length)
 
 void hal_spiTxRx(uint8_t *p_tx, uint8_t *p_rx, uint16_t len)
 {
-    /* TODO missing implementation */
+    uint16_t ix;
+
+    for (ix = 0; ix < len; ix++) {
+        p_rx[ix] = USART_SpiTransfer(s_hal_spi.pHndl->initData.port, p_tx[ix]);
+    }
+
 }
 
 /*==============================================================================

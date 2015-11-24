@@ -56,9 +56,14 @@
 
 #include "emb6.h"
 
-/*!< Interrupt Edge detections */
-typedef enum E_TARGET_INT_EDGE {
-    E_TARGET_INT_EDGE_FALLING = 0, E_TARGET_INT_EDGE_RISING,
+
+/**
+ * @brief   External interrupt edge enumeration declaration
+ */
+typedef enum E_TARGET_INT_EDGE
+{
+    E_TARGET_INT_EDGE_FALLING = 0,
+    E_TARGET_INT_EDGE_RISING,
 
     /*!< This enumeration is only when the edge is not specified, i.e. modules
      * using old emb6 BSP interface. However they should be corrected as soon
@@ -66,10 +71,22 @@ typedef enum E_TARGET_INT_EDGE {
     E_TARGET_INT_EDGE_UNKNOWN,
 } en_targetIntEdge_t;
 
-typedef enum E_TARGET_EXTINT {
-    /* TODO use more meaningful names i.e. enumeration name should indicate
-     * for what the interrupt is used.
-     * */
+
+/**
+ * @brief   External interrupt enumeration declaration
+ */
+typedef enum E_TARGET_EXTINT
+{
+    /**
+     * @note    (1) TI CC112x/CC120x uses following external interrupts
+     *              E_TARGET_EXT_INT_0 <---> RF.GPIO.0
+     *              E_TARGET_EXT_INT_1 <---> RF.GPIO.2
+     *              E_TARGET_EXT_INT_2 <---> RF.GPIO.3
+     *
+     *          (2) Atmel RF uses following external interrupt
+     *              E_TARGET_RADIO_INT
+     *              E_TARGET_USART_INT
+     */
     E_TARGET_EXT_INT_0,
     E_TARGET_EXT_INT_1,
     E_TARGET_EXT_INT_2,
@@ -77,12 +94,20 @@ typedef enum E_TARGET_EXTINT {
     E_TARGET_EXT_INT_MAX,
 
     E_TARGET_RADIO_INT,
-    E_TARGET_USART_INT
+    E_TARGET_USART_INT,
 } en_targetExtInt_t;
 
-typedef enum E_TARGET_EXTPIN {
-    E_TARGET_RADIO_RST, E_TARGET_RADIO_SLPTR,
+
+/**
+ * @brief   External interrupt pin enumeration declaration
+ */
+typedef enum E_TARGET_EXTPIN
+{
+    E_TARGET_RADIO_RST,      //!< E_TARGET_RADIO_RST
+    E_TARGET_RADIO_SLPTR,    //!< E_TARGET_RADIO_SLPTR
 } en_targetExtPin_t;
+
+
 /*----------------------------------------------------------------------------*/
 /** \brief      This function has to enter a critical section to prevent
  *                 interrupting part of a code.
