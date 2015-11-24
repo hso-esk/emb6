@@ -114,9 +114,6 @@ static void UDPSocket_Tx(uint32_t seq)
     uint8_t     payload[] = { 0, 0, 0, 0, 0x50, 0x51, 0x52, 0x53, 0x54 };
     uint16_t    payload_len = sizeof(payload);
 
-    uip_ds6_addr_t  *ps_src_addr;
-    rpl_dag_t       *ps_dag_desc;
-
 
     /*
      * create packet to send
@@ -124,6 +121,9 @@ static void UDPSocket_Tx(uint32_t seq)
     memcpy(payload, &seq, seq_size);
 
 #ifdef DEMO_UDP_SOCKET_ROLE_CLIENT
+    uip_ds6_addr_t  *ps_src_addr;
+    rpl_dag_t       *ps_dag_desc;
+
     /*
      * Get Server IP address
      */
@@ -131,20 +131,6 @@ static void UDPSocket_Tx(uint32_t seq)
     if (ps_src_addr) {
         ps_dag_desc = rpl_get_any_dag();
         if (ps_dag_desc) {
-            /*
-             * Logging
-             */
-#if LOGGER_ENABLE
-            LOG_RAW("UDP Sending...  : ");
-            uint16_t len = payload_len;
-            uint8_t *p_data = payload;
-            while (len--) {
-                LOG_RAW("%02x ", *p_data++);
-            }
-            LOG_RAW("\r\n");
-#endif
-
-
             /*
              * Issue transmission request
              */
@@ -159,10 +145,6 @@ static void UDPSocket_Tx(uint32_t seq)
 
 
 #ifdef DEMO_UDP_SOCKET_ROLE_SERVER
-    /*
-     *
-     */
-#if 1
     uip_ipaddr_copy(&UDPSocket_Conn->ripaddr,
                     &UIP_IP_BUF->srcipaddr);
 
@@ -171,30 +153,21 @@ static void UDPSocket_Tx(uint32_t seq)
                         payload_len);
 
     uip_create_unspecified(&UDPSocket_Conn->ripaddr);
-#else
-    uip_udp_packet_sendto(UDPSocket_Conn, payload, payload_len, &remipaddr,
-            UIP_HTONS(DEF_UDP_REMPORT));
-
-    printf("Sending...  : ");
-    uint8_t *ptr = payload;
-    while (payload_len--) {
-        printf("%02x ", *ptr++);
-    }
-    printf("\r\n");
-
-    /* Shows number of lost packets */
-    uint8_t is_lost = 0u;
-
-    is_lost = (UDPSocket_CurrSeqTx != 0u)
-            && (UDPSocket_CurrSeqTx != (UDPSocket_LastSeqRx + 1));
-
-    if (is_lost != 0u) {
-        UDPSocket_LostPktQty++;
-    }
-    printf("Lost packets: %lu / %lu\r\n\r\n", UDPSocket_LostPktQty, UDPSocket_CurrSeqTx);
-#endif
-
 #endif /* DEMO_UDP_SOCKET_ROLE_SERVER */
+
+
+    /*
+     * Logging
+     */
+#if LOGGER_ENABLE
+    LOG_RAW("UDP Sending...  : ");
+    uint16_t len = payload_len;
+    uint8_t *p_data = payload;
+    while (len--) {
+        LOG_RAW("%02x ", *p_data++);
+    }
+    LOG_RAW("\r\n=========================\r\n");
+#endif
 }
 
 
@@ -222,22 +195,20 @@ static void UDPSocket_EventHandler(c_event_t c_event, p_data_t p_data)
             p_dataptr = (uint8_t *)uip_appdata;
             len = (uint16_t)uip_datalen();
 
+            /* Obtain sequence number of the received message */
+            seq = UDPSocket_GetSeq(p_dataptr, len);
+
 #if LOGGER_ENABLE
-            /*
-             * Logging
-             */
+            /* Logging */
             LOG_RAW("UDP Receiving...  : ");
             while (len--) {
                 LOG_RAW("%02x ", *p_dataptr++);
             }
             LOG_RAW("\r\n");
 #endif
-            /*
-             * Obtain sequence number of the received message
-             */
-            seq = UDPSocket_GetSeq(p_dataptr, len);
+
 #ifdef DEMO_UDP_SOCKET_ROLE_SERVER
-            UDPSocket_Tx(seq);
+            //UDPSocket_Tx(seq);
 #else
             /* TODO compare sequence number */
 #endif /* DEMO_UDP_SOCKET_ROLE_SERVER */
