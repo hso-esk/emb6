@@ -1204,8 +1204,9 @@ static void _rf212b_init(void *p_netstk, e_nsErr_t *p_err)
 
     if ((p_rst != NULL) && (p_slpTrig != NULL) && (p_netstk != NULL))
     {
-        bsp_extIntEnable(E_TARGET_RADIO_INT, E_TARGET_INT_EDGE_RISING,
-                _isr_callback);
+        /* configure external interrupt */
+        bsp_extIntRegister(E_TARGET_RADIO_INT, E_TARGET_INT_EDGE_RISING, _isr_callback);
+        bsp_extIntEnable(E_TARGET_RADIO_INT);
 
         /* Set receive buffers empty and point to the first */
         for (i=0;i<RF212B_CONF_RX_BUFFERS;i++)

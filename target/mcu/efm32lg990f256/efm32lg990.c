@@ -364,43 +364,127 @@ void hal_ledOn(uint16_t ui_led)
 }/* hal_ledOn() */
 
 /*==============================================================================
-  hal_extIntEnable()
+  hal_extiClear()
  =============================================================================*/
-uint8_t hal_extIntEnable(en_targetExtInt_t e_extInt, en_targetIntEdge_t e_edge,
-        pfn_intCallb_t pfn_intCallback)
+void hal_extiRegister(en_targetExtInt_t     e_extInt,
+                      en_targetIntEdge_t    e_edge,
+                      pfn_intCallb_t        pfn_intCallback)
 {
-    int8_t    c_ret = 0;
-    s_hal_gpio_pin_t* p_gpioPin = NULL;
+#if NETSTK_CFG_ARG_CHK_EN
+    if (pfn_intCallback == NULL) {
+        return;
+    }
+#endif
 
-    if( pfn_intCallback != NULL ) {
 
-      /* Initialize GPIO interrupt dispatcher */
-      GPIOINT_Init();
+    s_hal_gpio_pin_t *p_gpioPin = NULL;
 
-      switch( e_extInt ){
+
+    /*
+     * This functions initializes the dispatcher register. Typically
+     * GPIOINT_Init() is called once in your startup code.
+     */
+    GPIOINT_Init();
+
+
+    switch (e_extInt) {
         case E_TARGET_RADIO_INT:
 
             pf_hal_radioCb = pfn_intCallback;
 
             p_gpioPin = &s_hal_gpio[e_hal_gpios_rf_irq];
             /* configure pin */
-            GPIO_PinModeSet( p_gpioPin->port, p_gpioPin->pin, p_gpioPin->mode, p_gpioPin->val );
+            GPIO_PinModeSet(p_gpioPin->port, p_gpioPin->pin,
+                    p_gpioPin->mode, p_gpioPin->val);
             /* Register callbacks before setting up and enabling pin interrupt. */
-            GPIOINT_CallbackRegister( p_gpioPin->pin, _hal_radioCb );
+            GPIOINT_CallbackRegister(p_gpioPin->pin, _hal_radioCb);
             /* Set falling edge interrupt */
-            GPIO_IntConfig( p_gpioPin->port, p_gpioPin->pin, true, false, true );
-            c_ret = 1;
+            GPIO_IntConfig(p_gpioPin->port, p_gpioPin->pin, true, false,
+                    true);
             break;
 
         case E_TARGET_USART_INT:
             break;
 
+        case E_TARGET_EXT_INT_0:
+        case E_TARGET_EXT_INT_1:
+        case E_TARGET_EXT_INT_2:
+            /*
+             * Treat external interrupt configurations in same manner
+             */
+            p_gpioPin = &s_hal_exti_gpio[e_extInt];
+
+            /* store interrupt callback */
+            pf_hal_exti[e_extInt] = pfn_intCallback;
+
+            /* configure external interrupt GPIOs */
+            GPIO_PinModeSet(p_gpioPin->port,
+                            p_gpioPin->pin,
+                            p_gpioPin->mode,
+                            p_gpioPin->val);
+
+            /* configure edge detection */
+            if (e_edge == E_TARGET_INT_EDGE_FALLING) {
+                GPIO_IntConfig(p_gpioPin->port,
+                               p_gpioPin->pin,
+                               false,
+                               true,
+                               true);
+            } else {
+                GPIO_IntConfig(p_gpioPin->port,
+                               p_gpioPin->pin,
+                               true,
+                               false,
+                               true);
+            }
+
+            /* register callback function */
+            GPIOINT_CallbackRegister(p_gpioPin->pin, _hal_extiCb);
+
+            /* disable interrupt by default */
+            hal_extiDisable(e_extInt);
+            break;
+
         default:
             break;
-        }
     }
-    return c_ret;
-} /* hal_extIntInit() */
+} /* hal_extiRegister() */
+
+
+/*==============================================================================
+  hal_extiClear()
+ =============================================================================*/
+void hal_extiClear(en_targetExtInt_t e_extInt)
+{
+    uint32_t pin_msk;
+
+    pin_msk = 1 << (s_hal_exti_gpio[e_extInt].pin);
+    GPIO_IntClear(pin_msk);
+} /* hal_extiClear() */
+
+
+/*==============================================================================
+  hal_extiEnable()
+ =============================================================================*/
+void hal_extiEnable(en_targetExtInt_t e_extInt)
+{
+    uint32_t pin_msk;
+
+    pin_msk = 1 << (s_hal_exti_gpio[e_extInt].pin);
+    GPIO_IntEnable(pin_msk);
+} /* hal_extiEnable() */
+
+/*==============================================================================
+  hal_extiDisable()
+ =============================================================================*/
+void hal_extiDisable(en_targetExtInt_t e_extInt)
+{
+    uint32_t pin_msk;
+
+    pin_msk = 1 << (s_hal_exti_gpio[e_extInt].pin);
+    GPIO_IntDisable(pin_msk);
+} /* hal_extiDisable() */
+
 
 /*==============================================================================
   hal_delay_us()

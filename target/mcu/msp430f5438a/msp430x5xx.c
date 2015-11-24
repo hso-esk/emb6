@@ -336,6 +336,61 @@ uint8_t hal_extIntClear(en_targetExtInt_t e_pin)
 }
 
 
+void hal_extiRegister(en_targetExtInt_t     e_pin,
+                      en_targetIntEdge_t    e_edge,
+                      pfn_intCallb_t        pf_cb)
+{
+    s_io_pin_desc_t *ps_desc = &s_target_extIntPin[e_pin];
+
+
+    /* register external interrupts */
+    if ((pf_cb != NULL) && (ps_desc->PORT != NULL)) {
+        switch (e_edge) {
+            case E_TARGET_INT_EDGE_FALLING:
+                io_extiRegister(ps_desc, INT_EDGE_FALLING, pf_cb);
+                break;
+
+            case E_TARGET_INT_EDGE_RISING:
+                io_extiRegister(ps_desc, INT_EDGE_RISING, pf_cb);
+                break;
+
+            default:
+                break;
+        }
+    }
+}
+
+void hal_extiClear(en_targetExtInt_t e_pin)
+{
+    s_io_pin_desc_t *ps_desc = &s_target_extIntPin[e_pin];
+
+
+    if (ps_desc->PORT != NULL) {
+        io_extiClear(ps_desc);
+    }
+}
+
+void hal_extiEnable(en_targetExtInt_t e_pin)
+{
+    s_io_pin_desc_t *ps_desc = &s_target_extIntPin[e_pin];
+
+
+    if (ps_desc->PORT != NULL) {
+        io_extiEnable(ps_desc);
+    }
+}
+
+void hal_extiDisable(en_targetExtInt_t e_pin)
+{
+    s_io_pin_desc_t *ps_desc = &s_target_extIntPin[e_pin];
+
+
+    if (ps_desc->PORT != NULL) {
+        io_extiDisable(ps_desc);
+    }
+}
+
+
 void hal_delay_us(uint32_t ul_delay)
 {
     /*

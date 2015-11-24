@@ -250,14 +250,18 @@ uint16_t bsp_led(en_bspLedColor_t ui_led, en_bspLedAction_t en_ledAction);
  *
  */
 /*============================================================================*/
-#define     bsp_extIntEnable(e_intSource, e_edge, fn_p) \
-            hal_extIntEnable(e_intSource, e_edge, fn_p)
+#define     bsp_extIntRegister(e_intSource, e_edge, fn_p) \
+            hal_extiRegister(e_intSource, e_edge, fn_p)
+
+#define     bsp_extIntEnable(e_intSource) \
+            hal_extiEnable(e_intSource)
 
 #define     bsp_extIntDisable(e_intSource) \
-            hal_extIntDisable(e_intSource)
+            hal_extiDisable(e_intSource)
 
 #define     bsp_extIntClear(e_intSource) \
-            hal_extIntClear(e_intSource)
+            hal_extiClear(e_intSource)
+
 
 /*============================================================================*/
 /** \brief  This function makes a delay on the target

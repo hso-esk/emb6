@@ -135,19 +135,50 @@ void hal_ledOn(uint16_t ui_led);
  */
 /*---------------------------------------------------------------------------*/
 void hal_ledOff(uint16_t ui_led);
+
 /*----------------------------------------------------------------------------*/
-/** \brief      This function configures external interrupt
- *  \param  e_extInt     source of an interrupt
- *  \param    pfn_intCallback    Callback function pointer
+/** \brief      This function configures external interrupt. By default, the
+ *              external interrupt is disabled after being configured.
  *
- *  \return        none
+ *  \param          e_extInt            source of an interrupt
+ *  \param          e_edge              edge upon which the interrupt occurs
+ *  \param          pfn_intCallback     callback function pointer
+ *
+ *  \return         none
  */
 /*---------------------------------------------------------------------------*/
-uint8_t hal_extIntEnable(en_targetExtInt_t e_extInt, en_targetIntEdge_t e_edge, pfn_intCallb_t pfn_intCallback);
+void hal_extiRegister(en_targetExtInt_t e_extInt, en_targetIntEdge_t e_edge, pfn_intCallb_t pfn_intCallback);
 
-uint8_t hal_extIntDisable(en_targetExtInt_t e_extInt);
+/*----------------------------------------------------------------------------*/
+/** \brief      This function clear state of external interrupt
+ *
+ *  \param          e_extInt            source of an interrupt
+ *
+ *  \return         none
+ */
+/*---------------------------------------------------------------------------*/
+void hal_extiClear(en_targetExtInt_t e_extInt);
 
-uint8_t hal_extIntClear(en_targetExtInt_t e_extInt);
+/*----------------------------------------------------------------------------*/
+/** \brief      This function enables external interrupt
+ *
+ *  \param          e_extInt            source of an interrupt
+ *
+ *  \return         none
+ */
+/*---------------------------------------------------------------------------*/
+void hal_extiEnable(en_targetExtInt_t e_extInt);
+
+/*----------------------------------------------------------------------------*/
+/** \brief      This function disable external interrupt
+ *
+ *  \param          e_extInt            source of an interrupt
+ *
+ *  \return         none
+ */
+/*---------------------------------------------------------------------------*/
+void hal_extiDisable(en_targetExtInt_t e_extInt);
+
 
 /*============================================================================*/
 /** \brief  This function makes a delay on the target MCU
@@ -226,9 +257,19 @@ void * hal_spiInit(void);
  *
  *  \return        0 if failed, 1 id ok
  */
-/*---------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 uint8_t hal_spiSlaveSel(void * p_spi, bool action);
 
+/*----------------------------------------------------------------------------*/
+/** \brief  This function simultaneously transmit and receive data from SPI
+ *
+ *  \param         p_tx    Pointer to buffer holding data to send
+ *  \param         p_rx    Pointer to buffer holding data to send
+ *  \param         len     Size of data to send
+ *
+ *  \return        none
+ */
+/*----------------------------------------------------------------------------*/
 void hal_spiTxRx(uint8_t *p_tx, uint8_t *p_rx, uint16_t len);
 
 /*----------------------------------------------------------------------------*/
