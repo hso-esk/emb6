@@ -1,0 +1,30 @@
+udp_socket = {
+    'demo' : [
+       '../*',
+    ],
+	'emb6' : [
+		'sock',
+		'rpl',
+		'ipv6',
+		'sicslowpan',
+		'llsec',
+		'llc',
+		'mac',
+		'framer',
+		'phy',
+	],
+	'utils' : [
+		'*',
+	],
+# C global defines
+	'defines' : [
+		('NET_USE_RPL',1),
+		('DEMO_USE_UDP_SOCKET',1),
+		('DEMO_UDP_SOCKET_ROLE_CLIENT', 1)
+	],
+# GCC flags
+	'cflags' : [
+	]
+}
+
+Return('udp_socket')

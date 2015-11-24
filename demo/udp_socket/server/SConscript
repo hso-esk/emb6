@@ -1,5 +1,6 @@
 udp_socket = {
 	'demo' : [
+	   '../*',
 	],
 	'emb6' : [
 		'sock',
