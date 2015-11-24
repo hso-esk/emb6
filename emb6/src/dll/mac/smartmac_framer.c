@@ -12,10 +12,8 @@
 #include "emb6.h"
 
 
-#if (LPR_CFG_SMARTMAC_EN == TRUE)
 #include "lib_tmr.h"
 #include "smartmac_framer.h"
-
 
 /*
 ********************************************************************************
@@ -55,7 +53,7 @@ static void SmartMAC_ParseSACK (uint8_t *p_pkt, uint16_t len, e_nsErr_t *p_err);
 static void SmartMAC_ParseBroadcast (uint8_t *p_pkt, uint16_t len, e_nsErr_t *p_err);
 
 static void SmartMAC_CalcSACKDelay(uint8_t ts_count);
-static void SmartMAC_CalcStrobeDelay(s_nsLprPwrOnTblEntry_t *p_dev, uint32_t *p_delay);
+static void SmartMAC_CalcStrobeDelay(s_nsMacUlePwrOnTblEntry_t *p_dev, uint32_t *p_delay);
 
 
 /*
@@ -63,8 +61,8 @@ static void SmartMAC_CalcStrobeDelay(s_nsLprPwrOnTblEntry_t *p_dev, uint32_t *p_
 *                               GLOBAL VARIABLES
 ********************************************************************************
 */
-s_nsLPRFramerDrv_t SmartMACFramer = {
-    "APSS SmartMAC",
+s_nsMacUleFramerDrv_t SmartMACFramer = {
+    "SmartMAC Framer",
      SmartMAC_Init,
      SmartMAC_Deinit,
      SmartMAC_Create,
@@ -84,7 +82,7 @@ s_nsLPRFramerDrv_t SmartMACFramer = {
  * @param   p_dev   Pointer to a structure holding power-on information of a
  *                  device
  */
-static void SmartMAC_CalcStrobeDelay(s_nsLprPwrOnTblEntry_t *p_dev, uint32_t *p_delay)
+static void SmartMAC_CalcStrobeDelay(s_nsMacUlePwrOnTblEntry_t *p_dev, uint32_t *p_delay)
 {
     uint8_t n, i;
     uint32_t t0, t1;
@@ -100,8 +98,8 @@ static void SmartMAC_CalcStrobeDelay(s_nsLprPwrOnTblEntry_t *p_dev, uint32_t *p_
          */
         i = 1;
         do {
-            n  = (TmrCurTick - t0) / LPR_CFG_POWERUP_INTERVAL_IN_MS;        /* Number of power-on interval in between   */
-            t1 = t0 + (n + i) * LPR_CFG_POWERUP_INTERVAL_IN_MS;             /* Predicted next power-on time interval    */
+            n  = (TmrCurTick - t0) / MAC_ULE_CFG_POWERUP_INTERVAL_IN_MS;        /* Number of power-on interval in between   */
+            t1 = t0 + (n + i) * MAC_ULE_CFG_POWERUP_INTERVAL_IN_MS;             /* Predicted next power-on time interval    */
             *p_delay = (t1 - TmrCurTick);
 
             /*
@@ -110,14 +108,14 @@ static void SmartMAC_CalcStrobeDelay(s_nsLprPwrOnTblEntry_t *p_dev, uint32_t *p_
              * (1)  Minimum possible delay shall be calculated as following:
              *      min_delay = T_off_to_on + T_on_to_off + T_scan + T_tx_smartpreamble
              */
-            tx_period = LPR_PORT_STROBE_TX_TIME_IN_MS +
-                        LPR_PORT_STROBE_TX_GAP_TIME_IN_MS;
+            tx_period = MAC_ULE_PORT_STROBE_TX_TIME_IN_MS +
+                        MAC_ULE_PORT_STROBE_TX_GAP_TIME_IN_MS;
 
-            tx_advance = LPR_CFG_QTY_STROBE_SENT_IN_ADVANCE * tx_period;
+            tx_advance = MAC_ULE_CFG_QTY_STROBE_SENT_IN_ADVANCE * tx_period;
 
-            min_delay = LPR_PORT_OFF_TO_ON_TIME_IN_MS +
-                        LPR_PORT_ON_TO_OFF_TIME_IN_MS +
-                        LPR_PORT_SCAN_DURATION_IN_MS;
+            min_delay = MAC_ULE_PORT_OFF_TO_ON_TIME_IN_MS +
+                        MAC_ULE_PORT_ON_TO_OFF_TIME_IN_MS +
+                        MAC_ULE_PORT_SCAN_DURATION_IN_MS;
 
             if (*p_delay < min_delay) {
                 *p_delay = 0;
@@ -131,7 +129,7 @@ static void SmartMAC_CalcStrobeDelay(s_nsLprPwrOnTblEntry_t *p_dev, uint32_t *p_
         } while (*p_delay == 0);
 
         /* set strobe counter to default */
-        SmartMAC_StrobeCnt = LPR_CFG_STROBE_TX_MAX;
+        SmartMAC_StrobeCnt = MAC_ULE_CFG_STROBE_TX_MAX;
     } else {
         *p_delay = 0;
     }
@@ -158,9 +156,9 @@ static void SmartMAC_CalcSACKDelay(uint8_t ts_count)
          * sleep. Instead the receive should replay with an ACK immediately
          * as in SmartMAC framer.
          */
-        SmartMAC_SACKDelay = ts_count * LPR_PORT_STROBE_TX_INTERVAL_IN_MS;
-        min_delay = LPR_PORT_ON_TO_OFF_TIME_IN_MS +
-                    LPR_PORT_OFF_TO_ON_TIME_IN_MS;
+        SmartMAC_SACKDelay = ts_count * MAC_ULE_PORT_STROBE_TX_INTERVAL_IN_MS;
+        min_delay = MAC_ULE_PORT_ON_TO_OFF_TIME_IN_MS +
+                    MAC_ULE_PORT_OFF_TO_ON_TIME_IN_MS;
         if (SmartMAC_SACKDelay <= min_delay) {
             SmartMAC_SACKDelay = 0;
         } else {
@@ -210,7 +208,7 @@ static void SmartMAC_ParseStrobe (uint8_t *p_pkt, uint16_t len, e_nsErr_t *p_err
     /*
      * If the received strobe is not destined for us...
      */
-    if (LPR_IS_PENDING_TX() == 0) {
+    if (MAC_ULE_IS_PENDING_TX() == 0) {
         *p_err = NETSTK_ERR_LPR_INVALID_ADDR;
     } else {
         if (dev_id == NetstkDstId) {
@@ -239,13 +237,13 @@ static void SmartMAC_ParseSACK (uint8_t *p_pkt, uint16_t len, e_nsErr_t *p_err)
     if (src_id == NetstkDstId) {
         *p_err = NETSTK_ERR_NONE;
 
-#if LPR_CFG_LOOSE_SYNC_EN
+#if MAC_ULE_CFG_LOOSE_SYNC_EN
         uint8_t ix;
 
-        for (ix = 0; ix < LPR_CFG_PWRON_TBL_SIZE; ix++) {
-            if (LPRPwrOnTbl[ix].DestId == NetstkDstId) {
-                LPRPwrOnTbl[ix].LastWakeup = TmrCurTick;
-                LPRPwrOnTbl[ix].StrobeSentQty = 0; /* Reset sent strobe quantity */
+        for (ix = 0; ix < MAC_ULE_CFG_PWRON_TBL_SIZE; ix++) {
+            if (MacUlePwrOnTbl[ix].DestId == NetstkDstId) {
+                MacUlePwrOnTbl[ix].LastWakeup = TmrCurTick;
+                MacUlePwrOnTbl[ix].StrobeSentQty = 0; /* Reset sent strobe quantity */
                 break;
             }
         }
@@ -295,7 +293,7 @@ static void SmartMAC_ParseBroadcast (uint8_t *p_pkt, uint16_t len, e_nsErr_t *p_
  */
 static void SmartMAC_Init (e_nsErr_t *p_err)
 {
-    SmartMAC_SACK[0] = LPR_FRAME_TYPE_SACK;
+    SmartMAC_SACK[0] = MAC_ULE_FRAME_TYPE_SACK;
     SmartMAC_SACK[1] = 0;
     SmartMAC_SACK[2] = 0;
     SmartMAC_SACK[3] = NetstkSrcId;
@@ -308,9 +306,9 @@ static void SmartMAC_Init (e_nsErr_t *p_err)
     SmartMAC_Strobe[3] = 0;
 
     SmartMAC_SACKDelay = 0;
-    SmartMAC_StrobeCnt = LPR_CFG_STROBE_TX_MAX;
+    SmartMAC_StrobeCnt = MAC_ULE_CFG_STROBE_TX_MAX;
     SmartMAC_RxBroadcast = 0;
-    SmartMAC_BroadcastCnt = LPR_CFG_BROADCAST_TX_MAX;
+    SmartMAC_BroadcastCnt = MAC_ULE_CFG_BROADCAST_TX_MAX;
     *p_err = NETSTK_ERR_NONE;
 }
 
@@ -337,7 +335,7 @@ static uint8_t* SmartMAC_CreateStrobe (uint16_t *p_len, LIB_TMR_TICK *p_delay, e
 {
     uint8_t *p_pkt;
 
-    SmartMAC_Strobe[0] = LPR_FRAME_TYPE_STROBE;
+    SmartMAC_Strobe[0] = MAC_ULE_FRAME_TYPE_STROBE;
     SmartMAC_Strobe[1] = 0;
     SmartMAC_Strobe[2] = SmartMAC_StrobeCnt;
     SmartMAC_Strobe[3] = NetstkDstId;
@@ -351,36 +349,37 @@ static uint8_t* SmartMAC_CreateStrobe (uint16_t *p_len, LIB_TMR_TICK *p_delay, e
     if (SmartMAC_StrobeCnt) {
         SmartMAC_StrobeCnt--;
     } else {
-        SmartMAC_StrobeCnt = LPR_CFG_STROBE_TX_MAX;
+        SmartMAC_StrobeCnt = MAC_ULE_CFG_STROBE_TX_MAX;
     }
 
-#if LPR_CFG_LOOSE_SYNC_EN
+
+#if MAC_ULE_CFG_LOOSE_SYNC_EN
     uint8_t ix;
     uint8_t is_found = 0;
     uint8_t ix_free_slot = 0xFF;
 
-    for (ix = 0; ix < LPR_CFG_PWRON_TBL_SIZE; ix++) {
-        if ((LPRPwrOnTbl[ix].DestId     == NetstkDstId) &&
-            (LPRPwrOnTbl[ix].LastWakeup != 0)) {
+    for (ix = 0; ix < MAC_ULE_CFG_PWRON_TBL_SIZE; ix++) {
+        if ((MacUlePwrOnTbl[ix].DestId     == NetstkDstId) &&
+            (MacUlePwrOnTbl[ix].LastWakeup != 0)) {
             is_found = 1;
-            SmartMAC_CalcStrobeDelay(&LPRPwrOnTbl[ix], p_delay);
+            SmartMAC_CalcStrobeDelay(&MacUlePwrOnTbl[ix], p_delay);
             break;
         }
 
-        if ((LPRPwrOnTbl[ix].DestId == 0) &&
+        if ((MacUlePwrOnTbl[ix].DestId == 0) &&
             (ix_free_slot == 0xFF)) {
             ix_free_slot = ix;
         }
     }
 
     if (is_found == 0) {
-        LPRPwrOnTbl[ix_free_slot].DestId = NetstkDstId;
+        MacUlePwrOnTbl[ix_free_slot].DestId = NetstkDstId;
     }
 
-    if (LPRPwrOnTbl[ix].StrobeSentQty > LPR_CFG_STROBE_TX_MAX) {
-        LPRPwrOnTbl[ix].StrobeSentQty = 0;
+    if (MacUlePwrOnTbl[ix].StrobeSentQty > MAC_ULE_CFG_STROBE_TX_MAX) {
+        MacUlePwrOnTbl[ix].StrobeSentQty = 0;
     } else {
-        LPRPwrOnTbl[ix].StrobeSentQty++;
+        MacUlePwrOnTbl[ix].StrobeSentQty++;
     }
 #endif
 
@@ -438,7 +437,7 @@ static uint8_t* SmartMAC_CreateBroadcast (uint16_t *p_len, LIB_TMR_TICK *p_delay
 
     uint8_t *p_pkt;
 
-    SmartMAC_Strobe[0] = LPR_FRAME_TYPE_BROADCAST;
+    SmartMAC_Strobe[0] = MAC_ULE_FRAME_TYPE_BROADCAST;
     SmartMAC_Strobe[1] = 0;
     SmartMAC_Strobe[2] = SmartMAC_BroadcastCnt;
     SmartMAC_Strobe[3] = 0xFF;
@@ -452,7 +451,7 @@ static uint8_t* SmartMAC_CreateBroadcast (uint16_t *p_len, LIB_TMR_TICK *p_delay
     if (SmartMAC_BroadcastCnt) {
         SmartMAC_BroadcastCnt--;
     } else {
-        SmartMAC_BroadcastCnt = LPR_CFG_BROADCAST_TX_MAX;
+        SmartMAC_BroadcastCnt = MAC_ULE_CFG_BROADCAST_TX_MAX;
         *p_err = NETSTK_ERR_LPR_BROADCAST_LAST_STROBE;
     }
     return p_pkt;
@@ -491,15 +490,15 @@ static uint8_t *SmartMAC_Create (uint8_t frame_type, uint16_t *p_len, uint32_t *
 
 
     switch (frame_type) {
-        case LPR_FRAME_TYPE_STROBE:
+        case MAC_ULE_FRAME_TYPE_STROBE:
             p_pkt = SmartMAC_CreateStrobe(p_len, p_delay, p_err);
             break;
 
-        case LPR_FRAME_TYPE_SACK:
+        case MAC_ULE_FRAME_TYPE_SACK:
             p_pkt = SmartMAC_CreateACK(p_len, p_delay, p_err);
             break;
 
-        case LPR_FRAME_TYPE_BROADCAST:
+        case MAC_ULE_FRAME_TYPE_BROADCAST:
             p_pkt = SmartMAC_CreateBroadcast(p_len, p_delay, p_err);
             break;
 
@@ -532,15 +531,15 @@ static void SmartMAC_Parse (uint8_t *p_frame_type, uint8_t *p_pkt, uint16_t len,
 
     *p_frame_type = *p_pkt;
     switch (*p_frame_type) {
-        case LPR_FRAME_TYPE_STROBE:
+        case MAC_ULE_FRAME_TYPE_STROBE:
             SmartMAC_ParseStrobe(p_pkt, len, p_err);
             break;
 
-        case LPR_FRAME_TYPE_SACK:
+        case MAC_ULE_FRAME_TYPE_SACK:
             SmartMAC_ParseSACK(p_pkt, len, p_err);
             break;
 
-        case LPR_FRAME_TYPE_BROADCAST:
+        case MAC_ULE_FRAME_TYPE_BROADCAST:
             SmartMAC_RxBroadcast = 1;
             SmartMAC_ParseBroadcast(p_pkt, len, p_err);
             break;
@@ -557,4 +556,3 @@ static void SmartMAC_Parse (uint8_t *p_frame_type, uint8_t *p_pkt, uint16_t len,
 *                               END OF FILE
 ********************************************************************************
 */
-#endif /* #if (LPR_SMARTMAC_EN == TRUE) */

@@ -1,19 +1,19 @@
 /**
- * @file    lpr.h
+ * @file    mac_ule.h
  * @date    Aug 19, 2015
  * @author  PN
  */
 
-#ifndef LPR_PRESENT
-#define LPR_PRESENT
+#ifndef MAC_ULE_PRESENT
+#define MAC_ULE_PRESENT
 
 
-typedef struct lpr_framer_api      s_nsLPRFramerDrv_t;
+typedef struct mac_ule_framer_api      s_nsMacUleFramerDrv_t;
 
 /**
- * @brief   Asynchronous Power Saving Scheme Framer API
+ * @brief   Ultra-Low-Energy MAC framer API structure declaration
  */
-struct lpr_framer_api
+struct mac_ule_framer_api
 {
     char         *Name;
 
@@ -27,9 +27,9 @@ struct lpr_framer_api
 };
 
 
-#define LPR_DEV_ID_BROADCAST                (NETSTK_DEV_ID)( 0xFFFF )
-#define LPR_DEV_ID_INVALID                  (NETSTK_DEV_ID)( 0x0000 )
-#define LPR_IS_PENDING_TX()                 (NetstkDstId > LPR_DEV_ID_INVALID)
+#define MAC_ULE_DEV_ID_BROADCAST            (NETSTK_DEV_ID)( 0xFFFF )
+#define MAC_ULE_ID_INVALID                  (NETSTK_DEV_ID)( 0x0000 )
+#define MAC_ULE_IS_PENDING_TX()             (NetstkDstId > MAC_ULE_ID_INVALID)
 
 /**
  * @addtogroup  LPR_FRAME_TYPES    APSS frame types
@@ -37,24 +37,24 @@ struct lpr_framer_api
  *              in IEEE802.15.4
  * @{
  */
-typedef uint8_t LPR_FRAME_TYPE;
+typedef uint8_t MAC_ULE_FRAME_TYPE;
 
-#define LPR_FRAME_TYPE_STROBE              (LPR_FRAME_TYPE) ( 0x14 )
-#define LPR_FRAME_TYPE_SACK                (LPR_FRAME_TYPE) ( 0x15 )
-#define LPR_FRAME_TYPE_BROADCAST           (LPR_FRAME_TYPE) ( 0x16 )
+#define MAC_ULE_FRAME_TYPE_STROBE           (MAC_ULE_FRAME_TYPE)( 0x14 )
+#define MAC_ULE_FRAME_TYPE_SACK             (MAC_ULE_FRAME_TYPE)( 0x15 )
+#define MAC_ULE_FRAME_TYPE_BROADCAST        (MAC_ULE_FRAME_TYPE)( 0x16 )
 
 /**
  * @}
  */
 
 
-#if     LPR_CFG_LOOSE_SYNC_EN
-typedef struct lpr_pwron_tbl_entry     s_nsLprPwrOnTblEntry_t;
+#if MAC_ULE_CFG_LOOSE_SYNC_EN
+typedef struct mac_ule_pwron_tbl_entry     s_nsMacUlePwrOnTblEntry_t;
 
 /**
  * @brief   Power-On table structure declaration
  */
-struct lpr_pwron_tbl_entry
+struct mac_ule_pwron_tbl_entry
 {
     uint32_t    LastWakeup;     /*!< Last wake-up record                            */
 
@@ -63,12 +63,11 @@ struct lpr_pwron_tbl_entry
     uint16_t    StrobeSentQty;  /*!< Quantity of sent strobes as waking-up signal   */
 };
 
-extern s_nsLprPwrOnTblEntry_t LPRPwrOnTbl[LPR_CFG_PWRON_TBL_SIZE];
+extern s_nsMacUlePwrOnTblEntry_t MacUlePwrOnTbl[MAC_ULE_CFG_PWRON_TBL_SIZE];
 #endif
 
 extern NETSTK_DEV_ID NetstkSrcId;
 extern NETSTK_DEV_ID NetstkDstId;
-extern s_nsLPRFramerDrv_t XMACFramer;
-extern s_nsLPRFramerDrv_t SmartMACFramer;
+extern s_nsMacUleFramerDrv_t SmartMACFramer;
 
-#endif /* LPR_PRESENT */
+#endif /* MAC_ULE_PRESENT */

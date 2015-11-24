@@ -64,8 +64,6 @@
 *                               ENABLE/DISABLE REFACTORING
 ********************************************************************************
 */
-#define NETSTK_CFG_REFACTOR_LPR_EN              ( 1U )
-
 
 
 /*=============================================================================
@@ -922,14 +920,14 @@ void uip_log(char *msg);
  * @addtogroup  Configurations
  * @{
  */
-#define LPR_CFG_LOOSE_SYNC_EN                      ( 1u )
-#define LPR_CFG_IDLE_DURATION_IN_MS                (uint32_t)(   20u )
-#define LPR_CFG_POWERUP_INTERVAL_IN_MS             (uint32_t)( 1000u )
-#define LPR_CFG_STROBE_TX_INTERVAL_IN_MS           (LPR_CFG_POWERUP_INTERVAL_IN_MS * 2)
+#define MAC_ULE_CFG_LOOSE_SYNC_EN                      ( 1u )
+#define MAC_ULE_CFG_IDLE_DURATION_IN_MS                (uint32_t)(   20u )
+#define MAC_ULE_CFG_POWERUP_INTERVAL_IN_MS             (uint32_t)( 1000u )
+#define MAC_ULE_CFG_STROBE_TX_INTERVAL_IN_MS           (MAC_ULE_CFG_POWERUP_INTERVAL_IN_MS * 2)
 
-#if     LPR_CFG_LOOSE_SYNC_EN
-#define LPR_CFG_PWRON_TBL_SIZE                     (uint8_t )(   3u  )
-#define LPR_CFG_QTY_STROBE_SENT_IN_ADVANCE         (uint8_t )(   3u  )      /*!< variable   */
+#if     MAC_ULE_CFG_LOOSE_SYNC_EN
+#define MAC_ULE_CFG_PWRON_TBL_SIZE                     (uint8_t )(   3u  )
+#define MAC_ULE_CFG_QTY_STROBE_SENT_IN_ADVANCE         (uint8_t )(   3u  )      /*!< variable   */
 #endif
  /**
   * @}
@@ -972,35 +970,33 @@ void uip_log(char *msg);
   *              This time addition is usually caused by transition time of RF
   *              driver implementation.
   */
-#define LPR_PORT_SCAN_DURATION_IN_MS                (uint32_t)(  25u )          /*!< fixed, hardware-specific       */
-#define LPR_PORT_MIN_DELAY_IN_MS                    (uint32_t)(  50U )          /*!< fixed, hardware-specific, 50   */
-#define LPR_PORT_ON_TO_OFF_TIME_IN_MS               (uint32_t)(   8u )          /*!< fixed, hardware-specific, 06   */
-#define LPR_PORT_OFF_TO_ON_TIME_IN_MS               (uint32_t)(  20u )          /*!< fixed, hardware-specific, 15   */
-#define LPR_PORT_TX_RX_TURNAROUND_IN_MS             (uint32_t)(   1u )          /*!< fixed, hardware-specific, 01   */
-#define LPR_PORT_STROBE_TX_TIME_IN_MS               (uint32_t)(  10u )          /*!< fixed, hardware-specific, 08   */
-#define LPR_PORT_STROBE_TX_GAP_TIME_IN_MS           (uint32_t)(  10u )          /*!< fixed, hardware-specific, 09   */
-#define LPR_PORT_RX_PAYLOAD_OFFSET_IN_MS            (uint32_t)(   2u )          /*!< variable, needed for better performance 2   */
-#define LPR_PORT_WFA_TIMEOUT_IN_MS                  (LPR_PORT_STROBE_TX_GAP_TIME_IN_MS)
+#define MAC_ULE_PORT_SCAN_DURATION_IN_MS                (uint32_t)(  25u )          /*!< fixed, hardware-specific       */
+#define MAC_ULE_PORT_MIN_DELAY_IN_MS                    (uint32_t)(  50U )          /*!< fixed, hardware-specific, 50   */
+#define MAC_ULE_PORT_ON_TO_OFF_TIME_IN_MS               (uint32_t)(   8u )          /*!< fixed, hardware-specific, 06   */
+#define MAC_ULE_PORT_OFF_TO_ON_TIME_IN_MS               (uint32_t)(  20u )          /*!< fixed, hardware-specific, 15   */
+#define MAC_ULE_PORT_TX_RX_TURNAROUND_IN_MS             (uint32_t)(   1u )          /*!< fixed, hardware-specific, 01   */
+#define MAC_ULE_PORT_STROBE_TX_TIME_IN_MS               (uint32_t)(  10u )          /*!< fixed, hardware-specific, 08   */
+#define MAC_ULE_PORT_STROBE_TX_GAP_TIME_IN_MS           (uint32_t)(  10u )          /*!< fixed, hardware-specific, 09   */
+#define MAC_ULE_PORT_RX_PAYLOAD_OFFSET_IN_MS            (uint32_t)(   2u )          /*!< variable, needed for better performance 2   */
+#define MAC_ULE_PORT_WFA_TIMEOUT_IN_MS                  (MAC_ULE_PORT_STROBE_TX_GAP_TIME_IN_MS)
 
-#define LPR_PORT_WFP_TIMEOUT_IN_MS                  (LPR_PORT_STROBE_TX_GAP_TIME_IN_MS +   \
-                                                     LPR_PORT_TX_RX_TURNAROUND_IN_MS   +   \
-                                                     LPR_PORT_RX_PAYLOAD_OFFSET_IN_MS)
+#define MAC_ULE_PORT_WFP_TIMEOUT_IN_MS                  (MAC_ULE_PORT_STROBE_TX_GAP_TIME_IN_MS +   \
+                                                         MAC_ULE_PORT_TX_RX_TURNAROUND_IN_MS   +   \
+                                                         MAC_ULE_PORT_RX_PAYLOAD_OFFSET_IN_MS)
 
-#define LPR_PORT_STROBE_TX_INTERVAL_IN_MS           (uint32_t)( 20U )
+#define MAC_ULE_PORT_STROBE_TX_INTERVAL_IN_MS           (uint32_t)( 17U )
 
-#define LPR_CFG_STROBE_TX_MAX                       (uint8_t )(LPR_CFG_STROBE_TX_INTERVAL_IN_MS / LPR_PORT_STROBE_TX_INTERVAL_IN_MS )
+#define MAC_ULE_CFG_STROBE_TX_MAX                       (uint8_t )(MAC_ULE_CFG_STROBE_TX_INTERVAL_IN_MS     /   \
+                                                                   MAC_ULE_PORT_STROBE_TX_INTERVAL_IN_MS)
 
 /**
  * @note    Broadcast feature is at the moment only available with SmartMAC
  */
-#define LPR_CFG_BROADCAST_TX_ADDITION               (uint8_t)( 2u )
-#define LPR_CFG_BROADCAST_TX_MAX                    (uint8_t)(LPR_CFG_POWERUP_INTERVAL_IN_MS       /       \
-                                                              LPR_PORT_STROBE_TX_INTERVAL_IN_MS    +       \
-                                                              LPR_CFG_BROADCAST_TX_ADDITION)
+#define MAC_ULE_CFG_BROADCAST_TX_ADDITION               (uint8_t)( 2u )
+#define MAC_ULE_CFG_BROADCAST_TX_MAX                    (uint8_t)(MAC_ULE_CFG_POWERUP_INTERVAL_IN_MS       /       \
+                                                              MAC_ULE_PORT_STROBE_TX_INTERVAL_IN_MS    +       \
+                                                              MAC_ULE_CFG_BROADCAST_TX_ADDITION)
 
-
-#define LPR_CFG_SMARTMAC_EN                 TRUE
-#define LPR_FRAMER                          SmartMACFramer
 
 /**
  * @}

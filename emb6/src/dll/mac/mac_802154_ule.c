@@ -155,8 +155,8 @@ NETSTK_DEV_ID      NetstkSrcId;
 NETSTK_DEV_ID      NetstkDstId;
 
 
-#if LPR_CFG_LOOSE_SYNC_EN
-s_nsLprPwrOnTblEntry_t  LPRPwrOnTbl[LPR_CFG_PWRON_TBL_SIZE];
+#if MAC_ULE_CFG_LOOSE_SYNC_EN
+s_nsMacUlePwrOnTblEntry_t  MacUlePwrOnTbl[MAC_ULE_CFG_PWRON_TBL_SIZE];
 #endif
 
 const s_nsMAC_t MACDrv802154ULE =
@@ -211,7 +211,7 @@ static void MAC_ULE_Init (void *p_netstk, e_nsErr_t *p_err)
     /*
      * Initialize APSS framer
      */
-    NetstkDstId = LPR_DEV_ID_INVALID;
+    NetstkDstId = MAC_ULE_ID_INVALID;
     memcpy(&NetstkSrcId, mac_phy_config.mac_address, 2);
     SmartMACFramer.Init(p_err);
 
@@ -220,13 +220,13 @@ static void MAC_ULE_Init (void *p_netstk, e_nsErr_t *p_err)
      */
     Tmr_Create(&MAC_ULE_TmrPowerUp,
                 LIB_TMR_TYPE_PERIODIC,
-                LPR_CFG_POWERUP_INTERVAL_IN_MS,
+                MAC_ULE_CFG_POWERUP_INTERVAL_IN_MS,
                 MAC_ULE_TmrIsrPowerUp,
                 NULL);
 
     Tmr_Create(&MAC_ULE_Tmr1Scan,
                LIB_TMR_TYPE_ONE_SHOT,
-               LPR_PORT_SCAN_DURATION_IN_MS,
+               MAC_ULE_PORT_SCAN_DURATION_IN_MS,
                0,
                NULL);
 
@@ -311,11 +311,11 @@ static void MAC_ULE_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 
     /* obtain destination addressing information */
     if (packetbuf_holds_broadcast()) {
-        NetstkDstId = LPR_DEV_ID_BROADCAST;
+        NetstkDstId = MAC_ULE_DEV_ID_BROADCAST;
     } else {
         p_dstaddr = packetbuf_addr(PACKETBUF_ADDR_RECEIVER);
         memcpy(&NetstkDstId, p_dstaddr->u8, 2);
-        if (NetstkDstId == LPR_DEV_ID_INVALID) {
+        if (NetstkDstId == MAC_ULE_ID_INVALID) {
             *p_err = NETSTK_ERR_INVALID_ARGUMENT;
         }
     }
@@ -437,7 +437,7 @@ static void MAC_ULE_ProcessIdle(e_nsErr_t *p_err)
 
 
     MAC_ULE_Tmr1Start(&MAC_ULE_Tmr1W,
-                       LPR_CFG_IDLE_DURATION_IN_MS,
+                       MAC_ULE_CFG_IDLE_DURATION_IN_MS,
                        MAC_ULE_TmrIsr1Idle);
 }
 
@@ -489,7 +489,7 @@ static void MAC_ULE_ProcessScan(e_nsErr_t *p_err)
         MAC_ULE_Cmd = MAC_ULE_CMD_RX;
         MAC_ULE_State = MAC_ULE_STATE_RX_PARSING;
         MAC_ULE_Tmr1Start(&MAC_ULE_Tmr1W,
-                           LPR_PORT_WFP_TIMEOUT_IN_MS,
+                           MAC_ULE_PORT_WFP_TIMEOUT_IN_MS,
                            MAC_ULE_TmrIsr1WFS);
     } else {
         MAC_ULE_Off(p_err);
@@ -577,7 +577,7 @@ static void MAC_ULE_ProcessTx(e_nsErr_t *p_err)
     switch (MAC_ULE_State) {
         case MAC_ULE_STATE_TX_STARTED:
             /* #1 Create a Strobe */
-            MAC_ULE_TxPktPtr = SmartMACFramer.Create(LPR_FRAME_TYPE_STROBE,
+            MAC_ULE_TxPktPtr = SmartMACFramer.Create(MAC_ULE_FRAME_TYPE_STROBE,
                                                      &MAC_ULE_TxPktLen,
                                                      &tx_delay,
                                                      p_err);
@@ -624,7 +624,7 @@ static void MAC_ULE_ProcessTx(e_nsErr_t *p_err)
                                   MAC_ULE_RxPktLen,
                                   p_err);
             if ((*p_err != NETSTK_ERR_NONE) ||
-                (frame_type != LPR_FRAME_TYPE_SACK)) {
+                (frame_type != MAC_ULE_FRAME_TYPE_SACK)) {
                 has_tx_finished = 1;
             } else {
                 Tmr_Stop(&MAC_ULE_Tmr1W);
@@ -809,7 +809,7 @@ static void MAC_ULE_CSMA(e_nsErr_t *p_err)
         }
 
         /* check CSMA termination conditions */
-        is_done = (cca_attempt > 4) ||
+        is_done = (cca_attempt > 3) ||
                   (*p_err != NETSTK_ERR_NONE);
     } while (!is_done);
 
@@ -846,11 +846,11 @@ static void MAC_ULE_RxStrobe(e_nsErr_t *p_err)
                            MAC_ULE_RxPktLen,
                            p_err);
      if ((*p_err != NETSTK_ERR_NONE) ||
-         (frame_type != LPR_FRAME_TYPE_STROBE)) {
+         (frame_type != MAC_ULE_FRAME_TYPE_STROBE)) {
          *p_err = NETSTK_ERR_LPR_NO_STROBE;
      } else {
          /* #2 Create a Strobe ACK */
-         MAC_ULE_TxPktPtr = SmartMACFramer.Create(LPR_FRAME_TYPE_SACK,
+         MAC_ULE_TxPktPtr = SmartMACFramer.Create(MAC_ULE_FRAME_TYPE_SACK,
                                                   &MAC_ULE_TxPktLen,
                                                   &tx_delay,
                                                   p_err);
@@ -863,7 +863,7 @@ static void MAC_ULE_RxStrobe(e_nsErr_t *p_err)
              MAC_ULE_RxPktLen = 0;
              MAC_ULE_RxPktPtr = NULL;
              MAC_ULE_Tmr1Start(&MAC_ULE_Tmr1W,
-                            LPR_PORT_WFP_TIMEOUT_IN_MS * 2,
+                            MAC_ULE_PORT_WFP_TIMEOUT_IN_MS * 2,
                             MAC_ULE_TmrIsr1WFS);
 
              do {
@@ -885,7 +885,7 @@ static void MAC_ULE_RxStrobe(e_nsErr_t *p_err)
                  MAC_ULE_Cmd = MAC_ULE_CMD_RX;
                  MAC_ULE_State = MAC_ULE_STATE_RX_WFP;
                  MAC_ULE_Tmr1Start(&MAC_ULE_Tmr1W,
-                                    LPR_PORT_WFP_TIMEOUT_IN_MS * 2,
+                                    MAC_ULE_PORT_WFP_TIMEOUT_IN_MS * 2,
                                     MAC_ULE_TmrIsr1WFS);
 
              } else {
@@ -919,7 +919,7 @@ static void MAC_ULE_TxStrobe(e_nsErr_t *p_err)
     if (is_broadcast == FALSE) {
         /* Start strobe transmission timer only for unicasts */
         MAC_ULE_Tmr1Start(&MAC_ULE_Tmr1Tx,
-                           LPR_CFG_STROBE_TX_INTERVAL_IN_MS,
+                           MAC_ULE_CFG_STROBE_TX_INTERVAL_IN_MS,
                            0);
     }
 
@@ -929,7 +929,7 @@ static void MAC_ULE_TxStrobe(e_nsErr_t *p_err)
     do {
         /* start strobe transmission interval timer */
         MAC_ULE_Tmr1Start(&MAC_ULE_Tmr1W,
-                           LPR_PORT_STROBE_TX_INTERVAL_IN_MS,
+                           MAC_ULE_PORT_STROBE_TX_INTERVAL_IN_MS,
                            0);
 
         /* transmit strobes */
@@ -964,11 +964,11 @@ static void MAC_ULE_TxStrobe(e_nsErr_t *p_err)
             /* wait for a time period until the packet is totally received */
             MAC_ULE_State = MAC_ULE_STATE_TX_WFSA;
             MAC_ULE_Tmr1Start(&MAC_ULE_Tmr1W,
-                               LPR_PORT_WFA_TIMEOUT_IN_MS,
+                               MAC_ULE_PORT_WFA_TIMEOUT_IN_MS,
                                MAC_ULE_TmrIsr1WFA);
         } else {
             /* Create a Strobe */
-            MAC_ULE_TxPktPtr = SmartMACFramer.Create(LPR_FRAME_TYPE_STROBE,
+            MAC_ULE_TxPktPtr = SmartMACFramer.Create(MAC_ULE_FRAME_TYPE_STROBE,
                                                      &MAC_ULE_TxPktLen,
                                                      &tx_delay,
                                                      p_err);
@@ -1132,7 +1132,7 @@ static void MAC_ULE_TxPayload(e_nsErr_t *p_err)
                 MAC_ULE_RxPktLen = 0;
                 MAC_ULE_RxPktPtr = NULL;
                 MAC_ULE_Tmr1Start(&MAC_ULE_Tmr1W,
-                                   LPR_PORT_WFA_TIMEOUT_IN_MS * 2,
+                                   MAC_ULE_PORT_WFA_TIMEOUT_IN_MS * 2,
                                    0);
                 do {
                     *p_err = NETSTK_ERR_NONE;
@@ -1155,7 +1155,7 @@ static void MAC_ULE_TxPayload(e_nsErr_t *p_err)
                      * received */
                     MAC_ULE_State = MAC_ULE_STATE_TX_WFA;
                     MAC_ULE_Tmr1Start(&MAC_ULE_Tmr1W,
-                                       LPR_PORT_WFA_TIMEOUT_IN_MS,
+                                       MAC_ULE_PORT_WFA_TIMEOUT_IN_MS,
                                        MAC_ULE_TmrIsr1WFA);
                 } else {
                     *p_err = NETSTK_ERR_TX_NOACK;
