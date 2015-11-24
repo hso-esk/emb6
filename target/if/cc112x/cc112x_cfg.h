@@ -28,10 +28,11 @@
  */
 static const s_regSettings_t cc112x_cfg_ieee802154g_chan0[] =
 {
-    {CC112X_IOCFG3,             0x0F},  /* CCA_STATUS */
-    {CC112X_IOCFG2,             0x13},
+    {CC112X_IOCFG3,             0x0F},  /* TXONCCA_DONE    EINT2, CCA_FINISHED, a pull occurs when a decision has been made as to whether the channel is busy or not */
+    {CC112X_IOCFG2,             0x13},  /* PKT_CRC_OK      EINT1, RX_STARTED, asserted when a good packet is received */
+    {CC112X_IOCFG0,             0x06},  /* PKT_SYNC_RXTX   EINT0, TX_FINISHED, asserted when sync word has been sent, de-asserted at the end of the packet */
+
     {CC112X_IOCFG1,             0xB0},
-    {CC112X_IOCFG0,             0x06},
 
     {CC112X_SYNC3,              0x93},
     {CC112X_SYNC2,              0x0B},
@@ -59,7 +60,7 @@ static const s_regSettings_t cc112x_cfg_ieee802154g_chan0[] =
     {CC112X_AGC_REF,            0x3C},
     {CC112X_AGC_CS_THR,         0x0C},
     {CC112X_AGC_CFG1,           0xA0},
-    {CC112X_AGC_CFG0,           0xC0},
+    {CC112X_AGC_CFG0,           0xC0},  /* RSSI_VALID_CNT = 00b; 0x02 */
     {CC112X_FIFO_CFG,           0x80},  /* Automatically flushes when CRC error occurred */
     {CC112X_SETTLING_CFG,       0x03},
     {CC112X_FS_CFG,             0x12},
@@ -68,7 +69,7 @@ static const s_regSettings_t cc112x_cfg_ieee802154g_chan0[] =
     {CC112X_WOR_EVENT0_MSB,     0x00},
     {CC112X_WOR_EVENT0_LSB,     0x78},  /* t_sleep = 3.102ms */
 
-    {CC112X_PKT_CFG2,           0x04},
+    {CC112X_PKT_CFG2,           0x04},  /* CCA_MODE=001b, indicating clear channel when RSSI is below threshold */
     {CC112X_PKT_CFG1,           0x05},
     {CC112X_PKT_CFG0,           0x20},
 
