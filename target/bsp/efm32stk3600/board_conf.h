@@ -83,6 +83,19 @@
 #define EFM32_IO_PORT_RF_SLP            gpioPortD
 #define EFM32_IO_PIN_RF_SLP                6
 
+
+/*
+ * TI transceiver CC112x/CC120x pins
+ */
+#define EFM32_IO_PORT_RF_IRQ_0              gpioPortC
+#define EFM32_IO_PIN_RF_IRQ_0               3
+
+#define EFM32_IO_PORT_RF_IRQ_2              gpioPortC
+#define EFM32_IO_PIN_RF_IRQ_2               4
+
+#define EFM32_IO_PORT_RF_IRQ_3              gpioPortC
+#define EFM32_IO_PIN_RF_IRQ_3               5
+
 /*============================================================================*/
 /*!
 \brief    emb6 board configuration fuction
