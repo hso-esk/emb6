@@ -1123,9 +1123,12 @@ static void MAC_ULE_TxPayload(e_nsErr_t *p_err)
     is_ack_req = packetbuf_attr(PACKETBUF_ATTR_RELIABLE);
     tx_retries = 0;
 
-
     /* data packet transmission handling */
     do {
+        /* insert a time period equal to TX_RX_TURNAROUND before every data
+         * transmission attempts */
+        Tmr_Delay(MAC_ULE_PORT_TX_RX_TURNAROUND_IN_MS);
+
         /* issue data packet transmission request */
         MAC_ULE_Netstk->phy->send(MAC_ULE_TxPktPtr,
                                   MAC_ULE_TxPktLen,
