@@ -486,7 +486,17 @@ void hal_extiRegister( en_targetExtInt_t e_extInt, en_targetIntEdge_t e_edge,
  =============================================================================*/
 void hal_extiClear(en_targetExtInt_t e_extInt)
 {
-    /* TODO missing implementation */
+    hal_enterCritical();
+    switch( e_extInt )
+    {
+        case E_TARGET_RADIO_INT:
+            EIFR |= ( 1 << INT5 );
+            break;
+        default:
+            break;
+    }
+    hal_exitCritical();
+    return;
 } /* hal_extiClear() */
 
 
@@ -495,7 +505,17 @@ void hal_extiClear(en_targetExtInt_t e_extInt)
  =============================================================================*/
 void hal_extiEnable(en_targetExtInt_t e_extInt)
 {
-    /* TODO missing implementation */
+    hal_enterCritical();
+    switch( e_extInt )
+    {
+        case E_TARGET_RADIO_INT:
+            EIMSK |= ( 1 << INT5 );
+            break;
+        default:
+            break;
+    }
+    hal_exitCritical();
+    return;
 } /* hal_extiEnable() */
 
 /*==============================================================================
@@ -503,7 +523,17 @@ void hal_extiEnable(en_targetExtInt_t e_extInt)
  =============================================================================*/
 void hal_extiDisable(en_targetExtInt_t e_extInt)
 {
-    /* TODO missing implementation */
+    hal_enterCritical();
+    switch( e_extInt )
+    {
+        case E_TARGET_RADIO_INT:
+            EIMSK &= ~( 1 << INT5 );
+            break;
+        default:
+            break;
+    }
+    hal_exitCritical();
+    return;
 } /* hal_extiDisable() */
 
 

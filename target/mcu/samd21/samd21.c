@@ -446,7 +446,7 @@ void hal_extiRegister( en_targetExtInt_t e_extInt, en_targetIntEdge_t e_edge,
  =============================================================================*/
 void hal_extiClear(en_targetExtInt_t e_extInt)
 {
-    /* TODO missing implementation */
+    /* not needed */
 } /* hal_extiClear() */
 
 
@@ -455,7 +455,17 @@ void hal_extiClear(en_targetExtInt_t e_extInt)
  =============================================================================*/
 void hal_extiEnable(en_targetExtInt_t e_extInt)
 {
-    /* TODO missing implementation */
+    switch( e_extInt )
+    {
+        case E_TARGET_RADIO_INT:
+
+            extint_chan_enable_callback( (uint8_t)radio_extInt.l_line, //EXT1_IRQ_INPUT,
+                    EXTINT_CALLBACK_TYPE_DETECT );
+            break;
+        default:
+            break;
+    }
+    return;
 } /* hal_extiEnable() */
 
 /*==============================================================================
@@ -463,7 +473,17 @@ void hal_extiEnable(en_targetExtInt_t e_extInt)
  =============================================================================*/
 void hal_extiDisable(en_targetExtInt_t e_extInt)
 {
-    /* TODO missing implementation */
+    switch( e_extInt )
+    {
+        case E_TARGET_RADIO_INT:
+
+            extint_chan_disable_callback( (uint8_t)radio_extInt.l_line, //EXT1_IRQ_INPUT,
+                    EXTINT_CALLBACK_TYPE_DETECT );
+            break;
+        default:
+            break;
+    }
+    return;
 } /* hal_extiDisable() */
 
 
