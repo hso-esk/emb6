@@ -4,6 +4,7 @@ extif = {
 	'emb6' : [
 		'sock',
 		'ipv6',
+		'sicslowpan',
 		'slip',
 		'llsec',
 		'llc',
