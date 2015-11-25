@@ -538,6 +538,8 @@ extern const s_nsllsec_t        nullsec_driver;
 */
 /*! Supported framers */
 extern const s_nsFramer_t       framer_802154;
+extern const s_nsFramer_t       framer_noframer;
+extern const s_nsFramer_t       framer_nullframer;
 
 
 /*
