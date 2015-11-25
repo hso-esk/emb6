@@ -528,10 +528,12 @@ static void MAC_ULE_ProcessRx(e_nsErr_t *p_err)
         case MAC_ULE_STATE_RX_WFP:
             MAC_ULE_RxPayload(p_err);
 
-            /* goto state idle */
-            MAC_ULE_Cmd = MAC_ULE_CMD_IDLE;
-            MAC_ULE_State = MAC_ULE_STATE_IDLE;
-            MAC_ULE_EVENT_POST(NETSTK_MAC_ULE_EVENT);
+            if (*p_err == NETSTK_ERR_NONE) {
+                /* goto state idle */
+                MAC_ULE_Cmd = MAC_ULE_CMD_IDLE;
+                MAC_ULE_State = MAC_ULE_STATE_IDLE;
+                MAC_ULE_EVENT_POST(NETSTK_MAC_ULE_EVENT);
+            }
             break;
 
         case MAC_ULE_STATE_RX_FINISHED:
@@ -541,7 +543,7 @@ static void MAC_ULE_ProcessRx(e_nsErr_t *p_err)
             break;
     }
 
-
+    /* immediate error handling */
     if (*p_err != NETSTK_ERR_NONE) {
         MAC_ULE_Off(p_err);
         MAC_ULE_Cmd = MAC_ULE_CMD_SLEEP;
@@ -1056,6 +1058,7 @@ static void MAC_ULE_RxPayload(e_nsErr_t *p_err)
             break;
 
         default:
+            *p_err = NETSTK_ERR_INVALID_FRAME;
             break;
     }
 }
