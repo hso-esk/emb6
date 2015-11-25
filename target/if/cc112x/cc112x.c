@@ -510,7 +510,7 @@ static void cc112x_isrTxFinished(void *p_arg)
     if (is_tx_ok) {
         RF_State = RF_STATE_TX_FINI;
         bsp_extIntDisable(RF_INT_TX_FINI);
-        bsp_extIntClear(RF_INT_RX_STARTED);
+        bsp_extIntClear(RF_INT_TX_FINI);
     } else {
         /* todo flush TX FIFO */
         err = NETSTK_ERR_FATAL;
