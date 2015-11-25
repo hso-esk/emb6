@@ -230,11 +230,16 @@ static void SmartMAC_ParseStrobe (uint8_t *p_pkt, uint16_t len, e_nsErr_t *p_err
 static void SmartMAC_ParseSACK (uint8_t *p_pkt, uint16_t len, e_nsErr_t *p_err)
 {
     NETSTK_DEV_ID  src_id;
+    uint8_t is_valid_ack;
 
 
     src_id = (NETSTK_DEV_ID)(p_pkt[3]     ) |
              (NETSTK_DEV_ID)(p_pkt[4] << 8);
-    if (src_id == NetstkDstId) {
+
+    /* valid ACK shall match device ID as well as counter value */
+    is_valid_ack = (src_id   == NetstkDstId) &&
+                   (p_pkt[2] == (SmartMAC_StrobeCnt + 1));
+    if (is_valid_ack) {
         *p_err = NETSTK_ERR_NONE;
 
 #if MAC_ULE_CFG_LOOSE_SYNC_EN
