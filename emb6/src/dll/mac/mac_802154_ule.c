@@ -849,6 +849,7 @@ static void MAC_ULE_RxStrobe(e_nsErr_t *p_err)
                            p_err);
      if ((*p_err != NETSTK_ERR_NONE) ||
          (frame_type != MAC_ULE_FRAME_TYPE_STROBE)) {
+         /* todo check if the received packet are data packet */
          *p_err = NETSTK_ERR_LPR_NO_STROBE;
      } else {
          /* #2 Create a Strobe ACK */
@@ -857,6 +858,8 @@ static void MAC_ULE_RxStrobe(e_nsErr_t *p_err)
                                                   &tx_delay,
                                                   p_err);
          /* #3 reply with an ACK */
+         Tmr_Delay(1);  /* ACK shall be transmitted after a period equal to 12
+                           symbol period, (@50kbps, symbol period = 20us) */
          MAC_ULE_Netstk->phy->send(MAC_ULE_TxPktPtr,
                                    MAC_ULE_TxPktLen,
                                    p_err);
