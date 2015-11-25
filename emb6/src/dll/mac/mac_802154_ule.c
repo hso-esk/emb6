@@ -868,9 +868,8 @@ static void MAC_ULE_RxStrobe(e_nsErr_t *p_err)
              MAC_ULE_RxPktLen = 0;
              MAC_ULE_RxPktPtr = NULL;
              MAC_ULE_Tmr1Start(&MAC_ULE_Tmr1W,
-                            MAC_ULE_PORT_WFP_TIMEOUT_IN_MS * 2,
-                            MAC_ULE_TmrIsr1WFS);
-
+                                MAC_ULE_PORT_WFP_TIMEOUT_IN_MS * 3,
+                                MAC_ULE_TmrIsr1WFS);
              do {
                  *p_err = NETSTK_ERR_NONE;
                  tmr_state = Tmr_StateGet(&MAC_ULE_Tmr1W);
@@ -890,7 +889,7 @@ static void MAC_ULE_RxStrobe(e_nsErr_t *p_err)
                  MAC_ULE_Cmd = MAC_ULE_CMD_RX;
                  MAC_ULE_State = MAC_ULE_STATE_RX_WFP;
                  MAC_ULE_Tmr1Start(&MAC_ULE_Tmr1W,
-                                    MAC_ULE_PORT_WFP_TIMEOUT_IN_MS * 2,
+                                    MAC_ULE_PORT_WFP_TIMEOUT_IN_MS,
                                     MAC_ULE_TmrIsr1WFS);
 
              } else {
@@ -1141,7 +1140,7 @@ static void MAC_ULE_TxPayload(e_nsErr_t *p_err)
                 MAC_ULE_RxPktLen = 0;
                 MAC_ULE_RxPktPtr = NULL;
                 MAC_ULE_Tmr1Start(&MAC_ULE_Tmr1W,
-                                   MAC_ULE_PORT_WFA_TIMEOUT_IN_MS * 2,
+                                   MAC_ULE_PORT_WFA_TIMEOUT_IN_MS,
                                    0);
                 do {
                     *p_err = NETSTK_ERR_NONE;
