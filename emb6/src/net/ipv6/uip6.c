@@ -551,11 +551,11 @@ remove_ext_hdr(void)
     memmove(((uint8_t *)UIP_TCP_BUF), (uint8_t *)UIP_TCP_BUF + uip_ext_len,
         uip_len - UIP_IPH_LEN - uip_ext_len);
 
-    uip_len -= uip_ext_len;
+    uip_len = uip_len - UIP_IPH_LEN - uip_ext_len;
 
     /* Update the IP length. */
-    UIP_IP_BUF->len[0] = (uip_len - UIP_IPH_LEN) >> 8;
-    UIP_IP_BUF->len[1] = (uip_len - UIP_IPH_LEN) & 0xff;
+    UIP_IP_BUF->len[0] = (uip_len) >> 8;
+    UIP_IP_BUF->len[1] = (uip_len) & 0xff;
     uip_ext_len = 0;
   }
 }
@@ -1483,7 +1483,7 @@ uip_process(uint8_t flag)
      work. If the application sets uip_slen, it has a packet to
      send. */
 #if UIP_UDP_CHECKSUMS
-  uip_len = uip_len - UIP_IPUDPH_LEN;
+  uip_len = uip_len - UIP_UDPH_LEN;
   uip_appdata = &uip_buf[UIP_IPUDPH_LEN + UIP_LLH_LEN];
   /* XXX hack: UDP/IPv6 receivers should drop packets with UDP
      checksum 0. Here, we explicitly receive UDP packets with checksum
@@ -1575,6 +1575,8 @@ uip_process(uint8_t flag)
   uip_appdata = &uip_buf[UIP_LLH_LEN + UIP_IPTCPH_LEN];
 
 #if UIP_UDP_CHECKSUMS
+  uip_ext_len = 0;
+
   /* Calculate UDP checksum. */
   UIP_UDP_BUF->udpchksum = ~(uip_udpchksum());
   if(UIP_UDP_BUF->udpchksum == 0) {

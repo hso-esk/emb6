@@ -131,63 +131,6 @@ static void _printAndExit( const char* rpc_reason )
     exit( 1 );
 }
 
-#ifdef __NATIVEROLE_BRSERVER__
-/*----------------------------------------------------------------------------*/
-/** \brief  NATIVE initialization for IPC
- *
- *  \param  p_netStack    Pointer to s network stack.
- *  \return int8_t        Status code.
- */
-/*----------------------------------------------------------------------------*/
-static int8_t _native_init(s_ns_t* p_netStack)
-{
-    linkaddr_t un_addr;
-    uint8_t l_error;
-    /* Please refer to lcm_create() reference. Default parameter is taken
-     from there */
-    ps_lcm = lcm_create(NULL);
-
-    if(!ps_lcm)
-        _printAndExit("LCM init failed");
-
-    LOG_INFO("%s\n\r","native driver was initialized");
-
-    /* Mac address should not be NULL pointer, although it can't be, but still
-     *  */
-    if (mac_phy_config.mac_address == NULL)
-    {
-        _printAndExit("MAC address is NULL");
-    }
-
-    lcm_subscribe (ps_lcm, FAKERADIO_CHANNEL, _native_read, NULL);
-
-    /* Initialise global lladdr structure with a given mac */
-    memcpy((void *)&un_addr.u8, &mac_phy_config.mac_address, 8);
-    memcpy(&uip_lladdr.addr, &un_addr.u8, 8);
-    linkaddr_set_node_addr(&un_addr);
-
-    LOG_INFO( "MAC address %x:%x:%x:%x:%x:%x:%x:%x", un_addr.u8[0],
-              un_addr.u8[1], un_addr.u8[2], un_addr.u8[3], un_addr.u8[4],
-              un_addr.u8[5], un_addr.u8[6], un_addr.u8[7] );
-
-    /* Low mac layer should be ok, not NULL */
-    if (p_netStack->lmac != NULL)
-    {
-        p_lmac = p_netStack->lmac;
-        l_error = 1;
-    }
-    else
-    {
-        _printAndExit("Bad lmac pointer");
-    }
-
-    /* Start the packet receive process */
-    etimer_set(&ps_nativeTmr, 10, _native_handler);
-    LOG1_INFO("set %p for %p callback\n\r",&ps_nativeTmr, &_native_handler);
-    LOG_WARN("Don't forget to destroy lcm object!");
-    return l_error;
-} /* _native_init() */
-#else
 /*----------------------------------------------------------------------------*/
 /** \brief  NATIVE transport initialization for IPC
  *
@@ -317,7 +260,6 @@ static int8_t _native_init( s_ns_t* p_netStack )
 
     return l_error;
 } /* _native_init() */
-#endif
 
 /*----------------------------------------------------------------------------*/
 /** \brief  NATIVE transport message send
@@ -331,27 +273,8 @@ static int8_t _native_init( s_ns_t* p_netStack )
 static int8_t _native_send( const void *pr_payload, uint8_t c_len )
 {
     uint32_t status;
-    /* We assume that usage of malloc here is ok as it's a simple Linux port
-     * However in the end we do a free() call. Function description expains
-     * why we need to allocate extra 2 bytes here
-     */
-    uint8_t* pc_frame = malloc( sizeof(uint8_t) * ( c_len + __ADDRLEN__ ) );
 
-    /* Check malloc result */
-    if( pc_frame == NULL )
-    {
-        LOG_ERR( "Insufficient memory" );
-        return RADIO_TX_ERR;
-    }
-
-    /* Add two last bytes of MAC address to the beginning of a frame */
-    *pc_frame = uip_lladdr.addr[6];
-    *( pc_frame + 1 ) = uip_lladdr.addr[7];
-    memmove( pc_frame + __ADDRLEN__, pr_payload, c_len );
-    status = lcm_publish( ps_lcm, pc_publish_ch, pc_frame,
-                          c_len + __ADDRLEN__ );
-    /* Free allocated memmory */
-    free( pc_frame );
+    status = lcm_publish( ps_lcm, pc_publish_ch, pr_payload, c_len );
 
     /* Return execution status to a caller */
     if( status == -1 )
@@ -392,27 +315,17 @@ static void _native_read( const lcm_recv_buf_t *rps_rbuf,
     }
     else
     {
-        /* If first two bytes of the received frame match with our
-         * MAC address then discard a frame
-         */
-        if( ( *( (uint8_t *)rps_rbuf->data )     != uip_lladdr.addr[6] ) ||
-            ( *( (uint8_t *)rps_rbuf->data + 1 ) != uip_lladdr.addr[7] ) )
+        memcpy( packetbuf_dataptr(), rps_rbuf->data, i_dSize );
+        LOG_OK( "RX packet [%d]", i_dSize);
+        LOG2_HEXDUMP( packetbuf_dataptr(), i_dSize  );
+        if( ( rps_rbuf->data_size > 0 ) && ( p_lmac != NULL ) )
         {
-            memcpy( packetbuf_dataptr(), rps_rbuf->data + __ADDRLEN__,
-                    i_dSize - __ADDRLEN__ );
-            LOG_OK( "RX packet [%d] from 0x%02X:0x%02X", i_dSize,
-                    *(uint8_t * )rps_rbuf->data,
-                    *( (uint8_t * )rps_rbuf->data + 1 ) );
-            LOG2_HEXDUMP( packetbuf_dataptr(), i_dSize - __ADDRLEN__ );
-            if( ( rps_rbuf->data_size > 0 ) && ( p_lmac != NULL ) )
-            {
-                packetbuf_set_datalen( i_dSize - __ADDRLEN__ );
-                p_lmac->input();
-            }
-            else
-            {
-                LOG_ERR( "Failed to receive packet" );
-            }
+            packetbuf_set_datalen( i_dSize );
+            p_lmac->input();
+        }
+        else
+        {
+            LOG_ERR( "Failed to receive packet" );
         }
     }
 } /* _native_read() */
