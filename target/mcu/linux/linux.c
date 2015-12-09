@@ -64,18 +64,24 @@
                                      MACROS
 ==============================================================================*/
 #define     LOGGER_ENABLE        LOGGER_HAL
-#define        _POSIX_C_SOURCE        199309L
+#define     _POSIX_C_SOURCE      199309L
 
 /*==============================================================================
                                  INCLUDE FILES
 ==============================================================================*/
+#define _XOPEN_SOURCE
 #include <stdio.h>
 
 #include "target.h"
 #include "hwinit.h"
 #include <unistd.h>
 #include <time.h>
+#include <termios.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/types.h>
 #include <sys/time.h>
+#include <sys/signal.h>
 #include "logger.h"
 /*==============================================================================
                                      ENUMS
@@ -89,10 +95,14 @@
                            LOCAL FUNCTION PROTOTYPES
 ==============================================================================*/
 
+static void _printAndExit( const char* rpc_reason );
+static void signal_handler_IO (int status);
+
 /*==============================================================================
                           VARIABLE DECLARATIONS
 ==============================================================================*/
 static    struct timespec             tim = {0,0};
+static int fdm;
 /*==============================================================================
                                 LOCAL CONSTANTS
 ==============================================================================*/
@@ -101,6 +111,27 @@ static    struct timespec             tim = {0,0};
 /*==============================================================================
                                 LOCAL FUNCTIONS
 ==============================================================================*/
+
+static void _printAndExit( const char* rpc_reason )
+{
+    perror(rpc_reason);
+    perror("\n");
+    exit( 1 );
+}
+
+static void signal_handler_IO (int status)
+{
+    char bufout = 'D';
+    char bufin;
+    int ret;
+    ret=read(fdm, &bufin, 1);
+    printf("read %i bytes: %c\n", ret, bufin);
+
+    bufout = bufin;
+    printf("writing %c\n", bufout);
+    ret = write(fdm, &bufout, 1);
+    printf("wrote %i bytes\n", ret);
+}
 
 /*==============================================================================
                                  API FUNCTIONS
@@ -129,14 +160,41 @@ void    hal_delay_us(uint32_t l_delay)
 
 void hal_enterCritical(void){}
 void hal_exitCritical(void){};
-void    hal_ledOff(uint16_t ui_led){}
-void    hal_ledOn(uint16_t ui_led){}
-int8_t     hal_init (void){
+void hal_ledOff(uint16_t ui_led){}
+void hal_ledOn(uint16_t ui_led){}
+int8_t hal_init (void){
+
+    struct sigaction saio;
+    fdm = open("/dev/ptmx", O_RDWR);  /* open master */
+    if( fdm < 0 )
+    {
+        _printAndExit( "Error on posix_openpt()" );
+    }
+    if( grantpt(fdm) < 0 )            /* change permission of slave */
+    {
+        _printAndExit( "Error on grantpt()" );
+    }
+    if( unlockpt(fdm) < 0 )          /* unlock slave */
+    {
+        _printAndExit("Error on unlockpt()");
+    }
+
+    saio.sa_handler = signal_handler_IO;
+    saio.sa_flags = 0;
+    saio.sa_restorer = NULL;
+    sigaction(SIGIO,&saio,NULL);
+
+    fcntl(fdm, F_SETFL, O_NDELAY);
+    fcntl(fdm, F_SETFL, O_ASYNC );
+
+    system("ls  /dev/pts");
+    printf("The slave side is named : %s\n", ptsname(fdm));
+
     return 1;
 }
-void     hal_watchdogReset(void){}
-void     hal_watchdogStart(void){}
-void     hal_watchdogStop(void){}
+void hal_watchdogReset(void){}
+void hal_watchdogStart(void){}
+void hal_watchdogStop(void){}
 
 
 uint8_t    hal_getrand(void)
