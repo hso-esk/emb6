@@ -58,5 +58,6 @@ TARGETS = [
                                                      'x86',                 '0x2121',      '99',          '-125',       'MODULATION_QPSK100'],
 ['virtu_cli',         [('testframework_emb6demoapp','client')],
                                                      'x86',                 '0x1111',      '99',          '-125',       'MODULATION_QPSK100'],
-] #TARGETS append END
+['if_x86',            [('extif','')],                'x86',                 '0x1111',      '99',          '-125',       'MODULATION_QPSK100'],
+]#TARGETS append END
 Return('TARGETS')
