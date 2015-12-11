@@ -70,7 +70,7 @@
 #include "cc.h"
 #include "framer.h"
 #include "framer_802154.h"
-#include "llsec_802154.h"
+
 
 /**
  *  \brief Structure that contains the lengths of the various addressing and security fields
