@@ -6492,11 +6492,11 @@
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\net\ipv6</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\net\sicslowpan</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\llsec</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\llc</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\dllsec</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\dllc</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\mac</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\framer</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\phy\lpr</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\phy</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\utils\inc</state>
         </option>
         <option>
@@ -7516,11 +7516,11 @@
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\net\ipv6</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\net\sicslowpan</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\llsec</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\llc</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\dllsec</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\dllc</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\mac</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\framer</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\phy\lpr</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\phy</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\utils\inc</state>
         </option>
         <option>
@@ -8221,21 +8221,27 @@
         <group>
           <name>dll</name>
           <group>
-            <name>framer</name>
+            <name>dllc</name>
             <file>
-              <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\dll\framer\framer_802154.c</name>
+              <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\dll\dllc\dllc_802154.c</name>
+            </file>
+            <file>
+              <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\dll\dllc\dllc_null.c</name>
+            </file>
+            <file>
+              <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\dll\dllc\linkaddr.c</name>
             </file>
           </group>
           <group>
-            <name>llc</name>
+            <name>dllsec</name>
             <file>
-              <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\dll\llc\linkaddr.c</name>
+              <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\dll\dllsec\dllsec_null.c</name>
             </file>
+          </group>
+          <group>
+            <name>framer</name>
             <file>
-              <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\dll\llc\llc_802154.c</name>
-            </file>
-            <file>
-              <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\dll\llc\llc_null.c</name>
+              <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\dll\framer\framer_802154.c</name>
             </file>
           </group>
           <group>
@@ -8256,6 +8262,9 @@
         </group>
         <group>
           <name>phy</name>
+          <file>
+            <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\phy\phy_802154.c</name>
+          </file>
           <file>
             <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\phy\phy_null.c</name>
           </file>

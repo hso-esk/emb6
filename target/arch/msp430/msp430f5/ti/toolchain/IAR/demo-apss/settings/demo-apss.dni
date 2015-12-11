@@ -20,7 +20,7 @@ NextState1=0
 Break=0
 State Storage=0
 [DebugChecksum]
-Checksum=1946000979
+Checksum=-1545221765
 [CallStack]
 ShowArgs=0
 [Disassembly]
@@ -52,7 +52,9 @@ LoggingEnabled=_ 0
 LogFile=_ ""
 [Breakpoints]
 Bp0=_ "STD_CODE" "{$PROJ_DIR$\..\..\..\..\..\..\..\..\demo\netstk\demo-netstk.c}.367.5" 1 0 0 0 "" 0 ""
-Count=1
+Bp1=_ "STD_CODE" "{$PROJ_DIR$\..\..\..\..\..\..\..\if\cc112x\cc112x.c}.388.9" 1 0 0 0 "" 0 ""
+Bp2=_ "STD_CODE" "{$PROJ_DIR$\..\..\..\..\..\..\..\if\cc112x\cc112x.c}.860.5" 1 0 0 0 "" 0 ""
+Count=3
 [FET]
 Clock mode=14
 Extended Clock mode=-1
