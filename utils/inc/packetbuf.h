@@ -64,7 +64,7 @@
 #ifdef PACKETBUF_CONF_SIZE
 #define PACKETBUF_SIZE PACKETBUF_CONF_SIZE
 #else
-#define PACKETBUF_SIZE 128
+#define PACKETBUF_SIZE 124  //128; FCS_LEN<=4
 #endif
 
 /**
@@ -73,7 +73,7 @@
 #ifdef PACKETBUF_CONF_HDR_SIZE
 #define PACKETBUF_HDR_SIZE PACKETBUF_CONF_HDR_SIZE
 #else
-#define PACKETBUF_HDR_SIZE 48
+#define PACKETBUF_HDR_SIZE 50 //48; PHR_LEN=2
 #endif
 
 
@@ -317,6 +317,14 @@ int packetbuf_hdralloc(int size);
  *
  */
 int packetbuf_hdrreduce(int size);
+
+/* obtain pointer to footer field */
+void *packetbuf_ftrptr(void);
+/* allocate footer */
+int packetbuf_ftralloc(int size);
+/* reduce footer */
+int packetbuf_ftrreduce(int size);
+
 
 /* Packet attributes stuff below: */
 
