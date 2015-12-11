@@ -448,7 +448,6 @@ static void cc112x_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
          */
         LED_TX_OFF();
         *p_err = NETSTK_ERR_NONE;
-        cc112x_spiCmdStrobe(CC112X_SFTX);
         cc112x_gotoSniff();
     }
 }
