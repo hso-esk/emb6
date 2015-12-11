@@ -64,11 +64,6 @@ typedef enum E_TARGET_INT_EDGE
 {
     E_TARGET_INT_EDGE_FALLING = 0,
     E_TARGET_INT_EDGE_RISING,
-
-    /*!< This enumeration is only when the edge is not specified, i.e. modules
-     * using old emb6 BSP interface. However they should be corrected as soon
-     * as possible */
-    E_TARGET_INT_EDGE_UNKNOWN,
 } en_targetIntEdge_t;
 
 
