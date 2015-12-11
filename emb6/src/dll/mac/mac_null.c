@@ -12,7 +12,7 @@
 */
 #include "emb6.h"
 #include "packetbuf.h"
-
+#include "linkaddr.h"
 
 /*
 ********************************************************************************
@@ -50,6 +50,7 @@ const s_nsMAC_t MACDrvNull =
     MAC_IOCtrl
 };
 
+extern uip_lladdr_t uip_lladdr;
 
 /*
 ********************************************************************************
@@ -65,8 +66,14 @@ static void MAC_Init(void *p_netstk, e_nsErr_t *p_err)
     }
 #endif
 
-
+    /* store pointer to netstack structure */
     MAC_Netstk = p_netstk;
+
+    /* configure stack MAC address */
+    memcpy(&uip_lladdr.addr, &mac_phy_config.mac_address, 8);
+    linkaddr_set_node_addr((linkaddr_t *)mac_phy_config.mac_address);
+
+    /* set returned error code */
     *p_err = NETSTK_ERR_NONE;
 }
 
