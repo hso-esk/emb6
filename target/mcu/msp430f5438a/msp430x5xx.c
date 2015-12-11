@@ -280,64 +280,6 @@ void hal_ledOff(uint16_t ui_led)
 }
 
 
-uint8_t hal_extIntEnable(en_targetExtInt_t      e_pin,
-                         en_targetIntEdge_t     e_edge,
-                         pfn_intCallb_t         pf_cb)
-{
-    s_io_pin_desc_t *ps_desc = &s_target_extIntPin[e_pin];
-
-
-
-    if ((pf_cb != NULL) &&
-        (ps_desc->PORT != NULL))
-    {
-        /*
-         * Enable interrupt
-         */
-        switch (e_edge) {
-            case E_TARGET_INT_EDGE_FALLING:
-                io_extiRegister( ps_desc, INT_EDGE_FALLING, pf_cb );
-                io_extiEnable(ps_desc);
-                break;
-
-            case E_TARGET_INT_EDGE_RISING:
-                io_extiRegister( ps_desc, INT_EDGE_RISING, pf_cb );
-                io_extiEnable(ps_desc);
-                break;
-
-            default:
-                break;
-        }
-    }
-
-    return 0;
-}
-
-
-uint8_t hal_extIntDisable(en_targetExtInt_t e_pin)
-{
-    s_io_pin_desc_t *ps_desc = &s_target_extIntPin[e_pin];
-
-
-    if (ps_desc->PORT != NULL) {
-        io_extiDisable(ps_desc);
-    }
-    return 0;
-}
-
-
-uint8_t hal_extIntClear(en_targetExtInt_t e_pin)
-{
-    s_io_pin_desc_t *ps_desc = &s_target_extIntPin[e_pin];
-
-
-    if (ps_desc->PORT != NULL) {
-        io_extiClear(ps_desc);
-    }
-    return 0;
-}
-
-
 void hal_extiRegister(en_targetExtInt_t     e_pin,
                       en_targetIntEdge_t    e_edge,
                       pfn_intCallb_t        pf_cb)
