@@ -347,6 +347,7 @@ typedef enum netstk_ioc_cmd
     NETSTK_CMD_RF_PROMISC_SET,      /*!< Set promisc mode                */
 
     NETSTK_CMD_RF_802154G_EU_CHAN,  /*!< Channel center for IEEE802.15.4 in Europe  */
+    NETSTK_CMD_RF_WOR_EN,           /*!< Enable/Disable WOR mode */
 
 }e_nsIocCmd_t;
 
