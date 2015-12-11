@@ -9,14 +9,7 @@
 #ifndef CRC_PRESENT
 #define CRC_PRESENT
 
-
-#include <stdint.h>
-
-
-#define CRC16_POLY      (uint16_t)( 0x8005 )
-#define CRC_INIT        (uint16_t)( 0xFFFF )
-
-
-uint16_t crc16Calc(uint8_t data, uint16_t curr_val);
+uint16_t crc_16(uint8_t *p_data, uint16_t len);
+uint32_t crc_32(uint8_t *p_data, uint16_t len);
 
 #endif /* CRC_PRESENT */
