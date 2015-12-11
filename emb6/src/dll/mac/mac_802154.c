@@ -31,7 +31,7 @@
 #define MAC_CFG_REFACTOR_EN                 ( 0u )
 
 #define MAC_CFG_TX_RETRY_MAX                (uint8_t  )( 3u )
-#define MAC_CFG_TMR_WFA_IN_MS               (uint32_t )( 20 )
+#define MAC_CFG_TMR_WFA_IN_MS               (uint32_t )( 40 )
 
 #define MAC_EVENT_PEND(_event_)             evproc_regCallback(_event_, MAC_EventHandler)
 #define MAC_EVENT_POST(_event_)             evproc_putEvent(E_EVPROC_HEAD, _event_, NULL)
@@ -50,7 +50,7 @@ static void MAC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
 static void MAC_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
 
 static uint8_t MAC_IsAcked(frame802154_t *p_frame);
-static void MAC_TxACK(uint8_t seq);
+static void MAC_TxACK(uint8_t seq, e_nsErr_t *p_err);
 static void MAC_EventHandler(c_event_t c_event, p_data_t p_data);
 static void MAC_IsrTmrACK(void *p_arg);
 static void MAC_CSMA(e_nsErr_t *p_err);
@@ -65,7 +65,6 @@ static void MAC_CSMA(e_nsErr_t *p_err);
  *   data or MAC command frame. The default is a random value within
  *   the range.
  */
-static uint8_t          MAC_IsTxAck;
 static uint8_t          MAC_IsAckReq;
 static uint8_t          MAC_TxRetries;
 static uint8_t          MAC_LastSeq;
@@ -124,7 +123,6 @@ void MAC_Init(void *p_netstk, e_nsErr_t *p_err)
     MAC_Netstk = (s_ns_t *)p_netstk;
     MAC_CbTxFnct = 0;
     MAC_CbTxArg = NULL;
-    MAC_IsTxAck = 0;
     MAC_IsAckReq = 0;
     MAC_LastErr = NETSTK_ERR_NONE;
     *p_err = NETSTK_ERR_NONE;
@@ -236,6 +234,7 @@ void MAC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
         MAC_IsAckReq = 1;
     }
     MAC_TxRetries = 0;
+    MAC_LastErr = NETSTK_ERR_NONE;
     MAC_LastSeq = frame802154_getDSN();
 
     /*
@@ -300,10 +299,10 @@ void MAC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     uint8_t is_acked;
     frame802154_t frame;
 
+    /* set returned error code to default */
+    *p_err = NETSTK_ERR_NONE;
 
-    /*
-     * Parsing
-     */
+    /* Parsing but not reducing header as that will be then handled by DLLC */
     hdrlen = frame802154_parse(p_data, len, &frame);
     if (hdrlen == 0) {
         *p_err = NETSTK_ERR_INVALID_FRAME;
@@ -314,8 +313,10 @@ void MAC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
         case FRAME802154_DATAFRAME:
         case FRAME802154_CMDFRAME:
             if (frame.fcf.ack_required) {
-                MAC_IsTxAck = 1;
-                MAC_LastSeq = frame.seq;
+                MAC_TxACK(frame.seq, p_err);
+                if (*p_err != NETSTK_ERR_NONE) {
+                    emb6_errorHandler(p_err);
+                }
             }
 
             /* store the received packet into the common packet buffer */
@@ -339,6 +340,8 @@ void MAC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
             break;
 
         default:
+            *p_err = NETSTK_ERR_INVALID_FRAME;
+            //emb6_errorHandler(p_err);
             break;
     }
 }
@@ -405,38 +408,50 @@ static uint8_t MAC_IsAcked(frame802154_t *p_frame)
  *
  * @param   seq     Frame sequence number of the outgoing ACK
  */
-static void MAC_TxACK(uint8_t seq)
+static void MAC_TxACK(uint8_t seq, e_nsErr_t *p_err)
 {
-    e_nsErr_t      err = NETSTK_ERR_NONE;
-    uint8_t        ack[3];
-    frame802154_t  params;
+    frame802154_t frame;
+    uint8_t hdr_len, alloc_ok;
 
 
-    /* init to zeros */
-    memset(&params, 0, sizeof(params));
+    /* initialize */
+    *p_err = NETSTK_ERR_NONE;
+    memset(&frame, 0, sizeof(frame));
+    packetbuf_clear();
 
     /* Build the FCF. */
-    params.fcf.frame_type = FRAME802154_ACKFRAME;
-    params.fcf.security_enabled = 0;
-    params.fcf.frame_pending = 0;
-    params.fcf.ack_required = 0;
-    params.fcf.panid_compression = 0;
+    frame.fcf.frame_type = FRAME802154_ACKFRAME;
+    frame.fcf.security_enabled = 0;
+    frame.fcf.frame_pending = 0;
+    frame.fcf.ack_required = 0;
+    frame.fcf.panid_compression = 0;
 
     /* Insert IEEE 802.15.4 (2003) version bits. */
-    params.fcf.frame_version = FRAME802154_IEEE802154_2003;
+    frame.fcf.frame_version = FRAME802154_IEEE802154_2003;
 
     /* Increment and set the data sequence number. */
-    params.seq = seq;
+    frame.seq = seq;
 
     /* Complete the addressing fields. */
-    params.fcf.src_addr_mode = FRAME802154_NOADDR;
-    params.fcf.dest_addr_mode = FRAME802154_NOADDR;
+    frame.fcf.src_addr_mode = FRAME802154_NOADDR;
+    frame.fcf.dest_addr_mode = FRAME802154_NOADDR;
 
-    /* Create frame to send */
-    frame802154_create(&params, ack);
+    /* allocate buffer for MAC header */
+    hdr_len = frame802154_hdrlen(&frame);
+    alloc_ok = packetbuf_hdralloc(hdr_len);
+    if (alloc_ok == 0) {
+        *p_err = NETSTK_ERR_BUF_OVERFLOW;
+        return;
+    }
+
+    /* write the header */
+    frame802154_create(&frame, packetbuf_hdrptr());
 
     /* Issue next lower layer to transmit ACK */
-    MAC_Netstk->phy->send(ack, sizeof(ack), &err);
+    Tmr_Delay(1);
+    MAC_Netstk->phy->send(packetbuf_hdrptr(),
+                          packetbuf_totlen(),
+                          p_err);
 }
 
 
@@ -454,11 +469,6 @@ static void MAC_EventHandler(c_event_t c_event, p_data_t p_data)
 
     switch (c_event) {
         case NETSTK_MAC_EVENT_RX:
-            if (MAC_IsTxAck) {
-                MAC_IsTxAck = 0;
-                MAC_TxACK(MAC_LastSeq);
-            }
-
             /* Inform the next higher layer of the received packet */
             MAC_Netstk->dllc->recv(packetbuf_dataptr(),
                                    packetbuf_datalen(),
@@ -466,8 +476,9 @@ static void MAC_EventHandler(c_event_t c_event, p_data_t p_data)
             break;
 
         case NETSTK_MAC_EVENT_TX_DONE:
-            MAC_CbTxFnct(MAC_CbTxArg, &MAC_LastErr);
+            MAC_IsAckReq = 0;
             MAC_TxRetries = 0;
+            MAC_CbTxFnct(MAC_CbTxArg, &MAC_LastErr);
             MAC_LastErr = NETSTK_ERR_NONE;
             break;
 
@@ -484,9 +495,8 @@ static void MAC_EventHandler(c_event_t c_event, p_data_t p_data)
                  */
                 MAC_CSMA(&MAC_LastErr);
                 if (MAC_LastErr != NETSTK_ERR_CHANNEL_ACESS_FAILURE) {
-                    MAC_Netstk->phy->send(packetbuf_hdrptr(),
-                                          packetbuf_totlen(),
-                                          &MAC_LastErr);
+                    /* Issue PHY to transmit the last packet */
+                    MAC_Netstk->phy->ioctrl(NETSTK_CMD_PHY_LAST_PKT_TX, NULL, &err);
                 }
 
                 if (MAC_LastErr != NETSTK_ERR_NONE) {
