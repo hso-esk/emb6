@@ -349,6 +349,7 @@
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\dllc</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\mac</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\framer</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\phy</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\utils\inc</state>
         </option>
         <option>
@@ -1204,8 +1205,6 @@
         <debug>1</debug>
         <option>
           <name>CCDefines</name>
-          <state>LOGGER_LEVEL=0</state>
-          <state>LOGGER_DEMO_UDP_SOCKET=0</state>
           <state>EMB6_INIT_ROOT=0</state>
           <state>NET_USE_RPL=1</state>
           <state>DEMO_USE_UDP_SOCKET=1</state>
@@ -1381,6 +1380,7 @@
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\dllc</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\mac</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\framer</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\phy</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\utils\inc</state>
         </option>
         <option>
