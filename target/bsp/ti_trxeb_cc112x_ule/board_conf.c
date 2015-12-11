@@ -34,7 +34,7 @@ uint8_t board_conf(s_ns_t *p_netstk)
     if (p_netstk != NULL) {
         p_netstk->dllc  = &DLLCDrv802154;
         p_netstk->mac   = &MACDrv802154ULE;
-        p_netstk->phy   = &PHYDrvNull;
+        p_netstk->phy   = &PHYDrv802154;
         p_netstk->rf    = &RFDrvCC112x;
     }
     else {
