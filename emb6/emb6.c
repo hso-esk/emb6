@@ -174,7 +174,7 @@ uint8_t loc_emb6NetstackInit(s_ns_t * ps_ns)
 {
     uint8_t     c_err = 0;
 	uint8_t     is_valid;
-    e_nsErr_t  err;
+    e_nsErr_t   err;
 
 
     /* Initialize stack protocols */
@@ -188,8 +188,8 @@ uint8_t loc_emb6NetstackInit(s_ns_t * ps_ns)
     is_valid = (ps_ns->rf    != NULL) &&
                (ps_ns->phy   != NULL) &&
                (ps_ns->mac   != NULL) &&
-               (ps_ns->llc   != NULL) &&
-               (ps_ns->llsec != NULL) &&
+               (ps_ns->dllc   != NULL) &&
+               (ps_ns->dllsec != NULL) &&
                (ps_ns->hc    != NULL);
     if (is_valid) {
         /*
@@ -210,17 +210,17 @@ uint8_t loc_emb6NetstackInit(s_ns_t * ps_ns)
             return 0;
         }
 
-        ps_ns->llc->init(ps_ns, &err);
+        ps_ns->dllc->init(ps_ns, &err);
         if (err != NETSTK_ERR_NONE) {
             return 0;
         }
 
-        ps_ns->llsec->init(ps_ns);      /* logical link security    */
+        ps_ns->dllsec->init(ps_ns);      /* logical link security    */
         ps_ns->hc->init(ps_ns);         /* header compressor        */
         ps_ns->frame->init(ps_ns);      /* sicslowpan driver        */
 
         /* turn the netstack on */
-        ps_ns->llc->on(&err);
+        ps_ns->dllc->on(&err);
 
         /*
          * Initialize TCP/IP stack

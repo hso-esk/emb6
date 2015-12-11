@@ -307,9 +307,9 @@ typedef enum netstk_ioc_cmd
     NETSTK_CMD_RX_CBFNT_SET,        /*!< Set RX Callback function       */
 
     /*
-     * LLC command codes
+     * DLLC command codes
      */
-    NETSTK_CMD_LLC_RSVD = 100U,
+    NETSTK_CMD_DLLC_RSVD = 100U,
 
     /*
      * MAC command codes
@@ -372,11 +372,11 @@ typedef void (*nsRxCbFnct_t) (uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
 typedef struct netstack                     s_ns_t;
 typedef struct netstack_socket              s_nsSocket_t;
 typedef struct netstack_headerCompression   s_nsHeadComp_t;
-typedef struct netstack_llsec               s_nsllsec_t;
+typedef struct netstack_dllsec              s_nsdllsec_t;
 typedef struct netstack_framer              s_nsFramer_t;
 typedef struct netstk_module_api            s_nsModuleDrv_t;
 
-typedef s_nsModuleDrv_t   s_nsLLC_t;
+typedef s_nsModuleDrv_t   s_nsDLLC_t;
 typedef s_nsModuleDrv_t   s_nsMAC_t;
 typedef s_nsModuleDrv_t   s_nsPHY_t;
 typedef s_nsModuleDrv_t   s_nsRF_t;
@@ -389,8 +389,8 @@ struct netstack
 {
     const s_nsFramer_t      *frame;             /*!< Pointer to 6LoWPAN framing driver                  */
     const s_nsHeadComp_t    *hc;                /*!< Pointer to 6LoWPAN header compressor Driver        */
-    const s_nsllsec_t       *llsec;             /*!< Pointer to Logical Link Security Driver            */
-    const s_nsLLC_t         *llc;               /*!< Pointer to Logical Link Control Driver             */
+    const s_nsdllsec_t      *dllsec;            /*!< Pointer to Data Link Layer Security Driver         */
+    const s_nsDLLC_t        *dllc;              /*!< Pointer to Data Link Layer Control Driver          */
     const s_nsMAC_t         *mac;               /*!< Pointer to Medium Access Control Driver            */
     const s_nsPHY_t         *phy;               /*!< Pointer to Physical Driver                         */
     const s_nsRF_t          *rf;                /*!< Pointer to Radio Frequency Driver                  */
@@ -453,9 +453,9 @@ struct netstack_headerCompression
 
 
 /**
- * The structure of a link layer security driver.
+ * The structure of a data link layer security driver.
  */
-struct netstack_llsec
+struct netstack_dllsec
 {
     char *name;
 
@@ -528,7 +528,7 @@ extern const s_nsHeadComp_t     slipnet_driver;
 ********************************************************************************
 */
 /*! Supported link layer security handlers */
-extern const s_nsllsec_t        nullsec_driver;
+extern const s_nsdllsec_t        nullsec_driver;
 
 
 /*
@@ -544,11 +544,11 @@ extern const s_nsFramer_t       framer_nullframer;
 
 /*
 ********************************************************************************
-*                           LLC DRIVERS DECLARATIONS
+*                           DLLC DRIVERS DECLARATIONS
 ********************************************************************************
 */
-extern  const s_nsLLC_t   LLCDrvNull;
-extern  const s_nsLLC_t   LLCDrv802154;
+extern  const s_nsDLLC_t    DLLCDrvNull;
+extern  const s_nsDLLC_t    DLLCDrv802154;
 
 /*
 ********************************************************************************

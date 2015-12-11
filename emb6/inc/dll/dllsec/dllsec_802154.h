@@ -32,35 +32,50 @@
 
 /**
  * \file
- *         Link layer security header file.
+ *         Common functionality of 802.15.4-compliant llsec_drivers.
  * \author
  *         Konrad Krentz <konrad.krentz@gmail.com>
  */
 
 /**
- * \defgroup llsec Link Layer Security
+ * \addtogroup llsec
+ * @{
+ */
+
+/**
+ * \defgroup llsec802154    802.15.4 Link Layer Security
  *
- * Layer for implementing link layer security.
- *
- * netstack_llsec sits in between netstack_highMac and
- * netstack_headerCompression protocols. All netstack_highMac
- * protocols invoke netstack_llsec.input() for incoming packets.
- * Likewise, all netstack_headerCompression protocols invoke
- * netstack_llsec.send(...) for outgoing packets.
- *
- * The init function of netstack_llsec can be used to defer the start
- * of upper layers so as to initialize pairwise keys. Only contiki-sky-main.c
- * supports this at the moment.
+ * Common functionality of 802.15.4-compliant llsec_drivers.
  *
  * @{
  */
 
+#ifndef LLSEC802154_H_
+#define LLSEC802154_H_
 
-#ifndef LLSEC_H_
-#define LLSEC_H_
+#include "framer_802154.h"
 
-#include "mac.h"
+#ifdef LLSEC802154_CONF_SECURITY_LEVEL
+#define LLSEC802154_SECURITY_LEVEL     LLSEC802154_CONF_SECURITY_LEVEL
+#else /* LLSEC802154_CONF_SECURITY_LEVEL */
+#define LLSEC802154_SECURITY_LEVEL     FRAME802154_SECURITY_LEVEL_NONE
+#endif /* LLSEC802154_CONF_SECURITY_LEVEL */
 
-#endif /* LLSEC_H_ */
+#define LLSEC802154_MIC_LENGTH         ((LLSEC802154_SECURITY_LEVEL & 3) * 4)
 
+#ifdef LLSEC802154_CONF_USES_ENCRYPTION
+#define LLSEC802154_USES_ENCRYPTION    LLSEC802154_CONF_USES_ENCRYPTION
+#else /* LLSEC802154_CONF_USES_ENCRYPTION */
+#define LLSEC802154_USES_ENCRYPTION    (LLSEC802154_SECURITY_LEVEL & (1 << 2))
+#endif /* LLSEC802154_CONF_USES_ENCRYPTION */
+
+#ifdef LLSEC802154_CONF_USES_EXPLICIT_KEYS
+#define LLSEC802154_USES_EXPLICIT_KEYS LLSEC802154_CONF_USES_EXPLICIT_KEYS
+#else /* LLSEC802154_CONF_USES_EXPLICIT_KEYS */
+#define LLSEC802154_USES_EXPLICIT_KEYS 0
+#endif /* LLSEC802154_CONF_USES_EXPLICIT_KEYS */
+
+#endif /* LLSEC802154_H_ */
+
+/** @} */
 /** @} */

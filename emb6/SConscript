@@ -31,11 +31,11 @@ emb6 = {
 		'net/slip/*',
 	],
 # new netstack drivers
-	'llsec' : [
-		'dll/llsec/*',
+	'dllsec' : [
+		'dll/dllsec/*',
 	],
-	'llc' : [
-		'dll/llc/*',
+	'dllc' : [
+		'dll/dllc/*',
 	],
 	'mac' : [
 		'dll/mac/*',
@@ -46,9 +46,7 @@ emb6 = {
 	'phy' : [
 		'phy/*',
 	],
-	'lpr' : [
-		'phy/lpr/*',
-	],
+
 # C global defines
 	'defines' : [
 	],

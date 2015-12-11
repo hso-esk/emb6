@@ -1357,10 +1357,10 @@ send_packet(linkaddr_t *dest)
     packetbuf_set_attr(PACKETBUF_ATTR_RELIABLE, 1);
 #endif
 
-    if ((p_ns != NULL) && (p_ns->llsec != NULL)) {
+    if ((p_ns != NULL) && (p_ns->dllsec != NULL)) {
         /* Provide a callback function to receive the result of
          a packet transmission. */
-       p_ns->llsec->send(&packet_sent, NULL);
+       p_ns->dllsec->send(&packet_sent, NULL);
     }
 
   /* If we are sending multiple packets in a row, we need to let the
@@ -1467,7 +1467,7 @@ static uint8_t output(const uip_lladdr_t *localdest)
 #else /* USE_FRAMER_HDRLEN */
   framer_hdrlen = 21;
 #endif /* USE_FRAMER_HDRLEN */
-  max_payload = MAC_MAX_PAYLOAD - framer_hdrlen - p_ns->llsec->get_overhead();
+  max_payload = MAC_MAX_PAYLOAD - framer_hdrlen - p_ns->dllsec->get_overhead();
 
   if((int)uip_len - (int)uncomp_hdr_len > max_payload - (int)packetbuf_hdr_len) {
 #if SICSLOWPAN_CONF_FRAG
@@ -1890,8 +1890,8 @@ void sicslowpan_init(s_ns_t* p_netStack)
 
 
   if ((p_netStack        == NULL) ||
-      (p_netStack->llsec == NULL) ||
-      (p_netStack->llc   == NULL) ||
+      (p_netStack->dllsec == NULL) ||
+      (p_netStack->dllc   == NULL) ||
       (p_netStack->mac   == NULL) ||
       (p_netStack->frame == NULL))
       return;

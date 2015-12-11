@@ -5,12 +5,11 @@ sniffer = {
 	'emb6' : [
 		'ipv6',
 		'sicslowpan',
-		'llsec',
-		'llc',
+		'dllsec',
+		'dllc',
 		'mac',
 		'framer',
 		'phy',
-		'lpr',
 	],
 	'utils' : [
 		'*',

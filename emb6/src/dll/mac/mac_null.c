@@ -97,7 +97,7 @@ static void MAC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
            p_data,
            len);
 
-    MAC_Netstk->llc->recv(p_data, len, p_err);
+    MAC_Netstk->dllc->recv(p_data, len, p_err);
 }
 
 

@@ -309,12 +309,12 @@ int8_t demo_udpSocketCfg(s_ns_t *p_netstk)
         if (!p_netstk->c_configured) {
             p_netstk->hc    = &sicslowpan_driver;
             p_netstk->frame = &framer_802154;
-            p_netstk->llsec = &nullsec_driver;
+            p_netstk->dllsec = &nullsec_driver;
             i_ret = 1;
         } else {
             if ((p_netstk->hc    == &sicslowpan_driver) &&
                 (p_netstk->frame == &framer_802154)     &&
-                (p_netstk->llsec == &nullsec_driver)) {
+                (p_netstk->dllsec == &nullsec_driver)) {
                 i_ret = 1;
             }
             else {

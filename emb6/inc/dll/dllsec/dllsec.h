@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Fraunhofer Heinrich-Hertz-Institut.
+ * Copyright (c) 2013, Hasso-Plattner-Institut.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,25 +26,41 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ * This file is part of the Contiki operating system.
+ *
  */
 
-#include "emb6.h"
-#include "framer.h"
-#include "packetbuf.h"
+/**
+ * \file
+ *         Link layer security header file.
+ * \author
+ *         Konrad Krentz <konrad.krentz@gmail.com>
+ */
 
-/*---------------------------------------------------------------------------*/
-int8_t
-framer_canonical_create_and_secure(s_ns_t* p_ns)
-{
-  int hdr_len;
-  
-  hdr_len = p_ns->frame->create();
-  if(hdr_len >= 0) {
-    packetbuf_compact();
-    if(!p_ns->dllsec->on_frame_created()) {
-      return FRAMER_FAILED;
-    }
-  }
-  return hdr_len;
-}
-/*---------------------------------------------------------------------------*/
+/**
+ * \defgroup llsec Link Layer Security
+ *
+ * Layer for implementing link layer security.
+ *
+ * netstack_llsec sits in between netstack_highMac and
+ * netstack_headerCompression protocols. All netstack_highMac
+ * protocols invoke netstack_llsec.input() for incoming packets.
+ * Likewise, all netstack_headerCompression protocols invoke
+ * netstack_llsec.send(...) for outgoing packets.
+ *
+ * The init function of netstack_llsec can be used to defer the start
+ * of upper layers so as to initialize pairwise keys. Only contiki-sky-main.c
+ * supports this at the moment.
+ *
+ * @{
+ */
+
+
+#ifndef DLLSEC_H_
+#define DLLSEC_H_
+
+#include "mac.h"
+
+#endif /* DLLSEC_H_ */
+
+/** @} */

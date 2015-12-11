@@ -53,7 +53,7 @@
 #ifndef NULLSEC_H_
 #define NULLSEC_H_
 
-#include "llsec.h"
+#include "dllsec.h"
 
 #endif /* NULLSEC_H_ */
 

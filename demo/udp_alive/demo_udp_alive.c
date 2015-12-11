@@ -301,13 +301,13 @@ uint8_t demo_udpAliveConf(s_ns_t* p_netstk)
         if (!p_netstk->c_configured) {
             p_netstk->hc    = &sicslowpan_driver;
             p_netstk->frame = &framer_802154;
-            p_netstk->llsec = &nullsec_driver;
+            p_netstk->dllsec = &nullsec_driver;
             p_netstk->c_configured = 1;
 
         } else {
             if ((p_netstk->hc    == &sicslowpan_driver) &&
                 (p_netstk->frame == &framer_802154)    	&&
-                (p_netstk->llsec == &nullsec_driver)) {
+                (p_netstk->dllsec == &nullsec_driver)) {
             }
             else {
                 p_netstk = NULL;

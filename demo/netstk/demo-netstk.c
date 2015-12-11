@@ -168,18 +168,18 @@ static void App_DataReq(e_nsErr_t *p_err)
     /*
      * set TX callback function and argument
      */
-    App_Netstk.llc->ioctrl(NETSTK_CMD_TX_CBFNCT_SET,
+    App_Netstk.dllc->ioctrl(NETSTK_CMD_TX_CBFNCT_SET,
                            (void *)App_CbTx,
                            p_err);
 
-    App_Netstk.llc->ioctrl(NETSTK_CMD_TX_CBARG_SET,
+    App_Netstk.dllc->ioctrl(NETSTK_CMD_TX_CBARG_SET,
                            NULL,
                            p_err);
 
     /*
      * Issue next lower layer to transmit the prepared packet
      */
-    App_Netstk.llc->send(packetbuf_hdrptr(),
+    App_Netstk.dllc->send(packetbuf_hdrptr(),
                          packetbuf_totlen(),
                          p_err);
 }
@@ -260,19 +260,19 @@ static void App_StkInit (s_ns_t *p_stk)
     App_Netstk.rf->init(p_stk, &err);
     App_Netstk.phy->init(p_stk, &err);
     App_Netstk.mac->init(p_stk, &err);
-    App_Netstk.llc->init(p_stk, &err);
+    App_Netstk.dllc->init(p_stk, &err);
 
     /*
      * Set LLC RX callback function
      */
-    App_Netstk.llc->ioctrl(NETSTK_CMD_RX_CBFNT_SET,
+    App_Netstk.dllc->ioctrl(NETSTK_CMD_RX_CBFNT_SET,
                            (void *)App_IsrRx,
                            &err);
     
     /*
      * In normal operation mode, netstack drivers are always powered on.
      */
-    App_Netstk.llc->on(&err);
+    App_Netstk.dllc->on(&err);
 }
 
 

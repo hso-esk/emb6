@@ -1044,7 +1044,7 @@ static void MAC_ULE_RxPayload(e_nsErr_t *p_err)
                    MAC_ULE_RxPktLen);
 
             /* signal the next higher layer of the received data packet */
-            MAC_ULE_Netstk->llc->recv(MAC_ULE_RxPktPtr,
+            MAC_ULE_Netstk->dllc->recv(MAC_ULE_RxPktPtr,
                                       MAC_ULE_RxPktLen,
                                       p_err);
             break;

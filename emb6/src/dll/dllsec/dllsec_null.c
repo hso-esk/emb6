@@ -38,19 +38,18 @@
  */
 
 /**
- * \addtogroup llsec_null
+ * \addtogroup dllsec_null
  * @{
  */
 
 #include "emb6.h"
-#include "llsec_null.h"
+#include "dllsec_null.h"
 #include "framer_802154.h"
 #include "packetbuf.h"
 
 
-static s_ns_t          *LLSec_Netstk;
-static mac_callback_t   LLSec_TxCbFnct;
-static void            *LLSec_TxCbArg;
+static s_ns_t          *DLLSec_Netstk;
+static mac_callback_t   DLLSec_TxCbFnct;
 
 /**
  * @brief   Transmission callback function handler
@@ -58,87 +57,91 @@ static void            *LLSec_TxCbArg;
  * @param   p_arg
  * @param   p_err
  */
-static void LLSec_CbTx(void *p_arg, e_nsErr_t *p_err)
+static void DLLSec_CbTx(void *p_arg, e_nsErr_t *p_err)
 {
     int status;
-    int transmission = 0;
+    int retx = 0;
 
     switch (*p_err) {
         case NETSTK_ERR_NONE:
             status = MAC_TX_OK;
+            retx = 0;
             break;
 
         case NETSTK_ERR_CHANNEL_ACESS_FAILURE:
             status = MAC_TX_COLLISION;
+            retx = 3;
             break;
 
         case NETSTK_ERR_TX_NOACK:
             status = MAC_TX_NOACK;
+            retx = 3;
             break;
 
         case NETSTK_ERR_BUSY:
             status = MAC_TX_DEFERRED;
+            retx = 3;
             break;
 
         default:
             status = MAC_TX_ERR_FATAL;
+            retx = 3;
             break;
     }
 
-    LLSec_TxCbFnct(LLSec_TxCbArg, status, transmission);
+    DLLSec_TxCbFnct(p_arg, status, retx);
 }
 
 
 /*---------------------------------------------------------------------------*/
-static void LLSec_Send(mac_callback_t sent, void *p_arg)
+static void DLLSec_Send(mac_callback_t sent, void *p_arg)
 {
     e_nsErr_t err = NETSTK_ERR_NONE;
 
 
-    LLSec_TxCbFnct = sent;
-    LLSec_TxCbArg = p_arg;
+    DLLSec_TxCbFnct = sent;
     packetbuf_set_attr(PACKETBUF_ATTR_FRAME_TYPE, FRAME802154_DATAFRAME);
 
 
     /*
      * set TX callback function and argument
      */
-    LLSec_Netstk->llc->ioctrl(NETSTK_CMD_TX_CBFNCT_SET,
-                             (void *)LLSec_CbTx,
-                             &err);
+    DLLSec_Netstk->dllc->ioctrl(NETSTK_CMD_TX_CBFNCT_SET,
+                                (void *)DLLSec_CbTx,
+                                &err);
 
-    LLSec_Netstk->llc->ioctrl(NETSTK_CMD_TX_CBARG_SET,
-                             NULL,
-                             &err);
+    DLLSec_Netstk->dllc->ioctrl(NETSTK_CMD_TX_CBARG_SET,
+                                p_arg,
+                                &err);
 
     /*
      * Issue next lower layer to transmit the prepared packet
      */
-    LLSec_Netstk->llc->send(packetbuf_hdrptr(),
-                            packetbuf_totlen(),
-                            &err);
+    DLLSec_Netstk->dllc->send(packetbuf_hdrptr(),
+                              packetbuf_totlen(),
+                              &err);
 }
 
 /*---------------------------------------------------------------------------*/
-static int LLSec_OnFrameCreated(void)
+static int DLLSec_OnFrameCreated(void)
 {
     return 1;
 }
 
 /*---------------------------------------------------------------------------*/
-static void LLSec_Input(void)
+static void DLLSec_Input(void)
 {
-    LLSec_Netstk->hc->input();
+    DLLSec_Netstk->hc->input();
 }
 
 /*---------------------------------------------------------------------------*/
-static uint8_t LLSec_GetOverhead(void)
+static uint8_t DLLSec_GetOverhead(void)
 {
     return 0;
 }
 
 /*---------------------------------------------------------------------------*/
-static void LLSec_Init(s_ns_t *p_netstk)
+static void DLLSec_Init(s_ns_t *p_netstk)
 {
 #if NETSTK_CFG_ARG_CHK_EN
     if (p_netstk == NULL) {
@@ -148,21 +151,21 @@ static void LLSec_Init(s_ns_t *p_netstk)
 
     e_nsErr_t err = NETSTK_ERR_NONE;
 
-    LLSec_Netstk = p_netstk;
-    LLSec_Netstk->llc->ioctrl(NETSTK_CMD_RX_CBFNT_SET,
-                              (void *)LLSec_Input,
+    DLLSec_Netstk = p_netstk;
+    DLLSec_Netstk->dllc->ioctrl(NETSTK_CMD_RX_CBFNT_SET,
+                              (void *)DLLSec_Input,
                               &err);
 }
 
 /*---------------------------------------------------------------------------*/
-const s_nsllsec_t nullsec_driver =
+const s_nsdllsec_t nullsec_driver =
 {
        "LLSEC NULL",
-        LLSec_Init,
-        LLSec_Send,
-        LLSec_OnFrameCreated,
-        LLSec_Input,
-        LLSec_GetOverhead
+        DLLSec_Init,
+        DLLSec_Send,
+        DLLSec_OnFrameCreated,
+        DLLSec_Input,
+        DLLSec_GetOverhead
 };
 /*---------------------------------------------------------------------------*/
 

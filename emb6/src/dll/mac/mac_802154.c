@@ -460,9 +460,9 @@ static void MAC_EventHandler(c_event_t c_event, p_data_t p_data)
             }
 
             /* Inform the next higher layer of the received packet */
-            MAC_Netstk->llc->recv(packetbuf_dataptr(),
-                                  packetbuf_datalen(),
-                                  &err);
+            MAC_Netstk->dllc->recv(packetbuf_dataptr(),
+                                   packetbuf_datalen(),
+                                   &err);
             break;
 
         case NETSTK_MAC_EVENT_TX_DONE:
