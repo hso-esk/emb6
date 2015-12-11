@@ -10,6 +10,72 @@
 
 
 /**
+ * @brief   GPIOs configuration for CCA operation
+ */
+static const s_regSettings_t cc120x_cfg_cca[] = {
+    {CC120X_IOCFG3,             0x0F},  /* CCA_DONE, rising */
+};
+
+
+/**
+ * @brief   GPIOs configuration for transmission operation
+ */
+static const s_regSettings_t cc120x_cfg_tx[] = {
+    /*
+     * Note 1:
+     *
+     * TX_FIFO_THR, asserted when TX FIFO is filled Above or Equal to
+     * (127-FIFO_CFG.FIGO_THR) or the end of packet is reached
+     * De-asserted when the TX FIFO is drained below the same threshold.
+     * This signal is also available in the MODEM_STATUS0 register.
+     *
+     * If byte_lefts is equal or above the threshold, an amount of byte equal to
+     * threshold is written into TX FIFO for transmission. This then causes
+     * TX_FIFO_THR interrupt. Here FIFO is configured to infinite packet length
+     * If the byte left is below the threshold, FIFO shall be configured to
+     * fixed packet length. Afterwards remaining bytes are written into TX FIFO
+     * for transmission. At the end of the transmission PKT_SYCN_RXTX is de-
+     * asserted.
+     */
+    {CC120X_IOCFG0,             0x02},  /* TX_FIFO_THR, rising */
+    {CC120X_IOCFG2,             0x06},  /* PKT_SYNC_RXTX, rising */
+
+    /*
+     * 0x00: fixed packet length mode
+     * 0x20: variable packet length mode. Packet length is configured by the
+     * first byte received after sync word;
+     * 0x40: infinite packet length mode
+     * By default the transceiver is configured to be infinite packet length
+     * mode (0x40). Upon number of remaining bytes regardless in transmission or
+     * reception, the packet length mode is configured accordingly (see note 1).
+     */
+    {CC120X_PKT_CFG0,           0x40},
+    {CC120X_FIFO_CFG,           0x78},  /* FIFO_THR = 120 */
+    /*
+     * Packet length
+     * In fixed length mode, this field indicates the packet length, and a value
+     * of 0 indicates the length to be 256 bytes.
+     * In variable packet length mode, this value indicates the maximum allowed
+     * packet lengths.
+     */
+    {CC120X_PKT_LEN,            0xFF},
+};
+
+/**
+ * @brief   GPIOs configuration for reception operation with eWOR enabled
+ */
+static const s_regSettings_t cc120x_cfg_rx_wor[] = {
+    {CC120X_IOCFG0,             0x00},  /* RXFIFO_THR, rising */
+    {CC120X_IOCFG2,             0x06},  /* PKT_SYNC_RXTX, rising */
+    {CC120X_IOCFG3,             0x06},  /* PKT_SYNC_RXTX, falling */
+
+    {CC120X_PKT_CFG0,           0x40},  /* packet length mode */
+    {CC120X_FIFO_CFG,           0x78},  /* FIFO_THR = 120 */
+    {CC120X_PKT_LEN,            0xFF},  /* packet length of 255 bytes */
+};
+
+
+/**
  * @brief   IEEE802.15.4g first channel center (channel 0)
  *          See also IEEE802.15.4g-2012, table 68d
  *
@@ -70,7 +136,7 @@ static const s_regSettings_t cc120x_cfg_ieee802154g_chan0[] =
     {CC120X_WOR_EVENT0_LSB,     0x96},  /* t_sleep = 3.102ms */
 
     {CC120X_PKT_CFG2,           0x00},
-    {CC120X_PKT_CFG1,           0x03},
+    {CC120X_PKT_CFG1,           0x00},    /* CRC_CFG = 00; CRC16 is disabled, APPEND_STATUS is disabled */
     {CC120X_PKT_CFG0,           0x20},
 
     {CC120X_RFEND_CFG0,         0x09},
