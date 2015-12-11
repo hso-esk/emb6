@@ -243,17 +243,19 @@ typedef enum netstk_err
     /*
      * Common error codes
      */
-    NETSTK_ERR_NONE                         = 0U,
-    NETSTK_ERR_INIT                         = 1U,
-    NETSTK_ERR_BUSY                         = 2U,
-    NETSTK_ERR_BUF_OVERFLOW                 = 3U,
-    NETSTK_ERR_INVALID_ARGUMENT             = 4U,
-    NETSTK_ERR_INVALID_FRAME                = 5U,
-    NETSTK_ERR_TX_TIMEOUT                   = 6U,
-    NETSTK_ERR_TX_NOACK                     = 7U,
-    NETSTK_ERR_CMD_UNSUPPORTED              = 8U,
-    NETSTK_ERR_CHANNEL_ACESS_FAILURE        = 9U,
-    NETSTK_ERR_FATAL                        = 10U,
+    NETSTK_ERR_NONE = 0U,
+    NETSTK_ERR_INIT,
+    NETSTK_ERR_BUSY,
+    NETSTK_ERR_BUF_OVERFLOW,
+    NETSTK_ERR_INVALID_ARGUMENT,
+    NETSTK_ERR_INVALID_FRAME,
+    NETSTK_ERR_TX_TIMEOUT,
+    NETSTK_ERR_TX_NOACK,
+    NETSTK_ERR_CMD_UNSUPPORTED,
+    NETSTK_ERR_CHANNEL_ACESS_FAILURE,
+    NETSTK_ERR_CRC,
+    NETSTK_ERR_BAD_FORMAT,
+    NETSTK_ERR_FATAL,
 
     /*
      * LLC error codes
@@ -557,17 +559,16 @@ extern  const s_nsDLLC_t    DLLCDrv802154;
 *                           MAC DRIVERS DECLARATIONS
 ********************************************************************************
 */
-extern  const s_nsMAC_t   MACDrvNull;
-extern  const s_nsMAC_t   MACDrv802154;
-extern  const s_nsMAC_t   MACDrv802154ULE;
+extern  const s_nsMAC_t     MACDrvNull;
+extern  const s_nsMAC_t     MACDrv802154;
+extern  const s_nsMAC_t     MACDrv802154ULE;
 
 /*
 ********************************************************************************
 *                           PHY DRIVERS DECLARATIONS
 ********************************************************************************
 */
-extern  const s_nsPHY_t   PHYDrvNull;
-
+extern  const s_nsPHY_t     PHYDrvNull;
 extern  const s_nsPHY_t     PHYDrv802154;
 
 
