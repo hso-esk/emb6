@@ -1013,6 +1013,10 @@ static void cc112x_cca(e_nsErr_t *p_err)
         /* Strobe RX */
         do {
             chip_status = cc112x_spiCmdStrobe(CC112X_SRX);
+            if (chip_status & 0x60) {
+                /* RX FIFO error then flush RX FIFO */
+                chip_status = cc112x_spiCmdStrobe(CC112X_SFRX);
+            }
         } while (RF_GET_CHIP_STATE(chip_status) != RF_CHIP_STATE_RX);
 
         /* disable RF external interrupts */

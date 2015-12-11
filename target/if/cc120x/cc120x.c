@@ -1018,6 +1018,10 @@ static void cc120x_cca(e_nsErr_t *p_err)
         /* Strobe RX */
         do {
             chip_status = cc120x_spiCmdStrobe(CC120X_SRX);
+            if (chip_status & 0x60) {
+                /* RX FIFO error then flush RX FIFO */
+                chip_status = cc120x_spiCmdStrobe(CC120X_SFRX);
+            }
         } while (RF_GET_CHIP_STATE(chip_status) != RF_CHIP_STATE_RX);
 
         /* disable RF external interrupts */
