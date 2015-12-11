@@ -74,10 +74,15 @@
  *  \name FCF element values definitions
  *  @{
  */
-#define FRAME802154_BEACONFRAME     (0x00)
-#define FRAME802154_DATAFRAME       (0x01)
-#define FRAME802154_ACKFRAME        (0x02)
-#define FRAME802154_CMDFRAME        (0x03)
+#define FRAME802154_BEACONFRAME             (0x00)
+#define FRAME802154_DATAFRAME               (0x01)
+#define FRAME802154_ACKFRAME                (0x02)
+#define FRAME802154_CMDFRAME                (0x03)
+
+#if NETSTK_CFG_IEEE_802154G_EN
+#define FRAME802154_LLDNFRAME               (0x04)  /*!< Low Latency Deterministic Network (LLDN) */
+#define FRAME802154_MULTIPURPOSE_FRAME      (0x05)
+#endif
 
 #define FRAME802154_BEACONREQ       (0x07)
 
@@ -131,7 +136,13 @@ typedef struct {
   uint8_t frame_pending;     /**< 1 bit. True if sender has more data to send */
   uint8_t ack_required;      /**< 1 bit. Is an ack frame required? */
   uint8_t panid_compression; /**< 1 bit. Is this a compressed header? */
+#if NETSTK_CFG_IEEE_802154G_EN
+  /* 1 bit is reserved */
+  uint8_t seq_suppression;
+  uint8_t ie_list_present;
+#else
   /*   uint8_t reserved; */  /**< 3 bit. Unused bits */
+#endif
   uint8_t dest_addr_mode;    /**< 2 bit. Destination address mode, see 802.15.4 */
   uint8_t frame_version;     /**< 2 bit. 802.15.4 frame version */
   uint8_t src_addr_mode;     /**< 2 bit. Source address mode, see 802.15.4 */
@@ -163,6 +174,20 @@ typedef struct {
   uint8_t  key_index[9];                        /**< < Key Index subfield */
 } frame802154_aux_hdr_t;
 
+#if NETSTK_CFG_IEEE_802154G_EN
+/**
+ * @brief   Information Elements field structure in IEEE 802154g frame
+ *
+ * @note    Number of IEs within the IE list is not limited
+ */
+typedef struct {
+    uint32_t header_num;    /*!< number of header IE present */
+    uint8_t *p_header;      /*!< pointer to the first header IE */
+    uint8_t *p_payload;     /*!< pointer to the first payload IE */
+} frame802154_ie;
+#endif
+
+
 /** \brief Parameters used by the frame802154_create() function.  These
  *  parameters are used in the 802.15.4 frame header.  See the 802.15.4
  *  specification for details.
@@ -178,6 +203,11 @@ typedef struct {
     uint16_t dest_pid;              /**< Destination PAN ID */
     uint16_t src_pid;               /**< Source PAN ID */
     frame802154_aux_hdr_t aux_hdr;  /**< Aux security header */
+
+#if NETSTK_CFG_IEEE_802154G_EN
+    frame802154_ie ie;              /**< Information Element fields */
+#endif
+
     uint8_t *payload;               /**< Pointer to 802.15.4 payload */
     int payload_len;                /**< Length of payload field */
 } frame802154_t;
