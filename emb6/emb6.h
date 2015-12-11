@@ -320,7 +320,8 @@ typedef enum netstk_ioc_cmd
      * PHY command codes
      */
     NETSTK_CMD_PHY_RSVD = 300U,
-
+    NETSTK_CMD_PHY_LAST_PKT_TX,
+    NETSTK_CMD_PHY_CRC_LEN_SET,
 
     /*
      * LPR command codes
@@ -566,6 +567,7 @@ extern  const s_nsMAC_t   MACDrv802154ULE;
 */
 extern  const s_nsPHY_t   PHYDrvNull;
 
+extern  const s_nsPHY_t     PHYDrv802154;
 
 
 /*
