@@ -63,10 +63,13 @@ static s_io_pin_desc_t s_target_extIntPin[] =
     {&gps_io_port[TARGETCONFIG_RF_GPIO0_PORT], TARGETCONFIG_RF_GPIO0_PIN, TARGETCONFIG_RF_GPIO0_MSK},
     {&gps_io_port[TARGETCONFIG_RF_GPIO2_PORT], TARGETCONFIG_RF_GPIO2_PIN, TARGETCONFIG_RF_GPIO2_MSK},
     {&gps_io_port[TARGETCONFIG_RF_GPIO3_PORT], TARGETCONFIG_RF_GPIO3_PIN, TARGETCONFIG_RF_GPIO3_MSK},
+
+    /* todo added UART interrupt */
 };
 
 static clock_time_t volatile    hal_ticks;
 static spiDesc_t                hal_rfspi;
+static pfn_intCallb_t           hal_uartCb;
 
 /*
 ********************************************************************************
@@ -75,6 +78,7 @@ static spiDesc_t                hal_rfspi;
 */
 static void _hal_systick(void);
 static void _hal_isrSysTick( void *p_arg );
+static void _hal_isrUartCb(uint8_t c);
 
 /*
 ********************************************************************************
@@ -89,21 +93,27 @@ static void _hal_isrSysTick( void *p_arg )
     }
 }
 
+static void _hal_isrUartCb(uint8_t c)
+{
+    if (hal_uartCb) {
+        hal_uartCb(&c);
+    }
+}
 
 static void _hal_systick(void)
 {
-    tmr_config(E_TMR_0,
-               (uint16_t)(TARGET_CFG_SYSTICK_RESOLUTION / TARGET_CFG_SYSTICK_SCALER));
+    uint16_t period;
+
+    period = (uint16_t)(TARGET_CFG_SYSTICK_RESOLUTION /
+                        TARGET_CFG_SYSTICK_SCALER);
+    tmr_config(E_TMR_0, period);
     tmr_start(E_TMR_0, _hal_isrSysTick );
 }
 
 static void _hal_uartInit(void)
 {
-    char *p_line = "\r\n\r\n========== BEGIN ===========\r\n\r\n";
-
     uart_init();
-    uart_config(E_UART_SEL_UART1, 115200, NULL);
-    uart_send(E_UART_SEL_UART1, p_line, strlen(p_line));
+    uart_config(E_UART_SEL_UART1, 115200, _hal_isrUartCb);
 }
 
 
@@ -187,6 +197,7 @@ int8_t hal_init(void)
 
         /* initialize UART */
         _hal_uartInit();
+        hal_uartCb = 0;
 
         /* initialize info flash */
         infoflash_init();
@@ -309,6 +320,10 @@ void hal_extiRegister(en_targetExtInt_t     e_pin,
             io_extiRegister(&s_target_extIntPin[e_pin], int_edge, pf_cb);
             break;
 
+        case E_TARGET_USART_INT:
+            /* register callback function */
+            hal_uartCb = pf_cb;
+            break;
 
         case E_TARGET_RADIO_INT:
         case E_TARGET_EXT_INT_3:
@@ -328,6 +343,10 @@ void hal_extiClear(en_targetExtInt_t e_pin)
             io_extiClear(&s_target_extIntPin[e_pin]);
             break;
 
+        case E_TARGET_USART_INT:
+            /* register callback function */
+            hal_uartCb = 0;
+            break;
 
         case E_TARGET_RADIO_INT:
         case E_TARGET_EXT_INT_3:
