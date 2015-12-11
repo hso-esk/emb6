@@ -284,53 +284,99 @@ void hal_extiRegister(en_targetExtInt_t     e_pin,
                       en_targetIntEdge_t    e_edge,
                       pfn_intCallb_t        pf_cb)
 {
-    s_io_pin_desc_t *ps_desc = &s_target_extIntPin[e_pin];
+    uint8_t int_edge;
 
+
+#if NETSTK_CFG_ARG_CHK_EN
+    if (pf_cb == NULL) {
+        return;
+    }
+#endif
 
     /* register external interrupts */
-    if ((pf_cb != NULL) && (ps_desc->PORT != NULL)) {
-        switch (e_edge) {
-            case E_TARGET_INT_EDGE_FALLING:
-                io_extiRegister(ps_desc, INT_EDGE_FALLING, pf_cb);
-                break;
+    switch (e_pin) {
+        case E_TARGET_EXT_INT_0:
+        case E_TARGET_EXT_INT_1:
+        case E_TARGET_EXT_INT_2:
+            /* get corresponding edge configuration */
+            if (e_edge == E_TARGET_INT_EDGE_FALLING) {
+                int_edge = INT_EDGE_FALLING;
+            } else {
+                int_edge = INT_EDGE_RISING;
+            }
 
-            case E_TARGET_INT_EDGE_RISING:
-                io_extiRegister(ps_desc, INT_EDGE_RISING, pf_cb);
-                break;
+            /* supported external interrupts are treated evenly */
+            io_extiRegister(&s_target_extIntPin[e_pin], int_edge, pf_cb);
+            break;
 
-            default:
-                break;
-        }
+
+        case E_TARGET_RADIO_INT:
+        case E_TARGET_EXT_INT_3:
+        case E_TARGET_EXT_INT_MAX:
+        default:
+            /* unsupported external interrupts */
+            break;
     }
 }
 
 void hal_extiClear(en_targetExtInt_t e_pin)
 {
-    s_io_pin_desc_t *ps_desc = &s_target_extIntPin[e_pin];
+    switch (e_pin) {
+        case E_TARGET_EXT_INT_0:
+        case E_TARGET_EXT_INT_1:
+        case E_TARGET_EXT_INT_2:
+            io_extiClear(&s_target_extIntPin[e_pin]);
+            break;
 
 
-    if (ps_desc->PORT != NULL) {
-        io_extiClear(ps_desc);
+        case E_TARGET_RADIO_INT:
+        case E_TARGET_EXT_INT_3:
+        case E_TARGET_EXT_INT_MAX:
+        default:
+            /* unsupported external interrupts */
+            break;
     }
 }
 
 void hal_extiEnable(en_targetExtInt_t e_pin)
 {
-    s_io_pin_desc_t *ps_desc = &s_target_extIntPin[e_pin];
+    switch (e_pin) {
+        case E_TARGET_EXT_INT_0:
+        case E_TARGET_EXT_INT_1:
+        case E_TARGET_EXT_INT_2:
+            io_extiEnable(&s_target_extIntPin[e_pin]);
+            break;
 
+        case E_TARGET_USART_INT:
+            break;
 
-    if (ps_desc->PORT != NULL) {
-        io_extiEnable(ps_desc);
+        case E_TARGET_RADIO_INT:
+        case E_TARGET_EXT_INT_3:
+        case E_TARGET_EXT_INT_MAX:
+        default:
+            /* unsupported external interrupts */
+            break;
     }
 }
 
 void hal_extiDisable(en_targetExtInt_t e_pin)
 {
-    s_io_pin_desc_t *ps_desc = &s_target_extIntPin[e_pin];
+    switch (e_pin) {
+        case E_TARGET_EXT_INT_0:
+        case E_TARGET_EXT_INT_1:
+        case E_TARGET_EXT_INT_2:
+            io_extiDisable(&s_target_extIntPin[e_pin]);
+            break;
 
+        case E_TARGET_USART_INT:
+            break;
 
-    if (ps_desc->PORT != NULL) {
-        io_extiDisable(ps_desc);
+        case E_TARGET_RADIO_INT:
+        case E_TARGET_EXT_INT_3:
+        case E_TARGET_EXT_INT_MAX:
+        default:
+            /* unsupported external interrupts */
+            break;
     }
 }
 
