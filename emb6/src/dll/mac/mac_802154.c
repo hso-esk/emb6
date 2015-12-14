@@ -343,6 +343,14 @@ void MAC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     /* set returned error code to default */
     *p_err = NETSTK_ERR_NONE;
 
+    /* frames with length greater than supported by the packetbuf shall be
+     * discarded. Otherwise it leads to buffer overflow when using memcpy to
+     * store frame into the packet buffer */
+    if (len > PACKETBUF_SIZE) {
+        *p_err = NETSTK_ERR_INVALID_FRAME;
+        return;
+    }
+
     /* Parsing but not reducing header as that will be then handled by DLLC */
     hdrlen = frame802154_parse(p_data, len, &frame);
     if (hdrlen == 0) {
