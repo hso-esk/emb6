@@ -137,7 +137,7 @@ static void PHY_Init(void *p_netstk, e_nsErr_t *p_err)
 
     /* set CRC size to default */
 #if NETSTK_CFG_IEEE_802154G_EN
-    PHY_FcsLen = 2; /* 32-bit CRC is not yet supported */
+    PHY_FcsLen = 4; /* 32-bit CRC */
 #else
     PHY_FcsLen = 2; /* 16-bit CRC */
 #endif
