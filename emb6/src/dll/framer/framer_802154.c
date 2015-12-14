@@ -397,8 +397,8 @@ frame802154_parse(uint8_t *data, int len, frame802154_t *pf)
      * - Sequence Number Suppression is ignored.
      * - IE List Present is ignored
      **/
-    fcf.seq_suppression = p[1] & 0x01;
-    fcf.ie_list_present = p[1] & 0x02;
+    fcf.seq_suppression = (p[1] & 0x01);
+    fcf.ie_list_present = (p[1] >> 1) & 0x01 ;
 #endif
     fcf.dest_addr_mode = (p[1] >> 2) & 3;
     fcf.frame_version = (p[1] >> 4) & 3;
