@@ -382,7 +382,7 @@ static void cc112x_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     }
 #endif
 
-    if (rf_state != RF_STATE_SNIFF) {
+    if (rf_state != RF_STATE_SNIFF && rf_state != RF_STATE_IDLE) {
         *p_err = NETSTK_ERR_BUSY;
     } else {
 #if LOGGER_ENABLE
@@ -925,10 +925,6 @@ static void cc112x_eventHandler(c_event_t c_event, p_data_t p_data)
          * (2)  Signal the next higher layer of the received frame
          */
 
-        /* The transceiver shall be ready for TX request before
-         * signaling upper layer of the received frame */
-        cc112x_gotoSniff();
-
         /*
          * exit actions
          */
@@ -946,10 +942,14 @@ static void cc112x_eventHandler(c_event_t c_event, p_data_t p_data)
 #endif
 
         rf_netstk->phy->recv(rf_rxBuf, rf_rxBufLen, &err);
-        if (err != NETSTK_ERR_NONE) {
-            rf_rxBufLen = 0;
-            rf_bufIx = rf_rxBuf;
-            memset(rf_rxBuf, 0, sizeof(rf_rxBuf));
+        rf_rxBufLen = 0;
+        rf_bufIx = rf_rxBuf;
+        memset(rf_rxBuf, 0, sizeof(rf_rxBuf));
+
+        if (rf_state != RF_STATE_SNIFF) {
+            /* The transceiver shall be ready for TX request before
+             * signaling upper layer of the received frame */
+            cc112x_gotoSniff();
         }
     }
 }
