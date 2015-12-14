@@ -124,21 +124,23 @@ get_key_id_len(uint8_t key_id_mode)
  */
 static int ie_len(uint8_t *p_ie, uint16_t len)
 {
-    int ie_tot_len = 0;
+    int ie_tot_len;
     uint16_t ie_hdr;
     uint8_t ie_len;
     uint8_t ie_id;
     uint8_t ie_type;
     uint8_t *p;
     uint8_t is_terminated;
+    uint8_t is_ie_bad_formatted;
 
+    ie_tot_len = len;
     if (p_ie) {
         /* use a temporary pointer to iterate IE fields */
         p = p_ie;
 
         /*
          * Parse Header IE list
-         * - see IEEE-802.15.4e-2012, 5.2.4
+         * - see IEEE-802.15.4e-2012, 5.2.4.22
          * - format:
          *      0...6    Length
          *      7...14   Element ID
@@ -146,24 +148,30 @@ static int ie_len(uint8_t *p_ie, uint16_t len)
          *      0...127  IE Content
          */
         is_terminated = FALSE;
-        while ((is_terminated == FALSE) && len) {
+        is_ie_bad_formatted = FALSE;
+        while ((is_terminated == FALSE) &&
+               (is_ie_bad_formatted == FALSE)) {
             /*
              * the Header IE list is terminated with an IE List Termination IE
              * (ID = 0x7e or 0x7f) that has a content length of zero,
              * See IEEE-802.15.4e-2012, 5.2.4.22
              */
             ie_hdr = (uint16_t)(p[0] << 8) | (p[1]);
-            ie_len = (ie_hdr & 0xfe) >> 8;
-            ie_id =  (ie_hdr & 0x01fe) >> 1;
-            ie_type = (ie_hdr & 0x0001);    /* type is set to 0 */
+            ie_len = (ie_hdr) & 0x007Fu;
+            ie_id =  (ie_hdr >> 7) & 0x00FFu;
+            ie_type = (ie_hdr >> 15) & 0x0001u;    /* type is set to 0 */
 
-            is_terminated = (ie_type == 0) &&
-                            (ie_len == 0) &&
-                            ((ie_id == 0x7e) || (ie_id == 0x7f));
+            /* check header IE format, table 4b, IEEE-802.15.4e-2012 */
+            is_ie_bad_formatted = (ie_id < 0x1a) ||
+                                  ((ie_id > 0x21) && (ie_id < 0x7e)) ||
+                                  (ie_id > 0x7f) ||
+                                  (ie_type != 0);
 
-            if (is_terminated == FALSE) {
+            if (is_ie_bad_formatted == FALSE) {
                 p += 2 + ie_len;
                 len -= 2 + ie_len;
+                is_terminated = (ie_len == 0) &&
+                                ((ie_id == 0x7e) || (ie_id == 0x7f));
             }
         }
 
@@ -177,28 +185,35 @@ static int ie_len(uint8_t *p_ie, uint16_t len)
          *      0...2047    IE Content
          */
         is_terminated = FALSE;
-        while ((is_terminated == FALSE) && len) {
+        while ((is_terminated == FALSE) &&
+               (is_ie_bad_formatted == FALSE)) {
             /*
              * the Header IE list is terminated with a group ID of 0x0F
              * (ID = 0x7e or 0x7f) that has a content length of zero,
              * See IEEE-802.15.4e-2012, 5.2.4.22
              */
             ie_hdr = (uint16_t)(p[0] << 8) | (p[1]);
-            ie_len = (ie_hdr & 0xffe0) >> 5;
-            ie_id =  (ie_hdr & 0x001e) >> 1;
-            ie_type = (ie_hdr & 0x0001);    /* type is set to 1 */
+            ie_len = (ie_hdr) & 0x07ffu;
+            ie_id = (ie_hdr >> 11) & 0x000fu;
+            ie_type = (ie_hdr >> 15) & 0x0001u;    /* type is set to 1 */
 
-            is_terminated = (ie_type == 0) &&
-                            (ie_len == 0) &&
-                            (ie_id == 0x0f);
+            /* check payload IE format, table 4c, IEEE-802.15.4e-2012 */
+            is_ie_bad_formatted = (ie_type != 1) ||
+                                   ((ie_id != 0x00) &&
+                                    (ie_id != 0x01) &&
+                                    (ie_id != 0x0f));
 
-            if (is_terminated == FALSE) {
+            if (is_ie_bad_formatted == FALSE) {
                 p += 2 + ie_len;
                 len -= 2 + ie_len;
+                is_terminated = (ie_len == 0) &&
+                                (ie_id == 0x0f);
             }
         }
     }
 
+    /* subtract remaining bytes after parsing IE fields */
+    ie_tot_len -= len;
     return ie_tot_len;
 }
 #endif
@@ -496,8 +511,13 @@ frame802154_parse(uint8_t *data, int len, frame802154_t *pf)
     /* parse Information Element Fields */
     uint16_t ie_tot_len = 0;
     if (fcf.ie_list_present) {
-        ie_tot_len = ie_len(p, p - data);
-        p += ie_tot_len;
+        ie_tot_len = ie_len(p, len - (p - data));
+        if (ie_tot_len == 0) {
+            /* IE fields are badly formatted, then terminate parsing process */
+            return 0;
+        } else {
+            p += ie_tot_len;
+        }
     }
 #endif
 
