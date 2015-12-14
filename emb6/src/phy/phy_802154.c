@@ -230,6 +230,10 @@ static void PHY_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 
     if (PHY_FcsLen == 4) {
         fcs = crc_32(p_data, len);
+        fcs = ((fcs & 0x000000FF) << 24) |
+              ((fcs & 0x0000FF00) <<  8) |
+              ((fcs & 0x00FF0000) >>  8) |
+              ((fcs & 0xFF000000) >> 24);
     } else {
         fcs = crc_16(p_data, len);
         fcs = ((fcs & 0x00FF) << 8) |
@@ -346,10 +350,10 @@ static void PHY_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 
         /* obtain CRC of the received frame */
         memcpy(&crc_exp, &p_data[psdu_len], crc_size);
-        crc_exp = ((uint32_t)(p_data[psdu_len + 0])) |
-                  ((uint32_t)(p_data[psdu_len + 1]) << 8)  |
-                  ((uint32_t)(p_data[psdu_len + 2]) << 16) |
-                  ((uint32_t)(p_data[psdu_len + 3]) << 24);
+        crc_exp = ((crc_exp & 0x000000FF) << 24) |
+                  ((crc_exp & 0x0000FF00) <<  8) |
+                  ((crc_exp & 0x00FF0000) >>  8) |
+                  ((crc_exp & 0xFF000000) >> 24);
 
         /* calculated actual CRC */
         crc_act = crc_32(p_data, psdu_len);
