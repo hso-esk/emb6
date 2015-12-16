@@ -90,7 +90,7 @@ static uint16_t pkt_end;        /* SLIP_END tracker. */
 
 static     void (* input_callback)(void) = NULL;
 static     void rxbuf_init(void);
-static    void slip_callback(c_event_t ev, p_data_t data);
+static     void slip_callback(c_event_t ev, p_data_t data);
 
 void slip_init(void)
 {

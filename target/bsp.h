@@ -247,7 +247,7 @@ uint16_t bsp_led(en_bspLedColor_t ui_led, en_bspLedAction_t en_ledAction);
  *
  */
 /*============================================================================*/
-#define        bsp_extIntInit(e_intSource, fn_p) hal_extIntInit(e_intSource,fn_p)
+#define     bsp_extIntInit(e_intSource, fn_p) hal_extIntInit(e_intSource,fn_p)
 
 
 /*============================================================================*/

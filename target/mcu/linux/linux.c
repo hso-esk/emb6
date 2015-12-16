@@ -71,7 +71,6 @@
 ==============================================================================*/
 #define _XOPEN_SOURCE
 #include <stdio.h>
-
 #include "target.h"
 #include "hwinit.h"
 #include <unistd.h>
@@ -94,15 +93,19 @@
 /*==============================================================================
                            LOCAL FUNCTION PROTOTYPES
 ==============================================================================*/
-
+#if DEMO_USE_EXTIF
 static void _printAndExit( const char* rpc_reason );
 static void signal_handler_IO (int status);
+#endif /* #if DEMO_USE_EXTIF */
 
 /*==============================================================================
                           VARIABLE DECLARATIONS
 ==============================================================================*/
 static    struct timespec             tim = {0,0};
-static int fdm;
+#if DEMO_USE_EXTIF
+static int fdm = -1;
+pfn_intCallb_t isr_rxCallb = NULL;
+#endif /* #if DEMO_USE_EXTIF */
 /*==============================================================================
                                 LOCAL CONSTANTS
 ==============================================================================*/
@@ -112,26 +115,36 @@ static int fdm;
                                 LOCAL FUNCTIONS
 ==============================================================================*/
 
+#if DEMO_USE_EXTIF
+int putchar (int __c)
+{
+    int ret = 0;
+    char c = (char)__c;
+    if( fdm != -1 )
+        write( fdm, &c, 1 );
+    return ret;
+}
+
+static void signal_handler_IO (int status)
+{
+    char bufin;
+    int ret;
+
+    do
+    {
+        ret=read(fdm, &bufin, 1);
+        if((isr_rxCallb != NULL) && (ret > 0))
+            isr_rxCallb(&bufin);
+    } while( ret > 0 );
+}
+
 static void _printAndExit( const char* rpc_reason )
 {
     perror(rpc_reason);
     perror("\n");
     exit( 1 );
 }
-
-static void signal_handler_IO (int status)
-{
-    char bufout = 'D';
-    char bufin;
-    int ret;
-    ret=read(fdm, &bufin, 1);
-    printf("read %i bytes: %c\n", ret, bufin);
-
-    bufout = bufin;
-    printf("writing %c\n", bufout);
-    ret = write(fdm, &bufout, 1);
-    printf("wrote %i bytes\n", ret);
-}
+#endif /* #if DEMO_USE_EXTIF */
 
 /*==============================================================================
                                  API FUNCTIONS
@@ -144,8 +157,28 @@ uint8_t hal_extIntInit( en_targetExtInt_t e_intSource,
         pfn_intCallb_t pfn_intCallback )
 {
     int8_t c_ret = 0;
-    return c_ret;
+    hal_enterCritical();
 
+    if( pfn_intCallback == NULL )
+    {
+        return 0;
+    }
+
+    switch( e_intSource )
+    {
+        case E_TARGET_RADIO_INT:
+            break;
+#if DEMO_USE_EXTIF
+        case E_TARGET_USART_INT:
+            isr_rxCallb = pfn_intCallback;
+            break;
+#endif /* DEMO_USE_EXTIF */
+        default:
+            c_ret = 0;
+            break;
+    }
+    hal_exitCritical();
+    return c_ret;
 } /* hal_extIntInit() */
 
 /*==============================================================================
@@ -164,6 +197,7 @@ void hal_ledOff(uint16_t ui_led){}
 void hal_ledOn(uint16_t ui_led){}
 int8_t hal_init (void){
 
+#if DEMO_USE_EXTIF
     struct sigaction saio;
     fdm = open("/dev/ptmx", O_RDWR);  /* open master */
     if( fdm < 0 )
@@ -184,11 +218,9 @@ int8_t hal_init (void){
     saio.sa_restorer = NULL;
     sigaction(SIGIO,&saio,NULL);
 
-    fcntl(fdm, F_SETFL, O_NDELAY);
-    fcntl(fdm, F_SETFL, O_ASYNC );
-
-    system("ls  /dev/pts");
+    fcntl(fdm, F_SETFL, O_NDELAY | O_NONBLOCK | O_ASYNC);
     printf("The slave side is named : %s\n", ptsname(fdm));
+#endif /* DEMO_USE_EXTIF */
 
     return 1;
 }
