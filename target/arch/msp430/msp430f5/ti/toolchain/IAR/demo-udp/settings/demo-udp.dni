@@ -20,7 +20,7 @@ NextState1=0
 Break=0
 State Storage=0
 [DebugChecksum]
-Checksum=-1305426795
+Checksum=-1878660960
 [CallStack]
 ShowArgs=0
 [Disassembly]
@@ -60,7 +60,7 @@ Category=_ 0
 LoggingEnabled=_ 0
 LogFile=_ ""
 [Breakpoints]
-Bp0=_ "STD_CODE" "{$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\phy\phy_802154.c}.228.5" 1 0 0 0 "" 0 ""
+Bp0=_ "STD_CODE" "{$PROJ_DIR$\..\..\..\..\..\..\..\..\demo\demo_main.c}.271.5" 1 0 0 0 "" 0 ""
 Count=1
 [FET]
 Clock mode=14

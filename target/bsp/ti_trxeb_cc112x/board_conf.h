@@ -14,14 +14,6 @@
 *                           MAC PHY CONFIGURATIONS
 ********************************************************************************
 */
-#ifndef	MAC_ADDR_WORD
-#ifdef  SMARTMAC_TX
-#define MAC_ADDR_WORD	            (uint16_t)( 0x1234u )
-#else
-#define MAC_ADDR_WORD               (uint16_t)( 0xabcdu )
-#endif
-#endif
-
 #ifndef TX_POWER
 #define TX_POWER                    (int8_t  )( 14 )
 #endif
