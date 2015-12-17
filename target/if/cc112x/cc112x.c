@@ -903,6 +903,9 @@ static void cc112x_isrTxCcaDone(void *p_arg)
 
     /* clear ISR flag */
     bsp_extIntClear(RF_INT_CFG_TX_CCA_DONE);
+
+    /* disable external CCA interrupts */
+    bsp_extIntDisable(RF_INT_CFG_TX_CCA_DONE);
 }
 
 

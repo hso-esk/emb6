@@ -905,6 +905,9 @@ static void cc120x_isrTxCcaDone(void *p_arg)
         err = NETSTK_ERR_FATAL;
         emb6_errorHandler(&err);
     }
+
+    /* disable external CCA interrupts */
+    bsp_extIntDisable(RF_INT_CFG_TX_CCA_DONE);
 }
 
 
