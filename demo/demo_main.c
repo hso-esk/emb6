@@ -264,6 +264,10 @@ static uint8_t loc_demoAppsInit(void)
 ==============================================================================*/
 void emb6_errorHandler(e_nsErr_t *p_err)
 {
+    /* turns LEDs on to indicate error */
+    bsp_led(E_BSP_LED_RED, E_BSP_LED_ON);
+
+    /* TODO misisng error handling */
     while (1) {
     }
 }
