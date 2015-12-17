@@ -50,12 +50,6 @@
 #include "lib_crc.h"
 
 
-#define CRC16_POLY      (uint16_t)( 0x1021u )
-#define CRC16_INIT      (uint16_t)( 0x0000u )
-
-#define CRC32_POLY      (uint32_t)( 0x04c11db7u )
-#define CRC32_INIT      (uint32_t)( 0xffffffffu )
-
 static uint32_t crc32_table[256] = {
     0x00000000u, 0x04c11db7u, 0x09823b6eu, 0x0d4326d9u,
     0x130476dcu, 0x17c56b6bu, 0x1a864db2u, 0x1e475005u,
@@ -123,19 +117,18 @@ static uint32_t crc32_table[256] = {
     0xbcb4666du, 0xb8757bdau, 0xb5365d03u, 0xb1f740b4u,
 };
 
-
 /**
- * @brief   Update 16-bit CRC when a byte is added
- * @param   curr_crc    Current CRC value
- * @param   byte        Value of byte to add
- * @return  Updated CRC value
+ * @brief   Calculate 16-bit ITU-T CRC over an array
+ * @param   p_data  pointer to array over which CRC is calculated
+ * @param   len     length of the array
+ * @return  calculated CRC
  */
-static uint16_t crc16_update(uint16_t curr_crc, uint8_t byte)
+uint16_t crc_16_update(uint16_t curr_crc, uint8_t byte)
 {
-    uint8_t i;
+    uint8_t ix;
 
+    ix = 8;
     curr_crc = curr_crc ^ byte << 8;
-    i = 8;
     do {
         if (curr_crc & 0x8000) {
             curr_crc = curr_crc << 1 ^ CRC16_POLY;
@@ -143,47 +136,22 @@ static uint16_t crc16_update(uint16_t curr_crc, uint8_t byte)
         else {
             curr_crc = curr_crc << 1;
         }
-    } while (--i);
+    } while (--ix);
 
     return curr_crc;
 }
 
-/**
- * @brief   Calculate 16-bit ITU-T CRC over an array
- * @param   p_data  pointer to array over which CRC is calculated
- * @param   len     length of the array
- * @return  calculated CRC
- */
-uint16_t crc_16(uint8_t *p_data, uint16_t len)
-{
-    uint16_t ix;
-    uint16_t crc_res;
-
-    crc_res = 0;
-    for (ix = 0; ix < len; ix++) {
-        crc_res = crc16_update(crc_res, p_data[ix]);
-    }
-
-    return crc_res;
-}
-
 
 /**
- * @brief   Calculate 16-bit ITU-T CRC over an array
- * @param   p_data  pointer to array over which CRC is calculated
- * @param   len     length of the array
- * @return  calculated CRC
+ * @brief   Update 32-bit ITU-T CRC
+ *
+ * @param   crc_value   current CRC value
+ * @param   byte        byte to add
+ *
+ * @return  Updated CRC
  */
-uint32_t crc_32(uint8_t *p_data, uint16_t len)
+uint32_t crc_32_update(uint32_t curr_crc, uint8_t byte)
 {
-    uint16_t ix;
-    uint32_t crc_res;
-
-    crc_res = CRC32_INIT;
-    for (ix = 0; ix < len; ix++) {
-        crc_res = crc32_table[p_data[ix] ^ ((crc_res >> 24) & 0xff)] ^ (crc_res << 8);
-    }
-    crc_res ^= CRC32_INIT;
-
-    return crc_res;
+    curr_crc = crc32_table[byte ^ ((curr_crc >> 24) & 0xff)] ^ (curr_crc << 8);
+    return curr_crc;
 }
