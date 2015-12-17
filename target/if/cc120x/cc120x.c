@@ -81,8 +81,8 @@ typedef enum rf_state
     RF_STATE_ERR,
     RF_STATE_IDLE,
 
-    /* WOR Submachine states */
-    RF_STATE_SNIFF,
+    /* RX Submachine states */
+    RF_STATE_RX_LISTENING,
     RF_STATE_RX_SYNC,
     RF_STATE_RX_PORTION_MIDDLE,
     RF_STATE_RX_PORTION_LAST,
@@ -260,7 +260,7 @@ static void cc120x_reset(void);
 static void cc120x_chkPartnumber(e_nsErr_t *p_err);
 static void cc120x_waitRdy(void);
 static void cc120x_gotoSleep(void);
-static void cc120x_gotoSniff(void);
+static void cc120x_gotoRx(void);
 static void cc120x_gotoIdle(void);
 
 static void cc120x_txPowerSet(uint8_t power, e_nsErr_t *p_err);
@@ -341,7 +341,7 @@ static void cc120x_On (e_nsErr_t *p_err)
     }
 
     /* go to state sniff */
-    cc120x_gotoSniff();
+    cc120x_gotoRx();
 
     /* indicate successful operation */
     *p_err = NETSTK_ERR_NONE;
@@ -385,7 +385,8 @@ static void cc120x_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     }
 #endif
 
-    if (rf_state != RF_STATE_SNIFF) {
+    if ((rf_state != RF_STATE_RX_LISTENING) &&
+        (rf_state != RF_STATE_IDLE)) {
         *p_err = NETSTK_ERR_BUSY;
     } else {
 #if LOGGER_ENABLE
@@ -401,10 +402,6 @@ static void cc120x_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
         LOG_RAW("\n\r\n\r");
 #endif
 
-        /*
-         * entry actions
-         */
-        LED_TX_ON();
         if (len > RF_CFG_MAX_PACKET_LENGTH) {
             /* packet length is out of range, and therefore transmission is
              * refused */
@@ -412,9 +409,13 @@ static void cc120x_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
             return;
         }
 
+        /*
+         * entry actions
+         */
         uint8_t reg_len, write_byte;
 
         /* go to state IDLE and flush TX FIFO */
+        LED_TX_ON();
         cc120x_spiCmdStrobe(CC120X_SIDLE);
         cc120x_spiCmdStrobe(CC120X_SFTX);
 
@@ -492,7 +493,7 @@ static void cc120x_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
          */
         LED_TX_OFF();
         *p_err = NETSTK_ERR_NONE;
-        cc120x_gotoSniff();
+        cc120x_gotoRx();
     }
 }
 
@@ -579,7 +580,7 @@ static void cc120x_gotoSleep(void)
 }
 
 
-static void cc120x_gotoSniff(void)
+static void cc120x_gotoRx(void)
 {
     uint8_t reg_len;
     uint8_t write_byte;
@@ -626,7 +627,7 @@ static void cc120x_gotoSniff(void)
             chip_status = cc120x_spiCmdStrobe(CC120X_SRX);
         } while (RF_GET_CHIP_STATE(chip_status) != RF_CHIP_STATE_RX);
     }
-    rf_state = RF_STATE_SNIFF;
+    rf_state = RF_STATE_RX_LISTENING;
 }
 
 
@@ -714,7 +715,7 @@ static void cc120x_isrRxSyncReceived(void *p_arg)
     uint8_t marc_status;
     cc120x_spiRegRead(CC120X_MARC_STATUS1, &marc_status, 1);
 
-    if (rf_state == RF_STATE_SNIFF) {
+    if (rf_state == RF_STATE_RX_LISTENING) {
         uint8_t num_rx_bytes;
         uint16_t pkt_len;
 
@@ -754,7 +755,7 @@ static void cc120x_isrRxSyncReceived(void *p_arg)
             bsp_extIntEnable(RF_INT_CFG_RX_FINI);
         } else {
             /* goto sniff state */
-            cc120x_gotoSniff();
+            cc120x_gotoRx();
         }
     }
 
@@ -909,6 +910,7 @@ static void cc120x_isrTxCcaDone(void *p_arg)
 
     /* clear ISR flag */
     bsp_extIntClear(RF_INT_CFG_TX_CCA_DONE);
+
     /* disable external CCA interrupts */
     bsp_extIntDisable(RF_INT_CFG_TX_CCA_DONE);
 }
@@ -928,18 +930,9 @@ static void cc120x_eventHandler(c_event_t c_event, p_data_t p_data)
 
         /*
          * do actions:
-         * (1)  Retrieve the received frame whose length and CRC fields should
-         *      be trimmed.
-         * (2)  Signal the next higher layer of the received frame
+         * (1)  Signal the next higher layer of the received frame
          */
 
-        /* The transceiver shall be ready for TX request before
-         * signaling upper layer of the received frame */
-        cc120x_gotoSniff();
-
-        /*
-         * exit actions
-         */
 #if LOGGER_ENABLE
         /*
          * Logging
@@ -954,10 +947,17 @@ static void cc120x_eventHandler(c_event_t c_event, p_data_t p_data)
 #endif
 
         rf_netstk->phy->recv(rf_rxBuf, rf_rxBufLen, &err);
-        if (err != NETSTK_ERR_NONE) {
-            rf_rxBufLen = 0;
-            rf_bufIx = rf_rxBuf;
-            memset(rf_rxBuf, 0, sizeof(rf_rxBuf));
+
+        /*
+         * exit actions
+         * (1)  Clear RX buffer
+         * (2)  Enter idle listening state if the RF is not there yet
+         */
+        rf_rxBufLen = 0;
+        rf_bufIx = rf_rxBuf;
+        memset(rf_rxBuf, 0, sizeof(rf_rxBuf));
+        if (rf_state != RF_STATE_RX_LISTENING) {
+            cc120x_gotoRx();
         }
     }
 }
@@ -1046,7 +1046,7 @@ static void cc120x_cca(e_nsErr_t *p_err)
      * CCA/LBT.
      */
 
-    if (rf_state != RF_STATE_SNIFF) {
+    if (rf_state != RF_STATE_RX_LISTENING) {
         *p_err = NETSTK_ERR_BUSY;
     } else {
         /*
@@ -1118,7 +1118,7 @@ static void cc120x_cca(e_nsErr_t *p_err)
         cc120x_spiRegWrite(CC120X_PKT_CFG2, &cca_mode, 1);
 
         /* put transceiver to state WOR */
-        cc120x_gotoSniff();
+        cc120x_gotoRx();
     }
 }
 
