@@ -80,6 +80,8 @@ static void PHY_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
 static void PHY_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
 static void PHY_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
 
+static uint16_t PHY_crc16(uint8_t *p_data, uint16_t len);
+static uint32_t PHY_crc32(uint8_t *p_data, uint16_t len);
 
 /*
 ********************************************************************************
@@ -229,13 +231,13 @@ static void PHY_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     }
 
     if (PHY_FcsLen == 4) {
-        fcs = crc_32(p_data, len);
+        fcs = PHY_crc32(p_data, len);
         fcs = ((fcs & 0x000000FF) << 24) |
               ((fcs & 0x0000FF00) <<  8) |
               ((fcs & 0x00FF0000) >>  8) |
               ((fcs & 0xFF000000) >> 24);
     } else {
-        fcs = crc_16(p_data, len);
+        fcs = PHY_crc16(p_data, len);
         fcs = ((fcs & 0x00FF) << 8) |
               ((fcs & 0xFF00) >> 8);
     }
@@ -342,7 +344,7 @@ static void PHY_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
                   ((crc_exp & 0xFF00) >> 8);
 
         /* calculated actual CRC */
-        crc_act = crc_16(p_data, psdu_len);
+        crc_act = PHY_crc16(p_data, psdu_len);
     } else {
         /* 32-bit CRC was used in the received frame */
         crc_size = 4;
@@ -356,7 +358,7 @@ static void PHY_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
                   ((crc_exp & 0xFF000000) >> 24);
 
         /* calculated actual CRC */
-        crc_act = crc_32(p_data, psdu_len);
+        crc_act = PHY_crc32(p_data, psdu_len);
     }
 
     if (crc_act != crc_exp) {
@@ -430,6 +432,40 @@ static void PHY_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
     }
 }
 
+static uint16_t PHY_crc16(uint8_t *p_data, uint16_t len)
+{
+    uint16_t ix;
+    uint32_t crc_res;
+
+    /* calculate CRC */
+    crc_res = CRC16_INIT;
+    for (ix = 0; ix < len; ix++) {
+        crc_res = crc_16_update(crc_res, p_data[ix]);
+    }
+
+    return crc_res;
+}
+
+static uint32_t PHY_crc32(uint8_t *p_data, uint16_t len)
+{
+    uint16_t ix;
+    uint32_t crc_res;
+
+    /* calculate CRC */
+    crc_res = CRC32_INIT;
+    for (ix = 0; ix < len; ix++) {
+        crc_res = crc_32_update(crc_res, p_data[ix]);
+    }
+
+    /* add padding when length is less than 4 octets.
+     * See IEEE-802.15.4g-2012, 5.2.1.9 */
+    if (len < 4) {
+        crc_res = crc_32_update(crc_res, 0x00);
+    }
+    crc_res ^= CRC32_INIT;
+
+    return crc_res;
+}
 
 /*
 ********************************************************************************
