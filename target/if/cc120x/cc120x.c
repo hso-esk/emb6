@@ -756,10 +756,10 @@ static void cc120x_isrRxSyncReceived(void *p_arg)
             /* goto sniff state */
             cc120x_gotoSniff();
         }
-
-        /* clear ISR flag */
-        bsp_extIntClear(RF_INT_CFG_RX_SYNC);
     }
+
+    /* clear ISR flag */
+    bsp_extIntClear(RF_INT_CFG_RX_SYNC);
 }
 
 
@@ -782,10 +782,10 @@ static void cc120x_isrRxFifoAboveThreshold(void *p_arg)
 
         /* check number of remaining bytes */
         cc120x_rxByteLeftChk();
-
-        /* clear ISR flag */
-        bsp_extIntClear(RF_INT_CFG_RX_FIFO_THR);
     }
+
+    /* clear ISR flag */
+    bsp_extIntClear(RF_INT_CFG_RX_FIFO_THR);
 }
 
 
@@ -814,11 +814,11 @@ static void cc120x_isrRxPacketReceived(void *p_arg)
 
         /* signal complete reception interrupt */
         RF_SEM_POST(NETSTK_RF_EVENT);
-
-        /* clear ISR flag */
-        bsp_extIntClear(RF_INT_CFG_RX_FINI);
         LED_RX_OFF();
     }
+
+    /* clear ISR flag */
+    bsp_extIntClear(RF_INT_CFG_RX_FINI);
 }
 
 
@@ -879,11 +879,13 @@ static void cc120x_isrTxPacketSent(void *p_arg)
     if (is_tx_ok) {
         /* TX process has successfully finished */
         rf_state = RF_STATE_TX_FINI;
-        bsp_extIntClear(RF_INT_CFG_TX_FINI);
     } else {
         /* flush TX FIFO */
         cc120x_spiCmdStrobe(CC120X_SFTX);
     }
+
+    /* clear ISR flag */
+    bsp_extIntClear(RF_INT_CFG_TX_FINI);
 }
 
 static void cc120x_isrTxCcaDone(void *p_arg)
@@ -900,12 +902,13 @@ static void cc120x_isrTxCcaDone(void *p_arg)
     is_cca_ok = (rf_state == RF_STATE_CCA_BUSY);
     if (is_cca_ok) {
         rf_state = RF_STATE_CCA_FINI;
-        bsp_extIntClear(RF_INT_CFG_TX_CCA_DONE);
     } else {
         err = NETSTK_ERR_FATAL;
         emb6_errorHandler(&err);
     }
 
+    /* clear ISR flag */
+    bsp_extIntClear(RF_INT_CFG_TX_CCA_DONE);
     /* disable external CCA interrupts */
     bsp_extIntDisable(RF_INT_CFG_TX_CCA_DONE);
 }
