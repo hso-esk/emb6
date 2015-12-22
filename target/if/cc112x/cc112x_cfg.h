@@ -126,11 +126,10 @@ static const s_regSettings_t cc112x_cfg_rx_wor[] = {
  *          Symbol rate:        50kbps
  *          Bit rate:           50kbps
  *          RX filter BW:       100kHz
- *          Modulation format:  2-FGSK
+ *          Modulation format:  2-FSK
  *          Deviation:          25kHz
  *          TX power:           15dBm - maximum
- *          RX Sniff mode:      enabled - eWOR
- *          Preamble length:    24bytes
+ *          Preamble length:    4bytes with WOR-disabled OR 24 byte with WOR-enabled
  *          RX termination:     Carrier Sense with threshold of -90dBm
  */
 static const s_regSettings_t cc112x_cfg_ieee802154g_chan0[] =
@@ -140,12 +139,12 @@ static const s_regSettings_t cc112x_cfg_ieee802154g_chan0[] =
     {CC112X_IOCFG3,             0xB0},  /* Impedance */
     {CC112X_IOCFG1,             0xB0},  /* Impedance */
 
-    {CC112X_SYNC3,              0x93},
-    {CC112X_SYNC2,              0x0B},
-    {CC112X_SYNC1,              0x51},
-    {CC112X_SYNC0,              0xDE},
+    {CC112X_SYNC3,              0x72},  /* SFD[15-8] FEC not supported and phyMRFSKSFD = 0 -> SFD = 0x7209 */
+    {CC112X_SYNC2,              0x09},  /* SFD[ 7-0] ... */
+    {CC112X_SYNC1,              0x51},  /* don't care */
+    {CC112X_SYNC0,              0xDE},  /* don't care */
     {CC112X_SYNC_CFG1,          0x08},  /* AUTO_CLEAR = 1, enabled; RX_CONFIG_LIMITATION = 0 */
-    {CC112X_SYNC_CFG0,          0x1B},  /* 16H bits */
+    {CC112X_SYNC_CFG0,          0x1B},  /* 16H bits SYCN3-SYNC2 */
 
     {CC112X_DEVIATION_M,        0x99},  /* Deviation 25kHz */
     {CC112X_MODCFG_DEV_E,       0x05},  /* MOD_FORMAT = 2-FSK */

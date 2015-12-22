@@ -127,11 +127,10 @@ static const s_regSettings_t cc120x_cfg_rx_wor[] = {
  *          Symbol rate:        50kbps
  *          Bit rate:           50kbps
  *          RX filter BW:       100kHz
- *          Modulation format:  2-FGSK
+ *          Modulation format:  2-FSK
  *          Deviation:          25kHz
  *          TX power:           15dBm - maximum
- *          RX Sniff mode:      enabled - eWOR
- *          Preamble length:    24bytes
+ *          Preamble length:    4bytes with WOR-disabled OR 24 byte with WOR-enabled
  *          RX termination:     Carrier Sense with threshold of -90dBm
  */
 static const s_regSettings_t cc120x_cfg_ieee802154g_chan0[] =
@@ -141,11 +140,11 @@ static const s_regSettings_t cc120x_cfg_ieee802154g_chan0[] =
     {CC120X_IOCFG1,             0xB0},
     {CC120X_IOCFG0,             0x06},  /* PKT_SYNC_RXTX    TX_FINISH   */
 
-    {CC120X_SYNC3,              0x93},
-    {CC120X_SYNC2,              0x0B},
-    {CC120X_SYNC1,              0x51},
-    {CC120X_SYNC0,              0xDE},
-    {CC120X_SYNC_CFG1,          0xC8},  /* 16H bits */
+    {CC120X_SYNC3,              0x72},  /* SFD[15-8] FEC not supported and phyMRFSKSFD = 0 -> SFD = 0x7209 */
+    {CC120X_SYNC2,              0x09},  /* SFD[ 7-0] ... */
+    {CC120X_SYNC1,              0x51},  /* don't care */
+    {CC120X_SYNC0,              0xDE},  /* don't care */
+    {CC120X_SYNC_CFG1,          0xC8},  /* 16H bits SYCN3-SYNC2 */
     {CC120X_SYNC_CFG0,          0x23},  /* AUTO_CLEAR = 1, enabled; RX_CONFIG_LIMITATION = 0 */
 
     {CC120X_DEVIATION_M,        0x48},  /* Deviation 25kHz */
