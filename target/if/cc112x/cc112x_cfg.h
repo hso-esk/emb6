@@ -148,7 +148,7 @@ static const s_regSettings_t cc112x_cfg_ieee802154g_chan0[] =
     {CC112X_SYNC_CFG0,          0x1B},  /* 16H bits */
 
     {CC112X_DEVIATION_M,        0x99},  /* Deviation 25kHz */
-    {CC112X_MODCFG_DEV_E,       0x0D},  /* MOD_FORMAT = 001, 2-GFSK; DEV_E = 011, Frequency deviation */
+    {CC112X_MODCFG_DEV_E,       0x05},  /* MOD_FORMAT = 2-FSK */
     {CC112X_DCFILT_CFG,         0x15},
 
     {CC112X_PREAMBLE_CFG1,      0x19},  /* NUM_PREAMBLE = 4 bytes; PREAMBLE_WORD = 0x55 */

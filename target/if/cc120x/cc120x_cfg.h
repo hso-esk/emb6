@@ -149,7 +149,7 @@ static const s_regSettings_t cc120x_cfg_ieee802154g_chan0[] =
     {CC120X_SYNC_CFG0,          0x23},  /* AUTO_CLEAR = 1, enabled; RX_CONFIG_LIMITATION = 0 */
 
     {CC120X_DEVIATION_M,        0x48},  /* Deviation 25kHz */
-    {CC120X_MODCFG_DEV_E,       0x0B},  /* MOD_FORMAT = 001, 2-GFSK; DEV_E = 011, Frequency deviation */
+    {CC120X_MODCFG_DEV_E,       0x05},  /* MOD_FORMAT = 2-FSK; */
     {CC120X_DCFILT_CFG,         0x4B},
 
     {CC120X_PREAMBLE_CFG1,      0x19},  /* NUM_PREAMBLE = 4 bytes; PREAMBLE_WORD = 0x55 */
