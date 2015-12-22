@@ -151,7 +151,7 @@ static const s_regSettings_t cc112x_cfg_ieee802154g_chan0[] =
     {CC112X_MODCFG_DEV_E,       0x0D},  /* MOD_FORMAT = 001, 2-GFSK; DEV_E = 011, Frequency deviation */
     {CC112X_DCFILT_CFG,         0x15},
 
-    {CC112X_PREAMBLE_CFG1,      0x30},  /* NUM_PREAMBLE = 1100, 24 bytes; PREAMBLE_WORD = 00, 0xAA */
+    {CC112X_PREAMBLE_CFG1,      0x19},  /* NUM_PREAMBLE = 4 bytes; PREAMBLE_WORD = 0x55 */
     {CC112X_PREAMBLE_CFG0,      0x8A},  /* PQT_EN = 1, Preamble detection disabled; PQT = 1010, Soft Decision PQT*/
 
     {CC112X_FREQ_IF_CFG,        0x3A},

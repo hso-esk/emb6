@@ -611,12 +611,20 @@ static void cc112x_gotoRx(void)
         write_byte = 0x09;
         cc112x_spiRegWrite(CC112X_RFEND_CFG0, &write_byte, 1);
 
+        /* set preamble length to 24 bytes */
+        write_byte = 0x31;
+        cc112x_spiRegWrite(CC112X_PREAMBLE_CFG1, &write_byte, 1);
+
         /* enter state Sniff */
         cc112x_spiCmdStrobe(CC112X_SWOR);
     } else {
         /* disable RX termination on bad packets regardless of the RXOFF_MODE */
         write_byte = 0;
         cc112x_spiRegWrite(CC112X_RFEND_CFG0, &write_byte, 1);
+
+        /* set preamble length to 4 bytes */
+        write_byte = 0x19;
+        cc112x_spiRegWrite(CC112X_PREAMBLE_CFG1, &write_byte, 1);
 
         /* Strobe RX */
         uint8_t chip_status;
