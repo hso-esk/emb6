@@ -24,6 +24,8 @@ GRTAGS
 GSYMS
 GTAGS
 
+tags
+
 *~
 
 .sconsign.dblite
