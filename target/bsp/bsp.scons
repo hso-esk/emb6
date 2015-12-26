@@ -1,0 +1,41 @@
+qpsk100  = 'MODULATION_QPSK100'
+bpsk20   = 'MODULATION_BPSK20'
+
+bsp      = []
+
+bsp += [{
+    'id'        : 'atany900',             'mac_addr' : '0x11A0',
+    'txrx'      : ['4','-100'],           'mode'     : qpsk100 
+}]
+
+bsp += [{
+    'id'        : 'atany900_pro5',        'mac_addr' : '0x16A6',
+    'txrx'      : ['-11','-60'],          'mode'     : qpsk100
+}]
+
+bsp += [{
+    'id'        : 'atany900_basic',       'mac_addr' : '0xaaaa',
+    'txrx'      : ['-11','-90'],          'mode'     : qpsk100
+}]
+
+bsp += [{
+    'id'        : 'samd20xpro_rf212',     'mac_addr' : '0x20B0',
+    'txrx'      : ['11','-100'],          'mode'     : qpsk100
+}]
+
+bsp += [{
+    'id'        : 'samd20xpro_rf212b',    'mac_addr' : '0x20B0',
+    'txrx'      : ['11','-100'],          'mode'     : qpsk100
+}]
+
+bsp += [{
+    'id'        : 'efm32stk3600',         'mac_addr' : '0x20C0',
+    'txrx'      : ['',''],                'mode'     : 'none'
+}]
+
+bsp += [{
+    'id'        : 'native',               'mac_addr' : '0x2121',
+    'txrx'      : ['0','0'],              'mode'     : qpsk100
+}]
+
+Return('bsp')
