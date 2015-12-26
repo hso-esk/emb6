@@ -4,182 +4,160 @@ import string
 import re
 import os
 import atexit
+from collections import defaultdict
+
+def color_out(__env):
+    # Enable color building message output
+    colors = {}
+    colors['purple'] = '\033[95m'
+    colors['blue']   = '\033[94m'
+    colors['yellow'] = '\033[93m'
+    colors['red']    = '\033[91m'
+    colors['end']    = '\033[0m'
+
+    compile = '%sCompiling %s==> %s$SOURCE%s' % \
+    (colors['blue'], colors['purple'], colors['yellow'], colors['end'])
+    
+    link    = '%sLinking Program %s==> %s$TARGET%s' % \
+    (colors['red'], colors['purple'], colors['yellow'], colors['end'])
+
+    link_lib= '%sLinking Static Library %s==> %s$TARGET%s' % \
+    (colors['red'], colors['purple'], colors['yellow'], colors['end'])
+
+    # Set default values	
+    __env['CXXCOMSTR']  = compile
+    __env['CCCOMSTR']   = compile
+    __env['ARCOMSTR']   = link_lib
+    __env['LINKCOMSTR'] = link    
+
+# Print a logo and a project name
+def print_bann():
+    bnr =  []
+    bnr += []
+    bnr += [".########.##.....##.########...##...##...#######. "]
+    bnr += [".##.......###...###.##.....##.####.####.##.....## "]
+    bnr += [".##.......####.####.##.....##..##...##..##....... "]
+    bnr += [".######...##.###.##.########............########. "]
+    bnr += [".##.......##.....##.##.....##..##...##..##.....## "]
+    bnr += [".##.......##.....##.##.....##.####.####.##.....## "]
+    bnr += [".########.##.....##.########...##...##...#######. "]
+    bnr += []
+    bnr = '\n'.join(bnr)
+    print bnr
+
+def assign_opt():
+    AddOption('--target',
+              dest='target', type='string',
+              nargs=1, action='store', 
+              metavar='TARGET_NAME',
+              help='Target name')
+
+    AddOption('--mac',
+              dest='bsp_mac', type='string',
+              nargs=1, action='store',
+              metavar='MAC_ADDR',
+              help='Two bytes of target mac address e.g. mac=0xffff')
+
+    AddOption('--rx_sens','--rxs',
+              dest='bsp_rxs', type='string',
+              nargs=1, action='store', 
+              metavar='RX_SENS',
+              help='Specify receiver sensitivity. Target specific.')
+
+    AddOption('--tx_pwr', '--txp',
+              dest='bsp_txp', type='string',
+              nargs=1, action='store', metavar='TX_POWER',
+              help='Specify transmitter output power')
+
+    AddOption('--logger', '--lo',
+              dest='log_lvl', type='string',
+              nargs=1, action='store', metavar='LOGGER_LEVEL',
+              help='Specify level of logger [from 0 to 3]')
+
+    AddOption('--verb',
+              dest='verbose', type='int',
+              nargs=1, action='store', metavar='VERBOSE',
+              help='Show link commands [0 or 1]')
+
+# Process users options and generate target description
+def proc_opt_get_trg(__genv,__trgs):
+    __trg_id = __genv.GetOption('target')
+    __trg_desc = get_descr(__trgs,__trg_id)
+    if __trg_desc == 'null':
+        print "Error: Specify target board. Use --target option"
+        exit(1)
+    
+    # Get Receiver sensitivity and overwrite default if required
+    __bsp_rxs = __genv.GetOption('bsp_rxs')
+    if __bsp_rxs:
+        __trg_desc['bsp']['txrx'][1] = __bsp_rxs
+
+    # Get transmitter output power and overwrite default if required
+    __bsp_txp = __genv.GetOption('bsp_txp')
+    if __bsp_txp:
+        __trg_desc['bsp']['txrx'][0] = __bsp_txp
+
+    # Get mac address and overwrite default if required
+    __bsp_mac = __genv.GetOption('bsp_mac')
+    if __bsp_mac:
+        if len(__bsp_mac) != 6:
+            print "Error: Specified last two bytes of MAC address are't OK. Should be --mac=0xFFFF"
+            exit(1)
+        else:
+            __trg_desc['bsp']['mac_addr'] = __bsp_mac
+
+    # Make output colorfull
+    if not genv.GetOption('verbose'):
+        color_out(genv)
+
+    return __trg_desc
+
+def get_descr(__db, __name):
+    for __db_entry in __db:
+        if __db_entry['id'] == __name:
+            return __db_entry
+    return 'null'
+
+######################## MAIN ###################################
+# Get global environment
+genv = Environment(ENV = os.environ, tools=['gcc', 'gnulink'])
 
 # Set number of jobs
 num_cpu = int(os.environ.get('NUM_CPU', 4))
 SetOption('num_jobs', num_cpu)
 CacheDir('./build/cache')
 
-#Parse targets file
-TARGETS_FILE = ARGUMENTS.get('targetfile', 'SConsTargets');
-if not os.path.isfile(TARGETS_FILE):
-    print "Error: Please provide correct target file (SConsTarget)"
-    exit(1)
-TARGETS = SConscript(TARGETS_FILE)
+print_bann()
 
-#Read all supported targets
-target_list = []
-for TARGET in TARGETS:
-	target_list.append(TARGET[0])
+# Install and assign available options
+assign_opt()
 
-#TARGET_NAME = NAME
-AddOption('--target',
-			dest='target',
-			type='string',
-			nargs=1,
-			action='store',
-			metavar='TARGET',
-			help='Specify target name. Supported targets are target=${target_list}')
-TARGET_NAME = GetOption('target')
-			
-AddOption('--mac',
-			dest='mac',
-			type='string',
-			nargs=1,
-			action='store',
-			metavar='MAC_ADDR',
-			help='Specify last two bytes of target mac address e.g. mac=0xffff')
-MAC_ADDR = GetOption('mac')
+# Get target description
+target = proc_opt_get_trg(genv, SConscript('targets.scons'))
 
-AddOption('--rx_sens',
-			dest='rx_sens',
-			type='string',
-			nargs=1,
-			action='store',
-			metavar='RX_SENS',
-			help='Specify receiver sensitivity. Target specific.')
-RX_SENS = GetOption('rx_sens')
+trg   = target['id']
+apps  = target['apps_conf']
+bsp   = target['bsp']
+args =  'genv trg apps bsp'
 
-AddOption('--tx_pwr',
-			dest='tx_pwr',
-			type='string',
-			nargs=1,
-			action='store',
-			metavar='TX_POWER',
-			help='Specify transmitter output power')
-TX_POWER = GetOption('tx_pwr')
+if genv.GetOption('log_lvl'):
+    args += ' log_lvl'
 
-AddOption('--logger',
-			dest='logger',
-			type='string',
-			nargs=1,
-			action='store',
-			metavar='LOGGER_LEVEL',
-			help='Specify level of logger [from 0 to 3]')
-LOGGER_LEVEL = GetOption('logger')
+build_dir = './build/'+ trg + '/'
 
-#Place Guards
-if not TARGET_NAME:
-	print "Error: Specify target board. Use --target option"
-	exit(1)
+file = genv.SConscript('SConscript', variant_dir=build_dir, duplicate=0, exports=args)
 
-if not TARGET_NAME or TARGET_NAME not in target_list:
-	print "Error: target board {0} not in SconsTargets file. Use --help option".format(TARGET_NAME)
-	exit(1)
-
-if MAC_ADDR and len(MAC_ADDR) != 6:
-	print "Error: Specified last two bytes of MAC address are't OK. Should be --mac=0xFFFF"
-	exit(1)
-
-# Get global environment
-genv = Environment(ENV = os.environ, tools=['gcc', 'gnulink'])
-
-if genv['PLATFORM'] == 'win32':
-    print "Environment: win32"
-elif genv['PLATFORM'] == 'linux':
-    print "Environment: linux"
-
-
-# Enable color building message output
-colors = {}
-colors['cyan']   = '\033[96m'
-colors['purple'] = '\033[95m'
-colors['blue']   = '\033[94m'
-colors['green']  = '\033[92m'
-colors['yellow'] = '\033[93m'
-colors['red']    = '\033[91m'
-colors['end']    = '\033[0m'
-
-#If the output is not a terminal, remove the colors
-if not sys.stdout.isatty():
-	print "Output is not terminal, coloring will be disabled"
-	for key, value in colors.iteritems():
-		colors[key] = ''
-
-compile_source_message = '%sCompiling %s==> %s$SOURCE%s' % \
-   (colors['blue'], colors['purple'], colors['yellow'], colors['end'])
-
-link_program_message = '%sLinking Program %s==> %s$TARGET%s' % \
-   (colors['red'], colors['purple'], colors['yellow'], colors['end'])
-
-link_library_message = '%sLinking Static Library %s==> %s$TARGET%s' % \
-   (colors['red'], colors['purple'], colors['yellow'], colors['end'])
-
-# Set default values	
-genv['PROGSUFFIX'] = '.elf'
-genv['OBJSUFFIX'] = '.o'
-genv['LIBPREFIX'] = 'lib'
-genv['LIBSUFFIX'] = '.a'
-genv['CXXCOMSTR'] = compile_source_message
-genv['CCCOMSTR'] = compile_source_message
-genv['ARCOMSTR'] = link_library_message
-genv['LINKCOMSTR'] = link_program_message
-
-Export('genv')
-
-
-#Parse targets
-for TARGET in TARGETS:
-	env = genv.Clone()
-
-	__TARGET_NAME  = TARGET[0]                      #Specify build name
-
-	if TARGET_NAME != __TARGET_NAME:                #If we dont have given name in target array continue
-		continue
-	args = 'env '
-	args = args + 'TARGET_NAME '
-
-	APPS_NAME   = TARGET[1]                         #Specify application and configuration name
-	args = args + 'APPS_NAME '
-
-	BOARD_NAME  = TARGET[2]         	        #Specify board name
-	args = args + 'BOARD_NAME '
-
-	if MAC_ADDR is None:
-		MAC_ADDR    = TARGET[3]			#Specify MAC address of the device
-	args = args + 'MAC_ADDR '
-
-	if TX_POWER is None:
-		TX_POWER    = TARGET[4]			#Specify transmit power in dBm
-	args = args + 'TX_POWER '
-
-	if RX_SENS is None:
-		RX_SENS     = TARGET[5]			#Specify receive sensitivity in dBm
-	args = args + 'RX_SENS '
-
-	RXTX_MODE   = TARGET[6]
-	args = args + 'RXTX_MODE '
-
-	if LOGGER_LEVEL:
-	   args = args + 'LOGGER_LEVEL'
-
-	BUILD_DIR = './build/'+ TARGET_NAME + '/'
-
-	TARGET_NAME = TARGET_NAME + '_' + MAC_ADDR
-
-	file = env.SConscript('SConscript', variant_dir=BUILD_DIR, duplicate=0, exports=args)
-
-	# copy bin file to ./bin directory 
-	file = env.Install('./bin/', [file])
-	env.Clean(file, '*')
+# copy bin file to ./bin directory 
+file = genv.Install('./bin/', [file])
+genv.Clean(file, '*')
 
 print '====================================================================' 
 print '> Select configuration parameters...'
-print '> Target name =                  ' + TARGET_NAME
-print '> Application and Config =       ' + str(APPS_NAME)
-print '> Board name =                   ' + BOARD_NAME
-print '> MAC address =                  ' + MAC_ADDR
-print '> Output power (dBm) =           ' + TX_POWER
-print '> Receiver\'s sensitivity (dBm) =' + RX_SENS
-print '> Transmitter\'s modulation =    ' + RXTX_MODE
+print '> Target name =                  ' + trg
+print '> Application and Config =       ' + str(apps)
+print '> Board name =                   ' + bsp['id']
+print '> MAC address =                  ' + bsp['mac_addr']
+print '> Output power (dBm) =           ' + bsp['txrx'][0]
+print '> Receiver\'s sensitivity (dBm) =' + bsp['txrx'][1]
+print '> Transmitter\'s modulation =    ' + bsp['mode']
 print '====================================================================' 
