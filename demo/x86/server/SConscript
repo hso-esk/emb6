@@ -1,6 +1,6 @@
 x86 = {
 # C global defines
-	'defines' : [
+	'CPPDEFINES' : [
 		('EMB6_INIT_ROOT',1),
 	],
 }
