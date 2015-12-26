@@ -231,8 +231,6 @@ except:
 # Compile program
 genv.MergeFlags({'CPPPATH' : includes})
 
-print genv['CPPPATH']
-
 Delete(trg+'.elf')
 retf = genv.Program(target = trg  + '.elf', source = sources)
 genv.Clean(retf, '*')
