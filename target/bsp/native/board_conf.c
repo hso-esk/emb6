@@ -60,7 +60,7 @@
 /** Enable or disable logging */
 #define        LOGGER_ENABLE          LOGGER_BSP
 
-#include "board_conf.h"
+#include "../native/board_conf.h"
 #include "hwinit.h"
 #include "emb6.h"
 #include "emb6_conf.h"
