@@ -197,22 +197,22 @@ uint8_t loc_emb6NetstackInit(s_ns_t * ps_ns)
          */
         ps_ns->rf->init(ps_ns, &err);
         if (err != NETSTK_ERR_NONE) {
-            return 0;
+            emb6_errorHandler(&err);
         }
 
         ps_ns->phy->init(ps_ns, &err);
         if (err != NETSTK_ERR_NONE) {
-            return 0;
+            emb6_errorHandler(&err);
         }
 
         ps_ns->mac->init(ps_ns, &err);
         if (err != NETSTK_ERR_NONE) {
-            return 0;
+            emb6_errorHandler(&err);
         }
 
         ps_ns->dllc->init(ps_ns, &err);
         if (err != NETSTK_ERR_NONE) {
-            return 0;
+            emb6_errorHandler(&err);
         }
 
         ps_ns->dllsec->init(ps_ns);      /* logical link security    */
