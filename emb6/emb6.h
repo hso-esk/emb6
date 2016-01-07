@@ -349,9 +349,49 @@ typedef enum netstk_ioc_cmd
     NETSTK_CMD_RF_PROMISC_SET,      /*!< Set promisc mode                */
 
     NETSTK_CMD_RF_802154G_EU_CHAN,  /*!< Channel center for IEEE802.15.4 in Europe  */
+    NETSTK_CMD_RF_CHAN_NUM_SET,     /*!< Set operation channel number */
+    NETSTK_CMD_RF_OP_MODE_SET,      /*!< Set operation mode */
+
     NETSTK_CMD_RF_WOR_EN,           /*!< Enable/Disable WOR mode */
 
 }e_nsIocCmd_t;
+
+
+/**
+ * @brief   IEEE-802.15.4g operating mode supports
+ */
+typedef enum netstk_rf_operating_mode
+{
+    /*!< Common Signaling Mode (CSM) */
+    NETSTK_RF_OP_MODE_CSM,
+
+#if (NETSTK_CFG_PHY_OP_MODE_1_EN == TRUE)
+    /*!< MR-FSK operating mode #1 */
+    NETSTK_RF_OP_MODE_1,
+#endif
+
+#if (NETSTK_CFG_PHY_OP_MODE_2_EN == TRUE)
+    /*!< MR-FSK operating mode #2 */
+    NETSTK_RF_OP_MODE_2,
+#endif
+
+#if (NETSTK_CFG_PHY_OP_MODE_3_EN == TRUE)
+    /*!< MR-FSK operating mode #3 */
+    NETSTK_RF_OP_MODE_3,
+#endif
+
+    /*!< Invalid mode */
+    NETSTK_RF_OP_MODE_MAX,
+
+} e_nsRfOpMode;
+
+
+#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
+#define NETSTK_RF_IEEE802154G_CHAN_QTY_CSM                  34u
+#define NETSTK_RF_IEEE802154G_CHAN_QTY_OPMODE1              34u
+#define NETSTK_RF_IEEE802154G_CHAN_QTY_OPMODE2              17u
+#define NETSTK_RF_IEEE802154G_CHAN_QTY_OPMODE3              17u
+#endif
 
 
 /*

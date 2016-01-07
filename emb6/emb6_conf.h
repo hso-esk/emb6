@@ -904,6 +904,12 @@ void uip_log(char *msg);
 *                          NETSTACK CONFIGURATIONS
 ********************************************************************************
 */
+#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
+#define NETSTK_CFG_PHY_OP_MODE_1_EN                         TRUE
+#define NETSTK_CFG_PHY_OP_MODE_2_EN                         FALSE
+#define NETSTK_CFG_PHY_OP_MODE_3_EN                         FALSE
+#endif
+
 
 /*
 ********************************************************************************
