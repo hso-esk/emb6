@@ -443,6 +443,13 @@ static void PHY_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
     }
 }
 
+
+/**
+ * @brief   Compute CRC-16 over a byte stream
+ * @param   p_data  Point to first byte of the stream
+ * @param   len     Length of the stream
+ * @return  CRC-16 value of the stream
+ */
 static uint16_t PHY_crc16(uint8_t *p_data, uint16_t len)
 {
     uint16_t ix;
@@ -457,6 +464,12 @@ static uint16_t PHY_crc16(uint8_t *p_data, uint16_t len)
     return crc_res;
 }
 
+/**
+ * @brief   Compute CRC-32 over a byte stream
+ * @param   p_data  Point to first byte of the stream
+ * @param   len     Length of the stream
+ * @return  CRC-32 value of the stream
+ */
 static uint32_t PHY_crc32(uint8_t *p_data, uint16_t len)
 {
     uint16_t ix;
