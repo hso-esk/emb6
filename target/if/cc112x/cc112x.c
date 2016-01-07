@@ -228,6 +228,9 @@ static uint8_t     *rf_bufIx;
 static uint8_t      rf_txLastPortion;
 static uint8_t      rf_worEn;
 
+static uint8_t      rf_chanNum;
+static e_nsRfOpMode rf_opMode;
+
 /*
 ********************************************************************************
 *                           LOCAL FUNCTIONS DECLARATION
@@ -263,7 +266,8 @@ static void cc112x_gotoIdle(void);
 
 static void cc112x_txPowerSet(uint8_t power, e_nsErr_t *p_err);
 static void cc112x_txPowerGet(uint8_t *p_power, e_nsErr_t *p_err);
-static void cc112x_chanlSet(uint8_t chan, e_nsErr_t *p_err);
+static void cc112x_chanNumSet(uint8_t chan_num, e_nsErr_t *p_err);
+static void cc112x_opModeSet(e_nsRfOpMode mode, e_nsErr_t *p_err);
 
 /*
 ********************************************************************************
@@ -303,9 +307,9 @@ static void cc112x_Init (void *p_netstk, e_nsErr_t *p_err)
         return;
     }
 
-    /* configure RF register in eWOR mode by default */
-    len = sizeof(cc112x_cfg_ieee802154g_chan0) / sizeof(s_regSettings_t);
-    cc112x_configureRegs(cc112x_cfg_ieee802154g_chan0, len);
+    /* set RF registers to default values */
+    len = sizeof(cc112x_cfg_ieee802154g_default) / sizeof(s_regSettings_t);
+    cc112x_configureRegs(cc112x_cfg_ieee802154g_default, len);
 
     /* calibrate radio */
     cc112x_calibrateRF();
@@ -319,6 +323,9 @@ static void cc112x_Init (void *p_netstk, e_nsErr_t *p_err)
     rf_rxBufLen = 0;
     rf_worEn = FALSE;   /* disable WOR mode by default */
 
+    /* configure operating mode and channel number */
+    rf_chanNum = 0;
+    rf_opMode = NETSTK_RF_OP_MODE_CSM;
     /* goto state sleep */
     cc112x_gotoSleep();
 }
@@ -535,8 +542,12 @@ static void cc112x_Ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
             }
             break;
 
-        case NETSTK_CMD_RF_802154G_EU_CHAN:
-            cc112x_chanlSet(*((uint8_t *) p_val), p_err);
+        case NETSTK_CMD_RF_CHAN_NUM_SET:
+            cc112x_chanNumSet(*((uint8_t *) p_val), p_err);
+            break;
+
+        case NETSTK_CMD_RF_OP_MODE_SET:
+            cc112x_opModeSet(*((e_nsRfOpMode *) p_val), p_err);
             break;
 
         case NETSTK_CMD_RF_WOR_EN:
@@ -1168,7 +1179,13 @@ static void cc112x_txPowerGet(uint8_t *p_power, e_nsErr_t *p_err)
     *p_err = NETSTK_ERR_NONE;
 }
 
-static void cc112x_chanlSet(uint8_t chan, e_nsErr_t *p_err)
+
+/**
+ * @brief   Select operating channel number
+ * @param   chan_num    Channel number to select
+ * @param   p_err       Pointer to variable holding returned error code
+ */
+static void cc112x_chanNumSet(uint8_t chan_num, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
     if (p_err == NULL) {
@@ -1176,22 +1193,96 @@ static void cc112x_chanlSet(uint8_t chan, e_nsErr_t *p_err)
     }
 #endif
 
-    uint8_t len;
+    uint32_t freq_reg = 0;
+    uint32_t freq_center = 0;
+    uint32_t freq_delta = 0;
+    uint8_t write_byte = 0;
 
-    if (chan == 0) {
-        /* reset the transceiver */
-        cc112x_reset();
 
-        /* configure RF register in eWOR mode by default */
-        len = sizeof(cc112x_cfg_ieee802154g_chan0) / sizeof(s_regSettings_t);
-        cc112x_configureRegs(cc112x_cfg_ieee802154g_chan0, len);
+    /* set returned error value to default */
+    *p_err = NETSTK_ERR_NONE;
 
-        /* calibrate radio */
-        cc112x_calibrateRF();
+    /* configure operating channel frequency based on operation mode i.e. CSM,
+     * mode #1, mode #2, or mode #3 */
+    switch (rf_opMode) {
+        case NETSTK_RF_OP_MODE_CSM:
+            if (chan_num < NETSTK_RF_IEEE802154G_CHAN_QTY_CSM) {
+                freq_center = CC112X_CSM_CHAN_CENTER_FREQ;
+                freq_delta = CC112X_CSM_DELTA_FREQ;
+                rf_chanNum = chan_num;
+            } else {
+                *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+            }
+            break;
 
-        /* calibrate RC oscillator */
-        cc112x_calibrateRCOsc();
+#if (NETSTK_CFG_PHY_OP_MODE_1_EN == TRUE)
+        case NETSTK_RF_OP_MODE_1:
+            if (chan_num < NETSTK_RF_IEEE802154G_CHAN_QTY_OPMODE1) {
+                freq_center = CC112X_OPMODE1_CHAN_CENTER_FREQ;
+                freq_delta = CC112X_OPMODE1_DELTA_FREQ;
+                rf_chanNum = chan_num;
+            } else {
+                *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+            }
+            break;
+#endif
 
+#if (NETSTK_CFG_PHY_OP_MODE_2_EN == TRUE)
+        case NETSTK_RF_OP_MODE_2:
+            if (chan_num < NETSTK_RF_IEEE802154G_CHAN_QTY_OPMODE2) {
+                freq_center = CC112X_OPMODE2_CHAN_CENTER_FREQ;
+                freq_delta = CC112X_OPMODE2_DELTA_FREQ;
+                rf_chanNum = chan_num;
+            } else {
+                *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+            }
+            break;
+#endif
+
+#if (NETSTK_CFG_PHY_OP_MODE_3_EN == TRUE)
+        case NETSTK_RF_OP_MODE_3:
+            if (chan_num < NETSTK_RF_IEEE802154G_CHAN_QTY_OPMODE3) {
+                freq_center = CC112X_OPMODE3_CHAN_CENTER_FREQ;
+                freq_delta = CC112X_OPMODE3_DELTA_FREQ;
+                rf_chanNum = chan_num;
+            } else {
+                *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+            }
+            break;
+#endif
+
+        default:
+            *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+            break;
+    }
+
+
+    /*
+     * configure frequency registers only when arguments are valid
+     */
+    if (*p_err == NETSTK_ERR_NONE) {
+        freq_reg = freq_center + rf_chanNum * freq_delta;
+
+        write_byte = (freq_reg & 0x00FF0000) >> 16;
+        cc112x_spiRegWrite(CC112X_FREQ2, &write_byte, 1);
+
+        write_byte = (freq_reg & 0x0000FF00) >> 8;
+        cc112x_spiRegWrite(CC112X_FREQ1, &write_byte, 1);
+
+        write_byte = (freq_reg & 0x000000FF);
+        cc112x_spiRegWrite(CC112X_FREQ0, &write_byte, 1);
+    }
+}
+
+/**
+ * @brief   Select operating mode
+ * @param   mode        Operating mode to select
+ * @param   p_err       Pointer to variable holding returned error code
+ */
+static void cc112x_opModeSet(e_nsRfOpMode mode, e_nsErr_t *p_err)
+{
+    if (rf_opMode < NETSTK_RF_OP_MODE_MAX) {
+        rf_opMode = mode;
         *p_err = NETSTK_ERR_NONE;
     } else {
         *p_err = NETSTK_ERR_INVALID_ARGUMENT;

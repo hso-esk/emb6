@@ -49,6 +49,22 @@
 #define CC112X_CFG_PRESENT
 
 
+/*
+ * Value of channel frequency register is calculated using following equation:
+ *      ChannelNumberFrequency = ChannelCenterFreq + ChannelIndex * DeltaFreq
+ */
+#define CC112X_CSM_DELTA_FREQ               0x000666u   /*!<   0.200 MHz */
+#define CC112X_CSM_CHAN_CENTER_FREQ         0x6BE000u   /*!< 863.000 MHz */
+
+#define CC112X_OPMODE1_DELTA_FREQ           0x000666u   /*!<   0.200 MHz */
+#define CC112X_OPMODE1_CHAN_CENTER_FREQ     0x6BE400u   /*!< 863.100 MHz */
+
+#define CC112X_OPMODE2_DELTA_FREQ           0x000CCCu   /*!<   0.400 MHz */
+#define CC112X_OPMODE2_CHAN_CENTER_FREQ     0x6BE733u   /*!< 863.100 MHz */
+
+#define CC112X_OPMODE3_DELTA_FREQ           0x000CCCu   /*!<   0.400 MHz */
+#define CC112X_OPMODE3_CHAN_CENTER_FREQ     0x6BE733u   /*!< 863.100 MHz */
+
 /**
  * @brief   GPIOs configuration for CCA operation
  */
@@ -116,23 +132,20 @@ static const s_regSettings_t cc112x_cfg_rx_wor[] = {
 
 
 /**
- * @brief   IEEE802.15.4g first channel center (channel 0)
- *          See also IEEE802.15.4g-2012, table 68d
- *
+ * @brief   Default register settings for IEEE-802.15.4g
  *          Carrier Frequency:  863.125MHz
  *          Modulation format:  MR-FSK
  *          Channel spacing:    200kHz
- *
  *          Symbol rate:        50kbps
  *          Bit rate:           50kbps
  *          RX filter BW:       100kHz
  *          Modulation format:  2-FSK
  *          Deviation:          25kHz
  *          TX power:           15dBm - maximum
- *          Preamble length:    4bytes with WOR-disabled OR 24 byte with WOR-enabled
+ *          Preamble length:    4bytes with WOR-disabled
  *          RX termination:     Carrier Sense with threshold of -90dBm
  */
-static const s_regSettings_t cc112x_cfg_ieee802154g_chan0[] =
+static const s_regSettings_t cc112x_cfg_ieee802154g_default[] =
 {
     {CC112X_IOCFG0,             0xB0},  /* Impedance */
     {CC112X_IOCFG2,             0xB0},  /* Impedance */
@@ -207,6 +220,7 @@ static const s_regSettings_t cc112x_cfg_ieee802154g_chan0[] =
     {CC112X_XOSC2,              0x00},
     {CC112X_XOSC1,              0x03},
 };
+
 
 /**
  * @brief   RF registers with following configurations
