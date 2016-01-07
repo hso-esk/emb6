@@ -326,8 +326,9 @@ static void cc112x_Init (void *p_netstk, e_nsErr_t *p_err)
     /* configure operating mode and channel number */
     rf_chanNum = 0;
     rf_opMode = NETSTK_RF_OP_MODE_CSM;
-    /* goto state sleep */
-    cc112x_gotoSleep();
+
+    /* goto state idle */
+    cc112x_gotoIdle();
 }
 
 
@@ -339,10 +340,8 @@ static void cc112x_On (e_nsErr_t *p_err)
     }
 #endif
 
-    /* if currently in state sleep, then must move on state idle first */
-    if (rf_state == RF_STATE_SLEEP) {
-        cc112x_gotoIdle();
-    }
+    /* first set RF to state idle */
+    cc112x_gotoIdle();
 
     /* go to state sniff */
     cc112x_gotoRx();
@@ -362,10 +361,6 @@ static void cc112x_Off (e_nsErr_t *p_err)
 
     /* put transceiver to state idle */
     cc112x_gotoIdle();
-
-    /* flush TXFIFO, RXFIFO */
-    cc112x_spiCmdStrobe(CC112X_SFRX);
-    cc112x_spiCmdStrobe(CC112X_SFTX);
 
     /* go to state sleep */
     cc112x_gotoSleep();
@@ -651,9 +646,20 @@ static void cc112x_gotoIdle(void)
 {
     uint8_t chip_status;
 
+    /* disable RF external interrupts */
+    RF_EXTI_DISABLED();
+
+    /* issue strobe IDLE */
     do {
         chip_status = cc112x_spiCmdStrobe(CC112X_SIDLE);
     } while (RF_GET_CHIP_STATE(chip_status) != RF_CHIP_STATE_IDLE);
+
+    /* flush TXFIFO, RXFIFO */
+    cc112x_spiCmdStrobe(CC112X_SFRX);
+    cc112x_spiCmdStrobe(CC112X_SFTX);
+
+    /* set RF driver state to idle */
+    rf_state = RF_STATE_IDLE;
 }
 
 
