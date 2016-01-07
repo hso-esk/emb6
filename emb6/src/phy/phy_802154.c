@@ -140,6 +140,17 @@ static void PHY_Init(void *p_netstk, e_nsErr_t *p_err)
     /* set CRC size to default */
 #if NETSTK_CFG_IEEE_802154G_EN
     PHY_FcsLen = 4; /* 32-bit CRC */
+
+    /* use MR-FSK operation mode #1 by default:
+     * - channel spacing
+     * - total number of channels
+     * - channel center frequency
+     */
+    uint8_t chan_num = 0;
+    e_nsRfOpMode mode = NETSTK_RF_OP_MODE_1;
+
+    PHY_Netstk->rf->ioctrl(NETSTK_CMD_RF_OP_MODE_SET, &mode, p_err);
+    PHY_Netstk->rf->ioctrl(NETSTK_CMD_RF_CHAN_NUM_SET, &chan_num, p_err);
 #else
     PHY_FcsLen = 2; /* 16-bit CRC */
 #endif
