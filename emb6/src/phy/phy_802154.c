@@ -390,8 +390,14 @@ static void PHY_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 
     /* verify CRC */
     psdu_len -= PHY_FcsLen;
-    crc_act = crc_16(p_data, psdu_len);
+
+    /* calculated actual CRC */
+    crc_act = PHY_crc16(p_data, psdu_len);
+
+    /* obtain CRC of the received frame */
     memcpy(&crc_exp, &p_data[psdu_len], PHY_FcsLen);
+    crc_exp = ((crc_exp & 0x00FF) << 8) |
+              ((crc_exp & 0xFF00) >> 8);
     if (crc_act != crc_exp) {
         *p_err = NETSTK_ERR_CRC;
         return;
