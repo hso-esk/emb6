@@ -24,33 +24,20 @@ def color_out(__env):
     link_lib= '%sLinking Static Library %s==> %s$TARGET%s' % \
     (colors['red'], colors['purple'], colors['yellow'], colors['end'])
 
-    # Set default values	
+    # Set default values
     __env['CXXCOMSTR']  = compile
     __env['CCCOMSTR']   = compile
     __env['ARCOMSTR']   = link_lib
     __env['LINKCOMSTR'] = link    
 
 # Print a logo and a project name
-def print_bann():
-    bnr =  []
-    bnr += []
-    bnr += [".########.##.....##.########...##...##...#######. "]
-    bnr += [".##.......###...###.##.....##.####.####.##.....## "]
-    bnr += [".##.......####.####.##.....##..##...##..##....... "]
-    bnr += [".######...##.###.##.########............########. "]
-    bnr += [".##.......##.....##.##.....##..##...##..##.....## "]
-    bnr += [".##.......##.....##.##.....##.####.####.##.....## "]
-    bnr += [".########.##.....##.########...##...##...#######. "]
-    bnr += []
-    bnr = '\n'.join(bnr)
-    print bnr
 
 def assign_opt():
     AddOption('--target',
               dest='target', type='string',
               nargs=1, action='store', 
               metavar='TARGET_NAME',
-              help='Target name')
+              help='Target name lskfjlsdf')
 
     AddOption('--mac',
               dest='bsp_mac', type='string',
@@ -79,14 +66,23 @@ def assign_opt():
               nargs=1, action='store', metavar='VERBOSE',
               help='Show link commands [0 or 1]')
 
+# Print list of supported target and exit
+def print_trgs_exit(__trgs):
+    print "List of supported targets:"
+    print '%-25s%-20s%-20s' % ('Target name', 'MCU type', 'Transceiver type')
+    for __trg_id  in __trgs:
+        bsp_conf = SConscript('target/bsp/'+__trg_id['bsp']['id']+'/SConscript')
+        print '%-25s%-20s%-20s' % (__trg_id['id'], bsp_conf['brd']['mcu'], bsp_conf['brd']['if'])
+    exit(1)
+
 # Process users options and generate target description
 def proc_opt_get_trg(__genv,__trgs):
     __trg_id = __genv.GetOption('target')
     __trg_desc = get_descr(__trgs,__trg_id)
     if __trg_desc == 'null':
         print "Error: Specify target board. Use --target option"
-        exit(1)
-    
+        print_trgs_exit(__trgs)
+
     # Get Receiver sensitivity and overwrite default if required
     __bsp_rxs = __genv.GetOption('bsp_rxs')
     if __bsp_rxs:
@@ -126,8 +122,6 @@ genv = Environment(ENV = os.environ, tools=['gcc', 'gnulink'])
 num_cpu = int(os.environ.get('NUM_CPU', 4))
 SetOption('num_jobs', num_cpu)
 CacheDir('./build/cache')
-
-print_bann()
 
 # Install and assign available options
 assign_opt()
