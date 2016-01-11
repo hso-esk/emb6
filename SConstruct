@@ -135,7 +135,7 @@ assign_opt()
 # Get target description
 target = proc_opt_get_trg(genv, SConscript('targets.scons'))
 
-trg   = target['id']
+trg   = target['id'] + '_' + target['bsp']['mac_addr']
 apps  = target['apps_conf']
 bsp   = target['bsp']
 args =  'genv trg apps bsp'
