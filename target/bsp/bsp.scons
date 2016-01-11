@@ -30,7 +30,7 @@ bsp += [{
 
 bsp += [{
     'id'        : 'efm32stk3600',         'mac_addr' : '0x20C0',
-    'txrx'      : ['',''],                'mode'     : 'none'
+    'txrx'      : ['11','-100'],          'mode'     : qpsk100
 }]
 
 bsp += [{
