@@ -1204,7 +1204,7 @@ static void cc112x_chanNumSet(uint8_t chan_num, e_nsErr_t *p_err)
     uint32_t freq_delta = 0;
     uint8_t write_byte = 0;
 
-
+#if NETSTK_CFG_IEEE_802154G_EN
     /* set returned error value to default */
     *p_err = NETSTK_ERR_NONE;
 
@@ -1278,6 +1278,7 @@ static void cc112x_chanNumSet(uint8_t chan_num, e_nsErr_t *p_err)
         write_byte = (freq_reg & 0x000000FF);
         cc112x_spiRegWrite(CC112X_FREQ0, &write_byte, 1);
     }
+#endif /* #if NETSTK_CFG_IEEE_802154G_EN */
 }
 
 /**
