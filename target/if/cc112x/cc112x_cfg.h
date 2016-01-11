@@ -57,13 +57,14 @@
 #define CC112X_CSM_CHAN_CENTER_FREQ         0x6BE000u   /*!< 863.000 MHz */
 
 #define CC112X_OPMODE1_DELTA_FREQ           0x000666u   /*!<   0.200 MHz */
-#define CC112X_OPMODE1_CHAN_CENTER_FREQ     0x6BE400u   /*!< 863.100 MHz */
+#define CC112X_OPMODE1_CHAN_CENTER_FREQ     0x6BE400u   /*!< 863.125 MHz */
 
 #define CC112X_OPMODE2_DELTA_FREQ           0x000CCCu   /*!<   0.400 MHz */
-#define CC112X_OPMODE2_CHAN_CENTER_FREQ     0x6BE733u   /*!< 863.100 MHz */
+#define CC112X_OPMODE2_CHAN_CENTER_FREQ     0x6BE733u   /*!< 863.225 MHz */
 
 #define CC112X_OPMODE3_DELTA_FREQ           0x000CCCu   /*!<   0.400 MHz */
-#define CC112X_OPMODE3_CHAN_CENTER_FREQ     0x6BE733u   /*!< 863.100 MHz */
+#define CC112X_OPMODE3_CHAN_CENTER_FREQ     0x6BE733u   /*!< 863.225 MHz */
+
 
 /**
  * @brief   GPIOs configuration for CCA operation
