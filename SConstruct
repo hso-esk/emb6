@@ -141,6 +141,7 @@ bsp   = target['bsp']
 args =  'genv trg apps bsp'
 
 if genv.GetOption('log_lvl'):
+    log_lvl = genv.GetOption('log_lvl')
     args += ' log_lvl'
 
 build_dir = './build/'+ trg + '/'
