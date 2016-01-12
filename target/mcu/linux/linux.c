@@ -70,6 +70,7 @@
                                  INCLUDE FILES
 ==============================================================================*/
 #define _XOPEN_SOURCE
+#define _XOPEN_SOURCE_EXTENDED
 #include <stdio.h>
 #include "target.h"
 #include "hwinit.h"
@@ -81,6 +82,8 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/signal.h>
+#include <stdlib.h>
+
 #include "logger.h"
 /*==============================================================================
                                      ENUMS
@@ -96,6 +99,7 @@
 #if DEMO_USE_EXTIF
 static void _printAndExit( const char* rpc_reason );
 static void signal_handler_IO (int status);
+static void signal_handler_interrupt(int signum);
 #endif /* #if DEMO_USE_EXTIF */
 
 /*==============================================================================
@@ -125,6 +129,13 @@ int putchar (int __c)
     return ret;
 }
 
+static void _printAndExit( const char* rpc_reason )
+{
+    perror(rpc_reason);
+    perror("\n");
+    exit( 1 );
+}
+
 static void signal_handler_IO (int status)
 {
     char bufin;
@@ -138,12 +149,12 @@ static void signal_handler_IO (int status)
     } while( ret > 0 );
 }
 
-static void _printAndExit( const char* rpc_reason )
+static void signal_handler_interrupt(int signum)
 {
-    perror(rpc_reason);
-    perror("\n");
-    exit( 1 );
+    close(fdm);
+    exit(1);
 }
+
 #endif /* #if DEMO_USE_EXTIF */
 
 /*==============================================================================
@@ -199,6 +210,9 @@ int8_t hal_init (void){
 
 #if DEMO_USE_EXTIF
     struct sigaction saio;
+    struct sigaction saint;
+    const char *symlink_path;
+
     fdm = open("/dev/ptmx", O_RDWR);  /* open master */
     if( fdm < 0 )
     {
@@ -210,7 +224,7 @@ int8_t hal_init (void){
     }
     if( unlockpt(fdm) < 0 )          /* unlock slave */
     {
-        _printAndExit("Error on unlockpt()");
+        _printAndExit( "Error on unlockpt()" );
     }
 
     saio.sa_handler = signal_handler_IO;
@@ -218,8 +232,21 @@ int8_t hal_init (void){
     saio.sa_restorer = NULL;
     sigaction(SIGIO,&saio,NULL);
 
+    memset(&saint, 0, sizeof(struct sigaction));
+    saint.sa_handler = signal_handler_interrupt;
+    sigaction(SIGINT ,&saint,NULL);
+
     fcntl(fdm, F_SETFL, O_NDELAY | O_NONBLOCK | O_ASYNC);
     printf("The slave side is named : %s\n", ptsname(fdm));
+
+    symlink_path = "/dev/6lbr/if";
+
+    unlink(symlink_path);
+    if ( symlink(ptsname(fdm), symlink_path) < 0 )
+    {
+        _printAndExit("Error on symlink");
+    }
+
 #endif /* DEMO_USE_EXTIF */
 
     return 1;
@@ -234,7 +261,6 @@ uint8_t    hal_getrand(void)
     // We don't need special kind of seed or rand.
     srand(time(NULL));
     int r = rand();
-
     return ((uint8_t) r);
 }
 
