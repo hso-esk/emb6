@@ -57,6 +57,8 @@
 #define PHY_PSDU_MAX                    (uint16_t)(  127u )
 #endif
 
+#define PHY_PSDU_MIN                    (uint16_t)(    2u ) /* 2-byte CRC */
+
 uint16_t phy_framer802154_getPktLen(uint8_t *p_data, uint16_t len);
 
 #endif /* PHY_FRAMER154_PRESENT */

@@ -65,5 +65,10 @@ uint16_t phy_framer802154_getPktLen(uint8_t *p_data, uint16_t len)
     psdu_len = p_data[0];
 #endif
 
+    /* verify length of PSDU */
+    if (psdu_len <= PHY_PSDU_MIN) {
+        psdu_len = 0;
+    }
+
     return psdu_len;
 }
