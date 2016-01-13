@@ -1,34 +1,39 @@
-hardware_config = {
+brd_conf = {
 # Micro Controller Unit description (HEAD/arch/<arch>/<mcu_fam>/<vendor> folder)
-	'mcu_arch' 		: 	'msp430',
-	'mcu_family' 	: 	'msp430f5',
-	'mcu_vendor' 	: 	'ti',
-	'mcu_cpu' 		: 	'msp430f5xxx',
-	'mcu_toolchain' : 	'GCC',
+	'arch'          : 'msp430',
+	'family'        : 'msp430f5',
+	'vendor'        : 'ti',
+	'cpu'           : 'msp430f5xxx',
+	'toolchain'     : 'GCC',
 
 
 # Device driver description (HEAD/target/mcu folder)
-	'mcu' 			:	'msp430f5438a',
+	'mcu'           : 'msp430f5438a',
 
 # Transceiver source description (HEAD/target/if folder)
-	'if'			:	'cc112x',
-
-# C code global defined symbols
-	'defines' : [
-	],
-
-# GCC flags
-	'cflags' : [
-        '-mlarge',
-        '-mmcu=msp430f5438a',
-	],
-
-# LINKER flags
-	'ldflags' : [
-        '-mlarge',       
-	],
-
-	'scriptfile' : 'msp430f5438a.ld'
+	'if'            : 'cc112x',
+	
+	'scriptfile'    : 'msp430f5438a.ld'
 }
 
-Return('hardware_config')
+std_conf = {
+# C code global defined symbols
+    'CPPDEFINES' : [
+            'dummy',
+    ],
+
+# GCC flags
+    'CFLAGS' : [
+        '-mlarge',
+        '-mmcu=msp430f5438a',
+    ],
+
+# LINKER flags
+    'LINKFLAGS' : [
+            '-mlarge',
+    ]
+}
+
+board_conf = {'brd' : brd_conf, 'std' : std_conf}
+
+Return('board_conf')

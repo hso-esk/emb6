@@ -17,13 +17,13 @@ udp_socket = {
 		'*',
 	],
 # C global defines
-	'defines' : [
+	'CPPDEFINES' : [
 		('NET_USE_RPL',1),
 		('DEMO_USE_UDP_SOCKET',1),
 		('DEMO_UDP_SOCKET_ROLE_CLIENT', 1)
 	],
 # GCC flags
-	'cflags' : [
+	'CFLAGS' : [
 	]
 }
 

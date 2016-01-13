@@ -7,6 +7,8 @@ def get_descr(db, name):
 coap_srv    = ('coap','server')
 coap_cli    = ('coap','client')
 udp_alive   = ('udp_alive', '')
+udp_srv     = ('udp_socket','server')
+udp_cli     = ('udp_socket','client')
 mqtt        = ('mqtt','')
 extif       = ('extif','')
 aptb_srv    = ('aptb','server')
@@ -94,6 +96,20 @@ trg += [{
     'id'        : 'cs_stk3600',
     'apps_conf' : [ coap_srv, udp_alive ],
     'bsp'       : get_descr(bsp, 'efm32stk3600')
+}]
+
+#TI based ++++++++++++++++++++++++++++++++++++++++#
+
+trg += [{
+    'id'        : 'us_ti_trxeb_cc112x',
+    'apps_conf' : [ udp_srv ],
+    'bsp'       : get_descr(bsp, 'ti_trxeb_cc112x')
+}]
+
+trg += [{
+    'id'        : 'us_ti_trxeb_cc120x',
+    'apps_conf' : [ udp_srv ],
+    'bsp'       : get_descr(bsp, 'ti_trxeb_cc120x')
 }]
 
 #NATIVE based ++++++++++++++++++++++++++++++++++++++++#
