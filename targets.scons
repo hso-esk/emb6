@@ -109,5 +109,11 @@ trg += [{
     'bsp'       : get_descr(bsp, 'native')
 }]
 
+trg += [{
+    'id'        : 'if_lux',
+    'apps_conf' : [ extif ],
+    'bsp'       : get_descr(bsp, 'native')
+}]
+
 
 Return('trg')
