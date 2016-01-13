@@ -19,6 +19,15 @@ _*/
 *.swp
 *.bin
 
+GPATH
+GRTAGS
+GSYMS
+GTAGS
+
+tags
+
+*~
+
 .sconsign.dblite
 .settings/
 
