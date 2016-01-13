@@ -16,12 +16,12 @@ aptb_srv = {
 		'*',
 	],
 # C global defines
-	'defines' : [
+	'CPPDEFINES' : [
 		('DEMO_USE_APTB',1),
 		('NET_USE_RPL',1),
 	],
 # GCC flags
-	'cflags' : [
+	'CFLAGS' : [
 	]	
 }
 

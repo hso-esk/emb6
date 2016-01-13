@@ -1,0 +1,113 @@
+def get_descr(db, name):
+    for db_entry in db:
+        if db_entry['id'] == name:
+            return db_entry
+    return 'null'
+
+coap_srv    = ('coap','server')
+coap_cli    = ('coap','client')
+udp_alive   = ('udp_alive', '')
+mqtt        = ('mqtt','')
+extif       = ('extif','')
+aptb_srv    = ('aptb','server')
+aptb_cli    = ('aptb','client')
+x86_srv     = ('x86','server')
+x86_cli     = ('x86','client')
+
+trg         = []
+
+# Read Board Support Package Scons file
+bsp = SConscript('target/bsp/bsp.scons')
+
+#ATANY900 based +++++++++++++++++++++++++++++++++++++++++#
+trg += [{
+    'id'        : 'cs_atany900',
+    'apps_conf' : [ coap_srv, udp_alive],
+    'bsp'       : get_descr(bsp,'atany900')
+}]
+
+trg += [{
+    'id'        : 'cc_atany900',
+    'apps_conf' : [ coap_cli, udp_alive ],
+    'bsp'       : get_descr(bsp, 'atany900')
+}]
+
+trg += [{
+    'id'        : 'mq_atany900',
+    'apps_conf' : [ mqtt ],
+    'bsp'       : get_descr(bsp, 'atany900')
+}]
+
+trg += [{
+    'id'        : 'if_atany900',
+    'apps_conf' : [ extif ],
+    'bsp'       : get_descr(bsp, 'atany900')
+}]
+
+#ATANY900_PRO based ++++++++++++++++++++++++++++++++++++++#
+trg += [{
+    'id'        : 'cs_atany900pro5',
+    'apps_conf' : [ coap_srv, udp_alive ],
+    'bsp'       : get_descr(bsp, 'atany900_pro5')
+}]
+
+#ATANY900_BASIC based ++++++++++++++++++++++++++++++++++++#
+trg += [{
+    'id'        : 'cs_atany900basic',
+    'apps_conf' : [ coap_srv, udp_alive ],
+    'bsp'       : get_descr(bsp, 'atany900_basic')
+}]
+
+trg += [{
+    'id'        : 'as_atany900basic',
+    'apps_conf' : [ aptb_srv, udp_alive ],
+    'bsp'       : get_descr(bsp, 'atany900_basic')
+}]
+
+trg += [{
+    'id'        : 'ac_atany900basic',
+    'apps_conf' : [ aptb_cli, udp_alive ],
+    'bsp'       : get_descr(bsp, 'atany900_basic')
+}]
+
+#SAND20XPRO based ++++++++++++++++++++++++++++++++++++++++#
+trg += [{
+    'id'        : 'as_samd20xpro_rf212',
+    'apps_conf' : [ aptb_srv, udp_alive ],
+    'bsp'       : get_descr(bsp, 'samd20xpro_rf212')
+}]
+
+trg += [{
+    'id'        : 'cs_xpro_212b',
+    'apps_conf' : [ aptb_srv, udp_alive ],
+    'bsp'       : get_descr(bsp, 'samd20xpro_rf212b')
+}]
+
+trg += [{
+    'id'        : 'mq_xpro_212b',
+    'apps_conf' : [ mqtt ],
+    'bsp'       : get_descr(bsp, 'samd20xpro_rf212b')
+}]
+
+#GECKOO based ++++++++++++++++++++++++++++++++++++++++#
+trg += [{
+    'id'        : 'cs_stk3600',
+    'apps_conf' : [ coap_srv, udp_alive ],
+    'bsp'       : get_descr(bsp, 'efm32stk3600')
+}]
+
+#NATIVE based ++++++++++++++++++++++++++++++++++++++++#
+trg += [{
+    'id'        : 'cs_luxsrv',
+    'apps_conf' : [ x86_srv, coap_srv, udp_alive ],
+    'bsp'       : get_descr(bsp, 'native')
+}]
+
+trg += [{
+    'id'        : 'cs_luxcli',
+    'apps_conf' : [ x86_cli, coap_srv, udp_alive ],
+    'bsp'       : get_descr(bsp, 'native')
+}]
+
+
+Return('trg')

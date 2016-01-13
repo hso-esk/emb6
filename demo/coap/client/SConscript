@@ -18,12 +18,12 @@ coap = {
 		'*',
 	],
 # C global defines
-	'defines' : [
+	'CPPDEFINES' : [
 		('DEMO_USE_COAP',1),
 		('NET_USE_RPL',1),
 	],
 # GCC flags
-	'cflags' : [
+	'CFLAGS' : [
 	]	
 }
 

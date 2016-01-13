@@ -71,7 +71,8 @@
  ==============================================================================*/
 #define     LOGGER_ENABLE                 LOGGER_RADIO
 #include    "logger.h"
-#define     NODE_INFO_MAX                   2048
+#define     __ADDRLEN__                   2
+#define     NODE_INFO_MAX                 2048
 
 /*==============================================================================
                                      ENUMS
@@ -154,6 +155,7 @@ static void _native_init( void *p_netstk, e_nsErr_t *p_err )
     linkaddr_t un_addr;
     FILE* fp;
     char pc_node_info[NODE_INFO_MAX];
+    char* pch;
 
     uint16_t addr;    // mac address of node read from configuration file
     uint8_t  addr_6;  // high byte of two last parts of mac address
@@ -190,8 +192,7 @@ static void _native_init( void *p_netstk, e_nsErr_t *p_err )
     /* assemble the parser command */
     while( !feof(fp) )
     {
-        char* pch;
-
+        memset(pc_node_info, 0, NODE_INFO_MAX);
         fgets( pc_node_info, NODE_INFO_MAX, fp );
         if( pc_node_info[0] == '#' ) continue;
 
@@ -244,7 +245,6 @@ static void _native_init( void *p_netstk, e_nsErr_t *p_err )
 
     /* Close the file */
     fclose(fp);
-
 
     LOG_INFO( "native driver was initialized" );
 

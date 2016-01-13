@@ -63,7 +63,7 @@
 */
 #include "emb6.h"
 
-#include "board_conf.h"
+#include "../native/board_conf.h"
 #include "hwinit.h"
 #include "etimer.h"
 #include "bsp.h"
