@@ -137,6 +137,7 @@
 /*=============================================================================
                                 DLL/PHY SECTIONS
 ==============================================================================*/
+#define NETSTK_CFG_IEEE_802154_IGNACK           TRUE
 #define NETSTK_CFG_IEEE_802154G_EN              TRUE
 
 
@@ -347,7 +348,7 @@
 
 /** Default uip_aligned_buf and sicslowpan_aligned_buf sizes of 1280 overflows RAM */
 #ifndef UIP_CONF_BUFFER_SIZE
-#define UIP_CONF_BUFFER_SIZE                240
+#define UIP_CONF_BUFFER_SIZE                350
 #endif
 
 /**

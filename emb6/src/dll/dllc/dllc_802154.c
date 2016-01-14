@@ -253,6 +253,10 @@ static void DLLC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
         params.fcf.dest_addr_mode = FRAME802154_LONGADDRMODE;
     }
 
+#if NETSTK_CFG_IEEE_802154_IGNACK
+    params.fcf.ack_required = 0;
+#endif /* #if NETSTK_CFG_IEEE_802154_IGNACK */
+
     /* Set the source PAN ID to the global variable. */
     params.src_pid = mac_phy_config.pan_id;
 
@@ -318,6 +322,13 @@ static void DLLC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
         DLLC_Busy = 1;
         DLLC_DSN++;
     }
+#if NETSTK_CFG_IEEE_802154_IGNACK
+    else if(*p_err == NETSTK_ERR_MAC_ACKOFF )
+    {
+        DLLC_DSN++;
+        *p_err = NETSTK_ERR_NONE;
+    }
+#endif /* NETSTK_CFG_IEEE_802154_IGNACK */
 }
 
 

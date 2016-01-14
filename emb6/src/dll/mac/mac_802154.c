@@ -282,13 +282,21 @@ void MAC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
      * Issue next lower layer to transmit the prepared frame
      */
     MAC_CSMA(&MAC_LastErr);
-    if (*p_err != NETSTK_ERR_CHANNEL_ACESS_FAILURE) {
+
+    if (MAC_LastErr != NETSTK_ERR_CHANNEL_ACESS_FAILURE) {
         MAC_Netstk->phy->send(p_data, len, &MAC_LastErr);
     }
+
 
     if (MAC_LastErr != NETSTK_ERR_NONE) {
         MAC_EVENT_POST(NETSTK_MAC_EVENT_TX_DONE);
     } else {
+#if NETSTK_CFG_IEEE_802154_IGNACK
+        bsp_delay_us(25000);
+        /* call TX-Done immediately and set return value*/
+        MAC_EventHandler( NETSTK_MAC_EVENT_TX_DONE, NULL );
+        MAC_LastErr = NETSTK_ERR_MAC_ACKOFF;
+#else
         /* check if ACK is required */
         if (MAC_IsAckReq) {
             Tmr_Stop(&MAC_Tmr1ACK);
@@ -296,7 +304,10 @@ void MAC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
         } else {
             MAC_EVENT_POST(NETSTK_MAC_EVENT_TX_DONE);
         }
+#endif /* #if NETSTK_CFG_IEEE_802154_IGNACK */
     }
+
+    *p_err = MAC_LastErr;
 }
 
 
