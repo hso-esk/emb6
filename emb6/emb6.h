@@ -64,6 +64,7 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
+#include <strings.h>
 #include <stdbool.h>
 
 /*=============================================================================

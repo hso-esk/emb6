@@ -1,0 +1,30 @@
+mdns = {
+	'demo' : [
+		'*',
+	],
+	'emb6' : [
+		'mdns',
+		'sock',
+		'rpl',
+		'ipv6',
+		'sicslowpan',
+		'llsec',
+		'nullmac',
+		'802154framer',
+	],
+	'utils' : [
+		'*',
+	],
+# C global defines
+	'defines' : [
+		('DEMO_USE_MDNS',1),
+		('CONF_USE_SERVER',1),
+		('RESOLV_CONF_SUPPORTS_MDNS',1),
+		('NET_USE_RPL',1),
+	],
+# GCC flags
+	'cflags' : [
+	]
+}
+
+Return('mdns')

@@ -82,6 +82,14 @@
 #endif
 #endif
 
+#if DEMO_USE_MDNS
+#if CONF_USE_SERVER
+#include "demo_mdns_srv.h"
+#else
+#include "demo_mdns_cli.h"
+#endif
+#endif
+
 #if DEMO_USE_SNIFFER
 #include "demo_sniffer.h"
 #endif
@@ -161,6 +169,10 @@ static uint8_t loc_demoAppsConf(s_ns_t* pst_netStack)
     demo_coapConf(pst_netStack);
     #endif
 
+	#if DEMO_USE_MDNS
+	demo_mdnsConf(pst_netStack);
+	#endif
+
     #if DEMO_USE_SNIFFER
     demo_sniffConf(pst_netStack);
     #endif
@@ -205,6 +217,12 @@ static uint8_t loc_demoAppsInit(void)
         return 0;
     }
     #endif
+
+	#if DEMO_USE_MDNS
+	if (!demo_mdnsInit()) {
+		return 0;
+	}
+	#endif
 
     #if DEMO_USE_SNIFFER
     if (!demo_sniffInit()) {
