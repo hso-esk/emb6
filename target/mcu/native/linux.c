@@ -230,7 +230,7 @@ int8_t hal_init (void){
     saio.sa_handler = signal_handler_IO;
     saio.sa_flags = 0;
     saio.sa_restorer = NULL;
-    sigaction    (SIGIO,&saio,NULL);
+    sigaction(SIGIO,&saio,NULL);
 
     memset(&saint, 0, sizeof(struct sigaction));
     saint.sa_handler = signal_handler_interrupt;
