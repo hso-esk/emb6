@@ -3,248 +3,250 @@ import glob
 
 sources = []
 includes = []
+prj_path = './'
+
+Import('genv', 'trg', 'apps', 'bsp')
 
 # Function to find already included files in the source list
 def add_sources(src2add):
-	global sources
-	global env
+    global sources
+    global genv
 
-	for tmp_src in env.Glob(src2add):
-		try:
-			sources.remove(File(tmp_src))
-		except ValueError:
-			pass
-		sources.append(File(tmp_src))
-		
+    for tmp_src in genv.Glob(src2add):
+        try:
+            sources.remove(File(tmp_src))
+        except ValueError:
+            pass
+        sources.append(File(tmp_src))
+
 # Function to find already included files in the include list
 def add_include(incpath2add):
-	global includes
-	global env
+    global includes
+    global genv
+    incpath = os.path.dirname(incpath2add)
 
-	try:
-		includes.remove(str(incpath2add))
-	except ValueError:
-		pass
-	includes.append(str(incpath2add))
+    try:
+        includes.remove(str(incpath))
+    except ValueError:
+        pass
+    includes.append(str(incpath))
 
-Import('env', 'TARGET_NAME', 'APPS_NAME', 'BOARD_NAME', 'MAC_ADDR', 'TX_POWER', 'RX_SENS', 'RXTX_MODE')
-env.Append(CPPPATH = ['./'])
+# Add source files from HEAD/demo/<APP_NAME>/<CONF_NAME>
+def prep_demo(__dconf, __dpath):
+    global prj_path
+    # Add demo root files
+    add_include(prj_path + 'demo/*')
+    add_sources(prj_path + 'demo/*.c')
+    if 'demo' in __dconf:
+        add_include(__dpath + '/')
+        add_sources(__dpath + '/*.c')
+        for demo_file in __dconf['demo']:
+            add_include(__dpath + '/' + demo_file)
+            add_sources(__dpath + '/' + demo_file + '.c')
 
-def parse_field(scons_conf):
-	global env
-	
-	# Add defines
-	if 'defines' in scons_conf:
-		env.MergeFlags({'CPPDEFINES' : scons_conf['defines']})
-		
-	# Add gcc flags
-	if 'cflags' in scons_conf:
-		env.MergeFlags({'CFLAGS' : scons_conf['cflags']})
-		
-	# Add linker flags
-	if 'ldflags' in scons_conf:
-		env.MergeFlags({'LINKFLAGS' : scons_conf['ldflags']})
-	
-	# Check library path
-	if 'libpath' in scons_conf:
-		env.MergeFlags({'LIBPATH' : scons_conf['libpath']})
-	
-	#Check includes for this library
-	if 'libincs' in scons_conf:
-		for libinc in scons_conf['libincs']:
-			add_include(libinc)
-	
-	# Check libraries and add them
-	if 'libs' in scons_conf:
-	   	conf = Configure(env)
-		libs = scons_conf['libs']
-		for lib in libs:
-		    if not conf.CheckLib(lib):
-		       print '> Didn\'t find lib{0}.a ot {0}.lib, exiting!'.format(lib)
-		       Exit(1)
-		    else:
-			conf.env.MergeFlags({'LIBS' : lib})
-		env = conf.Finish()
+def prep_emb6(__dconf):
+    global prj_path
+    global genv
 
-################################################################################ 
-################ DEMO APPLICATION CONFIGURATION ################################
-################################################################################
-# Add demo root files
-env.MergeFlags({'CPPPATH' : [os.path.dirname('./demo/*')]})
-add_sources('./demo/*.c')
+    emb6_path = prj_path + 'emb6/'
+    emb6_modules = genv.SConscript(emb6_path + 'SConscript')
 
-for app_conf in APPS_NAME:
-	app = app_conf[0]
-	conf = app_conf[1]
-	print '> Configure project for ' + app + ' application' + ' and ' + conf + ' configuration'
-	
-	# Import configuration settings 
-	if conf != '':
-		demo_conf = env.SConscript('./demo/' + app+'/'+conf+'/SConscript')
-		# Add source files from HEAD/demo/<APP_NAME>/<CONF_NAME>
-		if 'demo' in demo_conf:
-			add_include(os.path.dirname('./demo/'+app+'/'+conf+'/'))
-			add_sources('./demo/'+app+'/'+conf+'/*.c')
-			for demo_file in demo_conf['demo']:
-				add_include(os.path.dirname('./demo/'+app+'/'+conf+'/'+demo_file))
-				add_sources('./demo/'+app+'/'+conf+'/'+demo_file+'.c')
-	else:
-		demo_conf = env.SConscript('./demo/' + app + '/SConscript')	
-		# Add source files from HEAD/demo/<APP_NAME>/<CONF_NAME>
-		if 'demo' in demo_conf:
-			env.MergeFlags({'CPPPATH' : ['./demo/'+app+'/']})
-			add_sources('./demo/'+app+'/'+'/*.c')
-			for demo_file in demo_conf['demo']:
-				add_include(os.path.dirname('./demo/'+app+'/'+demo_file))
-				add_sources('./demo/'+app+'/'+demo_file+'.c')
-			
-	emb6_modules = env.SConscript('./emb6/SConscript')
+    # Add emb6 files from HEAD/emb6/ folder
+    add_include(emb6_path)
+    add_include(emb6_path + 'inc/')
+    add_sources(emb6_path + '*.c')
+    if 'emb6' in __dconf:
+        for req_libmodule in __dconf['emb6']:
+            if req_libmodule in emb6_modules:
+                for lib_file in emb6_modules[req_libmodule]:
+                    add_include(emb6_path + 'inc/' + lib_file)
+                    add_sources(emb6_path + 'src/' + lib_file+'.c')
 
-	# Add emb6 files from HEAD/emb6/ folder
-	env.MergeFlags({'CPPPATH' : [os.path.dirname('./emb6/inc/')]})
-	if 'emb6' in demo_conf:
-		env.MergeFlags({'CPPPATH' : ['./emb6']})
-		for req_libmodule in demo_conf['emb6']:
-			if req_libmodule in emb6_modules:
-				for lib_file in emb6_modules[req_libmodule]:
-					add_include(os.path.dirname('./emb6/inc/' + lib_file))
-					add_sources('./emb6/src/'+lib_file+'.c')
+# Add utils headers from HEAD/utils/ folder
+def prep_utils(__dconf):
+    global prj_path
 
-	# Add utils headers from HEAD/utils/ folder
-	if 'utils' in demo_conf:
-		for util_file in demo_conf['utils']:
-			add_include(os.path.dirname('./utils/inc/' + util_file))
-			add_sources('./utils/src/'+util_file+'.c')
+    utils_path = prj_path + 'utils/'
+    if 'utils' in __dconf:
+        for util_file in __dconf['utils']:
+            add_include(utils_path + 'inc/' + util_file)
+            add_sources(utils_path + 'src/' + util_file+'.c')
 
-	parse_field(demo_conf)
-		
-################################################################################ 
-#################### TARGET BOARD CONFIGURATION ################################
-################################################################################
+def prep_apps(__app, __aconf):
+    global prj_path
+    global genv
 
-# Import board configuration 
-board_conf = env.SConscript('./target/bsp/'+BOARD_NAME+'/SConscript')
+    if __aconf != '':
+        demo_path = prj_path + 'demo/' + __app + '/' + __aconf
+    else:
+        demo_path = prj_path + 'demo/' + __app
 
-########################## ARCH SECTION ########################################
+    # Import configuration settings
+    demo_conf = genv.SConscript(demo_path + '/SConscript')
 
-# Form a path to mcu folder
-# Path ./target/arch/<arch>/<family>/<vendor>/
-mcu_path = './target/arch/'+board_conf['mcu_arch']+'/'+board_conf['mcu_family']+'/'+board_conf['mcu_vendor']
+    prep_demo(demo_conf, demo_path)
 
-# Import arch configuration 
-arch_conf = env.SConscript(mcu_path+'/SConscript')
+    prep_emb6(demo_conf)
 
-# Add all include folder and sources which are common for a selected arch
-if 'extra' in arch_conf:
-	for extra_dir in arch_conf['extra']:
-		add_include(os.path.dirname(mcu_path + '/' +extra_dir+'/inc/'))
-		add_sources(mcu_path +'/'+ extra_dir +'/src/*.c')
+    prep_utils(demo_conf)
 
-# Add all include folder and sources for a selected device
-add_include(os.path.dirname(mcu_path+'/device/'+board_conf['mcu_cpu']+'/inc/'))
-add_sources(mcu_path+'/device/'+board_conf['mcu_cpu']+'/src/*.c')
+    genv.MergeFlags(demo_conf)
 
-# Append toolchain configuration
-# Path ./target/arch/<arch>/<family>/<vendor>/SConscript
+# Process core source and headers
+def prep_board_core(__trg_path, __conf):
+    bsp_path = __trg_path + 'bsp/'
 
-toolchain = env.SConscript(mcu_path+'/toolchain/'+board_conf['mcu_toolchain']+'/SConscript')
+    # Add board source files and headers
+    add_include(bsp_path + bsp['id'] + '/')
+    add_sources(bsp_path + bsp['id'] + '/*.c')
+    add_include(bsp_path)
+    add_sources(bsp_path + '*.c')
 
-#conf = Configure(env)
-#if not conf.CheckCC():
-#	print '> Didn\'t find {0} toolchain, exiting!'.format(toolcahin[''])
-#	Exit(1)
-#else:
-#	env = conf.Finish()
-env['CC'] = toolchain['CC']	
-env['AS'] = toolchain['AS']
-env['LINK'] = toolchain['LINK']
-env['OBJCOPY'] = toolchain['OBJCOPY']
-env['SIZE'] = toolchain['SIZE']
-env.MergeFlags(toolchain)
-
-# Add startup file
-if 'startupfile' in board_conf:
-	add_sources(mcu_path+'/device/'+board_conf['mcu_cpu']+'/startup/'+board_conf['startupfile'])
-
-# Add linker script file
-if 'scriptfile' in board_conf:
-	env.MergeFlags({'LINKFLAGS' : '-T'+mcu_path+'/device/'+board_conf['mcu_cpu']+'/ldscript/'+board_conf['scriptfile']})
-
-########################## BOARD SECTION #######################################
-# Add board source files and headers
-add_include(os.path.dirname('./target/bsp/'+BOARD_NAME+'/'))
-add_sources('./target/bsp/'+BOARD_NAME+'/*.c')
-add_include(os.path.dirname('./target/bsp/'))
-add_sources('./target/bsp/*.c')
-
-# Add common source files and headers
-add_include(os.path.dirname('./target/'))
-add_sources('./target/*.c')
+    # Add common source files and headers
+    add_include(__trg_path)
+    add_sources(__trg_path + '*.c')
 
 # Add mcu source files and libs
-add_include(os.path.dirname('./target/mcu/'+board_conf['mcu']+'/'))
-add_sources('./target/mcu/'+board_conf['mcu']+'/*.c')
+def prep_board_mcu(__trg_path, __conf):
+    mcu_path = __trg_path + 'mcu/'
+
+    add_include(mcu_path + __conf['mcu']+'/')
+    add_sources(mcu_path + __conf['mcu']+'/*.c')
 
 # Add transceiver source files and libs
-env.MergeFlags({'CPPPATH' : [os.path.dirname('./target/if/'+board_conf['if']+'/')]})
-add_sources('./target/if/'+board_conf['if']+'/*.c')
+def prep_board_if(__trg_path,__conf) :
+    global bsp
+    global genv
+    if_path  = __trg_path + 'if/'
 
-#Define transmitter output power
-if MAC_ADDR != '':
-	mac = 'MAC_ADDR_WORD='+ MAC_ADDR
-	env.MergeFlags({'CPPDEFINES' : mac})
+    genv.MergeFlags({'CPPPATH' : [os.path.dirname(if_path + __conf['if']+'/')]})
+    add_sources(if_path + __conf['if']+'/*.c')
 
-#Define transmitter output power
-if TX_POWER != '':
-	tx_pwr = [('TX_POWER', TX_POWER)]
-	env.MergeFlags({'CPPDEFINES' : tx_pwr})
+    #Define transmitter output power macro
+    mmac = 'MAC_ADDR_WORD='+ bsp['mac_addr']
+    genv.MergeFlags({'CPPDEFINES' : mmac})
 
-#Define transmitter receive sensitivity
-if RX_SENS != '':
-	rx_sens = 'RX_SENSITIVITY='+ RX_SENS
-	env.MergeFlags({'CPPDEFINES' : rx_sens})
-	
-#Define transmitter modulation
-if RXTX_MODE != '':
-	rxtx_mode = 'MODULATION='+ RXTX_MODE
-	env.MergeFlags({'CPPDEFINES' : rxtx_mode})
+    #Define transmitter output power macro
+    mtx_pwr = [('TX_POWER', bsp['txrx'][0])]
+    genv.MergeFlags({'CPPDEFINES' : mtx_pwr})
 
-parse_field(board_conf)
+    #Define transmitter receive sensitivity macro
+    mrx_sens = 'RX_SENSITIVITY=' + bsp['txrx'][1]
+    genv.MergeFlags({'CPPDEFINES' : mrx_sens})
 
-################################################################################ 
-####################### Final Compilation ######################################
+    #Define transmitter modulation macro
+    mmode = 'MODULATION='+ bsp['mode']
+    genv.MergeFlags({'CPPDEFINES' : mmode})
+
+def prep_board_arch(__trg_path,__conf):
+    global bsp_path
+    global genv
+
+    arch_path = __trg_path + 'arch/'
+
+    # Path ./target/arch/<arch>/<family>/<vendor>/
+    mcu_path = arch_path + __conf['arch'] + '/' + \
+               __conf['family'] + '/' + __conf['vendor']
+
+    # Import arch configuration
+    arch_conf = genv.SConscript(mcu_path+'/SConscript')
+
+    # Add all include folder and sources which are common for a selected arch
+    if 'extra' in arch_conf:
+          for extra_dir in arch_conf['extra']:
+              add_include(mcu_path + '/' +extra_dir+'/inc/')
+              add_sources(mcu_path +'/'+ extra_dir +'/src/*.c')
+
+    # Add all include folder and sources for a selected device
+    add_include(mcu_path+'/device/'+__conf['cpu']+'/inc/')
+    add_sources(mcu_path+'/device/'+__conf['cpu']+'/src/*.c')
+
+    # Append toolchain configuration
+    # Path ./target/arch/<arch>/<family>/<vendor>/SConscript
+    toolchain = genv.SConscript(mcu_path+'/toolchain/'+\
+                    __conf['toolchain']+'/SConscript')
+    genv['CC']      = toolchain['CC']
+    genv['AS']      = toolchain['AS']
+    genv['LINK']    = toolchain['LINK']
+    genv['OBJCOPY'] = toolchain['OBJCOPY']
+    genv['SIZE']    = toolchain['SIZE']
+    genv.MergeFlags(toolchain)
+
+    # Add startup file
+    if 'startupfile' in __conf:
+          add_sources(mcu_path+'/device/'+__conf['cpu']+\
+              '/startup/'+__conf['startupfile'])
+
+    # Add linker script file
+    if 'scriptfile' in __conf:
+        lflags = '-T'+mcu_path+'/device/'+\
+                 __conf['cpu']+'/ldscript/'+__conf['scriptfile']
+        genv.MergeFlags({'LINKFLAGS' : lflags})
+
+def prep_board():
+    global prj_path
+    global bsp
+    global genv
+
+    trg_path = prj_path + 'target/'
+    board_conf = genv.SConscript(trg_path + 'bsp/' + bsp['id']+'/SConscript')
+
+    # Merge core flags
+    print trg_path + 'bsp/' + bsp['id']+'/SConscript'
+
+    genv.MergeFlags(board_conf['std'])
+
+    prep_board_core(trg_path, board_conf['brd'])
+
+    prep_board_mcu(trg_path, board_conf['brd'])
+
+    prep_board_if(trg_path, board_conf['brd'])
+
+    prep_board_arch(trg_path, board_conf['brd'])
+
 ################################################################################
+############################## MAIN APPLICATION ################################
+################################################################################
+add_include(prj_path)
+#genv.Append(CPPPATH = ['./'])
+
+for app_conf in apps:
+    app = app_conf[0]
+    conf = app_conf[1]
+    print '> Configure project for ' + app + ' application' + \
+          ' and ' + conf + ' configuration'
+    prep_apps(app, conf)
+
+# Import board configuration 
+prep_board()
 
 #Define logger level
 try:
-	Import('LOGGER_LEVEL')
-	logger = 'LOGGER_LEVEL='+ LOGGER_LEVEL
-	env.MergeFlags({'CPPDEFINES' : logger})
+    Import('log_lvl')
+    __log_lvl = 'LOGGER_LEVEL='+ log_lvl
+    genv.MergeFlags({'CPPDEFINES' : __log_lvl})
 except:
-	pass
-
-# Add library source files and headers
-add_include(os.path.dirname('./emb6/'))
-add_sources('./emb6/*.c')
+    pass
 
 # Compile program
-env.MergeFlags({'CPPPATH' : includes})
-Delete(TARGET_NAME+'.elf')
-retf = env.Program(target = TARGET_NAME  + '.elf', source = sources)
-env.Clean(retf, '*')
+genv.MergeFlags({'CPPPATH' : includes})
+
+Delete(trg+'.elf')
+retf = genv.Program(target = trg  + '.elf', source = sources)
+genv.Clean(retf, '*')
 
 # Show program size
-psize = env.Command(' ', TARGET_NAME + '.elf', Action('$SIZE $SOURCE'))
-env.Clean(psize, '*')
+psize = genv.Command(' ', trg + '.elf', Action('$SIZE $SOURCE'))
+genv.Clean(psize, '*')
 
 # Create hex file
-Delete(TARGET_NAME+'.hex')
-hex_file = env.Command(TARGET_NAME+'.hex', TARGET_NAME+'.elf', Action('$OBJCOPY -O ihex $SOURCE $TARGET', '$OBJCOPYCOMSTR'))
-env.Clean(hex_file, '*')
+Delete(trg+'.hex')
+hex_file = genv.Command(trg+'.hex', trg+'.elf', Action('$OBJCOPY -O ihex $SOURCE $TARGET', '$OBJCOPYCOMSTR'))
+genv.Clean(hex_file, '*')
 
 # Create binary
-#Delete(TARGET_NAME+'.bin')
-#bin_file = env.Command(TARGET_NAME+'.bin', TARGET_NAME+'.elf', Action('$OBJCOPY -O binary $SOURCE $TARGET', '$OBJCOPYCOMSTR'))
-#env.Clean(bin_file, '*')
+#Delete(trg+'.bin')
+#bin_file = genv.Command(trg+'.bin', trg+'.elf', Action('$OBJCOPY -O binary $SOURCE $TARGET', '$OBJCOPYCOMSTR'))
+#genv.Clean(bin_file, '*')
 
 Return('retf')

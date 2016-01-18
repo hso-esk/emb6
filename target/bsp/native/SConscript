@@ -1,0 +1,25 @@
+brd_conf = {
+# Micro Controller Unit description (HEAD/arch/<arch>/<mcu_fam>/<vendor> folder)
+    'arch'          : 'native',
+    'family'        : 'generic',
+    'vendor'        : 'generic',
+    'cpu'           : 'generic',
+    'toolchain'     : 'GCC',
+
+# Device driver description (HEAD/target/mcu folder)
+    'mcu'           : 'native',
+
+# Transceiver source description (HEAD/target/if folder)
+    'if'            : 'native'
+}
+
+std_conf = {
+# Required Libraries
+    'LIBS' : [
+        'lcm'
+    ]
+}
+
+board_conf = {'brd' : brd_conf, 'std' : std_conf}
+
+Return('board_conf')

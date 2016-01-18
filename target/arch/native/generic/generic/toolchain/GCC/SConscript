@@ -1,10 +1,10 @@
 toolchain = {
-	'AS' : ['as'],
-	'CC' : ['gcc'],
-	'LINK' : ['gcc'],
+	'AS' :      ['as'],
+	'CC' :      ['gcc'],
+	'LINK' :    ['gcc'],
 	'OBJCOPY' : ['objcopy'],
 	'OBJDUMP' : ['objdump'],
-	'SIZE' : ['size'],
+	'SIZE' :    ['size'],
 	'ASFLAGS' : [
 		],
 	'CPPDEFINES' : [
