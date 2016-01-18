@@ -1,0 +1,17 @@
+diff --git a/examples/6lbr/platform/native/slip-dev.c b/examples/6lbr/platform/native/slip-dev.c
+index c4741f5..ff29981 100644
+--- a/examples/6lbr/platform/native/slip-dev.c
++++ b/examples/6lbr/platform/native/slip-dev.c
+@@ -442,12 +442,6 @@ stty_telos(int fd)
+     LOG6LBR_FATAL("tcsetattr() : %s\n", strerror(errno));
+     exit(1);
+   }
+-
+-  i = TIOCM_DTR;
+-  if(ioctl(fd, TIOCMBIS, &i) == -1) {
+-    LOG6LBR_FATAL("ioctl() : %s\n", strerror(errno));
+-    exit(1);
+-  }
+ #endif
+
+   usleep(10 * 1000);            /* Wait for hardware 10ms. */
