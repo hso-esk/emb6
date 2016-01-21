@@ -90,7 +90,6 @@ static uint8_t DLLC_IsBroadcastAddr(uint8_t mode, uint8_t *p_addr);
  *   the range.
  */
 static uint8_t          DLLC_DSN;
-static uint8_t          DLLC_Busy;
 static void            *DLLC_CbTxArg;
 static nsTxCbFnct_t     DLLC_CbTxFnct;
 static nsRxCbFnct_t     DLLC_CbRxFnct;
@@ -141,7 +140,6 @@ static void DLLC_Init(void *p_netstk, e_nsErr_t *p_err)
 
 
     DLLC_Netstk = (s_ns_t *)p_netstk;
-    DLLC_Busy = 0;
     DLLC_CbRxFnct = 0;
     DLLC_CbTxFnct = 0;
     DLLC_CbTxArg = NULL;
@@ -211,11 +209,6 @@ static void DLLC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
         return;
     }
 #endif
-
-    if (DLLC_Busy == 1) {
-        *p_err = NETSTK_ERR_BUSY;
-        return;
-    }
 
     /* init to zeros */
     memset(&params, 0, sizeof(params));
@@ -319,7 +312,6 @@ static void DLLC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
                            packetbuf_totlen(),
                            p_err);
     if (*p_err == NETSTK_ERR_NONE) {
-        DLLC_Busy = 1;
         DLLC_DSN++;
     }
 #if NETSTK_CFG_IEEE_802154_IGNACK
@@ -461,7 +453,6 @@ static void DLLC_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
  */
 static void DLLC_CbTx(void *p_arg, e_nsErr_t *p_err)
 {
-    DLLC_Busy = 0;
     if (DLLC_CbTxFnct) {
         DLLC_CbTxFnct(DLLC_CbTxArg, p_err);
     }
