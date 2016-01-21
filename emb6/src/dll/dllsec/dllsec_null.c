@@ -65,7 +65,7 @@ static void DLLSec_CbTx(void *p_arg, e_nsErr_t *p_err)
     switch (*p_err) {
         case NETSTK_ERR_NONE:
             status = MAC_TX_OK;
-            retx = 0;
+            retx = 1;
             break;
 
         case NETSTK_ERR_CHANNEL_ACESS_FAILURE:
