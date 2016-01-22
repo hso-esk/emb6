@@ -539,7 +539,7 @@ static void cc112x_Ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
             break;
 
         case NETSTK_CMD_RF_IS_RX_BUSY:
-            if (RF_IS_RX_BUSY()) {
+            if (RF_IS_RX_BUSY() == TRUE) {
                 *p_err = NETSTK_ERR_BUSY;
             }
             break;
@@ -899,7 +899,8 @@ static void cc112x_isrTxFifoBelowThreshold(void *p_arg)
         rf_byteLeft -= RF_CFG_AVAI_BYTES_IN_TX_FIFO;
         rf_bufIx += RF_CFG_AVAI_BYTES_IN_TX_FIFO;
 
-        if (!(--rf_iterations)) {
+        rf_iterations--;
+        if (rf_iterations == 0) {
             rf_txLastPortion = TRUE;
         }
     }
