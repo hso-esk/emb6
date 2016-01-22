@@ -91,7 +91,7 @@
 #define DEF_UDP_REMPORT                 4211UL
 #endif
 
-#define DEF_UDP_SEND_INTERVAL           (clock_time_t)( 500u )
+#define DEF_UDP_SEND_INTERVAL           (clock_time_t)(1000u )
 
 #define UIP_IP_BUF                      ((struct uip_ip_hdr *)&uip_buf[UIP_LLH_LEN])
 

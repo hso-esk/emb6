@@ -108,7 +108,7 @@ uip_lladdr_t uip_lladdr = {{0x00,0x06,0x98,0x00,0x02,0x32}};
 
 /** RPL default Configuration */
 s_rpl_conf_t rpl_config = {
-            .DIOintmin          = 8,
+            .DIOintmin          = 10,
             .DIOintdoub         = 12,
             /* This value decides which DAG instance we should
              * participate in by default. */
