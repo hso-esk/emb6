@@ -849,11 +849,11 @@ static void cc120x_isrRxPacketReceived(void *p_arg)
 
         /* signal complete reception interrupt */
         RF_SEM_POST(NETSTK_RF_EVENT);
-        LED_RX_OFF();
     }
 
     /* clear ISR flag */
     bsp_extIntClear(RF_INT_CFG_RX_FINI);
+    LED_RX_OFF();
 }
 
 
@@ -965,6 +965,7 @@ static void cc120x_eventHandler(c_event_t c_event, p_data_t p_data)
          * entry action
          */
         rf_state = RF_STATE_IDLE;
+        LED_RX_OFF();
 
         /*
          * do actions:
