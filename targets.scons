@@ -98,6 +98,12 @@ trg += [{
     'bsp'       : get_descr(bsp, 'efm32stk3600')
 }]
 
+trg += [{
+    'id'        : 'us_stk3600_cc112x',
+    'apps_conf' : [ udp_srv ],
+    'bsp'       : get_descr(bsp, 'efm32stk3600_cc112x')
+}]
+
 #TI based ++++++++++++++++++++++++++++++++++++++++#
 
 trg += [{
