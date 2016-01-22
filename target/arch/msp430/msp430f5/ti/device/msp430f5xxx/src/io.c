@@ -603,8 +603,7 @@ int8_t io_get( s_io_pin_desc_t* ps_pin )
   int8_t i_ret = -1;
 
   /* Pin must be IO input */
-  if( (ps_pin != NULL) && ((*ps_pin->PORT->PDIR & ps_pin->MSK ) == 0)
-     && ((*ps_pin->PORT->PSEL & ps_pin->MSK) == 0) )
+  if( (ps_pin != NULL) && ((*ps_pin->PORT->PDIR & ps_pin->MSK ) == 0))
   {
     /* get the Pin */
     i_ret = (*ps_pin->PORT->PIN & ps_pin->MSK) >> ps_pin->PIN;

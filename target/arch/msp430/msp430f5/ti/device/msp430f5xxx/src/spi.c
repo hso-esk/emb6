@@ -97,6 +97,9 @@ static s_io_pin_desc_t ps_spi_RfPinCsn = {
     &gps_io_port[TARGETCONFIG_RF_SPI_CSN_PORT], TARGETCONFIG_RF_SPI_CSN_PIN, TARGETCONFIG_RF_SPI_CSN_MSK,
 };
 
+static s_io_pin_desc_t ps_spi_RfPinMiso = {
+    &gps_io_port[TARGETCONFIG_RF_SPI_MISO_PORT], TARGETCONFIG_RF_SPI_MISO_PIN, TARGETCONFIG_RF_SPI_MISO_MSK,
+};
 
 /*============================================================================*/
 /*                          LOCAL FUNCTION PROTOTYPES                         */
@@ -274,6 +277,12 @@ void spi_rfInit(uint8_t divider)
 void spi_rfSelect(void)
 {
     SPI_TRX_BEGIN();
+
+    /* wait for S0 to go low before communication starts */
+    int8_t is_on;
+    do {
+        is_on = io_get(&ps_spi_RfPinMiso);
+    } while (is_on != 0);
 }
 
 
