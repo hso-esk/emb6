@@ -264,8 +264,8 @@ static void cc112x_gotoSleep(void);
 static void cc112x_gotoRx(void);
 static void cc112x_gotoIdle(void);
 
-static void cc112x_txPowerSet(uint8_t power, e_nsErr_t *p_err);
-static void cc112x_txPowerGet(uint8_t *p_power, e_nsErr_t *p_err);
+static void cc112x_txPowerSet(int8_t power, e_nsErr_t *p_err);
+static void cc112x_txPowerGet(int8_t *p_power, e_nsErr_t *p_err);
 static void cc112x_chanNumSet(uint8_t chan_num, e_nsErr_t *p_err);
 static void cc112x_opModeSet(e_nsRfOpMode mode, e_nsErr_t *p_err);
 
@@ -520,7 +520,7 @@ static void cc112x_Ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
     *p_err = NETSTK_ERR_NONE;
     switch (cmd) {
         case NETSTK_CMD_RF_TXPOWER_SET:
-            cc112x_txPowerSet(*((uint8_t *) p_val), p_err);
+            cc112x_txPowerSet(*((int8_t *) p_val), p_err);
             break;
 
         case NETSTK_CMD_RF_TXPOWER_GET:
@@ -1152,7 +1152,7 @@ static void cc112x_cca(e_nsErr_t *p_err)
 }
 
 
-static void cc112x_txPowerSet(uint8_t power, e_nsErr_t *p_err)
+static void cc112x_txPowerSet(int8_t power, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
     if (p_err == NULL) {
@@ -1171,7 +1171,7 @@ static void cc112x_txPowerSet(uint8_t power, e_nsErr_t *p_err)
     *p_err = NETSTK_ERR_NONE;
 }
 
-static void cc112x_txPowerGet(uint8_t *p_power, e_nsErr_t *p_err)
+static void cc112x_txPowerGet(int8_t *p_power, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
     if (p_err == NULL) {
