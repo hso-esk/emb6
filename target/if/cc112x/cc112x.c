@@ -483,15 +483,22 @@ static void cc112x_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
         }
 
         /* wait for packet to be sent */
-        do {
-            /* nothing */
-        } while(rf_state != RF_STATE_TX_FINI);
+        uint16_t iteration = 0xffff;
+        while ((rf_state == RF_STATE_TX_BUSY) &&
+               (iteration > 0)) {
+            iteration--;
+        }
 
         /*
          * Exit actions
          */
+        if (rf_state == RF_STATE_TX_FINI) {
+            *p_err = NETSTK_ERR_NONE;
+        } else {
+            *p_err = NETSTK_ERR_TX_TIMEOUT;
+        }
+
         LED_TX_OFF();
-        *p_err = NETSTK_ERR_NONE;
         cc112x_gotoRx();
     }
 }
@@ -747,16 +754,23 @@ static void cc112x_isrRxSyncReceived(void *p_arg)
 
     if (rf_state == RF_STATE_RX_LISTENING) {
         uint8_t num_rx_bytes;
+        uint8_t iteration;
         uint16_t pkt_len;
 
         /* go to state RX SYCN */
         rf_state = RF_STATE_RX_SYNC;
         LED_RX_ON();
 
-        /* wait until entire PHY header is received */
-        do {
+        /* 
+         * Wait until entire PHY header is received or number of register-
+         * reading attempts exceeds the predefined max value
+         */
+        iteration = 5;
+        num_rx_bytes = 0;
+        while ((num_rx_bytes == 0) && (iteration > 0)) {
+            iteration--;
             cc112x_spiRegRead(CC112X_NUM_RXBYTES, &num_rx_bytes, 1);
-        } while (num_rx_bytes < PHY_HEADER_LEN);
+        }
 
         /* parse PHY header for packet length */
         cc112x_spiRxFifoRead(rf_rxBuf, PHY_HEADER_LEN);
@@ -1055,6 +1069,7 @@ static void cc112x_cca(e_nsErr_t *p_err)
 
     uint8_t is_done;
     uint8_t marc_status0;
+    uint16_t iteration;
     rf_status_t chip_status;
     uint8_t cca_mode;
     uint8_t reg_len;
@@ -1115,8 +1130,11 @@ static void cc112x_cca(e_nsErr_t *p_err)
         chip_status = cc112x_spiCmdStrobe(CC112X_STX);
 
         is_done = FALSE;
+        iteration = 10;
         marc_status0 = 0;
-        do {
+        while ((is_done == FALSE) && (iteration > 0)) {
+            iteration--;
+
             /* read CCA_STATUS from the register MARC_STATUS0
              * (MAC_STATUS0 & 0x04) indicates value of TXONCCA_FAILED */
             cc112x_spiRegRead(CC112X_MARC_STATUS0, &marc_status0, 1);
@@ -1128,7 +1146,7 @@ static void cc112x_cca(e_nsErr_t *p_err)
             is_done = (rf_state != RF_STATE_CCA_BUSY) |         /* CCA_STATUS   */
                       (RF_IS_IN_TX(chip_status))      |         /* Channel free */
                       (marc_status0 & 0x04);                    /* Channel busy */
-        } while (is_done == FALSE);
+        }
 
         /* disable external CCA interrupts */
         bsp_extIntDisable(RF_INT_CFG_TX_CCA_DONE);
