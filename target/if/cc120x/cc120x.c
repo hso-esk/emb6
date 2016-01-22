@@ -342,10 +342,8 @@ static void cc120x_On (e_nsErr_t *p_err)
     }
 #endif
 
-    /* if currently in state sleep, then must move on state idle first */
-    if (rf_state == RF_STATE_SLEEP) {
-        cc120x_gotoIdle();
-    }
+    /* first set RF to state idle */
+    cc120x_gotoIdle();
 
     /* go to state sniff */
     cc120x_gotoRx();
