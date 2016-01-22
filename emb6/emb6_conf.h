@@ -927,12 +927,11 @@ void uip_log(char *msg);
  * @addtogroup  Configurations
  * @{
  */
-#define MAC_ULE_CFG_LOOSE_SYNC_EN                      ( 1u )
-#define MAC_ULE_CFG_IDLE_DURATION_IN_MS                (uint32_t)(   20u )
-#define MAC_ULE_CFG_POWERUP_INTERVAL_IN_MS             (uint32_t)( 1000u )
+#define MAC_ULE_CFG_LOOSE_SYNC_EN                      (TRUE)
+#define MAC_ULE_CFG_POWERUP_INTERVAL_IN_MS             (uint32_t)(  500u )
 #define MAC_ULE_CFG_STROBE_TX_INTERVAL_IN_MS           (MAC_ULE_CFG_POWERUP_INTERVAL_IN_MS * 2)
 
-#if     MAC_ULE_CFG_LOOSE_SYNC_EN
+#if (MAC_ULE_CFG_LOOSE_SYNC_EN == TRUE)
 #define MAC_ULE_CFG_PWRON_TBL_SIZE                     (uint8_t )(   3u  )
 #define MAC_ULE_CFG_QTY_STROBE_SENT_IN_ADVANCE         (uint8_t )(   3u  )      /*!< variable   */
 #endif
@@ -977,7 +976,7 @@ void uip_log(char *msg);
   *              This time addition is usually caused by transition time of RF
   *              driver implementation.
   */
-#define MAC_ULE_PORT_SCAN_DURATION_IN_MS                (uint32_t)(  25u )          /*!< fixed, hardware-specific       */
+#define MAC_ULE_PORT_SCAN_DURATION_IN_MS                (uint32_t)(  30u )          /*!< fixed, hardware-specific       */
 #define MAC_ULE_PORT_MIN_DELAY_IN_MS                    (uint32_t)(  50U )          /*!< fixed, hardware-specific, 50   */
 #define MAC_ULE_PORT_ON_TO_OFF_TIME_IN_MS               (uint32_t)(   8u )          /*!< fixed, hardware-specific, 06   */
 #define MAC_ULE_PORT_OFF_TO_ON_TIME_IN_MS               (uint32_t)(  20u )          /*!< fixed, hardware-specific, 15   */
@@ -989,9 +988,9 @@ void uip_log(char *msg);
 
 #define MAC_ULE_PORT_WFP_TIMEOUT_IN_MS                  (MAC_ULE_PORT_STROBE_TX_GAP_TIME_IN_MS +   \
                                                          MAC_ULE_PORT_TX_RX_TURNAROUND_IN_MS   +   \
-                                                         MAC_ULE_PORT_RX_PAYLOAD_OFFSET_IN_MS)
+                                                         MAC_ULE_PORT_RX_PAYLOAD_OFFSET_IN_MS  + 10)
 
-#define MAC_ULE_PORT_STROBE_TX_INTERVAL_IN_MS           (uint32_t)( 17U )
+#define MAC_ULE_PORT_STROBE_TX_INTERVAL_IN_MS           (uint32_t)( 20U )
 
 #define MAC_ULE_CFG_STROBE_TX_MAX                       (uint8_t )(MAC_ULE_CFG_STROBE_TX_INTERVAL_IN_MS     /   \
                                                                    MAC_ULE_PORT_STROBE_TX_INTERVAL_IN_MS)
