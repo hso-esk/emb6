@@ -330,7 +330,7 @@ static void cc120x_Init (void *p_netstk, e_nsErr_t *p_err)
     rf_opMode = NETSTK_RF_OP_MODE_CSM;
 
     /* goto state sleep */
-    cc120x_gotoSleep();
+    cc120x_gotoIdle();
 }
 
 
