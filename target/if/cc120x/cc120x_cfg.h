@@ -134,13 +134,12 @@ static const s_regSettings_t cc120x_cfg_rx_wor[] = {
 
 
 /**
- * @brief   IEEE802.15.4g first channel center (channel 0)
+ * @brief   Default register settings for IEEE-802.15.4g
  *          See also IEEE802.15.4g-2012, table 68d
  *
  *          Carrier Frequency:  863.125MHz
  *          Modulation format:  MR-FSK
  *          Channel spacing:    200kHz
- *
  *          Symbol rate:        50kbps
  *          Bit rate:           50kbps
  *          RX filter BW:       100kHz
@@ -150,7 +149,7 @@ static const s_regSettings_t cc120x_cfg_rx_wor[] = {
  *          Preamble length:    4bytes with WOR-disabled OR 24 byte with WOR-enabled
  *          RX termination:     Carrier Sense with threshold of -90dBm
  */
-static const s_regSettings_t cc120x_cfg_ieee802154g_chan0[] =
+static const s_regSettings_t cc120x_cfg_ieee802154g_default[] =
 {
     {CC120X_IOCFG3,             0x0F},  /* CCA_STATUS */
     {CC120X_IOCFG2,             0x13},  /* PKT_CRC_OK       RX_STARTED  */

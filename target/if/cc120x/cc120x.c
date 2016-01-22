@@ -310,8 +310,8 @@ static void cc120x_Init (void *p_netstk, e_nsErr_t *p_err)
     }
 
     /* configure RF register in eWOR mode by default */
-    len = sizeof(cc120x_cfg_ieee802154g_chan0) / sizeof(s_regSettings_t);
-    cc120x_configureRegs(cc120x_cfg_ieee802154g_chan0, len);
+    len = sizeof(cc120x_cfg_ieee802154g_default) / sizeof(s_regSettings_t);
+    cc120x_configureRegs(cc120x_cfg_ieee802154g_default, len);
 
     /* calibrate radio */
     cc120x_calibrateRF();
