@@ -321,7 +321,7 @@ static void cc112x_Init (void *p_netstk, e_nsErr_t *p_err)
     RF_SEM_WAIT(NETSTK_RF_EVENT);
     memset(rf_rxBuf, 0, sizeof(rf_rxBuf));
     rf_rxBufLen = 0;
-    rf_worEn = FALSE;   /* disable WOR mode by default */
+    rf_worEn = TRUE;    /* enable WOR mode by default */
 
     /* configure operating mode and channel number */
     rf_chanNum = 0;
@@ -343,7 +343,7 @@ static void cc112x_On (e_nsErr_t *p_err)
     /* first set RF to state idle */
     cc112x_gotoIdle();
 
-    /* go to state sniff */
+    /* go to state RX */
     cc112x_gotoRx();
 
     /* indicate successful operation */
@@ -779,7 +779,7 @@ static void cc112x_isrRxSyncReceived(void *p_arg)
         /* make sure that the packet length is acceptable */
         if ((pkt_len == 0) ||
             (pkt_len > RF_CFG_MAX_PACKET_LENGTH)) {
-            /* invalid packet length, then goto sniff state */
+            /* invalid packet length, then goto RX state */
             cc112x_gotoRx();
         } else {
             rf_state = RF_STATE_RX_PORTION_MIDDLE;
@@ -1171,7 +1171,7 @@ static void cc112x_cca(e_nsErr_t *p_err)
         cca_mode = RF_CCA_MODE_NONE;
         cc112x_spiRegWrite(CC112X_PKT_CFG2, &cca_mode, 1);
 
-        /* put transceiver to state WOR */
+        /* put transceiver to RX */
         cc112x_gotoRx();
     }
 }

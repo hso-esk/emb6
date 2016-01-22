@@ -323,7 +323,7 @@ static void cc120x_Init (void *p_netstk, e_nsErr_t *p_err)
     RF_SEM_WAIT(NETSTK_RF_EVENT);
     memset(rf_rxBuf, 0, sizeof(rf_rxBuf));
     rf_rxBufLen = 0;
-    rf_worEn = FALSE;   /* disable WOR mode by default */
+    rf_worEn = TRUE;    /* enable WOR mode by default */
 
     /* configure operating mode and channel number */
     rf_chanNum = 0;
@@ -345,7 +345,7 @@ static void cc120x_On (e_nsErr_t *p_err)
     /* first set RF to state idle */
     cc120x_gotoIdle();
 
-    /* go to state sniff */
+    /* go to state RX */
     cc120x_gotoRx();
 
     /* indicate successful operation */
@@ -1176,7 +1176,7 @@ static void cc120x_cca(e_nsErr_t *p_err)
         cca_mode = RF_CCA_MODE_NONE;
         cc120x_spiRegWrite(CC120X_PKT_CFG2, &cca_mode, 1);
 
-        /* put transceiver to state WOR */
+        /* put transceiver to RX */
         cc120x_gotoRx();
     }
 }
