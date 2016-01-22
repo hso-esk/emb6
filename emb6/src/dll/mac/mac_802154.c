@@ -71,7 +71,7 @@
 */
 #define MAC_CFG_REFACTOR_EN                 ( 0u )
 
-#define MAC_CFG_TX_RETRY_MAX                (uint8_t  )( 1u )
+#define MAC_CFG_TX_RETRY_MAX                (uint8_t  )( 3u )
 #define MAC_CFG_TMR_WFA_IN_MS               (uint32_t )( 20 )
 
 #define MAC_EVENT_PEND(_event_)             evproc_regCallback(_event_, MAC_EventHandler)
