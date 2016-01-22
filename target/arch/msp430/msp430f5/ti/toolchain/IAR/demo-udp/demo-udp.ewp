@@ -8586,6 +8586,10 @@
           <excluded>
             <configuration>UDP_SOCKET_SRV_CC120x</configuration>
             <configuration>UDP_SOCKET_CLI_CC120x</configuration>
+            <configuration>UDP_SOCKET_CLI_CC112x</configuration>
+            <configuration>UDP_SOCKET_SRV_CC112x</configuration>
+            <configuration>UDP_SOCKET_SRV_CC112X_ULE</configuration>
+            <configuration>UDP_SOCKET_CLI_CC112X_ULE</configuration>
           </excluded>
           <file>
             <name>$PROJ_DIR$\..\..\..\..\..\..\..\bsp\ti_trxeb_cc120x_ule\board_conf.c</name>
