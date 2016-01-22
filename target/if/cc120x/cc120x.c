@@ -366,10 +366,6 @@ static void cc120x_Off (e_nsErr_t *p_err)
     /* put transceiver to state idle */
     cc120x_gotoIdle();
 
-    /* flush TXFIFO, RXFIFO */
-    cc120x_spiCmdStrobe(CC120X_SFRX);
-    cc120x_spiCmdStrobe(CC120X_SFTX);
-
     /* go to state sleep */
     cc120x_gotoSleep();
 
@@ -661,9 +657,20 @@ static void cc120x_gotoIdle(void)
 {
     uint8_t chip_status;
 
+    /* disable RF external interrupts */
+    RF_EXTI_DISABLED();
+
+    /* issue strobe IDLE */
     do {
         chip_status = cc120x_spiCmdStrobe(CC120X_SIDLE);
     } while (RF_GET_CHIP_STATE(chip_status) != RF_CHIP_STATE_IDLE);
+
+    /* flush TXFIFO, RXFIFO */
+    cc120x_spiCmdStrobe(CC120X_SFRX);
+    cc120x_spiCmdStrobe(CC120X_SFTX);
+
+    /* set RF driver state to idle */
+    rf_state = RF_STATE_IDLE;
 }
 
 
