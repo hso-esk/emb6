@@ -765,42 +765,47 @@ static void cc112x_isrRxSyncReceived(void *p_arg)
          * Wait until entire PHY header is received or number of register-
          * reading attempts exceeds the predefined max value
          */
-        iteration = 5;
+        iteration = 100;
         num_rx_bytes = 0;
-        while ((num_rx_bytes == 0) && (iteration > 0)) {
+        while ((num_rx_bytes < PHY_HEADER_LEN) && (iteration > 0)) {
             iteration--;
             cc112x_spiRegRead(CC112X_NUM_RXBYTES, &num_rx_bytes, 1);
         }
 
-        /* parse PHY header for packet length */
-        cc112x_spiRxFifoRead(rf_rxBuf, PHY_HEADER_LEN);
-        pkt_len = phy_framer802154_getPktLen(rf_rxBuf, PHY_HEADER_LEN);
-
-        /* make sure that the packet length is acceptable */
-        if ((pkt_len == 0) ||
-            (pkt_len > RF_CFG_MAX_PACKET_LENGTH)) {
-            /* invalid packet length, then goto RX state */
+        if (num_rx_bytes < PHY_HEADER_LEN) {
+            /* invalid packet, then goto RX state */
             cc112x_gotoRx();
         } else {
-            rf_state = RF_STATE_RX_PORTION_MIDDLE;
+            /* parse PHY header for packet length */
+            cc112x_spiRxFifoRead(rf_rxBuf, PHY_HEADER_LEN);
+            pkt_len = phy_framer802154_getPktLen(rf_rxBuf, PHY_HEADER_LEN);
 
-            /* set RX buffer attributes in corresponds to the incoming packet */
-            rf_rxBufLen = PHY_HEADER_LEN + pkt_len;
-            rf_byteLeft = pkt_len;
-            rf_bufIx = &rf_rxBuf[PHY_HEADER_LEN];
+            /* make sure that the packet length is acceptable */
+            if ((pkt_len == 0) ||
+                (pkt_len > RF_CFG_MAX_PACKET_LENGTH)) {
+                /* invalid packet length, then goto RX state */
+                cc112x_gotoRx();
+            } else {
+                rf_state = RF_STATE_RX_PORTION_MIDDLE;
 
-            /* check number of remaining bytes */
-            cc112x_rxByteLeftChk();
+                /* set RX buffer attributes in corresponds to the incoming packet */
+                rf_rxBufLen = PHY_HEADER_LEN + pkt_len;
+                rf_byteLeft = pkt_len;
+                rf_bufIx = &rf_rxBuf[PHY_HEADER_LEN];
 
-            /* set fixed packet length */
-            uint8_t write_byte;
-            write_byte = rf_rxBufLen % (RF_CFG_MAX_VARIABLE_LENGTH + 1);
-            cc112x_spiRegWrite(CC112X_PKT_LEN, &write_byte, 1);
+                /* check number of remaining bytes */
+                cc112x_rxByteLeftChk();
 
-            /* enable PKT_SYCN_RXTX interrupt on falling edge, indicating entire
-             * packet arrives */
-            bsp_extIntClear(RF_INT_CFG_RX_FINI);
-            bsp_extIntEnable(RF_INT_CFG_RX_FINI);
+                /* set fixed packet length */
+                uint8_t write_byte;
+                write_byte = rf_rxBufLen % (RF_CFG_MAX_VARIABLE_LENGTH + 1);
+                cc112x_spiRegWrite(CC112X_PKT_LEN, &write_byte, 1);
+
+                /* enable PKT_SYCN_RXTX interrupt on falling edge, indicating entire
+                 * packet arrives */
+                bsp_extIntClear(RF_INT_CFG_RX_FINI);
+                bsp_extIntEnable(RF_INT_CFG_RX_FINI);
+            }
         }
     }
 
