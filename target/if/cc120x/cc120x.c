@@ -770,7 +770,7 @@ static void cc120x_isrRxSyncReceived(void *p_arg)
          */
         iteration = 100;
         num_rx_bytes = 0;
-        while ((num_rx_bytes == 0) && (iteration > 0)) {
+        while ((num_rx_bytes < PHY_HEADER_LEN) && (iteration > 0)) {
             iteration--;
             cc120x_spiRegRead(CC120X_NUM_RXBYTES, &num_rx_bytes, 1);
         }
