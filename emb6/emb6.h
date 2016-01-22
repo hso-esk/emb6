@@ -270,30 +270,26 @@ typedef enum netstk_err
     NETSTK_ERR_MAC_ACKOFF,
 #endif /* NETSTK_CFG_IEEE_802154_IGNACK */
 
+    NETSTK_ERR_MAC_ULE_XXX                  = 250U,
+    NETSTK_ERR_MAC_ULE_UNSUPPORTED_FRAME,
+    NETSTK_ERR_MAC_ULE_LAST_STROBE,
+    NETSTK_ERR_MAC_ULE_BROADCAST_NOACK,
+    NETSTK_ERR_MAC_ULE_INVALID_ADDR,
+    NETSTK_ERR_MAC_ULE_TX_COLLISION_SAME_DEST,
+    NETSTK_ERR_MAC_ULE_TX_COLLISION_DIFF_DEST,
+    NETSTK_ERR_MAC_ULE_INVALID_ACK,
+    NETSTK_ERR_MAC_ULE_NO_STROBE,
+
     /*
      * PHY error codes
      */
     NETSTK_ERR_PHY_XXX                      = 300U,
 
-
-    /*
-     * LPR error codes
-     */
-    NETSTK_ERR_LPR_XXX                      = 400U,
-    NETSTK_ERR_LPR_UNSUPPORTED_FRAME        = 401U,
-    NETSTK_ERR_LPR_BROADCAST_LAST_STROBE    = 402U,
-    NETSTK_ERR_LPR_BROADCAST_NOACK          = 403U,
-    NETSTK_ERR_LPR_INVALID_ADDR             = 404U,
-    NETSTK_ERR_LPR_TX_COLLISION_SAME_DEST   = 405U,
-    NETSTK_ERR_LPR_TX_COLLISION_DIFF_DEST   = 406U,
-    NETSTK_ERR_LPR_INVALID_ACK              = 407U,
-    NETSTK_ERR_LPR_NO_STROBE,
-
     /*
      * RF error codes
      */
-    NETSTK_ERR_RF_XXX                       = 500U,
-    NETSTK_ERR_RF_SEND                      = 501U,
+    NETSTK_ERR_RF_XXX                       = 400U,
+    NETSTK_ERR_RF_SEND                      = 401U,
 
 }e_nsErr_t;
 
