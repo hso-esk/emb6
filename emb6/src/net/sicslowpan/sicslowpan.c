@@ -1578,6 +1578,7 @@ static uint8_t output(const uip_lladdr_t *localdest)
       /* Check tx result. */
       if((last_tx_status == MAC_TX_COLLISION) ||
          (last_tx_status == MAC_TX_ERR) ||
+         (last_tx_status == MAC_TX_NOACK) ||
          (last_tx_status == MAC_TX_ERR_FATAL)) {
         PRINTFO("error in fragment tx, dropping subsequent fragments.\n\r");
         return 0;
