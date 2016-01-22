@@ -50,6 +50,23 @@
 #define CC120X_CFG_PRESENT
 
 
+/*
+ * Value of channel frequency register is calculated using following equation:
+ *      ChannelNumberFrequency = ChannelCenterFreq + ChannelIndex * DeltaFreq
+ */
+#define CC120X_CSM_DELTA_FREQ               0x00051Fu   /*!<   0.200 MHz */
+#define CC120X_CSM_CHAN_CENTER_FREQ         0x564CCCu   /*!< 863.000 MHz */
+
+#define CC120X_OPMODE1_DELTA_FREQ           0x00051Fu   /*!<   0.200 MHz */
+#define CC120X_OPMODE1_CHAN_CENTER_FREQ     0x565000u   /*!< 863.125 MHz */
+
+#define CC120X_OPMODE2_DELTA_FREQ           0x000A3Eu   /*!<   0.400 MHz */
+#define CC120X_OPMODE2_CHAN_CENTER_FREQ     0x56528Fu   /*!< 863.225 MHz */
+
+#define CC120X_OPMODE3_DELTA_FREQ           0x000A3Eu   /*!<   0.400 MHz */
+#define CC120X_OPMODE3_CHAN_CENTER_FREQ     0x56528Fu   /*!< 863.225 MHz */
+
+
 /**
  * @brief   GPIOs configuration for CCA operation
  */
