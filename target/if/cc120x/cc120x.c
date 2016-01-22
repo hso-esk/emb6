@@ -766,7 +766,11 @@ static void cc120x_isrRxSyncReceived(void *p_arg)
         pkt_len = phy_framer802154_getPktLen(rf_rxBuf, PHY_HEADER_LEN);
 
         /* make sure that the packet length is acceptable */
-        if (pkt_len <= RF_CFG_MAX_PACKET_LENGTH) {
+        if ((pkt_len == 0) ||
+            (pkt_len > RF_CFG_MAX_PACKET_LENGTH)) {
+            /* invalid packet length, then goto RX state */
+            cc120x_gotoRx();
+        } else {
             rf_state = RF_STATE_RX_PORTION_MIDDLE;
 
             /* set RX buffer attributes in corresponds to the incoming packet */
@@ -786,9 +790,6 @@ static void cc120x_isrRxSyncReceived(void *p_arg)
              * packet arrives */
             bsp_extIntClear(RF_INT_CFG_RX_FINI);
             bsp_extIntEnable(RF_INT_CFG_RX_FINI);
-        } else {
-            /* goto sniff state */
-            cc120x_gotoRx();
         }
     }
 
