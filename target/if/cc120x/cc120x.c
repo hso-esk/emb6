@@ -918,6 +918,9 @@ static void cc120x_isrTxPacketSent(void *p_arg)
     } else {
         /* flush TX FIFO */
         cc120x_spiCmdStrobe(CC120X_SFTX);
+
+        /* error occurs, RF shall be reset */
+        rf_state = RF_STATE_ERR;
     }
 
     /* clear ISR flag */

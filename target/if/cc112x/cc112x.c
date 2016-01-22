@@ -927,6 +927,9 @@ static void cc112x_isrTxPacketSent(void *p_arg)
     } else {
         /* flush TX FIFO */
         cc112x_spiCmdStrobe(CC112X_SFTX);
+
+        /* error occurs, RF shall be reset */
+        rf_state = RF_STATE_ERR;
     }
 
     /* clear ISR flag */
