@@ -137,7 +137,7 @@
 /*=============================================================================
                                 DLL/PHY SECTIONS
 ==============================================================================*/
-#define NETSTK_CFG_IEEE_802154_IGNACK           TRUE
+#define NETSTK_CFG_IEEE_802154_IGNACK           FALSE
 #define NETSTK_CFG_IEEE_802154G_EN              TRUE
 
 
