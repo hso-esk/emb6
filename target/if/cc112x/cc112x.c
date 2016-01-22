@@ -997,12 +997,14 @@ static void cc112x_eventHandler(c_event_t c_event, p_data_t p_data)
 
         /*
          * exit actions
-         * (1)  Clear RX buffer
+         * (1)  Clear RX buffer if invalid CRC is present
          * (2)  Enter idle listening state if the RF is not there yet
          */
-        rf_rxBufLen = 0;
-        rf_bufIx = rf_rxBuf;
-        memset(rf_rxBuf, 0, sizeof(rf_rxBuf));
+        if (err != NETSTK_ERR_NONE) {
+            rf_rxBufLen = 0;
+            rf_bufIx = rf_rxBuf;
+            memset(rf_rxBuf, 0, sizeof(rf_rxBuf));
+        }
         if (rf_state != RF_STATE_RX_LISTENING) {
             cc112x_gotoRx();
         }
