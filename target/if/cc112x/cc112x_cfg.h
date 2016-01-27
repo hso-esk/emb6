@@ -153,8 +153,8 @@ static const s_regSettings_t cc112x_cfg_ieee802154g_default[] =
     {CC112X_IOCFG3,             0xB0},  /* Impedance */
     {CC112X_IOCFG1,             0xB0},  /* Impedance */
 
-    {CC112X_SYNC3,              0x72},  /* SFD[15-8] FEC not supported and phyMRFSKSFD = 0 -> SFD = 0x7209 */
-    {CC112X_SYNC2,              0x09},  /* SFD[ 7-0] ... */
+    {CC112X_SYNC3,              0x90},  /* SFD[15-8] FEC not supported and phyMRFSKSFD = 0 -> SFD = 0x904E */
+    {CC112X_SYNC2,              0x4E},  /* SFD[ 7-0] ... */
     {CC112X_SYNC1,              0x51},  /* don't care */
     {CC112X_SYNC0,              0xDE},  /* don't care */
     {CC112X_SYNC_CFG1,          0x08},  /* AUTO_CLEAR = 1, enabled; RX_CONFIG_LIMITATION = 0 */
