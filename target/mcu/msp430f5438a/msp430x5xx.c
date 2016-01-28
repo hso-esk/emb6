@@ -278,22 +278,22 @@ void hal_ledOn(uint16_t ui_led)
 {
     switch (ui_led) {
 #if TARGET_CONFIG_LED1
-        case E_BSP_LED_ORANGE:
+        case E_BSP_LED_0:
             led_set(E_LED_1);
             break;
 #endif
 #if TARGET_CONFIG_LED2
-        case E_BSP_LED_YELLOW:
+        case E_BSP_LED_1:
             led_set(E_LED_2);
             break;
 #endif
 #if TARGET_CONFIG_LED3
-        case E_BSP_LED_GREEN:
+        case E_BSP_LED_2:
             led_set(E_LED_3);
             break;
 #endif
 #if TARGET_CONFIG_LED4
-        case E_BSP_LED_RED:
+        case E_BSP_LED_4:
             led_set(E_LED_4);
             break;
 #endif
@@ -307,22 +307,22 @@ void hal_ledOff(uint16_t ui_led)
 {
     switch (ui_led) {
 #if TARGET_CONFIG_LED1
-        case E_BSP_LED_ORANGE:
+        case E_BSP_LED_0:
             led_clear(E_LED_1);
             break;
 #endif
 #if TARGET_CONFIG_LED2
-        case E_BSP_LED_YELLOW:
+        case E_BSP_LED_1:
             led_clear(E_LED_2);
             break;
 #endif
 #if TARGET_CONFIG_LED3
-        case E_BSP_LED_GREEN:
+        case E_BSP_LED_2:
             led_clear(E_LED_3);
             break;
 #endif
 #if TARGET_CONFIG_LED4
-        case E_BSP_LED_RED:
+        case E_BSP_LED_4:
             led_clear(E_LED_4);
             break;
 #endif

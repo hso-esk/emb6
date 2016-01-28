@@ -168,7 +168,7 @@ int bsp_getChar (void)
 /*============================================================================*/
 /*  bsp_led()                                                               */
 /*============================================================================*/
-uint16_t bsp_led(en_bspLedColor_t ui_led, en_bspLedAction_t en_ledAction)
+uint16_t bsp_led(en_bspLedIdx_t ui_led, en_bspLedAction_t en_ledAction)
 {
     switch (en_ledAction) {
     case E_BSP_LED_ON:

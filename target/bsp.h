@@ -103,18 +103,19 @@ typedef enum E_BSP_LED_ACTION
 } en_bspLedAction_t;
 
 //! Define the leds color
-typedef enum E_BSP_LED_COLOR
+typedef enum E_BSP_LED_IDX
 {
-    //! Define Red color
-    E_BSP_LED_RED = 0x00,
-    //! Define YELLOW color
-    E_BSP_LED_YELLOW = 0x01,
-    //! Define GREEN color
-    E_BSP_LED_GREEN = 0x02,
-
-    E_BSP_LED_BLUE = 0x03,
-    E_BSP_LED_ORANGE = 0x04,
-} en_bspLedColor_t;
+    //! Define LED0
+    E_BSP_LED_0 = 0x00,
+    //! Define LED1
+    E_BSP_LED_1 = 0x01,
+    //! Define LED2
+    E_BSP_LED_2 = 0x02,
+    //! Define LED3
+    E_BSP_LED_3 = 0x03,
+    //! Define LED4
+    E_BSP_LED_4 = 0x04,
+} en_bspLedIdx_t;
 
 
 
@@ -226,7 +227,7 @@ int bsp_getChar(void);
     \return 1       LED was on and is set now to state en_ledAction
 */
 /*============================================================================*/
-uint16_t bsp_led(en_bspLedColor_t ui_led, en_bspLedAction_t en_ledAction);
+uint16_t bsp_led(en_bspLedIdx_t ui_led, en_bspLedAction_t en_ledAction);
 
 /*============================================================================*/
 /** \brief  This function enters critical section on the target

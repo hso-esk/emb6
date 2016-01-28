@@ -265,7 +265,7 @@ static uint8_t loc_demoAppsInit(void)
 void emb6_errorHandler(e_nsErr_t *p_err)
 {
     /* turns LEDs on to indicate error */
-    bsp_led(E_BSP_LED_RED, E_BSP_LED_ON);
+    bsp_led(E_BSP_LED_0, E_BSP_LED_ON);
 
     /* TODO misisng error handling */
     while (1) {
@@ -309,14 +309,14 @@ int main(void)
         }
 
         /* SHow that stack has been launched */
-        bsp_led(E_BSP_LED_GREEN, E_BSP_LED_ON);
+        bsp_led(E_BSP_LED_2, E_BSP_LED_ON);
         bsp_delay_us(2000000);
-        bsp_led(E_BSP_LED_GREEN, E_BSP_LED_OFF);
+        bsp_led(E_BSP_LED_2, E_BSP_LED_OFF);
 
         /* call process function with delay in us */
         emb6_process(500);  /* default: 500 us delay */
     }
-    bsp_led(E_BSP_LED_RED, E_BSP_LED_ON);
+    bsp_led(E_BSP_LED_0, E_BSP_LED_ON);
     printf("Program failed.");
     while(1);
 }

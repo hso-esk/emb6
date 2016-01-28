@@ -1021,11 +1021,11 @@ static void _rf212b_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     }
 
     if (c_ret != RADIO_TX_OK) {
-        bsp_led(E_BSP_LED_RED,E_BSP_LED_TOGGLE);
+        bsp_led(E_BSP_LED_0,E_BSP_LED_TOGGLE);
         LOG_ERR("Send failed with code %d ",c_ret);
     }
     else {
-        bsp_led(E_BSP_LED_YELLOW,E_BSP_LED_TOGGLE);
+        bsp_led(E_BSP_LED_1,E_BSP_LED_TOGGLE);
     }
 #if PRINT_PCK_STAT
     pck_cntr_out++;
@@ -1326,7 +1326,7 @@ static void _rf212b_callback(c_event_t c_event, p_data_t p_data)
 #if PRINT_PCK_STAT
     pck_cntr_in++;
 #endif /* PRINT_PCK_STAT */
-    bsp_led(E_BSP_LED_GREEN,E_BSP_LED_TOGGLE);
+    bsp_led(E_BSP_LED_2,E_BSP_LED_TOGGLE);
 } /*  _rf212b_callback() */
 
 /*==============================================================================

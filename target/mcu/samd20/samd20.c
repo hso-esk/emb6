@@ -342,13 +342,13 @@ void hal_ledOff(uint16_t ui_led)
     hal_enterCritical();
     switch (ui_led)
     {
-        case E_BSP_LED_RED:
+        case E_BSP_LED_0:
         port_pin_set_output_level(LED_0_PIN, LED_0_INACTIVE);
         break;
-        case E_BSP_LED_YELLOW:
+        case E_BSP_LED_1:
         port_pin_set_output_level(LED_1_PIN, LED_1_INACTIVE);
         break;
-        case E_BSP_LED_GREEN:
+        case E_BSP_LED_2:
         port_pin_set_output_level(LED_2_PIN, LED_2_INACTIVE);
         break;
         default:
@@ -366,13 +366,13 @@ void hal_ledOn(uint16_t ui_led)
     hal_enterCritical();
     switch (ui_led)
     {
-        case E_BSP_LED_RED:
+        case E_BSP_LED_0:
         port_pin_set_output_level(LED_0_PIN, LED_0_ACTIVE);
         break;
-        case E_BSP_LED_YELLOW:
+        case E_BSP_LED_1:
         port_pin_set_output_level(LED_1_PIN, LED_1_ACTIVE);
         break;
-        case E_BSP_LED_GREEN:
+        case E_BSP_LED_2:
         port_pin_set_output_level(LED_2_PIN, LED_2_ACTIVE);
         break;
         default:
