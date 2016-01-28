@@ -323,7 +323,7 @@ static void cc120x_Init (void *p_netstk, e_nsErr_t *p_err)
     RF_SEM_WAIT(NETSTK_RF_EVENT);
     memset(rf_rxBuf, 0, sizeof(rf_rxBuf));
     rf_rxBufLen = 0;
-    rf_worEn = TRUE;    /* enable WOR mode by default */
+    rf_worEn = FALSE;    /* enable WOR mode by default */
 
     /* configure operating mode and channel number */
     rf_chanNum = 0;
