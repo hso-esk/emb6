@@ -204,6 +204,13 @@ s_hal_gpio_pin_t s_hal_exti_gpio[E_TARGET_EXT_INT_MAX] =
     {0, 0, 0, 0},  /* E_TARGET_EXT_INT_3 is not supported */
 };
 
+/** User IOs */
+s_hal_gpio_pin_t s_hal_userio[] =
+{
+    {EFM32_IO_PORT_LED0, EFM32_IO_PIN_LED0, gpioModePushPull,  0},  /* LED0 */
+    {EFM32_IO_PORT_LED1, EFM32_IO_PIN_LED1, gpioModePushPull, 0},   /* LED1 */
+};
+
 /** External interrupt handler table */
 pfn_intCallb_t pf_hal_exti[E_TARGET_EXT_INT_MAX] = {0};
 
@@ -382,6 +389,13 @@ int8_t hal_init (void)
     /* initialize SysTicks */
     _hal_tcInit();
 
+    /* initialize user IOs */
+    for( ix = 0; ix < sizeof( s_hal_userio); ix++ )
+    {
+        s_hal_gpio_pin_t* p_gpioPin = &s_hal_userio[ix];
+        GPIO_PinModeSet( p_gpioPin->port, p_gpioPin->pin, p_gpioPin->mode, p_gpioPin->val );
+    }
+
 
     return 1;
 }/* hal_init() */
@@ -402,7 +416,22 @@ uint8_t hal_getrand(void)
 ==============================================================================*/
 void hal_ledOff(uint16_t ui_led)
 {
-    // Nothing to do
+    s_hal_gpio_pin_t* p_gpioPin = NULL;
+
+    switch( ui_led )
+    {
+        case 0:
+            p_gpioPin = &s_hal_userio[0];
+            break;
+        case 1:
+            p_gpioPin = &s_hal_userio[1];
+            break;
+        default:
+            break;
+    }
+
+    if( p_gpioPin != NULL )
+        GPIO_PinOutClear( p_gpioPin->port, p_gpioPin->pin );
 } /* hal_ledOff() */
 
 
@@ -411,7 +440,22 @@ void hal_ledOff(uint16_t ui_led)
 ==============================================================================*/
 void hal_ledOn(uint16_t ui_led)
 {
-    // Nothing to do
+    s_hal_gpio_pin_t* p_gpioPin = NULL;
+
+    switch( ui_led )
+    {
+        case 0:
+            p_gpioPin = &s_hal_userio[0];
+            break;
+        case 1:
+            p_gpioPin = &s_hal_userio[1];
+            break;
+        default:
+            break;
+    }
+
+    if( p_gpioPin != NULL )
+        GPIO_PinOutSet( p_gpioPin->port, p_gpioPin->pin );
 } /* hal_ledOn() */
 
 
