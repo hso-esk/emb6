@@ -4,3 +4,6 @@
 [submodule "tools/scpi-parser"]
 	path = tools/scpi-parser
 	url = https://github.com/j123b567/scpi-parser.git
+[submodule "tools/bref6"]
+	path = tools/bref6
+	url = https://github.com/alexproinc/bref6.git
