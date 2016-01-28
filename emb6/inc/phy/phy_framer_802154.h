@@ -52,12 +52,15 @@
 #if NETSTK_CFG_IEEE_802154G_EN
 #define PHY_HEADER_LEN                  (uint16_t)(    2u )
 #define PHY_PSDU_MAX                    (uint16_t)( 2047u )
+#define PHY_PSDU_CRC16(a)               ((a & 0x1000))
+#define PHY_PSDU_MIN(a)                 (PHY_PSDU_CRC16(a) ? 2 : 4)
 #else
 #define PHY_HEADER_LEN                  (uint16_t)(    1u )
 #define PHY_PSDU_MAX                    (uint16_t)(  127u )
+#define PHY_PSDU_MIN()                  ((uint16_t)(    2u )) /* 2-byte CRC */
 #endif
 
-#define PHY_PSDU_MIN                    (uint16_t)(    2u ) /* 2-byte CRC */
+
 
 uint16_t phy_framer802154_getPktLen(uint8_t *p_data, uint16_t len);
 

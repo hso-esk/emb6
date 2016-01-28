@@ -66,7 +66,7 @@ uint16_t phy_framer802154_getPktLen(uint8_t *p_data, uint16_t len)
 #endif
 
     /* verify length of PSDU */
-    if ((psdu_len < PHY_PSDU_MIN) || (psdu_len > PHY_PSDU_MAX) ) {
+    if ((psdu_len < PHY_PSDU_MIN( phr )) || (psdu_len > PHY_PSDU_MAX) ) {
         psdu_len = 0;
     }
 
