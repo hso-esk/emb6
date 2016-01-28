@@ -309,6 +309,11 @@ static void PHY_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
         crc_size = 2;
         psdu_len -= crc_size;
 
+        if ((psdu_len < PHY_PSDU_MIN) || (psdu_len > PHY_PSDU_MAX) ) {
+            *p_err = NETSTK_ERR_BAD_FORMAT;
+            return;
+         }
+
         /* obtain CRC of the received frame */
         memcpy(&crc_exp, &p_data[psdu_len], crc_size);
         crc_exp = ((crc_exp & 0x00FF) << 8) |
@@ -316,10 +321,16 @@ static void PHY_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 
         /* calculated actual CRC */
         crc_act = PHY_crc16(p_data, psdu_len);
+
     } else {
         /* 32-bit CRC was used in the received frame */
         crc_size = 4;
         psdu_len -= crc_size;
+
+        if ((psdu_len < PHY_PSDU_MIN) || (psdu_len > PHY_PSDU_MAX) ) {
+            *p_err = NETSTK_ERR_BAD_FORMAT;
+            return;
+         }
 
         /* obtain CRC of the received frame */
         memcpy(&crc_exp, &p_data[psdu_len], crc_size);
