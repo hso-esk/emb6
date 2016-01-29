@@ -211,6 +211,9 @@ inline static void log_hexdump(const void* p_buf, uint32_t l_len)
 #define LOG_HEXDUMP(buf,len)    LOGGER_HEXDUMP(0, buf,len)
 #define LOG_IP6ADDR(addr)       LOGGER_IP6ADDR(0, (const uint8_t* )addr)
 
+#define log_entry()             LOG2_INFO( "Enter %s function",__func__ );
+#define log_leave()             LOG2_INFO( "Leave %s function",__func__ );
+
 #pragma GCC diagnostic ignored "-Wformat"
 #define LOGGER_OK(log_lvl, msg, ...)        \
     do { if ((LOGGER_ENABLE) && (LOGGER_LEVEL > log_lvl)) printf("%lu |   ok | %5s (%d)| " msg "\r\n", bsp_getSec(), __FILE__, __LINE__, ##__VA_ARGS__); }while (0)
