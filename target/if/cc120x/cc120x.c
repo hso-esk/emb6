@@ -222,7 +222,7 @@ typedef enum e_rf_state
 #define RF_INT_CFG_EDGE_RX_FINI             E_TARGET_INT_EDGE_FALLING
 
 #ifndef RF_WD_TIMER_MS
-#define RF_WD_TIMER_MS                      1000
+#define RF_WD_TIMER_MS                      300
 #endif /* #ifndef RF_WD_TIMER_MS */
 
 /*
@@ -348,7 +348,7 @@ static void cc120x_Init (void *p_netstk, e_nsErr_t *p_err)
     Tmr_Create(&rf_tmrWD,
                LIB_TMR_TYPE_ONE_SHOT,
                RF_WD_TIMER_MS,
-               0,
+               cc120x_eventHandler,
                NULL);
 
     /* goto state sleep */
@@ -508,7 +508,6 @@ static void cc120x_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 
         Tmr_Stop( &rf_tmrWD );
         Tmr_Start( &rf_tmrWD );
-        RF_SEM_POST(NETSTK_RF_EVENT);
 
         /* wait for packet to be sent */
         uint16_t iteration = 0xffff;
@@ -793,7 +792,6 @@ static void cc120x_isrRxSyncReceived(void *p_arg)
         /* start the timeout and schedule an event*/
         Tmr_Stop( &rf_tmrWD );
         Tmr_Start( &rf_tmrWD );
-        RF_SEM_POST(NETSTK_RF_EVENT);
 
         /*
          * Wait until entire PHY header is received or number of register-
