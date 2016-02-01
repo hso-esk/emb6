@@ -403,11 +403,7 @@ int8_t hal_init (void)
     for( ix = 0; ix < sizeof( s_hal_userio); ix++ )
     {
         s_hal_gpio_pin_t* p_gpioPin = &s_hal_userio[ix];
-#if EFM32_LED_ACTIVE_HIGH
-        GPIO_PinModeClear( p_gpioPin->port, p_gpioPin->pin, p_gpioPin->mode, p_gpioPin->val );
-#else
         GPIO_PinModeSet( p_gpioPin->port, p_gpioPin->pin, p_gpioPin->mode, p_gpioPin->val );
-#endif /* #if EFM32_LED_ACTIVE_HIGH */
     }
 
 
