@@ -74,7 +74,7 @@
 *                                LOCAL TYPEDEFS
 ********************************************************************************
 */
-typedef enum rf_state
+typedef enum e_rf_state
 {
     RF_STATE_NON_INIT,
     RF_STATE_INIT,

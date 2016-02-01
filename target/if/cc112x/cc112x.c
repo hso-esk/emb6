@@ -82,7 +82,7 @@ typedef enum e_rf_state
     RF_STATE_ERR,
     RF_STATE_IDLE,
 
-    /* WOR Submachine states */
+    /* RX Submachine states */
     RF_STATE_RX_LISTENING,
     RF_STATE_RX_SYNC,
     RF_STATE_RX_PORTION_MIDDLE,
