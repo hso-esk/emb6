@@ -214,7 +214,8 @@ void Tmr_Start (LIB_TMR *p_tmr)
 {
     CPU_ENTER_CRITICAL();
     if ((p_tmr->State == LIB_TMR_STATE_CREATED) ||
-        (p_tmr->State == LIB_TMR_STATE_FINISHED)) {
+        (p_tmr->State == LIB_TMR_STATE_FINISHED) ||
+        (p_tmr->State == LIB_TMR_STATE_STOPPED)) {
         p_tmr->State = LIB_TMR_STATE_RUNNING;
         p_tmr->Counter = TmrCurTick + p_tmr->Period;
         Tmr_Link (p_tmr);
@@ -233,11 +234,11 @@ void Tmr_Stop (LIB_TMR *p_tmr)
 {
     CPU_ENTER_CRITICAL();
     if (p_tmr->State == LIB_TMR_STATE_CREATED) {
-        p_tmr->State = LIB_TMR_STATE_FINISHED;
+        p_tmr->State = LIB_TMR_STATE_STOPPED;
     }
 
     if (p_tmr->State == LIB_TMR_STATE_RUNNING) {
-        p_tmr->State = LIB_TMR_STATE_FINISHED;
+        p_tmr->State = LIB_TMR_STATE_STOPPED;
         Tmr_Unlink (p_tmr);
     }
     CPU_EXIT_CRITICAL();
@@ -310,6 +311,7 @@ void Tmr_Update (void)
 #endif
 
         Tmr_Stop(p_tmr);
+        p_tmr->State = LIB_TMR_STATE_FINISHED;
         if (p_tmr->Type == LIB_TMR_TYPE_PERIODIC) {
             Tmr_Start(p_tmr);
         }
