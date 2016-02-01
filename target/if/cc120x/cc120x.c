@@ -221,6 +221,9 @@ typedef enum rf_state
 #define RF_INT_CFG_EDGE_RX_SYNC             E_TARGET_INT_EDGE_RISING
 #define RF_INT_CFG_EDGE_RX_FINI             E_TARGET_INT_EDGE_FALLING
 
+#ifndef RF_WD_TIMER_MS
+#define RF_WD_TIMER_MS                      1000
+#endif /* #ifndef RF_WD_TIMER_MS */
 
 /*
 ********************************************************************************
@@ -241,6 +244,8 @@ static uint8_t      rf_worEn;
 
 static uint8_t      rf_chanNum;
 static e_nsRfOpMode rf_opMode;
+
+static LIB_TMR      rf_tmrWD;
 
 /*
 ********************************************************************************
@@ -338,6 +343,13 @@ static void cc120x_Init (void *p_netstk, e_nsErr_t *p_err)
     /* configure operating mode and channel number */
     rf_chanNum = 0;
     rf_opMode = NETSTK_RF_OP_MODE_CSM;
+
+    /* create watchdog timer */
+    Tmr_Create(&rf_tmrWD,
+               LIB_TMR_TYPE_ONE_SHOT,
+               RF_WD_TIMER_MS,
+               0,
+               NULL);
 
     /* goto state sleep */
     cc120x_gotoIdle();
@@ -493,6 +505,10 @@ static void cc120x_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
             /* enter TX mode */
             cc120x_spiCmdStrobe(CC120X_STX);
         }
+
+        Tmr_Stop( &rf_tmrWD );
+        Tmr_Start( &rf_tmrWD );
+        RF_SEM_POST(NETSTK_RF_EVENT);
 
         /* wait for packet to be sent */
         uint16_t iteration = 0xffff;
@@ -774,6 +790,11 @@ static void cc120x_isrRxSyncReceived(void *p_arg)
         rf_state = RF_STATE_RX_SYNC;
         LED_RX_ON();
 
+        /* start the timeout and schedule an event*/
+        Tmr_Stop( &rf_tmrWD );
+        Tmr_Start( &rf_tmrWD );
+        RF_SEM_POST(NETSTK_RF_EVENT);
+
         /*
          * Wait until entire PHY header is received or number of register-
          * reading attempts exceeds the predefined max value
@@ -876,6 +897,9 @@ static void cc120x_isrRxPacketReceived(void *p_arg)
         cc120x_spiRxFifoRead(rf_bufIx, rf_byteLeft);
         rf_byteLeft = 0;
 
+        /* stop WD timer */
+        Tmr_Stop( &rf_tmrWD );
+
         /* signal complete reception interrupt */
         RF_SEM_POST(NETSTK_RF_EVENT);
     }
@@ -952,6 +976,9 @@ static void cc120x_isrTxPacketSent(void *p_arg)
         rf_state = RF_STATE_ERR;
     }
 
+    /* stop WD timer */
+    Tmr_Stop( &rf_tmrWD );
+
     /* clear ISR flag */
     bsp_extIntClear(RF_INT_CFG_TX_FINI);
 }
@@ -1027,6 +1054,19 @@ static void cc120x_eventHandler(c_event_t c_event, p_data_t p_data)
             memset(rf_rxBuf, 0, sizeof(rf_rxBuf));
         }
         if (rf_state != RF_STATE_RX_LISTENING) {
+            cc120x_gotoRx();
+        }
+    }
+
+    if( Tmr_StateGet( &rf_tmrWD ) == LIB_TMR_STATE_FINISHED )
+    {
+        if( (rf_state != RF_STATE_IDLE) &&
+            (rf_state != RF_STATE_RX_LISTENING) &&
+            (rf_state != RF_STATE_SLEEP) )
+        {
+            /* rf state timeout. stop the timer and reset RF */
+            Tmr_Stop( &rf_tmrWD );
+            /* reset RF */
             cc120x_gotoRx();
         }
     }
