@@ -302,6 +302,9 @@ void Tmr_Update (void)
             break;
         }
 
+        Tmr_Stop(p_tmr);
+        p_tmr->State = LIB_TMR_STATE_FINISHED;
+
         if (p_tmr->CbFnct != (FNCT_VOID)0) {
             p_tmr->CbFnct (p_tmr->CbArg);
         }
@@ -310,8 +313,6 @@ void Tmr_Update (void)
         TmrLatestUnlinked = p_tmr;
 #endif
 
-        Tmr_Stop(p_tmr);
-        p_tmr->State = LIB_TMR_STATE_FINISHED;
         if (p_tmr->Type == LIB_TMR_TYPE_PERIODIC) {
             Tmr_Start(p_tmr);
         }
