@@ -83,8 +83,18 @@
 /*==============================================================================
                                      MACROS
 ==============================================================================*/
-#define     LOGGER_ENABLE        LOGGER_HAL
+#define     LOGGER_ENABLE           LOGGER_HAL
 #include    "logger.h"
+
+#ifndef EFM32_LED_ACTIVE_HIGH
+#define EFM32_LED_ACTIVE_HIGH       TRUE
+#endif /* #ifndef EFM32_LED_ACTIVE_HIGH */
+
+#if EFM32_LED_ACTIVE_HIGH
+#define EFM32_LED_OUT_VAL           0
+#else /* #ifndef EFM32_LED_ACTIVE_HIGH */
+#define EFM32_LED_OUT_VAL           1
+#endif /* #ifndef EFM32_LED_ACTIVE_HIGH */
 
 /*==============================================================================
                                      ENUMS
@@ -207,8 +217,8 @@ s_hal_gpio_pin_t s_hal_exti_gpio[E_TARGET_EXT_INT_MAX] =
 /** User IOs */
 s_hal_gpio_pin_t s_hal_userio[] =
 {
-    {EFM32_IO_PORT_LED0, EFM32_IO_PIN_LED0, gpioModePushPull,  0},  /* LED0 */
-    {EFM32_IO_PORT_LED1, EFM32_IO_PIN_LED1, gpioModePushPull, 0},   /* LED1 */
+    {EFM32_IO_PORT_LED0, EFM32_IO_PIN_LED0, gpioModePushPull,  EFM32_LED_OUT_VAL},  /* LED0 */
+    {EFM32_IO_PORT_LED1, EFM32_IO_PIN_LED1, gpioModePushPull, EFM32_LED_OUT_VAL},   /* LED1 */
 };
 
 /** External interrupt handler table */
@@ -393,7 +403,11 @@ int8_t hal_init (void)
     for( ix = 0; ix < sizeof( s_hal_userio); ix++ )
     {
         s_hal_gpio_pin_t* p_gpioPin = &s_hal_userio[ix];
+#if EFM32_LED_ACTIVE_HIGH
+        GPIO_PinModeClear( p_gpioPin->port, p_gpioPin->pin, p_gpioPin->mode, p_gpioPin->val );
+#else
         GPIO_PinModeSet( p_gpioPin->port, p_gpioPin->pin, p_gpioPin->mode, p_gpioPin->val );
+#endif /* #if EFM32_LED_ACTIVE_HIGH */
     }
 
 
@@ -431,7 +445,11 @@ void hal_ledOff(uint16_t ui_led)
     }
 
     if( p_gpioPin != NULL )
+#if EFM32_LED_ACTIVE_HIGH
         GPIO_PinOutClear( p_gpioPin->port, p_gpioPin->pin );
+#else
+        GPIO_PinOutSet( p_gpioPin->port, p_gpioPin->pin );
+#endif /* EFM32_LED_ACTIVE_HIGH */
 } /* hal_ledOff() */
 
 
@@ -455,7 +473,11 @@ void hal_ledOn(uint16_t ui_led)
     }
 
     if( p_gpioPin != NULL )
+#if EFM32_LED_ACTIVE_HIGH
         GPIO_PinOutSet( p_gpioPin->port, p_gpioPin->pin );
+#else
+    GPIO_PinOutClear( p_gpioPin->port, p_gpioPin->pin );
+#endif /* EFM32_LED_ACTIVE_HIGH */
 } /* hal_ledOn() */
 
 
