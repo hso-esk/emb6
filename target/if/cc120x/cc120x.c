@@ -53,12 +53,13 @@
 ********************************************************************************
 */
 #include "emb6.h"
-
+#include "board_conf.h"
 
 #include "cc120x.h"
 #include "cc120x_cfg.h"
 #include "cc120x_spi.h"
 
+#include "lib_tmr.h"
 #include "lib_port.h"
 #include "packetbuf.h"
 #include "evproc.h"
@@ -107,8 +108,17 @@ typedef enum rf_state
 *                                LOCAL DEFINES
 ********************************************************************************
 */
-#define RF_SEM_POST(_event_)          evproc_putEvent(E_EVPROC_HEAD, _event_, NULL)
-#define RF_SEM_WAIT(_event_)          evproc_regCallback(_event_, cc120x_eventHandler)
+
+#ifndef CC120X_PART_NUMBER
+#define CC120X_PART_NUMBER                  0x20
+#endif /* #ifndef CC120X_PART_NUMBER */
+
+#ifndef CC120X_PART_VERSION
+#define CC120X_PART_VERSION                 0x11
+#endif /* #ifndef CC120X_PART_VERSION */
+
+#define RF_SEM_POST(_event_)                evproc_putEvent(E_EVPROC_HEAD, _event_, NULL)
+#define RF_SEM_WAIT(_event_)                evproc_regCallback(_event_, cc120x_eventHandler)
 
 #define RF_CFG_MAX_PACKET_LENGTH            (uint16_t)(PHY_PSDU_MAX + PHY_HEADER_LEN)
 
@@ -698,14 +708,14 @@ static void cc120x_chkPartnumber(e_nsErr_t *p_err)
 
     /* get part number */
     cc120x_spiRegRead(CC120X_PARTNUMBER, &part_number, 1);
-    if (part_number != 0x20) {
+    if (part_number != CC120X_PART_NUMBER) {
         *p_err = NETSTK_ERR_INIT;
         return;
     }
 
     /* get part version */
     cc120x_spiRegRead(CC120X_PARTVERSION, &part_version, 1);
-    if (part_version != 0x11) {
+    if (part_version != CC120X_PART_VERSION) {
         *p_err = NETSTK_ERR_INIT;
         return;
     }

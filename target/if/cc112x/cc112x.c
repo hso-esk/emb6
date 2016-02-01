@@ -53,12 +53,14 @@
 ********************************************************************************
 */
 #include "emb6.h"
+#include "board_conf.h"
 
 #include "cc112x.h"
 #include "cc112x_cfg.h"
 #include "cc112x_spi.h"
 
 #include "lib_tmr.h"
+#include "lib_port.h"
 #include "packetbuf.h"
 #include "evproc.h"
 #include "phy_framer_802154.h"
@@ -106,8 +108,17 @@ typedef enum e_rf_state
 *                                LOCAL DEFINES
 ********************************************************************************
 */
-#define RF_SEM_POST(_event_)          evproc_putEvent(E_EVPROC_HEAD, _event_, NULL)
-#define RF_SEM_WAIT(_event_)          evproc_regCallback(_event_, cc112x_eventHandler)
+
+#ifndef CC112X_PART_NUMBER
+#define CC112X_PART_NUMBER                  0x48
+#endif /* #ifndef CC112X_PART_NUMBER */
+
+#ifndef CC112X_PART_VERSION
+#define CC112X_PART_VERSION                 0x21
+#endif /* #ifndef CC112X_PART_VERSION */
+
+#define RF_SEM_POST(_event_)                evproc_putEvent(E_EVPROC_HEAD, _event_, NULL)
+#define RF_SEM_WAIT(_event_)                evproc_regCallback(_event_, cc112x_eventHandler)
 
 #define RF_CFG_MAX_PACKET_LENGTH            (uint16_t)(PHY_PSDU_MAX + PHY_HEADER_LEN)
 
@@ -696,14 +707,14 @@ static void cc112x_chkPartnumber(e_nsErr_t *p_err)
 
     /* get part number */
     cc112x_spiRegRead(CC112X_PARTNUMBER, &part_number, 1);
-    if (part_number != 0x48) {
+    if (part_number != CC112X_PART_NUMBER) {
         *p_err = NETSTK_ERR_INIT;
         return;
     }
 
     /* get part version */
     cc112x_spiRegRead(CC112X_PARTVERSION, &part_version, 1);
-    if (part_version != 0x21) {
+    if (part_version != CC112X_PART_VERSION) {
         *p_err = NETSTK_ERR_INIT;
         return;
     }
