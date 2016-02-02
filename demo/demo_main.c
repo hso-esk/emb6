@@ -119,6 +119,10 @@
                                      MACROS
  =============================================================================*/
 
+#ifndef EMB6_PROC_DELAY
+#define EMB6_PROC_DELAY                     500
+#endif /* #ifndef EMB6_PROC_DELAY */
+
 /*==============================================================================
                                      ENUMS
  =============================================================================*/
@@ -314,7 +318,7 @@ int main(void)
         bsp_led(E_BSP_LED_2, E_BSP_LED_OFF);
 
         /* call process function with delay in us */
-        emb6_process(500);  /* default: 500 us delay */
+        emb6_process(EMB6_PROC_DELAY);  /* default: 500 us delay */
     }
     bsp_led(E_BSP_LED_0, E_BSP_LED_ON);
     printf("Program failed.");
