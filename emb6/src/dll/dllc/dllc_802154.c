@@ -77,7 +77,6 @@ static void DLLC_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
 
 static void DLLC_CbTx(void *p_arg, e_nsErr_t *p_err);
 static void DLLC_VerifyAddr(frame802154_t *p_frame, e_nsErr_t *p_err);
-static uint8_t DLLC_IsBroadcastAddr(uint8_t mode, uint8_t *p_addr);
 
 
 /*
@@ -460,23 +459,6 @@ static void DLLC_CbTx(void *p_arg, e_nsErr_t *p_err)
 
 
 /**
- *
- * @param mode
- * @param addr
- * @return
- */
-static uint8_t DLLC_IsBroadcastAddr(uint8_t mode, uint8_t *p_addr)
-{
-    uint8_t i = mode == FRAME802154_SHORTADDRMODE ? 2 : 8;
-    while (i-- > 0) {
-        if (p_addr[i] != 0xff) {
-            return 0;
-        }
-    }
-    return 1;
-}
-
-/**
  * @brief   Verify destination addresses of the received frame
  */
 static void DLLC_VerifyAddr(frame802154_t *p_frame, e_nsErr_t *p_err)
@@ -498,8 +480,7 @@ static void DLLC_VerifyAddr(frame802154_t *p_frame, e_nsErr_t *p_err)
         /*
          * Check for broadcast frame
          */
-        is_broadcast = DLLC_IsBroadcastAddr(p_frame->fcf.dest_addr_mode,
-                                            p_frame->dest_addr);
+        is_broadcast = frame802154_broadcast(p_frame);
         if (is_broadcast == 0) {
             /*
              * If not a broadcast frame, then store destination address

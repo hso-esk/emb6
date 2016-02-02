@@ -541,5 +541,17 @@ uint8_t frame802154_getDSN(void)
 {
     return Framer802154_DSN;
 }
+/*----------------------------------------------------------------------------*/
+uint8_t frame802154_broadcast(frame802154_t *p)
+{
+    uint8_t i = p->fcf.dest_addr_mode == FRAME802154_SHORTADDRMODE ? 2 : 8;
+    while (i-- > 0) {
+        if (p->dest_addr[i] != 0xff) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 /** \}   */
 /** @} */

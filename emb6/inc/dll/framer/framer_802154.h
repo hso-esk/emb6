@@ -221,6 +221,9 @@ int frame802154_parse(uint8_t *data, int length, frame802154_t *pf);
 void    frame802154_setDSN(uint8_t dsn);
 uint8_t frame802154_getDSN(void);
 
+uint8_t frame802154_broadcast(frame802154_t *p);
+
+
 #endif /* FRAME_802154_H */
 /** @} */
 /** @} */
