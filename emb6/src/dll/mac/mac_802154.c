@@ -404,7 +404,9 @@ void MAC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
         switch (frame.fcf.frame_type) {
             case FRAME802154_DATAFRAME:
             case FRAME802154_CMDFRAME:
-                if (frame.fcf.ack_required) {
+                if ((frame.fcf.ack_required) && (!frame802154_broadcast( &frame )) &&
+                  (linkaddr_cmp((linkaddr_t *)frame.dest_addr, &linkaddr_node_addr)))
+                {
                     MAC_TxACK(frame.seq, p_err);
                     if (*p_err != NETSTK_ERR_NONE) {
                         emb6_errorHandler(p_err);
