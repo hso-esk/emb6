@@ -781,7 +781,7 @@ static void cc112x_isrRxSyncReceived(void *p_arg)
 
     if (rf_state == RF_STATE_RX_LISTENING) {
         uint8_t num_rx_bytes;
-        uint8_t iteration;
+        uint16_t iteration;
         uint16_t pkt_len;
 
         /* go to state RX SYCN */
@@ -796,7 +796,7 @@ static void cc112x_isrRxSyncReceived(void *p_arg)
          * Wait until entire PHY header is received or number of register-
          * reading attempts exceeds the predefined max value
          */
-        iteration = 100;
+        iteration = 0xffff;
         num_rx_bytes = 0;
         while ((num_rx_bytes < PHY_HEADER_LEN) && (iteration > 0)) {
             iteration--;
