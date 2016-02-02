@@ -512,7 +512,6 @@ static void MAC_TxACK(uint8_t seq, e_nsErr_t *p_err)
     frame802154_create(&frame, packetbuf_hdrptr());
 
     /* Issue next lower layer to transmit ACK */
-    Tmr_Delay(1);
     MAC_Netstk->phy->send(packetbuf_hdrptr(),
                           packetbuf_totlen(),
                           p_err);
