@@ -173,6 +173,9 @@ static void _hal_tcInit( void );
 /* initialization of clocks */
 static void _hal_clksInit( void );
 
+/* initialization of uart */
+static void _hal_uartInit( void );
+
 /* callback for the Tick Counter */
 static void _hal_tcCb( void );
 
@@ -187,6 +190,10 @@ static void _hal_radioCb(uint8_t pin);
 static clock_time_t volatile l_hal_tick;
 /** Seconds since startup */
 static clock_time_t volatile l_hal_sec;
+
+/** UART instance */
+static USART_TypeDef* uart = EFM32_UART;
+extern USART_TypeDef* uartStdio = NULL;
 
 /** Definition of the SPI interface */
 static s_hal_spiDrv s_hal_spi = {
@@ -223,6 +230,7 @@ s_hal_gpio_pin_t s_hal_userio[] =
 
 /** External interrupt handler table */
 pfn_intCallb_t pf_hal_exti[E_TARGET_EXT_INT_MAX] = {0};
+
 
 /*==============================================================================
                                 LOCAL CONSTANTS
@@ -306,6 +314,49 @@ static void _hal_clksInit( void )
     CMU_ClockEnable( cmuClock_HFPER, true );
     CMU_ClockEnable( cmuClock_GPIO, true );
     CMU_ClockEnable( cmuClock_TIMER1, true );
+    CMU_ClockEnable(cmuClock_UART0, true);
+}
+
+/**
+ *    \brief    Initialize UART.
+ */
+static void _hal_uartInit( void )
+{
+    /* initialize UART for debug */
+    USART_InitAsync_TypeDef usartCfg = {
+          usartDisable,
+          0,
+          115200,
+          usartOVS16,
+          usartDatabits8,
+          usartNoParity,
+          usartStopbits1
+    };
+
+    /* Configure USART for basic async operation */
+    USART_InitAsync(uart, &usartCfg);
+
+    /* Use default location 0: TX - Pin F6, RX - Pin F7 */
+    /* To avoid false start, configure output as high */
+    GPIO_PinModeSet(EFM32_UART_PORT_USART_TX, EFM32_UART_PIN_USART_TX,
+            gpioModePushPull, 1);
+
+    /* Define input, no filtering */
+    GPIO_PinModeSet(EFM32_UART_PORT_USART_RX, EFM32_UART_PIN_USART_RX,
+            gpioModeInput, 0);
+
+    /* Enable pins at default location */
+    uart->ROUTE = EFM32_UART_LOC | UART_ROUTE_RXPEN | UART_ROUTE_TXPEN;
+
+    /* Clear previous RX interrupts */
+    USART_IntClear(EFM32_UART, UART_IF_RXDATAV);
+    NVIC_ClearPendingIRQ( UART0_RX_IRQn);
+
+    /* Finally enable it */
+    USART_Enable(uart, usartEnableTx);
+
+    /* set external UART instance */
+    uartStdio = uart;
 }
 
 
@@ -393,6 +444,9 @@ int8_t hal_init (void)
     /* initialize clocks */
     _hal_clksInit();
 
+    /* initialize UART */
+    _hal_uartInit();
+
     /* initialize watchdog */
     _hal_wdcInit();
 
@@ -405,7 +459,6 @@ int8_t hal_init (void)
         s_hal_gpio_pin_t* p_gpioPin = &s_hal_userio[ix];
         GPIO_PinModeSet( p_gpioPin->port, p_gpioPin->pin, p_gpioPin->mode, p_gpioPin->val );
     }
-
 
     return 1;
 }/* hal_init() */
