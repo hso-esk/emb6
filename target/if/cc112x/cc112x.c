@@ -273,7 +273,6 @@ static void cc112x_isrRxFifoAboveThreshold(void *p_arg);
 static void cc112x_isrRxPacketReceived(void *p_arg);
 static void cc112x_isrTxFifoBelowThreshold(void *p_arg);
 static void cc112x_isrTxPacketSent(void *p_arg);
-static void cc112x_isrTxCcaDone(void *p_arg);
 
 #if RF_WD_ENABLE
 static void cc112x_wdCB(void*);
@@ -1006,32 +1005,6 @@ static void cc112x_isrTxPacketSent(void *p_arg)
     bsp_extIntClear(RF_INT_CFG_TX_FINI);
 }
 
-static void cc112x_isrTxCcaDone(void *p_arg)
-{
-    uint8_t marc_status;
-    uint8_t is_cca_ok;
-    e_nsErr_t err;
-
-
-    /* achieve MARC_STATUS to determine what caused the interrupt */
-    cc112x_spiRegRead(CC112X_MARC_STATUS1, &marc_status, 1);
-
-    /* check reception process result */
-    is_cca_ok = (rf_state == RF_STATE_CCA_BUSY);
-    if (is_cca_ok) {
-        rf_state = RF_STATE_CCA_FINI;
-    } else {
-        err = NETSTK_ERR_FATAL;
-        emb6_errorHandler(&err);
-    }
-
-    /* clear ISR flag */
-    bsp_extIntClear(RF_INT_CFG_TX_CCA_DONE);
-
-    /* disable external CCA interrupts */
-    bsp_extIntDisable(RF_INT_CFG_TX_CCA_DONE);
-}
-
 #if RF_WD_ENABLE
 static void cc112x_wdCB(void* param)
 {
@@ -1165,33 +1138,20 @@ static void cc112x_cca(e_nsErr_t *p_err)
     }
 #endif
 
-
-    uint8_t is_done;
-    uint8_t marc_status0;
-    uint16_t iteration;
+    uint8_t rssi_status;
     rf_status_t chip_status;
     uint8_t cca_mode;
-    uint8_t reg_len;
+
+    /* disable RF external interrupts */
+    RF_EXTI_DISABLED();
 
     /* set the returned error code to default */
     *p_err = NETSTK_ERR_NONE;
 
-    /*
-     * See also: TI CC120x User's guide, 6.11
-     *
-     * When an STX or SFSTXON command strobe is given while the CC120x is in
-     * state RX, then the TX or FSTXON state is only entered if the clear
-     * channel requirements are fulfilled (i.e. CCA_STATUS is asserted).
-     * Otherwise the chip will remain in state RX.
-     * If the channel then becomes available (i.e. after the previous CCA
-     * failure), the radio will not enter TX or FSTXON before a new strobe
-     * command is sent on the SPI interface. This feature is called TX on
-     * CCA/LBT.
-     */
-
     if (rf_state != RF_STATE_RX_LISTENING) {
         *p_err = NETSTK_ERR_BUSY;
     } else {
+
         /*
          * Entry action
          */
@@ -1214,47 +1174,14 @@ static void cc112x_cca(e_nsErr_t *p_err)
             }
         } while (RF_GET_CHIP_STATE(chip_status) != RF_CHIP_STATE_RX);
 
-        /* disable RF external interrupts */
-        RF_EXTI_DISABLED();
 
-        /* configure RF GPIOs to aid CCA operation */
-        reg_len = sizeof(cc112x_cfg_cca) / sizeof(s_regSettings_t);
-        cc112x_configureRegs(cc112x_cfg_cca, reg_len);
-
-        /* configure external CCA interrupts */
-        bsp_extIntRegister(RF_INT_CFG_TX_CCA_DONE, RF_INT_CFG_EDGE_TX_CCA_DONE, cc112x_isrTxCcaDone);
-        bsp_extIntEnable(RF_INT_CFG_TX_CCA_DONE);
-
-        /* Strobe TX to assert CCA */
-        chip_status = cc112x_spiCmdStrobe(CC112X_STX);
-
-        is_done = FALSE;
-        iteration = 10;
-        marc_status0 = 0;
-        while ((is_done == FALSE) && (iteration > 0)) {
-            iteration--;
-
-            /* read CCA_STATUS from the register MARC_STATUS0
-             * (MAC_STATUS0 & 0x04) indicates value of TXONCCA_FAILED */
-            cc112x_spiRegRead(CC112X_MARC_STATUS0, &marc_status0, 1);
-
-            /* poll for radio status */
-            chip_status = cc112x_spiCmdStrobe(CC112X_SNOP);
-
-            /* check CCA attempt termination conditions */
-            is_done = (rf_state != RF_STATE_CCA_BUSY) |         /* CCA_STATUS   */
-                      (RF_IS_IN_TX(chip_status))      |         /* Channel free */
-                      (marc_status0 & 0x04);                    /* Channel busy */
-        }
-
-        /* disable external CCA interrupts */
-        bsp_extIntDisable(RF_INT_CFG_TX_CCA_DONE);
-
-        /* get result of CCA process */
-        cc112x_spiRegRead(CC112X_MARC_STATUS0, &marc_status0, 1);
-        if ((marc_status0 & 0x04)) {
+        do {
+            cc112x_spiRegRead(CC112X_RSSI0, &rssi_status, 1);
+        } while( (rssi_status & 0x02) == 0 );
+        if ( (rssi_status & 0x04) )
             *p_err = NETSTK_ERR_CHANNEL_ACESS_FAILURE;
-        }
+        else
+            *p_err = NETSTK_ERR_NONE;
 
         /*
          * Exit actions
