@@ -315,6 +315,8 @@ static void _hal_clksInit( void )
     CMU_ClockEnable( cmuClock_GPIO, true );
     CMU_ClockEnable( cmuClock_TIMER1, true );
     CMU_ClockEnable(cmuClock_UART0, true);
+
+    CMU_HFRCOBandSet( cmuHFRCOBand_28MHz );
 }
 
 /**
