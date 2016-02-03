@@ -117,6 +117,13 @@
 #define EFM32_IO_PORT_LED1                  gpioPortE
 #define EFM32_IO_PIN_LED1                   3
 
+#define EFM32_LED_ACTIVE_HIGH               TRUE
+
+/*
+ * DELAY
+ */
+#define EMB6_PROC_DELAY                     0
+
 /*============================================================================*/
 /*!
 \brief    emb6 board configuration fuction
