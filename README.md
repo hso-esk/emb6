@@ -38,8 +38,11 @@ Getting started
 ---------------
 
 For the best introduction to get started with `emb::6`, please read the
-documentation included. For the code comments you will also find a doxygen
+documentation included, our [Wiki](https://github.com/hso-esk/emb6/wiki) page. For the code comments you will also find a doxygen
 project file within the doc folder.
+
+If you want to launch an LCM based lightweight virtualisation with various routing topologies
+you are invited to visit a [dedicated](https://github.com/hso-esk/emb6/wiki/Running-a-virtual-emb6) Wiki page
 
 Features
 ---------

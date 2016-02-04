@@ -1,36 +1,41 @@
-hardware_config = {
+brd_conf = {
 # Micro Controller Unit description (HEAD/arch/<arch>/<mcu_fam>/<vendor> folder)
-	'mcu_arch' 		: 	'arm',
-	'mcu_family' 	: 	'cm0plus',
-	'mcu_vendor' 	: 	'atmel',
-	'mcu_cpu' 		: 	'samd20',
-	'mcu_toolchain' : 	'GCC',
-	
+    'arch'          : 'arm',
+    'family'        : 'cm0plus',
+    'vendor'        : 'atmel',
+    'cpu'           : 'samd20',
+    'toolchain'     : 'GCC',
+
 # Device driver description (HEAD/target/mcu folder)
-	'mcu'			:	'samd20',
+    'mcu'           : 'samd20',
 
 # Transceiver source description (HEAD/target/if folder)
-	'if'			:	'at86rf212b',
-	
-# C code global defined symbols
-	'defines' : [
-		'EXTINT_CALLBACK_MODE=true',
-		'RTC_COUNT_ASYNC=true',
-		'CYCLE_MODE=true',
-		'LEDS_ON_BOARD=true',
-		'IF_AT86RF212B',
-		'__SAMD20G18__',
-	],
-	
-# GCC flags
-	'cflags' : [
-	],
-	
-# LINKER flags
-	'ldflags' : [
-	],
-	'startupfile' : 'GCC/startup_samd20.c',
-	'scriptfile' : 'GCC/samd20g18_flash.ld'
+    'if'            : 'at86rf212b',
+
+    'startupfile'   : 'GCC/startup_samd20.c',
+    'scriptfile'    : 'GCC/samd20g18_flash.ld'
 }
 
-Return('hardware_config')
+std_conf = {
+# C code global defined symbols
+    'CPPDEFINES' : [
+        'EXTINT_CALLBACK_MODE=true',
+        'RTC_COUNT_ASYNC=true',
+        'CYCLE_MODE=true',
+        'LEDS_ON_BOARD=true',
+        'IF_AT86RF212B',
+        '__SAMD20G18__',
+    ],
+
+# GCC flags
+    'CFLAGS' : [
+    ],
+
+# LINKER flags
+    'LINKFLAGS' : [
+    ]
+}
+
+board_conf = {'brd' : brd_conf, 'std' : std_conf}
+
+Return('board_conf')
