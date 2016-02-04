@@ -71,8 +71,6 @@
 #include "evproc.h"
 #include "resolv.h"
 #include "demo_mdns_cli.h"
-//#include "uip-debug.h"
-
 /*==============================================================================
                                      MACROS
  =============================================================================*/
@@ -126,9 +124,6 @@ void demo_mdns_callback (c_event_t c_event, p_data_t p_data)
 {
 	switch(status)
 	{
-//		case RESOLV_STATUS_UNCACHED:
-//		case RESOLV_STATUS_RESOLVING:
-//			break;
 		case RESOLV_STATUS_CACHED:
 		{
 			if(etimer_expired(&et) && (&et == p_data)) {
@@ -240,8 +235,6 @@ int8_t demo_mdnsInit(void)
 	udp_socket_register(pst_client_udp_socket, NULL, NULL);
 	pst_client_udp_socket->udp_conn->rport = UIP_HTONS(3000);
 	udp_socket_bind(pst_client_udp_socket, 3001);
-
-//	status = set_connection_address(&pst_client_udp_socket->udp_conn->ripaddr);
 
 	PRINTF("Created a connection with the server ");
 	PRINT6ADDR(&pst_client_udp_socket->udp_conn->ripaddr);

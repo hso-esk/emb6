@@ -281,8 +281,6 @@ static uint8_t seqno;
 static struct udp_socket   st_udp_socket;
        struct udp_socket*  pst_udp_socket;
 
-//static struct etimer retry;
-
 static struct etimer probe;
 
 static uint8_t initialized = 0;
@@ -501,7 +499,6 @@ mdns_announce_requested(void)
 static void
 start_name_collision_check(clock_time_t after)
 {
-//	if (&probe != NULL) {
 	etimer_stop(&probe);
 	/* We need to wait a random (0-250ms) period of time before
 	 * probing to be in compliance with the MDNS spec. */
@@ -509,7 +506,6 @@ start_name_collision_check(clock_time_t after)
 	etimer_set(&probe,
 			(bsp_get(E_BSP_GET_TRES) * (random_rand() & 0xFF) / 1024) + after,
 			mdns_probe_process);
-//	}
 }
 /*---------------------------------------------------------------------------*/
 /** \internal
@@ -683,8 +679,6 @@ check_entries(const uint8_t *data)
   for(i = 0; i < RESOLV_ENTRIES; ++i) {
     namemapptr = &names[i];
     if(namemapptr->state == STATE_NEW || namemapptr->state == STATE_ASKING) {
-      /* TODO ft | whats the use of this timer ???
-       * etimer_set(&retry, bsp_get(E_BSP_GET_TRES) / 4); */
       if(namemapptr->state == STATE_ASKING) {
         if(--namemapptr->tmr == 0) {
 #if RESOLV_CONF_SUPPORTS_MDNS
@@ -775,9 +769,6 @@ check_entries(const uint8_t *data)
                 (query - (uint8_t *) data),
                 &resolv_mdns_addr, MDNS_PORT);
 
-//        uip_udp_packet_sendto(pst_udp_socket->udp_conn, data,
-//                              (query - (uint8_t *) data),
-//                              &resolv_mdns_addr, UIP_HTONS(MDNS_PORT));
 
         PRINTF("resolver: (i=%d) Sent MDNS %s for \"%s\".\n", i,
                namemapptr->is_probe?"probe":"request",namemapptr->name);
@@ -787,11 +778,6 @@ check_entries(const uint8_t *data)
                               (const uip_ipaddr_t *)
                               uip_nameserver_get(namemapptr->server),
                               DNS_PORT);
-//        uip_udp_packet_sendto(pst_udp_socket->udp_conn, data,
-//                              (query - (uint8_t *) data),
-//                              (const uip_ipaddr_t *)
-//                              uip_nameserver_get(namemapptr->server),
-//                              UIP_HTONS(DNS_PORT));
 
         PRINTF("resolver: (i=%d) Sent DNS request for \"%s\".\n", i,
                namemapptr->name);
@@ -900,16 +886,10 @@ newdata(const uip_ipaddr_t *source_addr,
         if(source_port == MDNS_PORT) {
           mdns_announce_requested();
         } else {
-            /* TODO I used buf[] instead of data */
+            /* Used a buf[] instead of uip_appdata */
             uint8_t buf[250];
             udp_socket_sendto(pst_udp_socket, buf, mdns_prep_host_announce_packet(buf), source_addr, source_port);
 
-            /*
-             * uip_udp_packet_sendto(pst_udp_socket->udp_conn, uip_appdata,
-                                mdns_prep_host_announce_packet(),
-                                &UIP_UDP_BUF->srcipaddr,
-                                UIP_UDP_BUF->srcport);
-            */
         }
         return;
       } else {
@@ -1111,7 +1091,6 @@ newdata(const uip_ipaddr_t *source_addr,
   {
     if(try_next_server(namemapptr)) {
       namemapptr->state = STATE_ASKING;
-//      process_post(&resolv_process, PROCESS_EVENT_TIMER, NULL);
     }
   }
 
@@ -1153,10 +1132,6 @@ resolv_get_hostname(void)
  */
 void mdns_probe_process(c_event_t c_event, p_data_t p_data)
 {
-//  static struct etimer delay;
-
-
-
   if(&probe == p_data) {
 
     if(c_event == EVENT_TYPE_TIMER_EXP)
@@ -1164,7 +1139,6 @@ void mdns_probe_process(c_event_t c_event, p_data_t p_data)
         mdns_state = MDNS_STATE_WAIT_BEFORE_PROBE;
         PRINTF("mdns-probe: Process (re)started.\n");
 
-        //etimer_expired(&probe);
         /* Begin searching for our name. */
         mdns_state = MDNS_STATE_PROBING;
         /* reset the flag to 0 */
@@ -1176,9 +1150,6 @@ void mdns_probe_process(c_event_t c_event, p_data_t p_data)
                 (long)etimer_expiration_time(&probe));
     }
     if(resolv_event_found == 1){
-        /* todo ft | Make sure this part isn't executed unless
-         * strcasecmp(resolv_hostname, data) != 0
-         * */
         mdns_state = MDNS_STATE_READY;
         mdns_announce_requested();
         etimer_stop(&probe);
@@ -1201,8 +1172,6 @@ void init(void)
 
   PRINTF("resolver: Process started.\n");
   pst_udp_socket = &st_udp_socket;
-
-//  resolv_conn = udp_new(NULL, 0, NULL);
 
 #if RESOLV_CONF_SUPPORTS_MDNS
   PRINTF("resolver: Supports MDNS.\n");
@@ -1538,9 +1507,8 @@ resolv_found(char *name, uip_ipaddr_t * ipaddr)
   }
 #endif /* VERBOSE_DEBUG */
 
-  /*TODO Broadcast that the name has been resolved. */
+  /* Broadcast that the name has been resolved. */
   resolv_event_found = 1;
-//  process_post(PROCESS_BROADCAST, resolv_event_found, name);
 }
 /*---------------------------------------------------------------------------*/
 #endif /* UIP_UDP */
