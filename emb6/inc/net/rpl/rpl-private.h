@@ -66,7 +66,7 @@
 /** \brief Set IP address addr to the link-local, all-rpl-nodes
     multicast address. */
 #define uip_create_linklocal_rplnodes_mcast(addr)    \
-  uip_ip6addr((addr), 0xff02, 0, 0, 0, 0, 0, 0, 0x001a)
+  uip_ip6addr((addr), 0xff02UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0x001aUL)
 /*---------------------------------------------------------------------------*/
 /* RPL message types */
 #define RPL_CODE_DIS                   0x00   /* DAG Information Solicitation */

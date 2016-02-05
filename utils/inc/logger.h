@@ -1,4 +1,5 @@
 /*
+/*
  * emb6 is licensed under the 3-clause BSD license. This license gives everyone
  * the right to use and distribute the code, either in binary or source code
  * format, as long as the copyright license is retained in the source code.
@@ -95,7 +96,11 @@ inline static void log_ip6addr( const uint8_t* pc_addr)
     for( i = 0, f = 0; i < IPV6ADDR_LEN; i += 2 )
     {
         i_addr_byte = ( pc_addr[i] << 8 ) + pc_addr[i + 1];
-        if( i_addr_byte == 0 && f >= 0 )
+#if 1
+        if( i_addr_byte == 0)
+#else
+        if( i_addr_byte == 0 && f >= 0 )        /* FIXME pointless comparison of unsigned interger with 0: f >= 0 */
+#endif
         {
             if( f++ == 0 )
             {
@@ -210,9 +215,6 @@ inline static void log_hexdump(const void* p_buf, uint32_t l_len)
 #define LOG_RAW(msg, ...)       LOGGER_RAW(0,msg, ##__VA_ARGS__)
 #define LOG_HEXDUMP(buf,len)    LOGGER_HEXDUMP(0, buf,len)
 #define LOG_IP6ADDR(addr)       LOGGER_IP6ADDR(0, (const uint8_t* )addr)
-
-#define log_entry()             LOG2_INFO( "Enter %s function",__func__ );
-#define log_leave()             LOG2_INFO( "Leave %s function",__func__ );
 
 #pragma GCC diagnostic ignored "-Wformat"
 #define LOGGER_OK(log_lvl, msg, ...)        \

@@ -38,7 +38,7 @@
 #ifndef CMD_H_
 #define CMD_H_
 
-#include "emb6_conf.h"
+
 #include "emb6.h"
 
 

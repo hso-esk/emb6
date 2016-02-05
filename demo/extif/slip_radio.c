@@ -125,7 +125,7 @@ slip_radio_cmd_handler(const uint8_t *data, int len)
       if (ps_ns != NULL) {
           /* parse frame before sending to get addresses, etc. */
           ps_ns->frame->parse();
-          ps_ns->hmac->send(packet_sent, &packet_ids[packet_pos]);
+          ps_ns->dllsec->send(packet_sent, &packet_ids[packet_pos]);
       }
 
       packet_pos++;
@@ -152,6 +152,7 @@ slip_radio_cmd_handler(const uint8_t *data, int len)
       return 1;
     }
   }
+
   return 0;
 }
 /*---------------------------------------------------------------------------*/
@@ -170,7 +171,9 @@ slip_input_callback(void)
 /*---------------------------------------------------------------------------*/
 int8_t demo_extifInit(void)
 {
-    bsp_extIntInit(E_TARGET_USART_INT,slip_input_byte);
+    bsp_extIntRegister(E_TARGET_USART_INT, E_TARGET_INT_EDGE_RISING, slip_input_byte);
+    bsp_extIntEnable(E_TARGET_USART_INT);
+
     slip_set_input_callback(slip_input_callback);
     packet_pos = 0;
     slip_init();
@@ -183,19 +186,15 @@ uint8_t demo_extifConf(s_ns_t* pst_netStack)
 
     if (pst_netStack != NULL) {
         if (pst_netStack->hc == &slipnet_driver) {}
-        else if (pst_netStack->llsec == &nullsec_driver) {}
-        else if (pst_netStack->hmac == &nullmac_driver) {}
-        else if (pst_netStack->lmac == &nullrdc_driver) {}
-        else if (pst_netStack->frame == &no_framer) {}
+        else if (pst_netStack->dllsec == &nullsec_driver) {}
+        else if (pst_netStack->frame == &framer_noframer) {}
         else {
             c_ret = 0;
         }
 
         pst_netStack->hc     = &slipnet_driver;
-        pst_netStack->llsec  = &nullsec_driver;
-        pst_netStack->hmac   = &nullmac_driver;
-        pst_netStack->lmac   = &nullrdc_driver;
-        pst_netStack->frame  = &no_framer;
+        pst_netStack->dllsec  = &nullsec_driver;
+        pst_netStack->frame  = &framer_noframer;
         /* Transceiver interface is defined by @ref board_conf function*/
         /*pst_netStack->inif   = $<some_transceiver>;*/
     }

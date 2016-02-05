@@ -39,7 +39,6 @@
 
 //#include "contiki-conf.h"
 #include "emb6.h"
-#include "emb6_conf.h"
 
 extern uint16_t uip_slen;
 
@@ -47,8 +46,6 @@ extern uint16_t uip_slen;
 #if UIP_CONF_IPV6_MULTICAST
 #include "uip-mcast6.h"
 #endif
-
-#include <string.h>
 
 /*---------------------------------------------------------------------------*/
 void

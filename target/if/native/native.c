@@ -53,7 +53,7 @@
 /*============================================================================*/
 
 /*==============================================================================
- INCLUDE FILES
+                                 INCLUDE FILES
  ==============================================================================*/
 #include "emb6.h"
 #include "emb6_conf.h"
@@ -64,11 +64,10 @@
 #include <errno.h>
 #include <sys/time.h>
 #include <stdio.h>
-/* Ligthweight Communication and Marshalling (LCM) is a library to perform
- communication between processes  */
 #include <lcm/lcm.h>
+
 /*==============================================================================
- MACROS
+                                    MACROS
  ==============================================================================*/
 #define     LOGGER_ENABLE                 LOGGER_RADIO
 #include    "logger.h"
@@ -76,44 +75,57 @@
 #define     NODE_INFO_MAX                 2048
 
 /*==============================================================================
- ENUMS
+                                     ENUMS
  ==============================================================================*/
 
 /*==============================================================================
- VARIABLE DECLARATIONS
+                             VARIABLE DECLARATIONS
  ==============================================================================*/
 static struct etimer ps_nativeTmr;
 /* Pointer to the lmac structure */
-static s_nsLowMac_t* p_lmac = NULL;
+static const s_nsPHY_t* p_phy = NULL;
 extern uip_lladdr_t uip_lladdr;
 static lcm_t *ps_lcm;
 static char pc_publish_ch[NODE_INFO_MAX];
 /*==============================================================================
- GLOBAL CONSTANTS
+                                 GLOBAL CONSTANTS
  ==============================================================================*/
 /*==============================================================================
- LOCAL FUNCTION PROTOTYPES
+                             LOCAL FUNCTION PROTOTYPES
  ==============================================================================*/
 /* Radio transceiver local functions */
 static void _printAndExit( const char* rpc_reason );
-static int8_t _native_on( void );
-static int8_t _native_off( void );
-static int8_t _native_init( s_ns_t* p_netStack );
-static int8_t _native_send( const void *pr_payload, uint8_t c_len );
+
+static void _native_init( void *p_netstk, e_nsErr_t *p_err );
+static void _native_on( e_nsErr_t *p_err );
+static void _native_off( e_nsErr_t *p_err );
+
+static void _native_send( uint8_t *p_data, uint16_t len, e_nsErr_t *p_err );
+static void _native_recv(uint8_t *p_buf, uint16_t len, e_nsErr_t *p_err);
+static void _native_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
+
 static void _native_read( const lcm_recv_buf_t *rbuf, const char * channel,
         void * p_macAddr );
 static void _native_handler( c_event_t c_event, p_data_t p_data );
+
+
 /*==============================================================================
- STRUCTURES AND OTHER TYPEDEFS
+                             STRUCTURES AND OTHER TYPEDEFS
  ==============================================================================*/
-const s_nsIf_t native_driver = {
-        "native_driver",
+
+const s_nsRF_t RFDrvNative = {
+        "RF Native",
         _native_init,
-        _native_send,
         _native_on,
-        _native_off, };
+        _native_off,
+        _native_send,
+        _native_recv,
+        _native_ioctl
+};
+
+
 /*==============================================================================
- LOCAL FUNCTIONS
+                                     LOCAL FUNCTIONS
  ==============================================================================*/
 /*----------------------------------------------------------------------------*/
 /** \brief  This function reports the error and exits back to the shell.
@@ -138,10 +150,9 @@ static void _printAndExit( const char* rpc_reason )
  *  \return int8_t        Status code.
  */
 /*----------------------------------------------------------------------------*/
-static int8_t _native_init( s_ns_t* p_netStack )
+static void _native_init( void *p_netstk, e_nsErr_t *p_err )
 {
     linkaddr_t un_addr;
-    uint8_t l_error;
     FILE* fp;
     char pc_node_info[NODE_INFO_MAX];
     char* pch;
@@ -149,6 +160,14 @@ static int8_t _native_init( s_ns_t* p_netStack )
     uint16_t addr;    // mac address of node read from configuration file
     uint8_t  addr_6;  // high byte of two last parts of mac address
     uint8_t  addr_7;  // low byte of two last parts of mac address
+
+#if NETSTK_CFG_ARG_CHK_EN
+    if (p_err == NULL) {
+        return;
+    }
+#endif
+
+    *p_err = NETSTK_ERR_NONE;
 
     LOG_INFO( "Try to initialize Broadcasting Client for native radio driver" );
 
@@ -245,20 +264,21 @@ static int8_t _native_init( s_ns_t* p_netStack )
             un_addr.u8[1], un_addr.u8[2], un_addr.u8[3], un_addr.u8[4],
             un_addr.u8[5], un_addr.u8[6], un_addr.u8[7] );
 
-    if( p_netStack->lmac != NULL )
+    if( ((s_ns_t*)p_netstk)->phy != NULL )
     {
-        p_lmac = p_netStack->lmac;
-        l_error = 1;
+        p_phy = ((s_ns_t*)p_netstk)->phy;
+        *p_err = NETSTK_ERR_NONE;
     }
     else
     {
         _printAndExit( "Bad lmac pointer" );
+        *p_err = NETSTK_ERR_INIT;
     }
 
     /* Start the packet receive process */
     etimer_set( &ps_nativeTmr, 10, _native_handler );
 
-    return l_error;
+    return;
 } /* _native_init() */
 
 /*----------------------------------------------------------------------------*/
@@ -270,25 +290,54 @@ static int8_t _native_init( s_ns_t* p_netStack )
  *  \return int8_t        Status code.
  */
 /*----------------------------------------------------------------------------*/
-static int8_t _native_send( const void *pr_payload, uint8_t c_len )
+static void _native_send( uint8_t *p_data, uint16_t len, e_nsErr_t *p_err )
 {
     uint32_t status;
 
-    status = lcm_publish( ps_lcm, pc_publish_ch, pr_payload, c_len );
+#if NETSTK_CFG_ARG_CHK_EN
+    if (p_err == NULL) {
+        return;
+    }
+#endif
+
+    *p_err = NETSTK_ERR_NONE;
+    status = lcm_publish( ps_lcm, pc_publish_ch, p_data, len );
 
     /* Return execution status to a caller */
     if( status == -1 )
     {
         LOG_ERR( "Send packet failed" );
-        return RADIO_TX_ERR;
+        *p_err = NETSTK_ERR_RF_SEND;
     }
     else
     {
-        LOG_OK( "TX packet [%d]", c_len );
-        LOG2_HEXDUMP( pr_payload, c_len );
-        return RADIO_TX_OK;
+        LOG_OK( "TX packet [%d]", len );
+        LOG2_HEXDUMP( p_data, len );
+        *p_err = NETSTK_ERR_NONE;
     }
 } /* _native_send() */
+
+static void _native_recv( uint8_t *p_buf, uint16_t len, e_nsErr_t *p_err )
+{
+#if NETSTK_CFG_ARG_CHK_EN
+    if (p_err == NULL) {
+        return;
+    }
+#endif
+
+    *p_err = NETSTK_ERR_NONE;
+} /* _native_on() */
+
+static void _native_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
+{
+#if NETSTK_CFG_ARG_CHK_EN
+    if (p_err == NULL) {
+        return;
+    }
+#endif
+
+    *p_err = NETSTK_ERR_NONE;
+} /* _native_on() */
 
 /*----------------------------------------------------------------------------*/
 /** \brief  NATIVE transport message reception
@@ -304,6 +353,7 @@ static void _native_read( const lcm_recv_buf_t *rps_rbuf,
         const char * rpc_channel, void * userdata )
 {
     uint16_t i_dSize = rps_rbuf->data_size;
+    e_nsErr_t s_err = NETSTK_ERR_NONE;
 
     /* Clear buffer where to store received payload */
     packetbuf_clear();
@@ -318,10 +368,10 @@ static void _native_read( const lcm_recv_buf_t *rps_rbuf,
         memcpy( packetbuf_dataptr(), rps_rbuf->data, i_dSize );
         LOG_OK( "RX packet [%d]", i_dSize);
         LOG2_HEXDUMP( packetbuf_dataptr(), i_dSize  );
-        if( ( rps_rbuf->data_size > 0 ) && ( p_lmac != NULL ) )
+        if( ( rps_rbuf->data_size > 0 ) && ( p_phy != NULL ) )
         {
             packetbuf_set_datalen( i_dSize );
-            p_lmac->input();
+            p_phy->recv( packetbuf_dataptr(), i_dSize, &s_err );
         }
         else
         {
@@ -335,9 +385,15 @@ static void _native_read( const lcm_recv_buf_t *rps_rbuf,
  *  \return 0
  */
 /*----------------------------------------------------------------------------*/
-static int8_t _native_on( void )
+static void _native_on( e_nsErr_t *p_err )
 {
-    return 0;
+#if NETSTK_CFG_ARG_CHK_EN
+    if (p_err == NULL) {
+        return;
+    }
+#endif
+
+    *p_err = NETSTK_ERR_NONE;
 } /* _native_on() */
 
 /*----------------------------------------------------------------------------*/
@@ -346,9 +402,15 @@ static int8_t _native_on( void )
  *  \return 0
  */
 /*----------------------------------------------------------------------------*/
-static int8_t _native_off( void )
+static void _native_off( e_nsErr_t *p_err )
 {
-    return 0;
+#if NETSTK_CFG_ARG_CHK_EN
+    if (p_err == NULL) {
+        return;
+    }
+#endif
+
+    *p_err = NETSTK_ERR_NONE;
 } /* _native_off() */
 
 /*----------------------------------------------------------------------------*/

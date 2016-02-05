@@ -31,5 +31,10 @@ tags
 .sconsign.dblite
 .settings/
 
+target/arch/msp430/ti/toolchain/IAR/demo-apss/CC1120_TX*/
+target/arch/msp430/ti/toolchain/IAR/demo-apss/CC1120_RX*/
+target/arch/msp430/ti/toolchain/IAR/demo-udp/UDP_SOCKET_SERVER*/
+target/arch/msp430/ti/toolchain/IAR/demo-udp/UDP_SOCKET_CLIENT*/
+
 doc/html/
 doc/latex/

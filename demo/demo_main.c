@@ -53,7 +53,7 @@
  */
 /*! \file   demo_main.c
 
-    \author Artem Yushev, 
+    \author Artem Yushev,
 
     \brief  Main function.
 
@@ -72,6 +72,10 @@
 
 #if DEMO_USE_UDP
 #include "demo_udp.h"
+#endif
+
+#if DEMO_USE_UDP_SOCKET
+#include "demo_udp_socket.h"
 #endif
 
 #if DEMO_USE_COAP
@@ -123,6 +127,10 @@
                                      MACROS
  =============================================================================*/
 
+#ifndef EMB6_PROC_DELAY
+#define EMB6_PROC_DELAY                     500
+#endif /* #ifndef EMB6_PROC_DELAY */
+
 /*==============================================================================
                                      ENUMS
  =============================================================================*/
@@ -146,8 +154,8 @@ static uint8_t loc_demoAppsInit(void);
 static void loc_initialConfig(void)
 {
     /* set last byte of mac address */
-    mac_phy_config.mac_address[7] = (uint8_t)MAC_ADDR_WORD;            // low byte
-    mac_phy_config.mac_address[6] = (uint8_t)(MAC_ADDR_WORD >> 8);     // high byte
+    mac_phy_config.mac_address[7] = (uint8_t)(MAC_ADDR_WORD);           // low byte
+    mac_phy_config.mac_address[6] = (uint8_t)(MAC_ADDR_WORD >> 8);      // high byte
 
     /* initial TX Power Output in dBm */
     mac_phy_config.init_power = TX_POWER;
@@ -169,9 +177,9 @@ static uint8_t loc_demoAppsConf(s_ns_t* pst_netStack)
     demo_coapConf(pst_netStack);
     #endif
 
-	#if DEMO_USE_MDNS
-	demo_mdnsConf(pst_netStack);
-	#endif
+    #if DEMO_USE_MDNS
+    demo_mdnsConf(pst_netStack);
+    #endif
 
     #if DEMO_USE_SNIFFER
     demo_sniffConf(pst_netStack);
@@ -179,6 +187,10 @@ static uint8_t loc_demoAppsConf(s_ns_t* pst_netStack)
 
     #if DEMO_USE_UDPALIVE
     demo_udpAliveConf(pst_netStack);
+    #endif
+
+    #if DEMO_USE_UDP_SOCKET
+    demo_udpSocketCfg(pst_netStack);
     #endif
 
     #if DEMO_USE_APTB
@@ -218,11 +230,11 @@ static uint8_t loc_demoAppsInit(void)
     }
     #endif
 
-	#if DEMO_USE_MDNS
-	if (!demo_mdnsInit()) {
-		return 0;
-	}
-	#endif
+    #if DEMO_USE_MDNS
+    if (!demo_mdnsInit()) {
+    	return 0;
+    }
+    #endif
 
     #if DEMO_USE_SNIFFER
     if (!demo_sniffInit()) {
@@ -232,6 +244,12 @@ static uint8_t loc_demoAppsInit(void)
 
     #if DEMO_USE_UDPALIVE
     if (!demo_udpAliveInit()) {
+        return 0;
+    }
+    #endif
+
+    #if DEMO_USE_UDP_SOCKET
+    if (!demo_udpSocketInit()) {
         return 0;
     }
     #endif
@@ -261,6 +279,19 @@ static uint8_t loc_demoAppsInit(void)
     #endif
 
     return 1;
+}
+
+/*==============================================================================
+ emb6_errorHandler()
+==============================================================================*/
+void emb6_errorHandler(e_nsErr_t *p_err)
+{
+    /* turns LEDs on to indicate error */
+    bsp_led(E_BSP_LED_0, E_BSP_LED_ON);
+
+    /* TODO misisng error handling */
+    while (1) {
+    }
 }
 
 /*==============================================================================
@@ -300,14 +331,14 @@ int main(void)
         }
 
         /* SHow that stack has been launched */
-        bsp_led(E_BSP_LED_GREEN,E_BSP_LED_ON);
+        bsp_led(E_BSP_LED_2, E_BSP_LED_ON);
         bsp_delay_us(2000000);
-        bsp_led(E_BSP_LED_GREEN,E_BSP_LED_OFF);
+        bsp_led(E_BSP_LED_2, E_BSP_LED_OFF);
 
         /* call process function with delay in us */
-        emb6_process(500);  /* default: 500 us delay */
+        emb6_process(EMB6_PROC_DELAY);  /* default: 500 us delay */
     }
-    bsp_led(E_BSP_LED_RED,E_BSP_LED_ON);
+    bsp_led(E_BSP_LED_0, E_BSP_LED_ON);
     printf("Program failed.");
     while(1);
 }

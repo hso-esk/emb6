@@ -56,15 +56,16 @@
 /*==============================================================================
                                  INCLUDE FILES
  =============================================================================*/
-
 #include "emb6.h"
-#include "emb6_conf.h"
+
 #include "tcpip.h"
 #include "bsp.h"
 #include "queuebuf.h"
 #include "linkaddr.h"
 #include "ctimer.h"
 #include "random.h"
+
+#include "lib_tmr.h"
 
 #if NETSTACK_CONF_WITH_IPV6
 #include "uip-ds6.h"
@@ -107,7 +108,7 @@ uip_lladdr_t uip_lladdr = {{0x00,0x06,0x98,0x00,0x02,0x32}};
 
 /** RPL default Configuration */
 s_rpl_conf_t rpl_config = {
-            .DIOintmin          = 8,
+            .DIOintmin          = 10,
             .DIOintdoub         = 12,
             /* This value decides which DAG instance we should
              * participate in by default. */
@@ -172,22 +173,62 @@ static int8_t loc_emb6DagRootInit(void)
 uint8_t loc_emb6NetstackInit(s_ns_t * ps_ns)
 {
     uint8_t     c_err = 0;
+	uint8_t     is_valid;
+    e_nsErr_t   err;
+
+
     /* Initialize stack protocols */
     queuebuf_init();
     ctimer_init();
-    if ((ps_ns->hc != NULL) && (ps_ns->llsec != NULL) && (ps_ns->hmac != NULL) &&
-        (ps_ns->lmac != NULL) && (ps_ns->frame != NULL) && (ps_ns->inif != NULL)) {
-        if (ps_ns->frame->init(ps_ns))
-        {
-            /* This drivers belong to Contiki and retval are't tracked */
-            ps_ns->lmac->init(ps_ns);
-            ps_ns->hmac->init(ps_ns);
-            ps_ns->llsec->init(ps_ns);
-            ps_ns->hc->init(ps_ns);
-            tcpip_init();
-            c_err = 1;
+    Tmr_Init();
+
+    /*
+     * Verify stack submodule drivers
+     */
+    is_valid = (ps_ns->rf    != NULL) &&
+               (ps_ns->phy   != NULL) &&
+               (ps_ns->mac   != NULL) &&
+               (ps_ns->dllc   != NULL) &&
+               (ps_ns->dllsec != NULL) &&
+               (ps_ns->hc    != NULL);
+    if (is_valid) {
+        /*
+         * Netstack submodule initializations
+         */
+        ps_ns->rf->init(ps_ns, &err);
+        if (err != NETSTK_ERR_NONE) {
+            emb6_errorHandler(&err);
         }
+
+        ps_ns->phy->init(ps_ns, &err);
+        if (err != NETSTK_ERR_NONE) {
+            emb6_errorHandler(&err);
+        }
+
+        ps_ns->mac->init(ps_ns, &err);
+        if (err != NETSTK_ERR_NONE) {
+            emb6_errorHandler(&err);
+        }
+
+        ps_ns->dllc->init(ps_ns, &err);
+        if (err != NETSTK_ERR_NONE) {
+            emb6_errorHandler(&err);
+        }
+
+        ps_ns->dllsec->init(ps_ns);      /* logical link security    */
+        ps_ns->hc->init(ps_ns);         /* header compressor        */
+        ps_ns->frame->init(ps_ns);      /* sicslowpan driver        */
+
+        /* turn the netstack on */
+        ps_ns->dllc->on(&err);
+
+        /*
+         * Initialize TCP/IP stack
+         */
+        tcpip_init();
+        c_err = 1;
     }
+
 
 #if EMB6_INIT_ROOT==TRUE
     if (!c_err || !loc_emb6DagRootInit()) {
@@ -240,3 +281,4 @@ void emb6_process(uint16_t us_delay)
 
 /** @} */
 /** @} */
+

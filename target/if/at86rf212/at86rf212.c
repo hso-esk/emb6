@@ -55,13 +55,12 @@
 /*==============================================================================
                                  INCLUDE FILES
 ==============================================================================*/
-
 #include "emb6.h"
-#include "emb6_conf.h"
 #include "bsp.h"
 
 #include "at86rf212.h"
 #include "at86rf212_regmap.h"
+#include "at86rf_hal_spi.h"
 
 #include "evproc.h"
 #include "packetbuf.h"
@@ -101,11 +100,11 @@ static  uint8_t                   c_rf212_pending;
 static  uint8_t                   c_pckCounter = 0;
 static  uint8_t                   c_power;
 static  uint8_t                   c_sensitivity;
-static  void *                    p_spi = NULL;
 static  void *                    p_slpTrig = NULL;
 static  void *                    p_rst = NULL;
-/* Pointer to the lmac structure */
-static  s_nsLowMac_t*             p_lmac = NULL;
+
+/* Pointer to the PHY structure */
+static  const s_nsPHY_t*          p_phy = NULL;
 
 /*               Output Power                               dBm,  EU1,  EU2  */
 static int16_t txpower[TXPWR_LIST_LEN][3] =    { {   5,    0, 0xe8 },
@@ -150,10 +149,11 @@ static  int8_t                  _rf212_prepare(const void * p_payload, uint8_t c
 static  int8_t                  _rf212_read(void *p_buf, uint8_t c_bufsize);
 static  void                    _rf212_setPanAddr(unsigned pan,unsigned addr,
                                                   const uint8_t ieee_addr[8]);
+static void                     _rf212_Ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
 static  int8_t                  _rf212_intON(void);
 static  int8_t                  _rf212_intOFF(void);
-static  int8_t                  _rf212_extON(void);
-static  int8_t                  _rf212_extOFF(void);
+static  void                    _rf212_extON(e_nsErr_t *p_err);
+static  void                    _rf212_extOFF(e_nsErr_t *p_err);
 static  uint8_t                 _rf212_getTxPower(void);
 static  void                    _rf212_setTxPower(uint8_t power);
 static  void                    _rf212_setPower(int8_t power);
@@ -163,11 +163,10 @@ static  int8_t                  _rf212_getSensitivity(void);
 static  int8_t                  _rf212_getRSSI(void);
 static  void                    _rf212_wReset(void);
 static  void                    _rf212_promisc(uint8_t value);
-static  int8_t                  _rf212_send(const void *pr_payload, uint8_t c_len);
-static  int8_t                  _rf212_init(s_ns_t* p_netStack);
-static  void                    _spiBitWrite(void * p_spi, uint8_t c_addr,
-                                            uint8_t c_mask,
-                                            uint8_t c_off,uint8_t c_data);
+static  void                    _rf212_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
+static  void                    _rf212_init(void *p_netstk, e_nsErr_t *p_err);
+static  void                    _spiBitWrite(uint8_t c_addr, uint8_t c_mask, uint8_t c_off,uint8_t c_data);
+
 #if PRINT_PCK_STAT
 static    void                     _show_stat(void *);
 #endif /* PRINT_PCK_STAT */
@@ -175,32 +174,25 @@ static    void                     _show_stat(void *);
 /*==============================================================================
                          STRUCTURES AND OTHER TYPEDEFS
 ==============================================================================*/
-const s_nsIf_t rf212_driver = {
+const s_nsRF_t rf212_driver = {
         .name               = "rf212",
         .init               = &_rf212_init,
         .send               = &_rf212_send,
         .on                 = &_rf212_extON,
         .off                = &_rf212_extOFF,
-        .set_txpower        = &_rf212_setPower,
-        .get_txpower        = &_rf212_getPower,
-        .set_sensitivity    = &_rf212_setSensitivity,
-        .get_sensitivity    = &_rf212_getSensitivity,
-        .get_rssi           = &_rf212_getRSSI,
-        .ant_div            = NULL,
-        .ant_rf_switch      = NULL,
-        .set_promisc        = &_rf212_promisc,
+        .ioctrl             = &_rf212_Ioctl,
 };
 /*==============================================================================
                                 LOCAL FUNCTIONS
 ==============================================================================*/
-static    void _spiBitWrite(void * p_spi,uint8_t c_addr,uint8_t c_mask, uint8_t c_off,uint8_t c_data)
+static void _spiBitWrite(uint8_t c_addr, uint8_t c_mask, uint8_t c_off, uint8_t c_data)
 {
-    uint8_t c_value = bsp_spiRegRead(p_spi,RF212_READ_COMMAND | c_addr);
+    uint8_t c_value = at86rf_halSpiRegRead(RF212_READ_COMMAND | c_addr);
     c_value &= ~c_mask;
     c_data <<= c_off;
     c_data &= c_mask;
     c_data |= c_value;
-    bsp_spiRegWrite(p_spi, RF212_WRITE_COMMAND | c_addr, c_data);
+    at86rf_halSpiRegWrite(RF212_WRITE_COMMAND | c_addr, c_data);
 }
 
 
@@ -228,7 +220,7 @@ static void _rf212_fRead(st_rxframe_t * ps_rxframe)
      * The 802.15.4 standard requires 640us after a greater than 18 byte frame.
      * With a low interrupt latency overwrites should never occur.
      */
-    bsp_spiFrameRead(p_spi, 0x20, ps_rxframe->data, &c_flen);
+    at86rf_halSpiFrameRead(0x20, ps_rxframe->data, &c_flen);
     ps_rxframe->length = c_flen;
     /*Read LQI value for this frame.*/
     ps_rxframe->lqi = ps_rxframe->data[c_flen + 1];
@@ -255,7 +247,7 @@ static void _rf212_fRead(st_rxframe_t * ps_rxframe)
  */
 static void _rf212_fWrite(uint8_t * pc_buff, uint8_t c_len)
 {
-    bsp_spiFrameWrite(p_spi, 0x60, pc_buff, c_len);
+    at86rf_halSpiFrameWrite(0x60, pc_buff, c_len);
 } /*  _rf212_fWrite() */
 
 /*----------------------------------------------------------------------------*/
@@ -267,7 +259,7 @@ static void     _rf212_setChannel(uint8_t c)
     /* Wait for any transmission to end. */
     _rf212_waitIdle();
     c_channel=c;
-    _spiBitWrite(p_spi, RG_PHY_CC_CCA, SR_CHANNEL, c);
+    _spiBitWrite(RG_PHY_CC_CCA, SR_CHANNEL, c);
 } /*  _rf212_setChannel() */
 
 /*----------------------------------------------------------------------------*/
@@ -278,7 +270,7 @@ static void _rf212_smReset(void)
 {
     bsp_clrPin(p_slpTrig);
     bsp_delay_us(E_TIME_NOCLK_TO_WAKE);
-    _spiBitWrite(p_spi, RG_TRX_STATE,SR_TRX_CMD, CMD_FORCE_TRX_OFF );
+    _spiBitWrite(RG_TRX_STATE,SR_TRX_CMD, CMD_FORCE_TRX_OFF );
     bsp_delay_us(E_TIME_CMD_FORCE_TRX_OFF);
 } /*  _rf212_smReset() */
 
@@ -294,7 +286,7 @@ static uint8_t _rf212_isIdle(void)
         return 1;
     }
     else {
-        c_rstate = bsp_spiBitRead(p_spi, RF212_READ_COMMAND | RG_TRX_STATUS, SR_TRX_STATUS);
+        c_rstate = at86rf_halSpiBitRead(RF212_READ_COMMAND | RG_TRX_STATUS, SR_TRX_STATUS);
         //        c_rstate = bsp_spiSubRead(SR_TRX_STATUS);
         if ((c_rstate != BUSY_TX_ARET) && \
                 (c_rstate != BUSY_RX_AACK) && \
@@ -368,7 +360,7 @@ static void _rf212_waitIdle(void)
  */
 static uint8_t _rf212_getState(void)
 {
-    return bsp_spiBitRead(p_spi, RF212_READ_COMMAND | RG_TRX_STATUS, SR_TRX_STATUS);
+    return at86rf_halSpiBitRead(RF212_READ_COMMAND | RG_TRX_STATUS, SR_TRX_STATUS);
     //    return bsp_spiSubRead(SR_TRX_STATUS);
 } /*  _rf212_getState() */
 
@@ -441,20 +433,20 @@ static e_rf212_sm_status_t _rf212_setTrxState(uint8_t c_new_state)
                 (c_orig_state == RX_AACK_ON)){
             /* First do intermediate state transition to PLL_ON, then to TX_ARET_ON. */
             /* The final state transition to TX_ARET_ON is handled after the if-else if. */
-            _spiBitWrite(p_spi, RG_TRX_STATE, SR_TRX_CMD, PLL_ON);
+            _spiBitWrite(RG_TRX_STATE, SR_TRX_CMD, PLL_ON);
             //            bsp_spiSubWrite(SR_TRX_CMD, PLL_ON);
             bsp_delay_us(E_TIME_STATE_TRANSITION_PLL_ACTIVE);
         } else if ((c_new_state == RX_AACK_ON) &&
                 (c_orig_state == TX_ARET_ON)){
             /* First do intermediate state transition to RX_ON, then to RX_AACK_ON. */
             /* The final state transition to RX_AACK_ON is handled after the if-else if. */
-            _spiBitWrite(p_spi, RG_TRX_STATE, SR_TRX_CMD, RX_ON);
+            _spiBitWrite(RG_TRX_STATE, SR_TRX_CMD, RX_ON);
             //            bsp_spiSubWrite(SR_TRX_CMD, RX_ON);
             bsp_delay_us(E_TIME_STATE_TRANSITION_PLL_ACTIVE);
         }
 
         /* Any other state transition can be done directly. */
-        _spiBitWrite(p_spi, RG_TRX_STATE, SR_TRX_CMD, c_new_state);
+        _spiBitWrite(RG_TRX_STATE, SR_TRX_CMD, c_new_state);
         //        bsp_spiSubWrite(SR_TRX_CMD, c_new_state);
 
         /* When the PLL is active most states can be reached in 1us. However, from */
@@ -502,9 +494,9 @@ static e_radio_tx_status_t _rf212_transmit(uint8_t c_len)
 #if RADIO_CONF_CALIBRATE_INTERVAL
         /* If nonzero, do periodic calibration. See clock.c */
         if (_rf212_calibrate) {
-            _spiBitWrite(p_spi,  RG_PLL_CF, SR_PLL_CF_START, 1); //takes 80us max
+            _spiBitWrite( RG_PLL_CF, SR_PLL_CF_START, 1); //takes 80us max
             //            bsp_spiSubWrite(SR_PLL_CF_START,1);   //takes 80us max
-            _spiBitWrite(p_spi,  RG_PLL_DCU, SR_PLL_DCU_START, 1); //takes 6us, concurrently
+            _spiBitWrite( RG_PLL_DCU, SR_PLL_DCU_START, 1); //takes 6us, concurrently
             //            bsp_spiSubWrite(SR_PLL_DCU_START,1); //takes 6us, concurrently
             _rf212_calibrate=0;
             _rf212_calibrated=1;
@@ -548,7 +540,7 @@ static e_radio_tx_status_t _rf212_transmit(uint8_t c_len)
 
     /* Get the transmission result */
 #if RF212_CONF_AUTORETRIES
-    c_tx_result = bsp_spiBitRead(p_spi, RF212_READ_COMMAND | RG_TRX_STATE, SR_TRAC_STATUS);
+    c_tx_result = at86rf_halSpiBitRead(RF212_READ_COMMAND | RG_TRX_STATE, SR_TRAC_STATUS);
 #else
     c_tx_result = RF212_TX_SUCCESS;
 #endif
@@ -767,7 +759,7 @@ static int8_t _rf212_read(void *p_buf, uint8_t c_bufsize)
             /* Get the received signal strength for the packet, 0-84 dB above rx threshold */
 #if RF212_CONF_AUTOACK
             // _rf212_last_rssi = bsp_spiSubRead(SR_ED_LEVEL);  //0-84 resolution 1 dB
-            c_last_rssi = bsp_spiRegRead(p_spi, RF212_READ_COMMAND | RG_PHY_ED_LEVEL); //0-84, resolution 1 dB
+            c_last_rssi = at86rf_halSpiRegRead(RF212_READ_COMMAND | RG_PHY_ED_LEVEL); //0-84, resolution 1 dB
 
             //    c_last_rssi =bsp_spiRead(RG_PHY_ED_LEVEL);  //0-84, resolution 1 dB
 #else
@@ -817,28 +809,28 @@ static void _rf212_setPanAddr(unsigned pan,    unsigned addr, const uint8_t prc_
     LOG_INFO("PAN=%x Short Addr=%x",pan,addr);
     uint8_t c_abyte;
     c_abyte = pan & 0xFF;
-    bsp_spiRegWrite(p_spi, RF212_WRITE_COMMAND | RG_PAN_ID_0, c_abyte);
+    at86rf_halSpiRegWrite(RF212_WRITE_COMMAND | RG_PAN_ID_0, c_abyte);
 
     c_abyte = (pan >> 8*1) & 0xFF;
-    bsp_spiRegWrite(p_spi, RF212_WRITE_COMMAND | RG_PAN_ID_1, c_abyte);
+    at86rf_halSpiRegWrite(RF212_WRITE_COMMAND | RG_PAN_ID_1, c_abyte);
 
 
     c_abyte = addr & 0xFF;
-    bsp_spiRegWrite(p_spi, RF212_WRITE_COMMAND | RG_SHORT_ADDR_0, c_abyte);
+    at86rf_halSpiRegWrite(RF212_WRITE_COMMAND | RG_SHORT_ADDR_0, c_abyte);
 
     c_abyte = (addr >> 8*1) & 0xFF;
-    bsp_spiRegWrite(p_spi, RF212_WRITE_COMMAND | RG_SHORT_ADDR_1, c_abyte);
+    at86rf_halSpiRegWrite(RF212_WRITE_COMMAND | RG_SHORT_ADDR_1, c_abyte);
 
 
     if (prc_ieee_addr != NULL) {
-        bsp_spiRegWrite(p_spi, RF212_WRITE_COMMAND | RG_IEEE_ADDR_7, *prc_ieee_addr++);
-        bsp_spiRegWrite(p_spi, RF212_WRITE_COMMAND | RG_IEEE_ADDR_6, *prc_ieee_addr++);
-        bsp_spiRegWrite(p_spi, RF212_WRITE_COMMAND | RG_IEEE_ADDR_5, *prc_ieee_addr++);
-        bsp_spiRegWrite(p_spi, RF212_WRITE_COMMAND | RG_IEEE_ADDR_4, *prc_ieee_addr++);
-        bsp_spiRegWrite(p_spi, RF212_WRITE_COMMAND | RG_IEEE_ADDR_3, *prc_ieee_addr++);
-        bsp_spiRegWrite(p_spi, RF212_WRITE_COMMAND | RG_IEEE_ADDR_2, *prc_ieee_addr++);
-        bsp_spiRegWrite(p_spi, RF212_WRITE_COMMAND | RG_IEEE_ADDR_1, *prc_ieee_addr++);
-        bsp_spiRegWrite(p_spi, RF212_WRITE_COMMAND | RG_IEEE_ADDR_0, *prc_ieee_addr++);
+        at86rf_halSpiRegWrite(RF212_WRITE_COMMAND | RG_IEEE_ADDR_7, *prc_ieee_addr++);
+        at86rf_halSpiRegWrite(RF212_WRITE_COMMAND | RG_IEEE_ADDR_6, *prc_ieee_addr++);
+        at86rf_halSpiRegWrite(RF212_WRITE_COMMAND | RG_IEEE_ADDR_5, *prc_ieee_addr++);
+        at86rf_halSpiRegWrite(RF212_WRITE_COMMAND | RG_IEEE_ADDR_4, *prc_ieee_addr++);
+        at86rf_halSpiRegWrite(RF212_WRITE_COMMAND | RG_IEEE_ADDR_3, *prc_ieee_addr++);
+        at86rf_halSpiRegWrite(RF212_WRITE_COMMAND | RG_IEEE_ADDR_2, *prc_ieee_addr++);
+        at86rf_halSpiRegWrite(RF212_WRITE_COMMAND | RG_IEEE_ADDR_1, *prc_ieee_addr++);
+        at86rf_halSpiRegWrite(RF212_WRITE_COMMAND | RG_IEEE_ADDR_0, *prc_ieee_addr++);
     }
 } /* _rf212_setPanAddr() */
 
@@ -849,7 +841,7 @@ uint8_t _rf212_getTxPower(void)
     if (bsp_getPin(p_slpTrig)) {
         LOG_DBG("_rf212_getTxPower:Sleeping");
     } else {
-        pwr = bsp_spiRegRead(p_spi, RF212_READ_COMMAND | RG_PHY_TX_PWR);
+        pwr = at86rf_halSpiRegRead(RF212_READ_COMMAND | RG_PHY_TX_PWR);
     }
     return pwr;
 } /* _rf212_getTxPower() */
@@ -871,7 +863,7 @@ void _rf212_setTxPower(uint8_t power)
     {
         power = 0x48;
     }
-    bsp_spiRegWrite(p_spi, RF212_WRITE_COMMAND | RG_PHY_TX_PWR, power);
+    at86rf_halSpiRegWrite(RF212_WRITE_COMMAND | RG_PHY_TX_PWR, power);
     c_power = power;
 } /* _rf212_setTxPower() */
 
@@ -917,7 +909,7 @@ void _rf212_setSensitivity(int8_t sens)
     } else if (s < 1) {
         s = 0;
     }
-    _spiBitWrite(p_spi, RG_RX_SYN, SR_RX_PDT_LEVEL, s);
+    _spiBitWrite(RG_RX_SYN, SR_RX_PDT_LEVEL, s);
     c_sensitivity = s;
 }
 
@@ -937,16 +929,16 @@ int8_t _rf212_getRSSI(void)
 void _rf212_wReset(void)
 {
     uint8_t c_tempReg;
-    bsp_spiRegWrite(p_spi, RF212_WRITE_COMMAND | RG_IRQ_MASK, RF212_SUPPORTED_INTERRUPT_MASK);
+    at86rf_halSpiRegWrite(RF212_WRITE_COMMAND | RG_IRQ_MASK, RF212_SUPPORTED_INTERRUPT_MASK);
 
     /* Set up number of automatic retries 0-15 (0 implies PLL_ON sends instead of the extended TX_ARET mode */
-    _spiBitWrite(p_spi, RG_XAH_CTRL_0, SR_MAX_FRAME_RETRIES, RF212_CONF_AUTORETRIES);
+    _spiBitWrite(RG_XAH_CTRL_0, SR_MAX_FRAME_RETRIES, RF212_CONF_AUTORETRIES);
 
     /* Set up carrier sense/clear c_channel assesment parameters for extended operating mode */
-    _spiBitWrite(p_spi, RG_XAH_CTRL_0, SR_MAX_CSMA_RETRIES, 5);  //highest allowed retries
-    bsp_spiRegWrite(p_spi, RF212_WRITE_COMMAND | RG_CSMA_BE, 0x80); //min backoff exponent 0, max 8 (highest allowed)
-    c_tempReg = bsp_spiRegRead(p_spi, RF212_READ_COMMAND | RG_PHY_RSSI);
-    bsp_spiRegWrite(p_spi, RF212_WRITE_COMMAND | RG_CSMA_SEED_0, c_tempReg); //upper two RSSI reg bits RND_VALUE are random
+    _spiBitWrite(RG_XAH_CTRL_0, SR_MAX_CSMA_RETRIES, 5);  //highest allowed retries
+    at86rf_halSpiRegWrite(RF212_WRITE_COMMAND | RG_CSMA_BE, 0x80); //min backoff exponent 0, max 8 (highest allowed)
+    c_tempReg = at86rf_halSpiRegRead(RF212_READ_COMMAND | RG_PHY_RSSI);
+    at86rf_halSpiRegWrite(RF212_WRITE_COMMAND | RG_CSMA_SEED_0, c_tempReg); //upper two RSSI reg bits RND_VALUE are random
 
     /* CCA Mode Mode 1=Energy above threshold  2=Carrier sense only  3=Both 0=Either (RF231 only) */
     //bsp_spiSubWrite(SR_E_CCA_MODE,1);  //1 is the power-on default
@@ -962,14 +954,14 @@ void _rf212_wReset(void)
 #ifdef RF212_CONF_E_CCA_THRES
 #if RF212_CONF_E_CCA_THRES < -91
 #warning RF212_CONF_E_CCA_THRES below hardware limit, setting to -91dBm
-    _spiBitWrite(p_spi, RG_E_CCA_THRES, SR_E_CCA_ED_THRES, 0);
+    _spiBitWrite(RG_E_CCA_THRES, SR_E_CCA_ED_THRES, 0);
     //  bsp_spiSubWrite(SR_E_CCA_ED_THRES,0);
 #elif RF212_CONF_E_CCA_THRES > -61
 #warning RF212_CONF_E_CCA_THRES above hardware limit, setting to -61dBm
-    _spiBitWrite(p_spi, RG_E_CCA_THRES, SR_E_CCA_ED_THRES, 15);
+    _spiBitWrite(RG_E_CCA_THRES, SR_E_CCA_ED_THRES, 15);
     //  bsp_spiSubWrite(SR_E_CCA_ED_THRES,15);
 #else
-    _spiBitWrite(p_spi, RG_E_CCA_THRES, SR_E_CCA_ED_THRES, (RF212_CONF_E_CCA_THRES+91)/2);
+    _spiBitWrite(RG_E_CCA_THRES, SR_E_CCA_ED_THRES, (RF212_CONF_E_CCA_THRES+91)/2);
     //  bsp_spiSubWrite(SR_E_CCA_ED_THRES,(RF212_CONF_E_CCA_THRES+91)/2);
 #endif
 #endif
@@ -977,18 +969,18 @@ void _rf212_wReset(void)
     /* Use automatic CRC unless manual is specified */
 #if RF212_CONF_CHECKSUM
     //  bsp_spiSubWrite(SR_TX_AUTO_CRC_ON, 0);
-    _spiBitWrite(p_spi, RG_TRX_CTRL_1, SR_TX_AUTO_CRC_ON, 0);
+    _spiBitWrite(RG_TRX_CTRL_1, SR_TX_AUTO_CRC_ON, 0);
 #else
-    _spiBitWrite(p_spi, RG_TRX_CTRL_1, SR_TX_AUTO_CRC_ON, 1);
+    _spiBitWrite(RG_TRX_CTRL_1, SR_TX_AUTO_CRC_ON, 1);
 #endif
 
     /* set wireless mode */
     if (mac_phy_config.modulation != MODULATION_QPSK100)
     {
-        bsp_spiRegWrite(p_spi, RF212_WRITE_COMMAND | RG_TRX_CTRL_2, 0x00);
+        at86rf_halSpiRegWrite(RF212_WRITE_COMMAND | RG_TRX_CTRL_2, 0x00);
         c_rssi_base_val = -100;
     } else {
-        bsp_spiRegWrite(p_spi, RF212_WRITE_COMMAND | RG_TRX_CTRL_2, 0x08);
+        at86rf_halSpiRegWrite(RF212_WRITE_COMMAND | RG_TRX_CTRL_2, 0x08);
         c_rssi_base_val = -98;
     }
 
@@ -1004,29 +996,97 @@ static void _rf212_promisc(uint8_t value)
     if (value) {
         memset(&ac_addr, 0, 8);
         _rf212_setPanAddr(0x0000, 0, ac_addr);
-        _spiBitWrite(p_spi, SR_AACK_PROM_MODE, 1);
-        _spiBitWrite(p_spi, SR_AACK_DIS_ACK, 1);
+        _spiBitWrite(SR_AACK_PROM_MODE, 1);
+        _spiBitWrite(SR_AACK_DIS_ACK, 1);
     }
     else {
-        _spiBitWrite(p_spi, SR_AACK_PROM_MODE, 0);
-        _spiBitWrite(p_spi, SR_AACK_DIS_ACK, 0);
+        _spiBitWrite(SR_AACK_PROM_MODE, 0);
+        _spiBitWrite(SR_AACK_DIS_ACK, 0);
     }
 }
 
 /*---------------------------------------------------------------------------*/
-static int8_t _rf212_send(const void *pr_payload, uint8_t c_len)
+static void _rf212_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 {
-    int8_t c_ret = 0;
-
-    if((c_ret = _rf212_prepare(pr_payload, c_len))) {
-        LOG_ERR("_rf212_send: Unable to send, prep failed (%d)",c_ret);
-        return c_ret;
+    int8_t c_ret;
+    if( len > 255 ) {
+        *p_err = NETSTK_ERR_RF_SEND;
+        return;
     }
-    c_ret = _rf212_transmit(c_len);
 
-    return c_ret;
+
+    if((c_ret = _rf212_prepare(p_data, len))) {
+        LOG_ERR("_rf212_send: Unable to send, prep failed (%d)",c_ret);
+        *p_err = NETSTK_ERR_RF_SEND;
+    }
+
+    switch( _rf212_transmit(len) ) {
+        case RADIO_TX_OK:
+            *p_err = NETSTK_ERR_NONE;
+            break;
+
+        case RADIO_TX_NOACK:
+            *p_err = NETSTK_ERR_TX_NOACK;
+            break;
+
+        default:
+            *p_err = NETSTK_ERR_RF_SEND;
+            break;
+    }
+
+    return;
 } /* _rf212_send() */
 
+static void _rf212_Ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
+{
+#if NETSTK_CFG_ARG_CHK_EN
+    if (p_err == (e_nsErr_t *)0) {
+        return;
+    }
+
+    if (p_val == (void *)0) {
+        return;
+    }
+#endif
+
+
+    *p_err = NETSTK_ERR_NONE;
+    switch (cmd) {
+        case NETSTK_CMD_RF_TXPOWER_SET:
+            _rf212_setPower( *(int8_t*)p_val );
+            break;
+
+        case NETSTK_CMD_RF_TXPOWER_GET:
+            *(int8_t*)p_val = _rf212_getPower();
+            break;
+
+        case NETSTK_CMD_RF_RSSI_GET:
+            *((int8_t *)p_val) = _rf212_getRSSI();
+            break;
+
+        case NETSTK_CMD_RF_SENS_SET:
+            _rf212_setSensitivity( *(int8_t*)p_val );
+            break;
+
+        case NETSTK_CMD_RF_SENS_GET:
+            *((int8_t *)p_val) = _rf212_getSensitivity();
+            break;
+
+        case NETSTK_CMD_RF_PROMISC_SET:
+            _rf212_promisc( *(uint8_t*)p_val );
+            break;
+
+        case NETSTK_CMD_RF_IS_RX_BUSY:
+        case NETSTK_CMD_RF_IS_TX_BUSY:
+        case NETSTK_CMD_RF_CCA_GET:
+        case NETSTK_CMD_RF_RF_SWITCH_SET:
+        case NETSTK_CMD_RF_ANT_DIV_SET:
+        default:
+            /* unsupported commands are treated in same way */
+            *p_err = NETSTK_ERR_CMD_UNSUPPORTED;
+            break;
+    }
+}
 
 /*----------------------------------------------------------------------------*/
 /** \brief  This function turns on the radio transceiver
@@ -1096,18 +1156,20 @@ static int8_t _rf212_intOFF(void)
     return 0;
 } /* _rf212_off() */
 
-static int8_t _rf212_extON(void)
+static void _rf212_extON(e_nsErr_t *p_err)
 {
+    *p_err = NETSTK_ERR_NONE;
     if (c_receive_on)
-        return 1;
+        return;
     _rf212_intON();
-    return 1;
+    return;
 } /* _rf212_extON() */
 
-static int8_t _rf212_extOFF(void)
+static void _rf212_extOFF(e_nsErr_t *p_err)
 {
+    *p_err = NETSTK_ERR_NONE;
     if (c_receive_on == 0)
-        return 0;
+        return;
 
     /*
      * If we are currently receiving a packet, we still call off(),
@@ -1119,7 +1181,7 @@ static int8_t _rf212_extOFF(void)
         LOG_INFO("_rf212_extOFF: busy receiving.");
     }
     _rf212_intOFF();
-    return 0;
+    return;
 } /* _rf212_extON() */
 
 //#if PRINT_PCK_STAT
@@ -1135,23 +1197,27 @@ static int8_t _rf212_extOFF(void)
 /*==============================================================================
   _rf212_init()
  =============================================================================*/
-static int8_t _rf212_init(s_ns_t* p_netStack)
+static void _rf212_init(void *p_netstk, e_nsErr_t *p_err)
 {
     uint8_t     i;
-    uint8_t        c_ret = 0;
     uint8_t     c_tvers;
     uint8_t     c_tmanu;
-    linkaddr_t     un_addr;
+    linkaddr_t  un_addr;
+
+    *p_err = NETSTK_ERR_NONE;
+
     /* Wait in case VCC just applied */
     bsp_delay_us(E_TIME_TO_ENTER_P_ON);
     /* Init spi interface and transceiver. Transceiver utilize spi interface. */
     p_rst = bsp_pinInit( E_TARGET_RADIO_RST);
     p_slpTrig = bsp_pinInit( E_TARGET_RADIO_SLPTR);
-    p_spi = bsp_spiInit();
+    at86rf_halSpiInit();
 
-    if ((p_spi != NULL) && (p_rst != NULL) && (p_slpTrig != NULL) && (p_netStack != NULL))
+    if ((p_rst != NULL) && (p_slpTrig != NULL) && (p_netstk != NULL))
     {
-        bsp_extIntInit(E_TARGET_RADIO_INT, _isr_callback);
+        /* configure external interrupt */
+        bsp_extIntRegister(E_TARGET_RADIO_INT, E_TARGET_INT_EDGE_RISING, _isr_callback);
+        bsp_extIntEnable(E_TARGET_RADIO_INT);
 
         /* Set receive buffers empty and point to the first */
         for (i=0;i<RF212_CONF_RX_BUFFERS;i++)
@@ -1173,23 +1239,23 @@ static int8_t _rf212_init(s_ns_t* p_netStack)
         bsp_setPin(p_rst);
 
         /* Force transition to TRX_OFF */
-        _spiBitWrite(p_spi, RG_TRX_STATE, SR_TRX_CMD, CMD_FORCE_TRX_OFF);
+        _spiBitWrite(RG_TRX_STATE, SR_TRX_CMD, CMD_FORCE_TRX_OFF);
         bsp_delay_us(E_TIME_P_ON_TO_TRX_OFF);
 
         /* Verify that it is a supported version */
         /* Note gcc optimizes this away if DEBUG is not set! */
         //ATMEGA128RFA1 - version 4, ID 31
-        c_tvers = bsp_spiRegRead(p_spi, RF212_READ_COMMAND | RG_VERSION_NUM);
-        c_tmanu = bsp_spiRegRead(p_spi, RF212_READ_COMMAND | RG_MAN_ID_0);
+        c_tvers = at86rf_halSpiRegRead(RF212_READ_COMMAND | RG_VERSION_NUM);
+        c_tmanu = at86rf_halSpiRegRead(RF212_READ_COMMAND | RG_MAN_ID_0);
 
         if ((c_tvers != RF212_REVA) && (c_tvers != RF212_REVB)) {
             LOG_INFO("Unsupported version %u",c_tvers);
-            c_ret = 0;
+            *p_err = NETSTK_ERR_INIT;
             goto error;
         }
         if (c_tmanu != SUPPORTED_MANUFACTURER_ID) {
             LOG_INFO("Unsupported manufacturer ID %u",c_tmanu);
-            c_ret = 0;
+            *p_err = NETSTK_ERR_INIT;
             goto error;
         }
 
@@ -1198,9 +1264,9 @@ static int8_t _rf212_init(s_ns_t* p_netStack)
         _rf212_wReset();
         /* Leave radio in on state (?)*/
         _rf212_intON();
-        //_spiBitWrite(p_spi, SR_AACK_PROM_MODE, 1);
+        //_spiBitWrite(SR_AACK_PROM_MODE, 1);
         if (mac_phy_config.mac_address == NULL) {
-            c_ret = 0;
+            *p_err = NETSTK_ERR_INIT;
         }
         else {
             memcpy((void *)&un_addr.u8,  &mac_phy_config.mac_address, 8);
@@ -1216,16 +1282,16 @@ static int8_t _rf212_init(s_ns_t* p_netStack)
                     un_addr.u8[6],un_addr.u8[7]);
 
             evproc_regCallback(EVENT_TYPE_PCK_LL,_rf212_callback);
-            if (p_netStack->lmac != NULL) {
-                p_lmac = p_netStack->lmac;
-                c_ret = 1;
+            if (((s_ns_t*)p_netstk)->phy != NULL) {
+                p_phy = ((s_ns_t*)p_netstk)->phy;
+                *p_err = NETSTK_ERR_NONE;
             } else {
-                c_ret = 0;
+                *p_err = NETSTK_ERR_INIT;
             }
         }
     }
     error:
-    return c_ret;
+    return;
 } /* _rf212_init() */
 
 /*----------------------------------------------------------------------------*/
@@ -1241,6 +1307,7 @@ static void _rf212_callback(c_event_t c_event, p_data_t p_data)
 {
     int8_t c_len;
     uint8_t c_ndx;
+    e_nsErr_t s_err;
 
     c_rf212_pending = 0;
     // The case where c_pckCounter is less or equal to 0 is not possible, however...
@@ -1263,9 +1330,9 @@ static void _rf212_callback(c_event_t c_event, p_data_t p_data)
     bsp_exitCritical();
     LOG_DBG("%u bytes lqi %u",c_len,c_last_correlation);
 
-    if((c_len > 0) && (p_lmac != NULL)) {
+    if((c_len > 0) && (p_phy != NULL)) {
         packetbuf_set_datalen(c_len);
-        p_lmac->input();
+        p_phy->recv( packetbuf_dataptr(), c_len, &s_err );
     }
 } /*  _rf212_callback() */
 
@@ -1291,18 +1358,18 @@ void _isr_callback(void * p_input)
     //    }
     c_pckCounter = (c_pckCounter < RF212_CONF_RX_BUFFERS) ? (c_pckCounter + 1) : c_pckCounter;
     /* Using SPI bus from ISR is generally a bad idea... */
-    c_int_src = bsp_spiRegRead(p_spi, RF212_READ_COMMAND | RG_IRQ_STATUS);
+    c_int_src = at86rf_halSpiRegRead(RF212_READ_COMMAND | RG_IRQ_STATUS);
     /* Note: all IRQ are not always automatically disabled when running in ISR */
     /*Handle the incomming interrupt. Prioritized.*/
     //    printf("Int source = %d\n\r",c_int_src);
     if ((c_int_src & RX_START_MASK)){
 #if !RF212_CONF_AUTOACK
-        bsp_spiTxRx(p_spi, RF212_READ_COMMAND | SR_RSSI,  &c_last_rssi);
+        bsp_spiTxRx(RF212_READ_COMMAND | SR_RSSI,  &c_last_rssi);
         c_last_rssi *= 3;
         //        c_last_rssi = 3 * bsp_spiSubRead(SR_RSSI);
 #endif
     } else if (c_int_src & TRX_END_MASK){
-        c_state = bsp_spiBitRead(p_spi, RF212_READ_COMMAND | RG_TRX_STATUS, SR_TRX_STATUS);
+        c_state = at86rf_halSpiBitRead(RF212_READ_COMMAND | RG_TRX_STATUS, SR_TRX_STATUS);
         //        c_state = bsp_spiSubRead(SR_TRX_STATUS);
         if( (c_state == BUSY_RX_AACK) || \
                 (c_state == RX_ON) ||          \
@@ -1314,7 +1381,7 @@ void _isr_callback(void * p_input)
             /* Save the rssi for printing in the main loop */
 #ifdef RF212_MIN_RX_POWER
 #if RF212_CONF_AUTOACK
-            c_last_rssi = bsp_spiRegRead(p_spi, RF212_READ_COMMAND | RG_PHY_ED_LEVEL);
+            c_last_rssi = at86rf_halSpiRegRead(RF212_READ_COMMAND | RG_PHY_ED_LEVEL);
 #endif
             if (c_last_rssi >= RF212_MIN_RX_POWER) {
 #endif
@@ -1331,10 +1398,10 @@ void _isr_callback(void * p_input)
             /*  Disable BAT_LOW interrupt to prevent endless interrupts. The interrupt */
             /*  will continously be asserted while the supply voltage is less than the */
             /*  user-defined voltage threshold. */
-            c_isr_mask = bsp_spiRegRead(p_spi, RF212_READ_COMMAND | RG_IRQ_MASK);
+            c_isr_mask = at86rf_halSpiRegRead(RF212_READ_COMMAND | RG_IRQ_MASK);
             //        uint8_t c_isr_mask = bsp_spiRead(RG_IRQ_MASK);
             c_isr_mask &= ~BAT_LOW_MASK;
-            bsp_spiRegWrite(p_spi, RF212_WRITE_COMMAND | RG_IRQ_MASK, c_isr_mask);
+            at86rf_halSpiRegWrite(RF212_WRITE_COMMAND | RG_IRQ_MASK, c_isr_mask);
             //        bsp_spiWrite(RG_IRQ_MASK, c_isr_mask);
         }
     }

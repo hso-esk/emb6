@@ -1,0 +1,34 @@
+hardware_config = {
+# Micro Controller Unit description (HEAD/arch/<arch>/<mcu_fam>/<vendor> folder)
+	'mcu_arch' 		: 	'msp430',
+	'mcu_family' 	: 	'msp430f5',
+	'mcu_vendor' 	: 	'ti',
+	'mcu_cpu' 		: 	'msp430f5xxx',
+	'mcu_toolchain' : 	'GCC',
+
+
+# Device driver description (HEAD/target/mcu folder)
+	'mcu' 			:	'msp430f5438a',
+
+# Transceiver source description (HEAD/target/if folder)
+	'if'			:	'cc112x',
+
+# C code global defined symbols
+	'defines' : [
+	],
+
+# GCC flags
+	'cflags' : [
+        '-mlarge',
+        '-mmcu=msp430f5438a',
+	],
+
+# LINKER flags
+	'ldflags' : [
+        '-mlarge',       
+	],
+
+	'scriptfile' : 'msp430f5438a.ld'
+}
+
+Return('hardware_config')

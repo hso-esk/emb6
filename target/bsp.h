@@ -80,7 +80,7 @@
 /*==============================================================================
                                      MACROS
 ==============================================================================*/
-#define LEDS_SUPPORTED                3
+#define LEDS_SUPPORTED                5
 
 #define BSP_PIN_DIROUTPUT           TRUE
 #define BSP_PIN_DIRINPUT            FALSE
@@ -103,15 +103,19 @@ typedef enum E_BSP_LED_ACTION
 } en_bspLedAction_t;
 
 //! Define the leds color
-typedef enum E_BSP_LED_COLOR
+typedef enum E_BSP_LED_IDX
 {
-    //! Define Red color
-    E_BSP_LED_RED = 0x00,
-    //! Define YELLOW color
-    E_BSP_LED_YELLOW = 0x01,
-    //! Define GREEN color
-    E_BSP_LED_GREEN = 0x02
-} en_bspLedColor_t;
+    //! Define LED0
+    E_BSP_LED_0 = 0x00,
+    //! Define LED1
+    E_BSP_LED_1 = 0x01,
+    //! Define LED2
+    E_BSP_LED_2 = 0x02,
+    //! Define LED3
+    E_BSP_LED_3 = 0x03,
+    //! Define LED4
+    E_BSP_LED_4 = 0x04,
+} en_bspLedIdx_t;
 
 
 
@@ -223,14 +227,14 @@ int bsp_getChar(void);
     \return 1       LED was on and is set now to state en_ledAction
 */
 /*============================================================================*/
-uint16_t bsp_led(en_bspLedColor_t ui_led, en_bspLedAction_t en_ledAction);
+uint16_t bsp_led(en_bspLedIdx_t ui_led, en_bspLedAction_t en_ledAction);
 
 /*============================================================================*/
 /** \brief  This function enters critical section on the target
  *
  */
 /*============================================================================*/
-#define        bsp_enterCritical()             hal_enterCritical()
+#define     bsp_enterCritical()             hal_enterCritical()
 
 /*============================================================================*/
 /** \brief  This function exits critical section on the target
@@ -247,17 +251,27 @@ uint16_t bsp_led(en_bspLedColor_t ui_led, en_bspLedAction_t en_ledAction);
  *
  */
 /*============================================================================*/
-#define        bsp_extIntInit(e_intSource, fn_p) hal_extIntInit(e_intSource,fn_p)
+#define     bsp_extIntRegister(e_intSource, e_edge, fn_p) \
+            hal_extiRegister(e_intSource, e_edge, fn_p)
+
+#define     bsp_extIntEnable(e_intSource) \
+            hal_extiEnable(e_intSource)
+
+#define     bsp_extIntDisable(e_intSource) \
+            hal_extiDisable(e_intSource)
+
+#define     bsp_extIntClear(e_intSource) \
+            hal_extiClear(e_intSource)
 
 
 /*============================================================================*/
 /** \brief  This function makes a delay on the target
  *
- *  \param  i_delay Delay in useconds
+ *  \param  i_delay Delay in microseconds
  *
  */
 /*============================================================================*/
-#define        bsp_delay_us(i_delay)           hal_delay_us(i_delay)
+#define     bsp_delay_us(i_delay)           hal_delay_us(i_delay)
 
 /*============================================================================*/
 /** \brief  This function initialize a specific pin
@@ -271,17 +285,12 @@ uint16_t bsp_led(en_bspLedColor_t ui_led, en_bspLedAction_t en_ledAction);
 uint8_t bsp_pin(en_bspPinAction_t e_pinAct, void * p_pin);
 
 
-#define     bsp_spiInit()                   hal_spiInit()
+#define     bsp_spiInit             hal_spiInit
+#define     bsp_spiSlaveSel         hal_spiSlaveSel
+#define     bsp_spiRead             hal_spiRead
+#define     bsp_spiWrite            hal_spiWrite
+#define     bsp_spiTxRx             hal_spiTxRx
 
-uint8_t bsp_spiRegRead(void * p_spi, uint8_t c_addr);
-
-void bsp_spiFrameRead(void * p_spi,uint8_t c_addr, uint8_t * pc_data, uint16_t * pi_len);
-
-uint8_t bsp_spiBitRead(void * p_spi, uint8_t c_addr, uint8_t c_mask, uint8_t c_pos );
-
-void bsp_spiRegWrite(void * p_spi, uint8_t c_addr, uint8_t  c_data);
-
-void bsp_spiFrameWrite(void * p_spi, uint8_t c_addr, uint8_t * pc_data, uint8_t c_len);
 
 
 /*============================================================================*/
@@ -296,14 +305,14 @@ void bsp_wdt(en_bspWdtAction_t wdtAct);
  *
  */
 /*============================================================================*/
-#define     bsp_getTick()              hal_getTick()
+#define     bsp_getTick()               hal_getTick()
 
 /*============================================================================*/
 /** \brief  This function will return seconds
  *
  */
 /*============================================================================*/
-#define     bsp_getSec()               hal_getSec()
+#define     bsp_getSec()                hal_getSec()
 
 /*============================================================================*/
 /** \brief  This function will return parameter specifed by type
@@ -311,6 +320,17 @@ void bsp_wdt(en_bspWdtAction_t wdtAct);
  */
 /*============================================================================*/
 uint32_t         bsp_get(en_bspParams_t en_param);
+
+
+
+/**
+ * @brief   This function returns a upper-bounded random number
+ * @param   max     Maximum possible value of the returned random number
+ * @return
+ */
+uint32_t    bsp_getrand(uint32_t max);
+
+
 #endif /* __BSP_H__ */
 /** @} */
 /** @} */

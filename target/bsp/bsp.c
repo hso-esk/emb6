@@ -58,13 +58,14 @@
  =============================================================================*/
 
 #include "emb6.h"
-#include "emb6_conf.h"
+
 #include "bsp.h"
 #include "board_conf.h"
-
 #include "etimer.h"
 #include "random.h"
 #include "evproc.h"
+
+
 /*==============================================================================
                                      MACROS
  =============================================================================*/
@@ -167,7 +168,7 @@ int bsp_getChar (void)
 /*============================================================================*/
 /*  bsp_led()                                                               */
 /*============================================================================*/
-uint16_t bsp_led(en_bspLedColor_t ui_led, en_bspLedAction_t en_ledAction)
+uint16_t bsp_led(en_bspLedIdx_t ui_led, en_bspLedAction_t en_ledAction)
 {
     switch (en_ledAction) {
     case E_BSP_LED_ON:
@@ -207,73 +208,6 @@ uint8_t bsp_pin(en_bspPinAction_t e_pinAct, void * p_pin)
     return 0;
 }
 
-uint8_t bsp_spiRegRead(void * p_spi, uint8_t c_addr)
-{
-    uint8_t c_data;
-    if (!hal_spiSlaveSel(p_spi,true)) {
-        LOG_ERR("%s\n\r","SPI transaction failed - reagread.");
-        return 0;
-    }
-
-    hal_spiWrite(&c_addr, 1);
-    hal_spiRead(&c_data, 1);
-    hal_spiSlaveSel(p_spi,false);
-    return c_data;
-}
-
-void bsp_spiFrameRead(void * p_spi,uint8_t c_addr, uint8_t * pc_data, uint16_t * pi_len)
-{
-    if (!hal_spiSlaveSel(p_spi,true)) {
-        LOG_ERR("%s\n\r","SPI transaction failed - fread.");
-        return;
-    }
-
-    hal_spiWrite(&c_addr, 1);
-    hal_spiRead((uint8_t *)pi_len, 1);
-    hal_spiRead(pc_data, *pi_len + 1);
-    hal_spiSlaveSel(p_spi,false);
-}
-
-uint8_t bsp_spiBitRead(void * p_spi, uint8_t c_addr, uint8_t c_mask, uint8_t c_off )
-{
-    uint8_t c_data;
-    if (!hal_spiSlaveSel(p_spi,true)) {
-        LOG_ERR("%s\n\r","SPI transaction failed - bitread.");
-        return 0;
-    }
-
-    hal_spiWrite(&c_addr, 1);
-    hal_spiRead(&c_data, 1);
-    hal_spiSlaveSel(p_spi,false);
-
-    c_data &= c_mask;
-    c_data >>=  c_off;
-    return c_data;
-}
-
-void bsp_spiRegWrite(void * p_spi, uint8_t c_addr, uint8_t  c_data)
-{
-    if (!hal_spiSlaveSel(p_spi,true)) {
-        LOG_ERR("%s\n\r","SPI transaction failed - regwrite.");
-        return;
-    }
-
-    hal_spiWrite(&c_addr, 1);
-    hal_spiWrite(&c_data, 1);
-    hal_spiSlaveSel(p_spi,false);
-}
-
-void bsp_spiFrameWrite(void * p_spi, uint8_t c_addr, uint8_t * pc_data, uint8_t c_len)
-{
-    if (!hal_spiSlaveSel(p_spi,true)) {
-        LOG_ERR("%s\n\r","SPI transaction failed - fwrite.");
-        return;
-    }
-    hal_spiWrite(&c_addr, 1);
-    hal_spiWrite(&c_len, 1);
-    hal_spiWrite(pc_data, (uint16_t)c_len);
-    hal_spiSlaveSel(p_spi,false);
-}
 
 /*============================================================================*/
 /*  bsp_wdt()                                                           */
@@ -324,6 +258,23 @@ uint32_t         bsp_get(en_bspParams_t en_param)
     }
     return l_ret;
 }
+
+
+/**
+ * @brief   This function returns a upper-bounded random number
+ * @param   max     Maximum possible value of the returned random number
+ * @return
+ */
+uint32_t bsp_getrand(uint32_t max)
+{
+    uint32_t ret;
+
+    /* generate random number in a range of 0 to max */
+    ret = random_rand();
+    ret = (uint32_t)(ret / 65536) % max;
+    return ret;
+}
+
 
 /** @} */
 /** @} */

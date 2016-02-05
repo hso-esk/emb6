@@ -47,10 +47,11 @@
 /*! \file   emb6.h
 
     \author Peter Lehmann peter.lehmann@hs-offenburg.de
+            Phuong Nguyen minh.nguyen@hs-offenburg.de
 
     \brief  emb6 API
 
-	\version 0.0.1
+	\version 0.0.2
 */
 
 #ifndef EMB6_H_
@@ -64,8 +65,15 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
-#include <strings.h>
 #include <stdbool.h>
+
+/*
+********************************************************************************
+*                               VERSION DECLARATION
+********************************************************************************
+*/
+#define EMB6_VERSION        000002UL          /* Version format Vx.yy.zz */
+
 
 /*=============================================================================
                                 BASIC CONSTANTS
@@ -80,6 +88,14 @@ typedef void                                (*pfn_intCallb_t)(void *);
 typedef uint32_t                            clock_time_t;
 /* linked with clock_time_t, maximum value for clock_time_t variables	      */
 #define TMR_OVRFLOW_VAL                     0xffffffff
+
+
+/*=============================================================================
+                                CONFIGURATIONS
+==============================================================================*/
+#include "emb6_conf.h"
+
+
 
 /*==============================================================================
                                      MACROS
@@ -164,14 +180,14 @@ typedef enum {
 
 //! We are using IEEE 802.15.4
 #define UIP_CONF_LL_802154                  TRUE
-#define UIP_CONF_LLH_LEN                    0
+#define UIP_CONF_LLH_LEN                    0UL
 #define	PRINT_PCK_STAT                      FALSE
-#define TIMESTAMP_PERIOD_SEC                10	// in sec
+#define TIMESTAMP_PERIOD_SEC                10UL	// in sec
 
 #ifdef LINKADDR_CONF_SIZE
 #define LINKADDR_SIZE                       LINKADDR_CONF_SIZE
 #else /* LINKADDR_SIZE */
-#define LINKADDR_SIZE                       8
+#define LINKADDR_SIZE                       8UL
 #endif /* LINKADDR_SIZE */
 
 
@@ -191,8 +207,8 @@ typedef struct uip_802154_longaddr {
 #if UIP_CONF_LL_802154
 /** \brief 802.15.4 address */
 typedef uip_802154_longaddr                 uip_lladdr_t;
-#define UIP_802154_SHORTADDR_LEN            2
-#define UIP_802154_LONGADDR_LEN             8
+#define UIP_802154_SHORTADDR_LEN            2UL
+#define UIP_802154_LONGADDR_LEN             8UL
 #define UIP_LLADDR_LEN                      UIP_802154_LONGADDR_LEN
 #else /*UIP_CONF_LL_802154*/
 #if UIP_CONF_LL_80211
@@ -208,28 +224,244 @@ typedef uip_eth_addr uip_lladdr_t;
 
 
 /*==============================================================================
-                         Netstack
+ *                                                                             *
+ *                                NETSTACK                                     *
+ *                                                                             *
  =============================================================================*/
 
-typedef struct netstack {
-        /*const struct netstack_socket*                   sock;*/
 
-	const struct netstack_headerCompression*        hc;
+/*
+********************************************************************************
+*                           ENUMERATION DECLARATIONS
+********************************************************************************
+*/
+/**
+ * @brief   Netstack error code enumeration declaration
+ */
+typedef enum netstk_err
+{
+    /*
+     * Common error codes
+     */
+    NETSTK_ERR_NONE = 0U,
+    NETSTK_ERR_INIT,
+    NETSTK_ERR_BUSY,
+    NETSTK_ERR_BUF_OVERFLOW,
+    NETSTK_ERR_INVALID_ARGUMENT,
+    NETSTK_ERR_INVALID_FRAME,
+    NETSTK_ERR_TX_TIMEOUT,
+    NETSTK_ERR_TX_NOACK,
+    NETSTK_ERR_CMD_UNSUPPORTED,
+    NETSTK_ERR_CHANNEL_ACESS_FAILURE,
+    NETSTK_ERR_CRC,
+    NETSTK_ERR_BAD_FORMAT,
+    NETSTK_ERR_FATAL,
 
-	const struct netstack_llsec*                    llsec;
+    /*
+     * LLC error codes
+     */
+    NETSTK_ERR_LLC_XXX                      = 100U,
 
-	const struct netstack_highMac*                  hmac;
+    /*
+     * MAC error codes
+     */
+    NETSTK_ERR_MAC_XXX                      = 200U,
+#if NETSTK_CFG_IEEE_802154_IGNACK
+    NETSTK_ERR_MAC_ACKOFF,
+#endif /* NETSTK_CFG_IEEE_802154_IGNACK */
 
-	const struct netstack_lowMac*                   lmac;
+    NETSTK_ERR_MAC_ULE_XXX                  = 250U,
+    NETSTK_ERR_MAC_ULE_UNSUPPORTED_FRAME,
+    NETSTK_ERR_MAC_ULE_LAST_STROBE,
+    NETSTK_ERR_MAC_ULE_BROADCAST_NOACK,
+    NETSTK_ERR_MAC_ULE_INVALID_ADDR,
+    NETSTK_ERR_MAC_ULE_TX_COLLISION_SAME_DEST,
+    NETSTK_ERR_MAC_ULE_TX_COLLISION_DIFF_DEST,
+    NETSTK_ERR_MAC_ULE_INVALID_ACK,
+    NETSTK_ERR_MAC_ULE_NO_STROBE,
 
-	const struct netstack_framer*                   frame;
+    /*
+     * PHY error codes
+     */
+    NETSTK_ERR_PHY_XXX                      = 300U,
 
-	const struct netstack_interface*                inif;
+    /*
+     * RF error codes
+     */
+    NETSTK_ERR_RF_XXX                       = 400U,
+    NETSTK_ERR_RF_SEND                      = 401U,
 
-	uint8_t                                         c_configured;
-}s_ns_t;
+}e_nsErr_t;
 
-typedef const struct netstack_socket{
+
+/**
+ * @brief   Netstack I/O Control command enumeration declaration
+ */
+typedef enum netstk_ioc_cmd
+{
+    /*
+     * Common command codes
+     */
+    NETSTK_CMD_NONE = 0,            /*!< Reserved command code          */
+    NETSTK_CMD_TX_CBFNCT_SET,       /*!< Set TX Callback function       */
+    NETSTK_CMD_TX_CBARG_SET,        /*!< Set TX Callback argument       */
+    NETSTK_CMD_RX_CBFNT_SET,        /*!< Set RX Callback function       */
+    NETSTK_CMD_RX_BUF_READ,
+
+    /*
+     * DLLC command codes
+     */
+    NETSTK_CMD_DLLC_RSVD = 100U,
+
+    /*
+     * MAC command codes
+     */
+    NETSTK_CMD_MAC_RSVD = 200U,
+
+    /*
+     * PHY command codes
+     */
+    NETSTK_CMD_PHY_RSVD = 300U,
+    NETSTK_CMD_PHY_LAST_PKT_TX,
+    NETSTK_CMD_PHY_CRC_LEN_SET,
+
+    /*
+     * LPR command codes
+     */
+    NETSTK_CMD_LPR_RSVD = 400U,
+
+    /*
+     * RF command codes
+     */
+    NETSTK_CMD_RF_RSVD = 500U,      /*!< RF reserved command code       */
+    NETSTK_CMD_RF_TXPOWER_SET,      /*!< Set TX Power                   */
+    NETSTK_CMD_RF_TXPOWER_GET,      /*!< Get TX Power                   */
+    NETSTK_CMD_RF_SENS_SET,         /*!< Set Sensitivity                */
+    NETSTK_CMD_RF_SENS_GET,         /*!< Get Sensitivity                */
+    NETSTK_CMD_RF_RSSI_GET,         /*!< Get RSSI                       */
+    NETSTK_CMD_RF_CCA_GET,          /*!< Get CCA                        */
+    NETSTK_CMD_RF_ANT_DIV_SET,      /*!< Set Antenna Div.               */
+    NETSTK_CMD_RF_RF_SWITCH_SET,    /*!< */
+    NETSTK_CMD_RF_IS_RX_BUSY,       /*!< Indicate if RF is in RX state  */
+    NETSTK_CMD_RF_IS_TX_BUSY,       /*!< Indicate if RF is in TX state  */
+    NETSTK_CMD_RF_SYNC_SET,         /*!< Set SYNC words                 */
+    NETSTK_CMD_RF_SYNC_GET,         /*!< Get SYNC words                 */
+    NETSTK_CMD_RF_PROMISC_SET,      /*!< Set promisc mode                */
+
+    NETSTK_CMD_RF_802154G_EU_CHAN,  /*!< Channel center for IEEE802.15.4 in Europe  */
+    NETSTK_CMD_RF_CHAN_NUM_SET,     /*!< Set operation channel number */
+    NETSTK_CMD_RF_OP_MODE_SET,      /*!< Set operation mode */
+
+    NETSTK_CMD_RF_WOR_EN,           /*!< Enable/Disable WOR mode */
+
+}e_nsIocCmd_t;
+
+
+/**
+ * @brief   IEEE-802.15.4g operating mode supports
+ */
+typedef enum netstk_rf_operating_mode
+{
+    /*!< Common Signaling Mode (CSM) */
+    NETSTK_RF_OP_MODE_CSM,
+
+#if (NETSTK_CFG_PHY_OP_MODE_1_EN == TRUE)
+    /*!< MR-FSK operating mode #1 */
+    NETSTK_RF_OP_MODE_1,
+#endif
+
+#if (NETSTK_CFG_PHY_OP_MODE_2_EN == TRUE)
+    /*!< MR-FSK operating mode #2 */
+    NETSTK_RF_OP_MODE_2,
+#endif
+
+#if (NETSTK_CFG_PHY_OP_MODE_3_EN == TRUE)
+    /*!< MR-FSK operating mode #3 */
+    NETSTK_RF_OP_MODE_3,
+#endif
+
+    /*!< Invalid mode */
+    NETSTK_RF_OP_MODE_MAX,
+
+} e_nsRfOpMode;
+
+
+#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
+#define NETSTK_RF_IEEE802154G_CHAN_QTY_CSM                  34u
+#define NETSTK_RF_IEEE802154G_CHAN_QTY_OPMODE1              34u
+#define NETSTK_RF_IEEE802154G_CHAN_QTY_OPMODE2              17u
+#define NETSTK_RF_IEEE802154G_CHAN_QTY_OPMODE3              17u
+#endif
+
+
+/*
+********************************************************************************
+*                            DATA TYPES DECLARATIONS
+********************************************************************************
+*/
+typedef uint16_t        NETSTK_DEV_ID;
+
+typedef void (* mac_callback_t)(void *ptr, int status, int transmissions);
+
+typedef void (*nsTxCbFnct_t) (void *p_arg, e_nsErr_t *p_err);
+
+typedef void (*nsRxCbFnct_t) (uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
+
+
+/*
+********************************************************************************
+*                           STRUCTURE DECLARATIONS
+********************************************************************************
+*/
+typedef struct netstack                     s_ns_t;
+typedef struct netstack_socket              s_nsSocket_t;
+typedef struct netstack_headerCompression   s_nsHeadComp_t;
+typedef struct netstack_dllsec              s_nsdllsec_t;
+typedef struct netstack_framer              s_nsFramer_t;
+typedef struct netstk_module_api            s_nsModuleDrv_t;
+
+typedef s_nsModuleDrv_t   s_nsDLLC_t;
+typedef s_nsModuleDrv_t   s_nsMAC_t;
+typedef s_nsModuleDrv_t   s_nsPHY_t;
+typedef s_nsModuleDrv_t   s_nsRF_t;
+
+
+/**
+ * @brief   Netstack driver structure declaration
+ */
+struct netstack
+{
+    const s_nsFramer_t      *frame;             /*!< Pointer to 6LoWPAN framing driver                  */
+    const s_nsHeadComp_t    *hc;                /*!< Pointer to 6LoWPAN header compressor Driver        */
+    const s_nsdllsec_t      *dllsec;            /*!< Pointer to Data Link Layer Security Driver         */
+    const s_nsDLLC_t        *dllc;              /*!< Pointer to Data Link Layer Control Driver          */
+    const s_nsMAC_t         *mac;               /*!< Pointer to Medium Access Control Driver            */
+    const s_nsPHY_t         *phy;               /*!< Pointer to Physical Driver                         */
+    const s_nsRF_t          *rf;                /*!< Pointer to Radio Frequency Driver                  */
+    uint8_t                 c_configured;       /*!< Indicate whether netstack is already configured    */
+};
+
+
+/**
+ * @brief   Netstack submodule driver structure declaration
+ */
+struct netstk_module_api
+{
+    char     *name;                                                             /*!< Driver name                    */
+    void    (*init  )(void *p_netstk, e_nsErr_t *p_err);                        /*!< Initialization handler         */
+    void    (*on    )(e_nsErr_t *p_err);                                        /*!< Turn the driver on             */
+    void    (*off   )(e_nsErr_t *p_err);                                        /*!< Turn the driver on             */
+    void    (*send  )(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);         /*!< Data transmission handler      */
+    void    (*recv  )(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);         /*!< Data reception handler         */
+    void    (*ioctrl)(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);         /*!< Miscellaneous functionality    */
+};
+
+
+/**
+ * @brief   Netstack socket driver structure declaration
+ */
+struct netstack_socket
+{
     char *name;
 
     /* Initialize the BSD socket driver */
@@ -249,9 +481,11 @@ typedef const struct netstack_socket{
     /* Close the BSD socket driver */
     void (* close)(s_ns_t* p_ns);
 
-}s_nsSocket_t;
+};
 
-typedef const struct netstack_headerCompression {
+
+struct netstack_headerCompression
+{
     char *name;
 
     /** Initialize the network driver */
@@ -259,14 +493,14 @@ typedef const struct netstack_headerCompression {
 
     /** Callback for getting notified of incoming packet. */
     void (* input)(void);
-}s_nsHeadComp_t;
+};
 
-typedef void (* mac_callback_t)(void *ptr, int status, int transmissions);
 
 /**
- * The structure of a link layer security driver.
+ * The structure of a data link layer security driver.
  */
-typedef const struct netstack_llsec {
+struct netstack_dllsec
+{
     char *name;
 
     /** Initializes link layer security and thereafter starts upper layers. */
@@ -290,64 +524,10 @@ typedef const struct netstack_llsec {
 
     /** Returns the security-related overhead per frame in bytes */
     uint8_t (* get_overhead)(void);
-}s_nsllsec_t;
+};
 
-typedef const struct netstack_highMac {
-    char *name;
-
-    /** Initialize the MAC driver */
-    void (* init)(s_ns_t* p_ns);
-
-    /** Send a packet from the Rime buffer  */
-    void (* send)(mac_callback_t sent_callback, void *ptr);
-
-    /** Callback for getting notified of incoming packet. */
-    void (* input)(void);
-
-    /** Turn the MAC layer on. */
-    int8_t (* on)(void);
-
-    /** Turn the MAC layer off. */
-    int8_t (* off)(int keep_radio_on);
-
-    /** Returns the channel check interval, expressed in clock_time_t ticks. */
-    unsigned short (* channel_check_interval)(void);
-}s_nsHighMac_t;
-
-/* List of packets to be sent by LMAC layer */
-typedef struct lmac_buf_list {
-    struct lmac_buf_list    *next;
-    struct queuebuf         *buf;
-    void                    *ptr;
-}s_nsLmacBufList_t;
-
-typedef const struct netstack_lowMac {
-    char *name;
-
-    /** Initialize the RDC driver */
-    void (* init)(s_ns_t* p_ns);
-
-    /** Send a packet from the Rime buffer  */
-    void (* send)(mac_callback_t sent_callback, void *ptr);
-
-    /** Send a packet list */
-    void (* send_list)(mac_callback_t sent_callback, void *ptr,
-                       s_nsLmacBufList_t *list);
-
-    /** Callback for getting notified of incoming packet. */
-    void (* input)(void);
-
-    /** Turn the MAC layer on. */
-    int8_t (* on)(void);
-
-    /** Turn the MAC layer off. */
-    int8_t (* off)(int keep_radio_on);
-
-    /** Returns the channel check interval, expressed in clock_time_t ticks. */
-    unsigned short (* channel_check_interval)(void);
-}s_nsLowMac_t;
-
-typedef const struct netstack_framer {
+struct netstack_framer
+{
     char *name;
 
     int8_t (* init)(s_ns_t* p_ns);
@@ -359,85 +539,91 @@ typedef const struct netstack_framer {
     int8_t (* create_and_secure)(s_ns_t* p_ns);
 
     int8_t (* parse)(void);
-}s_nsFramer_t;
+};
 
-typedef const struct netstack_interface {
-    char *name;
 
-    int8_t (* init)(s_ns_t* p_ns);
-
-    /** Prepare & transmit a packet. */
-    int8_t (* send)(const void *pr_payload, uint8_t c_len);
-
-    /** Turn the radio on. */
-    int8_t (* on)(void);
-
-    /** Turn the radio off. */
-    int8_t (* off)(void);
-
-    /** Set TX-Power */
-    void (* set_txpower)(int8_t power);
-
-    /** Get TX-Power */
-    int8_t (* get_txpower)(void);
-
-    /** Set Sensitivity */
-    void (* set_sensitivity)(int8_t sens);
-
-    /** Get Sensitivity */
-    int8_t (* get_sensitivity)(void);
-
-    /** Get RSSI Value */
-    int8_t (* get_rssi)(void);
-
-    /** Set Antenna Diversity */
-    void (* ant_div)(uint8_t value);
-
-    /** Set RF Switch*/
-    void (* ant_rf_switch)(uint8_t value);
-
-    /** Set promiscuous mode */
-    void (* set_promisc)(uint8_t c_on_off);
-
-}s_nsIf_t;
-
+/*
+********************************************************************************
+*                           SOCKET DRIVERS DECLARATIONS
+********************************************************************************
+*/
 /*! Supported BSD-like socket interface */
 /*extern const s_nsSocket_t udp_socket_driver;
 extern const s_nsSocket_t tcp_socket_driver;*/
 
+
+/*
+********************************************************************************
+*                       HEADER COMPRESSOR DRIVERS DECLARATIONS
+********************************************************************************
+*/
 /*! Supported headers compression handlers */
 extern const s_nsHeadComp_t     sicslowpan_driver;
+
 
 /*! This driver are pretending to be a hc layer
  *  for sniffing data and sending them via USART     */
 extern const s_nsHeadComp_t     slipnet_driver;
 
 
+/*
+********************************************************************************
+*                           LLSEC DRIVERS DECLARATIONS
+********************************************************************************
+*/
 /*! Supported link layer security handlers */
-extern const s_nsllsec_t        nullsec_driver;
-
-/*! Supported high mac handlers */
-extern const s_nsHighMac_t      nullmac_driver;
+extern const s_nsdllsec_t        nullsec_driver;
 
 
-/*! Supported low mac handlers */
-extern const s_nsLowMac_t       sicslowmac_driver;
-extern const s_nsLowMac_t       nullrdc_driver;
-
-
+/*
+********************************************************************************
+*                   6LOWPAN FRAMER DRIVERS DECLARATIONS
+********************************************************************************
+*/
 /*! Supported framers */
 extern const s_nsFramer_t       framer_802154;
-extern const s_nsFramer_t       no_framer;
-extern const s_nsFramer_t       nullframer;
+extern const s_nsFramer_t       framer_noframer;
+extern const s_nsFramer_t       framer_nullframer;
 
 
-/*! Supported interfaces */
-extern const s_nsIf_t           rf212_driver;
-extern const s_nsIf_t           rf212b_driver;
-extern const s_nsIf_t           rf230_driver;
-extern const s_nsIf_t           native_driver;
+/*
+********************************************************************************
+*                           DLLC DRIVERS DECLARATIONS
+********************************************************************************
+*/
+extern  const s_nsDLLC_t    DLLCDrvNull;
+extern  const s_nsDLLC_t    DLLCDrv802154;
+
+/*
+********************************************************************************
+*                           MAC DRIVERS DECLARATIONS
+********************************************************************************
+*/
+extern  const s_nsMAC_t     MACDrvNull;
+extern  const s_nsMAC_t     MACDrv802154;
+extern  const s_nsMAC_t     MACDrv802154ULE;
+
+/*
+********************************************************************************
+*                           PHY DRIVERS DECLARATIONS
+********************************************************************************
+*/
+extern  const s_nsPHY_t     PHYDrvNull;
+extern  const s_nsPHY_t     PHYDrv802154;
 
 
+/*
+********************************************************************************
+*                           RF DRIVERS DECLARATIONS
+********************************************************************************
+*/
+
+extern  const s_nsRF_t      RFDrvNull;
+extern  const s_nsRF_t      RFDrvNative;
+extern  const s_nsRF_t      rf212_driver;
+extern  const s_nsRF_t      rf212b_driver;
+extern  const s_nsRF_t      RFDrvCC112x;
+extern  const s_nsRF_t      RFDrvCC120x;
 
 
 /*==============================================================================
@@ -480,6 +666,16 @@ void emb6_process(uint16_t delay);
 /*============================================================================*/
 s_ns_t * emb6_get(void);
 
+/*============================================================================*/
+/*!
+\brief   emb6 error handler function
+
+\return  pointer to returned error code
+
+*/
+/*============================================================================*/
+void emb6_errorHandler(e_nsErr_t *p_err);
+
 /*=============================================================================
                                 	UTILS SECTION
 ==============================================================================*/
@@ -494,7 +690,6 @@ s_ns_t * emb6_get(void);
 #ifndef QUEUEBUF_CONF_REF_NUM
 #define QUEUEBUF_CONF_REF_NUM               4
 #endif
-
 
 #endif /* EMB6_H_ */
 
