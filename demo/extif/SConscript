@@ -16,11 +16,11 @@ extif = {
 		'*',
 	],
 # C global defines
-	'defines' : [
+	'CPPDEFINES' : [
 		('DEMO_USE_EXTIF',1),
 	],
 # GCC flags
-	'cflags' : [
+	'CFLAGS' : [
 	]	
 }
 
