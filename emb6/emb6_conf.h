@@ -874,6 +874,9 @@ void uip_log(char *msg);
 #define LOGGER_DEMO_COAP                   	FALSE
 #endif
 
+ /** DEMO COAP example                      (see demo_dtls_*.c) */
+ #define LOGGER_DEMO_DTLS                   FALSE
+
 /** DEMO SNIFFER                           	(see demo_sniffer.c) */
 #ifndef LOGGER_DEMO_SNIFFER
 #define LOGGER_DEMO_SNIFFER                	FALSE

@@ -111,6 +111,14 @@
 #include "slip.h"
 #endif
 
+#if DEMO_USE_DTLS
+#if CONF_USE_SERVER
+#include "demo_dtls_srv.h"
+#else
+#include "demo_dtls_cli.h"
+#endif
+#endif
+
 #if UIP_CONF_IPV6_RPL
 #include "rpl.h"
 #endif
@@ -197,6 +205,10 @@ static uint8_t loc_demoAppsConf(s_ns_t* pst_netStack)
     demo_testsuiteConf(pst_netStack);
     #endif
 
+    #if DEMO_USE_DTLS
+    demo_dtlsConf(pst_netStack);
+    #endif
+
     if (pst_netStack == NULL)
         return 0;
     else
@@ -257,6 +269,12 @@ static uint8_t loc_demoAppsInit(void)
     #if DEMO_USE_TESTSUITE
     if (!demo_testsuiteInit()) {
         return 0;
+    }
+    #endif
+
+    #if DEMO_USE_DTLS
+    if (!demo_dtlsInit()) {
+	    return 0;
     }
     #endif
 

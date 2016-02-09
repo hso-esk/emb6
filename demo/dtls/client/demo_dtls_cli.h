@@ -37,61 +37,53 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-/**  \addtogroup emb6
- *      @{
- *      \addtogroup bsp Board Support Package
+/*============================================================================*/
+/**
+ * 	 \addtogroup emb6
+ * 	 @{
+ *   \addtogroup demo
  *   @{
- *   \addtogroup board
+ *   \defgroup demo_dtls DTLS demos
+ *
+ *   DTLS client and server functionalities are demonstrated.
  *   @{
- *      \addtogroup x86 x86 emulation with a TCPIP based fake radio interface
- *      				   specific configuration
+ *   \defgroup demo_dtls_client DTLS UDP client
+ *
+ *   Simple example of a DTLS client
  *   @{
- */
-/*! \file   x86/board_conf.c
+*/
+/*! \file   demo_dtls_cli.h
 
-    \author Artem Yushev, 
+    \author Fesseha T. Mamo
 
-    \brief  Board Configuration for x86 emulation
+    \brief  This is the header file of the demo DTLS client example.
 
     \version 0.0.1
 */
+#ifndef DEMO_DTLS_CLI_H_
+#define DEMO_DTLS_CLI_H_
 
-/*
-********************************************************************************
-*                                   INCLUDES
-********************************************************************************
+/*==============================================================================
+                         FUNCTION PROTOTYPES OF THE API
+==============================================================================*/
+/*============================================================================*/
+/*!
+   \brief Initialization of the CoAP client application.
+
 */
-#include "emb6.h"
+/*============================================================================*/
+int8_t demo_dtlsInit(void);
 
-#include "../native/board_conf.h"
-#include "hwinit.h"
-#include "etimer.h"
-#include "etimer.h"
-#include "bsp.h"
-#include "logger.h"
+/*============================================================================*/
+/*!
+	\brief Configuration of the CoAP client application.
 
-/** Enable or disable logging */
-#define        LOGGER_ENABLE          LOGGER_BSP
+	\return 0 - error, 1 - success
+*/
+/*============================================================================*/
+uint8_t demo_dtlsConf(s_ns_t* pst_netStack);
 
-uint8_t board_conf(s_ns_t* p_netstk)
-{
-    uint8_t 	c_ret = 0;
-
-
-    if (p_netstk != NULL) {
-		p_netstk->dllc = &DLLCDrvNull;
-		p_netstk->mac = &MACDrvNull;
-		p_netstk->phy = &PHYDrvNull;
-		p_netstk->rf  = &RFDrvNative;
-		etimer_init();
-		c_ret = 1;
-    }
-    else {
-            LOG_ERR("Network stack pointer is NULL");
-    }
-
-    return c_ret;
-}
+#endif /* DEMO_DTLS_CLI_H_ */
 /** @} */
 /** @} */
 /** @} */

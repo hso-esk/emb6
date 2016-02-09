@@ -1,0 +1,30 @@
+dtls = {
+	'demo' : [
+		'*',
+	],
+	'emb6' : [
+		'coap',
+		'dtls',
+		'sock',
+		'rpl',
+		'ipv6',
+		'sicslowpan',
+		'llsec',
+		'nullmac',
+		'802154framer',
+	],
+	'utils' : [
+		'*',
+	],
+# C global defines
+	'defines' : [
+		('DEMO_USE_DTLS',1),
+		('NET_USE_RPL',1),
+		('WITH_CONTIKI',1),
+	],
+# GCC flags
+	'cflags' : [
+	]
+}
+
+Return('dtls')
