@@ -15,6 +15,8 @@ aptb_srv    = ('aptb','server')
 aptb_cli    = ('aptb','client')
 x86_srv     = ('x86','server')
 x86_cli     = ('x86','client')
+dtls_cli    = ('dtls','client')
+dtls_srv    = ('dtls','server')
 
 trg         = []
 
@@ -99,6 +101,18 @@ trg += [{
 }]
 
 trg += [{
+    'id'        : 'dc_stk3600',
+    'apps_conf' : [ dtls_cli ],
+    'bsp'       : get_descr(bsp, 'efm32stk3600')
+}]
+
+trg += [{
+    'id'        : 'ds_stk3600',
+    'apps_conf' : [ dtls_srv ],
+    'bsp'       : get_descr(bsp, 'efm32stk3600')
+}]
+
+trg += [{
     'id'        : 'us_stk3600_cc112x',
     'apps_conf' : [ udp_srv ],
     'bsp'       : get_descr(bsp, 'efm32stk3600_cc112x')
@@ -114,6 +128,18 @@ trg += [{
     'id'        : 'uc_stk3600_cc120x',
     'apps_conf' : [ udp_cli ],
     'bsp'       : get_descr(bsp, 'efm32stk3600_cc120x')
+}]
+
+trg += [{
+    'id'        : 'uc_moses',
+    'apps_conf' : [ udp_cli ],
+    'bsp'       : get_descr(bsp, 'moses')
+}]
+
+trg += [{
+    'id'        : 'us_moses',
+    'apps_conf' : [ udp_srv ],
+    'bsp'       : get_descr(bsp, 'moses')
 }]
 
 
@@ -150,5 +176,16 @@ trg += [{
     'bsp'       : get_descr(bsp, 'native')
 }]
 
+trg += [{
+    'id'        : 'dc_lux',
+    'apps_conf' : [ dtls_cli ],
+    'bsp'       : get_descr(bsp, 'native')
+}]
+
+trg += [{
+    'id'        : 'ds_lux',
+    'apps_conf' : [ dtls_srv ],
+    'bsp'       : get_descr(bsp, 'native')
+}]
 
 Return('trg')
