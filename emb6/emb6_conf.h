@@ -874,8 +874,15 @@ void uip_log(char *msg);
 #define LOGGER_DEMO_COAP                   	FALSE
 #endif
 
- /** DEMO COAP example                      (see demo_dtls_*.c) */
- #define LOGGER_DEMO_DTLS                   FALSE
+ /** DEMO DTLS example                      	(see demo_dtls_*.c) */
+ #define LOGGER_DEMO_DTLS                   	FALSE
+#endif
+
+/** DEMO MDNS example                      	(see demo_mdns_*.c) */
+#ifndef LOGGER_DEMO_MDNS
+#define LOGGER_DEMO_MDNS                    	FALSE
+#endif
+
 
 /** DEMO SNIFFER                           	(see demo_sniffer.c) */
 #ifndef LOGGER_DEMO_SNIFFER
@@ -913,7 +920,6 @@ void uip_log(char *msg);
 #define NETSTK_CFG_PHY_OP_MODE_2_EN                         FALSE
 #define NETSTK_CFG_PHY_OP_MODE_3_EN                         FALSE
 #endif
-
 
 /*
 ********************************************************************************

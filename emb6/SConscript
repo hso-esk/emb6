@@ -18,6 +18,9 @@ emb6 = {
 		'net/dtls/ecc/*',
 		'net/dtls/sha2/*',
 	],
+	'mdns' : [
+		'apl/dns/*',
+	],
 	'sock' : [
 		'tport/*',
 	],
