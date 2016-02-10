@@ -875,7 +875,8 @@ void uip_log(char *msg);
 #endif
 
  /** DEMO DTLS example                      	(see demo_dtls_*.c) */
- #define LOGGER_DEMO_DTLS                   	FALSE
+#ifndef LOGGER_DEMO_DTLS
+#define LOGGER_DEMO_DTLS                   	FALSE
 #endif
 
 /** DEMO MDNS example                      	(see demo_mdns_*.c) */
