@@ -12,6 +12,7 @@ toolchain = {
 		],
 	'CPPDEFINES' : [
 		{'printf': 'iprintf'},
+		('__SDCC', 1),
 		],
 	'CFLAGS' :  [
 		'-O0', 

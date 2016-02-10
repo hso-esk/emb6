@@ -16,7 +16,8 @@ mdns = {
 		'*',
 	],
 # C global defines
-	'defines' : [
+	'CPPDEFINES' : [
+		('EMB6_INIT_ROOT',1),
 		('DEMO_USE_MDNS',1),
 		('CONF_USE_SERVER',1),
 		('RESOLV_CONF_SUPPORTS_MDNS',1),

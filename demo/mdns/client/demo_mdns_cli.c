@@ -59,7 +59,7 @@
 /*============================================================================*/
 
 /*==============================================================================
- INCLUDE FILES
+                                  INCLUDE FILES
  =============================================================================*/
 
 #include "emb6.h"
@@ -71,6 +71,7 @@
 #include "evproc.h"
 #include "resolv.h"
 #include "demo_mdns_cli.h"
+
 /*==============================================================================
                                      MACROS
  =============================================================================*/
@@ -78,17 +79,6 @@
 #define     LOGGER_ENABLE        LOGGER_DEMO_MDNS
 #include    "logger.h"
 
-#define DEBUG 1
-#if DEBUG
-#include <stdio.h>
-#define PRINTF(...) printf(__VA_ARGS__)
-#define PRINT6ADDR(addr) PRINTF("[%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x]", ((uint8_t *)addr)[0], ((uint8_t *)addr)[1], ((uint8_t *)addr)[2], ((uint8_t *)addr)[3], ((uint8_t *)addr)[4], ((uint8_t *)addr)[5], ((uint8_t *)addr)[6], ((uint8_t *)addr)[7], ((uint8_t *)addr)[8], ((uint8_t *)addr)[9], ((uint8_t *)addr)[10], ((uint8_t *)addr)[11], ((uint8_t *)addr)[12], ((uint8_t *)addr)[13], ((uint8_t *)addr)[14], ((uint8_t *)addr)[15])
-#define PRINTLLADDR(lladdr) PRINTF("[%02x:%02x:%02x:%02x:%02x:%02x]", (lladdr)->addr[0], (lladdr)->addr[1], (lladdr)->addr[2], (lladdr)->addr[3], (lladdr)->addr[4], (lladdr)->addr[5])
-#else
-#define PRINTF(...)
-#define PRINT6ADDR(addr)
-#define PRINTLLADDR(addr)
-#endif
 /*==============================================================================
                           LOCAL VARIABLE DECLARATIONS
  =============================================================================*/
@@ -128,10 +118,10 @@ void demo_mdns_callback (c_event_t c_event, p_data_t p_data)
 		{
 			if(etimer_expired(&et) && (&et == p_data)) {
 				/* */
-				printf("Client sending to: ");
-				PRINT6ADDR(&pst_client_udp_socket->udp_conn->ripaddr);
+				LOG_INFO("Client sending to: ");
+				LOG_IP6ADDR(&pst_client_udp_socket->udp_conn->ripaddr.u8);
 				sprintf(buf, "Hello %d from the client", ++seq_id);
-				printf(" (msg: %s)\n", buf);
+				LOG_INFO(" (msg: %s)\n", buf);
 		#if SEND_TOO_LARGE_PACKET_TO_TEST_FRAGMENTATION
 				udp_socket_send(pst_client_udp_socket, buf, UIP_APPDATA_SIZE);
 		#else /* SEND_TOO_LARGE_PACKET_TO_TEST_FRAGMENTATION */
@@ -155,13 +145,13 @@ print_local_addresses(void)
 	int i;
 	uint8_t state;
 
-	PRINTF("Client IPv6 addresses: ");
+	LOG_INFO("Client IPv6 addresses: ");
 	for(i = 0; i < UIP_DS6_ADDR_NB; i++) {
 		state = uip_ds6_if.addr_list[i].state;
 		if(uip_ds6_if.addr_list[i].isused &&
 				(state == ADDR_TENTATIVE || state == ADDR_PREFERRED)) {
-			PRINT6ADDR(&uip_ds6_if.addr_list[i].ipaddr);
-			PRINTF("\n");
+			LOG_IP6ADDR(&uip_ds6_if.addr_list[i].ipaddr.u8);
+			LOG_INFO("\n");
 		}
 	}
 }
@@ -170,7 +160,7 @@ resolv_status_t set_connection_address(uip_ipaddr_t *ipaddr)
 {
 #ifndef UDP_CONNECTION_ADDR
 #if RESOLV_CONF_SUPPORTS_MDNS
-#define UDP_CONNECTION_ADDR       contiki-udp-server.local
+#define UDP_CONNECTION_ADDR       demo-gateway.local
 #elif UIP_CONF_ROUTER
 #define UDP_CONNECTION_ADDR       aaaa:0:0:0:0212:7404:0004:0404
 #else
@@ -187,16 +177,16 @@ resolv_status_t set_connection_address(uip_ipaddr_t *ipaddr)
 		uip_ipaddr_t *resolved_addr = NULL;
 		status = resolv_lookup(QUOTEME(UDP_CONNECTION_ADDR),&resolved_addr);
 		if(status == RESOLV_STATUS_UNCACHED || status == RESOLV_STATUS_EXPIRED) {
-			PRINTF("Attempting to look up %s\n",QUOTEME(UDP_CONNECTION_ADDR));
+			LOG_INFO("Attempting to look up %s\n",QUOTEME(UDP_CONNECTION_ADDR));
 			resolv_query(QUOTEME(UDP_CONNECTION_ADDR));
 			status = RESOLV_STATUS_RESOLVING;
 		} else if(status == RESOLV_STATUS_CACHED && resolved_addr != NULL) {
-			PRINTF("Lookup of \"%s\" succeeded!\n",QUOTEME(UDP_CONNECTION_ADDR));
+			LOG_INFO("Lookup of \"%s\" succeeded!\n",QUOTEME(UDP_CONNECTION_ADDR));
 		} else if(status == RESOLV_STATUS_RESOLVING) {
 			resolv_query(QUOTEME(UDP_CONNECTION_ADDR));
-			PRINTF("Still looking up \"%s\"...\n",QUOTEME(UDP_CONNECTION_ADDR));
+			LOG_INFO("Still looking up \"%s\"...\n",QUOTEME(UDP_CONNECTION_ADDR));
 		} else {
-			PRINTF("Lookup of \"%s\" failed. status = %d\n",QUOTEME(UDP_CONNECTION_ADDR),status);
+			LOG_INFO("Lookup of \"%s\" failed. status = %d\n",QUOTEME(UDP_CONNECTION_ADDR),status);
 		}
 		if(resolved_addr)
 			uip_ipaddr_copy(ipaddr, resolved_addr);
@@ -210,9 +200,9 @@ resolv_status_t set_connection_address(uip_ipaddr_t *ipaddr)
                                  API FUNCTIONS
  =============================================================================*/
 
-/*==============================================================================
- demo_coapInit()
-==============================================================================*/
+/*------------------------------------------------------------------------------
+demo_mdnsInit()
+------------------------------------------------------------------------------*/
 
 int8_t demo_mdnsInit(void)
 {
@@ -228,7 +218,7 @@ int8_t demo_mdnsInit(void)
 
 	pst_client_udp_socket = &st_client_udp_socket;
 
-	PRINTF("UDP client process started\n");
+	LOG_INFO("UDP client process started\n");
 	print_local_addresses();
 
 	/* new connection with remote host */
@@ -236,18 +226,18 @@ int8_t demo_mdnsInit(void)
 	pst_client_udp_socket->udp_conn->rport = UIP_HTONS(3000);
 	udp_socket_bind(pst_client_udp_socket, 3001);
 
-	PRINTF("Created a connection with the server ");
-	PRINT6ADDR(&pst_client_udp_socket->udp_conn->ripaddr);
-	PRINTF(" local/remote port %u/%u\n",
+	LOG_INFO("Created a connection with the server ");
+	LOG_IP6ADDR(&pst_client_udp_socket->udp_conn->ripaddr.u8);
+	LOG_INFO(" local/remote port %u/%u\n",
 			UIP_HTONS(pst_client_udp_socket->udp_conn->lport), UIP_HTONS(pst_client_udp_socket->udp_conn->rport));
 
 	etimer_set(&et, SEND_INTERVAL, demo_mdns_callback);
 	return 1;
 }
 
-/*==============================================================================
- demo_coapConf()
-==============================================================================*/
+/*------------------------------------------------------------------------------
+demo_mdnsConf()
+------------------------------------------------------------------------------*/
 
 uint8_t demo_mdnsConf(s_ns_t* pst_netStack)
 {
@@ -256,30 +246,24 @@ uint8_t demo_mdnsConf(s_ns_t* pst_netStack)
 	/*
 	 * By default stack
 	 */
-	if (pst_netStack != NULL) {
-		if (!pst_netStack->c_configured) {
-			pst_netStack->hc     = &sicslowpan_driver;
-			pst_netStack->llsec   = &nullsec_driver;
-			pst_netStack->hmac   = &nullmac_driver;
-			pst_netStack->lmac   = &sicslowmac_driver;
-			pst_netStack->frame  = &framer_802154;
-			pst_netStack->c_configured = 1;
-			/* Transceiver interface is defined by @ref board_conf function*/
-			/*pst_netStack->inif   = $<some_transceiver>;*/
-		} else {
-			if ((pst_netStack->hc == &sicslowpan_driver)   &&
-					(pst_netStack->llsec == &nullsec_driver)   &&
-					(pst_netStack->hmac == &nullmac_driver)    &&
-					(pst_netStack->lmac == &sicslowmac_driver) &&
-					(pst_netStack->frame == &framer_802154)) {
-				/* right configuration */
-			}
-			else {
-				pst_netStack = NULL;
-				c_ret = 0;
-			}
-		}
-	}
+    if (pst_netStack != NULL) {
+        if (!pst_netStack->c_configured) {
+            pst_netStack->hc    = &sicslowpan_driver;
+            pst_netStack->frame = &framer_802154;
+            pst_netStack->dllsec = &nullsec_driver;
+            c_ret = 1;
+        } else {
+            if ((pst_netStack->hc    == &sicslowpan_driver) &&
+                (pst_netStack->frame == &framer_802154)     &&
+                (pst_netStack->dllsec == &nullsec_driver)) {
+                c_ret = 1;
+            }
+            else {
+                pst_netStack = NULL;
+                c_ret = 0;
+            }
+        }
+    }
 	return (c_ret);
 }
 

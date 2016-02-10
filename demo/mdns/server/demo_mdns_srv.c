@@ -60,14 +60,16 @@
  INCLUDE FILES
  =============================================================================*/
 
-#include "demo_mdns_srv.h"
 #include "emb6.h"
-
 #include "tcpip.h"
 #include "udp-socket.h"
 #include "uip.h"
 #include "resolv.h"
+#include "demo_mdns_srv.h"
 
+/*==============================================================================
+                                     MACROS
+ =============================================================================*/
 
 #define     LOGGER_ENABLE        LOGGER_DEMO_MDNS
 #include    "logger.h"
@@ -75,18 +77,6 @@
 /*==============================================================================
                           LOCAL VARIABLE DECLARATIONS
  =============================================================================*/
-#define DEBUG 1
-#if DEBUG
-#include <stdio.h>
-#define PRINTF(...) printf(__VA_ARGS__)
-#define PRINT6ADDR(addr) PRINTF("[%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x]", ((uint8_t *)addr)[0], ((uint8_t *)addr)[1], ((uint8_t *)addr)[2], ((uint8_t *)addr)[3], ((uint8_t *)addr)[4], ((uint8_t *)addr)[5], ((uint8_t *)addr)[6], ((uint8_t *)addr)[7], ((uint8_t *)addr)[8], ((uint8_t *)addr)[9], ((uint8_t *)addr)[10], ((uint8_t *)addr)[11], ((uint8_t *)addr)[12], ((uint8_t *)addr)[13], ((uint8_t *)addr)[14], ((uint8_t *)addr)[15])
-#define PRINTLLADDR(lladdr) PRINTF("[%02x:%02x:%02x:%02x:%02x:%02x]", (lladdr)->addr[0], (lladdr)->addr[1], (lladdr)->addr[2], (lladdr)->addr[3], (lladdr)->addr[4], (lladdr)->addr[5])
-#else
-#define PRINTF(...)
-#define PRINT6ADDR(addr)
-#define PRINTLLADDR(addr)
-#endif
-
 #define MAX_PAYLOAD_LEN 120
 
 static struct udp_socket   st_server_udp_socket;
@@ -107,14 +97,13 @@ static void mdns_callback(struct udp_socket *c,
 
 	if(data) {
 		((char *)data)[datalen] = 0;
-		PRINTF("Server received: '%s' from ", (char *)data);
-		PRINT6ADDR(source_addr);
-		PRINTF("\n");
+		LOG_INFO("Server received: '%s' from ", (char *)data);
+		LOG_IP6ADDR(source_addr->u8);
 
 		uip_ipaddr_copy(&pst_server_udp_socket->udp_conn->ripaddr, source_addr);
-		PRINTF("Responding with message: ");
+		LOG_INFO("Responding with message: ");
 		sprintf(buf, "Hello from the server! (%d)", ++seq_id);
-		PRINTF("%s\n", buf);
+		LOG_INFO("%s\n", buf);
 
 		udp_socket_send(pst_server_udp_socket, buf, strlen(buf));
 		/* Restore server connection to allow data from any node */
@@ -124,15 +113,15 @@ static void mdns_callback(struct udp_socket *c,
 /*==============================================================================
                                          API FUNCTIONS
  =============================================================================*/
-/*----------------------------------------------------------------------------*/
-/*    demo_mdnsInit()                                                           */
-/*----------------------------------------------------------------------------*/
+/*------------------------------------------------------------------------------
+demo_mdnsInit()
+------------------------------------------------------------------------------*/
 
 int8_t demo_mdnsInit(void)
 {
 	init();
 #if RESOLV_CONF_SUPPORTS_MDNS
-	resolv_set_hostname("contiki-udp-server");
+	resolv_set_hostname("demo-gateway");
 #endif
 
 	pst_server_udp_socket = &st_server_udp_socket;
@@ -144,36 +133,28 @@ int8_t demo_mdnsInit(void)
 	return 1;
 }
 
-/*----------------------------------------------------------------------------*/
-/*    demo_coapConf()                                                           */
-/*----------------------------------------------------------------------------*/
+/*------------------------------------------------------------------------------
+demo_mdnsConf()
+------------------------------------------------------------------------------*/
 
 uint8_t demo_mdnsConf(s_ns_t* pst_netStack)
 {
-    uint8_t c_ret = 1;
+	uint8_t c_ret = 1;
 
-    /*
-     * By default stack
-     */
+	/*
+	 * By default stack
+	 */
     if (pst_netStack != NULL) {
         if (!pst_netStack->c_configured) {
-            /*pst_netStack->sock   = &udp_socket_driver;*/
-            pst_netStack->hc     = &sicslowpan_driver;
-            pst_netStack->llsec  = &nullsec_driver;
-            pst_netStack->hmac   = &nullmac_driver;
-            pst_netStack->lmac   = &sicslowmac_driver;
-            pst_netStack->frame  = &framer_802154;
-            pst_netStack->c_configured = 1;
-            /* Transceiver interface is defined by @ref board_conf function*/
-            /*pst_netStack->inif   = $<some_transceiver>;*/
+            pst_netStack->hc    = &sicslowpan_driver;
+            pst_netStack->frame = &framer_802154;
+            pst_netStack->dllsec = &nullsec_driver;
+            c_ret = 1;
         } else {
-            if (/*(pst_netStack->sock == &udp_socket_driver) && */
-                (pst_netStack->hc == &sicslowpan_driver)   &&
-                (pst_netStack->llsec == &nullsec_driver)   &&
-                (pst_netStack->hmac == &nullmac_driver)    &&
-                (pst_netStack->lmac == &sicslowmac_driver) &&
-                (pst_netStack->frame == &framer_802154)) {
-                /* right configuration */
+            if ((pst_netStack->hc    == &sicslowpan_driver) &&
+                (pst_netStack->frame == &framer_802154)     &&
+                (pst_netStack->dllsec == &nullsec_driver)) {
+                c_ret = 1;
             }
             else {
                 pst_netStack = NULL;
@@ -181,7 +162,7 @@ uint8_t demo_mdnsConf(s_ns_t* pst_netStack)
             }
         }
     }
-    return (c_ret);
+	return (c_ret);
 }
 
 /** @} */

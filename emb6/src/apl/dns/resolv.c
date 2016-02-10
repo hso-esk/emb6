@@ -70,10 +70,6 @@
 #include "evproc.h"
 #include "random.h"
 
-#ifndef DEBUG
-#define DEBUG 1
-#endif
-
 #if UIP_UDP
 
 #include "emb6.h"
@@ -83,6 +79,14 @@
 #ifndef NULL
 #define NULL (void *)0
 #endif /* NULL */
+
+#ifndef DEBUG
+#define DEBUG 0
+#endif
+
+#ifndef VERBOSE_DEBUG
+#define VERBOSE_DEBUG 0
+#endif
 
 #if !defined(__SDCC) && defined(SDCC_REVISION)
 #define __SDCC 1

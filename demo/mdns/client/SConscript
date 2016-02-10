@@ -16,7 +16,7 @@ mdns = {
 		'*',
 	],
 # C global defines
-	'defines' : [
+	'CPPDEFINES' : [
 		('DEMO_USE_MDNS',1),
 		('RESOLV_CONF_SUPPORTS_MDNS',1),
 		('NET_USE_RPL',1),
