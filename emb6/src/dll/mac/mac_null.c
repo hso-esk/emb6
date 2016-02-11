@@ -73,7 +73,10 @@ static void MAC_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
 *                               LOCAL VARIABLES
 ********************************************************************************
 */
-static s_ns_t *MAC_Netstk;
+static s_ns_t           *MAC_Netstk;
+static void            *MAC_CbTxArg;
+static nsTxCbFnct_t     MAC_CbTxFnct;
+static e_nsErr_t        MAC_TxErr;
 
 /*
 ********************************************************************************
@@ -134,6 +137,10 @@ static void MAC_Off(e_nsErr_t *p_err)
 static void MAC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 {
     MAC_Netstk->phy->send(p_data, len, p_err);
+
+    MAC_TxErr = NETSTK_ERR_NONE;
+    if( MAC_CbTxFnct != NULL )
+        MAC_CbTxFnct(MAC_CbTxArg, &MAC_TxErr);
 }
 
 
@@ -160,8 +167,19 @@ static void MAC_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
 
     *p_err = NETSTK_ERR_NONE;
     switch (cmd) {
-        case NETSTK_CMD_MAC_RSVD:
+        case NETSTK_CMD_TX_CBFNCT_SET:
+            if (p_val == NULL) {
+                *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+            } else {
+                MAC_CbTxFnct = (nsTxCbFnct_t)p_val;
+            }
             break;
+
+        case NETSTK_CMD_TX_CBARG_SET:
+            MAC_CbTxArg = p_val;
+            break;
+            case NETSTK_CMD_MAC_RSVD:
+                break;
 
         default:
             MAC_Netstk->phy->ioctrl(cmd, p_val, p_err);
