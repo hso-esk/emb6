@@ -66,14 +66,19 @@ static void DLLC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
 static void DLLC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
 static void DLLC_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
 
+static void DLLC_CbTx(void *p_arg, e_nsErr_t *p_err);
+
 
 /*
 ********************************************************************************
 *                               LOCAL VARIABLES
 ********************************************************************************
 */
+
+static void             *DLLC_CbTxArg;
+static nsTxCbFnct_t     DLLC_CbTxFnct;
+static nsRxCbFnct_t     DLLC_CbRxFnct;
 static s_ns_t           *DLLC_Netstk;
-static nsRxCbFnct_t      DLLC_CbRxFnct;
 
 
 /*
@@ -98,6 +103,20 @@ const s_nsDLLC_t DLLCDrvNull =
 *                           LOCAL FUNCTION DEFINITIONS
 ********************************************************************************
 */
+
+/**
+ *
+ * @param ptr
+ * @param status
+ * @param transmissions
+ */
+static void DLLC_CbTx(void *p_arg, e_nsErr_t *p_err)
+{
+    if (DLLC_CbTxFnct) {
+        DLLC_CbTxFnct(DLLC_CbTxArg, p_err);
+    }
+}
+
 static void DLLC_Init(void *p_netstk, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
@@ -109,6 +128,8 @@ static void DLLC_Init(void *p_netstk, e_nsErr_t *p_err)
 
 
     DLLC_Netstk = p_netstk;
+    DLLC_CbTxFnct = 0;
+    DLLC_CbTxArg = NULL;
     *p_err = NETSTK_ERR_NONE;
 }
 
@@ -127,6 +148,17 @@ static void DLLC_Off(e_nsErr_t *p_err)
 
 static void DLLC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 {
+    /*
+     * set TX callback function and argument
+     */
+    DLLC_Netstk->mac->ioctrl(NETSTK_CMD_TX_CBFNCT_SET,
+                            (void *)DLLC_CbTx,
+                            p_err);
+
+    DLLC_Netstk->mac->ioctrl(NETSTK_CMD_TX_CBARG_SET,
+                            NULL,
+                            p_err);
+
     DLLC_Netstk->mac->send(p_data, len, p_err);
 }
 
@@ -154,6 +186,25 @@ static void DLLC_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
 
     *p_err = NETSTK_ERR_NONE;
     switch (cmd) {
+        case NETSTK_CMD_TX_CBFNCT_SET:
+            if (p_val == NULL) {
+                *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+            } else {
+                DLLC_CbTxFnct = (nsTxCbFnct_t)p_val;
+            }
+            break;
+
+        case NETSTK_CMD_TX_CBARG_SET:
+            DLLC_CbTxArg = p_val;
+            break;
+
+        case NETSTK_CMD_RX_CBFNT_SET:
+            if (p_val == NULL) {
+                *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+            } else {
+                DLLC_CbRxFnct = (nsRxCbFnct_t)p_val;
+            }
+            break;
         case NETSTK_CMD_DLLC_RSVD:
             break;
 
