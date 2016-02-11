@@ -79,7 +79,7 @@ uint8_t board_conf(s_ns_t* p_netstk)
 
 
     if (p_netstk != NULL) {
-		p_netstk->dllc = &DLLCDrvNull;
+		p_netstk->dllc = &DLLCDrv802154;
 		p_netstk->mac = &MACDrvNull;
 		p_netstk->phy = &PHYDrvNull;
 		p_netstk->rf  = &RFDrvNative;
