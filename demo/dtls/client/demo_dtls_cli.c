@@ -112,8 +112,6 @@ static session_t dst;
 static int connected = 0;
 static struct etimer et;
 
-//static struct uip_udp_conn *client_conn;
-
 static  struct  udp_socket          st_udp_socket;
         struct  udp_socket*         pst_udp_socket;
 
@@ -147,15 +145,6 @@ static void dtls_udp_callback(void);
 /*==============================================================================
                                 LOCAL CONSTANTS
  =============================================================================*/
-
-#define TOGGLE_INTERVAL 2  /* interval for client requests */
-
-/* Example URIs that can be queried. */
-#define NUMBER_OF_URLS 2
-
-/* leading and ending slashes only for demo purposes, get cropped automatically when setting the Uri-Path */
-char *service_urls[NUMBER_OF_URLS] =
-{ ".well-known/core", "actuators/LED_toggle"};
 
 /*==============================================================================
                                 LOCAL FUNCTIONS
@@ -203,7 +192,7 @@ send_to_peer(struct dtls_context_t *ctx,
   int ret = 0;
   struct udp_socket *st_udp_socket  = (struct udp_socket *)dtls_get_app_data(ctx);
 
-  ret = udp_socket_sendto(st_udp_socket, data, len, &session->addr, session->port);
+  ret = udp_socket_sendto(st_udp_socket, data, len, &session->addr, uip_htons(session->port));
 
   return ret;
 }
@@ -313,9 +302,7 @@ set_connection_address(uip_ipaddr_t *ipaddr)
   }
 #elif UIP_CONF_ROUTER
   /* todo Set IPv6 address of the DTLS UDP server accordingly. */
-  /* 2001:bbbb:dddd:0:d04d:e1d3:4fad:97b8 */
-//  uip_ip6addr(ipaddr,0x2001,0xbbbb,0xdddd,0,0xd04d,0xe1d3,0x4fad,0x97b8);
-  uip_ip6addr(ipaddr,0xfe80,0,0,0,0x0250,0xc2ff,0xfea8,0x00FF);
+  uip_ip6addr(ipaddr,0xfe80,0,0,0,0x0250,0xc2ff,0xfea8,0x00AA);
 #else
   uip_ip6addr(ipaddr,0xfe80,0,0,0,0x6466,0x6666,0x6666,0x6666);
 #endif /* UDP_CONNECTION_ADDR */
@@ -337,13 +324,10 @@ init_dtls(session_t *dst) {
   };
 
   dst->size = sizeof(dst->addr) + sizeof(dst->port);
-  /* todo set port address as needed */
+  /* set port address as needed */
   dst->port = UIP_HTONS(20220);
 
   set_connection_address(&dst->addr);
-//  client_conn = udp_new(&dst->addr, 0, NULL);
-
-//  udp_bind(client_conn, dst->port);
 
   PRINTF("set connection address to ");
   PRINT6ADDR(&dst->addr);
@@ -385,8 +369,6 @@ int8_t demo_dtlsInit(void)
 	if (!connected)
 		connected = dtls_connect(dtls_context, &dst) >= 0;
 
-//	evproc_regCallback(EVENT_TYPE_TCPIP, dtls_udp_callback);
-
 	etimer_set(&et, 20 * bsp_get(E_BSP_GET_TRES), try_send);
 
 	return 1;
@@ -394,11 +376,7 @@ int8_t demo_dtlsInit(void)
 
 static void dtls_udp_callback(void)
 {
-//	if(c_event == EVENT_TYPE_TCPIP) {
-		dtls_handle_read(dtls_context);
-//	} else if(connected && c_event == EVENT_TYPE_TIMER_EXP) {
-//		try_send(dtls_context, &dst);
-//	}
+	dtls_handle_read(dtls_context);
 }
 
 /*==============================================================================

@@ -8,11 +8,6 @@
 #define CONTIKI
 
 #ifdef CONTIKI
-//#include "contiki.h"
-//#include "contiki-lib.h"
-//#include "contiki-net.h"
-//
-//#include "contiki-conf.h"
 
 /* global constants for constrained devices running Contiki */
 #ifndef DTLS_PEER_MAX

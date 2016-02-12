@@ -38,7 +38,7 @@
 #endif
 
 #ifdef HAVE_TIME_H
-//#include <time.h>
+#include <time.h>
 #endif
 
 #include "global.h"
@@ -83,10 +83,10 @@ print_timestamp(char *s, size_t len, time_t t) {
 
 static inline size_t
 print_timestamp(char *s, size_t len, clock_time_t t) {
-#ifdef HAVE_SNPRINTF
+#if HAVE_SNPRINTF == 1
   return snprintf(s, len, "%u.%03u",
-		  (unsigned int)(t / CLOCK_SECOND),
-		  (unsigned int)(t % CLOCK_SECOND));
+		  (unsigned int)(t / bsp_get(E_BSP_GET_TRES)),
+		  (unsigned int)(t % bsp_get(E_BSP_GET_TRES)));
 #else /* HAVE_SNPRINTF */
   /* @todo do manual conversion of timestamp */
   return 0;
@@ -117,7 +117,7 @@ dtls_strnlen(const char *s, size_t maxlen) {
 
 static size_t
 dsrv_print_addr(const session_t *addr, char *buf, size_t len) {
-#ifdef HAVE_ARPA_INET_H
+#if HAVE_ARPA_INET_H == 1
   const void *addrptr = NULL;
   in_port_t port;
   char *p = buf;

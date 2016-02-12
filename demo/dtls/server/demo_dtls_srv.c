@@ -139,7 +139,7 @@ send_to_peer(struct dtls_context_t *ctx,
   int ret = 0;
   struct udp_socket *st_udp_socket  = (struct udp_socket *)dtls_get_app_data(ctx);
 
-  ret = udp_socket_sendto(st_udp_socket, data, len, &session->addr, session->port);
+  ret = udp_socket_sendto(st_udp_socket, data, len, &session->addr, uip_htons(session->port));
 
   return ret;
 }
@@ -253,29 +253,6 @@ init_dtls() {
 #endif /* UIP_CONF_ROUTER */
 
   PRINTF("DTLS server started\n");
-
-#if 0  /* TEST */
-  memset(&tmp_addr, 0, sizeof(rimeaddr_t));
-  if(get_eui64_from_eeprom(tmp_addr.u8));
-#if UIP_CONF_IPV6
-  memcpy(&uip_lladdr.addr, &tmp_addr.u8, 8);
-#endif
-#endif /* TEST */
-
-#if 0
-/*   uip_ip6addr(&ipaddr, 0xaaaa, 0, 0, 0, 0, 0, 0, 0); */
-/*   uip_ds6_set_addr_iid(&ipaddr, &uip_lladdr); */
-/*   uip_ds6_addr_add(&ipaddr, 0, ADDR_AUTOCONF); */
-
-/*   create_rpl_dag(&ipaddr); */
-/* #else */
-  /* uip_ds6_addr_add(&ipaddr, 0, ADDR_AUTOCONF); */
-
-  uip_ip6addr(&ipaddr, 0xaaaa, 0,0,0,0x0200,0,0,0x0003);
-  uip_ds6_addr_add(&ipaddr, 0, ADDR_MANUAL);
-
-  create_rpl_dag(&ipaddr);
-#endif /* UIP_CONF_ROUTER */
 
   /* set the pointer to the udp-socket */
   pst_udp_socket = &st_udp_socket;
