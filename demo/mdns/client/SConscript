@@ -3,14 +3,16 @@ mdns = {
 		'*',
 	],
 	'emb6' : [
-		'mdns',
-		'sock',
-		'rpl',
-		'ipv6',
-		'sicslowpan',
-		'llsec',
-		'nullmac',
-		'802154framer',
+        'mdns',
+        'sock',
+        'rpl',
+        'ipv6',
+        'sicslowpan',
+        'dllsec',
+        'dllc',
+        'mac',
+        'phy',
+        'framer',
 	],
 	'utils' : [
 		'*',
@@ -22,7 +24,7 @@ mdns = {
 		('NET_USE_RPL',1),
 	],
 # GCC flags
-	'cflags' : [
+	'CFLAGS' : [
 	]
 }
 

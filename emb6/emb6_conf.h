@@ -874,16 +874,15 @@ void uip_log(char *msg);
 #define LOGGER_DEMO_COAP                   	FALSE
 #endif
 
- /** DEMO DTLS example                      	(see demo_dtls_*.c) */
+/** DEMO DTLS example                      	(see demo_dtls_*.c) */
 #ifndef LOGGER_DEMO_DTLS
 #define LOGGER_DEMO_DTLS                   	FALSE
 #endif
 
 /** DEMO MDNS example                      	(see demo_mdns_*.c) */
 #ifndef LOGGER_DEMO_MDNS
-#define LOGGER_DEMO_MDNS                    	FALSE
+#define LOGGER_DEMO_MDNS                   	FALSE
 #endif
-
 
 /** DEMO SNIFFER                           	(see demo_sniffer.c) */
 #ifndef LOGGER_DEMO_SNIFFER

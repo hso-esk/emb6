@@ -149,7 +149,7 @@ udp_socket_sendto(struct udp_socket *c,
 
   if(c->udp_conn != NULL) {
     uip_udp_packet_sendto(c->udp_conn, data, datalen,
-                          to, port);
+                          to, UIP_HTONS(port));
     return datalen;
   }
   return -1;

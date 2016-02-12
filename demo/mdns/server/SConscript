@@ -8,9 +8,11 @@ mdns = {
 		'rpl',
 		'ipv6',
 		'sicslowpan',
-		'llsec',
-		'nullmac',
-		'802154framer',
+		'dllsec',
+		'dllc',
+		'mac',
+		'phy',
+		'framer',
 	],
 	'utils' : [
 		'*',
@@ -24,7 +26,7 @@ mdns = {
 		('NET_USE_RPL',1),
 	],
 # GCC flags
-	'cflags' : [
+	'CFLAGS' : [
 	]
 }
 
