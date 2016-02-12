@@ -365,13 +365,12 @@ static void _native_read( const lcm_recv_buf_t *rps_rbuf,
     }
     else
     {
-        memcpy( packetbuf_dataptr(), rps_rbuf->data, i_dSize );
         LOG_OK( "RX packet [%d]", i_dSize);
-        LOG2_HEXDUMP( packetbuf_dataptr(), i_dSize  );
+        LOG2_HEXDUMP( rps_rbuf->data, i_dSize  );
         if( ( rps_rbuf->data_size > 0 ) && ( p_phy != NULL ) )
         {
             packetbuf_set_datalen( i_dSize );
-            p_phy->recv( packetbuf_dataptr(), i_dSize, &s_err );
+            p_phy->recv( rps_rbuf->data, i_dSize, &s_err );
         }
         else
         {
