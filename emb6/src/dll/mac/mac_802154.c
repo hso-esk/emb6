@@ -515,8 +515,8 @@ static void MAC_CSMA(e_nsErr_t *p_err)
     uint32_t unit_backoff;
     uint32_t nb;
     uint32_t be;
-    uint32_t min_be = 3;
-    uint32_t max_backoff = 3;
+    uint32_t min_be = 5;
+    uint32_t max_backoff = 5;
     uint32_t delay = 0;
     uint32_t max_random;
 
