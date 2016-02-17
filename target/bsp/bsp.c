@@ -270,8 +270,8 @@ uint32_t bsp_getrand(uint32_t max)
     uint32_t ret;
 
     /* generate random number in a range of 0 to max */
-    ret = random_rand();
-    ret = (uint32_t)(ret / 65536) % max;
+    ret = (uint32_t)random_rand();
+    ret = ret % max;
     return ret;
 }
 
