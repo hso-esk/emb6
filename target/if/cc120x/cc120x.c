@@ -1139,9 +1139,6 @@ static void cc120x_cca(e_nsErr_t *p_err)
     uint8_t cca_mode;
     e_rfState_t e_rf_state_store = rf_state;
 
-    /* disable RF external interrupts */
-    RF_EXTI_DISABLED();
-
     /* set the returned error code to default */
     *p_err = NETSTK_ERR_NONE;
 
@@ -1149,6 +1146,9 @@ static void cc120x_cca(e_nsErr_t *p_err)
         (rf_state != RF_STATE_IDLE)) {
         *p_err = NETSTK_ERR_BUSY;
     } else {
+
+        /* disable RF external interrupts */
+        RF_EXTI_DISABLED();
 
         /*
          * Entry action
