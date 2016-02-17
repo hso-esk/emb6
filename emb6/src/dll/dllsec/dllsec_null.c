@@ -70,22 +70,22 @@ static void DLLSec_CbTx(void *p_arg, e_nsErr_t *p_err)
 
         case NETSTK_ERR_CHANNEL_ACESS_FAILURE:
             status = MAC_TX_COLLISION;
-            retx = 3;
+            retx = 1;
             break;
 
         case NETSTK_ERR_TX_NOACK:
             status = MAC_TX_NOACK;
-            retx = 3;
+            retx = 1;
             break;
 
         case NETSTK_ERR_BUSY:
             status = MAC_TX_DEFERRED;
-            retx = 3;
+            retx = 1;
             break;
 
         default:
             status = MAC_TX_ERR_FATAL;
-            retx = 3;
+            retx = 1;
             break;
     }
 
