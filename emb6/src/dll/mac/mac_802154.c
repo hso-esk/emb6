@@ -305,9 +305,8 @@ void MAC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
          * (2)  CSMA declares channel busy while attempting to transmit
          * (3)  Transmission retry exceeds maximum
          */
-        is_tx_done = (MAC_TxErr == NETSTK_ERR_NONE)                   ||
-                     (MAC_TxErr == NETSTK_ERR_CHANNEL_ACESS_FAILURE)  ||
-                     (tx_retries > MAC_CFG_TX_RETRY_MAX);
+        is_tx_done = ((MAC_TxErr == NETSTK_ERR_NONE) ||
+                     (tx_retries > MAC_CFG_TX_RETRY_MAX));
     } while (is_tx_done == FALSE);
 
     LOG_INFO("MAC_TX: --> Done - TX Status %d (%d retries).", MAC_TxErr, tx_retries );
