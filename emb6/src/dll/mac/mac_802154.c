@@ -72,8 +72,8 @@
 #define MAC_CFG_TX_RETRY_MAX                (uint8_t  )( 3u )
 #define MAC_CFG_TMR_WFA_IN_MS               (uint32_t )( 20 )
 
-#define MAC_EVENT_PEND(_event_)             evproc_regCallback(_event_, MAC_EventHandler)
-#define MAC_EVENT_POST(_event_)             evproc_putEvent(E_EVPROC_HEAD, _event_, NULL)
+//#define MAC_EVENT_PEND(_event_)             evproc_regCallback(_event_, MAC_EventHandler)
+//#define MAC_EVENT_POST(_event_)             evproc_putEvent(E_EVPROC_HEAD, _event_, NULL)
 
 
 /*
@@ -89,7 +89,6 @@ static void MAC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
 static void MAC_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
 
 static void MAC_TxACK(uint8_t seq, e_nsErr_t *p_err);
-static void MAC_EventHandler(c_event_t c_event, p_data_t p_data);
 static void MAC_CSMA(e_nsErr_t *p_err);
 
 
@@ -172,11 +171,6 @@ void MAC_Init(void *p_netstk, e_nsErr_t *p_err)
      */
     memcpy(&uip_lladdr.addr, &mac_phy_config.mac_address, 8);
     linkaddr_set_node_addr((linkaddr_t *)mac_phy_config.mac_address);
-
-    /*
-     * Register events
-     */
-    MAC_EVENT_PEND(NETSTK_MAC_EVENT_RX);
 
     /* set returned error */
     *p_err = NETSTK_ERR_NONE;
@@ -413,13 +407,6 @@ void MAC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
                     }
                 }
 
-                /* store the received packet into the common packet buffer */
-                packetbuf_clear();
-                packetbuf_set_datalen(len);
-                memcpy(packetbuf_dataptr(),
-                       p_data,
-                       len);
-                MAC_EVENT_POST(NETSTK_MAC_EVENT_RX);
                 break;
 
             default:
@@ -515,29 +502,6 @@ static void MAC_TxACK(uint8_t seq, e_nsErr_t *p_err)
     MAC_Netstk->phy->send(packetbuf_hdrptr(),
                           packetbuf_totlen(),
                           p_err);
-}
-
-
-/**
- * @brief   Driver's internal events handler
- *
- * @param   c_event     Event to handle
- * @param   p_data      Pointer to the registered data in combination with the
- *                      event to handle
- */
-static void MAC_EventHandler(c_event_t c_event, p_data_t p_data)
-{
-    e_nsErr_t err = NETSTK_ERR_NONE;
-
-
-    switch (c_event) {
-        case NETSTK_MAC_EVENT_RX:
-            /* Inform the next higher layer of the received packet */
-            MAC_Netstk->dllc->recv(packetbuf_dataptr(),
-                                   packetbuf_datalen(),
-                                   &err);
-            break;
-    }
 }
 
 

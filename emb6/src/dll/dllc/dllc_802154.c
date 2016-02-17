@@ -348,6 +348,9 @@ static void DLLC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     frame802154_t frame;
     int hdrlen, ret;
 
+    packetbuf_clear();
+    packetbuf_set_datalen(len);
+    memcpy(packetbuf_dataptr(), p_data, len);
 
     hdrlen = frame802154_parse(p_data, len, &frame);
     if (hdrlen == 0) {
@@ -389,9 +392,7 @@ static void DLLC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
         /*
          * Inform the next higher layer
          */
-        DLLC_CbRxFnct(packetbuf_dataptr(),
-                     packetbuf_datalen(),
-                     p_err);
+        DLLC_CbRxFnct(packetbuf_dataptr(), packetbuf_datalen(), p_err);
     }
 }
 
