@@ -407,6 +407,8 @@ void MAC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
                     }
                 }
 
+                /* forward data */
+                MAC_Netstk->dllc->recv( p_data, len, p_err);
                 break;
 
             default:
