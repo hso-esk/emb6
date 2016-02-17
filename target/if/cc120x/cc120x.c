@@ -1137,6 +1137,7 @@ static void cc120x_cca(e_nsErr_t *p_err)
     uint8_t rssi_status;
     rf_status_t chip_status;
     uint8_t cca_mode;
+    e_rfState_t e_rf_state_store = rf_state;
 
     /* disable RF external interrupts */
     RF_EXTI_DISABLED();
@@ -1144,7 +1145,8 @@ static void cc120x_cca(e_nsErr_t *p_err)
     /* set the returned error code to default */
     *p_err = NETSTK_ERR_NONE;
 
-    if (rf_state != RF_STATE_RX_LISTENING) {
+    if ((rf_state != RF_STATE_RX_LISTENING) &&
+        (rf_state != RF_STATE_IDLE)) {
         *p_err = NETSTK_ERR_BUSY;
     } else {
 
@@ -1186,8 +1188,11 @@ static void cc120x_cca(e_nsErr_t *p_err)
         cca_mode = RF_CCA_MODE_NONE;
         cc120x_spiRegWrite(CC120X_PKT_CFG2, &cca_mode, 1);
 
-        /* put transceiver to RX */
-        cc120x_gotoRx();
+        if( e_rf_state_store == RF_STATE_IDLE )
+            cc120x_gotoIdle();
+        else
+            /* put transceiver to RX */
+            cc120x_gotoRx();
     }
 }
 
