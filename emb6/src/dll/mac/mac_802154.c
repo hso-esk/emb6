@@ -234,19 +234,7 @@ void MAC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     }
 #endif
 
-
-#if LOGGER_ENABLE
-    /*
-     * Logging
-     */
-    uint16_t data_len = len;
-    uint8_t *p_dataptr = p_data;
-    LOG_RAW("MAC_TX: ");
-    while (data_len--) {
-        LOG_RAW("%02x", *p_dataptr++);
-    }
-    LOG_RAW("\r\n");
-#endif
+    LOG_INFO("MAC_TX: Transmit %d bytes.", len );
 
 
     int is_broadcast;
@@ -272,11 +260,12 @@ void MAC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
         /* transmission attempt begins with CSMA operation */
         MAC_CSMA(&MAC_TxErr);
 
+        tx_retries++;
+        LOG_INFO("MAC_TX: Attempt %d.",tx_retries);
         /* when channel is clear, attempt to transmit packet */
         if (MAC_TxErr != NETSTK_ERR_CHANNEL_ACESS_FAILURE) {
             /* issue PHY to transmit packet */
             MAC_Netstk->phy->send(p_data, len, &MAC_TxErr);
-            tx_retries++;
 
             /* Auto-ACK */
             if (is_ack_req == 0 || is_broadcast == 1) {
@@ -305,6 +294,8 @@ void MAC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
                 /* stop Wait-For-ACK timer */
                 Tmr_Stop(&MAC_TmrWfa);
             }
+        } else {
+            LOG_INFO("MAC_TX: CH-ERR.");
         }
 
         /*
@@ -319,6 +310,7 @@ void MAC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
                      (tx_retries > MAC_CFG_TX_RETRY_MAX);
     } while (is_tx_done == FALSE);
 
+    LOG_INFO("MAC_TX: --> Done - TX Status %d (%d retries).", MAC_TxErr, tx_retries );
     /* signal upper layer */
     MAC_IsAckReq = 0;
     MAC_CbTxFnct(MAC_CbTxArg, &MAC_TxErr);
@@ -347,21 +339,6 @@ void MAC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
         return;
     }
 #endif
-
-
-#if LOGGER_ENABLE
-    /*
-     * Logging
-     */
-    uint16_t data_len = len;
-    uint8_t *p_dataptr = p_data;
-    LOG_RAW("MAC_RX: ");
-    while (data_len--) {
-        LOG_RAW("%02x", *p_dataptr++);
-    }
-    LOG_RAW("\r\n");
-#endif
-
 
     int hdrlen;
     uint8_t is_acked;
@@ -416,6 +393,8 @@ void MAC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
                 break;
         }
     }
+
+    LOG_INFO("MAC_RX: Received %d bytes.", len );
 }
 
 
@@ -504,6 +483,7 @@ static void MAC_TxACK(uint8_t seq, e_nsErr_t *p_err)
     MAC_Netstk->phy->send(packetbuf_hdrptr(),
                           packetbuf_totlen(),
                           p_err);
+    LOG_INFO("MAC_TX: ACK %d.", frame.seq );
 }
 
 
@@ -549,6 +529,7 @@ static void MAC_CSMA(e_nsErr_t *p_err)
             be = ((be + 1) < min_be) ? (be + 1) : (min_be);         /*   BE = min(BE + 1, MinBE)    */
         }
     }
+    LOG_INFO("MAC_TX: NB %d.", nb );
 }
 
 
