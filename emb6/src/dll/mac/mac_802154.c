@@ -69,7 +69,6 @@
 *                               LOCAL MACROS
 ********************************************************************************
 */
-#define MAC_CFG_TX_RETRY_MAX                (uint8_t  )( 3u )
 #define MAC_CFG_TMR_WFA_IN_MS               (uint32_t )( 20 )
 
 //#define MAC_EVENT_PEND(_event_)             evproc_regCallback(_event_, MAC_EventHandler)
@@ -241,6 +240,7 @@ void MAC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     uint8_t is_tx_done;
     uint8_t is_wfa_done;
     uint8_t tx_retries;
+    uint8_t tx_retriesMax;
     packetbuf_attr_t is_ack_req;
     LIB_TMR_STATE wfa_tmr_state;
 
@@ -253,6 +253,7 @@ void MAC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     /*
      * Transmission handling
      */
+    tx_retriesMax = packetbuf_attr(PACKETBUF_ATTR_MAX_MAC_TRANSMISSIONS);
     tx_retries = 0;
     is_tx_done = FALSE;
     is_wfa_done = FALSE;
@@ -306,10 +307,10 @@ void MAC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
          * (3)  Transmission retry exceeds maximum
          */
         is_tx_done = ((MAC_TxErr == NETSTK_ERR_NONE) ||
-                     (tx_retries > MAC_CFG_TX_RETRY_MAX));
+                     (tx_retries > tx_retriesMax));
     } while (is_tx_done == FALSE);
 
-    LOG_INFO("MAC_TX: --> Done - TX Status %d (%d retries).", MAC_TxErr, tx_retries );
+    LOG_INFO("MAC_TX: --> Done - TX Status %d (%d/%d retries).", MAC_TxErr, tx_retries, tx_retriesMax );
     /* signal upper layer */
     MAC_IsAckReq = 0;
     MAC_CbTxFnct(MAC_CbTxArg, &MAC_TxErr);
