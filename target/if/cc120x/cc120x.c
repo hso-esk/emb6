@@ -857,6 +857,13 @@ static void cc120x_isrRxSyncReceived(void *p_arg)
             }
         }
     }
+    else if( rf_state != RF_STATE_INIT )
+    {
+        LED_RX_ON();
+        LED_TX_ON();
+
+        while(1);
+    }
 
     /* clear ISR flag */
     bsp_extIntClear(RF_INT_CFG_RX_SYNC);

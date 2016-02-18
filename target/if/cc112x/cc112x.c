@@ -857,7 +857,7 @@ static void cc112x_isrRxSyncReceived(void *p_arg)
             }
         }
     }
-    else
+    else if( rf_state != RF_STATE_INIT )
     {
         LED_RX_ON();
         LED_TX_ON();
