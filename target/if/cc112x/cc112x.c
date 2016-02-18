@@ -315,6 +315,8 @@ static void cc112x_Init (void *p_netstk, e_nsErr_t *p_err)
 
     uint8_t len;
 
+    RF_EXTI_DISABLED();
+
     /* indicates radio is in state initialization */
     rf_state = RF_STATE_INIT;
 
