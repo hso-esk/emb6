@@ -71,10 +71,6 @@
 */
 #define MAC_CFG_TMR_WFA_IN_MS               (uint32_t )( 20 )
 
-//#define MAC_EVENT_PEND(_event_)             evproc_regCallback(_event_, MAC_EventHandler)
-//#define MAC_EVENT_POST(_event_)             evproc_putEvent(E_EVPROC_HEAD, _event_, NULL)
-
-
 /*
 ********************************************************************************
 *                          LOCAL FUNCTION DECLARATIONS
