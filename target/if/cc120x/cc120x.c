@@ -250,6 +250,7 @@ static uint8_t      rf_worEn;
 
 static uint8_t      rf_chanNum;
 static e_nsRfOpMode rf_opMode;
+static uint8_t      rf_regVerify;
 
 #if RF_WD_ENABLE
 static LIB_TMR      rf_tmrWD;
@@ -285,6 +286,7 @@ static void cc120x_cca(e_nsErr_t *p_err);
 
 static void cc120x_reset(void);
 static void cc120x_chkPartnumber(e_nsErr_t *p_err);
+static void cc120x_chkReset(void);
 static void cc120x_waitRdy(void);
 static void cc120x_gotoSleep(void);
 static void cc120x_gotoRx(void);
@@ -537,6 +539,7 @@ static void cc120x_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
         if (rf_state == RF_STATE_TX_FINI) {
             *p_err = NETSTK_ERR_NONE;
         } else {
+            cc120x_chkReset();
             *p_err = NETSTK_ERR_TX_TIMEOUT;
         }
 
@@ -751,6 +754,23 @@ static void cc120x_chkPartnumber(e_nsErr_t *p_err)
     }
 }
 
+static void cc120x_chkReset(void)
+{
+    e_nsErr_t err;
+    uint8_t read_byte;
+
+    /* check one of the registers */
+    cc120x_spiRegRead(CC120X_FREQ2, &read_byte, 1);
+
+    if (read_byte != rf_regVerify ) {
+        uint8_t rf_chanNum_st = rf_chanNum;
+        uint8_t rf_opMode_st = rf_opMode;
+
+        cc120x_Init( rf_netstk, &err );
+        cc120x_opModeSet( rf_opMode_st, &err );
+        cc120x_chanNumSet( rf_chanNum_st, &err );
+    }
+}
 
 static void cc120x_waitRdy(void)
 {
@@ -1075,6 +1095,8 @@ static void cc120x_eventHandler(c_event_t c_event, p_data_t p_data)
         {
             /* rf state timeout. stop the timer and reset RF */
             Tmr_Stop( &rf_tmrWD );
+            /* check reset */
+            cc120x_chkReset();
             /* reset RF */
             cc120x_gotoRx();
         }
@@ -1337,6 +1359,7 @@ static void cc120x_chanNumSet(uint8_t chan_num, e_nsErr_t *p_err)
 
         write_byte = (freq_reg & 0x00FF0000) >> 16;
         cc120x_spiRegWrite(CC120X_FREQ2, &write_byte, 1);
+        rf_regVerify = write_byte;
 
         write_byte = (freq_reg & 0x0000FF00) >> 8;
         cc120x_spiRegWrite(CC120X_FREQ1, &write_byte, 1);
