@@ -133,6 +133,12 @@ trg += [{
 }]
 
 trg += [{
+    'id'        : 'cs_stk3600_cc112x',
+    'apps_conf' : [ coap_srv, udp_alive, udp_cli ],
+    'bsp'       : get_descr(bsp, 'efm32stk3600_cc112x')
+}]
+
+trg += [{
     'id'        : 'mdc_stk3600_cc112x',
     'apps_conf' : [ mdns_cli, udp_alive ],
     'bsp'       : get_descr(bsp, 'efm32stk3600_cc112x')
