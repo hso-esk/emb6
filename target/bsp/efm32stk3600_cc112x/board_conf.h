@@ -65,11 +65,26 @@
 /*==============================================================================
                                      MACROS
 ==============================================================================*/
+
+/*
+ * RF SPI pins
+ */
 #define EFM32_USART                         SPIDRV_MASTER_USART1
 #define EFM32_USART_LOC                     _USART_ROUTE_LOCATION_LOC1
 
+#define EFM32_IO_PORT_USART_CLK             gpioPortD
+#define EFM32_IO_PIN_USART_CLK              2
+
+#define EFM32_IO_PORT_USART_TX              gpioPortD
+#define EFM32_IO_PIN_USART_TX               0
+
+#define EFM32_IO_PORT_USART_RX              gpioPortD
+#define EFM32_IO_PIN_USART_RX               1
+
 #define EFM32_IO_PORT_USART_CS              gpioPortD
 #define EFM32_IO_PIN_USART_CS               3
+
+
 
 #define EFM32_IO_PORT_RF_RST                gpioPortD
 #define EFM32_IO_PIN_RF_RST                 4

@@ -131,6 +131,12 @@ typedef struct
     SPIDRV_HandleData_t hndl;
     /** handle pointer to the SPI driver */
     SPIDRV_Handle_t pHndl;
+    /** clk select pin */
+    s_hal_gpio_pin_t clkPin;
+    /** tx  pin */
+    s_hal_gpio_pin_t txPin;
+    /** rx pin */
+    s_hal_gpio_pin_t rxPin;
     /** chip select pin */
     s_hal_gpio_pin_t csPin;
 
@@ -198,6 +204,9 @@ extern USART_TypeDef* uartStdio = NULL;
 /** Definition of the SPI interface */
 static s_hal_spiDrv s_hal_spi = {
         .pHndl = NULL,
+        .clkPin = {EFM32_IO_PORT_USART_CLK, EFM32_IO_PIN_USART_CLK, gpioModePushPull, 0},
+        .txPin = {EFM32_IO_PORT_USART_TX, EFM32_IO_PIN_USART_TX, gpioModePushPull, 0},
+        .rxPin = {EFM32_IO_PORT_USART_RX, EFM32_IO_PIN_USART_RX, gpioModeInputPull, 0},
         .csPin = {EFM32_IO_PORT_USART_CS, EFM32_IO_PIN_USART_CS, gpioModePushPull, 0}
 };
 
