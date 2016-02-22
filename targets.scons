@@ -144,6 +144,11 @@ trg += [{
     'bsp'       : get_descr(bsp, 'efm32stk3600_cc112x')
 }]
 
+trg += [{
+    'id'        : 'cs_moses_cc112x',
+    'apps_conf' : [ coap_srv, udp_alive ],
+    'bsp'       : get_descr(bsp, 'moses')
+}]
 
 trg += [{
     'id'        : 'uc_moses',
