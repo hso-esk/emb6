@@ -240,6 +240,7 @@ s_hal_gpio_pin_t s_hal_userio[] =
 /** External interrupt handler table */
 pfn_intCallb_t pf_hal_exti[E_TARGET_EXT_INT_MAX] = {0};
 
+void* p_spiMisoPin = &s_hal_spi.rxPin;
 
 /*==============================================================================
                                 LOCAL CONSTANTS
@@ -890,6 +891,37 @@ void hal_watchdogReset(void)
  =============================================================================*/
 void hal_watchdogStart(void)
 {
+    WDOG_Init_TypeDef wdog_init;
+    /* start it automatically after the initialization */
+    wdog_init.enable = 1;
+    /* don't run it during debugging */
+    wdog_init.debugRun = 1;
+    /* run it at EM2 energy mode */
+    wdog_init.em2Run = 1;
+    /* run it at EM3 energy mode */
+    wdog_init.em3Run = 1;
+    /* don't block the MCU from entering to EM4 energy mode (shutdown) */
+    wdog_init.em4Block = 0;
+    /* don't block software from disabling of LF oscillators */
+    wdog_init.swoscBlock = 0;
+    /* don't lock the wdog configuration - possible to change the wdog configuration at run time */
+    wdog_init.lock = 0;
+    /* chose the clock source for the wdog
+      if it have to work at EM3 - choose Ultra Low Energy Clock: 1KHz
+      for example I choose the Low Energy Clock: 32.768 KHz  */
+    wdog_init.clkSel = wdogClkSelLFXO;
+    /* choose period for wdog  */
+    wdog_init.perSel = wdogPeriod_64k;
+    /*
+    In this case, I configured the wdog to reset the MCU each 2 seconds :
+    Formula -> Time = (1/Clock) * period
+    2 sec = (1/32768) * 65537
+    */
+
+    /* So, lets init it:  */
+    WDOG_Init(&wdog_init);
+
+    /* enable */
     WDOG_Enable( true );
 } /* hal_watchdogStart() */
 
