@@ -206,7 +206,7 @@ static void UDPSocket_Tx(uint32_t seq)
     while (len--) {
         LOG_RAW("%02x ", *p_data++);
     }
-    LOG_RAW("\r\n=========================\r\n");
+    LOG_RAW("\r\n");
 #endif
 }
 
