@@ -331,6 +331,19 @@ void dtls_check_retransmit(dtls_context_t *context, clock_time_t *next);
 #define DTLS_CT_APPLICATION_DATA   23
 
 /** Generic header structure of the DTLS record layer. */
+#ifdef IAR_COMPILER
+#pragma pack(push, 1)
+typedef struct st_dtls_record_header {
+  uint8 content_type;		/**< content type of the included message */
+  uint16 version;		/**< Protocol version */
+  uint16 epoch;		        /**< counter for cipher state changes */
+  uint48 sequence_number;       /**< sequence number */
+  uint16 length;		/**< length of the following fragment */
+  /* fragment */
+} dtls_record_header_t;
+#pragma pack(pop)
+#endif
+#ifdef GCC_COMPILER
 typedef struct __attribute__((__packed__)) {
   uint8 content_type;		/**< content type of the included message */
   uint16 version;		/**< Protocol version */
@@ -339,6 +352,7 @@ typedef struct __attribute__((__packed__)) {
   uint16 length;		/**< length of the following fragment */
   /* fragment */
 } dtls_record_header_t;
+#endif
 
 /* Handshake types */
 
@@ -355,6 +369,19 @@ typedef struct __attribute__((__packed__)) {
 #define DTLS_HT_FINISHED            20
 
 /** Header structure for the DTLS handshake protocol. */
+#ifdef IAR_COMPILER
+#pragma pack(push, 1)
+typedef struct st_dtls_handshake_header {
+  uint8 msg_type; /**< Type of handshake message  (one of DTLS_HT_) */
+  uint24 length;  /**< length of this message */
+  uint16 message_seq; 	/**< Message sequence number */
+  uint24 fragment_offset;	/**< Fragment offset. */
+  uint24 fragment_length;	/**< Fragment length. */
+  /* body */
+} dtls_handshake_header_t;
+#pragma pack(pop)
+#endif
+#ifdef GCC_COMPILER
 typedef struct __attribute__((__packed__)) {
   uint8 msg_type; /**< Type of handshake message  (one of DTLS_HT_) */
   uint24 length;  /**< length of this message */
@@ -363,8 +390,24 @@ typedef struct __attribute__((__packed__)) {
   uint24 fragment_length;	/**< Fragment length. */
   /* body */
 } dtls_handshake_header_t;
+#endif
+
 
 /** Structure of the Client Hello message. */
+#ifdef IAR_COMPILER
+#pragma pack(push, 1)
+typedef struct st_dtls_client_hello {
+  uint16 version;	  /**< Client version */
+  uint32 gmt_random;	  /**< GMT time of the random byte creation */
+  unsigned char random[28];	/**< Client random bytes */
+  /* session id (up to 32 bytes) */
+  /* cookie (up to 32 bytes) */
+  /* cipher suite (2 to 2^16 -1 bytes) */
+  /* compression method */
+} dtls_client_hello_t;
+#pragma pack(pop)
+#endif
+#ifdef GCC_COMPILER
 typedef struct __attribute__((__packed__)) {
   uint16 version;	  /**< Client version */
   uint32 gmt_random;	  /**< GMT time of the random byte creation */
@@ -374,13 +417,27 @@ typedef struct __attribute__((__packed__)) {
   /* cipher suite (2 to 2^16 -1 bytes) */
   /* compression method */
 } dtls_client_hello_t;
+#endif
+
 
 /** Structure of the Hello Verify Request. */
+#ifdef IAR_COMPILER
+#pragma pack(push, 1)
+typedef struct st_dtls_hello_verify {
+  uint16 version;		/**< Server version */
+  uint8 cookie_length;	/**< Length of the included cookie */
+  uint8 cookie[];		/**< up to 32 bytes making up the cookie */
+} dtls_hello_verify_t;
+#pragma pack(pop)
+#endif
+#ifdef GCC_COMPILER
 typedef struct __attribute__((__packed__)) {
   uint16 version;		/**< Server version */
   uint8 cookie_length;	/**< Length of the included cookie */
   uint8 cookie[];		/**< up to 32 bytes making up the cookie */
 } dtls_hello_verify_t;
+#endif
+
 
 #if 0
 /**
