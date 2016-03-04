@@ -219,9 +219,6 @@ uint8_t loc_emb6NetstackInit(s_ns_t * ps_ns)
         ps_ns->hc->init(ps_ns);         /* header compressor        */
         ps_ns->frame->init(ps_ns);      /* sicslowpan driver        */
 
-        /* turn the netstack on */
-        ps_ns->dllc->on(&err);
-
         /*
          * Initialize TCP/IP stack
          */
@@ -285,6 +282,11 @@ s_ns_t * emb6_get(void)
 
 void emb6_process(uint16_t us_delay)
 {
+    e_nsErr_t   err;
+
+    /* turn the netstack on */
+    ps_emb6Stack->dllc->on(&err);
+
     /* Attention: emb6 main process loop !! do not change !! */
     while(1)
     {
