@@ -70,6 +70,9 @@
 #include "bsp.h"
 #include "etimer.h"
 
+#define  LOGGER_ENABLE        LOGGER_MAIN
+#include "logger.h"
+
 #if DEMO_USE_UDP
 #include "demo_udp.h"
 #endif
@@ -154,7 +157,7 @@
                            LOCAL FUNCTION PROTOTYPES
  =============================================================================*/
 static void loc_initialConfig(void);
-static uint8_t loc_demoAppsConf(s_ns_t* pst_netStack);
+static void loc_demoAppsConf(s_ns_t* pst_netStack, e_nsErr_t *p_err);
 static uint8_t loc_demoAppsInit(void);
 /*==============================================================================
                                 LOCAL FUNCTIONS
@@ -175,8 +178,19 @@ static void loc_initialConfig(void)
     mac_phy_config.modulation = MODULATION;
 }
 
-static uint8_t loc_demoAppsConf(s_ns_t* pst_netStack)
+static void loc_demoAppsConf(s_ns_t* pst_netStack, e_nsErr_t *p_err)
 {
+#if NETSTK_CFG_ARG_CHK_EN
+    if (p_err == NULL) {
+        emb6_errorHandler(p_err);
+    }
+
+    if (pst_netStack == NULL) {
+        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+        return;
+    }
+#endif
+
     #if DEMO_USE_EXTIF
     demo_extifConf(pst_netStack);
     #endif
@@ -221,10 +235,8 @@ static uint8_t loc_demoAppsConf(s_ns_t* pst_netStack)
     demo_dtlsConf(pst_netStack);
     #endif
 
-    if (pst_netStack == NULL)
-        return 0;
-    else
-        return 1;
+    /* set returned error code */
+    *p_err = NETSTK_ERR_NONE;
 }
 
 static uint8_t loc_demoAppsInit(void)
@@ -306,6 +318,7 @@ void emb6_errorHandler(e_nsErr_t *p_err)
 {
     /* turns LEDs on to indicate error */
     bsp_led(E_BSP_LED_0, E_BSP_LED_ON);
+    LOG_ERR("Program failed");
 
     /* TODO misisng error handling */
     while (1) {
@@ -318,14 +331,15 @@ void emb6_errorHandler(e_nsErr_t *p_err)
 int main(void)
 {
     s_ns_t st_netstack;
+    e_nsErr_t err;
+    uint8_t ret;
 
-    /*
-     * By default stack is disabled
-     */
+
+    /* set return error code to default */
+    err = NETSTK_ERR_NONE;
+
+    /* set stack parameters to default */
     st_netstack.c_configured = 0;
-    /*
-    * set initial stack parameters
-    */
     loc_initialConfig();
 
     /*
@@ -333,32 +347,32 @@ int main(void)
     * If ok, pointer will points to network stack structure
     * @ref s_ns_t
     */
-    if (!loc_demoAppsConf(&st_netstack)) {
-        return 0;
+    loc_demoAppsConf(&st_netstack, &err);
+    if (err != NETSTK_ERR_NONE) {
+        emb6_errorHandler(&err);
     }
 
-    /*
-    * Initialize emb6-stack - call all initialization functions
-    */
-    if (emb6_init(&st_netstack))
-    {
-        /* initialize demo apps */
-        if(!loc_demoAppsInit())
-        {
-            return 0;
-        }
-
-        /* SHow that stack has been launched */
-        bsp_led(E_BSP_LED_2, E_BSP_LED_ON);
-        bsp_delay_us(2000000);
-        bsp_led(E_BSP_LED_2, E_BSP_LED_OFF);
-
-        /* call process function with delay in us */
-        emb6_process(EMB6_PROC_DELAY);  /* default: 500 us delay */
+    /* Initialize emb6-stack - call all initialization functions */
+    emb6_init(&st_netstack, &err);
+    if (err != NETSTK_ERR_NONE) {
+        emb6_errorHandler(&err);
     }
-    bsp_led(E_BSP_LED_0, E_BSP_LED_ON);
-    printf("Program failed.");
-    while(1);
+
+    /* Show that stack has been launched */
+    bsp_led(E_BSP_LED_2, E_BSP_LED_ON);
+    bsp_delay_us(2000000);
+    bsp_led(E_BSP_LED_2, E_BSP_LED_OFF);
+
+    /* initialize demo apps */
+    ret = loc_demoAppsInit();
+    if(ret == 0) {
+        LOG_ERR("Demo APP failed to initialize");
+        err = NETSTK_ERR_INIT;
+        emb6_errorHandler(&err);
+    }
+
+    /* call process function with delay in us */
+    emb6_process(EMB6_PROC_DELAY);
 }
 /** @} */
 /** @} */

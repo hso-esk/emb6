@@ -636,10 +636,11 @@ extern  const s_nsRF_t      RFDrvCC120x;
 
     This function inits the board support packet and the complete netstack
 
-\return returns 0 if failed, 1 if success
+\param  p_err   a variable to store returned error code
+\return none
 */
 /*============================================================================*/
-uint8_t emb6_init(s_ns_t * ps_netstack);
+void emb6_init(s_ns_t* pst_netStack, e_nsErr_t *p_err);
 
 /*============================================================================*/
 /*!

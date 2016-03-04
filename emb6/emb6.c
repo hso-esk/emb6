@@ -242,24 +242,39 @@ uint8_t loc_emb6NetstackInit(s_ns_t * ps_ns)
 /*==============================================================================
                                  API FUNCTIONS
  =============================================================================*/
-uint8_t emb6_init(s_ns_t * ps_ns)
+void emb6_init(s_ns_t* ps_ns, e_nsErr_t *p_err)
 {
-    uint8_t c_err = 1;
-
-    if (!bsp_init(ps_ns)) {
-        ps_ns = NULL;
-        c_err = 0;
+#if NETSTK_CFG_ARG_CHK_EN
+    if (p_err == NULL) {
+        emb6_errorHandler(p_err);
     }
 
-    if (!loc_emb6NetstackInit(ps_ns) && c_err) {
-        ps_ns = NULL;
+    if (ps_ns == NULL) {
+        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+        return;
+    }
+#endif
+
+    uint8_t ret;
+
+    /* set return error code to default */
+    *p_err = NETSTK_ERR_NONE;
+
+    /* initialize BSP */
+    ret = bsp_init(ps_ns);
+    if (ret == 0) {
+        *p_err = NETSTK_ERR_INIT;
+        return;
+    }
+
+    /* initialize netstack */
+    ret = loc_emb6NetstackInit(ps_ns);
+    if (ret == 0) {
+        *p_err = NETSTK_ERR_INIT;
         LOG_ERR("Failed to initialise emb6 stack");
-        c_err = 0;
     }else {
         ps_emb6Stack = ps_ns;
     }
-
-    return (c_err);
 }
 
 s_ns_t * emb6_get(void)
