@@ -334,7 +334,7 @@ static void cc112x_Init (void *p_netstk, e_nsErr_t *p_err)
     /* check part number */
     cc112x_chkPartnumber(p_err);
     if (*p_err != NETSTK_ERR_NONE) {
-        return;
+        emb6_errorHandler(p_err);
     }
 
     /* set RF registers to default values */
@@ -880,10 +880,7 @@ static void cc112x_isrRxSyncReceived(void *p_arg)
     }
     else if( rf_state != RF_STATE_INIT )
     {
-        LED_RX_ON();
-        LED_TX_ON();
-
-        while(1);
+        emb6_errorHandler(NULL);
     }
 
     /* clear ISR flag */
