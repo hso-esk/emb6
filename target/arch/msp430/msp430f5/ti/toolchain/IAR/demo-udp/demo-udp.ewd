@@ -3,7 +3,7 @@
 <project>
   <fileVersion>2</fileVersion>
   <configuration>
-    <name>UDP_SOCKET_SRV_CC120x</name>
+    <name>CC120x_SRV</name>
     <toolchain>
       <name>MSP430</name>
     </toolchain>
@@ -385,7 +385,7 @@
     </debuggerPlugins>
   </configuration>
   <configuration>
-    <name>UDP_SOCKET_CLI_CC120x</name>
+    <name>CC120x_CLI</name>
     <toolchain>
       <name>MSP430</name>
     </toolchain>
@@ -767,7 +767,7 @@
     </debuggerPlugins>
   </configuration>
   <configuration>
-    <name>UDP_SOCKET_CLI_CC112x</name>
+    <name>CC112x_SRV</name>
     <toolchain>
       <name>MSP430</name>
     </toolchain>
@@ -1149,7 +1149,7 @@
     </debuggerPlugins>
   </configuration>
   <configuration>
-    <name>UDP_SOCKET_SRV_CC112x</name>
+    <name>CC112x_CLI</name>
     <toolchain>
       <name>MSP430</name>
     </toolchain>
@@ -1531,7 +1531,7 @@
     </debuggerPlugins>
   </configuration>
   <configuration>
-    <name>UDP_SOCKET_SRV_CC112X_ULE</name>
+    <name>CC120x_SRV_ULE</name>
     <toolchain>
       <name>MSP430</name>
     </toolchain>
@@ -1913,7 +1913,7 @@
     </debuggerPlugins>
   </configuration>
   <configuration>
-    <name>UDP_SOCKET_CLI_CC112X_ULE</name>
+    <name>CC120x_CLI_ULE</name>
     <toolchain>
       <name>MSP430</name>
     </toolchain>
@@ -2295,7 +2295,7 @@
     </debuggerPlugins>
   </configuration>
   <configuration>
-    <name>UDP_SOCKET_SRV_CC120X_ULE</name>
+    <name>CC112x_SRV_ULE</name>
     <toolchain>
       <name>MSP430</name>
     </toolchain>
@@ -2677,7 +2677,7 @@
     </debuggerPlugins>
   </configuration>
   <configuration>
-    <name>UDP_SOCKET_CLI_CC120X_ULE</name>
+    <name>CC112x_CLI_ULE</name>
     <toolchain>
       <name>MSP430</name>
     </toolchain>

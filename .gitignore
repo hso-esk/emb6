@@ -31,10 +31,20 @@ tags
 .sconsign.dblite
 .settings/
 
-target/arch/msp430/ti/toolchain/IAR/demo-apss/CC1120_TX*/
-target/arch/msp430/ti/toolchain/IAR/demo-apss/CC1120_RX*/
-target/arch/msp430/ti/toolchain/IAR/demo-udp/UDP_SOCKET_SERVER*/
-target/arch/msp430/ti/toolchain/IAR/demo-udp/UDP_SOCKET_CLIENT*/
+target/arch/msp430/msp430f5/ti/toolchain/IAR/demo-udp/CC120x_CLI/*/*
+target/arch/msp430/msp430f5/ti/toolchain/IAR/demo-udp/CC120x_SRV/*/*
+target/arch/msp430/msp430f5/ti/toolchain/IAR/demo-udp/CC112x_CLI/*/*
+target/arch/msp430/msp430f5/ti/toolchain/IAR/demo-udp/CC112x_SRV/*/*
+
+target/arch/msp430/msp430f5/ti/toolchain/IAR/demo-dtls/CC120x_CLI/*/*
+target/arch/msp430/msp430f5/ti/toolchain/IAR/demo-dtls/CC120x_SRV/*/*
+target/arch/msp430/msp430f5/ti/toolchain/IAR/demo-dtls/CC112x_CLI/*/*
+target/arch/msp430/msp430f5/ti/toolchain/IAR/demo-dtls/CC112x_SRV/*/*
+
+target/arch/msp430/msp430f5/ti/toolchain/IAR/demo-mdns/CC120x_CLI/*/*
+target/arch/msp430/msp430f5/ti/toolchain/IAR/demo-mdns/CC120x_SRV/*/*
+target/arch/msp430/msp430f5/ti/toolchain/IAR/demo-mdns/CC112x_CLI/*/*
+target/arch/msp430/msp430f5/ti/toolchain/IAR/demo-mdns/CC112x_SRV/*/*
 
 doc/html/
 doc/latex/
