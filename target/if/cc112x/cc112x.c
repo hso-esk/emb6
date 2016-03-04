@@ -809,11 +809,15 @@ static void cc112x_rxByteLeftChk(void)
 
 static void cc112x_isrRxSyncReceived(void *p_arg)
 {
+    uint8_t marc_status;
+
     /* avoid compiler warning of unused parameters */
     (void)&p_arg;
 
+    /* clear ISR flag */
+    bsp_extIntClear(RF_INT_CFG_RX_SYNC);
+
     /* achieve MARC_STATUS to determine what caused the interrupt */
-    uint8_t marc_status;
     cc112x_spiRegRead(CC112X_MARC_STATUS1, &marc_status, 1);
 
     if (rf_state == RF_STATE_RX_LISTENING) {
@@ -882,19 +886,20 @@ static void cc112x_isrRxSyncReceived(void *p_arg)
     {
         emb6_errorHandler(NULL);
     }
-
-    /* clear ISR flag */
-    bsp_extIntClear(RF_INT_CFG_RX_SYNC);
 }
 
 
 static void cc112x_isrRxFifoAboveThreshold(void *p_arg)
 {
+    uint8_t marc_status;
+
     /* avoid compiler warning of unused parameters */
     (void)&p_arg;
 
+    /* clear ISR flag */
+    bsp_extIntClear(RF_INT_CFG_RX_FIFO_THR);
+
     /* achieve MARC_STATUS to determine what caused the interrupt */
-    uint8_t marc_status;
     cc112x_spiRegRead(CC112X_MARC_STATUS1, &marc_status, 1);
 
     /* only receive middle portions of packet here */
@@ -908,19 +913,19 @@ static void cc112x_isrRxFifoAboveThreshold(void *p_arg)
         /* check number of remaining bytes */
         cc112x_rxByteLeftChk();
     }
-
-    /* clear ISR flag */
-    bsp_extIntClear(RF_INT_CFG_RX_FIFO_THR);
 }
 
 
 static void cc112x_isrRxPacketReceived(void *p_arg)
 {
+    uint8_t marc_status;
+    uint8_t is_rx_ok;
+
     /* avoid compiler warning of unused parameters */
     (void)&p_arg;
 
-    uint8_t marc_status;
-    uint8_t is_rx_ok;
+    /* clear ISR flag */
+    bsp_extIntClear(RF_INT_CFG_RX_FINI);
 
     /* achieve MARC_STATUS to determine what caused the interrupt */
     cc112x_spiRegRead(CC112X_MARC_STATUS1, &marc_status, 1);
@@ -945,9 +950,6 @@ static void cc112x_isrRxPacketReceived(void *p_arg)
         /* signal complete reception interrupt */
         RF_SEM_POST(NETSTK_RF_EVENT);
     }
-
-    /* clear ISR flag */
-    bsp_extIntClear(RF_INT_CFG_RX_FINI);
     LED_RX_OFF();
 }
 
@@ -961,6 +963,9 @@ static void cc112x_isrTxFifoBelowThreshold(void *p_arg)
 {
     /* avoid compiler warning of unused parameters */
     (void)&p_arg;
+
+    /* clear ISR flag */
+    bsp_extIntClear(RF_INT_CFG_TX_FIFO_THR);
 
     if (rf_txLastPortion == TRUE) {
         /* fill up the TX FIFO with remaining bytes */
@@ -988,15 +993,15 @@ static void cc112x_isrTxFifoBelowThreshold(void *p_arg)
             rf_txLastPortion = TRUE;
         }
     }
-
-    /* clear ISR flag */
-    bsp_extIntClear(RF_INT_CFG_TX_FIFO_THR);
 }
 
 static void cc112x_isrTxPacketSent(void *p_arg)
 {
     uint8_t marc_status;
     uint8_t is_tx_ok;
+
+    /* clear ISR flag */
+    bsp_extIntClear(RF_INT_CFG_TX_FINI);
 
     /* achieve MARC_STATUS to determine what caused the interrupt */
     cc112x_spiRegRead(CC112X_MARC_STATUS1, &marc_status, 1);
@@ -1020,9 +1025,6 @@ static void cc112x_isrTxPacketSent(void *p_arg)
     /* stop WD timer */
     Tmr_Stop( &rf_tmrWD );
 #endif /* #if RF_WD_ENABLE */
-
-    /* clear ISR flag */
-    bsp_extIntClear(RF_INT_CFG_TX_FINI);
 }
 
 #if RF_WD_ENABLE
