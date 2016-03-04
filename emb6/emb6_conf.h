@@ -831,7 +831,7 @@ void uip_log(char *msg);
 
 /** Main functions                         	(see emb6_main.c) */
 #ifndef LOGGER_MAIN
-#define LOGGER_MAIN                        	FALSE
+#define LOGGER_MAIN                        	TRUE
 #endif
 
 /** Event process functions                	(see llc_xxx.c) */
