@@ -342,8 +342,7 @@ typedef struct st_dtls_record_header {
   /* fragment */
 } dtls_record_header_t;
 #pragma pack(pop)
-#endif
-#ifdef GCC_COMPILER
+#else
 typedef struct __attribute__((__packed__)) {
   uint8 content_type;		/**< content type of the included message */
   uint16 version;		/**< Protocol version */
@@ -380,8 +379,7 @@ typedef struct st_dtls_handshake_header {
   /* body */
 } dtls_handshake_header_t;
 #pragma pack(pop)
-#endif
-#ifdef GCC_COMPILER
+#else
 typedef struct __attribute__((__packed__)) {
   uint8 msg_type; /**< Type of handshake message  (one of DTLS_HT_) */
   uint24 length;  /**< length of this message */
@@ -406,8 +404,7 @@ typedef struct st_dtls_client_hello {
   /* compression method */
 } dtls_client_hello_t;
 #pragma pack(pop)
-#endif
-#ifdef GCC_COMPILER
+#else
 typedef struct __attribute__((__packed__)) {
   uint16 version;	  /**< Client version */
   uint32 gmt_random;	  /**< GMT time of the random byte creation */
@@ -429,8 +426,7 @@ typedef struct st_dtls_hello_verify {
   uint8 cookie[];		/**< up to 32 bytes making up the cookie */
 } dtls_hello_verify_t;
 #pragma pack(pop)
-#endif
-#ifdef GCC_COMPILER
+#else
 typedef struct __attribute__((__packed__)) {
   uint16 version;		/**< Server version */
   uint8 cookie_length;	/**< Length of the included cookie */
