@@ -211,7 +211,7 @@ int8_t hal_init(void)
         io_init();
 
         /* initialize system clock */
-        mcu_sysClockInit( MCU_SYSCLK_4MHZ);
+        mcu_sysClockInit( MCU_SYSCLK_25MHZ );
 
         /* initialize interrupts */
         int_init();
@@ -227,7 +227,7 @@ int8_t hal_init(void)
 
         /* initialize RF SPI */
 #if (TARGET_CONFIG_RF == TRUE)
-        spi_rfInit(1);
+        spi_rfInit(4);
 #endif
 
         /* initialize LCD */
