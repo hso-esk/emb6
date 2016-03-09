@@ -35,6 +35,8 @@ target/arch/msp430/msp430f5/ti/toolchain/IAR/demo-udp/CC120x_CLI/*/*
 target/arch/msp430/msp430f5/ti/toolchain/IAR/demo-udp/CC120x_SRV/*/*
 target/arch/msp430/msp430f5/ti/toolchain/IAR/demo-udp/CC112x_CLI/*/*
 target/arch/msp430/msp430f5/ti/toolchain/IAR/demo-udp/CC112x_SRV/*/*
+target/arch/msp430/msp430f5/ti/toolchain/IAR/demo-udp/CC120x_UDP_ALIVE/*/*
+target/arch/msp430/msp430f5/ti/toolchain/IAR/demo-udp/CC112x_UDP_ALIVE/*/*
 
 target/arch/msp430/msp430f5/ti/toolchain/IAR/demo-dtls/CC120x_CLI/*/*
 target/arch/msp430/msp430f5/ti/toolchain/IAR/demo-dtls/CC120x_SRV/*/*
@@ -45,6 +47,10 @@ target/arch/msp430/msp430f5/ti/toolchain/IAR/demo-mdns/CC120x_CLI/*/*
 target/arch/msp430/msp430f5/ti/toolchain/IAR/demo-mdns/CC120x_SRV/*/*
 target/arch/msp430/msp430f5/ti/toolchain/IAR/demo-mdns/CC112x_CLI/*/*
 target/arch/msp430/msp430f5/ti/toolchain/IAR/demo-mdns/CC112x_SRV/*/*
+
+target/arch/msp430/msp430f5/ti/toolchain/IAR/demo-coap/CC120x_SRV/*/*
+target/arch/msp430/msp430f5/ti/toolchain/IAR/demo-coap/CC112x_SRV/*/*
+
 
 doc/html/
 doc/latex/

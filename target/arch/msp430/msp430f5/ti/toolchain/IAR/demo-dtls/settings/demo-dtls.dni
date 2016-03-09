@@ -20,11 +20,13 @@ NextState1=0
 Break=0
 State Storage=0
 [DebugChecksum]
-Checksum=515116151
+Checksum=1512783440
 [CallStack]
 ShowArgs=0
 [Disassembly]
 MixedMode=1
+[watch_formats]
+Fmt0={W}0:length	3	0
 [Log file]
 LoggingEnabled=_ 0
 LogFile=_ ""
