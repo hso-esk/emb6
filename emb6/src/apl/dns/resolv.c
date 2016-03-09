@@ -118,11 +118,7 @@ strcasecmp(const char *s1, const char *s2)
   return strcmp(s1, s2);
 }
 #else
-#ifdef IAR_COMPILER
-#include <string.h>
-#else
-#include <strings.h>    // not found in IAR
-#endif
+#include <strings.h>
 #endif /* __SDCC */
 
 #define UIP_UDP_BUF ((struct uip_udpip_hdr *)&uip_buf[UIP_LLH_LEN])
