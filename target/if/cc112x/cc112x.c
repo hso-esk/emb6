@@ -765,7 +765,7 @@ static void cc112x_chkReset(void)
 
     if (read_byte != rf_regVerify ) {
         uint8_t rf_chanNum_st = rf_chanNum;
-        uint8_t rf_opMode_st = rf_opMode;
+        e_nsRfOpMode rf_opMode_st = rf_opMode;
 
         cc112x_Init( rf_netstk, &err );
         cc112x_opModeSet( rf_opMode_st, &err );
