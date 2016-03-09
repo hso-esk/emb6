@@ -130,6 +130,7 @@ dtls_dsrv_log_addr(log_t level, const char *name, const struct __session_t *addr
 #endif /* NDEBUG */
 
 /* A set of convenience macros for common log levels. */
+#if (LOGGER_LEVEL > 0)
 #define dtls_emerg(...) dsrv_log(DTLS_LOG_EMERG, __VA_ARGS__)
 #define dtls_alert(...) dsrv_log(DTLS_LOG_ALERT, __VA_ARGS__)
 #define dtls_crit(...) dsrv_log(DTLS_LOG_CRIT, __VA_ARGS__)
@@ -139,5 +140,16 @@ dtls_dsrv_log_addr(log_t level, const char *name, const struct __session_t *addr
 #define dtls_debug(...) dsrv_log(DTLS_LOG_DEBUG, __VA_ARGS__)
 #define dtls_debug_hexdump(name, buf, length) dtls_dsrv_hexdump_log(DTLS_LOG_DEBUG, name, buf, length, 1)
 #define dtls_debug_dump(name, buf, length) dtls_dsrv_hexdump_log(DTLS_LOG_DEBUG, name, buf, length, 0)
+#else
+#define dtls_emerg(...)
+#define dtls_alert(...)
+#define dtls_crit(...)
+#define dtls_warn(...)
+#define dtls_notice(...)
+#define dtls_info(...)
+#define dtls_debug(...)
+#define dtls_debug_hexdump(name, buf, length)
+#define dtls_debug_dump(name, buf, length)
+#endif
 
 #endif /* _DTLS_DEBUG_H_ */
