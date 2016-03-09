@@ -1045,7 +1045,7 @@ static void cc112x_eventHandler(c_event_t c_event, p_data_t p_data)
         /*
          * entry action
          */
-        rf_state = RF_STATE_IDLE;
+        cc112x_gotoIdle();
         LED_RX_OFF();
 
         /*
