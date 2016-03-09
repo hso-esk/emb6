@@ -76,6 +76,12 @@ trg += [{
     'bsp'       : get_descr(bsp, 'atany900_basic')
 }]
 
+trg += [{
+    'id'        : 'dc_atany900basic',
+    'apps_conf' : [ dtls_cli ],
+    'bsp'       : get_descr(bsp, 'atany900_basic')
+}]
+
 #SAND20XPRO based ++++++++++++++++++++++++++++++++++++++++#
 trg += [{
     'id'        : 'as_samd20xpro_rf212',
@@ -96,11 +102,6 @@ trg += [{
 }]
 
 #GECKOO based ++++++++++++++++++++++++++++++++++++++++#
-trg += [{
-    'id'        : 'cs_stk3600',
-    'apps_conf' : [ coap_srv, udp_alive ],
-    'bsp'       : get_descr(bsp, 'efm32stk3600')
-}]
 
 trg += [{
     'id'        : 'dc_stk3600',
@@ -115,6 +116,44 @@ trg += [{
 }]
 
 trg += [{
+    'id'        : 'ds_stk3600_cc112x',
+    'apps_conf' : [ dtls_srv ],
+    'bsp'       : get_descr(bsp, 'efm32stk3600_cc112x')
+}]
+
+trg += [{
+    'id'        : 'dc_stk3600_cc112x',
+    'apps_conf' : [ dtls_cli ],
+    'bsp'       : get_descr(bsp, 'efm32stk3600_cc112x')
+}]
+
+#++++++++++ DTLS ++++++++++#
+trg += [{
+    'id'        : 'ds12',	#_stk3600_cc120x
+    'apps_conf' : [ dtls_srv ],
+    'bsp'       : get_descr(bsp, 'efm32stk3600_cc120x')
+}]
+
+trg += [{
+    'id'        : 'dc12',	#_stk3600_cc120x
+    'apps_conf' : [ dtls_cli ],
+    'bsp'       : get_descr(bsp, 'efm32stk3600_cc120x')
+}]
+
+trg += [{
+    'id'        : 'ds11',	#_stk3600_cc112x
+    'apps_conf' : [ dtls_srv ],
+    'bsp'       : get_descr(bsp, 'efm32stk3600_cc112x')
+}]
+
+trg += [{
+    'id'        : 'dc11',	#_stk3600_cc112x
+    'apps_conf' : [ dtls_cli ],
+    'bsp'       : get_descr(bsp, 'efm32stk3600_cc112x')
+}]
+
+#++++++++++ UDP Socket ++++++++++#
+trg += [{
     'id'        : 'us_stk3600_cc112x',
     'apps_conf' : [ udp_srv ],
     'bsp'       : get_descr(bsp, 'efm32stk3600_cc112x')
@@ -127,17 +166,18 @@ trg += [{
 }]
 
 trg += [{
+    'id'        : 'us_stk3600_cc120x',
+    'apps_conf' : [ udp_srv ],
+    'bsp'       : get_descr(bsp, 'efm32stk3600_cc120x')
+}]
+
+trg += [{
     'id'        : 'uc_stk3600_cc120x',
     'apps_conf' : [ udp_cli ],
     'bsp'       : get_descr(bsp, 'efm32stk3600_cc120x')
 }]
 
-trg += [{
-    'id'        : 'cs_stk3600_cc112x',
-    'apps_conf' : [ coap_srv, udp_alive, udp_cli ],
-    'bsp'       : get_descr(bsp, 'efm32stk3600_cc112x')
-}]
-
+#++++++++++ MDNS ++++++++++#
 trg += [{
     'id'        : 'mdc_stk3600_cc112x',
     'apps_conf' : [ mdns_cli, udp_alive ],
@@ -147,6 +187,62 @@ trg += [{
 trg += [{
     'id'        : 'mds_stk3600_cc112x',
     'apps_conf' : [ mdns_srv, udp_alive ],
+    'bsp'       : get_descr(bsp, 'efm32stk3600_cc112x')
+}]
+
+trg += [{
+    'id'        : 'mdc_stk3600_cc120x',
+    'apps_conf' : [ mdns_cli, udp_alive ],
+    'bsp'       : get_descr(bsp, 'efm32stk3600_cc120x')
+}]
+
+trg += [{
+    'id'        : 'mds_stk3600_cc120x',
+    'apps_conf' : [ mdns_srv, udp_alive ],
+    'bsp'       : get_descr(bsp, 'efm32stk3600_cc120x')
+}]
+
+#++++++++++ UDP Alive ++++++++++#
+trg += [{
+    'id'        : 'ua_stk_cc112x',
+    'apps_conf' : [ coap_cli, udp_alive ],
+    'bsp'       : get_descr(bsp, 'efm32stk3600_cc112x')
+}]
+
+trg += [{
+    'id'        : 'ua_stk_cc120x',
+    'apps_conf' : [ coap_cli, udp_alive ],
+    'bsp'       : get_descr(bsp, 'efm32stk3600_cc120x')
+}]
+
+#++++++++++ COAP ++++++++++#
+trg += [{
+    'id'        : 'cs_stk3600',
+    'apps_conf' : [ coap_srv, udp_alive ],
+    'bsp'       : get_descr(bsp, 'efm32stk3600')
+}]
+
+trg += [{
+    'id'        : 'cs_StkCC120x',
+    'apps_conf' : [ coap_srv, udp_alive, udp_cli ],
+    'bsp'       : get_descr(bsp, 'efm32stk3600_cc120x')
+}]
+
+trg += [{
+    'id'        : 'cc_StkCC120x',
+    'apps_conf' : [ coap_cli, udp_alive, udp_cli ],
+    'bsp'       : get_descr(bsp, 'efm32stk3600_cc120x')
+}]
+
+trg += [{
+    'id'        : 'cs_StkCC112x',
+    'apps_conf' : [ coap_srv, udp_alive, udp_cli ],
+    'bsp'       : get_descr(bsp, 'efm32stk3600_cc112x')
+}]
+
+trg += [{
+    'id'        : 'cc_StkCC112x',
+    'apps_conf' : [ coap_cli, udp_alive, udp_cli ],
     'bsp'       : get_descr(bsp, 'efm32stk3600_cc112x')
 }]
 
