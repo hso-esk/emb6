@@ -57,7 +57,7 @@
 #else
 #define PHY_HEADER_LEN                  (uint16_t)(    1u )
 #define PHY_PSDU_MAX                    (uint16_t)(  127u )
-#define PHY_PSDU_MIN()                  ((uint16_t)(    2u )) /* 2-byte CRC */
+#define PHY_PSDU_MIN(a)                 ((uint16_t)(    2u )) /* 2-byte CRC */
 #endif
 
 
