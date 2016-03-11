@@ -443,6 +443,8 @@ void hal_exitCritical( void )
 int8_t hal_init (void)
 {
     uint8_t ix;
+    uint8_t led_num;
+    s_hal_gpio_pin_t *p_gpioPin;
 
     /* reset callback */
     pf_hal_radioCb = NULL;
@@ -466,10 +468,11 @@ int8_t hal_init (void)
     _hal_tcInit();
 
     /* initialize user IOs */
-    for( ix = 0; ix < sizeof( s_hal_userio); ix++ )
-    {
-        s_hal_gpio_pin_t* p_gpioPin = &s_hal_userio[ix];
-        GPIO_PinModeSet( p_gpioPin->port, p_gpioPin->pin, p_gpioPin->mode, p_gpioPin->val );
+    led_num = sizeof(s_hal_userio) / sizeof(s_hal_gpio_pin_t);
+    for (ix = 0; ix < led_num; ix++) {
+        p_gpioPin = &s_hal_userio[ix];
+        GPIO_PinModeSet(p_gpioPin->port, p_gpioPin->pin, p_gpioPin->mode,
+                p_gpioPin->val);
     }
 
     return 1;
