@@ -86,10 +86,11 @@ typedef enum E_TARGET_EXTINT
     E_TARGET_EXT_INT_1,
     E_TARGET_EXT_INT_2,
     E_TARGET_EXT_INT_3,
-    E_TARGET_EXT_INT_MAX,
 
     E_TARGET_RADIO_INT,
     E_TARGET_USART_INT,
+
+    E_TARGET_EXT_INT_MAX,
 } en_targetExtInt_t;
 
 

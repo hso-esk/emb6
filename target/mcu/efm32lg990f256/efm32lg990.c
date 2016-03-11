@@ -96,6 +96,7 @@
 #define EFM32_LED_OUT_VAL           1
 #endif /* #ifndef EFM32_LED_ACTIVE_HIGH */
 
+
 /*==============================================================================
                                      ENUMS
 ==============================================================================*/
@@ -217,17 +218,16 @@ s_hal_gpio_pin_t s_hal_gpio[e_hal_gpios_max] =
     {EFM32_IO_PORT_RF_SLP, EFM32_IO_PIN_RF_SLP, gpioModePushPull,  0},  /* e_hal_gpios_rf_slp */
 };
 
-/** registered callback function for the radio interrupt */
-pfn_intCallb_t pf_hal_radioCb = NULL;
-
 /** External interrupt GPIOs table */
 s_hal_gpio_pin_t s_hal_exti_gpio[E_TARGET_EXT_INT_MAX] =
 {
     {EFM32_IO_PORT_RF_IRQ_0, EFM32_IO_PIN_RF_IRQ_0, gpioModeInputPull, 0},  /* E_TARGET_EXT_INT_0 */
     {EFM32_IO_PORT_RF_IRQ_2, EFM32_IO_PIN_RF_IRQ_2, gpioModeInputPull, 0},  /* E_TARGET_EXT_INT_1 */
     {EFM32_IO_PORT_RF_IRQ_3, EFM32_IO_PIN_RF_IRQ_3, gpioModeInputPull, 0},  /* E_TARGET_EXT_INT_2 */
-
     {0, 0, 0, 0},  /* E_TARGET_EXT_INT_3 is not supported */
+
+    {EFM32_IO_PORT_RF_IRQ,   EFM32_IO_PIN_RF_IRQ,   gpioModeInputPull, 0},  /* INT for Atmel RF */
+    {0, 0, 0, 0},  /* E_TARGET_USART_INT is not supported */
 };
 
 /** User IOs */
@@ -387,15 +387,6 @@ static void _hal_tcCb( void )
 
 
 /**
- * \brief    Internal radio interrupt callback function.
- */
-static void _hal_radioCb( uint8_t pin )
-{
-    if( pf_hal_radioCb != NULL )
-        pf_hal_radioCb( NULL );
-}
-
-/**
  * \brief   External interrupt handler
  */
 static void _hal_extiCb(uint8_t pin)
@@ -404,10 +395,16 @@ static void _hal_extiCb(uint8_t pin)
 
     for (ix = 0; ix < E_TARGET_EXT_INT_MAX; ix++) {
         if (s_hal_exti_gpio[ix].pin == pin) {
+            /*
+             * TI and Atmel transceivers use same pin number for one interrupt
+             * (EFM32_IO_PORT_RF_IRQ_3 and EFM32_IO_PORT_RF_IRQ). Therefore
+             * if an interrupt handling function found with pin number of
+             * interest is 0, let MCU iterate interrupt table to find the
+             * correct interrupt occurred
+             */
             if (pf_hal_exti[ix]) {
                 pf_hal_exti[ix](NULL);
             }
-            break;
         }
     }
 }
@@ -447,7 +444,6 @@ int8_t hal_init (void)
     s_hal_gpio_pin_t *p_gpioPin;
 
     /* reset callback */
-    pf_hal_radioCb = NULL;
     for (ix = 0; ix < E_TARGET_EXT_INT_MAX; ix++) {
         pf_hal_exti[ix] = 0;
     }
@@ -559,8 +555,9 @@ void hal_extiRegister(en_targetExtInt_t     e_extInt,
 #endif
 
 
-    s_hal_gpio_pin_t *p_gpioPin = NULL;
-
+    s_hal_gpio_pin_t *p_gpioPin;
+    uint8_t is_falling_edge;
+    uint8_t is_rising_edge;
 
     /*
      * This functions initializes the dispatcher register. Typically
@@ -571,23 +568,6 @@ void hal_extiRegister(en_targetExtInt_t     e_extInt,
 
     switch (e_extInt) {
         case E_TARGET_RADIO_INT:
-
-            pf_hal_radioCb = pfn_intCallback;
-
-            p_gpioPin = &s_hal_gpio[e_hal_gpios_rf_irq];
-            /* configure pin */
-            GPIO_PinModeSet(p_gpioPin->port, p_gpioPin->pin,
-                    p_gpioPin->mode, p_gpioPin->val);
-            /* Register callbacks before setting up and enabling pin interrupt. */
-            GPIOINT_CallbackRegister(p_gpioPin->pin, _hal_radioCb);
-            /* Set falling edge interrupt */
-            GPIO_IntConfig(p_gpioPin->port, p_gpioPin->pin, true, false,
-                    true);
-            break;
-
-        case E_TARGET_USART_INT:
-            break;
-
         case E_TARGET_EXT_INT_0:
         case E_TARGET_EXT_INT_1:
         case E_TARGET_EXT_INT_2:
@@ -599,32 +579,23 @@ void hal_extiRegister(en_targetExtInt_t     e_extInt,
             /* store interrupt callback */
             pf_hal_exti[e_extInt] = pfn_intCallback;
 
+            /* register callback function */
+            GPIOINT_CallbackRegister(p_gpioPin->pin, _hal_extiCb);
+
             /* configure external interrupt GPIOs */
             GPIO_PinModeSet(p_gpioPin->port,
                             p_gpioPin->pin,
                             p_gpioPin->mode,
                             p_gpioPin->val);
 
-            /* configure edge detection */
-            if (e_edge == E_TARGET_INT_EDGE_FALLING) {
-                GPIO_IntConfig(p_gpioPin->port,
-                               p_gpioPin->pin,
-                               false,
-                               true,
-                               true);
-            } else {
-                GPIO_IntConfig(p_gpioPin->port,
-                               p_gpioPin->pin,
-                               true,
-                               false,
-                               true);
-            }
-
-            /* register callback function */
-            GPIOINT_CallbackRegister(p_gpioPin->pin, _hal_extiCb);
-
-            /* disable interrupt by default */
-            hal_extiDisable(e_extInt);
+            /* configure edge detection and disable interrupt by default */
+            is_rising_edge = (e_edge == E_TARGET_INT_EDGE_RISING);
+            is_falling_edge = (e_edge == E_TARGET_INT_EDGE_FALLING);
+            GPIO_IntConfig(p_gpioPin->port,
+                           p_gpioPin->pin,
+                           is_rising_edge,
+                           is_falling_edge,
+                           FALSE);  /* enable */
             break;
 
         default:
