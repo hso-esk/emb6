@@ -139,6 +139,10 @@
 
 #define EFM32_LED_ACTIVE_HIGH               FALSE
 
+#define CC112X_PART_NUMBER                  ((uint8_t) 0x48u)
+#define CC112X_PART_VERSION                 ((uint8_t) 0x23u)
+
+
 /*============================================================================*/
 /*!
 \brief    emb6 board configuration fuction
