@@ -76,11 +76,14 @@ uint8_t board_conf(s_ns_t *p_netstk)
 
 
     if (p_netstk != NULL) {
-//        p_netstk->dllc  = &DLLCDrv802154;
-    	p_netstk->dllc  = &DLLCDrvNull;
-        p_netstk->mac   = &MACDrv802154;
-        p_netstk->phy   = &PHYDrv802154;
-        p_netstk->rf    = &RFDrvCC112x;
+#if (DEMO_USE_EXTIF == 1)
+        p_netstk->dllc = &DLLCDrvNull;
+#else
+        p_netstk->dllc = &DLLCDrv802154;
+#endif
+        p_netstk->mac  = &MACDrv802154;
+        p_netstk->phy  = &PHYDrv802154;
+        p_netstk->rf   = &RFDrvCC112x;
     }
     else {
         LOG_ERR("Network stack pointer is NULL");
