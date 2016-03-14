@@ -46,7 +46,7 @@
  * \addtogroup efm32
  * @{
  */
-/*! \file   efm32lg840f256_extif/efm32lg840.c
+/*! \file   efm32lg840f128/efm32lg840.c
 
     \author Manuel Schappacher manuel.schappacher@hs-offenburg.de
 
@@ -60,10 +60,10 @@
                                  INCLUDE FILES
 ==============================================================================*/
 
-#include "../efm32lg840f128/hwinit.h"
 #include "emb6.h"
 
 #include "target.h"
+#include "hwinit.h"
 #include "bsp.h"
 #include "board_conf.h"
 
@@ -83,7 +83,7 @@
 /*==============================================================================
                                      MACROS
 ==============================================================================*/
-#define     LOGGER_ENABLE        LOGGER_HAL
+#define     LOGGER_ENABLE           LOGGER_HAL
 #include    "logger.h"
 
 #ifndef EFM32_LED_ACTIVE_HIGH
@@ -96,14 +96,11 @@
 #define EFM32_LED_OUT_VAL           1
 #endif /* #ifndef EFM32_LED_ACTIVE_HIGH */
 
+
 /*==============================================================================
                                      ENUMS
 ==============================================================================*/
 
-/* Setup UART0 in async mode for RS232*/
-static USART_TypeDef           * uart   = USART0;
-USART_TypeDef* uartStdio = NULL;
-static USART_InitAsync_TypeDef uartInit = USART_INITASYNC_DEFAULT;
 /*==============================================================================
                          STRUCTURES AND OTHER TYPEDEFS
 ==============================================================================*/
@@ -183,13 +180,12 @@ static void _hal_tcInit( void );
 /* initialization of clocks */
 static void _hal_clksInit( void );
 
+/* initialization of uart */
+static void _hal_uartInit( void );
+
 /* callback for the Tick Counter */
 static void _hal_tcCb( void );
 
-/* callback for the radio interrupt */
-static void _hal_radioCb(uint8_t pin);
-/* uart initialization */
-static void _hal_uart_Init(void);
 
 /*==============================================================================
                           VARIABLE DECLARATIONS
@@ -199,6 +195,11 @@ static void _hal_uart_Init(void);
 static clock_time_t volatile l_hal_tick;
 /** Seconds since startup */
 static clock_time_t volatile l_hal_sec;
+
+/** UART instance */
+static USART_TypeDef *uart = USART0;
+USART_TypeDef *uartStdio = NULL;
+static USART_InitAsync_TypeDef uartInit = USART_INITASYNC_DEFAULT;
 
 /** Definition of the SPI interface */
 static s_hal_spiDrv s_hal_spi = {
@@ -216,21 +217,16 @@ s_hal_gpio_pin_t s_hal_gpio[e_hal_gpios_max] =
     {EFM32_IO_PORT_RF_SLP, EFM32_IO_PIN_RF_SLP, gpioModePushPull,  0},  /* e_hal_gpios_rf_slp */
 };
 
-/** registered callback function for the radio interrupt */
-pfn_intCallb_t pf_hal_radioCb = NULL;
-
-/** registered callback function for the uart interrupt */
-pfn_intCallb_t pf_hal_rxCallb = NULL;
-
-
 /** External interrupt GPIOs table */
 s_hal_gpio_pin_t s_hal_exti_gpio[E_TARGET_EXT_INT_MAX] =
 {
     {EFM32_IO_PORT_RF_IRQ_0, EFM32_IO_PIN_RF_IRQ_0, gpioModeInputPull, 0},  /* E_TARGET_EXT_INT_0 */
     {EFM32_IO_PORT_RF_IRQ_2, EFM32_IO_PIN_RF_IRQ_2, gpioModeInputPull, 0},  /* E_TARGET_EXT_INT_1 */
     {EFM32_IO_PORT_RF_IRQ_3, EFM32_IO_PIN_RF_IRQ_3, gpioModeInputPull, 0},  /* E_TARGET_EXT_INT_2 */
-
     {0, 0, 0, 0},  /* E_TARGET_EXT_INT_3 is not supported */
+
+    {EFM32_IO_PORT_RF_IRQ,   EFM32_IO_PIN_RF_IRQ,   gpioModeInputPull, 0},  /* INT for Atmel RF */
+    {0, 0, 0, 0},  /* E_TARGET_USART_INT is not supported */
 };
 
 /** User IOs */
@@ -244,6 +240,11 @@ s_hal_gpio_pin_t s_hal_userio[] =
 pfn_intCallb_t pf_hal_exti[E_TARGET_EXT_INT_MAX] = {0};
 
 void* p_spiMisoPin = &s_hal_spi.rxPin;
+
+/** registered callback function for the uart interrupt */
+pfn_intCallb_t pf_hal_rxCallb = NULL;
+
+
 /*==============================================================================
                                 LOCAL CONSTANTS
 ==============================================================================*/
@@ -254,21 +255,6 @@ void* p_spiMisoPin = &s_hal_spi.rxPin;
 /*==============================================================================
                                 LOCAL FUNCTIONS
 ==============================================================================*/
-
-/**
- *    \brief    Timer1 interrupt handler.
- */
-void TIMER1_IRQHandler()
-{
-    uint32_t flags;
-    INT_Disable();
-
-    flags = TIMER_IntGet( TIMER1 );
-    _hal_tcCb();
-    TIMER_IntClear( TIMER1, flags );
-
-    INT_Enable();
-}
 
 /**
  *    \brief    Initializes Watchdog.
@@ -323,11 +309,56 @@ static void _hal_tcInit(void)
 static void _hal_clksInit( void )
 {
     /* enable required clocks */
-    CMU_ClockEnable( cmuClock_HFPER, true );
-    CMU_ClockEnable( cmuClock_GPIO, true );
-    CMU_ClockEnable( cmuClock_TIMER1, true );
-    CMU_ClockEnable( cmuClock_USART0, true);
-    CMU_HFRCOBandSet( cmuHFRCOBand_28MHz );
+    CMU_ClockEnable(cmuClock_HFPER, true);
+    CMU_ClockEnable(cmuClock_GPIO, true);
+    CMU_ClockEnable(cmuClock_TIMER1, true);
+    CMU_ClockEnable(cmuClock_USART0, true);
+    CMU_HFRCOBandSet(cmuHFRCOBand_28MHz);
+}
+
+/**
+ *    \brief    Initialize UART.
+ */
+static void _hal_uartInit( void )
+{
+    /* Prepare struct for initializing UART in asynchronous mode*/
+    uartInit.enable       = usartDisable;   /* Don't enable UART upon intialization */
+    uartInit.refFreq      = 0;              /* Provide information on reference frequency. When set to 0, the reference frequency is */
+    uartInit.baudrate     = 115200;         /* Baud rate */
+    uartInit.oversampling = usartOVS16;     /* Oversampling. Range is 4x, 6x, 8x or 16x */
+    uartInit.databits     = usartDatabits8; /* Number of data bits. Range is 4 to 10 */
+    uartInit.parity       = usartNoParity;  /* Parity mode */
+    uartInit.stopbits     = usartStopbits1; /* Number of stop bits. Range is 0 to 2 */
+    uartInit.mvdis        = false;          /* Disable majority voting */
+    uartInit.prsRxEnable  = false;          /* Enable USART Rx via Peripheral Reflex System */
+    uartInit.prsRxCh      = usartPrsRxCh0;  /* Select PRS channel if enabled */
+
+    /* Initialize USART with uartInit struct */
+    USART_InitAsync(uart, &uartInit);
+
+    /* Configure GPIO pins */
+    GPIO_PinModeSet(gpioPortE, 13, gpioModePushPull, 1);
+    GPIO_PinModeSet(gpioPortE, 12, gpioModeInput, 0);
+
+    /* Prepare UART Rx and Tx interrupts */
+    USART_IntClear(uart, _USART_IFC_MASK);
+    USART_IntEnable(uart, USART_IEN_RXDATAV);
+    NVIC_ClearPendingIRQ(USART0_RX_IRQn);
+    NVIC_ClearPendingIRQ(USART0_TX_IRQn);
+    NVIC_EnableIRQ(USART0_RX_IRQn);
+    NVIC_EnableIRQ(USART0_TX_IRQn);
+
+    /* Enable I/O pins at UART1 location #3 */
+    uart->ROUTE = USART_ROUTE_RXPEN | USART_ROUTE_TXPEN | USART_ROUTE_LOCATION_LOC3;
+
+    /* Enable UART */
+    USART_Enable(uart, usartEnable);
+
+    /* set external UART instance */
+    uartStdio = uart;
+
+    /* disable STDIO buffer */
+    setvbuf( stdout , NULL , _IONBF , 0 );
 }
 
 
@@ -346,15 +377,6 @@ static void _hal_tcCb( void )
 
 
 /**
- * \brief    Internal radio interrupt callback function.
- */
-static void _hal_radioCb( uint8_t pin )
-{
-    if( pf_hal_radioCb != NULL )
-        pf_hal_radioCb( NULL );
-}
-
-/**
  * \brief   External interrupt handler
  */
 static void _hal_extiCb(uint8_t pin)
@@ -363,100 +385,46 @@ static void _hal_extiCb(uint8_t pin)
 
     for (ix = 0; ix < E_TARGET_EXT_INT_MAX; ix++) {
         if (s_hal_exti_gpio[ix].pin == pin) {
+            /*
+             * TI and Atmel transceivers use same pin number for one interrupt
+             * (EFM32_IO_PORT_RF_IRQ_3 and EFM32_IO_PORT_RF_IRQ). Therefore
+             * if an interrupt handling function found with pin number of
+             * interest is 0, let MCU iterate interrupt table to find the
+             * correct interrupt occurred
+             */
             if (pf_hal_exti[ix]) {
                 pf_hal_exti[ix](NULL);
-                break;
             }
         }
     }
 }
 
 
-//############################################################################
-//### UART
-//############################################################################
+/**
+ *    \brief    Timer1 interrupt handler.
+ */
+void TIMER1_IRQHandler()
+{
+    uint32_t flags;
+    INT_Disable();
 
+    flags = TIMER_IntGet( TIMER1 );
+    _hal_tcCb();
+    TIMER_IntClear( TIMER1, flags );
 
-/**************************************************************************//**
- * @brief UART1 RX IRQ Handler
- *
- * Set up the interrupt prior to use
- *
- * Note that this function handles overflows in a very simple way.
- *
- *****************************************************************************/
-
+    INT_Enable();
+}
 
 void USART0_RX_IRQHandler(void)
 {
- /* Check for RX data valid interrupt */
-  if (uart->IF & USART_IF_RXDATAV)
-  {
+    /* Check for RX data valid interrupt */
+    if (uart->IF & USART_IF_RXDATAV) {
 
-    /* Copy data into RX Buffer */
-	 uint8_t rxData = USART_Rx(uart);
-
-    if( pf_hal_rxCallb != NULL )
-    	pf_hal_rxCallb( &rxData );
-
-  }
-}
-
-
-/******************************************************************************
-* @brief  uartSetup function
-*
-******************************************************************************/
-static void _hal_uart_Init(void)
-{
- /* Enable clock for GPIO module (required for pin configuration) */
- //CMU_ClockEnable(cmuClock_GPIO, true);
-
- // enable clock for usart0
- //CMU_ClockEnable(cmuClock_USART0, true);
-
-
-
-
- /* Prepare struct for initializing UART in asynchronous mode*/
- uartInit.enable       = usartDisable;   /* Don't enable UART upon intialization */
- uartInit.refFreq      = 0;              /* Provide information on reference frequency. When set to 0, the reference frequency is */
- uartInit.baudrate     = 57600;         /* Baud rate */
- uartInit.oversampling = usartOVS16;     /* Oversampling. Range is 4x, 6x, 8x or 16x */
- uartInit.databits     = usartDatabits8; /* Number of data bits. Range is 4 to 10 */
- uartInit.parity       = usartNoParity;  /* Parity mode */
- uartInit.stopbits     = usartStopbits1; /* Number of stop bits. Range is 0 to 2 */
- uartInit.mvdis        = false;          /* Disable majority voting */
- uartInit.prsRxEnable  = false;          /* Enable USART Rx via Peripheral Reflex System */
- uartInit.prsRxCh      = usartPrsRxCh0;  /* Select PRS channel if enabled */
-
- /* Initialize USART with uartInit struct */
- USART_InitAsync(uart, &uartInit);
-
- /* Configure GPIO pins */
- GPIO_PinModeSet(gpioPortE, 13, gpioModePushPull, 1);
- GPIO_PinModeSet(gpioPortE, 12, gpioModeInput, 0);
-
- /* Prepare UART Rx and Tx interrupts */
- USART_IntClear(uart, _USART_IFC_MASK);
- USART_IntEnable(uart, USART_IEN_RXDATAV);
- NVIC_ClearPendingIRQ(USART0_RX_IRQn);
- NVIC_ClearPendingIRQ(USART0_TX_IRQn);
- NVIC_EnableIRQ(USART0_RX_IRQn);
- NVIC_EnableIRQ(USART0_TX_IRQn);
-
- /* Enable I/O pins at UART1 location #3 */
- uart->ROUTE = USART_ROUTE_RXPEN | USART_ROUTE_TXPEN | USART_ROUTE_LOCATION_LOC3;
-
- /* Enable UART */
- USART_Enable(uart, usartEnable);
-
- /* set external UART instance */
- uartStdio = uart;
-
- /* disable STDIO buffer */
- setvbuf( stdout , NULL , _IONBF , 0 );
-
+        /* Copy data into RX Buffer */
+        uint8_t rxData = USART_Rx(uart);
+        if (pf_hal_rxCallb != NULL)
+            pf_hal_rxCallb(&rxData);
+    }
 }
 
 
@@ -490,9 +458,10 @@ void hal_exitCritical( void )
 int8_t hal_init (void)
 {
     uint8_t ix;
+    uint8_t led_num;
+    s_hal_gpio_pin_t *p_gpioPin;
 
     /* reset callback */
-    pf_hal_radioCb = NULL;
     for (ix = 0; ix < E_TARGET_EXT_INT_MAX; ix++) {
         pf_hal_exti[ix] = 0;
     }
@@ -503,8 +472,8 @@ int8_t hal_init (void)
     /* initialize clocks */
     _hal_clksInit();
 
-    /* initialize uart */
-    _hal_uart_Init();
+    /* initialize UART */
+    _hal_uartInit();
 
     /* initialize watchdog */
     _hal_wdcInit();
@@ -513,10 +482,11 @@ int8_t hal_init (void)
     _hal_tcInit();
 
     /* initialize user IOs */
-    for( ix = 0; ix < sizeof( s_hal_userio); ix++ )
-    {
-        s_hal_gpio_pin_t* p_gpioPin = &s_hal_userio[ix];
-        GPIO_PinModeSet( p_gpioPin->port, p_gpioPin->pin, p_gpioPin->mode, p_gpioPin->val );
+    led_num = sizeof(s_hal_userio) / sizeof(s_hal_gpio_pin_t);
+    for (ix = 0; ix < led_num; ix++) {
+        p_gpioPin = &s_hal_userio[ix];
+        GPIO_PinModeSet(p_gpioPin->port, p_gpioPin->pin, p_gpioPin->mode,
+                p_gpioPin->val);
     }
 
     return 1;
@@ -540,7 +510,17 @@ void hal_ledOff(uint16_t ui_led)
 {
     s_hal_gpio_pin_t* p_gpioPin = NULL;
 
-    p_gpioPin = &s_hal_userio[ui_led];
+    switch( ui_led )
+    {
+        case 0:
+            p_gpioPin = &s_hal_userio[0];
+            break;
+        case 1:
+            p_gpioPin = &s_hal_userio[1];
+            break;
+        default:
+            break;
+    }
 
     if( p_gpioPin != NULL )
 #if EFM32_LED_ACTIVE_HIGH
@@ -558,8 +538,17 @@ void hal_ledOn(uint16_t ui_led)
 {
     s_hal_gpio_pin_t* p_gpioPin = NULL;
 
-    p_gpioPin = &s_hal_userio[ui_led];
-
+    switch( ui_led )
+    {
+        case 0:
+            p_gpioPin = &s_hal_userio[0];
+            break;
+        case 1:
+            p_gpioPin = &s_hal_userio[1];
+            break;
+        default:
+            break;
+    }
 
     if( p_gpioPin != NULL )
 #if EFM32_LED_ACTIVE_HIGH
@@ -568,7 +557,6 @@ void hal_ledOn(uint16_t ui_led)
     GPIO_PinOutClear( p_gpioPin->port, p_gpioPin->pin );
 #endif /* EFM32_LED_ACTIVE_HIGH */
 } /* hal_ledOn() */
-
 
 
 /*==============================================================================
@@ -585,8 +573,9 @@ void hal_extiRegister(en_targetExtInt_t     e_extInt,
 #endif
 
 
-    s_hal_gpio_pin_t *p_gpioPin = NULL;
-
+    s_hal_gpio_pin_t *p_gpioPin;
+    uint8_t is_falling_edge;
+    uint8_t is_rising_edge;
 
     /*
      * This functions initializes the dispatcher register. Typically
@@ -596,26 +585,11 @@ void hal_extiRegister(en_targetExtInt_t     e_extInt,
 
 
     switch (e_extInt) {
-        case E_TARGET_RADIO_INT:
-
-            pf_hal_radioCb = pfn_intCallback;
-
-            p_gpioPin = &s_hal_gpio[e_hal_gpios_rf_irq];
-            /* configure pin */
-            GPIO_PinModeSet(p_gpioPin->port, p_gpioPin->pin,
-                    p_gpioPin->mode, p_gpioPin->val);
-            /* Register callbacks before setting up and enabling pin interrupt. */
-            GPIOINT_CallbackRegister(p_gpioPin->pin, _hal_radioCb);
-            /* Set falling edge interrupt */
-            GPIO_IntConfig(p_gpioPin->port, p_gpioPin->pin, true, false,
-                    true);
-            break;
-
         case E_TARGET_USART_INT:
-        	pf_hal_rxCallb = pfn_intCallback;
-            break;
+            pf_hal_rxCallb = pfn_intCallback;
             break;
 
+        case E_TARGET_RADIO_INT:
         case E_TARGET_EXT_INT_0:
         case E_TARGET_EXT_INT_1:
         case E_TARGET_EXT_INT_2:
@@ -627,32 +601,23 @@ void hal_extiRegister(en_targetExtInt_t     e_extInt,
             /* store interrupt callback */
             pf_hal_exti[e_extInt] = pfn_intCallback;
 
+            /* register callback function */
+            GPIOINT_CallbackRegister(p_gpioPin->pin, _hal_extiCb);
+
             /* configure external interrupt GPIOs */
             GPIO_PinModeSet(p_gpioPin->port,
                             p_gpioPin->pin,
                             p_gpioPin->mode,
                             p_gpioPin->val);
 
-            /* configure edge detection */
-            if (e_edge == E_TARGET_INT_EDGE_FALLING) {
-                GPIO_IntConfig(p_gpioPin->port,
-                               p_gpioPin->pin,
-                               false,
-                               true,
-                               true);
-            } else {
-                GPIO_IntConfig(p_gpioPin->port,
-                               p_gpioPin->pin,
-                               true,
-                               false,
-                               true);
-            }
-
-            /* register callback function */
-            GPIOINT_CallbackRegister(p_gpioPin->pin, _hal_extiCb);
-
-            /* disable interrupt by default */
-            hal_extiDisable(e_extInt);
+            /* configure edge detection and disable interrupt by default */
+            is_rising_edge = (e_edge == E_TARGET_INT_EDGE_RISING);
+            is_falling_edge = (e_edge == E_TARGET_INT_EDGE_FALLING);
+            GPIO_IntConfig(p_gpioPin->port,
+                           p_gpioPin->pin,
+                           is_rising_edge,
+                           is_falling_edge,
+                           FALSE);  /* enable */
             break;
 
         default:
@@ -680,8 +645,15 @@ void hal_extiEnable(en_targetExtInt_t e_extInt)
 {
     uint32_t pin_msk;
 
+#if 1
+    if (e_extInt != E_TARGET_USART_INT) {
+        pin_msk = 1 << (s_hal_exti_gpio[e_extInt].pin);
+        GPIO_IntEnable(pin_msk);
+    }
+#else
     pin_msk = 1 << (s_hal_exti_gpio[e_extInt].pin);
     GPIO_IntEnable(pin_msk);
+#endif
 } /* hal_extiEnable() */
 
 /*==============================================================================
@@ -922,6 +894,37 @@ void hal_watchdogReset(void)
  =============================================================================*/
 void hal_watchdogStart(void)
 {
+    WDOG_Init_TypeDef wdog_init;
+    /* start it automatically after the initialization */
+    wdog_init.enable = 1;
+    /* don't run it during debugging */
+    wdog_init.debugRun = 1;
+    /* run it at EM2 energy mode */
+    wdog_init.em2Run = 1;
+    /* run it at EM3 energy mode */
+    wdog_init.em3Run = 1;
+    /* don't block the MCU from entering to EM4 energy mode (shutdown) */
+    wdog_init.em4Block = 0;
+    /* don't block software from disabling of LF oscillators */
+    wdog_init.swoscBlock = 0;
+    /* don't lock the wdog configuration - possible to change the wdog configuration at run time */
+    wdog_init.lock = 0;
+    /* chose the clock source for the wdog
+      if it have to work at EM3 - choose Ultra Low Energy Clock: 1KHz
+      for example I choose the Low Energy Clock: 32.768 KHz  */
+    wdog_init.clkSel = wdogClkSelLFXO;
+    /* choose period for wdog  */
+    wdog_init.perSel = wdogPeriod_64k;
+    /*
+    In this case, I configured the wdog to reset the MCU each 2 seconds :
+    Formula -> Time = (1/Clock) * period
+    2 sec = (1/32768) * 65537
+    */
+
+    /* So, lets init it:  */
+    WDOG_Init(&wdog_init);
+
+    /* enable */
     WDOG_Enable( true );
 } /* hal_watchdogStart() */
 
