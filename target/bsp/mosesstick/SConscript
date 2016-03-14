@@ -13,7 +13,7 @@ brd_conf = {
     'if'            : 'cc112x',
 
     'startupfile': 'GCC/startup_efm32lg.S',
-    'scriptfile' : 'GCC/efm32lg.ld'
+    'scriptfile' : 'GCC/efm32lg840f128.ld'
 }
 
 std_conf = {
