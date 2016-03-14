@@ -52,7 +52,7 @@
 ********************************************************************************
 */
 #include "emb6.h"
-
+#include "packetbuf.h"
 
 /*
 ********************************************************************************
@@ -166,12 +166,16 @@ static void DLLC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 static void DLLC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 {
     if (DLLC_CbRxFnct) {
-        /*
-         * Inform the next higher layer
-         */
-        DLLC_CbRxFnct(p_data,
-                     len,
-                     p_err);
+        /* set return error code */
+        *p_err = NETSTK_ERR_NONE;
+
+        /* store the received frame into common packet buffer */
+        packetbuf_clear();
+        packetbuf_set_datalen(len);
+        memcpy(packetbuf_dataptr(), p_data, len);
+
+        /* Inform the next higher layer */
+        DLLC_CbRxFnct(packetbuf_dataptr(), packetbuf_datalen(), p_err);
     }
 }
 
