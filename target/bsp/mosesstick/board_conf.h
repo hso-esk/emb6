@@ -117,8 +117,8 @@
 /*
  * UART
  */
-#define EFM32_UART                          UART0
-#define EFM32_UART_LOC                      UART_ROUTE_LOCATION_LOC3
+#define EFM32_UART                          USART0
+#define EFM32_UART_LOC                      USART_ROUTE_LOCATION_LOC3
 
 #define EFM32_UART_PORT_USART_TX            gpioPortE
 #define EFM32_UART_PIN_USART_TX             13
