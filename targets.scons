@@ -264,6 +264,12 @@ trg += [{
     'bsp'       : get_descr(bsp, 'moses')
 }]
 
+trg += [{
+    'id'        : 'if_mosesstick',
+    'apps_conf' : [ extif ],
+    'bsp'       : get_descr(bsp, 'mosesstick')
+}]
+
 
 #TI based ++++++++++++++++++++++++++++++++++++++++#
 

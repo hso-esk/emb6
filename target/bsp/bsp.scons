@@ -44,6 +44,11 @@ bsp += [{
 }]
 
 bsp += [{
+    'id'        : 'mosesstick',  'mac_addr' : '0x0001',
+    'txrx'      : ['11','-100'],          'mode'     : qpsk100
+}]
+
+bsp += [{
     'id'        : 'efm32stk3600_cc120x',  'mac_addr' : '0x20C0',
     'txrx'      : ['11','-100'],          'mode'     : qpsk100
 }]
