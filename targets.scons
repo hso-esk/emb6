@@ -271,6 +271,12 @@ trg += [{
 }]
 
 
+trg += [{
+    'id'        : 'uc_mosesstick',
+    'apps_conf' : [ udp_cli ],
+    'bsp'       : get_descr(bsp, 'mosesstick')
+}]
+
 #TI based ++++++++++++++++++++++++++++++++++++++++#
 
 trg += [{
