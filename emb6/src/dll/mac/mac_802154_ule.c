@@ -644,6 +644,7 @@ static void MAC_ULE_RxUnicast(e_nsErr_t *p_err)
      * (b)  Waiting timeout is over
      */
     is_rx_done = FALSE;
+    rx_valid_frame = FALSE;
     MAC_ULE_Tmr1Start(&MAC_ULE_Tmr1Wait, MAC_ULE_PORT_WFP_TIMEOUT_IN_MS, 0);
     do {
         /* find out the answer for condition (a) */
@@ -849,6 +850,7 @@ static void MAC_ULE_TxUnicast(e_nsErr_t *p_err)
          * (S2)     Transmit strobes
          */
         delay = 0;
+        rx_valid_frame = FALSE;
         is_tx_done = FALSE;
         do {
             /* create wake-up strobe */
