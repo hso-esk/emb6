@@ -43,10 +43,10 @@
  *   @{
  *   \addtogroup board
  *   @{
- *      \addtogroup efm32stk3600 Board EFM32 Leopard Gecko Starter Kit specific configuration
+ *      \addtogroup efm32stk3600_cc112x Board EFM32 Leopard Gecko Starter Kit specific configuration
  *   @{
  */
-/*! \file   efm32stk3600/board_conf.h
+/*! \file   efm32stk3600_cc112x/board_conf.h
 
     \author Artem Yushev, 
 

@@ -196,13 +196,13 @@ trg += [{
 trg += [{
     'id'        : 'dc_stk3600',
     'apps_conf' : [ dtls_cli ],
-    'bsp'       : get_descr(bsp, 'efm32stk3600')
+    'bsp'       : get_descr(bsp, 'efm32stk3600_rf212b')
 }]
 
 trg += [{
     'id'        : 'ds_stk',
     'apps_conf' : [ dtls_srv ],
-    'bsp'       : get_descr(bsp, 'efm32stk3600')
+    'bsp'       : get_descr(bsp, 'efm32stk3600_rf212b')
 }]
 
 trg += [{
@@ -246,7 +246,7 @@ trg += [{
 trg += [{
     'id'        : 'us_stk3600',
     'apps_conf' : [ udp_srv ],
-    'bsp'       : get_descr(bsp, 'efm32stk3600')
+    'bsp'       : get_descr(bsp, 'efm32stk3600_rf212b')
 }]
 
 trg += [{
@@ -315,7 +315,7 @@ trg += [{
 trg += [{
     'id'        : 'cs_stk3600',
     'apps_conf' : [ coap_srv, udp_alive ],
-    'bsp'       : get_descr(bsp, 'efm32stk3600')
+    'bsp'       : get_descr(bsp, 'efm32stk3600_rf212b')
 }]
 
 trg += [{
