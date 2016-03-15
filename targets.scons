@@ -50,6 +50,12 @@ trg += [{
     'bsp'       : get_descr(bsp, 'atany900')
 }]
 
+trg += [{
+    'id'        : 'mdc_atany900',
+    'apps_conf' : [ mdns_cli ],
+    'bsp'       : get_descr(bsp, 'atany900')
+}]
+
 #ATANY900_PRO based ++++++++++++++++++++++++++++++++++++++#
 trg += [{
     'id'        : 'cs_atany900pro5',
@@ -57,7 +63,37 @@ trg += [{
     'bsp'       : get_descr(bsp, 'atany900_pro5')
 }]
 
+trg += [{
+    'id'        : 'ds_atany900pro5',
+    'apps_conf' : [ dtls_srv ],
+    'bsp'       : get_descr(bsp, 'atany900_pro5')
+}]
+
+trg += [{
+    'id'        : 'md_atany900pro5_srv',
+    'apps_conf' : [ mdns_srv ],
+    'bsp'       : get_descr(bsp, 'atany900_pro5')
+}]
+
+trg += [{
+    'id'        : 'ud_atany900pro5_srv',
+    'apps_conf' : [ udp_srv ],
+    'bsp'       : get_descr(bsp, 'atany900_pro5')
+}]
+
+trg += [{
+    'id'        : 'ap_atany900pro5_srv',
+    'apps_conf' : [ aptb_srv ],
+    'bsp'       : get_descr(bsp, 'atany900_pro5')
+}]
+
 #ATANY900_BASIC based ++++++++++++++++++++++++++++++++++++#
+trg += [{
+    'id'        : 'if_atany900basic',
+    'apps_conf' : [ extif ],
+    'bsp'       : get_descr(bsp, 'atany900_basic')
+}]
+
 trg += [{
     'id'        : 'cs_atany900basic',
     'apps_conf' : [ coap_srv, udp_alive ],
@@ -82,7 +118,31 @@ trg += [{
     'bsp'       : get_descr(bsp, 'atany900_basic')
 }]
 
-#SAND20XPRO based ++++++++++++++++++++++++++++++++++++++++#
+trg += [{
+    'id'        : 'md_atany900basic_cli',
+    'apps_conf' : [ mdns_cli ],
+    'bsp'       : get_descr(bsp, 'atany900_basic')
+}]
+
+trg += [{
+    'id'        : 'md_atany900basic_srv',
+    'apps_conf' : [ mdns_srv ],
+    'bsp'       : get_descr(bsp, 'atany900_basic')
+}]
+
+trg += [{
+    'id'        : 'ud_atany900basic_cli',
+    'apps_conf' : [ udp_cli ],
+    'bsp'       : get_descr(bsp, 'atany900_basic')
+}]
+
+trg += [{
+    'id'        : 'ud_atany900basic_srv',
+    'apps_conf' : [ udp_srv ],
+    'bsp'       : get_descr(bsp, 'atany900_basic')
+}]
+
+#SAMD20XPRO based ++++++++++++++++++++++++++++++++++++++++#
 trg += [{
     'id'        : 'as_samd20xpro_rf212',
     'apps_conf' : [ aptb_srv, udp_alive ],
@@ -101,6 +161,36 @@ trg += [{
     'bsp'       : get_descr(bsp, 'samd20xpro_rf212b')
 }]
 
+trg += [{
+    'id'        : 'md_samd20xpro_rf212b_cli',
+    'apps_conf' : [ mdns_cli ],
+    'bsp'       : get_descr(bsp, 'samd20xpro_rf212b')
+}]
+
+trg += [{
+    'id'        : 'md_samd20xpro_rf212_srv',
+    'apps_conf' : [ mdns_srv ],
+    'bsp'       : get_descr(bsp, 'samd20xpro_rf212')
+}]
+
+trg += [{
+    'id'        : 'ds_samd20xpro_rf212b',
+    'apps_conf' : [ dtls_srv ],
+    'bsp'       : get_descr(bsp, 'samd20xpro_rf212b')
+}]
+
+trg += [{
+    'id'        : 'ud_samd20xpro_rf212',
+    'apps_conf' : [ udp_srv ],
+    'bsp'       : get_descr(bsp, 'samd20xpro_rf212')
+}]
+
+trg += [{
+    'id'        : 'ud_samd20xpro_rf212_cli',
+    'apps_conf' : [ udp_cli ],
+    'bsp'       : get_descr(bsp, 'samd20xpro_rf212')
+}]
+
 #GECKOO based ++++++++++++++++++++++++++++++++++++++++#
 
 trg += [{
@@ -110,7 +200,7 @@ trg += [{
 }]
 
 trg += [{
-    'id'        : 'ds_stk3600',
+    'id'        : 'ds_stk',
     'apps_conf' : [ dtls_srv ],
     'bsp'       : get_descr(bsp, 'efm32stk3600')
 }]
@@ -153,6 +243,12 @@ trg += [{
 }]
 
 #++++++++++ UDP Socket ++++++++++#
+trg += [{
+    'id'        : 'us_stk3600',
+    'apps_conf' : [ udp_srv ],
+    'bsp'       : get_descr(bsp, 'efm32stk3600')
+}]
+
 trg += [{
     'id'        : 'us_stk3600_cc112x',
     'apps_conf' : [ udp_srv ],
