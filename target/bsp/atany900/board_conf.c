@@ -74,7 +74,11 @@ uint8_t board_conf(s_ns_t* ps_nStack)
 
 
     if (ps_nStack != NULL) {
+#if (DEMO_USE_EXTIF == 1)
+        ps_nStack->dllc = &DLLCDrvNull;
+#else
         ps_nStack->dllc = &DLLCDrv802154;
+#endif
         ps_nStack->mac  = &MACDrvNull;
         ps_nStack->phy  = &PHYDrvNull;
         ps_nStack->rf   = &rf212_driver;
