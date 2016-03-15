@@ -1331,6 +1331,7 @@ static void _rf212_callback(c_event_t c_event, p_data_t p_data)
     LOG_DBG("%u bytes lqi %u",c_len,c_last_correlation);
 
     if((c_len > 0) && (p_phy != NULL)) {
+        s_err = NETSTK_ERR_NONE;
         packetbuf_set_datalen(c_len);
         p_phy->recv( packetbuf_dataptr(), c_len, &s_err );
     }
