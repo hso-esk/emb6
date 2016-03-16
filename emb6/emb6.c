@@ -286,6 +286,9 @@ void emb6_process(uint16_t us_delay)
 
     /* turn the netstack on */
     ps_emb6Stack->dllc->on(&err);
+    if (err != NETSTK_ERR_NONE) {
+        emb6_errorHandler(&err);
+    }
 
     /* Attention: emb6 main process loop !! do not change !! */
     while(1)

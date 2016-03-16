@@ -72,7 +72,7 @@
 
 uint8_t board_conf(s_ns_t* ps_nStack)
 {
-    uint8_t c_ret = 0;
+    uint8_t c_ret = 1;
     uint8_t c_antDiv = 1;
     e_nsErr_t s_err;
 
@@ -89,7 +89,7 @@ uint8_t board_conf(s_ns_t* ps_nStack)
     if (ps_nStack != NULL) {
         ps_nStack->dllc = &DLLCDrv802154;
         ps_nStack->mac  = &MACDrvNull;
-        ps_nStack->phy  = &PHYDrv802154;
+        ps_nStack->phy  = &PHYDrvNull;
         ps_nStack->rf   = &rf212b_driver;
     }
     else {

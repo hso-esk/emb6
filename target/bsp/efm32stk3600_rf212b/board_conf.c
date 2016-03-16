@@ -43,12 +43,12 @@
  *   @{
  *   \addtogroup board
  *   @{
- *      \addtogroup efm32stk3600 Board EFM32 Leopard Gecko Starter Kit specific configuration
+ *      \addtogroup efm32stk3600_rf212b Board EFM32 Leopard Gecko Starter Kit specific configuration
  *   @{
  */
-/*! \file   efm32stk3600/board_conf.c
+/*! \file   efm32stk3600_rf212b/board_conf.c
 
-    \author Artem Yushev, 
+    \author Artem Yushev,
 
     \brief  Board Configuration for EFM32 Leopard Gecko Starter Kit
 
@@ -79,7 +79,7 @@ uint8_t board_conf(s_ns_t* ps_nStack)
     if (ps_nStack != NULL) {
         ps_nStack->dllc = &DLLCDrv802154;
         ps_nStack->mac  = &MACDrvNull;
-        ps_nStack->phy  = &PHYDrv802154;
+        ps_nStack->phy  = &PHYDrvNull;
         ps_nStack->rf   = &rf212b_driver;
     }
     else {

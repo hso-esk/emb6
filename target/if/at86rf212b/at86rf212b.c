@@ -1320,6 +1320,7 @@ static void _rf212b_callback(c_event_t c_event, p_data_t p_data)
     bsp_exitCritical();
 
     if((c_len > 0) && (p_phy != NULL)) {
+          s_err = NETSTK_ERR_NONE;
           packetbuf_set_datalen(c_len);
           p_phy->recv( packetbuf_dataptr(), c_len, &s_err );
     }
