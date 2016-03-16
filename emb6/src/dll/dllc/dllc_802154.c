@@ -224,6 +224,7 @@ static void DLLC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 
     /* Increment and set the data sequence number. */
     params.seq = DLLC_DSN;
+    packetbuf_set_attr(PACKETBUF_ATTR_PACKET_ID, DLLC_DSN);
 
     /* Complete the addressing fields. */
     /**
@@ -262,7 +263,6 @@ static void DLLC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     linkaddr_copy((linkaddr_t *)&params.src_addr, &linkaddr_node_addr);
 #endif
 
-    frame802154_setDSN(DLLC_DSN);
     params.payload = packetbuf_dataptr();
     params.payload_len = packetbuf_datalen();
 

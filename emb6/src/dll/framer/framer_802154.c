@@ -85,8 +85,6 @@ typedef struct {
 } field_length_t;
 
 /*----------------------------------------------------------------------------*/
-static uint8_t Framer802154_DSN;
-
 CC_INLINE static uint8_t
 addr_len(uint8_t mode)
 {
@@ -530,16 +528,6 @@ frame802154_parse(uint8_t *data, int len, frame802154_t *pf)
 
     /* return header length if successful */
     return c > len ? 0 : c;
-}
-/*----------------------------------------------------------------------------*/
-void frame802154_setDSN(uint8_t dsn)
-{
-    Framer802154_DSN = dsn;
-}
-/*----------------------------------------------------------------------------*/
-uint8_t frame802154_getDSN(void)
-{
-    return Framer802154_DSN;
 }
 /*----------------------------------------------------------------------------*/
 uint8_t frame802154_broadcast(frame802154_t *p)

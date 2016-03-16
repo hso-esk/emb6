@@ -969,7 +969,8 @@ static void MAC_ULE_TxPayload(e_nsErr_t *p_err)
          */
         is_acked = FALSE;
         is_rx_done = FALSE;
-        last_dsn = frame802154_getDSN();
+        last_dsn = packetbuf_attr(PACKETBUF_ATTR_PACKET_ID);
+
         MAC_ULE_Tmr1Start(&MAC_ULE_Tmr1Wait, 15, 0);
         do {
             /* condition (a) */
