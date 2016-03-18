@@ -186,8 +186,6 @@ static void _hal_uartInit( void );
 /* callback for the Tick Counter */
 static void _hal_tcCb( void );
 
-/* callback for the radio interrupt */
-static void _hal_radioCb(uint8_t pin);
 
 /*==============================================================================
                           VARIABLE DECLARATIONS
