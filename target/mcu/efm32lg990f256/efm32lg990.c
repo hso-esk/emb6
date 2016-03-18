@@ -611,8 +611,18 @@ void hal_extiClear(en_targetExtInt_t e_extInt)
 {
     uint32_t pin_msk;
 
-    pin_msk = 1 << (s_hal_exti_gpio[e_extInt].pin);
-    GPIO_IntClear(pin_msk);
+    switch (e_extInt) {
+        case E_TARGET_RADIO_INT:
+        case E_TARGET_EXT_INT_0:
+        case E_TARGET_EXT_INT_1:
+        case E_TARGET_EXT_INT_2:
+            pin_msk = 1 << (s_hal_exti_gpio[e_extInt].pin);
+            GPIO_IntClear(pin_msk);
+            break;
+
+        default:
+            break;
+    }
 } /* hal_extiClear() */
 
 
@@ -623,8 +633,18 @@ void hal_extiEnable(en_targetExtInt_t e_extInt)
 {
     uint32_t pin_msk;
 
-    pin_msk = 1 << (s_hal_exti_gpio[e_extInt].pin);
-    GPIO_IntEnable(pin_msk);
+    switch (e_extInt) {
+        case E_TARGET_RADIO_INT:
+        case E_TARGET_EXT_INT_0:
+        case E_TARGET_EXT_INT_1:
+        case E_TARGET_EXT_INT_2:
+            pin_msk = 1 << (s_hal_exti_gpio[e_extInt].pin);
+            GPIO_IntEnable(pin_msk);
+            break;
+
+        default:
+            break;
+    }
 } /* hal_extiEnable() */
 
 /*==============================================================================
@@ -634,8 +654,18 @@ void hal_extiDisable(en_targetExtInt_t e_extInt)
 {
     uint32_t pin_msk;
 
-    pin_msk = 1 << (s_hal_exti_gpio[e_extInt].pin);
-    GPIO_IntDisable(pin_msk);
+    switch (e_extInt) {
+        case E_TARGET_RADIO_INT:
+        case E_TARGET_EXT_INT_0:
+        case E_TARGET_EXT_INT_1:
+        case E_TARGET_EXT_INT_2:
+            pin_msk = 1 << (s_hal_exti_gpio[e_extInt].pin);
+            GPIO_IntDisable(pin_msk);
+            break;
+
+        default:
+            break;
+    }
 } /* hal_extiDisable() */
 
 
