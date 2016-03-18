@@ -193,9 +193,9 @@ static void DLLC_Off(e_nsErr_t *p_err)
 static void DLLC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 {
     int             alloc;
+    int             is_broadcast;
     uint8_t         hdr_len;
     frame802154_t   params;
-
 
 #if NETSTK_CFG_ARG_CHK_EN
     if (p_err == NULL) {
@@ -216,7 +216,6 @@ static void DLLC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     params.fcf.frame_type = FRAME802154_DATAFRAME;
     params.fcf.security_enabled = 0;
     params.fcf.frame_pending = 0;
-    params.fcf.ack_required = packetbuf_attr(PACKETBUF_ATTR_RELIABLE);
     params.fcf.panid_compression = 0;
 
     /* Insert IEEE 802.15.4 (2003) version bits. */
@@ -233,7 +232,8 @@ static void DLLC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     params.fcf.src_addr_mode = FRAME802154_LONGADDRMODE;
     params.dest_pid = mac_phy_config.pan_id;
 
-    if (packetbuf_holds_broadcast()) {
+    is_broadcast = packetbuf_holds_broadcast();
+    if (is_broadcast == 1) {
         /* Broadcast requires short address mode. */
         params.fcf.dest_addr_mode = FRAME802154_SHORTADDRMODE;
         params.dest_addr[0] = 0xFF;
@@ -243,6 +243,7 @@ static void DLLC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
         linkaddr_copy((linkaddr_t *) &params.dest_addr,
                       packetbuf_addr(PACKETBUF_ADDR_RECEIVER));
         params.fcf.dest_addr_mode = FRAME802154_LONGADDRMODE;
+        params.fcf.ack_required = packetbuf_attr(PACKETBUF_ATTR_RELIABLE);
     }
 
 #if NETSTK_CFG_IEEE_802154_IGNACK
