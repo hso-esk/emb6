@@ -245,6 +245,7 @@ static int8_t parse(void)
     packetbuf_set_addr(PACKETBUF_ADDR_SENDER, (linkaddr_t *)&frame.src_addr);
     packetbuf_set_attr(PACKETBUF_ATTR_PENDING, frame.fcf.frame_pending);
     packetbuf_set_attr(PACKETBUF_ATTR_PACKET_ID, frame.seq);
+    frame802154_setDSN(frame.seq);
     if (frame.fcf.ack_required == 1) {
         packetbuf_set_attr(PACKETBUF_ATTR_RELIABLE, frame.fcf.ack_required);
     }
