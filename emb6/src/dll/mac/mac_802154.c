@@ -338,6 +338,7 @@ void MAC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 
     int hdrlen;
     uint8_t is_acked;
+    uint8_t exp_pkt_seq;
     frame802154_t frame;
 
     /* set returned error code to default */
@@ -362,7 +363,9 @@ void MAC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
         /*
          * When ACK is required, frames other than ACK shall be discarded
          */
-        is_acked = (frame.seq == frame802154_getDSN() &&
+        /* check if this is expected ACK */
+        exp_pkt_seq = (uint8_t )packetbuf_attr(PACKETBUF_ATTR_MAC_SEQNO);
+        is_acked = (frame.seq == exp_pkt_seq &&
                    (frame.fcf.frame_type == FRAME802154_ACKFRAME));
         if (is_acked) {
             MAC_TxErr = NETSTK_ERR_NONE;
