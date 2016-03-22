@@ -88,6 +88,8 @@ static s_nsLowMac_t* p_lmac = NULL;
 extern uip_lladdr_t uip_lladdr;
 static lcm_t *ps_lcm;
 static char pc_publish_ch[NODE_INFO_MAX];
+static lcm_subscription_t *subscr;
+static char *subscribe_channel;
 /*==============================================================================
  GLOBAL CONSTANTS
  ==============================================================================*/
@@ -103,6 +105,9 @@ static int8_t _native_send( const void *pr_payload, uint8_t c_len );
 static void _native_read( const lcm_recv_buf_t *rbuf, const char * channel,
         void * p_macAddr );
 static void _native_handler( c_event_t c_event, p_data_t p_data );
+static void _beautiful_split_messages( const lcm_recv_buf_t *rps_rbuf,
+        const char * rpc_channel, void * userdata );
+static void _beautiful_comand_parser( const char *line);
 /*==============================================================================
  STRUCTURES AND OTHER TYPEDEFS
  ==============================================================================*/
@@ -190,18 +195,20 @@ static int8_t _native_init( s_ns_t* p_netStack )
         if( addr_6 != mac_phy_config.mac_address[6] ||
             addr_7 != mac_phy_config.mac_address[7] )
             continue;
-        fprintf( stderr, "\n addr=0x%04X", addr );
+        LOG_INFO("\n addr=0x%04X", addr);
 
         /* read for the subscribe channel */
         if ( pch != NULL )
         {
             int tmpChLen = strlen(pch) + 10;
             char* tmpCh = malloc( tmpChLen );
+            subscribe_channel = malloc( tmpChLen );
             if( tmpCh != NULL )
             {
                 snprintf( tmpCh, tmpChLen, ".*_%s_.*", pch );
-                lcm_subscribe( ps_lcm, tmpCh, _native_read, NULL );
-                fprintf( stderr,"\n subscribe channel =  %s", tmpCh );
+                subscr = lcm_subscribe( ps_lcm, tmpCh, _beautiful_split_messages, NULL );
+                LOG_INFO("\n subscribe channel =  %s", tmpCh);
+                strcpy(subscribe_channel, tmpCh);
                 free( tmpCh );
             }
             else
@@ -390,6 +397,75 @@ static void _native_handler( c_event_t c_event, p_data_t p_data )
 
     }
 }
+
+/*----------------------------------------------------------------------------*/
+/** \brief  "BEAUTIFUL" split messages reception
+ *          You think this is funny?
+ *  \param  rps_rbuf      Pointer to a payload.
+ *  \param  rpc_channel   Reception channel
+ *  \param  userdata      Not used.
+ *  \return void
+ */
+/*----------------------------------------------------------------------------*/
+static void _beautiful_split_messages( const lcm_recv_buf_t *rps_rbuf,
+        const char * rpc_channel, void * userdata )
+{
+    const char *message = (const char *)rps_rbuf->data;
+    if (strncmp(message, "CMD line", 4) == 0)
+    {
+        int length = strlen(message)-3;
+        char *line = (char *)malloc(length*sizeof(char));
+        memset(line, '\0', length);
+        strcpy(line, message+4);
+        //LOG_INFO("%s:\n\t\"%s\"\n", "I've got a CMD", line);
+        printf("%s:\n\t\"%s\"\n", "I've got a CMD", line);
+        _beautiful_comand_parser(line);
+    }
+    else
+    {
+        _native_read(rps_rbuf, rpc_channel, userdata);
+    }
+    return;
+} /* _beautiful_split_messages() */
+
+/*----------------------------------------------------------------------------*/
+/** \brief  "BEAUTIFUL" split messages reception
+ *          You think this is funny?
+ *  \param  rps_rbuf      Pointer to a payload.
+ *  \param  rpc_channel   Reception channel
+ *  \param  userdata      Not used.
+ *  \return void
+ */
+/*----------------------------------------------------------------------------*/
+static void _beautiful_comand_parser( const char *line)
+{
+    if (strncmp(line, "subscribe name", 10) == 0)
+    {
+        int length = strlen(line)-9;
+        char *new_channel = (char *)malloc(length*sizeof(char));
+        memset(new_channel, '\0', length);
+        strcpy(new_channel, line+10);
+        if (strcmp(new_channel, subscribe_channel) == 0) return;
+        subscribe_channel = new_channel;
+        lcm_unsubscribe(ps_lcm, subscr);
+        subscr = lcm_subscribe( ps_lcm, subscribe_channel, _beautiful_split_messages, NULL );
+    }
+    if (strncmp(line, "publish name", 8) == 0)
+    {
+        int length = strlen(line)-7;
+        char *new_channel = (char *)malloc(length*sizeof(char));
+        memset(new_channel, '\0', length);
+        strcpy(new_channel, line+8);
+        if (strcmp(new_channel, pc_publish_ch) == 0) return;
+        memset( pc_publish_ch, '\0', NODE_INFO_MAX );
+        strcpy(pc_publish_ch, new_channel);
+    }
+    if (strncmp(line, "exit", 4) == 0)
+    {
+        _printAndExit("I've got command to EXIT. Bye!\n");
+    }
+    return;
+} /* _beautiful_split_messages() */
 
 /*==============================================================================
  API FUNCTIONS
