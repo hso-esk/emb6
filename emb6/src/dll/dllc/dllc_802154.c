@@ -142,7 +142,7 @@ static void DLLC_Init(void *p_netstk, e_nsErr_t *p_err)
     DLLC_CbRxFnct = 0;
     DLLC_CbTxFnct = 0;
     DLLC_CbTxArg = NULL;
-    DLLC_DSN = random_rand() % 256;
+    DLLC_DSN = random_rand() & 0xFF;
     *p_err = NETSTK_ERR_NONE;
 }
 
@@ -212,58 +212,69 @@ static void DLLC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     /* init to zeros */
     memset(&params, 0, sizeof(params));
 
-    /* Build the FCF. */
-    params.fcf.frame_type = FRAME802154_DATAFRAME;
-    params.fcf.security_enabled = 0;
-    params.fcf.frame_pending = 0;
+    /* build the FCF. */
+    params.fcf.frame_type = packetbuf_attr(PACKETBUF_ATTR_FRAME_TYPE);
+    params.fcf.frame_pending = packetbuf_attr(PACKETBUF_ATTR_PENDING);
+
+    /* ACK-required bit */
+    is_broadcast = packetbuf_holds_broadcast();
+    if (is_broadcast == 1) {
+        params.fcf.ack_required = 0;
+    } else {
+        params.fcf.ack_required = packetbuf_attr(PACKETBUF_ATTR_RELIABLE);
+    }
+
+    /* PAN ID compression */
     params.fcf.panid_compression = 0;
 
-    /* Insert IEEE 802.15.4 (2003) version bits. */
-    params.fcf.frame_version = FRAME802154_IEEE802154_2003;
+    /* Insert IEEE 802.15.4 (2006) version bits. */
+    params.fcf.frame_version = FRAME802154_IEEE802154_2006;
 
-    /* Increment and set the data sequence number. */
-    params.seq = DLLC_DSN;
+    /* sequence number */
+    params.seq = (uint8_t )packetbuf_attr(PACKETBUF_ATTR_MAC_SEQNO);
+    if (params.seq == 0) {
+        params.seq = DLLC_DSN++;
+        packetbuf_set_attr(PACKETBUF_ATTR_MAC_SEQNO, params.seq);
+    }
 
-    /* Complete the addressing fields. */
-    /**
-     \todo For phase 1 the addresses are all long. We'll need a mechanism
-     in the rime attributes to tell the MAC to use long or short for phase 2.
-     */
-    params.fcf.src_addr_mode = FRAME802154_LONGADDRMODE;
+    /* addressing fields */
     params.dest_pid = mac_phy_config.pan_id;
-
-    is_broadcast = packetbuf_holds_broadcast();
     if (is_broadcast == 1) {
         /* Broadcast requires short address mode. */
         params.fcf.dest_addr_mode = FRAME802154_SHORTADDRMODE;
         params.dest_addr[0] = 0xFF;
         params.dest_addr[1] = 0xFF;
-        params.fcf.ack_required = 0;
     } else {
         linkaddr_copy((linkaddr_t *) &params.dest_addr,
                       packetbuf_addr(PACKETBUF_ADDR_RECEIVER));
         params.fcf.dest_addr_mode = FRAME802154_LONGADDRMODE;
-        params.fcf.ack_required = packetbuf_attr(PACKETBUF_ATTR_RELIABLE);
     }
 
-#if NETSTK_CFG_IEEE_802154_IGNACK
-    params.fcf.ack_required = 0;
-#endif /* #if NETSTK_CFG_IEEE_802154_IGNACK */
-
-    /* Set the source PAN ID to the global variable. */
     params.src_pid = mac_phy_config.pan_id;
-
-    /*
-     * Set up the source address using only the long address mode for
-     * phase 1.
-     */
-#if NETSTACK_CONF_BRIDGE_MODE
-    linkaddr_copy((linkaddr_t *)&params.src_addr,packetbuf_addr(PACKETBUF_ADDR_SENDER));
-#else
+    if (LINKADDR_SIZE == 2UL) {
+        params.fcf.src_addr_mode = FRAME802154_SHORTADDRMODE;
+    } else {
+        params.fcf.src_addr_mode = FRAME802154_LONGADDRMODE;
+    }
     linkaddr_copy((linkaddr_t *)&params.src_addr, &linkaddr_node_addr);
-#endif
 
-    frame802154_setDSN(DLLC_DSN);
+    /* auxiliary security */
+#if LLSEC802154_SECURITY_LEVEL
+    if(packetbuf_attr(PACKETBUF_ATTR_SECURITY_LEVEL)) {
+        params.fcf.security_enabled = 1;
+    }
+    /* Setting security-related attributes */
+    params.aux_hdr.security_control.security_level = packetbuf_attr(PACKETBUF_ATTR_SECURITY_LEVEL);
+    params.aux_hdr.frame_counter.u16[0] = packetbuf_attr(PACKETBUF_ATTR_FRAME_COUNTER_BYTES_0_1);
+    params.aux_hdr.frame_counter.u16[1] = packetbuf_attr(PACKETBUF_ATTR_FRAME_COUNTER_BYTES_2_3);
+#if LLSEC802154_USES_EXPLICIT_KEYS
+    params.aux_hdr.security_control.key_id_mode = packetbuf_attr(PACKETBUF_ATTR_KEY_ID_MODE);
+    params.aux_hdr.key_index = packetbuf_attr(PACKETBUF_ATTR_KEY_INDEX);
+    params.aux_hdr.key_source.u16[0] = packetbuf_attr(PACKETBUF_ATTR_KEY_SOURCE_BYTES_0_1);
+#endif /* LLSEC802154_USES_EXPLICIT_KEYS */
+#endif /* LLSEC802154_SECURITY_LEVEL */
+
+    /* configure packet payload */
     params.payload = packetbuf_dataptr();
     params.payload_len = packetbuf_datalen();
 
@@ -298,12 +309,12 @@ static void DLLC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
      * set TX callback function and argument
      */
     DLLC_Netstk->mac->ioctrl(NETSTK_CMD_TX_CBFNCT_SET,
-                            (void *)DLLC_CbTx,
-                            p_err);
+                             (void *)DLLC_CbTx,
+                             p_err);
 
     DLLC_Netstk->mac->ioctrl(NETSTK_CMD_TX_CBARG_SET,
-                            NULL,
-                            p_err);
+                             NULL,
+                             p_err);
 
     /*
      * Issue next lower layer to transmit the prepared frame
@@ -311,16 +322,6 @@ static void DLLC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     DLLC_Netstk->mac->send(packetbuf_hdrptr(),
                            packetbuf_totlen(),
                            p_err);
-    if (*p_err == NETSTK_ERR_NONE) {
-        DLLC_DSN++;
-    }
-#if NETSTK_CFG_IEEE_802154_IGNACK
-    else if(*p_err == NETSTK_ERR_MAC_ACKOFF )
-    {
-        DLLC_DSN++;
-        *p_err = NETSTK_ERR_NONE;
-    }
-#endif /* NETSTK_CFG_IEEE_802154_IGNACK */
 }
 
 
