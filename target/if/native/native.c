@@ -129,6 +129,7 @@ const s_nsIf_t native_driver = {
 /*----------------------------------------------------------------------------*/
 static void _printAndExit( const char* rpc_reason )
 {
+    // TODO: LOG_ERR(...);
     fputs( strerror( errno ), stderr );
     fputs( ": ", stderr );
     fputs( rpc_reason, stderr );
@@ -227,8 +228,8 @@ static int8_t _native_init( s_ns_t* p_netStack )
                     (NODE_INFO_MAX-strlen(pc_publish_ch)), "_%s_", pch );
             pch = strtok ( NULL, " \t\n," );
         }
-        fprintf( stderr,"\n public channel = %s", pc_publish_ch );
-        fprintf( stderr, "\n +++++++++++ " );
+        LOG_INFO("\n public channel = %s", pc_publish_ch);
+        LOG_INFO("\n +++++++++++ ");
     }
 
     /* Close the file */
