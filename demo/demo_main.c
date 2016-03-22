@@ -129,17 +129,18 @@
 /*==============================================================================
                            LOCAL FUNCTION PROTOTYPES
  =============================================================================*/
-static void loc_initialConfig(void);
+static void loc_initialConfig(uint16_t);
+static uint16_t loc_parseMac(const char*, uint16_t);
 static uint8_t loc_demoAppsConf(s_ns_t* pst_netStack);
 static uint8_t loc_demoAppsInit(void);
 /*==============================================================================
                                 LOCAL FUNCTIONS
  =============================================================================*/
-static void loc_initialConfig(void)
+static void loc_initialConfig(uint16_t mac_addr_word)
 {
     /* set last byte of mac address */
-    mac_phy_config.mac_address[7] = (uint8_t)MAC_ADDR_WORD;            // low byte
-    mac_phy_config.mac_address[6] = (uint8_t)(MAC_ADDR_WORD >> 8);     // high byte
+    mac_phy_config.mac_address[7] = (uint8_t)mac_addr_word;            // low byte
+    mac_phy_config.mac_address[6] = (uint8_t)(mac_addr_word >> 8);     // high byte
 
     /* initial TX Power Output in dBm */
     mac_phy_config.init_power = TX_POWER;
@@ -149,6 +150,20 @@ static void loc_initialConfig(void)
 
     /* initial wireless mode  */
     mac_phy_config.modulation = MODULATION;
+}
+
+static uint16_t loc_parseMac(const char* mac, uint16_t defaultMac)
+{
+    uint16_t mac_addr_word;
+    if (!mac) return defaultMac;
+
+    if (sscanf(mac, "0x%X", &mac_addr_word)) 
+        return mac_addr_word;
+
+    if (sscanf(mac, "%X", &mac_addr_word)) 
+        return mac_addr_word;
+
+    return defaultMac;
 }
 
 static uint8_t loc_demoAppsConf(s_ns_t* pst_netStack)
@@ -248,18 +263,26 @@ static uint8_t loc_demoAppsInit(void)
 /*==============================================================================
  main()
 ==============================================================================*/
-int main(void)
+int main(int argc, char **argv)
 {
+    char *pc_mac_addr = NULL;
+    uint16_t mac_addr_word;
     s_ns_t st_netstack;
 
     /*
      * By default stack is disabled
      */
     st_netstack.c_configured = 0;
+
     /*
     * set initial stack parameters
     */
-    loc_initialConfig();
+    if (argc > 1) {
+        pc_mac_addr = malloc(strlen(argv[1])+1);
+        strcpy(pc_mac_addr, argv[1]);
+    }
+    mac_addr_word = loc_parseMac(pc_mac_addr, MAC_ADDR_WORD);
+    loc_initialConfig(mac_addr_word);
 
     /*
     * set proper stack pointers
