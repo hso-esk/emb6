@@ -156,7 +156,7 @@ static int8_t _native_init( s_ns_t* p_netStack )
     uint8_t  addr_6;  // high byte of two last parts of mac address
     uint8_t  addr_7;  // low byte of two last parts of mac address
 
-    LOG_INFO( "Try to initialize Broadcasting Client for native radio driver" );
+    LOG1_INFO( "Try to initialize Broadcasting Client for native radio driver" );
 
     /* Please refer to lcm_create() reference. Default parameter is taken
      from there */
@@ -196,7 +196,6 @@ static int8_t _native_init( s_ns_t* p_netStack )
         if( addr_6 != mac_phy_config.mac_address[6] ||
             addr_7 != mac_phy_config.mac_address[7] )
             continue;
-        LOG_INFO("\n addr=0x%04X", addr);
 
         /* read for the subscribe channel */
         if ( pch != NULL )
@@ -208,7 +207,7 @@ static int8_t _native_init( s_ns_t* p_netStack )
             {
                 snprintf( tmpCh, tmpChLen, ".*_%s_.*", pch );
                 subscr = lcm_subscribe( ps_lcm, tmpCh, _beautiful_split_messages, NULL );
-                LOG_INFO("\n subscribe channel =  %s", tmpCh);
+                LOG1_INFO("Subscription channel =  %s", tmpCh);
                 strcpy(subscribe_channel, tmpCh);
                 free( tmpCh );
             }
@@ -228,14 +227,13 @@ static int8_t _native_init( s_ns_t* p_netStack )
                     (NODE_INFO_MAX-strlen(pc_publish_ch)), "_%s_", pch );
             pch = strtok ( NULL, " \t\n," );
         }
-        LOG_INFO("\n public channel = %s", pc_publish_ch);
-        LOG_INFO("\n +++++++++++ ");
+        LOG1_INFO("Publication channel = %s", pc_publish_ch);
     }
 
     /* Close the file */
     fclose(fp);
 
-    LOG_INFO( "native driver was initialized" );
+    LOG1_OK( "Native driver init" );
 
     /* Mac address should not be NULL pointer, although it can't be, but still
      *  */
@@ -249,7 +247,7 @@ static int8_t _native_init( s_ns_t* p_netStack )
     memcpy( &uip_lladdr.addr, &un_addr.u8, 8 );
     linkaddr_set_node_addr( &un_addr );
 
-    LOG_INFO( "MAC address %x:%x:%x:%x:%x:%x:%x:%x", un_addr.u8[0],
+    LOG1_INFO( "MAC address %x:%x:%x:%x:%x:%x:%x:%x", un_addr.u8[0],
             un_addr.u8[1], un_addr.u8[2], un_addr.u8[3], un_addr.u8[4],
             un_addr.u8[5], un_addr.u8[6], un_addr.u8[7] );
 
