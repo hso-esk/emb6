@@ -88,8 +88,8 @@ static s_nsLowMac_t* p_lmac = NULL;
 extern uip_lladdr_t uip_lladdr;
 static lcm_t *ps_lcm;
 static char pc_publish_ch[NODE_INFO_MAX];
+static char *pc_subscribe_ch;
 static lcm_subscription_t *subscr;
-static char *subscribe_channel;
 /*==============================================================================
  GLOBAL CONSTANTS
  ==============================================================================*/
@@ -202,13 +202,13 @@ static int8_t _native_init( s_ns_t* p_netStack )
         {
             int tmpChLen = strlen(pch) + 10;
             char* tmpCh = malloc( tmpChLen );
-            subscribe_channel = malloc( tmpChLen );
+            pc_subscribe_ch = malloc( tmpChLen );
             if( tmpCh != NULL )
             {
                 snprintf( tmpCh, tmpChLen, ".*_%s_.*", pch );
                 subscr = lcm_subscribe( ps_lcm, tmpCh, _beautiful_split_messages, NULL );
                 LOG1_INFO("Subscription channel =  %s", tmpCh);
-                strcpy(subscribe_channel, tmpCh);
+                strcpy(pc_subscribe_ch, tmpCh);
                 free( tmpCh );
             }
             else
@@ -444,10 +444,10 @@ static void _beautiful_comand_parser( const char *line)
         char *new_channel = (char *)malloc(length*sizeof(char));
         memset(new_channel, '\0', length);
         strcpy(new_channel, line+10);
-        if (strcmp(new_channel, subscribe_channel) == 0) return;
-        subscribe_channel = new_channel;
+        if (strcmp(new_channel, pc_subscribe_ch) == 0) return;
+        pc_subscribe_ch = new_channel;
         lcm_unsubscribe(ps_lcm, subscr);
-        subscr = lcm_subscribe( ps_lcm, subscribe_channel, _beautiful_split_messages, NULL );
+        subscr = lcm_subscribe( ps_lcm, pc_subscribe_ch, _beautiful_split_messages, NULL );
     }
     if (strncmp(line, "publish name", 8) == 0)
     {
