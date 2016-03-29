@@ -33,7 +33,7 @@ std_conf = {
 
 # LINKER flags
     'LINKFLAGS' : [
-            '--entry=ResetISR',
+            '--entry=Reset_Handler',
     ]
 }
 
