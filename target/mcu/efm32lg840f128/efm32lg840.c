@@ -324,7 +324,7 @@ static void _hal_uartInit( void )
     /* Prepare struct for initializing UART in asynchronous mode*/
     uartInit.enable       = usartDisable;   /* Don't enable UART upon intialization */
     uartInit.refFreq      = 0;              /* Provide information on reference frequency. When set to 0, the reference frequency is */
-    uartInit.baudrate     = 115200;         /* Baud rate */
+    uartInit.baudrate     = 57600;          /* Baud rate */
     uartInit.oversampling = usartOVS16;     /* Oversampling. Range is 4x, 6x, 8x or 16x */
     uartInit.databits     = usartDatabits8; /* Number of data bits. Range is 4 to 10 */
     uartInit.parity       = usartNoParity;  /* Parity mode */
