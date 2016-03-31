@@ -320,7 +320,7 @@ void emb6_errorHandler(e_nsErr_t *p_err)
     bsp_led(E_BSP_LED_0, E_BSP_LED_ON);
     LOG_ERR("Program failed");
 
-    /* TODO misisng error handling */
+    /* TODO missing error handling */
     while (1) {
     }
 }
