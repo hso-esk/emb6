@@ -195,6 +195,7 @@ uint8_t demo_extifConf(s_ns_t* pst_netStack)
         pst_netStack->hc     = &slipnet_driver;
         pst_netStack->dllsec  = &nullsec_driver;
         pst_netStack->frame  = &framer_noframer;
+        pst_netStack->dllc = &DLLCDrvNull;
         /* Transceiver interface is defined by @ref board_conf function*/
         /*pst_netStack->inif   = $<some_transceiver>;*/
     }
