@@ -373,6 +373,9 @@ int main(void)
 
     /* call process function with delay in us */
     emb6_process(EMB6_PROC_DELAY);
+
+    /* the program should never come here */
+    return -1;
 }
 /** @} */
 /** @} */
