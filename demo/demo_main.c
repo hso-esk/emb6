@@ -156,13 +156,14 @@
 /*==============================================================================
                            LOCAL FUNCTION PROTOTYPES
  =============================================================================*/
-static void loc_initialConfig(void);
+static void loc_stackConf(void);
 static void loc_demoAppsConf(s_ns_t* pst_netStack, e_nsErr_t *p_err);
 static uint8_t loc_demoAppsInit(void);
+
 /*==============================================================================
                                 LOCAL FUNCTIONS
  =============================================================================*/
-static void loc_initialConfig(void)
+static void loc_stackConf(void)
 {
     /* set last byte of mac address */
     mac_phy_config.mac_address[7] = (uint8_t)(MAC_ADDR_WORD);           // low byte
@@ -177,6 +178,7 @@ static void loc_initialConfig(void)
     /* initial wireless mode  */
     mac_phy_config.modulation = MODULATION;
 }
+
 
 static void loc_demoAppsConf(s_ns_t* pst_netStack, e_nsErr_t *p_err)
 {
@@ -331,11 +333,11 @@ void emb6_errorHandler(e_nsErr_t *p_err)
 int main(void)
 {
     s_ns_t st_netstack;
-    e_nsErr_t err;
     uint8_t ret;
+    e_nsErr_t err;
 
 
-    /* set return error code to default */
+    /* Initialize variables */
     err = NETSTK_ERR_NONE;
     memset(&st_netstack, 0, sizeof(st_netstack));
 
@@ -346,17 +348,13 @@ int main(void)
         emb6_errorHandler(&err);
     }
 
-    /*
-    * set proper stack pointers
-    * If ok, pointer will points to network stack structure
-    * @ref s_ns_t
-    */
+    /* Configure applications */
     loc_demoAppsConf(&st_netstack, &err);
     if (err != NETSTK_ERR_NONE) {
         emb6_errorHandler(&err);
     }
 
-    /* Initialize emb6-stack - call all initialization functions */
+    /* Initialize stack */
     loc_stackConf();
     emb6_init(&st_netstack, &err);
     if (err != NETSTK_ERR_NONE) {
@@ -368,7 +366,7 @@ int main(void)
     bsp_delay_us(2000000);
     bsp_led(E_BSP_LED_2, E_BSP_LED_OFF);
 
-    /* initialize demo apps */
+    /* Initialize applications */
     ret = loc_demoAppsInit();
     if(ret == 0) {
         LOG_ERR("Demo APP failed to initialize");
@@ -376,7 +374,7 @@ int main(void)
         emb6_errorHandler(&err);
     }
 
-    /* call process function with delay in us */
+    /* Start the emb6 stack */
     emb6_process(EMB6_PROC_DELAY);
 
     /* the program should never come here */
