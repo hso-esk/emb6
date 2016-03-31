@@ -104,26 +104,7 @@
 #define PRINTF(...) do { } while(0)
 #endif
 
-#ifdef __SDCC
-static int
-strncasecmp(const char *s1, const char *s2, size_t n)
-{
-  /* TODO: Add case support! */
-  return strncmp(s1, s2, n);
-}
-static int
-strcasecmp(const char *s1, const char *s2)
-{
-  /* TODO: Add case support! */
-  return strcmp(s1, s2);
-}
-#else
-#ifdef IAR_COMPILER
 #include <string.h>
-#else
-#include <strings.h>    // not found in IAR
-#endif
-#endif /* __SDCC */
 
 #define UIP_UDP_BUF ((struct uip_udpip_hdr *)&uip_buf[UIP_LLH_LEN])
 
