@@ -6,14 +6,27 @@ import os
 import atexit
 from collections import defaultdict
 
+AddOption('--colors',
+          dest='use_colors', action='store_true',
+          default=False,
+          help='Enable colored build output')
+
 def color_out(__env):
     # Enable color building message output
     colors = {}
-    colors['purple'] = '\033[95m'
-    colors['blue']   = '\033[94m'
-    colors['yellow'] = '\033[93m'
-    colors['red']    = '\033[91m'
-    colors['end']    = '\033[0m'
+    if GetOption('use_colors'):
+            colors['purple'] = '\033[95m'
+            colors['blue']   = '\033[94m'
+            colors['yellow'] = '\033[93m'
+            colors['red']    = '\033[91m'
+            colors['end']    = '\033[0m'
+    else:
+            colors['purple'] = ''
+            colors['blue']   = ''
+            colors['yellow'] = ''
+            colors['red']    = ''
+            colors['end']    = ''
+
 
     compile = '%sCompiling %s==> %s$SOURCE%s' % \
     (colors['blue'], colors['purple'], colors['yellow'], colors['end'])
