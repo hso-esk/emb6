@@ -55,9 +55,13 @@
     \version 0.0.1
 */
 
-#include "board_conf.h"
+/*
+********************************************************************************
+*                                   INCLUDES
+********************************************************************************
+*/
 #include "emb6.h"
-#include "emb6_conf.h"
+#include "board_conf.h"
 #include "logger.h"
 #include "bsp.h"
 
@@ -66,13 +70,22 @@
 
 uint8_t board_conf(s_ns_t* ps_nStack)
 {
-    uint8_t c_ret = 0;
+    uint8_t c_ret = 1;
+
+
     if (ps_nStack != NULL) {
-        ps_nStack->inif = &rf212_driver;
-        c_ret = ps_nStack->inif->init(ps_nStack);
+#if (DEMO_USE_EXTIF == 1)
+        ps_nStack->dllc = &DLLCDrvNull;
+#else
+        ps_nStack->dllc = &DLLCDrv802154;
+#endif
+        ps_nStack->mac  = &MACDrvNull;
+        ps_nStack->phy  = &PHYDrvNull;
+        ps_nStack->rf   = &rf212_driver;
     }
     else {
         LOG_ERR("Network stack pointer is NULL");
+        c_ret = 0;
     }
 
     return c_ret;

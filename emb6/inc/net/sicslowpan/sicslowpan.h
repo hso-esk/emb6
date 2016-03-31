@@ -75,25 +75,25 @@
  * \name 6lowpan dispatches
  * @{
  */
-#define SICSLOWPAN_DISPATCH_IPV6                    0x41 /* 01000001 = 65 */
-#define SICSLOWPAN_DISPATCH_HC1                     0x42 /* 01000010 = 66 */
-#define SICSLOWPAN_DISPATCH_IPHC                    0x60 /* 011xxxxx = ... */
-#define SICSLOWPAN_DISPATCH_FRAG1                   0xc0 /* 11000xxx */
-#define SICSLOWPAN_DISPATCH_FRAGN                   0xe0 /* 11100xxx */
+#define SICSLOWPAN_DISPATCH_IPV6                    0x41UL /* 01000001 = 65 */
+#define SICSLOWPAN_DISPATCH_HC1                     0x42UL /* 01000010 = 66 */
+#define SICSLOWPAN_DISPATCH_IPHC                    0x60UL /* 011xxxxx = ... */
+#define SICSLOWPAN_DISPATCH_FRAG1                   0xc0UL /* 11000xxx */
+#define SICSLOWPAN_DISPATCH_FRAGN                   0xe0UL /* 11100xxx */
 /** @} */
 
 /** \name HC1 encoding
  * @{
  */
-#define SICSLOWPAN_HC1_NH_UDP                       0x02
-#define SICSLOWPAN_HC1_NH_TCP                       0x06
-#define SICSLOWPAN_HC1_NH_ICMP6                     0x04
+#define SICSLOWPAN_HC1_NH_UDP                       0x02UL
+#define SICSLOWPAN_HC1_NH_TCP                       0x06UL
+#define SICSLOWPAN_HC1_NH_ICMP6                     0x04UL
 /** @} */
 
 /** \name HC_UDP encoding (works together with HC1)
  * @{
  */
-#define SICSLOWPAN_HC_UDP_ALL_C                     0xE0
+#define SICSLOWPAN_HC_UDP_ALL_C                     0xE0UL
 /** @} */
 
 /**
@@ -104,32 +104,32 @@
  * Values of fields within the IPHC encoding first byte
  * (C stands for compressed and I for inline)
  */
-#define SICSLOWPAN_IPHC_FL_C                        0x10
-#define SICSLOWPAN_IPHC_TC_C                        0x08
-#define SICSLOWPAN_IPHC_NH_C                        0x04
-#define SICSLOWPAN_IPHC_TTL_1                       0x01
-#define SICSLOWPAN_IPHC_TTL_64                      0x02
-#define SICSLOWPAN_IPHC_TTL_255                     0x03
-#define SICSLOWPAN_IPHC_TTL_I                       0x00
+#define SICSLOWPAN_IPHC_FL_C                        0x10UL
+#define SICSLOWPAN_IPHC_TC_C                        0x08UL
+#define SICSLOWPAN_IPHC_NH_C                        0x04UL
+#define SICSLOWPAN_IPHC_TTL_1                       0x01UL
+#define SICSLOWPAN_IPHC_TTL_64                      0x02UL
+#define SICSLOWPAN_IPHC_TTL_255                     0x03UL
+#define SICSLOWPAN_IPHC_TTL_I                       0x00UL
 
 
 /* Values of fields within the IPHC encoding second byte */
-#define SICSLOWPAN_IPHC_CID                         0x80
+#define SICSLOWPAN_IPHC_CID                         0x80UL
 
-#define SICSLOWPAN_IPHC_SAC                         0x40
-#define SICSLOWPAN_IPHC_SAM_00                      0x00
-#define SICSLOWPAN_IPHC_SAM_01                      0x10
-#define SICSLOWPAN_IPHC_SAM_10                      0x20
-#define SICSLOWPAN_IPHC_SAM_11                      0x30
+#define SICSLOWPAN_IPHC_SAC                         0x40UL
+#define SICSLOWPAN_IPHC_SAM_00                      0x00UL
+#define SICSLOWPAN_IPHC_SAM_01                      0x10UL
+#define SICSLOWPAN_IPHC_SAM_10                      0x20UL
+#define SICSLOWPAN_IPHC_SAM_11                      0x30UL
 
 #define SICSLOWPAN_IPHC_SAM_BIT                     4
 
-#define SICSLOWPAN_IPHC_M                           0x08
-#define SICSLOWPAN_IPHC_DAC                         0x04
-#define SICSLOWPAN_IPHC_DAM_00                      0x00
-#define SICSLOWPAN_IPHC_DAM_01                      0x01
-#define SICSLOWPAN_IPHC_DAM_10                      0x02
-#define SICSLOWPAN_IPHC_DAM_11                      0x03
+#define SICSLOWPAN_IPHC_M                           0x08UL
+#define SICSLOWPAN_IPHC_DAC                         0x04UL
+#define SICSLOWPAN_IPHC_DAM_00                      0x00UL
+#define SICSLOWPAN_IPHC_DAM_01                      0x01UL
+#define SICSLOWPAN_IPHC_DAM_10                      0x02UL
+#define SICSLOWPAN_IPHC_DAM_11                      0x03UL
 
 #define SICSLOWPAN_IPHC_DAM_BIT                     0
 

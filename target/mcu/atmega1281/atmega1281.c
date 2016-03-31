@@ -405,13 +405,13 @@ void hal_ledOn( uint16_t ui_led )
     hal_enterCritical();
     switch (ui_led)
     {
-        case E_BSP_LED_RED:
+        case E_BSP_LED_0:
         PORT(HAL_LED_RED_PORT) HAL_LED_SET ( 1 << PIN(HAL_LED_RED_PIN));
         break;
-        case E_BSP_LED_YELLOW:
+        case E_BSP_LED_1:
         PORT(HAL_LED_YELLOW_PORT) HAL_LED_SET ( 1 << PIN(HAL_LED_YELLOW_PIN));
         break;
-        case E_BSP_LED_GREEN:
+        case E_BSP_LED_2:
         PORT(HAL_LED_GREEN_PORT) HAL_LED_SET ( 1 << PIN(HAL_LED_GREEN_PIN));
         break;
         default:
@@ -427,13 +427,13 @@ void hal_ledOff( uint16_t ui_led )
     hal_enterCritical();
     switch (ui_led)
     {
-        case E_BSP_LED_RED:
+        case E_BSP_LED_0:
         PORT(HAL_LED_RED_PORT) HAL_LED_CLR ( 1 << PIN(HAL_LED_RED_PIN));
         break;
-        case E_BSP_LED_YELLOW:
+        case E_BSP_LED_1:
         PORT(HAL_LED_YELLOW_PORT) HAL_LED_CLR ( 1 << PIN(HAL_LED_YELLOW_PIN));
         break;
-        case E_BSP_LED_GREEN:
+        case E_BSP_LED_2:
         PORT(HAL_LED_GREEN_PORT) HAL_LED_CLR ( 1 << PIN(HAL_LED_GREEN_PIN));
         break;
         default:
@@ -444,21 +444,20 @@ void hal_ledOff( uint16_t ui_led )
 }
 
 /*==============================================================================
- hal_extIntInit()
+ hal_extiRegister()
  =============================================================================*/
-uint8_t hal_extIntInit( en_targetExtInt_t e_intSource,
+void hal_extiRegister( en_targetExtInt_t e_extInt, en_targetIntEdge_t e_edge,
         pfn_intCallb_t pfn_intCallback )
 {
-    int8_t c_ret = 0;
     hal_enterCritical();
 
     if( pfn_intCallback == NULL )
     {
         //        LOG_ERR("You are tying to initialise NULL pointer function.");
-        return 0;
+        return;
     }
 
-    switch( e_intSource )
+    switch( e_extInt )
     {
         case E_TARGET_RADIO_INT:
             EIMSK |= ( 1 << INT5 );
@@ -466,19 +465,77 @@ uint8_t hal_extIntInit( en_targetExtInt_t e_intSource,
             PORTE &= ~( 1 << PE5 );
             DDRE &= ~( 1 << DDE5 );
             isr_radioCallb = pfn_intCallback;
-            c_ret = 1;
+
+            hal_extiDisable(e_extInt);
             break;
         case E_TARGET_USART_INT:
             isr_rxCallb = pfn_intCallback;
             break;
         default:
-            c_ret = 0;
             break;
     }
     hal_exitCritical();
-    return c_ret;
+    return;
 
 } /* hal_extIntInit() */
+
+
+
+/*==============================================================================
+  hal_extiClear()
+ =============================================================================*/
+void hal_extiClear(en_targetExtInt_t e_extInt)
+{
+    hal_enterCritical();
+    switch( e_extInt )
+    {
+        case E_TARGET_RADIO_INT:
+            EIFR |= ( 1 << INT5 );
+            break;
+        default:
+            break;
+    }
+    hal_exitCritical();
+    return;
+} /* hal_extiClear() */
+
+
+/*==============================================================================
+  hal_extiEnable()
+ =============================================================================*/
+void hal_extiEnable(en_targetExtInt_t e_extInt)
+{
+    hal_enterCritical();
+    switch( e_extInt )
+    {
+        case E_TARGET_RADIO_INT:
+            EIMSK |= ( 1 << INT5 );
+            break;
+        default:
+            break;
+    }
+    hal_exitCritical();
+    return;
+} /* hal_extiEnable() */
+
+/*==============================================================================
+  hal_extiDisable()
+ =============================================================================*/
+void hal_extiDisable(en_targetExtInt_t e_extInt)
+{
+    hal_enterCritical();
+    switch( e_extInt )
+    {
+        case E_TARGET_RADIO_INT:
+            EIMSK &= ~( 1 << INT5 );
+            break;
+        default:
+            break;
+    }
+    hal_exitCritical();
+    return;
+} /* hal_extiDisable() */
+
 
 /*==============================================================================
  hal_delay_us()

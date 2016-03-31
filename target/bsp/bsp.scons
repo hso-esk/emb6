@@ -29,8 +29,48 @@ bsp += [{
 }]
 
 bsp += [{
-    'id'        : 'efm32stk3600',         'mac_addr' : '0x20C0',
+    'id'        : 'efm32stk3600_rf212b',  'mac_addr' : '0x20C0',
     'txrx'      : ['11','-100'],          'mode'     : qpsk100
+}]
+
+bsp += [{
+    'id'        : 'efm32stk3600_cc112x',  'mac_addr' : '0x20C0',
+    'txrx'      : ['11','-100'],          'mode'     : qpsk100
+}]
+
+bsp += [{
+    'id'        : 'moses',  'mac_addr' : '0x20C0',
+    'txrx'      : ['11','-100'],          'mode'     : qpsk100
+}]
+
+bsp += [{
+    'id'        : 'mosesstick',  'mac_addr' : '0x0001',
+    'txrx'      : ['11','-100'],          'mode'     : qpsk100
+}]
+
+bsp += [{
+    'id'        : 'efm32stk3600_cc120x',  'mac_addr' : '0x20C0',
+    'txrx'      : ['11','-100'],          'mode'     : qpsk100
+}]
+
+bsp += [{
+    'id'        : 'ti_trxeb_cc112x',      'mac_addr' : '0x3010',
+    'txrx'      : ['0','0'],              'mode'     : qpsk100
+}]
+
+bsp += [{
+    'id'        : 'ti_trxeb_cc112x_ule',  'mac_addr' : '0x3020',
+    'txrx'      : ['0','0'],              'mode'     : qpsk100
+}]
+
+bsp += [{
+    'id'        : 'ti_trxeb_cc120x',      'mac_addr' : '0x3110',
+    'txrx'      : ['0','0'],              'mode'     : qpsk100
+}]
+
+bsp += [{
+    'id'        : 'ti_trxeb_cc120x_ule',  'mac_addr' : '0x3120',
+    'txrx'      : ['0','0'],              'mode'     : qpsk100
 }]
 
 bsp += [{

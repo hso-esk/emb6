@@ -44,11 +44,8 @@
  */
 
 #include "emb6.h"
-#include "emb6_conf.h"
 #include "bsp.h"
-
 #include "tcpip.h"
-
 #include "etimer.h"
 #include "uip-split.h"
 #include "uip-packetqueue.h"

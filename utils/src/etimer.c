@@ -61,12 +61,10 @@
                              INCLUDE FILES
 ==============================================================================*/
 
-#include "etimer.h"
-#include "clist.h"
-
-#include "emb6_conf.h"
 #include "emb6.h"
 
+#include "etimer.h"
+#include "clist.h"
 #include "bsp.h"
 
 /*==============================================================================

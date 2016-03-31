@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<Workspace>
+  <ConfigDictionary>
+    
+  <CurrentConfigs><Project>demo-apss/CC112X_TX</Project></CurrentConfigs></ConfigDictionary>
+  <Desktop>
+    <Static>
+      <Workspace>
+        <ColumnWidths>
+          
+          
+          
+          
+        <Column0>313</Column0><Column1>27</Column1><Column2>27</Column2><Column3>27</Column3></ColumnWidths>
+      </Workspace>
+    <Build><ColumnWidth0>20</ColumnWidth0><ColumnWidth1>782</ColumnWidth1><ColumnWidth2>503</ColumnWidth2><ColumnWidth3>81</ColumnWidth3></Build><Debug-Log><ColumnWidth0>19</ColumnWidth0><ColumnWidth1>1622</ColumnWidth1></Debug-Log><TerminalIO/><Find-All-Declarations><ColumnWidth0>580</ColumnWidth0><ColumnWidth1>82</ColumnWidth1><ColumnWidth2>994</ColumnWidth2></Find-All-Declarations><Find-in-Files><ColumnWidth0>497</ColumnWidth0><ColumnWidth1>82</ColumnWidth1><ColumnWidth2>746</ColumnWidth2><ColumnWidth3>331</ColumnWidth3></Find-in-Files><Find-All-References><ColumnWidth0>580</ColumnWidth0><ColumnWidth1>82</ColumnWidth1><ColumnWidth2>994</ColumnWidth2></Find-All-References><Select-Ambiguous-Definitions><ColumnWidth0>580</ColumnWidth0><ColumnWidth1>82</ColumnWidth1><ColumnWidth2>994</ColumnWidth2></Select-Ambiguous-Definitions></Static>
+    <Windows>
+      
+    <Wnd0>
+        <Tabs>
+          <Tab>
+            <Identity>TabID-9060-27301</Identity>
+            <TabName>Workspace</TabName>
+            <Factory>Workspace</Factory>
+            <Session>
+              
+            <NodeDict><ExpandedNode>demo-apss</ExpandedNode><ExpandedNode>demo-apss/demo</ExpandedNode><ExpandedNode>demo-apss/emb6</ExpandedNode><ExpandedNode>demo-apss/emb6/emb6</ExpandedNode><ExpandedNode>demo-apss/emb6/emb6/src</ExpandedNode><ExpandedNode>demo-apss/emb6/emb6/src/dll</ExpandedNode><ExpandedNode>demo-apss/emb6/emb6/src/dll/dllc</ExpandedNode><ExpandedNode>demo-apss/emb6/emb6/src/dll/dllsec</ExpandedNode><ExpandedNode>demo-apss/emb6/emb6/src/dll/llc</ExpandedNode><ExpandedNode>demo-apss/emb6/emb6/src/dll/mac</ExpandedNode><ExpandedNode>demo-apss/emb6/emb6/src/phy</ExpandedNode><ExpandedNode>demo-apss/emb6/target</ExpandedNode><ExpandedNode>demo-apss/emb6/target/if</ExpandedNode><ExpandedNode>demo-apss/emb6/target/if/cc112x</ExpandedNode></NodeDict></Session>
+          </Tab>
+        </Tabs>
+        
+      <SelectedTab>0</SelectedTab></Wnd0><Wnd1><Tabs><Tab><Identity>TabID-9875-27491</Identity><TabName>Build</TabName><Factory>Build</Factory><Session/></Tab><Tab><Identity>TabID-30912-27915</Identity><TabName>Debug Log</TabName><Factory>Debug-Log</Factory><Session/></Tab><Tab><Identity>TabID-21631-27902</Identity><TabName>Declarations</TabName><Factory>Find-All-Declarations</Factory><Session/></Tab><Tab><Identity>TabID-17673-21246</Identity><TabName>Find in Files</TabName><Factory>Find-in-Files</Factory><Session/></Tab><Tab><Identity>TabID-5447-4040</Identity><TabName>Breakpoints</TabName><Factory>Breakpoints</Factory></Tab><Tab><Identity>TabID-3686-244</Identity><TabName>References</TabName><Factory>Find-All-References</Factory><Session/></Tab><Tab><Identity>TabID-26291-639</Identity><TabName>Ambiguous Definitions</TabName><Factory>Select-Ambiguous-Definitions</Factory><Session/></Tab></Tabs><SelectedTab>0</SelectedTab></Wnd1></Windows>
+    <Editor>
+      
+      
+      
+      
+    <Pane><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\..\..\..\..\..\..\..\if\cc120x\cc120x.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>392</YPos2><SelStart2>0</SelStart2><SelEnd2>0</SelEnd2></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\..\..\..\..\..\..\..\..\emb6\src\phy\phy_null.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>191</YPos2><SelStart2>5301</SelStart2><SelEnd2>5301</SelEnd2></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\..\..\..\..\..\..\..\..\utils\src\evproc.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>385</YPos2><SelStart2>16294</SelStart2><SelEnd2>16294</SelEnd2></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\..\..\..\..\..\..\..\..\emb6\src\dll\mac\smartmac_framer.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>219</YPos2><SelStart2>0</SelStart2><SelEnd2>0</SelEnd2></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\..\..\..\..\..\..\..\..\utils\inc\packetbuf.h</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>46</YPos2><SelStart2>2143</SelStart2><SelEnd2>2143</SelEnd2></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\..\..\..\..\..\..\..\bsp\ti_trxeb_cc112x_ule\board_conf.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>10</YPos2><SelStart2>834</SelStart2><SelEnd2>834</SelEnd2></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\..\..\..\..\..\..\..\..\emb6\src\phy\phy_802154.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>191</YPos2><SelStart2>5441</SelStart2><SelEnd2>5441</SelEnd2></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\..\..\..\..\..\..\..\if\cc112x\cc112x.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>0</YPos2><SelStart2>518</SelStart2><SelEnd2>535</SelEnd2></Tab><ActiveTab>7</ActiveTab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\..\..\..\..\..\..\..\..\emb6\src\dll\mac\mac_802154_ule.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>921</YPos2><SelStart2>26658</SelStart2><SelEnd2>26658</SelEnd2></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\..\..\..\..\..\..\..\..\demo\netstk\demo-netstk.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>305</YPos2><SelStart2>9045</SelStart2><SelEnd2>9045</SelEnd2></Tab></Pane><ActivePane>0</ActivePane><Sizes><Pane><X>1000000</X><Y>1000000</Y></Pane></Sizes><SplitMode>1</SplitMode></Editor>
+    <Positions>
+      
+      
+      
+      
+      
+    <Top><Row0><Sizes><Toolbar-0080f4a0><key>iaridepm.enu1</key></Toolbar-0080f4a0></Sizes></Row0></Top><Left><Row0><Sizes><Wnd0><Rect><Top>-2</Top><Left>-2</Left><Bottom>649</Bottom><Right>404</Right><x>-2</x><y>-2</y><xscreen>3454</xscreen><yscreen>205</yscreen><sizeHorzCX>2055952</sizeHorzCX><sizeHorzCY>211777</sizeHorzCY><sizeVertCX>241667</sizeVertCX><sizeVertCY>672521</sizeVertCY></Rect></Wnd0></Sizes></Row0></Left><Right><Row0><Sizes/></Row0></Right><Bottom><Row0><Sizes><Wnd1><Rect><Top>-2</Top><Left>-2</Left><Bottom>274</Bottom><Right>1682</Right><x>-2</x><y>-2</y><xscreen>1684</xscreen><yscreen>276</yscreen><sizeHorzCX>1002381</sizeHorzCX><sizeHorzCY>285124</sizeHorzCY><sizeVertCX>2055952</sizeVertCX><sizeVertCY>211777</sizeVertCY></Rect></Wnd1></Sizes></Row0></Bottom><Float><Sizes/></Float></Positions>
+  </Desktop>
+</Workspace>
+
+

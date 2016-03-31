@@ -1,0 +1,31 @@
+toolchain = {
+	'AS' : ['msp430-elf-as'],
+	'CC' : ['msp430-elf-gcc'],
+	'LINK' : ['msp430-elf-gcc'],
+	'OBJCOPY' : ['msp430-elf-objcopy'],
+	'OBJDUMP' : ['msp430-elf-objdump'],
+	'SIZE' : ['msp430-elf-size'],
+	'ASFLAGS' : [
+		'--traditional-format',
+		],
+	'CPPDEFINES' : [
+		{'printf': 'iprintf'},
+		],
+	'CFLAGS' :  [
+		'-O0', 
+		'-DGCC_COMPILER',
+		'-Wall', 
+		'-fno-strict-aliasing',
+		'-Werror-implicit-function-declaration',
+		'-ffunction-sections', 
+		'-fdata-sections',
+		'-std=c99',
+		'-Wno-format',
+		'-Wno-comment',
+		'-g',
+		],
+	'LINKFLAGS' : [	
+        '-Wl,-Map=${TARGET.base}.map,--gc-section',
+		]
+}
+Return('toolchain')

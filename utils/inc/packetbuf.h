@@ -54,9 +54,8 @@
 #define PACKETBUF_H_
 
 
-//#include "linkaddr.h"
 #include "emb6.h"
-#include "llsec802154.h"
+#include "dllsec_802154.h"
 
 /**
  * \brief      The size of the packetbuf, in bytes
@@ -73,7 +72,7 @@
 #ifdef PACKETBUF_CONF_HDR_SIZE
 #define PACKETBUF_HDR_SIZE PACKETBUF_CONF_HDR_SIZE
 #else
-#define PACKETBUF_HDR_SIZE 48
+#define PACKETBUF_HDR_SIZE 50 //48; PHR_LEN=2
 #endif
 
 
@@ -317,6 +316,14 @@ int packetbuf_hdralloc(int size);
  *
  */
 int packetbuf_hdrreduce(int size);
+
+/* obtain pointer to footer field */
+void *packetbuf_ftrptr(void);
+/* allocate footer */
+int packetbuf_ftralloc(int size);
+/* reduce footer */
+int packetbuf_ftrreduce(int size);
+
 
 /* Packet attributes stuff below: */
 

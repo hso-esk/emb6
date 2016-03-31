@@ -71,31 +71,44 @@
 /*=============================================================================
                                  MACROS
  =============================================================================*/
-/// Defines all of the event that functions can operate
-#define EVENT_TYPES        {EVENT_TYPE_TIMER_EXP, \
-                            EVENT_TYPE_TCP_POLL, \
-                            EVENT_TYPE_UDP_POLL, \
-                            EVENT_TYPE_PCK_INPUT, \
-                            EVENT_TYPE_ICMP6, \
-                            EVENT_TYPE_TCPIP, \
-                            EVENT_TYPE_SLIP_POLL, \
-                            EVENT_TYPE_PCK_LL }
+/*!< Defines all of the event that functions can operate */
+#define EVENT_TYPES        {EVENT_TYPE_TIMER_EXP,           \
+                            EVENT_TYPE_TCP_POLL,            \
+                            EVENT_TYPE_UDP_POLL,            \
+                            EVENT_TYPE_PCK_INPUT,           \
+                            EVENT_TYPE_ICMP6,               \
+                            EVENT_TYPE_TCPIP,               \
+                            EVENT_TYPE_SLIP_POLL,           \
+                            NETSTK_APP_EVENT_TX,            \
+                            NETSTK_MAC_ULE_EVENT,           \
+                            NETSTK_RF_EVENT,                \
+                            EVENT_TYPE_PCK_LL}
 
-#define EVENT_TYPE_NONE             0x00    ///< No event
-#define EVENT_TYPE_TIMER_EXP        0x01    ///< Timer expired event
-#define EVENT_TYPE_TCP_POLL         0x02    ///< TCP poll event
-#define EVENT_TYPE_UDP_POLL         0x03    ///< UDP poll event
-#define EVENT_TYPE_PCK_INPUT        0x04    ///< New packet in buffer event
-#define EVENT_TYPE_ICMP6            0x05    ///< New icmp6 packet event
-#define EVENT_TYPE_TCPIP            0x06    ///< New tcpip event
-#define EVENT_TYPE_SLIP_POLL        0x07    ///< Process slip handler
-#define OBLIG_EVENT_PRIOR           0x0a
-#define EVENT_TYPE_PCK_LL           0x0a    ///< New low level packet received
+#define EVENT_TYPE_NONE                     (  0U )     ///< No event
+#define EVENT_TYPE_TIMER_EXP                (  1U )     ///< Timer expired event
+#define EVENT_TYPE_TCP_POLL                 (  2U )     ///< TCP poll event
+#define EVENT_TYPE_UDP_POLL                 (  3U )     ///< UDP poll event
+#define EVENT_TYPE_PCK_INPUT                (  4U )     ///< New packet in buffer event
+#define EVENT_TYPE_ICMP6                    (  5U )     ///< New icmp6 packet event
+#define EVENT_TYPE_TCPIP                    (  6U )     ///< New tcpip event
+#define EVENT_TYPE_SLIP_POLL                (  7U )     ///< Process slip handler
+
+/*
+ * New event defines
+ */
+#define NETSTK_APP_EVENT_TX                 (  8U )
+#define NETSTK_MAC_ULE_EVENT                ( 10U )
+#define NETSTK_RF_EVENT                     ( 11U )
+
+#define OBLIG_EVENT_PRIOR                   ( 15U )
+#define EVENT_TYPE_PCK_LL                   ( 15U )     ///< New low level packet received
+
+#define EVENT_TYPES_COUNT                   ( 14U )     ///< Counter of events in /ref EVENT_TYPES macro
+#define MAX_CALLBACK_COUNT                  ( 13U )     ///< Maximal amount of callbacks in /ref st_funcRegList_t list
+#define EVPROC_QUEUE_SIZE                   ( 20U )     ///< Maximal amount of events in /ref pst_evList queue
 
 
-#define EVENT_TYPES_COUNT           8       ///< Counter of events in /ref EVENT_TYPES macro
-#define MAX_CALLBACK_COUNT          7       ///< Maximal amount of callbacks in /ref st_funcRegList_t list
-#define EVPROC_QUEUE_SIZE           20      ///< Maximal amount of events in /ref pst_evList queue
+
 /*=============================================================================
                                  ENUMS
  =============================================================================*/

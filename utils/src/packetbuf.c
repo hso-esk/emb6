@@ -54,9 +54,8 @@
 struct packetbuf_attr packetbuf_attrs[PACKETBUF_NUM_ATTRS];
 struct packetbuf_addr packetbuf_addrs[PACKETBUF_NUM_ADDRS];
 
-
 static uint16_t buflen, bufptr;
-static uint8_t hdrptr;
+static uint8_t hdrptr, ftrptr;
 
 /* The declarations below ensure that the packet buffer is aligned on
    an even 32-bit boundary. On some platforms (most notably the
@@ -81,6 +80,7 @@ packetbuf_clear(void)
 {
   buflen = bufptr = 0;
   hdrptr = PACKETBUF_HDR_SIZE;
+  ftrptr = PACKETBUF_HDR_SIZE;
 
   packetbufptr = &packetbuf[PACKETBUF_HDR_SIZE];
   packetbuf_attr_clear();
@@ -197,6 +197,34 @@ packetbuf_hdrreduce(int size)
   bufptr += size;
   buflen -= size;
   return 1;
+}
+/*---------------------------------------------------------------------------*/
+void *packetbuf_ftrptr(void)
+{
+    return (void *)(&packetbuf[ftrptr]);
+}
+/*---------------------------------------------------------------------------*/
+int
+packetbuf_ftralloc(int size)
+{
+    if ((packetbuf_totlen() + size) <= PACKETBUF_SIZE) {
+        ftrptr = hdrptr + packetbuf_totlen();
+        buflen += size;
+        return 1;
+    } else {
+        return 0;
+    }
+}
+/*---------------------------------------------------------------------------*/
+int
+packetbuf_ftrreduce(int size)
+{
+    if (buflen < size) {
+        return 0;
+    } else {
+        buflen -= size;
+        return 1;
+    }
 }
 /*---------------------------------------------------------------------------*/
 void

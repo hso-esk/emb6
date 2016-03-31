@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<Workspace>
+  <ConfigDictionary>
+    
+  <CurrentConfigs><Project>demo-udp/CC120x_UDP_ALIVE</Project></CurrentConfigs></ConfigDictionary>
+  <Desktop>
+    <Static>
+      <Workspace>
+        <ColumnWidths>
+          
+          
+          
+          
+        <Column0>317</Column0><Column1>27</Column1><Column2>27</Column2><Column3>27</Column3></ColumnWidths>
+      </Workspace>
+      <Build>
+        
+        
+        
+        
+      <ColumnWidth0>20</ColumnWidth0><ColumnWidth1>1215</ColumnWidth1><ColumnWidth2>324</ColumnWidth2><ColumnWidth3>81</ColumnWidth3></Build>
+      <TerminalIO/>
+      <Select-Ambiguous-Definitions>
+        <ColumnWidth0>580</ColumnWidth0>
+        <ColumnWidth1>82</ColumnWidth1>
+        <ColumnWidth2>994</ColumnWidth2>
+      </Select-Ambiguous-Definitions>
+      <Find-in-Files>
+        
+        
+        
+        
+      <ColumnWidth0>497</ColumnWidth0><ColumnWidth1>82</ColumnWidth1><ColumnWidth2>746</ColumnWidth2><ColumnWidth3>331</ColumnWidth3></Find-in-Files>
+    <Debug-Log><ColumnWidth0>18</ColumnWidth0><ColumnWidth1>1623</ColumnWidth1></Debug-Log><Find-All-Declarations><ColumnWidth0>580</ColumnWidth0><ColumnWidth1>82</ColumnWidth1><ColumnWidth2>994</ColumnWidth2></Find-All-Declarations></Static>
+    <Windows>
+      
+      
+    <Wnd0>
+        <Tabs>
+          <Tab>
+            <Identity>TabID-23329-9894</Identity>
+            <TabName>Workspace</TabName>
+            <Factory>Workspace</Factory>
+            <Session>
+              
+            <NodeDict><ExpandedNode>demo-udp</ExpandedNode><ExpandedNode>demo-udp/demo</ExpandedNode><ExpandedNode>demo-udp/emb6</ExpandedNode><ExpandedNode>demo-udp/emb6/demo</ExpandedNode><ExpandedNode>demo-udp/emb6/demo/udp_alive</ExpandedNode><ExpandedNode>demo-udp/emb6/demo/udp_socket</ExpandedNode><ExpandedNode>demo-udp/emb6/emb6</ExpandedNode><ExpandedNode>demo-udp/emb6/target</ExpandedNode><ExpandedNode>demo-udp/emb6/target/if</ExpandedNode><ExpandedNode>demo-udp/emb6/target/if/cc112x</ExpandedNode></NodeDict></Session>
+          </Tab>
+        </Tabs>
+        
+      <SelectedTab>0</SelectedTab></Wnd0><Wnd1>
+        <Tabs>
+          <Tab>
+            <Identity>TabID-20547-10560</Identity>
+            <TabName>Build</TabName>
+            <Factory>Build</Factory>
+            <Session/>
+          </Tab>
+          <Tab>
+            <Identity>TabID-12352-20334</Identity>
+            <TabName>Ambiguous Definitions</TabName>
+            <Factory>Select-Ambiguous-Definitions</Factory>
+            <Session/>
+          </Tab>
+          <Tab>
+            <Identity>TabID-22347-20556</Identity>
+            <TabName>Find in Files</TabName>
+            <Factory>Find-in-Files</Factory>
+            <Session/>
+          </Tab>
+        <Tab><Identity>TabID-28560-8525</Identity><TabName>Debug Log</TabName><Factory>Debug-Log</Factory><Session/></Tab><Tab><Identity>TabID-6196-13706</Identity><TabName>Declarations</TabName><Factory>Find-All-Declarations</Factory><Session/></Tab></Tabs>
+        
+      <SelectedTab>0</SelectedTab></Wnd1></Windows>
+    <Editor>
+      
+      
+      
+      
+    <Pane><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\..\..\..\..\..\..\..\..\emb6\emb6.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>231</YPos2><SelStart2>8844</SelStart2><SelEnd2>8844</SelEnd2></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\..\..\..\..\..\..\..\..\utils\src\evproc.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>382</YPos2><SelStart2>16847</SelStart2><SelEnd2>16847</SelEnd2></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\..\..\..\device\msp430f5xxx\src\int.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>181</YPos2><SelStart2>7232</SelStart2><SelEnd2>7232</SelEnd2></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\..\..\..\..\..\..\..\..\emb6\src\net\ipv6\tcpip.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>404</YPos2><SelStart2>9740</SelStart2><SelEnd2>9740</SelEnd2></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\..\..\..\..\..\..\..\bsp\ti_trxeb_cc120x\board_conf.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>0</YPos2><SelStart2>425</SelStart2><SelEnd2>425</SelEnd2></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\..\..\..\..\..\..\..\if\cc120x\cc120x.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>316</YPos2><SelStart2>12485</SelStart2><SelEnd2>12485</SelEnd2></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\..\..\..\device\msp430f5xxx\src\io.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>458</YPos2><SelStart2>18456</SelStart2><SelEnd2>18456</SelEnd2></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\..\..\..\..\..\..\..\..\utils\src\lib_tmr.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>211</YPos2><SelStart2>6839</SelStart2><SelEnd2>6839</SelEnd2></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\..\..\..\..\..\..\..\mcu\msp430f5438a\msp430x5xx.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>437</YPos2><SelStart2>12332</SelStart2><SelEnd2>12332</SelEnd2></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\..\..\..\..\..\..\..\..\demo\udp_socket\demo_udp_socket.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>177</YPos2><SelStart2>6974</SelStart2><SelEnd2>6974</SelEnd2></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\..\..\..\..\..\..\..\..\demo\demo_main.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>302</YPos2><SelStart2>8935</SelStart2><SelEnd2>8935</SelEnd2></Tab><ActiveTab>10</ActiveTab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\..\..\..\..\..\..\..\if\cc112x\cc112x.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>384</YPos2><SelStart2>18291</SelStart2><SelEnd2>18306</SelEnd2></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\..\..\..\..\..\..\..\..\emb6\src\dll\mac\mac_802154.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>264</YPos2><SelStart2>9068</SelStart2><SelEnd2>9068</SelEnd2></Tab></Pane><ActivePane>0</ActivePane><Sizes><Pane><X>1000000</X><Y>1000000</Y></Pane></Sizes><SplitMode>1</SplitMode></Editor>
+    <Positions>
+      
+      
+      
+      
+      
+    <Top><Row0><Sizes><Toolbar-00dc1e90><key>iaridepm.enu1</key></Toolbar-00dc1e90></Sizes></Row0><Row1><Sizes/></Row1><Row2><Sizes/></Row2><Row3><Sizes/></Row3><Row4><Sizes/></Row4><Row5><Sizes/></Row5><Row6><Sizes/></Row6><Row7><Sizes/></Row7><Row8><Sizes/></Row8><Row9><Sizes/></Row9><Row10><Sizes/></Row10><Row11><Sizes/></Row11><Row12><Sizes/></Row12><Row13><Sizes/></Row13><Row14><Sizes/></Row14><Row15><Sizes/></Row15><Row16><Sizes/></Row16><Row17><Sizes/></Row17><Row18><Sizes/></Row18><Row19><Sizes/></Row19><Row20><Sizes/></Row20><Row21><Sizes/></Row21><Row22><Sizes/></Row22><Row23><Sizes/></Row23><Row24><Sizes/></Row24><Row25><Sizes/></Row25><Row26><Sizes/></Row26><Row27><Sizes/></Row27><Row28><Sizes/></Row28><Row29><Sizes/></Row29><Row30><Sizes/></Row30><Row31><Sizes/></Row31><Row32><Sizes/></Row32><Row33><Sizes/></Row33><Row34><Sizes/></Row34><Row35><Sizes/></Row35><Row36><Sizes/></Row36><Row37><Sizes/></Row37><Row38><Sizes/></Row38><Row39><Sizes/></Row39><Row40><Sizes/></Row40><Row41><Sizes/></Row41><Row42><Sizes/></Row42><Row43><Sizes/></Row43><Row44><Sizes/></Row44><Row45><Sizes/></Row45><Row46><Sizes/></Row46><Row47><Sizes/></Row47><Row48><Sizes/></Row48><Row49><Sizes/></Row49><Row50><Sizes/></Row50><Row51><Sizes/></Row51><Row52><Sizes/></Row52><Row53><Sizes/></Row53><Row54><Sizes/></Row54><Row55><Sizes/></Row55><Row56><Sizes/></Row56><Row57><Sizes/></Row57><Row58><Sizes/></Row58><Row59><Sizes/></Row59><Row60><Sizes/></Row60><Row61><Sizes/></Row61><Row62><Sizes/></Row62><Row63><Sizes/></Row63><Row64><Sizes/></Row64><Row65><Sizes/></Row65><Row66><Sizes/></Row66><Row67><Sizes/></Row67><Row68><Sizes/></Row68><Row69><Sizes/></Row69><Row70><Sizes/></Row70><Row71><Sizes/></Row71><Row72><Sizes/></Row72></Top><Left><Row0><Sizes><Wnd0><Rect><Top>-2</Top><Left>-2</Left><Bottom>705</Bottom><Right>391</Right><x>-2</x><y>-2</y><xscreen>146</xscreen><yscreen>208</yscreen><sizeHorzCX>86905</sizeHorzCX><sizeHorzCY>214876</sizeHorzCY><sizeVertCX>233929</sizeVertCX><sizeVertCY>730372</sizeVertCY></Rect></Wnd0></Sizes></Row0></Left><Right><Row0><Sizes/></Row0></Right><Bottom><Row0><Sizes><Wnd1><Rect><Top>-2</Top><Left>-2</Left><Bottom>218</Bottom><Right>1682</Right><x>-2</x><y>-2</y><xscreen>1684</xscreen><yscreen>220</yscreen><sizeHorzCX>1002381</sizeHorzCX><sizeHorzCY>227273</sizeHorzCY><sizeVertCX>86905</sizeVertCX><sizeVertCY>214876</sizeVertCY></Rect></Wnd1></Sizes></Row0></Bottom><Float><Sizes/></Float></Positions>
+  </Desktop>
+</Workspace>
+
+

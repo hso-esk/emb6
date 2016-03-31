@@ -41,7 +41,6 @@
  * @{
  */
 
-#include "emb6_conf.h"
 #include "emb6.h"
 #include "uip.h"
 #include "tcpip.h"
@@ -56,7 +55,6 @@
 #include "uip-debug.h"
 
 #include <limits.h>
-#include <string.h>
 
 
 #if RPL_CONF_STATS
@@ -255,7 +253,7 @@ rpl_link_neighbor_callback(const linkaddr_t *addr, int status, int numtx)
   rpl_instance_t *instance;
   rpl_instance_t *end;
 
-  uip_ip6addr(&ipaddr, 0xfe80, 0, 0, 0, 0, 0, 0, 0);
+  uip_ip6addr(&ipaddr, 0xfe80UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL);
   uip_ds6_set_addr_iid(&ipaddr, (uip_lladdr_t *)addr);
 
   for(instance = &instance_table[0], end = instance + RPL_MAX_INSTANCES; instance < end; ++instance) {

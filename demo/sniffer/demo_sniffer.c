@@ -60,7 +60,6 @@
  INCLUDE FILES
  =============================================================================*/
 #include "emb6.h"
-#include "emb6_conf.h"
 #include "bsp.h"
 #include "demo_sniffer.h"
 
@@ -105,7 +104,7 @@ uint8_t demo_sniffConf(s_ns_t* pst_netStack)
      */
     if (pst_netStack != NULL) {
         if (pst_netStack->hc == &sicslowpan_driver) {}
-        else if (pst_netStack->llsec == &nullsec_driver) {}
+        else if (pst_netStack->dllsec == &nullsec_driver) {}
         else if (pst_netStack->hmac == &nullmac_driver) {}
         else if (pst_netStack->lmac == &nullrdc_driver) {}
         else if (pst_netStack->frame == &no_framer) {}
@@ -115,7 +114,7 @@ uint8_t demo_sniffConf(s_ns_t* pst_netStack)
         }
 
         pst_netStack->hc     = &sicslowpan_driver;
-        pst_netStack->llsec  = &nullsec_driver;
+        pst_netStack->dllsec  = &nullsec_driver;
         pst_netStack->hmac   = &nullmac_driver;
         pst_netStack->lmac   = &nullrdc_driver;
         pst_netStack->frame  = &no_framer;
