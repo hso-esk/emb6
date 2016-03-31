@@ -257,13 +257,6 @@ void emb6_init(s_ns_t* ps_ns, e_nsErr_t *p_err)
     /* set return error code to default */
     *p_err = NETSTK_ERR_NONE;
 
-    /* initialize BSP */
-    ret = bsp_init(ps_ns);
-    if (ret == 0) {
-        *p_err = NETSTK_ERR_INIT;
-        return;
-    }
-
     /* initialize netstack */
     ret = loc_emb6NetstackInit(ps_ns);
     if (ret == 0) {

@@ -337,10 +337,14 @@ int main(void)
 
     /* set return error code to default */
     err = NETSTK_ERR_NONE;
+    memset(&st_netstack, 0, sizeof(st_netstack));
 
-    /* set stack parameters to default */
-    st_netstack.c_configured = 0;
-    loc_initialConfig();
+    /* Initialize BSP */
+    ret = bsp_init(&st_netstack);
+    if (ret != 1) {
+        err = NETSTK_ERR_INIT;
+        emb6_errorHandler(&err);
+    }
 
     /*
     * set proper stack pointers
@@ -353,6 +357,7 @@ int main(void)
     }
 
     /* Initialize emb6-stack - call all initialization functions */
+    loc_stackConf();
     emb6_init(&st_netstack, &err);
     if (err != NETSTK_ERR_NONE) {
         emb6_errorHandler(&err);
