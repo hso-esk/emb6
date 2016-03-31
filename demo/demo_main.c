@@ -110,7 +110,7 @@
 #endif
 
 #if DEMO_USE_MQTT
-#include "demo_mqtt.h"
+#include "mqtt.h"
 #endif
 
 #if DEMO_USE_TESTSUITE
@@ -291,7 +291,7 @@ static uint8_t loc_demoAppsInit(void)
     #endif
 
     #if DEMO_USE_MQTT
-    if (!demo_mqttInit()) {
+    if (!mqtt_init()) {
         return 0;
     }
     #endif
