@@ -17,7 +17,8 @@ extif = {
 	],
 # C global defines
 	'CPPDEFINES' : [
-		('DEMO_USE_EXTIF',1),
+		('DEMO_USE_EXTIF', 1),
+		('LOGGER_LEVEL', 0),
 	],
 # GCC flags
 	'CFLAGS' : [
