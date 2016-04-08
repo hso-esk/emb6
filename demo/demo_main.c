@@ -134,6 +134,14 @@
 #include "rpl.h"
 #endif
 
+#if DEMO_USE_MCAST_ROOT
+#include "demo_mcast_root.h"
+#endif
+
+#if DEMO_USE_MCAST_SINK
+#include "demo_mcast_sink.h"
+#endif
+
 /*==============================================================================
                                      MACROS
  =============================================================================*/
@@ -237,6 +245,14 @@ static void loc_demoAppsConf(s_ns_t* pst_netStack, e_nsErr_t *p_err)
     demo_dtlsConf(pst_netStack);
     #endif
 
+	#if DEMO_USE_MCAST_ROOT
+    demo_mcastRootConf(pst_netStack);
+	#endif
+
+	#if DEMO_USE_MCAST_SINK
+    demo_mcastSinkConf(pst_netStack);
+	#endif
+
     /* set returned error code */
     *p_err = NETSTK_ERR_NONE;
 }
@@ -309,6 +325,18 @@ static uint8_t loc_demoAppsInit(void)
 	    return 0;
     }
     #endif
+
+	#if DEMO_USE_MCAST_ROOT
+    if (!demo_mcastRootInit()) {
+    	return 0;
+    }
+	#endif
+
+	#if DEMO_USE_MCAST_SINK
+    if (!demo_mcastSinkInit()) {
+    	return 0;
+    }
+	#endif
 
     return 1;
 }

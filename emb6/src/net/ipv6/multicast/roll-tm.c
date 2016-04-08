@@ -43,6 +43,7 @@
 //#include "contiki.h"
 //#include "contiki-lib.h"
 //#include "contiki-net.h"
+#include "emb6_conf.h"
 #include "emb6.h"
 #include "uip-icmp6.h"
 #include "uip-mcast6.h"
@@ -528,7 +529,7 @@ double_interval(void *ptr)
   ctimer_set(&param->ct, param->t_next, handle_timer, (void *)param);
 
   VERBOSE_PRINTF("ROLL TM: Doubling at %lu (offset %d), Start %lu, End %lu,"
-                 " Periodic in %lu\n", bsp_getTick(), offset,
+                 " Periodic in %lu\n", clock_time(), offset,
                  (unsigned long)param->t_start,
                  (unsigned long)param->t_end, (unsigned long)param->t_next);
 }
@@ -564,7 +565,7 @@ handle_timer(void *ptr)
   }
 
   VERBOSE_PRINTF("ROLL TM: M=%u Periodic at %lu, last=%lu\n",
-                 m, (unsigned long)bsp_getTick(),
+                 m, (unsigned long)clock_time(),
                  (unsigned long)param->t_last_trigger);
 
   /* Temporarily store 'now' in t_next and calculate diffs */
@@ -663,7 +664,7 @@ handle_timer(void *ptr)
   }
   VERBOSE_PRINTF
     ("ROLL TM: M=%u Periodic at %lu, Interval End at %lu in %lu\n", m,
-     (unsigned long)bsp_getTick(), (unsigned long)param->t_end,
+     (unsigned long)clock_time(), (unsigned long)param->t_end,
      (unsigned long)param->t_next);
   ctimer_set(&param->ct, param->t_next, double_interval, (void *)param);
 
@@ -1112,26 +1113,26 @@ icmp_input()
     PRINT6ADDR(&UIP_IP_BUF->destipaddr);
     PRINTF("\n");
     ROLL_TM_STATS_ADD(icmp_bad);
-    return;
+    goto discard;
   }
 
   if(!uip_is_addr_linklocal_allnodes_mcast(&UIP_IP_BUF->destipaddr)
      && !uip_is_addr_linklocal_allrouters_mcast(&UIP_IP_BUF->destipaddr)) {
     PRINTF("ROLL TM: ICMPv6 In, bad destination\n");
     ROLL_TM_STATS_ADD(icmp_bad);
-    return;
+    goto discard;
   }
 
   if(UIP_ICMP_BUF->icode != ROLL_TM_ICMP_CODE) {
     PRINTF("ROLL TM: ICMPv6 In, bad ICMP code\n");
     ROLL_TM_STATS_ADD(icmp_bad);
-    return;
+    goto discard;
   }
 
   if(UIP_IP_BUF->ttl != ROLL_TM_IP_HOP_LIMIT) {
     PRINTF("ROLL TM: ICMPv6 In, bad TTL\n");
     ROLL_TM_STATS_ADD(icmp_bad);
-    return;
+    goto discard;
   }
 #endif
 
@@ -1316,6 +1317,9 @@ drop:
     t[1].c++;
   }
 
+discard:
+
+  uip_len = 0;
   return;
 }
 /*---------------------------------------------------------------------------*/
@@ -1412,7 +1416,7 @@ in()
 }
 /*---------------------------------------------------------------------------*/
 static void
-init(void)
+init()
 {
   PRINTF("ROLL TM: ROLL Multicast - Draft #%u\n", ROLL_TM_VER);
 

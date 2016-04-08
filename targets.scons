@@ -19,6 +19,8 @@ dtls_cli    = ('dtls','client')
 dtls_srv    = ('dtls','server')
 mdns_cli    = ('mdns','client')
 mdns_srv    = ('mdns','server')
+mcastroot	= ('mcast', 'root')
+mcastsink	= ('mcast', 'sink')
 
 trg         = []
 
@@ -427,6 +429,18 @@ trg += [{
 trg += [{
     'id'        : 'md_x86srv',
     'apps_conf' : [ mdns_srv, udp_alive ],
+    'bsp'       : get_descr(bsp, 'native')
+}]
+
+trg += [{
+    'id'        : 'cs_luxmcastroot',
+    'apps_conf' : [ x86_cli, coap_srv, mcastroot ],
+    'bsp'       : get_descr(bsp, 'native')
+}]
+
+trg += [{
+    'id'        : 'cs_luxmcastsink',
+    'apps_conf' : [ x86_cli, coap_srv, mcastsink ],
     'bsp'       : get_descr(bsp, 'native')
 }]
 

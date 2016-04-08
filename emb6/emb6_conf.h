@@ -87,6 +87,10 @@
                                 NETWORK LAYER SECTION
 ===============================================================================*/
 
+/** Define the Multicast Engine to Roll Trickle Multicast */
+#define	UIP_CONF_IPV6_MULTICAST				TRUE
+#define UIP_MCAST6_CONF_ENGINE				UIP_MCAST6_ENGINE_ROLL_TM
+
 /** Define IPv6 as based protocol (should not be undefined) */
 #define UIP_CONF_IPV6                        TRUE
 
@@ -877,6 +881,11 @@ void uip_log(char *msg);
 /** DEMO DTLS example                      	(see demo_dtls_*.c) */
 #ifndef LOGGER_DEMO_DTLS
 #define LOGGER_DEMO_DTLS                   	FALSE
+#endif
+
+ /** DEMO MCAST example						(see mcast/*.c) */
+#ifndef	LOGGER_DEMO_MCAST
+#define LOGGER_DEMO_MCAST                  	TRUE
 #endif
 
 /** DEMO MDNS example                      	(see demo_mdns_*.c) */
