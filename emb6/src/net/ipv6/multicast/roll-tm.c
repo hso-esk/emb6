@@ -40,10 +40,6 @@
  *    George Oikonomou - <oikonomou@users.sourceforge.net>
  */
 
-//#include "contiki.h"
-//#include "contiki-lib.h"
-//#include "contiki-net.h"
-#include "emb6_conf.h"
 #include "emb6.h"
 #include "uip-icmp6.h"
 #include "uip-mcast6.h"
@@ -52,8 +48,6 @@
 #include "bsp.h"
 #include "ctimer.h"
 #include "random.h"
-//#include "dev/watchdog.h"
-//#include <string.h>
 
 #define DEBUG DEBUG_NONE
 #include "uip-debug.h"
@@ -529,7 +523,7 @@ double_interval(void *ptr)
   ctimer_set(&param->ct, param->t_next, handle_timer, (void *)param);
 
   VERBOSE_PRINTF("ROLL TM: Doubling at %lu (offset %d), Start %lu, End %lu,"
-                 " Periodic in %lu\n", clock_time(), offset,
+                 " Periodic in %lu\n", bsp_getTick(), offset,
                  (unsigned long)param->t_start,
                  (unsigned long)param->t_end, (unsigned long)param->t_next);
 }
@@ -565,7 +559,7 @@ handle_timer(void *ptr)
   }
 
   VERBOSE_PRINTF("ROLL TM: M=%u Periodic at %lu, last=%lu\n",
-                 m, (unsigned long)clock_time(),
+                 m, (unsigned long)bsp_getTick(),
                  (unsigned long)param->t_last_trigger);
 
   /* Temporarily store 'now' in t_next and calculate diffs */
@@ -664,7 +658,7 @@ handle_timer(void *ptr)
   }
   VERBOSE_PRINTF
     ("ROLL TM: M=%u Periodic at %lu, Interval End at %lu in %lu\n", m,
-     (unsigned long)clock_time(), (unsigned long)param->t_end,
+     (unsigned long)bsp_getTick(), (unsigned long)param->t_end,
      (unsigned long)param->t_next);
   ctimer_set(&param->ct, param->t_next, double_interval, (void *)param);
 
@@ -1416,7 +1410,7 @@ in()
 }
 /*---------------------------------------------------------------------------*/
 static void
-init()
+init(void)
 {
   PRINTF("ROLL TM: ROLL Multicast - Draft #%u\n", ROLL_TM_VER);
 
