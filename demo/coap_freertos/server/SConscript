@@ -1,0 +1,36 @@
+freertos_coap = {
+	'demo' : [
+		'resources/*',
+		'../*'
+	],
+	'emb6' : [
+		'coap',
+		'sock',
+		'rpl',
+		'ipv6',
+		'sicslowpan',
+		'dllsec',
+		'dllc',
+		'mac',
+		'framer',
+		'phy',
+	],
+	'utils' : [
+		'*',
+	],
+	'freertos' : [
+        'base',
+        'portableCM3',
+    ],
+# C global defines
+	'CPPDEFINES' : [
+		('DEMO_USE_COAP',1),
+		('CONF_USE_SERVER',1),
+		('NET_USE_RPL',1),
+	],
+# GCC flags
+	'CFLAGS' : [
+	]	
+}
+
+Return('freertos_coap')

@@ -1,0 +1,19 @@
+freertos = {
+	'base' : [
+		'*',
+		'include/*',
+	],
+	'portableCM3' : [
+        'portable/GCC/ARM_CM3/*',
+        'portable/MemMang/*',
+    ],	
+
+# C global defines
+	'CPPDEFINES' : [
+	],
+# GCC flags
+	'CFLAGS' : [
+	]	
+}
+
+Return('freertos')

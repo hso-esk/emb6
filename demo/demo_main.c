@@ -70,6 +70,9 @@
 #include "bsp.h"
 #include "etimer.h"
 
+#include "em_device.h"
+#include "segmentlcd.h"
+
 #define  LOGGER_ENABLE        LOGGER_MAIN
 #include "logger.h"
 
@@ -134,6 +137,13 @@
 #include "rpl.h"
 #endif
 
+ /* Scheduler includes. */
+#include "FreeRTOS.h"
+#include "croutine.h"
+#include "task.h"
+#include "queue.h"
+#include "semphr.h"
+
 /*==============================================================================
                                      MACROS
  =============================================================================*/
@@ -142,16 +152,21 @@
 #define EMB6_PROC_DELAY                     500
 #endif /* #ifndef EMB6_PROC_DELAY */
 
+/* Task priorities. */
+#define mainEMB6_TASK_PRIORITY          ( tskIDLE_PRIORITY + 1 )
+#define mainLCD_TASK_PRIORITY           ( tskIDLE_PRIORITY + 2 )
+#define mainLED_TASK_PRIORITY           ( tskIDLE_PRIORITY + 3 )
+
 /*==============================================================================
                                      ENUMS
  =============================================================================*/
 
 /*==============================================================================
-                          LOCAL VARIABLE DECLARATIONS
+                                    VARIABLES
  =============================================================================*/
-/*==============================================================================
-                                LOCAL CONSTANTS
- =============================================================================*/
+
+extern s_led_task_param_t ledTaskParams;
+extern s_display_output_t lcdTaskParams;
 
 /*==============================================================================
                            LOCAL FUNCTION PROTOTYPES
@@ -159,6 +174,31 @@
 static void loc_stackConf(void);
 static void loc_demoAppsConf(s_ns_t* pst_netStack, e_nsErr_t *p_err);
 static uint8_t loc_demoAppsInit(void);
+
+/**
+ * EMB6 task.
+ */
+static void vEMB6Task( void *pvParameters );
+
+/**
+ * LCD task.
+ */
+static void vLCDTask( void *pvParameters );
+
+/**
+ * LED task.
+ */
+static void vLEDTask( void *pvParameters );
+
+/*
+ * Configure the hardware as required by the demo.
+ */
+static void prvSetupHardware( void );
+
+/*
+ * Put the CPU into the least low power low power mode.
+ */
+static void prvLowPowerMode1( void );
 
 /*==============================================================================
                                 LOCAL FUNCTIONS
@@ -327,10 +367,10 @@ void emb6_errorHandler(e_nsErr_t *p_err)
     }
 }
 
-/*==============================================================================
- main()
-==============================================================================*/
-int main(void)
+/**
+ * EMB6 task.
+ */
+static void vEMB6Task( void *pvParameters )
 {
     s_ns_t st_netstack;
     uint8_t ret;
@@ -374,11 +414,135 @@ int main(void)
         emb6_errorHandler(&err);
     }
 
-    /* Start the emb6 stack */
-    emb6_process(EMB6_PROC_DELAY);
+    while(1)
+    {
+        /* run the emb6 stack */
+        emb6_process(-1);
+    }
 
     /* the program should never come here */
-    return -1;
+    return;
+}
+
+/*-----------------------------------------------------------*/
+
+static void vLEDTask( void *pvParameters )
+{
+    s_led_task_param_t* p_params = (s_led_task_param_t*)pvParameters;
+    while(1)
+    {
+        if( p_params->en )
+        {
+            bsp_led( E_BSP_LED_0, E_BSP_LED_TOGGLE );
+            bsp_led( E_BSP_LED_1, E_BSP_LED_TOGGLE );
+        }
+
+        vTaskDelay( p_params->delay / portTICK_PERIOD_MS );
+    }
+}
+/*-----------------------------------------------------------*/
+
+static void vLCDTask( void *pvParameters )
+{
+    int i;
+    s_display_output_t* p_params = (s_display_output_t*)pvParameters;
+    while(1)
+    {
+        /* Enable all segments */
+        i = 1;
+        SegmentLCD_AllOn();
+        vTaskDelay( 1000 / portTICK_PERIOD_MS );
+
+        /* Disable all segments */
+        SegmentLCD_AllOff();
+        vTaskDelay( 500 / portTICK_PERIOD_MS );
+        SegmentLCD_Write((p_params->output));
+        vTaskDelay( 1000 / portTICK_PERIOD_MS );
+        if (p_params->len > 7)
+        {
+            while(i < p_params->len)
+            {
+                SegmentLCD_Write((p_params->output)+i);
+                vTaskDelay( 400 / portTICK_PERIOD_MS );
+                i++;
+            }
+        }
+        SegmentLCD_AllOff();
+        vTaskDelay( 500 / portTICK_PERIOD_MS );
+
+    }
+}
+/*-----------------------------------------------------------*/
+
+void vApplicationIdleHook( void )
+{
+    /* Use the idle task to place the CPU into a low power mode.  Greater power
+    saving could be achieved by not including any demo tasks that never block. */
+    prvLowPowerMode1();
+}
+/*-----------------------------------------------------------*/
+
+void vApplicationStackOverflowHook( TaskHandle_t pxTask, char *pcTaskName )
+{
+    /* This function will be called if a task overflows its stack, if
+    configCHECK_FOR_STACK_OVERFLOW != 0.  It might be that the function
+    parameters have been corrupted, depending on the severity of the stack
+    overflow.  When this is the case pxCurrentTCB can be inspected in the
+    debugger to find the offending task. */
+    for( ;; );
+}
+/*-----------------------------------------------------------*/
+
+
+
+static void prvSetupHardware( void )
+{
+    /* Enable LCD without voltage boost */
+    SegmentLCD_Init(false);
+}
+/*-----------------------------------------------------------*/
+
+static void prvLowPowerMode1( void )
+{
+    /* Clear SLEEPDEEP for EM1 */
+    SCB->SCR &= ~( 1 << SCB_SCR_SLEEPDEEP_Pos );
+
+    /* Power down. */
+    __DSB();
+    __WFI();
+}
+
+/*==============================================================================
+ main()
+==============================================================================*/
+int main(void)
+{
+
+    ledTaskParams.en = 1;
+    ledTaskParams.delay = 1000;
+    strcpy(lcdTaskParams.output, "DEMO COAP SERVER");
+    lcdTaskParams.len = 16;
+
+    /* Perform the necessary hardware configuration. */
+    prvSetupHardware();
+
+    /* Create EMB6 task. */
+    xTaskCreate( vEMB6Task, "EMB6Task", 2048, NULL, mainEMB6_TASK_PRIORITY, NULL );
+
+    /* Create LED task. */
+    xTaskCreate( vLEDTask, "LEDTask", configMINIMAL_STACK_SIZE, &ledTaskParams, mainLED_TASK_PRIORITY, NULL );
+
+    /* Create LCD task  */
+    xTaskCreate( vLCDTask, "LCDTask", configMINIMAL_STACK_SIZE, &lcdTaskParams, mainLCD_TASK_PRIORITY, NULL );
+
+    /* Start the scheduler. */
+    vTaskStartScheduler();
+
+    /* The scheduler should now be running the tasks so the following code should
+    never be reached.  If it is reached then there was insufficient heap space
+    for the idle task to be created.  In this case the heap size is set by
+    configTOTAL_HEAP_SIZE in FreeRTOSConfig.h. */
+    for( ;; );
 }
 /** @} */
 /** @} */

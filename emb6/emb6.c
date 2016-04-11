@@ -265,6 +265,14 @@ void emb6_init(s_ns_t* ps_ns, e_nsErr_t *p_err)
     }else {
         ps_emb6Stack = ps_ns;
     }
+
+    e_nsErr_t   err;
+
+    /* turn the netstack on */
+    ps_emb6Stack->dllc->on(&err);
+    if (err != NETSTK_ERR_NONE) {
+        emb6_errorHandler(&err);
+    }
 }
 
 s_ns_t * emb6_get(void)
@@ -273,23 +281,18 @@ s_ns_t * emb6_get(void)
 }
 
 
-void emb6_process(uint16_t us_delay)
+void emb6_process(int32_t us_delay)
 {
-    e_nsErr_t   err;
-
-    /* turn the netstack on */
-    ps_emb6Stack->dllc->on(&err);
-    if (err != NETSTK_ERR_NONE) {
-        emb6_errorHandler(&err);
-    }
+    uint8_t runLoop = (us_delay < 0) ? FALSE : TRUE;
+    uint32_t delay = runLoop ? us_delay : 0;
 
     /* Attention: emb6 main process loop !! do not change !! */
-    while(1)
+    do
     {
         evproc_nextEvent();
         etimer_request_poll();
-        bsp_delay_us(us_delay);
-    }
+        bsp_delay_us(delay);
+    }while(runLoop);
 }
 
 /** @} */

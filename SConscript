@@ -62,6 +62,25 @@ def prep_emb6(__dconf):
                     add_include(emb6_path + 'inc/' + lib_file)
                     add_sources(emb6_path + 'src/' + lib_file+'.c')
 
+def prep_freertos(__dconf):
+    global prj_path
+    global genv
+
+    freertos_path = prj_path + 'freertos/'
+    freertos_modules = genv.SConscript(freertos_path + 'SConscript')
+
+    # Add freertos files from HEAD/freertos/ folder
+    add_include(freertos_path)
+    add_include(freertos_path + '*.h')
+    add_sources(freertos_path + '*.c')
+    if 'freertos' in __dconf:
+        for req_libmodule in __dconf['freertos']:
+            if req_libmodule in freertos_modules:
+                for lib_file in freertos_modules[req_libmodule]:
+                    add_include(freertos_path + lib_file)
+                    add_sources(freertos_path + lib_file + '.c')
+                    print 'HALLO: ' + freertos_path + lib_file + '.c'
+
 # Add utils headers from HEAD/utils/ folder
 def prep_utils(__dconf):
     global prj_path
@@ -87,6 +106,8 @@ def prep_apps(__app, __aconf):
     prep_demo(demo_conf, demo_path)
 
     prep_emb6(demo_conf)
+
+    prep_freertos(demo_conf)
 
     prep_utils(demo_conf)
 

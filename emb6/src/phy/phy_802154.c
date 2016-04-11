@@ -149,7 +149,7 @@ static void PHY_Init(void *p_netstk, e_nsErr_t *p_err)
      * - total number of channels
      * - channel center frequency
      */
-    uint8_t chan_num = 0;
+    uint8_t chan_num = 26;
     e_nsRfOpMode mode = NETSTK_RF_OP_MODE_1;
 
     PHY_Netstk->rf->ioctrl(NETSTK_CMD_RF_OP_MODE_SET, &mode, p_err);

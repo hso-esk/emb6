@@ -19,6 +19,7 @@ dtls_cli    = ('dtls','client')
 dtls_srv    = ('dtls','server')
 mdns_cli    = ('mdns','client')
 mdns_srv    = ('mdns','server')
+freertos_coap_srv    = ('coap_freertos','server')
 
 trg         = []
 
@@ -429,6 +430,24 @@ trg += [{
     'apps_conf' : [ mdns_srv, udp_alive ],
     'bsp'       : get_descr(bsp, 'native')
 }]
+
+
+#FREERTOS based ++++++++++++++++++++++++++++++++++++++++#
+
+
+
+trg += [{
+    'id'        : 'freertos_cs_stk3600_cc1200',
+    'apps_conf' : [ freertos_coap_srv, udp_alive, udp_cli ],
+    'bsp'       : get_descr(bsp, 'efm32stk3600_cc120x')
+}]
+
+trg += [{
+    'id'        : 'freertos_cs_stk3600_cc112x',
+    'apps_conf' : [ freertos_coap_srv, udp_alive, udp_cli ],
+    'bsp'       : get_descr(bsp, 'efm32stk3600_cc112x')
+}]
+
 
 
 Return('trg')
