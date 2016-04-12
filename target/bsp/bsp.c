@@ -87,6 +87,7 @@
 static    uint8_t    c_wtgStop = 1;
 static    struct    etimer st_ledsTims[LEDS_SUPPORTED];
 static        uint8_t bsp_numNestedCriticalSection;
+static        uint8_t bsp_spiLocked;
 /*==============================================================================
                                 LOCAL CONSTANTS
  =============================================================================*/
@@ -316,6 +317,51 @@ void bsp_exitCritical(void)
     }
   }
 } /* bsp_exitCritical() */
+
+/*============================================================================*/
+/*  bsp_spiInit()                                                             */
+/*============================================================================*/
+void *bsp_spiInit(void)
+{
+  void *p_spi = NULL;
+
+  p_spi = hal_spiInit();
+  bsp_spiLocked = FALSE;
+  return p_spi;
+} /* bsp_spiInit() */
+
+
+/*============================================================================*/
+/*  bsp_spiSlaveSel()                                                         */
+/*============================================================================*/
+uint8_t bsp_spiSlaveSel(void *p_spi, bool enable)
+{
+  uint8_t ret = 1;
+
+  if (enable == TRUE) {
+    if (bsp_spiLocked == FALSE) {
+      /* lock SPI handle */
+      bsp_spiLocked = TRUE;
+
+      /* enable SPI */
+      ret = hal_spiSlaveSel(p_spi, TRUE);
+    } else {
+      /* SPI is being locked */
+      ret = 0;
+    }
+  } else {
+    if (bsp_spiLocked == TRUE) {
+      /* disable SPI */
+      ret = hal_spiSlaveSel(p_spi, FALSE);
+
+      /* unlock SPI handle */
+      bsp_spiLocked = FALSE;
+    } else {
+      /* SPI is already unlocked and disabled */
+    }
+  }
+  return ret;
+} /* bsp_spiSlaveSel() */
 
 /** @} */
 /** @} */

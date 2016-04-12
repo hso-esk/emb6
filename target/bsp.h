@@ -284,9 +284,6 @@ void bsp_exitCritical(void);
 
 uint8_t bsp_pin(en_bspPinAction_t e_pinAct, void * p_pin);
 
-
-#define     bsp_spiInit             hal_spiInit
-#define     bsp_spiSlaveSel         hal_spiSlaveSel
 #define     bsp_spiRead             hal_spiRead
 #define     bsp_spiWrite            hal_spiWrite
 #define     bsp_spiTxRx             hal_spiTxRx
@@ -309,6 +306,23 @@ void bsp_wdt(en_bspWdtAction_t wdtAct);
 
 /*============================================================================*/
 /** \brief  This function will return seconds
+/*----------------------------------------------------------------------------*/
+/** \brief  This function configures SPI interface
+ *
+ *  \return        pointer to an allocated memory
+ */
+/*---------------------------------------------------------------------------*/
+void *bsp_spiInit(void);
+
+/*----------------------------------------------------------------------------*/
+/** \brief  This function selects slave with which we will work
+ *  \param         p_spi    Pointer to spi description entity
+ *  \param        action    true or false
+ *
+ *  \return        0 if failed, 1 id ok
+ */
+/*----------------------------------------------------------------------------*/
+uint8_t bsp_spiSlaveSel(void * p_spi, bool action);
  *
  */
 /*============================================================================*/
