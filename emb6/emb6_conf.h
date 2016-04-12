@@ -920,6 +920,8 @@ void uip_log(char *msg);
 #define NETSTK_CFG_PHY_OP_MODE_2_EN                         FALSE
 #define NETSTK_CFG_PHY_OP_MODE_3_EN                         FALSE
 #endif
+#define NETSTK_CFG_WOR_EN                                   FALSE
+
 
 /*
 ********************************************************************************
