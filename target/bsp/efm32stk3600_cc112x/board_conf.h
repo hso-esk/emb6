@@ -138,6 +138,8 @@
  */
 #define EMB6_PROC_DELAY                     0
 
+#define CC112X_PART_VERSION                 0x21u
+
 /*============================================================================*/
 /*!
 \brief    emb6 board configuration fuction
