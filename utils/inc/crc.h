@@ -40,41 +40,23 @@
 /*============================================================================*/
 
 /**
- * @file    phy_framer_802154.c
- * @date    01.12.2015
+ * @file    crc.h
+ * @date    16.11.2015
  * @author  PN
+ * @brief   Cyclic Redundancy Checking (CRC) implementation based on example
+ *          codes from TI
  */
 
-#include "emb6.h"
-#include "phy_framer_802154.h"
+#ifndef CRC_PRESENT
+#define CRC_PRESENT
 
-uint16_t phy_framer802154_getPktLen(uint8_t *p_data, uint16_t len)
-{
-  if (len < PHY_HEADER_LEN) {
-    return 0;
-  }
+#define CRC16_POLY      (uint16_t)( 0x1021u )
+#define CRC16_INIT      (uint16_t)( 0x0000u )
 
-  uint16_t psdu_len = 0;
+#define CRC32_POLY      (uint32_t)( 0x04c11db7u )
+#define CRC32_INIT      (uint32_t)( 0xffffffffu )
 
-#if NETSTK_CFG_IEEE_802154G_EN
-  uint16_t phr;
+uint16_t crc_16_update(uint16_t curr_crc, uint8_t byte);
+uint32_t crc_32_update(uint32_t curr_crc, uint8_t byte);
 
-  phr = (p_data[0] << 8) | (p_data[1]);
-  if (phr & 0xE800) {
-    /* unsupported frame, see also IEEE Std. 802.15.4g-2012, 18.1.1.3 */
-    psdu_len = 0;
-  } else {
-    psdu_len = phr & 0x07FF;
-  }
-#else
-  psdu_len = p_data[0];
-#endif
-
-  /* verify length of PSDU */
-  if ((psdu_len < PHY_PSDU_MIN(phr)) ||
-      (psdu_len > PHY_PSDU_MAX )) {
-    psdu_len = 0;
-  }
-
-  return psdu_len;
-}
+#endif /* CRC_PRESENT */

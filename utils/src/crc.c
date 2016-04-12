@@ -47,7 +47,7 @@
  */
 
 #include <stdint.h>
-#include "lib_crc.h"
+#include "crc.h"
 
 
 static uint32_t crc32_table[256] = {

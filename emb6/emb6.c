@@ -63,9 +63,8 @@
 #include "queuebuf.h"
 #include "linkaddr.h"
 #include "ctimer.h"
+#include "rt_tmr.h"
 #include "random.h"
-
-#include "lib_tmr.h"
 
 #if NETSTACK_CONF_WITH_IPV6
 #include "uip-ds6.h"
@@ -175,12 +174,12 @@ uint8_t loc_emb6NetstackInit(s_ns_t * ps_ns)
     uint8_t     c_err = 0;
 	uint8_t     is_valid;
     e_nsErr_t   err;
+  rt_tmr_init();
 
 
     /* Initialize stack protocols */
     queuebuf_init();
     ctimer_init();
-    Tmr_Init();
 
     /*
      * Verify stack submodule drivers

@@ -57,8 +57,8 @@
 #include "framer_802154.h"
 #include "packetbuf.h"
 #include "random.h"
+#include "rt_tmr.h"
 
-#include "lib_tmr.h"
 
 #define     LOGGER_ENABLE        LOGGER_MAC
 #include    "logger.h"
@@ -69,23 +69,25 @@
 *                               LOCAL MACROS
 ********************************************************************************
 */
+#if (NETSTK_CFG_WOR_EN == TRUE)
+#define MAC_CFG_TMR_WFA_IN_MS               (uint32_t )( 9 )
+#else
 #define MAC_CFG_TMR_WFA_IN_MS               (uint32_t )( 5 )
+#endif
 
 /*
 ********************************************************************************
 *                          LOCAL FUNCTION DECLARATIONS
 ********************************************************************************
 */
-static void MAC_Init(void *p_netstk, e_nsErr_t *p_err);
-static void MAC_On(e_nsErr_t *p_err);
-static void MAC_Off(e_nsErr_t *p_err);
-static void MAC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
-static void MAC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
-static void MAC_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
-
-static void MAC_TxACK(uint8_t seq, e_nsErr_t *p_err);
-static void MAC_CSMA(e_nsErr_t *p_err);
-
+static void mac_init(void *p_netstk, e_nsErr_t *p_err);
+static void mac_on(e_nsErr_t *p_err);
+static void mac_off(e_nsErr_t *p_err);
+static void mac_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
+static void mac_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
+static void mac_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
+static void mac_txAck(uint8_t seq, e_nsErr_t *p_err);
+static void mac_csma(e_nsErr_t *p_err);
 
 /*
 ********************************************************************************
@@ -96,12 +98,12 @@ static void MAC_CSMA(e_nsErr_t *p_err);
  *   data or MAC command frame. The default is a random value within
  *   the range.
  */
-static uint8_t          MAC_IsAckReq;
-static LIB_TMR          MAC_TmrWfa;
-static s_ns_t          *MAC_Netstk;
-static void            *MAC_CbTxArg;
-static nsTxCbFnct_t     MAC_CbTxFnct;
-static e_nsErr_t        MAC_TxErr;
+static uint8_t          mac_isAckReq;
+static s_rt_tmr_t       mac_tmrWfa;
+static s_ns_t          *pmac_netstk;
+static void            *pmac_cbTxArg;
+static nsTxCbFnct_t     mac_cbTxFnct;
+static e_nsErr_t        mac_txErr;
 
 
 /*
@@ -109,15 +111,15 @@ static e_nsErr_t        MAC_TxErr;
 *                               GLOBAL VARIABLES
 ********************************************************************************
 */
-const s_nsMAC_t MACDrv802154 =
+const s_nsMAC_t mac_driver_802154 =
 {
-   "MAC 802154",
-    MAC_Init,
-    MAC_On,
-    MAC_Off,
-    MAC_Send,
-    MAC_Recv,
-    MAC_IOCtrl,
+ "MAC 802154",
+  mac_init,
+  mac_on,
+  mac_off,
+  mac_send,
+  mac_recv,
+  mac_ioctl,
 };
 
 extern uip_lladdr_t uip_lladdr;
@@ -135,40 +137,36 @@ extern uip_lladdr_t uip_lladdr;
  * @param   p_netstk    Pointer to netstack structure
  * @param   p_err       Pointer to a variable storing returned error code
  */
-void MAC_Init(void *p_netstk, e_nsErr_t *p_err)
+void mac_init(void *p_netstk, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
-    if (p_err == NULL) {
-        return;
-    }
+  if (p_err == NULL) {
+    return;
+  }
 
-    if (p_netstk == NULL) {
-        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
-        return;
-    }
+  if (p_netstk == NULL) {
+    *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+    return;
+  }
 #endif
 
-    /* initialize local variables */
-    MAC_Netstk = (s_ns_t *)p_netstk;
-    MAC_CbTxFnct = 0;
-    MAC_CbTxArg = NULL;
-    MAC_IsAckReq = 0;
-    MAC_TxErr = NETSTK_ERR_NONE;
+  /* initialize local variables */
+  pmac_netstk = (s_ns_t *) p_netstk;
+  mac_cbTxFnct = 0;
+  pmac_cbTxArg = NULL;
+  mac_isAckReq = 0;
+  mac_txErr = NETSTK_ERR_NONE;
 
-    Tmr_Create(&MAC_TmrWfa,
-               LIB_TMR_TYPE_ONE_SHOT,
-               MAC_CFG_TMR_WFA_IN_MS,
-               0,
-               NULL);
+  rt_tmr_create(&mac_tmrWfa, E_RT_TMR_TYPE_ONE_SHOT, MAC_CFG_TMR_WFA_IN_MS, 0, NULL);
 
-    /*
-     * Configure stack address
-     */
-    memcpy(&uip_lladdr.addr, &mac_phy_config.mac_address, 8);
-    linkaddr_set_node_addr((linkaddr_t *)mac_phy_config.mac_address);
+  /*
+   * Configure stack address
+   */
+  memcpy(&uip_lladdr.addr, &mac_phy_config.mac_address, 8);
+  linkaddr_set_node_addr((linkaddr_t *) mac_phy_config.mac_address);
 
-    /* set returned error */
-    *p_err = NETSTK_ERR_NONE;
+  /* set returned error */
+  *p_err = NETSTK_ERR_NONE;
 }
 
 
@@ -177,16 +175,15 @@ void MAC_Init(void *p_netstk, e_nsErr_t *p_err)
  *
  * @param   p_err       Pointer to a variable storing returned error code
  */
-void MAC_On(e_nsErr_t *p_err)
+void mac_on(e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
-    if (p_err == NULL) {
-        return;
-    }
+  if (p_err == NULL) {
+    return;
+  }
 #endif
 
-
-    MAC_Netstk->phy->on(p_err);
+  pmac_netstk->phy->on(p_err);
 }
 
 
@@ -195,16 +192,15 @@ void MAC_On(e_nsErr_t *p_err)
  *
  * @param   p_err       Pointer to a variable storing returned error code
  */
-void MAC_Off(e_nsErr_t *p_err)
+void mac_off(e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
-    if (p_err == NULL) {
-        return;
-    }
+  if (p_err == NULL) {
+    return;
+  }
 #endif
 
-
-    MAC_Netstk->phy->off(p_err);
+  pmac_netstk->phy->off(p_err);
 }
 
 
@@ -215,103 +211,101 @@ void MAC_Off(e_nsErr_t *p_err)
  * @param   len         Length of frame to send
  * @param   p_err       Pointer to a variable storing returned error code
  */
-void MAC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
+void mac_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
-    if (p_err == NULL) {
-        return;
-    }
+  if (p_err == NULL) {
+    return;
+  }
 
-    if ((len == 0) ||
-        (p_data == NULL)) {
-        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
-        return;
-    }
+  if ((len == 0) || (p_data == NULL)) {
+    *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+    return;
+  }
 #endif
 
-    LOG_INFO("MAC_TX: Transmit %d bytes.", len );
+  LOG_INFO("MAC_TX: Transmit %d bytes.", len);
 
+  int is_broadcast;
+  uint8_t is_tx_done;
+  uint8_t is_wfa_done;
+  uint8_t tx_retries;
+  uint8_t tx_retriesMax;
+  packetbuf_attr_t is_ack_req;
+  e_rt_tmr_state_t wfa_tmr_state;
 
-    int is_broadcast;
-    uint8_t is_tx_done;
-    uint8_t is_wfa_done;
-    uint8_t tx_retries;
-    uint8_t tx_retriesMax;
-    packetbuf_attr_t is_ack_req;
-    LIB_TMR_STATE wfa_tmr_state;
+  /* find out if ACK is required */
+  is_broadcast = packetbuf_holds_broadcast();
+  is_ack_req = packetbuf_attr(PACKETBUF_ATTR_RELIABLE);
+  mac_isAckReq = (is_ack_req == 1) &&
+                 (is_broadcast == 0);
 
-    /* find out if ACK is required */
-    is_broadcast = packetbuf_holds_broadcast();
-    is_ack_req = packetbuf_attr(PACKETBUF_ATTR_RELIABLE);
-    MAC_IsAckReq = (is_ack_req == 1) &&
-                   (is_broadcast == 0);
+  /*
+   * Transmission handling
+   */
+  tx_retriesMax = packetbuf_attr(PACKETBUF_ATTR_MAX_MAC_TRANSMISSIONS);
+  tx_retries = 0;
+  is_tx_done = FALSE;
+  is_wfa_done = FALSE;
+  do {
+    /* transmission attempt begins with CSMA operation */
+    mac_csma(&mac_txErr);
+
+    tx_retries++;
+    LOG_INFO("MAC_TX: Attempt %d.", tx_retries);
+
+    if (mac_txErr != NETSTK_ERR_CHANNEL_ACESS_FAILURE) {
+      /* when channel is clear, attempt to transmit packet */
+      pmac_netstk->phy->send(p_data, len, &mac_txErr);
+
+      if (mac_isAckReq == FALSE) {
+        is_tx_done = TRUE;
+      } else {
+        /* ACK is required then start Wait-For-ACK timer */
+        rt_tmr_stop(&mac_tmrWfa);
+        rt_tmr_start(&mac_tmrWfa);
+
+        /* wait for ACK */
+        mac_txErr = NETSTK_ERR_TX_NOACK;
+        do {
+          /* poll for state of WFA timer */
+          wfa_tmr_state = rt_tmr_getState(&mac_tmrWfa);
+          pmac_netstk->phy->ioctrl(NETSTK_CMD_RX_BUF_READ, NULL, p_err);
+          /*
+           * Wait-For-ACK is declared as done if one of following
+           * conditions is met:
+           * (1)  WFA timeout is over
+           * (2)  MAC_TxErr is set to NETSTK_ERR_NONE, which is expected
+           *      to happen in MAC_Recv()
+           */
+          is_wfa_done = (wfa_tmr_state != E_RT_TMR_STATE_RUNNING) ||
+                        (mac_txErr == NETSTK_ERR_NONE);
+        } while (is_wfa_done == FALSE);
+
+        /* stop Wait-For-ACK timer */
+        rt_tmr_stop(&mac_tmrWfa);
+      }
+    } else {
+      LOG_INFO("MAC_TX: CH-ERR.");
+    }
 
     /*
-     * Transmission handling
+     * Transmission attempt is declared as finished when one of following
+     * conditions is met.
+     * (1)  Transmission is succeeded
+     * (2)  CSMA declares channel busy while attempting to transmit
+     * (3)  Transmission retry exceeds maximum
      */
-    tx_retriesMax = packetbuf_attr(PACKETBUF_ATTR_MAX_MAC_TRANSMISSIONS);
-    tx_retries = 0;
-    is_tx_done = FALSE;
-    is_wfa_done = FALSE;
-    do {
-        /* transmission attempt begins with CSMA operation */
-        MAC_CSMA(&MAC_TxErr);
+    is_tx_done = ((mac_txErr  == NETSTK_ERR_NONE) ||
+                  (tx_retries >= tx_retriesMax));
+  } while (is_tx_done == FALSE);
+  LOG_INFO("MAC_TX: --> Done - TX Status %d (%d/%d retries).", mac_txErr, tx_retries, tx_retriesMax);
 
-        tx_retries++;
-        LOG_INFO("MAC_TX: Attempt %d.",tx_retries);
-        /* when channel is clear, attempt to transmit packet */
-        if (MAC_TxErr != NETSTK_ERR_CHANNEL_ACESS_FAILURE) {
-            /* issue PHY to transmit packet */
-            MAC_Netstk->phy->send(p_data, len, &MAC_TxErr);
-
-            /* Auto-ACK */
-            if (is_ack_req == 0 || is_broadcast == 1) {
-                is_tx_done = TRUE;
-            } else {
-                /* start Wait-For-ACK timer */
-                Tmr_Start(&MAC_TmrWfa);
-
-                /* Wait for ACK */
-                MAC_TxErr = NETSTK_ERR_TX_NOACK;
-                do {
-                    /* poll for state of WFA timer */
-                    wfa_tmr_state = Tmr_StateGet(&MAC_TmrWfa);
-                    MAC_Netstk->phy->ioctrl(NETSTK_CMD_RX_BUF_READ, NULL, p_err);
-                    /*
-                     * Wait-For-ACK is declared as done if one of following
-                     * conditions is met:
-                     * (1)  WFA timeout is over
-                     * (2)  MAC_TxErr is set to NETSTK_ERR_NONE, which is expected
-                     *      to happen in MAC_Recv()
-                     */
-                    is_wfa_done = (wfa_tmr_state != LIB_TMR_STATE_RUNNING) ||
-                                  (MAC_TxErr == NETSTK_ERR_NONE);
-                } while (is_wfa_done == FALSE);
-
-                /* stop Wait-For-ACK timer */
-                Tmr_Stop(&MAC_TmrWfa);
-            }
-        } else {
-            LOG_INFO("MAC_TX: CH-ERR.");
-        }
-
-        /*
-         * Transmission attempt is declared as finished when one of following
-         * conditions is met.
-         * (1)  Transmission is succeeded
-         * (2)  CSMA declares channel busy while attempting to transmit
-         * (3)  Transmission retry exceeds maximum
-         */
-        is_tx_done = ((MAC_TxErr == NETSTK_ERR_NONE) ||
-                     (tx_retries > tx_retriesMax));
-    } while (is_tx_done == FALSE);
-
-    LOG_INFO("MAC_TX: --> Done - TX Status %d (%d/%d retries).", MAC_TxErr, tx_retries, tx_retriesMax );
-    /* signal upper layer */
-    MAC_IsAckReq = 0;
-    MAC_CbTxFnct(MAC_CbTxArg, &MAC_TxErr);
-    MAC_TxErr = NETSTK_ERR_NONE;
-    *p_err = MAC_TxErr;
+  /* signal upper layer */
+  mac_isAckReq = 0;
+  mac_cbTxFnct(pmac_cbTxArg, &mac_txErr);
+  mac_txErr = NETSTK_ERR_NONE;
+  *p_err = mac_txErr;
 }
 
 
@@ -322,78 +316,73 @@ void MAC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
  * @param   len         Length of frame to receive
  * @param   p_err       Pointer to a variable storing returned error code
  */
-void MAC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
+void mac_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
-    if (p_err == NULL) {
-        return;
-    }
+  if (p_err == NULL) {
+    return;
+  }
 
-    if ((len == 0) ||
-        (p_data == NULL)) {
-        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
-        return;
-    }
+  if ((len == 0) || (p_data == NULL)) {
+    *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+    return;
+  }
 #endif
 
-    int hdrlen;
-    uint8_t is_acked;
-    uint8_t exp_pkt_seq;
-    frame802154_t frame;
+  int hdrlen;
+  uint8_t is_acked;
+  uint8_t exp_pkt_seq;
+  frame802154_t frame;
 
-    /* set returned error code to default */
-    *p_err = NETSTK_ERR_NONE;
+  /* set returned error code to default */
+  *p_err = NETSTK_ERR_NONE;
 
-    /* frames with length greater than supported by the packetbuf shall be
-     * discarded. Otherwise it leads to buffer overflow when using memcpy to
-     * store frame into the packet buffer */
-    if (len > PACKETBUF_SIZE) {
-        *p_err = NETSTK_ERR_INVALID_FRAME;
-        return;
+  /* frames with length greater than supported by the packetbuf shall be
+   * discarded. Otherwise it leads to buffer overflow when using memcpy to
+   * store frame into the packet buffer */
+  if (len > PACKETBUF_SIZE) {
+    *p_err = NETSTK_ERR_INVALID_FRAME;
+    return;
+  }
+
+  /* Parsing but not reducing header as that will be then handled by DLLC */
+  hdrlen = frame802154_parse(p_data, len, &frame);
+  if (hdrlen == 0) {
+    *p_err = NETSTK_ERR_INVALID_FRAME;
+    return;
+  }
+
+  if (mac_isAckReq) {
+    /*
+     * When ACK is required, frames other than ACK shall be discarded
+     */
+    /* check if this is expected ACK */
+    exp_pkt_seq = (uint8_t) packetbuf_attr(PACKETBUF_ATTR_MAC_SEQNO);
+    is_acked = ((frame.seq == exp_pkt_seq) &&
+                (frame.fcf.frame_type == FRAME802154_ACKFRAME));
+    if (is_acked) {
+      mac_txErr = NETSTK_ERR_NONE;
     }
-
-    /* Parsing but not reducing header as that will be then handled by DLLC */
-    hdrlen = frame802154_parse(p_data, len, &frame);
-    if (hdrlen == 0) {
-        *p_err = NETSTK_ERR_INVALID_FRAME;
-        return;
-    }
-
-    if (MAC_IsAckReq) {
-        /*
-         * When ACK is required, frames other than ACK shall be discarded
-         */
-        /* check if this is expected ACK */
-        exp_pkt_seq = (uint8_t )packetbuf_attr(PACKETBUF_ATTR_MAC_SEQNO);
-        is_acked = (frame.seq == exp_pkt_seq &&
-                   (frame.fcf.frame_type == FRAME802154_ACKFRAME));
-        if (is_acked) {
-            MAC_TxErr = NETSTK_ERR_NONE;
+  } else {
+    switch (frame.fcf.frame_type) {
+      case FRAME802154_DATAFRAME:
+      case FRAME802154_CMDFRAME:
+        if ((frame.fcf.ack_required == 1) &&
+            (frame802154_broadcast(&frame) == 0) &&
+            (linkaddr_cmp((linkaddr_t *) frame.dest_addr, &linkaddr_node_addr)) == 1) {
+          mac_txAck(frame.seq, p_err);
         }
-    } else {
-        switch (frame.fcf.frame_type) {
-            case FRAME802154_DATAFRAME:
-            case FRAME802154_CMDFRAME:
-                if ((frame.fcf.ack_required) && (!frame802154_broadcast( &frame )) &&
-                  (linkaddr_cmp((linkaddr_t *)frame.dest_addr, &linkaddr_node_addr)))
-                {
-                    MAC_TxACK(frame.seq, p_err);
-                    if (*p_err != NETSTK_ERR_NONE) {
-                        emb6_errorHandler(p_err);
-                    }
-                }
 
-                /* forward data */
-                MAC_Netstk->dllc->recv( p_data, len, p_err);
-                break;
+        /* signal upper layer of the received packet */
+        pmac_netstk->dllc->recv(p_data, len, p_err);
+        break;
 
-            default:
-                *p_err = NETSTK_ERR_INVALID_FRAME;
-                break;
-        }
+      default:
+        *p_err = NETSTK_ERR_INVALID_FRAME;
+        break;
     }
-
-    LOG_INFO("MAC_RX: Received %d bytes.", len );
+  }
+  LOG_INFO("MAC_RX: Received %d bytes.", len);
 }
 
 
@@ -404,33 +393,32 @@ void MAC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
  * @param   p_val       Pointer to a variable related to the command
  * @param   p_err       Pointer to a variable storing returned error code
  */
-void MAC_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
+void mac_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
-    if (p_err == NULL) {
-        return;
-    }
+  if (p_err == NULL) {
+    return;
+  }
 #endif
 
+  *p_err = NETSTK_ERR_NONE;
+  switch (cmd) {
+    case NETSTK_CMD_TX_CBFNCT_SET:
+      if (p_val == NULL) {
+        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+      } else {
+        mac_cbTxFnct = (nsTxCbFnct_t) p_val;
+      }
+      break;
 
-    *p_err = NETSTK_ERR_NONE;
-    switch (cmd) {
-        case NETSTK_CMD_TX_CBFNCT_SET:
-            if (p_val == NULL) {
-                *p_err = NETSTK_ERR_INVALID_ARGUMENT;
-            } else {
-                MAC_CbTxFnct = (nsTxCbFnct_t)p_val;
-            }
-            break;
+    case NETSTK_CMD_TX_CBARG_SET:
+      pmac_cbTxArg = p_val;
+      break;
 
-        case NETSTK_CMD_TX_CBARG_SET:
-            MAC_CbTxArg = p_val;
-            break;
-
-        default:
-            MAC_Netstk->phy->ioctrl(cmd, p_val, p_err);
-            break;
-    }
+    default:
+      pmac_netstk->phy->ioctrl(cmd, p_val, p_err);
+      break;
+  }
 }
 
 
@@ -439,50 +427,46 @@ void MAC_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
  *
  * @param   seq     Frame sequence number of the outgoing ACK
  */
-static void MAC_TxACK(uint8_t seq, e_nsErr_t *p_err)
+static void mac_txAck(uint8_t seq, e_nsErr_t *p_err)
 {
-    frame802154_t frame;
-    uint8_t hdr_len, alloc_ok;
+  frame802154_t frame;
+  uint8_t hdr_len, alloc_ok;
+  /* initialize */
+  *p_err = NETSTK_ERR_NONE;
+  memset(&frame, 0, sizeof(frame));
+  packetbuf_clear();
 
+  /* Build the FCF. */
+  frame.fcf.frame_type = FRAME802154_ACKFRAME;
+  frame.fcf.security_enabled = 0;
+  frame.fcf.frame_pending = 0;
+  frame.fcf.ack_required = 0;
+  frame.fcf.panid_compression = 0;
 
-    /* initialize */
-    *p_err = NETSTK_ERR_NONE;
-    memset(&frame, 0, sizeof(frame));
-    packetbuf_clear();
+  /* Insert IEEE 802.15.4 (2003) version bits. */
+  frame.fcf.frame_version = FRAME802154_IEEE802154_2003;
 
-    /* Build the FCF. */
-    frame.fcf.frame_type = FRAME802154_ACKFRAME;
-    frame.fcf.security_enabled = 0;
-    frame.fcf.frame_pending = 0;
-    frame.fcf.ack_required = 0;
-    frame.fcf.panid_compression = 0;
+  /* Increment and set the data sequence number. */
+  frame.seq = seq;
 
-    /* Insert IEEE 802.15.4 (2003) version bits. */
-    frame.fcf.frame_version = FRAME802154_IEEE802154_2003;
+  /* Complete the addressing fields. */
+  frame.fcf.src_addr_mode = FRAME802154_NOADDR;
+  frame.fcf.dest_addr_mode = FRAME802154_NOADDR;
 
-    /* Increment and set the data sequence number. */
-    frame.seq = seq;
+  /* allocate buffer for MAC header */
+  hdr_len = frame802154_hdrlen(&frame);
+  alloc_ok = packetbuf_hdralloc(hdr_len);
+  if (alloc_ok == 0) {
+    *p_err = NETSTK_ERR_BUF_OVERFLOW;
+    return;
+  }
 
-    /* Complete the addressing fields. */
-    frame.fcf.src_addr_mode = FRAME802154_NOADDR;
-    frame.fcf.dest_addr_mode = FRAME802154_NOADDR;
+  /* write the header */
+  frame802154_create(&frame, packetbuf_hdrptr());
 
-    /* allocate buffer for MAC header */
-    hdr_len = frame802154_hdrlen(&frame);
-    alloc_ok = packetbuf_hdralloc(hdr_len);
-    if (alloc_ok == 0) {
-        *p_err = NETSTK_ERR_BUF_OVERFLOW;
-        return;
-    }
-
-    /* write the header */
-    frame802154_create(&frame, packetbuf_hdrptr());
-
-    /* Issue next lower layer to transmit ACK */
-    MAC_Netstk->phy->send(packetbuf_hdrptr(),
-                          packetbuf_totlen(),
-                          p_err);
-    LOG_INFO("MAC_TX: ACK %d.", frame.seq );
+  /* Issue next lower layer to transmit ACK */
+  pmac_netstk->phy->send(packetbuf_hdrptr(), packetbuf_totlen(), p_err);
+  LOG_INFO("MAC_TX: ACK %d.", frame.seq);
 }
 
 
@@ -491,46 +475,45 @@ static void MAC_TxACK(uint8_t seq, e_nsErr_t *p_err)
  *
  * @param   p_err   Pointer to a variable storing returned error code
  */
-static void MAC_CSMA(e_nsErr_t *p_err)
+static void mac_csma(e_nsErr_t *p_err)
 {
-    uint32_t unit_backoff;
-    uint32_t nb;
-    uint32_t be;
-    uint32_t min_be = 5;
-    uint32_t max_backoff = 5;
-    uint32_t delay = 0;
-    uint32_t max_random;
+  uint32_t unit_backoff;
+  uint32_t delay = 0;
+  uint32_t max_random;
+  uint8_t nb;
+  uint8_t be;
+  uint8_t min_be = 3;
+  uint8_t max_be = 5;
+  uint8_t max_backoff = 4;
 
+  nb = 0;
+  be = min_be;
+  unit_backoff = 20 * 20; /* unit backoff period = 20 * symbol periods [us] */
+  *p_err = NETSTK_ERR_NONE;
 
-    nb = 0;
-    be = min_be;
-    unit_backoff = 20 * 20; /* Unit backoff period = 20 * symbol periods [us] */
-    *p_err = NETSTK_ERR_NONE;
+  /* perform CCA maximum MaxBackoff time */
+  while (nb <= max_backoff) {
+    /* delay for random (2^BE - 1) unit backoff periods */
+    max_random = (1 << be) - 1;
+    delay = bsp_getrand(max_random);
+    delay *= unit_backoff; // us, symbol period is 20us @50kbps
+    bsp_delay_us(delay);
 
-    while (nb <= max_backoff) {                                     /* NB > MaxBackoff: Failure     */
-        /*
-         * Delay for random (2^BE - 1) unit backoff periods
-         */
-        max_random = (1 << be) - 1;
-        delay = bsp_getrand(max_random);
-        delay *= unit_backoff; // us, symbol period is 20us @50kbps
-        bsp_delay_us(delay);
-
-
-        /*
-         * Perform CCA
-         */
-        MAC_Netstk->phy->ioctrl(NETSTK_CMD_RF_CCA_GET, 0, p_err);
-        if (*p_err == NETSTK_ERR_NONE) {                            /* Channel idle ?               */
-            break;                                                  /*   Success                    */
-        } else {                                                    /* Else                         */
-            nb++;                                                   /*   NB = NB + 1                */
-            be = ((be + 1) < min_be) ? (be + 1) : (min_be);         /*   BE = min(BE + 1, MinBE)    */
-        }
+    /*
+     * Perform CCA
+     */
+    pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_CCA_GET, 0, p_err);
+    if (*p_err == NETSTK_ERR_NONE) {
+      /* channel idle is detected, then terminate CSMA */
+      break;
+    } else {
+      /* channel busy is detected */
+      nb++;
+      be = ((be + 1) < max_be) ? (be + 1) : (max_be);
     }
-    LOG_INFO("MAC_TX: NB %d.", nb );
+  }
+  LOG_INFO("MAC_TX: NB %d.", nb);
 }
-
 
 /*
 ********************************************************************************

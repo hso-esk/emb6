@@ -77,8 +77,7 @@
 #include "em_usart.h"
 #include "em_timer.h"
 #include "gpiointerrupt.h"
-
-#include "lib_tmr.h"
+#include "rt_tmr.h"
 
 /*==============================================================================
                                      MACROS
@@ -380,7 +379,8 @@ static void _hal_tcCb( void )
         l_hal_sec++;
     l_hal_tick++;
 
-    Tmr_Update();
+  /* update real-time timers*/
+  rt_tmr_update();
 } /* _isr_tc_interrupt() */
 
 

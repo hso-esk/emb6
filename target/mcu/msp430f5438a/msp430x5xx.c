@@ -71,10 +71,8 @@
 #include "uart.h"
 #include "rtc.h"
 #include "infoflash.h"
+#include "rt_tmr.h"
 
-#if 1
-#include "lib_tmr.h"
-#endif
 
 /*
 ********************************************************************************
@@ -130,7 +128,7 @@ static void _hal_isrSysTick( void *p_arg )
 {
     hal_ticks++;
     if ((hal_ticks % TARGET_CFG_SYSTICK_SCALER) == 0) {
-        Tmr_Update();
+        rt_tmr_update();
     }
 }
 
