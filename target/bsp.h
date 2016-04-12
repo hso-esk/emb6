@@ -234,14 +234,14 @@ uint16_t bsp_led(en_bspLedIdx_t ui_led, en_bspLedAction_t en_ledAction);
  *
  */
 /*============================================================================*/
-#define     bsp_enterCritical()             hal_enterCritical()
+void bsp_enterCritical(void);
 
 /*============================================================================*/
 /** \brief  This function exits critical section on the target
  *
  */
 /*============================================================================*/
-#define     bsp_exitCritical()              hal_exitCritical()
+void bsp_exitCritical(void);
 
 /*============================================================================*/
 /** \brief  This function initialize external interrupt on the target

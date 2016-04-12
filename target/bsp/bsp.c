@@ -86,6 +86,7 @@
  =============================================================================*/
 static    uint8_t    c_wtgStop = 1;
 static    struct    etimer st_ledsTims[LEDS_SUPPORTED];
+static        uint8_t bsp_numNestedCriticalSection;
 /*==============================================================================
                                 LOCAL CONSTANTS
  =============================================================================*/
@@ -133,6 +134,8 @@ uint8_t bsp_init (s_ns_t * ps_ns)
     if (!board_conf(ps_ns))
         return 0;
 
+  /* initialize local variables */
+  bsp_numNestedCriticalSection = 0;
     random_init(hal_getrand());
 
     /* Normal exit*/
@@ -275,6 +278,44 @@ uint32_t bsp_getrand(uint32_t max)
     return ret;
 }
 
+
+/*============================================================================*/
+/*  bsp_enterCritical()                                                       */
+/*============================================================================*/
+void bsp_enterCritical(void)
+{
+  /*
+   * if bsp_numNestedCriticalSection is non-zero, then MCU is already in critical sections.
+   * therefore there is no need to re-enter critical section.
+   * Otherwise, hal_enterCritical() is called.
+   */
+  if (bsp_numNestedCriticalSection == 0) {
+    hal_enterCritical();
+  }
+
+  /* increase number of nested critical sections */
+  bsp_numNestedCriticalSection++;
+} /* bsp_enterCritical() */
+
+
+/*============================================================================*/
+/*  bsp_exitCritical()                                                        */
+/*============================================================================*/
+void bsp_exitCritical(void)
+{
+  /*
+   * If bsp_numNestedCriticalSection is non-zero, meaning that MCU is in nested critical sections.
+   * Therefore it is NOT allowed to exit critical section.
+   * Leaving critical section MUST be done in the most outer critical section.
+   */
+  if (bsp_numNestedCriticalSection > 0) {
+    bsp_numNestedCriticalSection--;
+    if (bsp_numNestedCriticalSection == 0) {
+      /* the most outer critical section */
+      hal_exitCritical();
+    }
+  }
+} /* bsp_exitCritical() */
 
 /** @} */
 /** @} */
