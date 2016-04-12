@@ -399,7 +399,7 @@ typedef enum netstk_rf_operating_mode
 *                            DATA TYPES DECLARATIONS
 ********************************************************************************
 */
-typedef uint16_t        NETSTK_DEV_ID;
+typedef uint16_t        netstk_devid_t;
 
 typedef void (* mac_callback_t)(void *ptr, int status, int transmissions);
 
