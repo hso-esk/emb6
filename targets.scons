@@ -205,18 +205,6 @@ trg += [{
     'bsp'       : get_descr(bsp, 'efm32stk3600_rf212b')
 }]
 
-trg += [{
-    'id'        : 'ds_stk3600_cc112x',
-    'apps_conf' : [ dtls_srv ],
-    'bsp'       : get_descr(bsp, 'efm32stk3600_cc112x')
-}]
-
-trg += [{
-    'id'        : 'dc_stk3600_cc112x',
-    'apps_conf' : [ dtls_cli ],
-    'bsp'       : get_descr(bsp, 'efm32stk3600_cc112x')
-}]
-
 #++++++++++ DTLS ++++++++++#
 trg += [{
     'id'        : 'ds12',	#_stk3600_cc120x
