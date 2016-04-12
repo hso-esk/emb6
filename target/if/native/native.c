@@ -113,7 +113,7 @@ static void _native_handler( c_event_t c_event, p_data_t p_data );
                              STRUCTURES AND OTHER TYPEDEFS
  ==============================================================================*/
 
-const s_nsRF_t RFDrvNative = {
+const s_nsRF_t rf_driver_native = {
         "RF Native",
         _native_init,
         _native_on,

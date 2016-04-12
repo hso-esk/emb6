@@ -180,26 +180,31 @@ int8_t demo_extifInit(void)
     return 1;
 }
 
-uint8_t demo_extifConf(s_ns_t* pst_netStack)
+uint8_t demo_extifConf(s_ns_t* p_netstk)
 {
-    uint8_t c_ret = 1;
+  uint8_t c_ret = 1;
 
-    if (pst_netStack != NULL) {
-        if (pst_netStack->hc == &slipnet_driver) {}
-        else if (pst_netStack->dllsec == &nullsec_driver) {}
-        else if (pst_netStack->frame == &framer_noframer) {}
-        else {
-            c_ret = 0;
-        }
-
-        pst_netStack->hc     = &slipnet_driver;
-        pst_netStack->dllsec  = &nullsec_driver;
-        pst_netStack->frame  = &framer_noframer;
-        pst_netStack->dllc = &DLLCDrvNull;
-        /* Transceiver interface is defined by @ref board_conf function*/
-        /*pst_netStack->inif   = $<some_transceiver>;*/
+  if (p_netstk != NULL) {
+    if (p_netstk->c_configured == 0) {
+      p_netstk->hc     = &hc_driver_slipnet;
+      p_netstk->frame  = &framer_noframer;
+      p_netstk->dllsec = &dllsec_driver_null;
+      p_netstk->dllc   = &dllc_driver_null;
+      c_ret = 1;
+    } else {
+      if ((p_netstk->hc     == &hc_driver_slipnet) &&
+          (p_netstk->frame  == &framer_noframer) &&
+          (p_netstk->dllsec == &dllsec_driver_null) &&
+          (p_netstk->dllc   == &dllc_driver_null)) {
+        c_ret = 1;
+      } else {
+        p_netstk = NULL;
+        c_ret = 0;
+      }
     }
-    return (c_ret);
+  }
+
+  return (c_ret);
 }
 
 /*---------------------------------------------------------------------------*/

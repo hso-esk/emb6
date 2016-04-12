@@ -558,12 +558,12 @@ extern const s_nsSocket_t tcp_socket_driver;*/
 ********************************************************************************
 */
 /*! Supported headers compression handlers */
-extern const s_nsHeadComp_t     sicslowpan_driver;
+extern const s_nsHeadComp_t     hc_driver_sicslowpan;
 
 
 /*! This driver are pretending to be a hc layer
  *  for sniffing data and sending them via USART     */
-extern const s_nsHeadComp_t     slipnet_driver;
+extern const s_nsHeadComp_t     hc_driver_slipnet;
 
 
 /*
@@ -572,7 +572,7 @@ extern const s_nsHeadComp_t     slipnet_driver;
 ********************************************************************************
 */
 /*! Supported link layer security handlers */
-extern const s_nsdllsec_t        nullsec_driver;
+extern const s_nsdllsec_t       dllsec_driver_null;
 
 
 /*
@@ -591,25 +591,25 @@ extern const s_nsFramer_t       framer_nullframer;
 *                           DLLC DRIVERS DECLARATIONS
 ********************************************************************************
 */
-extern  const s_nsDLLC_t    DLLCDrvNull;
-extern  const s_nsDLLC_t    DLLCDrv802154;
+extern  const s_nsDLLC_t        dllc_driver_null;
+extern  const s_nsDLLC_t        dllc_driver_802154;
 
 /*
 ********************************************************************************
 *                           MAC DRIVERS DECLARATIONS
 ********************************************************************************
 */
-extern  const s_nsMAC_t     MACDrvNull;
-extern  const s_nsMAC_t     MACDrv802154;
-extern  const s_nsMAC_t     MACDrv802154ULE;
+extern  const s_nsMAC_t         mac_driver_null;
+extern  const s_nsMAC_t         mac_driver_802154;
+extern  const s_nsMAC_t         mac_driver_ule;
 
 /*
 ********************************************************************************
 *                           PHY DRIVERS DECLARATIONS
 ********************************************************************************
 */
-extern  const s_nsPHY_t     PHYDrvNull;
-extern  const s_nsPHY_t     PHYDrv802154;
+extern  const s_nsPHY_t         phy_driver_null;
+extern  const s_nsPHY_t         phy_driver_802154;
 
 
 /*
@@ -618,13 +618,12 @@ extern  const s_nsPHY_t     PHYDrv802154;
 ********************************************************************************
 */
 
-extern  const s_nsRF_t      RFDrvNull;
-extern  const s_nsRF_t      RFDrvNative;
-extern  const s_nsRF_t      rf212_driver;
-extern  const s_nsRF_t      rf212b_driver;
-extern  const s_nsRF_t      RFDrvCC112x;
-extern  const s_nsRF_t      RFDrvCC120x;
-
+extern  const s_nsRF_t          rf_driver_null;
+extern  const s_nsRF_t          rf_driver_native;
+extern  const s_nsRF_t          rf_driver_at212;
+extern  const s_nsRF_t          rf_driver_at212b;
+extern  const s_nsRF_t          rf_driver_ticc112x;
+extern  const s_nsRF_t          rf_driver_ticc120x;
 
 /*==============================================================================
                                  API FUNCTIONS

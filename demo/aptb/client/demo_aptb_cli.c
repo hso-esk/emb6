@@ -254,32 +254,29 @@ int8_t demo_aptbInit(void)
 /*----------------------------------------------------------------------------*/
 uint8_t demo_aptbConf(s_ns_t* pst_netStack)
 {
-    uint8_t c_ret = 1;
+  uint8_t c_ret = 1;
 
-    /*
-     * By default stack
-     */
-    if (pst_netStack != NULL) {
-        if (!pst_netStack->c_configured) {
-            pst_netStack->hc     = &sicslowpan_driver;
-            pst_netStack->dllsec  = &nullsec_driver;
-            pst_netStack->frame  = &framer_802154;
-            pst_netStack->c_configured = 1;
-            /* Transceiver interface is defined by @ref board_conf function*/
-            /* pst_netStack->inif   = $<some_transceiver>;*/
-        } else {
-            if ((pst_netStack->hc == &sicslowpan_driver)   &&
-                (pst_netStack->dllsec == &nullsec_driver)   &&
-                (pst_netStack->frame == &framer_802154)) {
-                /* right configuration */
-            }
-            else {
-                pst_netStack = NULL;
-                c_ret = 0;
-            }
-        }
+  /*
+   * By default stack
+   */
+  if (pst_netStack != NULL) {
+    if (!pst_netStack->c_configured) {
+      pst_netStack->hc = &hc_driver_sicslowpan;
+      pst_netStack->dllsec = &dllsec_driver_null;
+      pst_netStack->frame = &framer_802154;
+      pst_netStack->c_configured = 1;
+    } else {
+      if ((pst_netStack->hc == &hc_driver_sicslowpan) &&
+          (pst_netStack->dllsec == &dllsec_driver_null) &&
+          (pst_netStack->frame == &framer_802154)) {
+        /* right configuration */
+      } else {
+        pst_netStack = NULL;
+        c_ret = 0;
+      }
     }
-    return (c_ret);
+  }
+  return (c_ret);
 }/* demo_aptbConf()  */
 /** @} */
 /** @} */

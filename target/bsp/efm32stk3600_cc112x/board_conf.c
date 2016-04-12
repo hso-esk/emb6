@@ -71,21 +71,20 @@
 
 uint8_t board_conf(s_ns_t *p_netstk)
 {
-    uint8_t c_ret = 1;
+  uint8_t c_ret = 1;
 
+  if (p_netstk != NULL) {
+    p_netstk->dllc = &dllc_driver_802154;
+    p_netstk->mac  = &mac_driver_802154;
+    p_netstk->phy  = &phy_driver_802154;
+    p_netstk->rf   = &rf_driver_ticc112x;
+  }
+  else {
+    LOG_ERR("Network stack pointer is NULL");
+    c_ret = 0;
+  }
 
-    if (p_netstk != NULL) {
-        p_netstk->dllc  = &DLLCDrv802154;
-        p_netstk->mac   = &MACDrv802154;
-        p_netstk->phy   = &PHYDrv802154;
-        p_netstk->rf    = &RFDrvCC112x;
-    }
-    else {
-        LOG_ERR("Network stack pointer is NULL");
-        c_ret = 0;
-    }
-
-    return c_ret;
+  return c_ret;
 }
 /** @} */
 /** @} */

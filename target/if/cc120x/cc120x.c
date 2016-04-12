@@ -1391,7 +1391,7 @@ static void cc120x_opModeSet(e_nsRfOpMode mode, e_nsErr_t *p_err)
 *                               DRIVER DEFINITION
 ********************************************************************************
 */
-const s_nsRF_t RFDrvCC120x =
+const s_nsRF_t rf_driver_ticc120x =
 {
    "CC120X",
     cc120x_Init,
