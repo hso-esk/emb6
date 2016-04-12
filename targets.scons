@@ -331,7 +331,7 @@ trg += [{
 }]
 
 trg += [{
-    'id'        : 'cs_moses_cc112x',
+    'id'        : 'cs_moses',
     'apps_conf' : [ coap_srv, udp_alive ],
     'bsp'       : get_descr(bsp, 'moses')
 }]
