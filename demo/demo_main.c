@@ -54,6 +54,7 @@
 /*! \file   demo_main.c
 
     \author Artem Yushev,
+            Phuong Nguyen
 
     \brief  Main function.
 
@@ -183,149 +184,151 @@ static void loc_stackConf(void)
 static void loc_demoAppsConf(s_ns_t* pst_netStack, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
-    if (p_err == NULL) {
-        emb6_errorHandler(p_err);
-    }
+  if (p_err == NULL) {
+      emb6_errorHandler(p_err);
+  }
 
-    if (pst_netStack == NULL) {
-        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
-        return;
-    }
+  if (pst_netStack == NULL) {
+      *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+      return;
+  }
 #endif
 
-    #if DEMO_USE_EXTIF
-    demo_extifConf(pst_netStack);
-    #endif
+  #if DEMO_USE_EXTIF
+  demo_extifConf(pst_netStack);
+  #endif
 
-    #if DEMO_USE_COAP
-    demo_coapConf(pst_netStack);
-    #endif
+  #if DEMO_USE_COAP
+  demo_coapConf(pst_netStack);
+  #endif
 
-    #if DEMO_USE_MDNS
-    demo_mdnsConf(pst_netStack);
-    #endif
+  #if DEMO_USE_MDNS
+  demo_mdnsConf(pst_netStack);
+  #endif
 
-    #if DEMO_USE_SNIFFER
-    demo_sniffConf(pst_netStack);
-    #endif
+  #if DEMO_USE_SNIFFER
+  demo_sniffConf(pst_netStack);
+  #endif
 
-    #if DEMO_USE_UDPALIVE
-    demo_udpAliveConf(pst_netStack);
-    #endif
+  #if DEMO_USE_UDPALIVE
+  demo_udpAliveConf(pst_netStack);
+  #endif
 
-    #if DEMO_USE_UDP_SOCKET
-    demo_udpSocketCfg(pst_netStack);
-    #endif
+  #if DEMO_USE_UDP_SOCKET
+  demo_udpSocketCfg(pst_netStack);
+  #endif
 
-    #if DEMO_USE_APTB
-    demo_aptbConf(pst_netStack);
-    #endif
+  #if DEMO_USE_APTB
+  demo_aptbConf(pst_netStack);
+  #endif
 
-    #if DEMO_USE_UDP
-    demo_udpSockConf(pst_netStack);
-    #endif
+  #if DEMO_USE_UDP
+  demo_udpSockConf(pst_netStack);
+  #endif
 
-    #if DEMO_USE_MQTT
-    demo_mqttConf(pst_netStack);
-    #endif
+  #if DEMO_USE_MQTT
+  demo_mqttConf(pst_netStack);
+  #endif
 
-    #if DEMO_USE_TESTSUITE
-    demo_testsuiteConf(pst_netStack);
-    #endif
+  #if DEMO_USE_TESTSUITE
+  demo_testsuiteConf(pst_netStack);
+  #endif
 
-    #if DEMO_USE_DTLS
-    demo_dtlsConf(pst_netStack);
-    #endif
+  #if DEMO_USE_DTLS
+  demo_dtlsConf(pst_netStack);
+  #endif
 
-    /* set returned error code */
-    *p_err = NETSTK_ERR_NONE;
+  /* set returned error code */
+  *p_err = NETSTK_ERR_NONE;
 }
 
 static uint8_t loc_demoAppsInit(void)
 {
 
-    #if DEMO_USE_EXTIF
-    if (!demo_extifInit()) {
-        return 0;
-    }
-    #endif
+  #if DEMO_USE_EXTIF
+  if (!demo_extifInit()) {
+      return 0;
+  }
+  #endif
 
-    #if DEMO_USE_COAP
-    if (!demo_coapInit()) {
-        return 0;
-    }
-    #endif
+  #if DEMO_USE_COAP
+  if (!demo_coapInit()) {
+      return 0;
+  }
+  #endif
 
-    #if DEMO_USE_MDNS
-    if (!demo_mdnsInit()) {
-    	return 0;
-    }
-    #endif
+  #if DEMO_USE_MDNS
+  if (!demo_mdnsInit()) {
+    return 0;
+  }
+  #endif
 
-    #if DEMO_USE_SNIFFER
-    if (!demo_sniffInit()) {
-        return 0;
-    }
-    #endif
+  #if DEMO_USE_SNIFFER
+  if (!demo_sniffInit()) {
+      return 0;
+  }
+  #endif
 
-    #if DEMO_USE_UDPALIVE
-    if (!demo_udpAliveInit()) {
-        return 0;
-    }
-    #endif
+  #if DEMO_USE_UDPALIVE
+  if (!demo_udpAliveInit()) {
+      return 0;
+  }
+  #endif
 
-    #if DEMO_USE_UDP_SOCKET
-    if (!demo_udpSocketInit()) {
-        return 0;
-    }
-    #endif
+  #if DEMO_USE_UDP_SOCKET
+  if (!demo_udpSocketInit()) {
+      return 0;
+  }
+  #endif
 
-    #if DEMO_USE_APTB
-    if (!demo_aptbInit()) {
-        return 0;
-    }
-    #endif
+  #if DEMO_USE_APTB
+  if (!demo_aptbInit()) {
+      return 0;
+  }
+  #endif
 
-    #if DEMO_USE_UDP
-    if (!demo_udpSockInit()) {
-        return 0;
-    }
-    #endif
+  #if DEMO_USE_UDP
+  if (!demo_udpSockInit()) {
+      return 0;
+  }
+  #endif
 
-    #if DEMO_USE_MQTT
-    if (!mqtt_init()) {
-        return 0;
-    }
-    #endif
+  #if DEMO_USE_MQTT
+  if (!mqtt_init()) {
+      return 0;
+  }
+  #endif
 
-    #if DEMO_USE_TESTSUITE
-    if (!demo_testsuiteInit()) {
-        return 0;
-    }
-    #endif
+  #if DEMO_USE_TESTSUITE
+  if (!demo_testsuiteInit()) {
+      return 0;
+  }
+  #endif
 
-    #if DEMO_USE_DTLS
-    if (!demo_dtlsInit()) {
-	    return 0;
-    }
-    #endif
+  #if DEMO_USE_DTLS
+  if (!demo_dtlsInit()) {
+    return 0;
+  }
+  #endif
 
-    return 1;
+  return 1;
 }
+
 
 /*==============================================================================
  emb6_errorHandler()
 ==============================================================================*/
 void emb6_errorHandler(e_nsErr_t *p_err)
 {
-    /* turns LEDs on to indicate error */
-    bsp_led(E_BSP_LED_0, E_BSP_LED_ON);
-    LOG_ERR("Program failed");
+  /* turns LEDs on to indicate error */
+  bsp_led(E_BSP_LED_0, E_BSP_LED_ON);
+  LOG_ERR("Program failed");
 
-    /* TODO missing error handling */
-    while (1) {
-    }
+  /* error handling */
+  while (1) {
+  }
 }
+
 
 /*==============================================================================
  main()

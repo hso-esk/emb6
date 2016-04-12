@@ -71,12 +71,12 @@
 
 uint8_t board_conf(s_ns_t* ps_nStack)
 {
-    uint8_t c_ret = 1;
+  uint8_t c_ret = 1;
 
-    hal_gpioPinInit(SAMD20_SPI0_SCK_PIN, BSP_PIN_DIROUTPUT ,BSP_PIN_UP);
-    hal_gpioPinInit(SAMD20_SPI0_MOSI_PIN, BSP_PIN_DIROUTPUT ,BSP_PIN_UP);
-    hal_gpioPinInit(SAMD20_SPI0_MISO_PIN, BSP_PIN_DIRINPUT ,BSP_PIN_UP);
-    hal_gpioPinInit(SAMD20_SPI0_CS_PIN, BSP_PIN_DIROUTPUT ,BSP_PIN_UP);
+  hal_gpioPinInit(SAMD20_SPI0_SCK_PIN, BSP_PIN_DIROUTPUT, BSP_PIN_UP);
+  hal_gpioPinInit(SAMD20_SPI0_MOSI_PIN, BSP_PIN_DIROUTPUT, BSP_PIN_UP);
+  hal_gpioPinInit(SAMD20_SPI0_MISO_PIN, BSP_PIN_DIRINPUT, BSP_PIN_UP);
+  hal_gpioPinInit(SAMD20_SPI0_CS_PIN, BSP_PIN_DIROUTPUT, BSP_PIN_UP);
 
   if (ps_nStack != NULL) {
     ps_nStack->dllc = &dllc_driver_802154;
@@ -88,7 +88,7 @@ uint8_t board_conf(s_ns_t* ps_nStack)
     c_ret = 0;
   }
 
-    return c_ret;
+  return c_ret;
 }
 /** @} */
 /** @} */

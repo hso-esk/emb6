@@ -50,7 +50,7 @@
 
     \brief  emb6 stack initialization source file
 
-    \version 0.0.1
+    \version 0.0.2
 */
 
 /*==============================================================================
@@ -171,59 +171,58 @@ static int8_t loc_emb6DagRootInit(void)
 
 uint8_t loc_emb6NetstackInit(s_ns_t * ps_ns)
 {
-    uint8_t     c_err = 0;
-	uint8_t     is_valid;
-    e_nsErr_t   err;
+  uint8_t c_err = 0;
+  uint8_t is_valid;
+  e_nsErr_t err;
+
+  /* Initialize stack protocols */
+  queuebuf_init();
+  ctimer_init();
   rt_tmr_init();
 
+  /*
+   * Verify stack submodule drivers
+   */
+  is_valid = (ps_ns->rf     != NULL) &&
+             (ps_ns->phy    != NULL) &&
+             (ps_ns->mac    != NULL) &&
+             (ps_ns->dllc   != NULL) &&
+             (ps_ns->dllsec != NULL) &&
+             (ps_ns->hc     != NULL);
+  if (is_valid) {
+    /*
+     * Netstack submodule initializations
+     */
+    ps_ns->rf->init(ps_ns, &err);
+    if (err != NETSTK_ERR_NONE) {
+      emb6_errorHandler(&err);
+    }
 
-    /* Initialize stack protocols */
-    queuebuf_init();
-    ctimer_init();
+    ps_ns->phy->init(ps_ns, &err);
+    if (err != NETSTK_ERR_NONE) {
+      emb6_errorHandler(&err);
+    }
+
+    ps_ns->mac->init(ps_ns, &err);
+    if (err != NETSTK_ERR_NONE) {
+      emb6_errorHandler(&err);
+    }
+
+    ps_ns->dllc->init(ps_ns, &err);
+    if (err != NETSTK_ERR_NONE) {
+      emb6_errorHandler(&err);
+    }
+
+    ps_ns->dllsec->init(ps_ns); /* logical link security    */
+    ps_ns->hc->init(ps_ns);     /* header compressor        */
+    ps_ns->frame->init(ps_ns);  /* sicslowpan driver        */
 
     /*
-     * Verify stack submodule drivers
+     * Initialize TCP/IP stack
      */
-    is_valid = (ps_ns->rf    != NULL) &&
-               (ps_ns->phy   != NULL) &&
-               (ps_ns->mac   != NULL) &&
-               (ps_ns->dllc   != NULL) &&
-               (ps_ns->dllsec != NULL) &&
-               (ps_ns->hc    != NULL);
-    if (is_valid) {
-        /*
-         * Netstack submodule initializations
-         */
-        ps_ns->rf->init(ps_ns, &err);
-        if (err != NETSTK_ERR_NONE) {
-            emb6_errorHandler(&err);
-        }
-
-        ps_ns->phy->init(ps_ns, &err);
-        if (err != NETSTK_ERR_NONE) {
-            emb6_errorHandler(&err);
-        }
-
-        ps_ns->mac->init(ps_ns, &err);
-        if (err != NETSTK_ERR_NONE) {
-            emb6_errorHandler(&err);
-        }
-
-        ps_ns->dllc->init(ps_ns, &err);
-        if (err != NETSTK_ERR_NONE) {
-            emb6_errorHandler(&err);
-        }
-
-        ps_ns->dllsec->init(ps_ns);      /* logical link security    */
-        ps_ns->hc->init(ps_ns);         /* header compressor        */
-        ps_ns->frame->init(ps_ns);      /* sicslowpan driver        */
-
-        /*
-         * Initialize TCP/IP stack
-         */
-        tcpip_init();
-        c_err = 1;
-    }
+    tcpip_init();
+    c_err = 1;
+  }
 
 
 #if EMB6_INIT_ROOT==TRUE
@@ -260,7 +259,7 @@ void emb6_init(s_ns_t* ps_ns, e_nsErr_t *p_err)
     ret = loc_emb6NetstackInit(ps_ns);
     if (ret == 0) {
         *p_err = NETSTK_ERR_INIT;
-        LOG_ERR("Failed to initialise emb6 stack");
+        LOG_ERR("Failed to initialize emb6 stack");
     }else {
         ps_emb6Stack = ps_ns;
     }

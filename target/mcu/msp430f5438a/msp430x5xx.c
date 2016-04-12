@@ -511,18 +511,17 @@ void *hal_spiInit(void)
 uint8_t hal_spiSlaveSel(void *p_spi, bool action)
 {
 #if TARGET_CFG_ARG_CHK_EN
-    if (p_spi == NULL) {
-        return 0;
-    }
+  if (p_spi == NULL) {
+    return 0;
+  }
 #endif
 
-
-    if (action == TRUE) {
-        spi_rfSelect();
-    } else {
-        spi_rfDeselect();
-    }
-    return 1;
+  if (action == TRUE) {
+    spi_rfSelect();
+  } else {
+    spi_rfDeselect();
+  }
+  return 1;
 }
 
 void hal_spiTxRx(uint8_t *p_tx, uint8_t *p_rx, uint16_t len)
