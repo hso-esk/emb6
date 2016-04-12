@@ -46,6 +46,7 @@
 /*! \file   bsp.h
 
     \author Artem Yushev, 
+            Phuong Nguyen
 
     \brief  Definition of the API for board support packaged (BSP) used by
             the embetter_main.c demo implementation.
@@ -88,6 +89,7 @@
 #define BSP_PIN_UP                  TRUE
 #define BSP_PIN_DOWN                FALSE
 
+
 /*==============================================================================
                                      ENUMS
 ==============================================================================*/
@@ -116,9 +118,6 @@ typedef enum E_BSP_LED_IDX
     //! Define LED4
     E_BSP_LED_4 = 0x04,
 } en_bspLedIdx_t;
-
-
-
 
 //! Define the action the function bsp_wdt() must provide
 typedef enum E_BSP_WDT_ACTION
@@ -157,9 +156,27 @@ typedef enum E_BSP_GET_TYPE
     E_BSP_GET_TRES
 }en_bspParams_t;
 
+
 /*==============================================================================
                          STRUCTURES AND OTHER TYPEDEFS
 ==============================================================================*/
+
+
+/*==============================================================================
+                               MACROS
+==============================================================================*/
+#define LED_RX_ON()                 bsp_led(E_BSP_LED_0, E_BSP_LED_ON)
+#define LED_RX_OFF()                bsp_led(E_BSP_LED_0, E_BSP_LED_OFF)
+#define LED_TX_ON()                 bsp_led(E_BSP_LED_1, E_BSP_LED_ON)
+#define LED_TX_OFF()                bsp_led(E_BSP_LED_1, E_BSP_LED_OFF)
+#define LED_SCAN_ON()               bsp_led(E_BSP_LED_2, E_BSP_LED_ON)
+#define LED_SCAN_OFF()              bsp_led(E_BSP_LED_2, E_BSP_LED_OFF)
+#define LED_MEAS_ON()               bsp_led(E_BSP_LED_4, E_BSP_LED_ON)
+#define LED_MEAS_OFF()              bsp_led(E_BSP_LED_4, E_BSP_LED_OFF)
+#define LED_ERROR()                 bsp_led(E_BSP_LED_4, E_BSP_LED_ON)
+#define LED_ERR_ON()                bsp_led(E_BSP_LED_4, E_BSP_LED_ON)
+#define LED_ERR_OFF()               bsp_led(E_BSP_LED_4, E_BSP_LED_OFF)
+
 
 /*==============================================================================
                          FUNCTION PROTOTYPES OF THE API
@@ -229,6 +246,7 @@ int bsp_getChar(void);
 /*============================================================================*/
 uint16_t bsp_led(en_bspLedIdx_t ui_led, en_bspLedAction_t en_ledAction);
 
+
 /*============================================================================*/
 /** \brief  This function enters critical section on the target
  *
@@ -244,68 +262,92 @@ void bsp_enterCritical(void);
 void bsp_exitCritical(void);
 
 /*============================================================================*/
-/** \brief  This function initialize external interrupt on the target
+/** \brief  This function will return system ticks
  *
- *  \param  e_intSource     source of an interrupt
- *  \param    fn_p        Callback function pointer
- *
+ *  \retval    ticks
  */
 /*============================================================================*/
-#define     bsp_extIntRegister(e_intSource, e_edge, fn_p) \
-            hal_extiRegister(e_intSource, e_edge, fn_p)
+clock_time_t bsp_getTick(void);
 
-#define     bsp_extIntEnable(e_intSource) \
-            hal_extiEnable(e_intSource)
-
-#define     bsp_extIntDisable(e_intSource) \
-            hal_extiDisable(e_intSource)
-
-#define     bsp_extIntClear(e_intSource) \
-            hal_extiClear(e_intSource)
-
+/*============================================================================*/
+/** \brief  This function will return seconds
+ *
+ *  \retval    seconds
+ */
+/*============================================================================*/
+clock_time_t bsp_getSec(void);
 
 /*============================================================================*/
 /** \brief  This function makes a delay on the target
  *
  *  \param  i_delay Delay in microseconds
- *
  */
 /*============================================================================*/
-#define     bsp_delay_us(i_delay)           hal_delay_us(i_delay)
+void bsp_delay_us(uint32_t i_delay);
 
 /*============================================================================*/
-/** \brief  This function initialize a specific pin
+/** \brief  This function initialize given control pin
  *
- *  \param  e_pinType Type of a a pin
- *    \return err code
+ *  \param  e_pinType    Type of a pin
+ *
+ *  \retval    pointer to a pin
  */
 /*============================================================================*/
-#define     bsp_pinInit(e_pinType)          hal_ctrlPinInit(e_pinType)
+void * bsp_pinInit(en_targetExtPin_t e_pinType);
 
+/*============================================================================*/
+/** \brief  This function control a GPIO pin
+ *
+ *  \param  e_pinAct  action to be taken on the pin
+ *  \param  p_pin     point to the pin description
+ */
+/*============================================================================*/
 uint8_t bsp_pin(en_bspPinAction_t e_pinAct, void * p_pin);
 
-#define     bsp_spiRead             hal_spiRead
-#define     bsp_spiWrite            hal_spiWrite
-#define     bsp_spiTxRx             hal_spiTxRx
-
-
-
 /*============================================================================*/
-/** \brief  This function will manipulate a watchdog timer
- *    \param wdtAct    type of an action with watchdog timer: reset, start or stop.
- */
-/*============================================================================*/
-void bsp_wdt(en_bspWdtAction_t wdtAct);
-
-/*============================================================================*/
-/** \brief  This function will return system ticks
+/** \brief      This function configures external interrupt. By default, the
+ *              external interrupt is disabled after being configured.
  *
+ *  \param          e_extInt            source of an interrupt
+ *  \param          e_edge              edge upon which the interrupt occurs
+ *  \param          pfn_intCallback     callback function pointer
+ *
+ *  \return         none
  */
 /*============================================================================*/
-#define     bsp_getTick()               hal_getTick()
+void bsp_extIntRegister(en_targetExtInt_t e_extInt, en_targetIntEdge_t e_edge,
+    pfn_intCallb_t pfn_intCallback);
 
 /*============================================================================*/
-/** \brief  This function will return seconds
+/** \brief      This function clear state of external interrupt
+ *
+ *  \param          e_extInt            source of an interrupt
+ *
+ *  \return         none
+ */
+/*============================================================================*/
+void bsp_extIntClear(en_targetExtInt_t e_extInt);
+
+/*============================================================================*/
+/** \brief      This function enables external interrupt
+ *
+ *  \param          e_extInt            source of an interrupt
+ *
+ *  \return         none
+ */
+/*============================================================================*/
+void bsp_extIntEnable(en_targetExtInt_t e_extInt);
+
+/*============================================================================*/
+/** \brief      This function disable external interrupt
+ *
+ *  \param          e_extInt            source of an interrupt
+ *
+ *  \return         none
+ */
+/*============================================================================*/
+void bsp_extIntDisable(en_targetExtInt_t e_extInt);
+
 /*----------------------------------------------------------------------------*/
 /** \brief  This function configures SPI interface
  *
@@ -323,17 +365,55 @@ void *bsp_spiInit(void);
  */
 /*----------------------------------------------------------------------------*/
 uint8_t bsp_spiSlaveSel(void * p_spi, bool action);
+
+/*----------------------------------------------------------------------------*/
+/** \brief  This function simultaneously transmit and receive data from SPI
  *
+ *  \param         p_tx    Pointer to buffer holding data to send
+ *  \param         p_rx    Pointer to buffer holding data to send
+ *  \param         len     Size of data to send
+ *
+ *  \return        none
  */
-/*============================================================================*/
-#define     bsp_getSec()                hal_getSec()
+/*----------------------------------------------------------------------------*/
+void bsp_spiTxRx(uint8_t *p_tx, uint8_t *p_rx, uint16_t len);
+
+/*----------------------------------------------------------------------------*/
+/** \brief  This function reads data via given SPI interface.
+ *     TODO    Implement selecting of an interface instance.
+ *  \param  p_reg Pointer where to store received data
+ *  \param    i_length Length of a data to be received
+ *
+ *  \returns The actual value of the read register.
+ */
+/*----------------------------------------------------------------------------*/
+uint8_t bsp_spiRead(uint8_t * p_reg, uint16_t i_length);
+
+/*----------------------------------------------------------------------------*/
+/** \brief  This function writes a new value via given SPI interface
+ *          registers.
+ *
+ *
+ *  \param  value         Pointer to a value.
+ *  \param  i_length     Length of a data to be received
+ */
+/*----------------------------------------------------------------------------*/
+void bsp_spiWrite(uint8_t * value, uint16_t i_length);
+
 
 /*============================================================================*/
-/** \brief  This function will return parameter specifed by type
+/** \brief  This function will manipulate a watchdog timer
+ *    \param wdtAct    type of an action with watchdog timer: reset, start or stop.
+ */
+/*============================================================================*/
+void bsp_wdt(en_bspWdtAction_t wdtAct);
+
+/*============================================================================*/
+/** \brief  This function will return parameter specified by type
  *
  */
 /*============================================================================*/
-uint32_t         bsp_get(en_bspParams_t en_param);
+uint32_t bsp_get(en_bspParams_t en_param);
 
 
 
@@ -342,8 +422,7 @@ uint32_t         bsp_get(en_bspParams_t en_param);
  * @param   max     Maximum possible value of the returned random number
  * @return
  */
-uint32_t    bsp_getrand(uint32_t max);
-
+uint32_t bsp_getrand(uint32_t max);
 
 #endif /* __BSP_H__ */
 /** @} */
