@@ -129,10 +129,10 @@ uint8_t bsp_init (s_ns_t * ps_ns)
     /* Initialize hardware */
     if (!hal_init())
         return 0;
+  /* Configure board */
+  if (!board_conf(ps_ns))
+    return 0;
 
-    /* Configure board */
-    if (!board_conf(ps_ns))
-        return 0;
 
   /* initialize local variables */
   bsp_numNestedCriticalSection = 0;
