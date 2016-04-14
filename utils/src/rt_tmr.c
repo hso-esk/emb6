@@ -172,7 +172,8 @@ void rt_tmr_create(s_rt_tmr_t *p_tmr, e_rt_tmr_type_t type, rt_tmr_tick_t period
 {
   if ((p_tmr  != (s_rt_tmr_t *) 0) &&
       (period != (rt_tmr_tick_t) 0) &&
-      (p_tmr->state == E_RT_TMR_STATE_INIT)) {
+      ((p_tmr->state == E_RT_TMR_STATE_INIT) ||
+       (p_tmr->state == E_RT_TMR_STATE_STOPPED))) {
     memset(p_tmr, 0, sizeof(s_rt_tmr_t));
     p_tmr->type = type;
     p_tmr->period = period;
