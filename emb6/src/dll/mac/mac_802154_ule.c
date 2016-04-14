@@ -65,7 +65,7 @@
 *                               LOCAL DEFINES
 ********************************************************************************
 */
-
+#define MAC_ULE_CFG_STAT_EN                 TRUE
 
 /*
 ********************************************************************************
@@ -156,6 +156,14 @@ static s_rt_tmr_t mac_ule_tmr1Csma;
 static s_rt_tmr_t mac_ule_tmr1Delay;
 static s_rt_tmr_t mac_ule_tmr1Wait;
 
+#if (MAC_ULE_CFG_STAT_EN == TRUE)
+#define LOGGER_ENABLE       TRUE
+#include "logger.h"
+
+static uint32_t mac_ule_nUnicastTx;
+static uint32_t mac_ule_nUnicastTxOk;
+#endif
+
 
 /*
 ********************************************************************************
@@ -243,6 +251,16 @@ static void mac_ule_init (void *p_netstk, e_nsErr_t *p_err)
    */
   rt_tmr_create(&mac_ule_tmrPowerUp, E_RT_TMR_TYPE_PERIODIC, MAC_ULE_CFG_POWERUP_INTERVAL_IN_MS, mac_ule_tmrIsrPowerUp, NULL);
   rt_tmr_start(&mac_ule_tmrPowerUp);
+
+
+#if (MAC_ULE_CFG_STAT_EN == TRUE)
+  /* initialize local statistical variables */
+  mac_ule_nUnicastTx = 0;
+  mac_ule_nUnicastTxOk = 0;
+
+  /* output statistics */
+  LOG_RAW("nTxOk nTx LastErr\n");
+#endif
 }
 
 
@@ -330,6 +348,17 @@ static void mac_ule_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     mac_ule_txBroadcast(p_err);
   } else {
     mac_ule_txUnicast(p_err);
+
+#if (MAC_ULE_CFG_STAT_EN == TRUE)
+    /* update local statistical variables */
+    mac_ule_nUnicastTx++;
+    if (*p_err == NETSTK_ERR_NONE) {
+      mac_ule_nUnicastTxOk++;
+    }
+
+    /* output statistics */
+    LOG_RAW("%3lu / %3lu / %3d \n", mac_ule_nUnicastTxOk, mac_ule_nUnicastTx, *p_err);
+#endif
   }
   mac_ule_state = MAC_ULE_STATE_TX_FINISHED;
 
