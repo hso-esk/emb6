@@ -1,0 +1,29 @@
+thread_root = {
+	'demo' : [
+	],
+	'emb6' : [
+		'sock',
+		'rpl',
+		'ipv6',
+		'sicslowpan',
+		'llsec',
+		'mle',
+		'nullmac',
+		'802154framer',
+		'ipv6mc',
+	],
+	'utils' : [
+		'*',
+	],
+# C global defines
+	'CPPDEFINES' : [
+		('DEMO_USE_THREAD_ROOT',1),
+		#('DEMO_USE_UDPALIVE',1),
+		('NET_USE_RPL',1),
+	],
+# GCC flags
+	'CFLAGS' : [
+	]	
+}
+
+Return('thread_root')
