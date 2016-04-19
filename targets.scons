@@ -21,6 +21,8 @@ mdns_cli    = ('mdns','client')
 mdns_srv    = ('mdns','server')
 mcastroot	= ('mcast', 'root')
 mcastsink	= ('mcast', 'sink')
+routeroot	= ('route', 'root')
+routesink	= ('route', 'sink')
 
 trg         = []
 
@@ -441,6 +443,18 @@ trg += [{
 trg += [{
     'id'        : 'cs_luxmcastsink',
     'apps_conf' : [ x86_cli, coap_srv, mcastsink ],
+    'bsp'       : get_descr(bsp, 'native')
+}]
+
+trg += [{
+    'id'        : 'cs_luxrouteroot',
+    'apps_conf' : [ x86_cli, coap_srv, routeroot ],
+    'bsp'       : get_descr(bsp, 'native')
+}]
+
+trg += [{
+    'id'        : 'cs_luxroutesink',
+    'apps_conf' : [ x86_cli, coap_srv, routesink ],
     'bsp'       : get_descr(bsp, 'native')
 }]
 

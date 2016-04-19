@@ -142,6 +142,14 @@
 #include "demo_mcast_sink.h"
 #endif
 
+#if DEMO_USE_ROUTE_ROOT
+#include "demo_route_root.h"
+#endif
+
+#if DEMO_USE_ROUTE_SINK
+#include "demo_route_sink.h"
+#endif
+
 /*==============================================================================
                                      MACROS
  =============================================================================*/
@@ -253,6 +261,14 @@ static void loc_demoAppsConf(s_ns_t* pst_netStack, e_nsErr_t *p_err)
     demo_mcastSinkConf(pst_netStack);
 	#endif
 
+	#if DEMO_USE_ROUTE_ROOT
+	demo_routeRootConf(pst_netStack);
+	#endif
+
+	#if DEMO_USE_ROUTE_SINK
+	demo_routeSinkConf(pst_netStack);
+	#endif
+
     /* set returned error code */
     *p_err = NETSTK_ERR_NONE;
 }
@@ -336,6 +352,18 @@ static uint8_t loc_demoAppsInit(void)
     if (!demo_mcastSinkInit()) {
     	return 0;
     }
+	#endif
+
+	#if DEMO_USE_ROUTE_ROOT
+	if (!demo_routeRootInit()) {
+		return 0;
+	}
+	#endif
+
+	#if DEMO_USE_ROUTE_SINK
+	if (!demo_routeSinkInit()) {
+		return 0;
+	}
 	#endif
 
     return 1;
