@@ -17,8 +17,6 @@
 #include "demo_route_root.h"
 #include "thrd-route.h"
 
-
-
 #define		DEBUG		DEBUG_PRINT
 
 #include "uip-debug.h"	// For debugging terminal output.
@@ -127,7 +125,7 @@ static int8_t _mcast_sendMsg(void)
 	PRINTF(" Remote Port %u,", uip_ntohs(mcast_conn->rport));
 	PRINTF(" (msg=0x%08lx)", (unsigned long)uip_ntohl(*((uint32_t *)buf)));
 	PRINTF(" %lu bytes\n", (unsigned long)sizeof(id));
-	*/
+	 */
 
 	uip_udp_packet_send(mcast_conn, buf, sizeof(id));
 
@@ -135,22 +133,44 @@ static int8_t _mcast_sendMsg(void)
 
 	switch (cnt) {
 	case 0:
+		thrd_rdb_rid_add(1);
+		// thrd_rdb_link_add(1, 6, 20, 20, 250);
 		thrd_rdb_route_add(1, 2, 5);
 		break;
 	case 1:
+		thrd_rdb_rid_add(2);
+		// thrd_rdb_link_add(2, 6, 20, 20, 250);
 		thrd_rdb_route_add(2, 3, 10);
 		break;
 	case 2:
+		// thrd_rdb_rid_add(1);
+		thrd_rdb_link_add(3, 6, 20, 20, 250);
 		thrd_rdb_route_add(3, 1, 1);
 		break;
 	case 3:
+		// thrd_rdb_rid_add(2);
+		// thrd_rdb_link_add(2, 6, 20, 20, 250);
 		thrd_rdb_route_add(1, 2, 4);
 		break;
 	case 4:
+		// thrd_rdb_rid_add(3);
+		// thrd_rdb_link_add(3, 6, 20, 20, 250);
 		thrd_rdb_route_add(2, 3, 11);
 		break;
 	case 5:
+		thrd_rdb_rid_add(3);
+		// thrd_rdb_link_add(1, 6, 20, 20, 250);
 		thrd_rdb_route_add(3, 1, 1);
+		break;
+	case 6:
+		thrd_rdb_rid_add(4);
+		// thrd_rdb_link_add(2, 6, 20, 20, 250);
+		thrd_rdb_route_add(4, 1, 1);
+		break;
+	case 7:
+		// thrd_rdb_rid_add(4);
+		// thrd_rdb_link_add(1, 6, 20, 20, 250);
+		thrd_rdb_route_add(1, 1, 1);
 		break;
 	default:
 		break;

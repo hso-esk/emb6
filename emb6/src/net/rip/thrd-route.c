@@ -2,11 +2,10 @@
  * thrd-route.c
  *
  *  Created on: 18 Apr 2016
- *      Author: osboxes
+ *  	Author: Lukas Zimmermann <lzimmer1@stud.hs-offenburg.de>
  */
 
 #include "emb6.h"
-#include "uip.h"
 #include "stdlib.h"
 #include "string.h"
 #include "clist.h"
@@ -45,6 +44,11 @@ MEMB(route_memb, thrd_rdb_route_t, THRD_CONF_MAX_ROUTES);
 
 /* --------------------------------------------------------------------------- */
 
+/* Number of currently stored router ids in the Router ID Set. */
+static int num_rids = 0;
+/* Number of currently stored links in the Link Set. */
+static int num_links = 0;
+/* Number of currently stored routes in the Route Set. */
 static int num_routes = 0;
 
 /* --------------------------------------------------------------------------- */
@@ -65,10 +69,26 @@ thrd_rdb_init(void)
 
 /* --------------------------------------------------------------------------- */
 
-thrd_rdb_route_t
-*thrd_rdb_route_head(void)
+int
+thrd_rdb_rid_num_rids(void)
 {
-	return list_head(route_list);
+	return num_rids;
+}
+
+/* --------------------------------------------------------------------------- */
+
+int
+thrd_rdb_link_num_links(void)
+{
+	return num_links;
+}
+
+/* --------------------------------------------------------------------------- */
+
+int
+thrd_rdb_route_num_routes(void)
+{
+	return num_routes;
 }
 
 /* --------------------------------------------------------------------------- */
@@ -85,6 +105,14 @@ thrd_rdb_link_t
 *thrd_rdb_link_head(void)
 {
 	return list_head(link_list);
+}
+
+/* --------------------------------------------------------------------------- */
+
+thrd_rdb_route_t
+*thrd_rdb_route_head(void)
+{
+	return list_head(route_list);
 }
 
 /* --------------------------------------------------------------------------- */
@@ -129,11 +157,7 @@ uint8_t
 *thrd_rdb_route_nexthop(thrd_rdb_route_t *route)
 {
 	if ( route != NULL ) {
-		// TODO
-		// return uip_ds6_nbr_ipaddr_from_lladdr(uip_ds6_route_nexthop_lladdr(route));
-
-		// PRINTF("6.2\n");
-
+		// TODO Correct?
 		return (uint8_t*) route->R_next_hop;	// LZ.
 	} else {
 		return NULL;
@@ -142,22 +166,14 @@ uint8_t
 
 /* --------------------------------------------------------------------------- */
 
-int
-thrd_rdb_route_num_routes(void)
-{
-	return num_routes;
-}
-
-/* --------------------------------------------------------------------------- */
-
 thrd_rdb_id_t
-*thrd_rdb_rid_lookup(uint8_t destination)
+*thrd_rdb_rid_lookup(uint8_t router_id)
 {
 	thrd_rdb_id_t *rid;
 	thrd_rdb_id_t *found_rid;
 
 	PRINTF("thrd_rdb_rid_lookup: Looking up Router ID Set for router id ");
-	PRINTF("%d\n", destination);
+	PRINTF("%d\n", router_id);
 	PRINTF("\n\r");
 
 	found_rid = NULL;
@@ -166,7 +182,7 @@ thrd_rdb_id_t
 			rid = thrd_rdb_rid_next(rid) ) {
 		PRINTF("%d\n", rid->router_id);
 		PRINTF("\n\r");
-		if ( rid->router_id == destination ) {
+		if ( rid->router_id == router_id ) {
 			found_rid = rid;
 			break;
 		}
@@ -174,7 +190,7 @@ thrd_rdb_id_t
 
 	if ( found_rid != NULL ) {
 		PRINTF("thrd_rdb_rid_lookup: Found router id: ");
-		PRINTF("%d\n", destination);
+		PRINTF("%d\n", router_id);
 		PRINTF("\n\r");
 	} else {
 		PRINTF("thrd_rdb_rid_lookup: No router id found\n\r");
@@ -195,13 +211,13 @@ thrd_rdb_id_t
 /* --------------------------------------------------------------------------- */
 
 thrd_rdb_link_t
-*thrd_rdb_link_lookup(uint8_t destination)
+*thrd_rdb_link_lookup(uint8_t router_id)
 {
 	thrd_rdb_link_t *link;
 	thrd_rdb_link_t *found_link;
 
 	PRINTF("thrd_rdb_link_lookup: Looking up Link Set for router id ");
-	PRINTF("%d\n", destination);
+	PRINTF("%d\n", router_id);
 	PRINTF("\n\r");
 
 	found_link = NULL;
@@ -210,7 +226,7 @@ thrd_rdb_link_t
 			link = thrd_rdb_link_next(link) ) {
 		PRINTF("%d\n", link->L_router_id);
 		PRINTF("\n\r");
-		if ( link->L_router_id == destination ) {
+		if ( link->L_router_id == router_id ) {
 			found_link = link;
 			break;
 		}
@@ -218,7 +234,7 @@ thrd_rdb_link_t
 
 	if ( found_link != NULL ) {
 		PRINTF("thrd_rdb_link_lookup: Found link for router id: ");
-		PRINTF("%d\n", destination);
+		PRINTF("%d\n", router_id);
 		PRINTF("\n\r");
 	} else {
 		PRINTF("thrd_rdb_link_lookup: No link for router id found\n\r");
@@ -284,122 +300,182 @@ thrd_rdb_route_t
 
 /* --------------------------------------------------------------------------- */
 
+thrd_rdb_id_t
+*thrd_rdb_rid_add(uint8_t router_id)
+{
+	thrd_rdb_id_t *rid;
+
+	/* Find the corresponding Router ID entry (Router ID Set). */
+
+	rid = thrd_rdb_rid_lookup(router_id);
+
+	/* Check whether the given router id already has an entry in the Router ID Set. */
+	if ( rid == NULL ) {
+		PRINTF("thrd_rdb_rid_add: router id unknown for ");
+		PRINTF("%d\n", router_id);
+		PRINTF("\n\r");
+
+		/* If there is no router id entry, create one. We first need to
+		 * check if we have room for this router id. If not, we remove the
+		 * least recently used one we have. */
+
+		if ( thrd_rdb_rid_num_rids() == MAX_ROUTER_ID ) {
+			/* Removing the oldest router id entry from the Router ID Set. The
+			 * least recently used link is the first router id on the set. */
+			thrd_rdb_id_t *oldest;
+
+			oldest = list_tail(routerid_list);
+			thrd_rdb_rid_rm(oldest);
+		}
+
+		/* Allocate a router id entry and populate it. */
+		rid = memb_alloc(&routerid_memb);
+
+		if ( rid == NULL ) {
+			/* This should not happen, as we explicitly deallocated one
+			 * link set entry above. */
+			PRINTF("thrd_rdb_rid_add: could not allocate router id\n");
+			return NULL;
+		}
+
+		rid->router_id = router_id;
+
+		/* Add new router id first - assuming that there is a reason to add this
+		 * and that there is a packet coming soon. */
+		list_push(routerid_list, rid);
+
+		PRINTF("thrd_rdb_rid_add: Added router id %d\n\r", router_id);
+
+		num_rids++;
+
+		PRINTF("thrd_rdb_rid_add: num_rids %d\n\r", num_rids);
+
+	} else {
+
+		PRINTF("thrd_rdb_rid_add: router id is already known for ");
+		PRINTF("%d\n", router_id);
+		PRINTF("\n\r");
+	}
+
+	PRINTF("-----------------------------------------------------\n\r");
+
+	return rid;
+}
+
+/* --------------------------------------------------------------------------- */
+
+thrd_rdb_link_t
+*thrd_rdb_link_add(uint8_t router_id, uint8_t link_margin,
+		uint8_t incoming_quality, uint8_t outgoing_quality,
+		uint8_t age)
+{
+	thrd_rdb_link_t *l;
+
+	/* Find the corresponding Router ID entry (Router ID Set). */
+
+	l = thrd_rdb_link_lookup(router_id);
+
+	/* Check whether the given router id already has an entry in the Link Set. */
+	if ( l == NULL ) {
+		PRINTF("thrd_rdb_link_add: router id unknown for ");
+		PRINTF("%d\n", router_id);
+		PRINTF("\n\r");
+
+		/* If there is no link entry, create one. We first need to
+		 * check if we have room for this link. If not, we remove the
+		 * least recently used one we have. */
+
+		if ( thrd_rdb_link_num_links() == MAX_ROUTERS ) {
+			/* Removing the oldest link entry from the Link Set. The
+			 * least recently used link is the first link on the set. */
+			thrd_rdb_link_t *oldest;
+
+			oldest = list_tail(link_list);
+			thrd_rdb_link_rm(oldest);
+		}
+
+		/* Allocate a link entry and populate it. */
+		l = memb_alloc(&link_memb);
+
+		if ( l == NULL ) {
+			/* This should not happen, as we explicitly deallocated one
+			 * link set entry above. */
+			PRINTF("thrd_rdb_link_add: could not allocate link\n");
+			return NULL;
+		}
+
+		l->L_router_id = router_id;
+
+		/* Add new link first - assuming that there is a reason to add this
+		 * and that there is a packet coming soon. */
+		list_push(link_list, l);
+
+		num_links++;
+
+		PRINTF("thrd_rdb_link_add: num_links %d\n\r", num_links);
+
+	} else {
+
+		PRINTF("thrd_rdb_link_add: router id is already known for ");
+		PRINTF("%d\n", router_id);
+		PRINTF("\n\r");
+	}
+
+	PRINTF("-----------------------------------------------------\n\r");
+
+	return l;
+}
+
+/* --------------------------------------------------------------------------- */
+
 thrd_rdb_route_t
 *thrd_rdb_route_add(uint8_t destination, uint8_t next_hop, uint8_t route_cost)
 {
 	thrd_rdb_route_t *r;
 
 	// Get the valid router id set.
-	thrd_rdb_id_t *router_id_set;
-	// Get the neighbor Link Set.
-	thrd_rdb_link_t *neighbor_link_set;
+	thrd_rdb_id_t *rid;
 
-	/* Get next hop, make sure it is in neighbor table (Link Set). */
-
-	/* Find the corresponding Router ID entry (Router ID Set). */
-	for ( router_id_set = list_head( routerid_list );
-			(router_id_set != NULL) && (router_id_set->router_id != destination);
-			router_id_set = list_item_next( router_id_set ));
-
-	/* Find the corresponding neighbor link entry (Link Set). */
-	for ( neighbor_link_set = list_head( link_list );
-			(neighbor_link_set != NULL) && (neighbor_link_set->L_router_id != destination);
-			neighbor_link_set = list_item_next( neighbor_link_set ));
-
-	if ( router_id_set == NULL ) {
-		PRINTF("thrd_rdb_route_add: router id unknown for ");
-		PRINTF("%d\n", destination);
-		PRINTF("\n\r");
-		// return NULL;
-	}
-
-	if ( router_id_set == NULL ) {
-		PRINTF("thrd_rdb_route_add: neighbor link unknown for ");
-		PRINTF("%d\n", destination);
-		PRINTF("\n\r");
-	}
-
-	PRINTF("thrd_rdb_route_add: search neighbor router destination id ");
+	PRINTF("thrd_rdb_route_add: search route set entry for destination id ");
 	PRINTF("%d\n", destination);
 	PRINTF("\n\r");
 
 	r = thrd_rdb_route_lookup(destination);
 
-	if ( (r != NULL) && (!(next_hop == (uint8_t*) thrd_rdb_route_nexthop(r)) || route_cost < r->R_route_cost) ) {
-		// PRINTF("6.5\n");
-
-		if ( route_cost < r->R_route_cost ) {
-			/* The new route is better, remove the current one. */
-			PRINTF(ANSI_COLOR_RED "thrd_rdb_route_add: Found better route (metric). Removing old route." ANSI_COLOR_RESET "\n\r");
-		}
-
-		thrd_rdb_route_rm(r);
-	}
-
-	/* First make sure that we don't add a route twice. If we find an
-	     existing route for our destination, we'll delete the old
-	     one first. */
-	r = thrd_rdb_route_lookup(destination);
-
 	if ( r != NULL ) {
-		uint8_t current_nexthop;
-		current_nexthop = (uint8_t*) thrd_rdb_route_nexthop(r);
 
-		if ( next_hop == current_nexthop) {
-			/* At least check whether the metric has changed. */
-			if ( route_cost < r->R_route_cost ) {
-				/* The new route is better, remove the current one. */
-				PRINTF("thrd_rdb_route_add: Found better route (metric). Removing old route.\n\r");
-				thrd_rdb_route_rm(r);
-			} else {
-				/* No changes. The route already exists. */
-				PRINTF("thrd_rdb_route_add: Route is already known. Return without any changes.\n\r");
-				PRINTF("-----------------------------------------------------\n\r");
-				return r;
-			}
-		}
-	}
-	{
+		PRINTF(ANSI_COLOR_RED "thrd_rdb_route_add: Route already known." ANSI_COLOR_RESET "\n\r");
+
+		/* Return NULL, because the Route Set already contains a route for the given destination. */
+		return NULL;
+	} else {
 		/* If there is no routing entry, create one. We first need to
           check if we have room for this route. If not, we remove the
           least recently used one we have. */
 
 		if ( thrd_rdb_route_num_routes() == THRD_CONF_MAX_ROUTES ) {
 			/* Removing the oldest route entry from the route table. The
-             least recently used route is the first route on the list. */
+             least recently used route is the first route on the set. */
 			thrd_rdb_route_t *oldest;
 
 			oldest = list_tail(route_list);
 			thrd_rdb_route_rm(oldest);
 		}
 
-		/* We first check to see if we already have this router in our
-		 * router_id_set.
-		 */
-		if ( router_id_set == NULL) {
-			/* If the router did not have an entry in our router_id_set,
-			 * we create one.
-			 */
+		/* We first check to see if the destination router is in our
+		 * Router ID Set (set of valid Router IDs). */
+		rid = thrd_rdb_rid_lookup(destination);
 
-			router_id_set = memb_alloc(&routerid_memb);
+		if ( rid == NULL) {
+			/* If the router did not have an entry in our Router ID Set,
+			 * return NULL. */
 
-			router_id_set->router_id = destination;
+			PRINTF(ANSI_COLOR_RED "thrd_rdb_route_add: Destination router with router id ");
+			PRINTF("%d is invalid.", destination);
+			PRINTF( ANSI_COLOR_RESET "\n\r");
 
-			/* add new router id first - assuming that there is a reason to add this
-	           and that there is a packet coming soon. */
-			list_push(routerid_list, router_id_set);
-		}
-
-		if ( neighbor_link_set == NULL ) {
-			// TODO Only add neighbor link set, if the router with the given router id is a neighbor.
-
-			neighbor_link_set = memb_alloc(&link_memb);
-
-			neighbor_link_set->L_router_id = destination;
-
-			/* add new link first - assuming that there is a reason to add this
-	           and that there is a packet coming soon. */
-			list_push(link_list, neighbor_link_set);
+			PRINTF("-----------------------------------------------------\n\r");
+			return NULL;
 		}
 
 		/* Allocate a routing entry and populate it. */
@@ -408,7 +484,9 @@ thrd_rdb_route_t
 		if ( r == NULL ) {
 			/* This should not happen, as we explicitly deallocated one
 			 * route set entry above. */
-			PRINTF("thrd_rdb_route_add: could not allocate route\n");
+			PRINTF(ANSI_COLOR_RED  "thrd_rdb_route_add: could not allocate route with router id ");
+			PRINTF("%d\n", destination);
+			PRINTF( ANSI_COLOR_RESET "\n\r");
 			return NULL;
 		}
 
@@ -418,24 +496,65 @@ thrd_rdb_route_t
 
 		num_routes++;
 
-		PRINTF("thrd_rdb_route_add num %d\n\r", num_routes);
+		PRINTF("thrd_rdb_route_add: num_routes %d\n\r", num_routes);
+
+		r->R_destination = destination;
+		r->R_next_hop = next_hop;
+		r->R_route_cost = route_cost;
+
+		PRINTF("uip_ds6_route_add: adding route: ");
+		PRINTF("%d", r->R_destination);
+		PRINTF(" via ");
+		PRINTF("%d", r->R_next_hop);
+		PRINTF("\n\r");
+
+		PRINTF("-----------------------------------------------------\n\r");
 	}
-
-	r->R_destination = destination;
-	r->R_next_hop = next_hop;
-	r->R_route_cost = route_cost;
-
-	PRINTF("uip_ds6_route_add: adding route: ");
-	PRINTF("%d", r->R_destination);
-	PRINTF(" via ");
-	PRINTF("%d", r->R_next_hop);
-	PRINTF("\n\r");
-	// ANNOTATE("#L %u 1;blue\n\r", nexthop->u8[sizeof(uip_ipaddr_t) - 1]);
-
-	PRINTF("-----------------------------------------------------\n\r");
 
 	return r;
 }
+
+/* --------------------------------------------------------------------------- */
+
+void
+thrd_rdb_rid_rm(thrd_rdb_id_t *rid)
+{
+	if ( rid != NULL) {
+		PRINTF("thrd_rdb_rid_rm: removing router id from 'Router ID Set' with router id: ");
+		PRINTF("%d\n", rid->router_id);
+		PRINTF("\n\r");
+
+		/* Remove the router id from the Router ID Set. */
+		list_remove(routerid_list, rid);
+		memb_free(&routerid_memb, rid);
+
+		num_rids--;
+
+		PRINTF("thrd_rdb_rid_rm: num_rids %d\n\r", num_rids);
+	}
+}
+
+/* --------------------------------------------------------------------------- */
+
+void
+thrd_rdb_link_rm(thrd_rdb_link_t *link)
+{
+	if ( link != NULL) {
+		PRINTF("thrd_rdb_link_rm: removing link with router id: ");
+		PRINTF("%d\n", link->L_router_id);
+		PRINTF("\n\r");
+
+		/* Remove the link from the Link Set. */
+		list_remove(link_list, link);
+		memb_free(&link_memb, link);
+
+		num_links--;
+
+		PRINTF("thrd_rdb_link_rm: num_links %d\n\r", num_links);
+	}
+}
+
+/* --------------------------------------------------------------------------- */
 
 void
 thrd_rdb_route_rm(thrd_rdb_route_t *route)
@@ -445,20 +564,13 @@ thrd_rdb_route_rm(thrd_rdb_route_t *route)
 	// Get the neighbor Link Set.
 	thrd_rdb_link_t *neighbor_link_set;
 
-
-	/*
-	struct uip_ds6_route_neighbor_route *neighbor_route;
-#if DEBUG != DEBUG_NONE
-	assert_nbr_routes_list_sane();
-#endif*/ /* DEBUG != DEBUG_NONE */
-
 	if ( route != NULL ) {
 
 		PRINTF("thrd_rdb_route_rm: removing route with router id: ");
 		PRINTF("%d\n", route->R_destination);
 		PRINTF("\n\r");
 
-		/* Remove the route from the route list */
+		/* Remove the route from the Route Set. */
 		list_remove(route_list, route);
 
 		/* Find the corresponding Router ID entry and remove it from the Router ID Set. */
@@ -494,63 +606,10 @@ thrd_rdb_route_rm(thrd_rdb_route_t *route)
 
 		PRINTF("thrd_rdb_route_rm num %d\n\r", num_routes);
 
-		/*
-#if UIP_DS6_NOTIFICATIONS
-		call_route_callback(UIP_DS6_NOTIFICATION_ROUTE_RM,
-				&route->ipaddr, uip_ds6_route_nexthop(route));
-#endif
-#if 0 //(DEBUG & DEBUG_ANNOTATE) == DEBUG_ANNOTATE
-		// we need to check if this was the last route towards "nexthop"
-		// if so - remove that link (annotation)
-		uip_ds6_route_t *r;
-		for(r = uip_ds6_route_head();
-				r != NULL;
-				r = uip_ds6_route_next(r)) {
-			uip_ipaddr_t *nextr, *nextroute;
-			nextr = uip_ds6_route_nexthop(r);
-			nextroute = uip_ds6_route_nexthop(route);
-			if(nextr != NULL &&
-					nextroute != NULL &&
-					uip_ipaddr_cmp(nextr, nextroute)) {
-				// we found another link using the specific nexthop, so keep the #L
-				return;
-			}
-		}
-		ANNOTATE("#L %u 0\n\r", uip_ds6_route_nexthop(route)->u8[sizeof(uip_ipaddr_t) - 1]);
-#endif*/
 	}
-	/*
-#if DEBUG != DEBUG_NONE
-	assert_nbr_routes_list_sane();
-#endif // DEBUG != DEBUG_NONE
-	 */
+
 	return;
 }
 
 /* --------------------------------------------------------------------------- */
-
-/*
-#ifdef RIP_DEBUG
-void rt_print_iface_list() {
-
-	struct rt_iface *ptr;
-
-	ptr = rt_db->iface;									// Pointer to the first element of the set.
-
-	PRINTF("\n");
-	PRINTF("------------Iface List------------\n");
-
-	while ( ptr != NULL ) {
-		PRINTF("[%s]\n", ptr->iface_config->name);
-		// PRINTF("Print Pointer (iface): %p\n", ptr);
-		// PRINTF("Print Pointer (iface_config): %p\n", (void*)(ptr->iface_config));
-		ptr = ptr->next;
-	}
-	PRINTF("----------------------------------\n");
-	PRINTF("\n");
-}
-#endif
- */
-
-
 

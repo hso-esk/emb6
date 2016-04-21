@@ -16,8 +16,8 @@
 #define	ID_SEQUENCE_PERIOD				10
 #define	MAX_NEIGHBOR_AGE				100
 #define	MAX_ROUTE_COST					16
-#define	MAX_ROUTER_ID					62
-#define	MAX_ROUTERS						32
+#define	MAX_ROUTER_ID					2 // 62
+#define	MAX_ROUTERS						2 // 32
 #define	MIN_DOWNGRADE_NEIGHBORS			7
 #define	NETWORK_ID_TIMEOUT				120
 #define	PARENT_ROUTE_TO_LEADER_TIMEOUT	20
