@@ -39,6 +39,9 @@ emb6 = {
 	'slip' : [
 		'net/slip/*',
 	],
+	'mle' : [
+		'mle/*',
+	],
 # new netstack drivers
 	'dllsec' : [
 		'dll/dllsec/*',

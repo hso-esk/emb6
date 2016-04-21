@@ -22,6 +22,10 @@ mdns_srv    = ('mdns','server')
 mcastroot	= ('mcast', 'root')
 mcastsink	= ('mcast', 'sink')
 
+thread_root	= ('thread', 'root')
+thread_sink	= ('thread', 'sink')
+
+
 trg         = []
 
 # Read Board Support Package Scons file
@@ -402,6 +406,7 @@ trg += [{
     'bsp'       : get_descr(bsp, 'native')
 }]
 
+
 trg += [{
     'id'        : 'if_lux',
     'apps_conf' : [ extif ],
@@ -443,6 +448,19 @@ trg += [{
     'apps_conf' : [ x86_cli, coap_srv, mcastsink ],
     'bsp'       : get_descr(bsp, 'native')
 }]
+
+trg += [{
+    'id'        : 'cs_luxthrdroot',
+    'apps_conf' : [ x86_srv, coap_srv, thread_root ],
+    'bsp'       : get_descr(bsp, 'native')
+}]
+
+trg += [{
+    'id'        : 'cs_luxthrdsink',
+    'apps_conf' : [ x86_cli, coap_srv, thread_sink ],
+    'bsp'       : get_descr(bsp, 'native')
+}]
+
 
 
 Return('trg')

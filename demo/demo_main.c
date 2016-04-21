@@ -81,6 +81,10 @@
 #include "demo_udp_socket.h"
 #endif
 
+#if DEMO_USE_THREAD
+#include "thread_demo.h"
+#endif
+
 #if DEMO_USE_COAP
 #if CONF_USE_SERVER
 #include "demo_coap_srv.h"
@@ -140,6 +144,14 @@
 
 #if DEMO_USE_MCAST_SINK
 #include "demo_mcast_sink.h"
+#endif
+
+#if DEMO_USE_THREAD_ROOT
+#include "demo_thread_root.h"
+#endif
+
+#if DEMO_USE_THREAD_SINK
+#include "demo_thread_sink.h"
 #endif
 
 /*==============================================================================
@@ -225,6 +237,10 @@ static void loc_demoAppsConf(s_ns_t* pst_netStack, e_nsErr_t *p_err)
     demo_udpSocketCfg(pst_netStack);
     #endif
 
+	#if DEMO_USE_THREAD
+	demo_threadCfg(pst_netStack);
+	#endif
+
     #if DEMO_USE_APTB
     demo_aptbConf(pst_netStack);
     #endif
@@ -251,6 +267,14 @@ static void loc_demoAppsConf(s_ns_t* pst_netStack, e_nsErr_t *p_err)
 
 	#if DEMO_USE_MCAST_SINK
     demo_mcastSinkConf(pst_netStack);
+	#endif
+
+	#if DEMO_USE_THREAD_ROOT
+	demo_threadRootConf(pst_netStack);
+	#endif
+
+	#if DEMO_USE_THREAD_SINK
+	demo_threadSinkConf(pst_netStack);
 	#endif
 
     /* set returned error code */
@@ -296,6 +320,12 @@ static uint8_t loc_demoAppsInit(void)
     }
     #endif
 
+	#if DEMO_USE_THREAD
+	if (!demo_threadInit()) {
+		return 0;
+	}
+	#endif
+
     #if DEMO_USE_APTB
     if (!demo_aptbInit()) {
         return 0;
@@ -338,6 +368,17 @@ static uint8_t loc_demoAppsInit(void)
     }
 	#endif
 
+	#if DEMO_USE_THREAD_ROOT
+	if (!demo_threadRootInit()) {
+		return 0;
+	}
+	#endif
+
+	#if DEMO_USE_THREAD_SINK
+	if (!demo_threadSinkInit()) {
+		return 0;
+	}
+#endif
     return 1;
 }
 

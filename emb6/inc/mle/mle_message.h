@@ -7,19 +7,54 @@
 
 
 typedef struct {
-//uint8_t          aux_header;     /**< Aux Header */
-mle_cmd_t          command;        /**< mle command */
-uint8_t            mic ;           /**< MIC */
+	uint8_t          aux_header;     /**< Aux Header */
+	mle_cmd_t          command;        /**< mle command */
+	uint8_t            mic ;           /**< MIC */
 }mle_msg_t ;
 
 
+/*==============================================================================
+                                 API FUNCTIONS
+ =============================================================================*/
+uint8_t mle_deserialize_mle_msg(uint8_t* ptr , mle_msg_t* mle_msg  , int16_t msg_length );
 
 
-void process_incoming_mle_msg();
 
-uint8_t mle_link_request_to_routers(int8_t pan_id);
 
-uint8_t mle_parent_request(int8_t nwk_id , uint8_t Scan_Mask);
+//uint8_t mle_build_cmd( mle_cmd_type_t  cmd_type , mle_cmd_t* mle_cmd);
+
+
+/*==============================================================================
+								LOCAL FUNCTION
+ =============================================================================*/
+
+/*static*/ uint16_t  get_16_MAC(void);
+
+/*
+static uint8_t mle_build_link_request_cmd(mle_cmd_t* mle_cmd);
+static uint8_t mle_build_link_accept_cmd(mle_cmd_t* mle_cmd);
+static uint8_t mle_build_link_accept_request_cmd(mle_cmd_t* mle_cmd);
+static uint8_t mle_build_link_reject_cmd(mle_cmd_t* mle_cmd);
+
+static uint8_t mle_build_advertisement_cmd(mle_cmd_t* mle_cmd);
+
+static uint8_t mle_build_data_request_cmd(mle_cmd_t* mle_cmd);
+static uint8_t mle_build_data_response_cmd(mle_cmd_t* mle_cmd);
+
+static uint8_t mle_build_parent_request_cmd(mle_cmd_t* mle_cmd);
+static uint8_t mle_build_parent_response_cmd(mle_cmd_t* mle_cmd);
+
+static uint8_t mle_build_child_id_request_cmd(mle_cmd_t* mle_cmd);
+static uint8_t mle_build_child_id_response_cmd(mle_cmd_t* mle_cmd);
+
+static uint8_t mle_build_child_update_cmd(mle_cmd_t* mle_cmd);
+static uint8_t mle_build_child_update_response_cmd(mle_cmd_t* mle_cmd);
+
+static uint8_t   get_Mode(void);
+
+static void *    generate_challenge(void);
+ */
+
 
 
 #endif /* __MLE_MSG_H_ */

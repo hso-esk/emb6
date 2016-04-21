@@ -3,17 +3,38 @@
 #include "mle_message.h"
 
 
-/**
- * @brief process incoming MLE messages
 
- *
- *
- */
-/*
-void process_incoming_mle_msg()
+
+
+uint8_t mle_deserialize_mle_msg(uint8_t* ptr , mle_msg_t* mle_msg , int16_t msg_length  )
 {
+	//deserialize aux header
 
-}*/
+	/* deserialize the mle command */
+	if (mle_deserialize_cmd(ptr/* + aux header length */ , &mle_msg->command , msg_length/* - aux header length - mic */  ))
+		return 1 ;
+	else
+		return 0 ;
+
+	//deserialize mic
+}
+
+
+
+/*static*/ uint16_t  get_16_MAC(void)
+{
+	//printf("mac addres is : %04x" ,a);
+return (mac_phy_config.mac_address[6] | (mac_phy_config.mac_address[7] << 8));
+//	return 0xabcd ;
+}
+/*
+memcpy(mac_phy_config.mac_address, App_SrcMACAddr, sizeof(App_SrcMACAddr));
+mac_phy_config.pan_id = 0xabcd;
+
+x = mac_address[7] | (mac_address[6] << 8);
+
+
+*/
 
 /**
  * @brief Send multicast MLE link request to all routers
@@ -46,7 +67,7 @@ uint8_t mle_parent_request( uint8_t scan_mask)
 
 }
 
-*/
+ */
 
 
 
