@@ -96,8 +96,7 @@
 
 // --------------- THREAD ROUTING PROTOCOL ----------------------
 
-/** Routing table size */
-#define THRD_CONF_MAX_ROUTES                  10
+
 
 // --------------------------------------------------------------
 

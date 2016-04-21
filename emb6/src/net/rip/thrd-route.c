@@ -14,7 +14,7 @@
 
 #include "thrd-route.h"
 
-#define DEBUG DEBUG_PRINT
+// #define DEBUG DEBUG_PRINT
 #include "uip-debug.h"
 
 /* --------------------------------------------------------------------------- */
@@ -352,9 +352,14 @@ thrd_rdb_id_t
 
 	} else {
 
-		PRINTF("thrd_rdb_rid_add: router id is already known for ");
+		PRINTF(ANSI_COLOR_RED "thrd_rdb_rid_add: router id is already known for ");
 		PRINTF("%d\n", router_id);
-		PRINTF("\n\r");
+		PRINTF(ANSI_COLOR_RESET "\n\r");
+
+		PRINTF("thrd_rdb_rid_add: num_rids %d\n\r", num_rids);
+		PRINTF("-----------------------------------------------------\n\r");
+
+		return NULL;
 	}
 
 	PRINTF("-----------------------------------------------------\n\r");
@@ -371,6 +376,8 @@ thrd_rdb_link_t
 {
 	thrd_rdb_link_t *l;
 
+	thrd_rdb_id_t *rid;
+
 	/* Find the corresponding Router ID entry (Router ID Set). */
 
 	l = thrd_rdb_link_lookup(router_id);
@@ -380,6 +387,28 @@ thrd_rdb_link_t
 		PRINTF("thrd_rdb_link_add: router id unknown for ");
 		PRINTF("%d\n", router_id);
 		PRINTF("\n\r");
+
+		/* If there is no link entry, check if the given router id
+		 * is valid (Router ID Set). If valid, create one. We first need to
+		 * check if we have room for this link. If not, we remove the
+		 * least recently used one we have. */
+
+		/* We first check to see if the destination router is in our
+		 * Router ID Set (set of valid Router IDs). */
+		rid = thrd_rdb_rid_lookup(router_id);
+
+		if ( rid == NULL) {
+			/* If the router did not have an entry in our Router ID Set,
+			 * return NULL. */
+
+			PRINTF(ANSI_COLOR_RED "thrd_rdb_link_add: Router with router id ");
+			PRINTF("%d is invalid.", router_id);
+			PRINTF( ANSI_COLOR_RESET "\n\r");
+
+			PRINTF("-----------------------------------------------------\n\r");
+			return NULL;
+		}
+
 
 		/* If there is no link entry, create one. We first need to
 		 * check if we have room for this link. If not, we remove the
@@ -416,9 +445,14 @@ thrd_rdb_link_t
 
 	} else {
 
-		PRINTF("thrd_rdb_link_add: router id is already known for ");
+		PRINTF(ANSI_COLOR_RED "thrd_rdb_link_add: router id is already known for ");
 		PRINTF("%d\n", router_id);
-		PRINTF("\n\r");
+		PRINTF(ANSI_COLOR_RESET "\n\r");
+
+		PRINTF("thrd_rdb_link_add: num_links %d\n\r", num_links);
+		PRINTF("-----------------------------------------------------\n\r");
+
+		return NULL;
 	}
 
 	PRINTF("-----------------------------------------------------\n\r");
@@ -442,25 +476,12 @@ thrd_rdb_route_t
 
 	r = thrd_rdb_route_lookup(destination);
 
-	if ( r != NULL ) {
+	if ( r == NULL ) {
 
-		PRINTF(ANSI_COLOR_RED "thrd_rdb_route_add: Route already known." ANSI_COLOR_RESET "\n\r");
-
-		/* Return NULL, because the Route Set already contains a route for the given destination. */
-		return NULL;
-	} else {
-		/* If there is no routing entry, create one. We first need to
-          check if we have room for this route. If not, we remove the
-          least recently used one we have. */
-
-		if ( thrd_rdb_route_num_routes() == THRD_CONF_MAX_ROUTES ) {
-			/* Removing the oldest route entry from the route table. The
-             least recently used route is the first route on the set. */
-			thrd_rdb_route_t *oldest;
-
-			oldest = list_tail(route_list);
-			thrd_rdb_route_rm(oldest);
-		}
+		/* If there is no routing entry, check if the given router id
+		 * is valid (Router ID Set). If valid, create one. We first need to
+		 * check if we have room for this route. If not, we remove the
+		 * least recently used one we have. */
 
 		/* We first check to see if the destination router is in our
 		 * Router ID Set (set of valid Router IDs). */
@@ -476,6 +497,15 @@ thrd_rdb_route_t
 
 			PRINTF("-----------------------------------------------------\n\r");
 			return NULL;
+		}
+
+		if ( thrd_rdb_route_num_routes() == THRD_CONF_MAX_ROUTES ) {
+			/* Removing the oldest route entry from the route table. The
+		             least recently used route is the first route on the set. */
+			thrd_rdb_route_t *oldest;
+
+			oldest = list_tail(route_list);
+			thrd_rdb_route_rm(oldest);
 		}
 
 		/* Allocate a routing entry and populate it. */
@@ -509,6 +539,16 @@ thrd_rdb_route_t
 		PRINTF("\n\r");
 
 		PRINTF("-----------------------------------------------------\n\r");
+
+	} else {
+
+		PRINTF(ANSI_COLOR_RED "thrd_rdb_route_add: Route already known." ANSI_COLOR_RESET "\n\r");
+
+		PRINTF("thrd_rdb_route_add: num_routes %d\n\r", num_routes);
+		PRINTF("-----------------------------------------------------\n\r");
+
+		/* Return NULL, because the Route Set already contains a route for the given destination. */
+		return NULL;
 	}
 
 	return r;
@@ -559,11 +599,6 @@ thrd_rdb_link_rm(thrd_rdb_link_t *link)
 void
 thrd_rdb_route_rm(thrd_rdb_route_t *route)
 {
-	// Get the valid router id set.
-	thrd_rdb_id_t *router_id_set;
-	// Get the neighbor Link Set.
-	thrd_rdb_link_t *neighbor_link_set;
-
 	if ( route != NULL ) {
 
 		PRINTF("thrd_rdb_route_rm: removing route with router id: ");
@@ -572,40 +607,11 @@ thrd_rdb_route_rm(thrd_rdb_route_t *route)
 
 		/* Remove the route from the Route Set. */
 		list_remove(route_list, route);
-
-		/* Find the corresponding Router ID entry and remove it from the Router ID Set. */
-		for ( router_id_set = list_head( routerid_list );
-				router_id_set != NULL && router_id_set->router_id != route->R_destination;
-				router_id_set = list_item_next( router_id_set ));
-
-		/* Find the corresponding neighbor link entry and remove it from the Link Set. */
-		for ( neighbor_link_set = list_head( link_list );
-				neighbor_link_set != NULL && neighbor_link_set->L_router_id != route->R_destination;
-				neighbor_link_set = list_item_next( neighbor_link_set ));
-
-		if ( router_id_set == NULL ) {
-			PRINTF("thrd_rdb_route_rm: router_id_set was NULL for ");
-			PRINTF("%d\n", route->R_destination);	// vorher: &route->...
-			PRINTF("\n");
-		}
-
-		if ( neighbor_link_set == NULL ) {
-			PRINTF("thrd_rdb_route_rm: neighbor_link_set was NULL for ");
-			PRINTF("%d\n", route->R_destination);	// vorher: &route->...
-			PRINTF("\n");
-		}
-
-		list_remove(routerid_list, router_id_set);
-		list_remove(link_list, neighbor_link_set);
-
-		memb_free(&routerid_memb, router_id_set);
-		memb_free(&link_memb, neighbor_link_set);
 		memb_free(&route_memb, route);
 
 		num_routes--;
 
-		PRINTF("thrd_rdb_route_rm num %d\n\r", num_routes);
-
+		PRINTF("thrd_rdb_route_rm: num_routes %d\n\r", num_routes);
 	}
 
 	return;
@@ -613,3 +619,76 @@ thrd_rdb_route_rm(thrd_rdb_route_t *route)
 
 /* --------------------------------------------------------------------------- */
 
+#ifdef RIP_DEBUG
+
+void
+thrd_rdb_print_rid_set(void)
+{
+	thrd_rdb_id_t *rid;
+
+	printf("ROUTER ID SET\n");
+	printf("| ROUTER ID |\n");
+	printf("-------------\n\r");
+	for( rid = thrd_rdb_rid_head(); rid != NULL; rid = thrd_rdb_rid_next(rid)) {
+		printf("| " ANSI_COLOR_YELLOW "%9d" ANSI_COLOR_RESET " |\n", rid->router_id);
+	}
+	printf("-------------\n\r");
+}
+
+/* --------------------------------------------------------------------------- */
+
+void
+thrd_rdb_print_link_set(void)
+{
+	thrd_rdb_link_t *l;
+
+	printf("---------------------------------- LINK SET -------------------------------------\n");
+	printf("| L_router_id | L_link_margin | L_incoming_quality | L_outgoing_quality | L_age |\n");
+	printf("---------------------------------------------------------------------------------\n\r");
+	for( l = thrd_rdb_link_head(); l != NULL; l = thrd_rdb_link_next(l)) {
+		printf("| " ANSI_COLOR_YELLOW "%11d" ANSI_COLOR_RESET
+				" | " ANSI_COLOR_YELLOW "%13d" ANSI_COLOR_RESET
+				" | " ANSI_COLOR_YELLOW "%18d" ANSI_COLOR_RESET
+				" | " ANSI_COLOR_YELLOW "%18d" ANSI_COLOR_RESET
+				" | " ANSI_COLOR_YELLOW "%5d" ANSI_COLOR_RESET
+				" |\n"
+				, l->L_router_id, l->L_link_margin, l->L_incoming_quality, l->L_outgoing_quality, l->L_age);
+	}
+	printf("---------------------------------------------------------------------------------\n\r");
+}
+
+/* --------------------------------------------------------------------------- */
+
+void
+thrd_rdb_print_route_set(void)
+{
+	thrd_rdb_route_t *r;
+
+	printf("----------------- ROUTE SET -----------------\n");
+	printf("| R_destination | R_next_hop | R_route_cost |\n");
+	printf("---------------------------------------------\n\r");
+	for( r = thrd_rdb_route_head(); r != NULL; r = thrd_rdb_route_next(r)) {
+		printf("| " ANSI_COLOR_YELLOW "%13d" ANSI_COLOR_RESET
+				" | " ANSI_COLOR_YELLOW "%10d" ANSI_COLOR_RESET
+				" | " ANSI_COLOR_YELLOW "%12d" ANSI_COLOR_RESET
+				" |\n",
+				r->R_destination, r->R_next_hop, r->R_route_cost);
+	}
+	printf("---------------------------------------------\n\r");
+}
+
+/* --------------------------------------------------------------------------- */
+
+void
+thrd_rdb_print_routing_database(void)
+{
+	printf(ANSI_COLOR_RED "|============================== ROUTING DATABASE ===============================|" ANSI_COLOR_RESET "\n\r");
+	thrd_rdb_print_rid_set();
+	thrd_rdb_print_link_set();
+	thrd_rdb_print_route_set();
+	printf(ANSI_COLOR_RED "|===============================================================================|" ANSI_COLOR_RESET "\n\r");
+}
+
+#endif /* RIP_DEBUG */
+
+/* --------------------------------------------------------------------------- */

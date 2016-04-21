@@ -10,6 +10,9 @@
 
 /** Network Level Protocol Parameters */
 
+/** Routing table size */
+#define THRD_CONF_MAX_ROUTES            2 // 10
+
 #define	ADVERTISEMENT_I_MIN				1
 #define	ADVERTISEMENT_I_MAX				32
 #define	ID_REUSE_DELAY					100
