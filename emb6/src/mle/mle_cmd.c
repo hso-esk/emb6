@@ -10,109 +10,55 @@
 
 void  mle_init_cmd(mle_cmd_t* mle_cmd , const mle_cmd_type_t type)
 {
-	mle_cmd->type=type;
-	for (uint8_t i=0 ; i<MAX_TLV; i++)
-		mle_cmd->tlv[i].type=TLV_NONE;
+	mle_cmd->type= (uint8_t) type;
 	mle_cmd->used_data=0;
 }
 
-void  mle_init_empty_cmd(mle_cmd_t* mle_cmd )
+void  mle_create_cmd_from_buff(mle_cmd_t** cmd , uint8_t* data , uint16_t datalen)
 {
-	mle_init_cmd(mle_cmd ,CMD_NONE);
+*cmd=(mle_cmd_t*) data;
+(*cmd)->used_data=datalen-1;
+
 }
 
-uint8_t mle_deserialize_cmd(const uint8_t* ptr , mle_cmd_t* mle_cmd , int16_t cmd_length )
-{
-	 uint8_t i=0 ; //  tlv counter
-	 uint32_t index=0 ; // index : number of byte serialized
 
-	if(mle_cmd->type != CMD_NONE || ptr == NULL) // the command should be empty
+
+
+
+uint8_t mle_add_tlv_to_cmd(mle_cmd_t * cmd , const tlv_type_t type, const int8_t length,   uint8_t * value )
+{
+	tlv_t * tlv;
+	uint8_t i=0;
+
+
+	/* carry about data buffer overflow*/
+	if ((cmd->used_data+ length +sizeof(tlv->type) + sizeof(tlv->length)) < MAX_TLV_DATA_SIZE)
+		tlv_init(&tlv,&cmd->tlv_data[cmd->used_data]);
+	else
+	{
+		printf("buffer overflow \n");
 		return 0;
+	};
 
+	/* an MLE message MUST NOT contain two or more TLVs of the same type
+	 * With the exceptions of the Source Address TLV and Parameter TLV */
 
-	/* deserialize mle cmd type  */
-	mle_cmd->type= (mle_cmd_type_t) ptr[index++];
-
-	mle_cmd->used_data=0;
-	while(index < cmd_length)
+	tlv_init(&tlv,cmd->tlv_data);
+	while( tlv < (tlv_t*)&cmd->tlv_data[cmd->used_data])
 	{
-		// deserialize tlv type
-		mle_cmd->tlv[i].type= (tlv_type_t) ptr[index++];
-
-		// deserialize tlv length
-		mle_cmd->tlv[i].length=ptr[index++];
-
-		// deserialize data only if data is not NULL
-		if(mle_cmd->tlv[i].length > 0)
+		if (tlv->type==type && type!=TLV_SOURCE_ADDRESS)
 		{
-			mle_cmd->tlv[i].value= &mle_cmd->data[mle_cmd->used_data] ;
-			memcpy(&mle_cmd->data[mle_cmd->used_data], &ptr[index], mle_cmd->tlv[i].length);
-
-			mle_cmd->used_data+=mle_cmd->tlv[i].length;
-			index += mle_cmd->tlv[i].length;
-		}
-		else
-		{
-			mle_cmd->tlv[i].value = NULL;
-		}
-		i++;
-	}
-
-	return 1 ;
-}
-
-
-
-uint8_t mle_serialize_cmd(const mle_cmd_t mle_cmd , uint8_t* ptr , uint16_t* result_length)
-{
-	 uint8_t i = 0 ; // i: tlv counter // result_length : number of byte serialized
-	 uint32_t index=0;
-	if(mle_cmd.type == CMD_NONE || ptr == NULL) // check if the command is empty
-		return 0;
-
-	ptr[index++]= (uint8_t) mle_cmd.type;
-	while(mle_cmd.tlv[i].type!=TLV_NONE && i< MAX_TLV )
-	{
-		ptr[index++]=(uint8_t) mle_cmd.tlv[i].type;
-		ptr[index++]=(uint8_t) mle_cmd.tlv[i].length;
-		memcpy(&ptr[index], mle_cmd.tlv[i].value , mle_cmd.tlv[i].length);
-
-		index+=(mle_cmd.tlv[i].length);
-		i++;
-	}
-	*result_length=index;
-	return 1 ;
-}
-
-
-
-uint8_t mle_add_tlv_to_cmd(mle_cmd_t * mle_cmd , const tlv_type_t type, const int8_t length,   uint8_t * value )
-{
-	 uint8_t i=0;
-	// an MLE message MUST NOT contain two or more TLVs of the same type With the exceptions of the Source Address TLV and Parameter TLV
-
-	while (mle_cmd->tlv[i].type!=TLV_NONE)
-	{
-		if (mle_cmd->tlv[i].type==type && type!=TLV_SOURCE_ADDRESS)
-		{
-			printf("\nError TLV already exit ...\n" );
+			printf("\nError TLV already exist ...\n" );
 			return 0 ;
 		}
-		if(i==MAX_TLV  )
-		{
-			printf("\nError tlv buffer is full ...\n" );
-			return 0 ;
-		}
-		i++;
+		i+=(tlv->length+2);
+		tlv_init(&tlv,&cmd->tlv_data[i]);
 	}
 
-	/*
-	 * i should carry about data buffer overflow
-	 * */
-
-	if(tlv_write(&mle_cmd->tlv[i], type,  length, value , &mle_cmd->data[mle_cmd->used_data]))
+	/* adding the tlv */
+	if(tlv_write(tlv, type,  length, value))
 	{
-		mle_cmd->used_data+=length;
+		cmd->used_data+=(length+2);
 		return 1;
 	}
 	else
@@ -121,22 +67,23 @@ uint8_t mle_add_tlv_to_cmd(mle_cmd_t * mle_cmd , const tlv_type_t type, const in
 }
 
 
- void print_buffer(uint8_t* buffer)
+void print_buffer(uint8_t* buffer ,uint8_t length)
 {
 	printf("==> Buffer :  ");
-	for(uint8_t i=0 ; i<strlen((char*) buffer) ;i++) {
+	for(uint8_t i=0 ; i<length ;i++) {
 		printf("%02x ", buffer[i]);
 	}
 	printf("\n");
 
 }
 
-uint8_t mle_print_cmd(const mle_cmd_t mle_cmd )
+uint8_t mle_print_cmd( mle_cmd_t cmd )
 {
-	 uint8_t i=0;
+	tlv_t * tlv;
+	uint8_t i=0;
 
-	printf("-----------------------------------------------------\nMLE command : " );
-	switch (mle_cmd.type)
+	printf("-----------------------------------------------------\n            MLE command : " );
+	switch (cmd.type)
 	{
 	case LINK_REQUEST:
 		printf("LINK_REQUEST");
@@ -183,17 +130,21 @@ uint8_t mle_print_cmd(const mle_cmd_t mle_cmd )
 	case CHILD_UPDATE_RESPONSE:
 		printf("CHILD_UPDATE_RESPONSE");
 		break;
-	case CMD_NONE:
+	default :
 		printf("error mle command type not recognized ");
 		return 0 ;
 		break;
 	}
-	printf("\n" );
+	printf("\n-----------------------------------------------------\n" );
 
-	while( mle_cmd.tlv[i].type!= TLV_NONE &&  i<MAX_TLV)
+	tlv_init(&tlv,cmd.tlv_data);
+	while( tlv < (tlv_t*)&cmd.tlv_data[cmd.used_data])
 	{
-		tlv_print(mle_cmd.tlv[i++]);
+		tlv_print(tlv);
+		i+=(tlv->length+2);
+		tlv_init(&tlv,&cmd.tlv_data[i]);
 	}
+
 	printf("-----------------------------------------------------\n" );
 	return 1 ;
 }
