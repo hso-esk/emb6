@@ -124,6 +124,7 @@ static void  _aptb_callback(struct udp_socket *c, void *ptr,
              const uip_ipaddr_t *dest_addr,   uint16_t dest_port,
              const uint8_t *data,             uint16_t datalen)
 {
+
     char        pc_buf[MAX_S_PAYLOAD_LEN];
     uint64_t    seqID;
 

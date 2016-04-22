@@ -16,10 +16,6 @@ typedef struct {
 /*==============================================================================
                                  API FUNCTIONS
  =============================================================================*/
-uint8_t mle_deserialize_mle_msg(uint8_t* ptr , mle_msg_t* mle_msg  , int16_t msg_length );
-
-
-
 
 //uint8_t mle_build_cmd( mle_cmd_type_t  cmd_type , mle_cmd_t* mle_cmd);
 

@@ -14,8 +14,8 @@
                                      MACROS
  =============================================================================*/
 
-#define MAX_TLV                   10
-#define MAX_TLV_DATA_SIZE         50
+
+#define MAX_TLV_DATA_SIZE         255
 
 
 /*==============================================================================
@@ -43,10 +43,9 @@ typedef enum
 } mle_cmd_type_t;
 
 
-typedef struct {
-	mle_cmd_type_t     type;                              /**< command type */
-	tlv_t              tlv[MAX_TLV];                      /**< series of TLV */
-	uint8_t            data[MAX_TLV_DATA_SIZE];           /**< buffer of values */
+typedef struct __attribute__((__packed__)) {
+	uint8_t   		   type;                                  /**< command type */
+	uint8_t            tlv_data[MAX_TLV_DATA_SIZE];           /**< tlv buffer */
 	uint8_t            used_data;
 }mle_cmd_t ;
 
@@ -67,11 +66,13 @@ void  mle_init_cmd(mle_cmd_t* mle_cmd , const mle_cmd_type_t type );
 
 
 /**
- * @brief  create empty mle command
+ * @brief  create  mle command from buffer
  *
  * @param  mle_cmd	  pointer to mle_cmd structure
+ * @param  data	      pointer to the data
+ * @param  datalen	  data length
  */
-void  mle_init_empty_cmd(mle_cmd_t* mle_cmd );
+void  mle_create_cmd_from_buff(mle_cmd_t** cmd , uint8_t* data , uint16_t datalen);
 
 
 
@@ -123,7 +124,7 @@ uint8_t mle_add_tlv_to_cmd(mle_cmd_t * mle_cmd , const tlv_type_t type, const in
  * @param  buffer	  pointer to buffer
 
  */
-void print_buffer(uint8_t* buffer);
+void print_buffer(uint8_t* buffer  ,uint8_t length);
 
 
 
@@ -136,7 +137,7 @@ void print_buffer(uint8_t* buffer);
          -  1 sucess
          -  0 error
  */
-uint8_t mle_print_cmd(const mle_cmd_t mle_cmd );
+uint8_t mle_print_cmd(  mle_cmd_t mle_cmd );
 
 
 

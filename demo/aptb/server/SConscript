@@ -11,6 +11,7 @@ aptb_srv = {
 		'mac',
 		'framer',
 		'phy',
+		'ipv6mc',
 	],
 	'utils' : [
 		'*',

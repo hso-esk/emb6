@@ -13,23 +13,34 @@
  =============================================================================*/
 
 
-int8_t tlv_write(tlv_t *tlv, tlv_type_t type, int8_t length, uint8_t * value , uint8_t * ptr_to_buffer)
+int8_t tlv_init(tlv_t ** tlv, uint8_t * ptr )
 {
-	if(tlv->type != TLV_NONE || ptr_to_buffer == NULL) // check if the command is empty
-		return 0;
+	if( ptr == NULL)
+		return 0 ;
 
-	tlv->type=type;
-	tlv->length=length;
-	tlv->value=ptr_to_buffer;
-	memcpy(ptr_to_buffer, value, length);
+
+	*tlv= (tlv_t* )  ptr;
 	return 1 ;
 }
 
 
-int8_t tlv_print(tlv_t tlv)
+int8_t tlv_write(tlv_t *tlv, tlv_type_t type, int8_t length, uint8_t * value )
+{
+	if(tlv == NULL )
+		return 0;
+
+	tlv->type=(uint8_t)type;
+	tlv->length=length;
+	memcpy(tlv->value, value, tlv->length);
+	return 1 ;
+}
+
+
+
+int8_t tlv_print(tlv_t* tlv)
 {
 	printf("  + ");
-	switch (tlv.type)
+	switch (tlv->type)
 	{
 	case TLV_SOURCE_ADDRESS:
 		printf("type : SOURCE_ADDRESS    ");
@@ -91,15 +102,15 @@ int8_t tlv_print(tlv_t tlv)
 	case TLV_ADDRESS_REGISTRATION:
 		printf("type : ADDRESS_REGISTRATION");
 		break;
-	case TLV_NONE:
+	 default:
 		printf("Error tlv type not recognized ");
 		return 0 ;
 		break;
 	}
-	printf(", length : %i , value :  ",tlv.length);
+	printf(", length : %i , value :  ",tlv->length);
 
-	for(uint8_t i=0 ; i<tlv.length;i++) {
-		printf("%02x ", tlv.value[i]);
+	for(uint8_t i=0 ; i<tlv->length; i++) {
+		printf("%02x ", tlv->value[i]);
 	}
 	printf("\r\n");
 	return 1;

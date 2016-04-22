@@ -90,7 +90,7 @@
 /** Define a network prefix for all addresses */
 #define     NETWORK_PREFIX          0xaaaa, 0x0000, 0x0000, 0x0000
 /** Mode 3 - derived from server link-local (MAC) address */
-#define     SERVER_IP_ADDR80        0x0250, 0xc2ff, 0xfea8, 0xbabe
+#define     SERVER_IP_ADDR80        0x0250, 0xc2ff, 0xfea8, 0x00AA
 /** Server IP address consist of network prefix and 64 bit of mac address */
 #define     SERVER_IP_ADDR          NETWORK_PREFIX,SERVER_IP_ADDR80
 

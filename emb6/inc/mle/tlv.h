@@ -19,7 +19,7 @@
  =============================================================================*/
 
 /* MLE TLV TYPE  */
-typedef enum {
+typedef enum  {
 	TLV_SOURCE_ADDRESS,
 	TLV_MODE,
 	TLV_TIME_OUT,
@@ -41,18 +41,21 @@ typedef enum {
 	TLV_VERSION,
 	TLV_ADDRESS_REGISTRATION,
 	TLV_NONE,
-} tlv_type_t ;
+}  tlv_type_t  ;
 
 
-typedef struct {
-	tlv_type_t type;    // type
-	int8_t length;   // length
-	uint8_t * value; // pointer to the value
-}tlv_t;
+typedef struct __attribute__((__packed__)) {
+	uint8_t  type    ;    // type
+	uint8_t	length  ;   // length
+	uint8_t  value[1]   ; // pointer to the value
+}  tlv_t   ;
 
 /*==============================================================================
 								LOCAL FUNCTION
  =============================================================================*/
+
+
+int8_t tlv_init(tlv_t **tlv, uint8_t * ptr );
 
 /**
  * @brief  write on tlv object
@@ -60,14 +63,13 @@ typedef struct {
  * @param  tlv	  			pointer to tlv object to write on
  * @param  type	  			type of tlv object
  * @param  length	 		length of the value
- * @param  value	 		pointer to the value to write on the value buffer
- * @param  ptr_to_buffer	pointer to buffer to write value (cause no malloc function used)
+ * @param  value	 		pointer to the value
  *
  * @return
          -  1 sucess
          -  0 error
  */
-int8_t tlv_write(tlv_t *tlv, tlv_type_t type, int8_t length, uint8_t * value, uint8_t * ptr_to_buffer);
+int8_t tlv_write(tlv_t *tlv , tlv_type_t type, int8_t length, uint8_t * value );
 
 /**
  * @brief  print a tlv object
@@ -78,7 +80,7 @@ int8_t tlv_write(tlv_t *tlv, tlv_type_t type, int8_t length, uint8_t * value, ui
          -  1 sucess
          -  0 error
  */
-int8_t tlv_print(tlv_t tlv);
+int8_t tlv_print(tlv_t * tlv);
 
 
 /*==============================================================================

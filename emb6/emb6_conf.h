@@ -870,7 +870,7 @@ void uip_log(char *msg);
 
 /** DEMO APTB example                      	(see demo_aptb_xxx.c) */
 #ifndef LOGGER_DEMO_APTB
-#define LOGGER_DEMO_APTB                   	FALSE
+#define LOGGER_DEMO_APTB                   	TRUE
 #endif
 
 /** DEMO COAP example                      	(see demo_coap_*.c) */
