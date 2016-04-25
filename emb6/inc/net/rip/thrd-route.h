@@ -2,7 +2,9 @@
  * thrd-route.h
  *
  *  Created on: 18 Apr 2016
- *      Author: osboxes
+ *  Author: Lukas Zimmermann <lzimmer1@stud.hs-offenburg.de>
+ *
+ *  Routing database manipulation.
  */
 
 #ifndef EMB6_INC_NET_RIP_THRD_ROUTE_H_
@@ -75,13 +77,10 @@ int thrd_rdb_link_num_links(void);
 
 int thrd_rdb_route_num_routes(void);
 
-/** Get the first element of the Router ID Set. */
 thrd_rdb_id_t *thrd_rdb_rid_head(void);
 
-/** Get the first element of the Link Set (neighbor table). */
 thrd_rdb_link_t *thrd_rdb_link_head(void);
 
-/** Get the first element of the Route Set. */
 thrd_rdb_route_t *thrd_rdb_route_head(void);
 
 thrd_rdb_id_t *thrd_rdb_rid_next(thrd_rdb_id_t *r);
@@ -92,11 +91,9 @@ thrd_rdb_route_t *thrd_rdb_route_next(thrd_rdb_route_t *r);
 
 uint8_t *thrd_rdb_route_nexthop(thrd_rdb_route_t *route);
 
-/** Look up a given router id in the Router ID Set. */
 thrd_rdb_id_t *thrd_rdb_rid_lookup(uint8_t destination);
 
-/** Look up a given router id in the Link Set. */
-thrd_rdb_link_t *thrd_rdb_link_lookup(uint8_t destination);
+thrd_rdb_link_t *thrd_rdb_link_lookup(uint8_t router_id);
 
 thrd_rdb_route_t *thrd_rdb_route_lookup(uint8_t destination);
 
@@ -114,6 +111,8 @@ void thrd_rdb_rid_rm(thrd_rdb_id_t *rid);
 void thrd_rdb_link_rm(thrd_rdb_link_t *link);
 
 void thrd_rdb_route_rm(thrd_rdb_route_t *route);
+
+thrd_rdb_route_t *thrd_rdb_route_update(uint8_t router_id, uint8_t destination, uint8_t cost_reported);
 
 #ifdef RIP_DEBUG
 void thrd_rdb_print_rid_set(void);

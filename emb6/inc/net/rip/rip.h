@@ -11,7 +11,7 @@
 /** Network Level Protocol Parameters */
 
 /** Routing table size */
-#define THRD_CONF_MAX_ROUTES            2 // 10
+#define THRD_CONF_MAX_ROUTES            5 // 10
 
 #define	ADVERTISEMENT_I_MIN				1
 #define	ADVERTISEMENT_I_MAX				32
@@ -19,8 +19,8 @@
 #define	ID_SEQUENCE_PERIOD				10
 #define	MAX_NEIGHBOR_AGE				100
 #define	MAX_ROUTE_COST					16
-#define	MAX_ROUTER_ID					2 // 62
-#define	MAX_ROUTERS						2 // 32
+#define	MAX_ROUTER_ID					5 // 62
+#define	MAX_ROUTERS						5 // 32
 #define	MIN_DOWNGRADE_NEIGHBORS			7
 #define	NETWORK_ID_TIMEOUT				120
 #define	PARENT_ROUTE_TO_LEADER_TIMEOUT	20
@@ -30,6 +30,10 @@
 #define	INFINITE_COST_TIMEOUT			90
 #define	REED_ADVERTISEMENT_INTERVAL		570
 #define	REED_ADVERTISEMENT_MAX_JITTER	60
+
+/** Network Layer TLVs. */
+#define THRD_NET_TLV_MAX_NUM			10		// Maximum number of network layer TLVs.
+#define THRD_NET_TLV_MAX_SIZE			50		// Maximum size of network layer TLVs.
 
 /** ------------------------- Structures ------------------------------- */
 
