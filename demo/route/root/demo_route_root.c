@@ -133,50 +133,41 @@ static int8_t _mcast_sendMsg(void)
 
 	switch (cnt) {
 	case 0:
-		thrd_rdb_rid_add(1);
-		thrd_rdb_link_add(1, 6, 20, 20, 250);
-		thrd_rdb_route_add(1, 2, 5);
+		thrd_rdb_rid_add(2);
+		thrd_rdb_link_add(2, 4, 20, 20, 250);
 		break;
 	case 1:
-		thrd_rdb_rid_add(2);
-		thrd_rdb_link_add(2, 6, 20, 20, 250);
-		thrd_rdb_route_add(2, 3, 10);
+		thrd_rdb_rid_add(3);
+		thrd_rdb_route_update(2, 3, 3);
 		break;
 	case 2:
-		thrd_rdb_rid_add(3);
-		thrd_rdb_link_add(3, 6, 20, 20, 250);
-		thrd_rdb_route_add(3, 1, 1);
+		thrd_rdb_rid_add(4);
+		thrd_rdb_route_update(2, 4, 6);
 		break;
 	case 3:
-		// thrd_rdb_rid_add(2);
-		thrd_rdb_link_add(2, 6, 20, 20, 250);
-		thrd_rdb_route_add(1, 2, 4);
+		thrd_rdb_route_update(2, 4, 4);
 		break;
 	case 4:
-		// thrd_rdb_rid_add(3);
-		thrd_rdb_link_add(3, 6, 20, 20, 250);
-		thrd_rdb_route_add(2, 3, 11);
+		thrd_rdb_rid_add(5);
+		thrd_rdb_link_add(5, 2, 20, 20, 250);
 		break;
 	case 5:
-		thrd_rdb_rid_add(3);
-		thrd_rdb_link_add(1, 6, 20, 20, 250);
-		thrd_rdb_route_add(3, 1, 1);
+		thrd_rdb_route_update(5, 4, 6);
 		break;
 	case 6:
-		thrd_rdb_rid_add(4);
-		thrd_rdb_link_add(2, 6, 20, 20, 250);
-		thrd_rdb_route_add(4, 1, 1);
+		thrd_rdb_route_update(5, 3, 7);
 		break;
 	case 7:
-		// thrd_rdb_rid_add(4);
-		thrd_rdb_link_add(1, 6, 20, 20, 250);
-		thrd_rdb_route_add(1, 1, 1);
+		thrd_rdb_route_update(5, 2, 1);
+		break;
+	case 8:
+		thrd_rdb_route_update(5, 3, 4);
 		break;
 	default:
 		break;
 	}
 
-	if ( cnt <= 7 ) {
+	if ( cnt <= 8 ) {
 		// Print all data of the routing database.
 		thrd_rdb_print_routing_database();
 	}
