@@ -22,7 +22,7 @@
 
 #include "thrd-route.h"
 
-#define DEBUG DEBUG_PRINT
+// #define DEBUG DEBUG_PRINT
 #include "uip-debug.h"
 
 /*
@@ -200,6 +200,144 @@ uint8_t
 		return (uint8_t*) route->R_next_hop; // LZ.
 	} else {
 		return NULL;
+	}
+}
+
+/* --------------------------------------------------------------------------- */
+
+/**
+ * Calculate the incoming quality based on the measured link margin.
+ * @param link_margin	The measured link margin in dB.
+ * @return				The corresponding incoming quality.
+ */
+uint8_t
+thrd_rdb_link_calc_incoming_quality(uint8_t link_margin)
+{
+	if ( link_margin > 20 )
+		return 3;
+	else if ( (link_margin > 10) && (link_margin <= 20) )
+		return 2;
+	else if ( (link_margin > 2) && (link_margin <= 10) )
+		return 1;
+	else
+		return 0;
+}
+
+/* --------------------------------------------------------------------------- */
+
+/**
+ * Calculate the link cost based on the given incoming quality.
+ * @param incoming_quality	The incoming quality (a number between 0 and 3).
+ * @return					The corresponding link cost.
+ */
+uint8_t
+thrd_rdb_calc_link_cost(uint8_t incoming_quality)
+{
+	switch (incoming_quality) {
+	case 3:
+		return THRD_LINK_COST_1;
+	case 2:
+		return THRD_LINK_COST_2;
+	case 1:
+		return THRD_LINK_COST_6;
+	default:
+		return THRD_LINK_COST_INFINTE;
+	}
+}
+
+/* --------------------------------------------------------------------------- */
+
+/**
+ * Determine the link margin using exponentially weighted moving average
+ * calculation.
+ * Formula: x(t)* = a * x(t) + (1 - a) * x(t - 1).
+ * <=> (1 / a) * x(t)* = x(t) + ((1 / a) - 1) * x(t - 1).
+ * @param link_margin	The measured link margin for messages received from the
+ * 						neighbor.
+ * @return				The calculated link margin, based on the previous value.
+ */
+uint8_t
+thrd_rdb_link_margin_average(uint8_t old_link_margin, uint8_t new_link_margin)
+{
+#if (THRD_EXP_WEIGHT_MOV_AVG == EXP_WEIGHT_MOV_AVG_1_8)
+	printf("\n= %d + (7 * %d) = %d + %d\n", new_link_margin, old_link_margin, new_link_margin, (7 * old_link_margin));
+	uint16_t link_margin_shifted = new_link_margin + (7 * old_link_margin);
+	printf("= %d\n", link_margin_shifted);
+	printf("= %d\n", ((uint8_t) (link_margin_shifted >> 3)));
+	return (uint8_t) (link_margin_shifted >> 3);
+#else
+	uint16_t link_margin_shifted = new_link_margin + (15 * old_link_margin);
+	return (uint8_t) (link_margin_shifted >> 4);
+#endif
+}
+
+/* --------------------------------------------------------------------------- */
+
+/**
+ * Determine the link incoming quality using hysteresis, based on the link margin.
+ * @param old_link_margin	The current link margin.
+ * @param new_link_margin	The new (measured) link margin.
+ * @return					The incoming quality of the link after applying
+ * 							hysteresis.
+ */
+uint8_t
+thrd_rdb_link_hysteresis(uint8_t old_link_margin, uint8_t new_link_margin)
+{
+	uint8_t old_iq = thrd_rdb_link_calc_incoming_quality(old_link_margin);
+	uint8_t new_iq = thrd_rdb_link_calc_incoming_quality(new_link_margin);
+
+	printf("\nold_iq = %d | new_iq = %d\n", old_iq, new_iq);
+
+	/* Check whether the link margin changed in such a way that the incoming
+	 * quality for this link should change. To avoid frequent changes of the
+	 * quality of a link, a hysteresis of 2dB is applied.
+	 */
+	if ( old_iq != new_iq ) {
+		// Check whether the incoming quality should be increased.
+		if ( old_iq < new_iq ) {
+			// Check hysteresis boundary.
+			uint8_t diff_db = new_link_margin - thrd_rdb_link_margin_get_lower_bound(new_iq);
+			printf("\ndiff_db = %d - %d = %d\n", new_link_margin, thrd_rdb_link_margin_get_lower_bound(new_iq), diff_db);
+			if ( diff_db >= 2 ) {
+				printf("\nIncreasing incoming quality from %d to %d\n", old_iq, new_iq);
+				return thrd_rdb_link_calc_incoming_quality(new_iq);
+			}
+
+		} else {
+			// The incoming quality should be decreased.
+			uint8_t diff_db = thrd_rdb_link_margin_get_lower_bound(old_iq) - new_link_margin;
+			printf("\ndiff_db = %d - %d = %d\n", thrd_rdb_link_margin_get_lower_bound(old_iq), new_link_margin, diff_db);
+			if ( diff_db >= 2) {
+				printf("\nDecreasing incoming quality from %d to %d\n", old_iq, new_iq);
+				return thrd_rdb_link_calc_incoming_quality(new_iq);
+			}
+		}
+	}
+	return thrd_rdb_link_calc_incoming_quality(old_link_margin);
+}
+
+/* --------------------------------------------------------------------------- */
+
+/**
+ * Get the lower bound of the link margin <--> quality conversion.
+ * Example: link_margin = 15 --> return 10.
+ * @param link_margin
+ * @return
+ */
+uint8_t
+thrd_rdb_link_margin_get_lower_bound(uint8_t link_margin)
+{
+	uint8_t quality = thrd_rdb_link_calc_incoming_quality(link_margin);
+
+	switch (quality) {
+	case 3:
+		return 20;
+	case 2:
+		return 10;
+	case 1:
+		return 2;
+	default:
+		return 0;
 	}
 }
 
@@ -404,16 +542,26 @@ thrd_rdb_id_t
 
 /* --------------------------------------------------------------------------- */
 
+/**
+ * Add a new link entry to the Link Set.
+ * @param router_id			The router id.
+ * @param link_margin		The measured link margin for messages received from
+ * 							the neighbor.
+ * @param outgoing_quality	The incoming link quality metric reported by the
+ * 							neighbor for messages arriving from this Router.
+ * @param age				The elapsed time since an advertisement was received
+ * 							from the neighbor.
+ * @return					A pointer to the added link entry, if successful.
+ * 							NULL, else.
+ */
 thrd_rdb_link_t
 *thrd_rdb_link_add(uint8_t router_id, uint8_t link_margin,
-		uint8_t incoming_quality, uint8_t outgoing_quality, uint8_t age)
+		uint8_t outgoing_quality, uint8_t age)
 {
 	thrd_rdb_link_t *l;
-
 	thrd_rdb_id_t *rid;
 
 	/* Find the corresponding Router ID entry (Router ID Set). */
-
 	l = thrd_rdb_link_lookup(router_id);
 
 	/* Check whether the given router id already has an entry in the Link Set. */
@@ -467,6 +615,8 @@ thrd_rdb_link_t
 
 		l->L_router_id = router_id;
 		l->L_link_margin = link_margin;
+		l->L_incoming_quality = thrd_rdb_link_calc_incoming_quality(link_margin);
+		l->L_outgoing_quality = outgoing_quality;
 
 		/* Add new link first - assuming that there is a reason to add this
 		 * and that there is a packet coming soon. */
@@ -687,16 +837,19 @@ thrd_rdb_route_t
 			 * better than the (link-local) route.
 			 */
 			l = thrd_rdb_link_lookup(destination);
-			link_cost = thrd_rdb_link_lookup(router_id)->L_link_margin;
 
-			/* If the destination router id is a neighbor and the new route is not
-			 * better, return.
-			 */
-			if ( l != NULL && ( (link_cost + cost_reported) >= l->L_link_margin) ) {
-				PRINTF("thrd_rdb_route_update: Not a better route to destination router id %d", destination);
-				PRINTF("\n\r");
+			if ( l != NULL ) {
+				link_cost = thrd_rdb_calc_link_cost(thrd_rdb_link_lookup(router_id)->L_incoming_quality);
 
-				return NULL;
+				/* If the destination router id is a neighbor and the new route is not
+				 * better, return.
+				 */
+				if ( (link_cost + cost_reported) >= thrd_rdb_calc_link_cost(l->L_incoming_quality) ) {
+					PRINTF("thrd_rdb_route_update: Not a better route to destination router id %d", destination);
+					PRINTF("\n\r");
+
+					return NULL;
+				}
 			}
 
 			PRINTF("thrd_rdb_route_update: Adding new route from advertisement "
@@ -720,8 +873,8 @@ thrd_rdb_route_t
 				PRINTF(ANSI_COLOR_RED "thrd_rdb_route_update: ERROR! Inconsistency found!" ANSI_COLOR_RESET);
 				return NULL;
 			}
-			link_cost = l->L_link_margin;
-			nxt_link_cost = thrd_rdb_link_lookup(r->R_next_hop)->L_link_margin;
+			link_cost = thrd_rdb_calc_link_cost(l->L_incoming_quality);
+			nxt_link_cost = thrd_rdb_calc_link_cost(thrd_rdb_link_lookup(r->R_next_hop)->L_incoming_quality);
 
 			/* Check whether the new route is better. */
 			if ( (link_cost + cost_reported) < (nxt_link_cost + r->R_route_cost) ) {

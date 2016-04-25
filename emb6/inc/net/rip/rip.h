@@ -13,6 +13,13 @@
 /** Routing table size */
 #define THRD_CONF_MAX_ROUTES            5 // 10
 
+/** Exponentially weighted moving average. */
+#define EXP_WEIGHT_MOV_AVG_1_8			3	// 1/8.
+#define EXP_WEIGHT_MOV_AVG_1_16			4	// 1/16.
+/** Set the weight. */
+#define THRD_EXP_WEIGHT_MOV_AVG			EXP_WEIGHT_MOV_AVG_1_8
+
+/** Network Layer defines. */
 #define	ADVERTISEMENT_I_MIN				1
 #define	ADVERTISEMENT_I_MAX				32
 #define	ID_REUSE_DELAY					100

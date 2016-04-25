@@ -110,6 +110,8 @@ static void _mcast_callback(c_event_t c_event, p_data_t p_data) {
 
 uint8_t cnt = 0;
 
+uint8_t l_m = 5;
+
 static int8_t _mcast_sendMsg(void)
 {
 
@@ -134,25 +136,44 @@ static int8_t _mcast_sendMsg(void)
 	switch (cnt) {
 	case 0:
 		thrd_rdb_rid_add(2);
-		thrd_rdb_link_add(2, 4, 20, 20, 250);
+		thrd_rdb_link_add(2, 15, 25, 250);
+
+		printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(5, 10));
+		printf("------------------------------------------\n\n");
+
 		break;
 	case 1:
 		thrd_rdb_rid_add(3);
-		thrd_rdb_route_update(2, 3, 3);
+		thrd_rdb_route_update(2, 3, 6);
+
+		printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(5, 12));
+		printf("------------------------------------------\n\n");
 		break;
 	case 2:
 		thrd_rdb_rid_add(4);
-		thrd_rdb_route_update(2, 4, 6);
+		thrd_rdb_route_update(2, 4, 7);
+
+		printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(17, 25));
+		printf("------------------------------------------\n\n");
 		break;
 	case 3:
-		thrd_rdb_route_update(2, 4, 4);
+		thrd_rdb_route_update(2, 4, 2);
+
+		printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(0, 5));
+		printf("------------------------------------------\n\n");
 		break;
 	case 4:
 		thrd_rdb_rid_add(5);
-		thrd_rdb_link_add(5, 2, 20, 20, 250);
+		thrd_rdb_link_add(5, 25, 25, 250);
+
+		printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(2, 25));
+		printf("------------------------------------------\n\n");
 		break;
 	case 5:
 		thrd_rdb_route_update(5, 4, 6);
+
+		printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(0, 25));
+		printf("------------------------------------------\n\n");
 		break;
 	case 6:
 		thrd_rdb_route_update(5, 3, 7);
@@ -164,6 +185,7 @@ static int8_t _mcast_sendMsg(void)
 		thrd_rdb_route_update(5, 3, 4);
 		break;
 	default:
+		exit(0);
 		break;
 	}
 

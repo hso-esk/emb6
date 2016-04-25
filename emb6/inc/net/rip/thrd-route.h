@@ -12,6 +12,7 @@
 
 #include "stimer.h"
 #include "clist.h"
+#include "rip.h"
 
 #define ANSI_COLOR_RED     	"\x1b[31m"
 #define ANSI_COLOR_YELLOW  	"\x1b[33m"
@@ -62,6 +63,14 @@ typedef struct thrd_rdb_route {
 	uint8_t R_route_cost;
 } thrd_rdb_route_t;
 
+/** \brief Link costs. */
+enum thrd_link_cost_t {
+	THRD_LINK_COST_1 = 1,
+	THRD_LINK_COST_2 = 2,
+	THRD_LINK_COST_6 = 6,
+	THRD_LINK_COST_INFINTE = MAX_ROUTE_COST,	// Infinite cost.
+};
+
 /* --------------------------------------------------------------------------- */
 
 /* --------------------------------------------------------------------------- */
@@ -91,6 +100,16 @@ thrd_rdb_route_t *thrd_rdb_route_next(thrd_rdb_route_t *r);
 
 uint8_t *thrd_rdb_route_nexthop(thrd_rdb_route_t *route);
 
+uint8_t thrd_rdb_link_calc_incoming_quality(uint8_t link_margin);
+
+uint8_t thrd_rdb_calc_link_cost(uint8_t incoming_quality);
+
+uint8_t thrd_rdb_link_margin_average(uint8_t old_link_margin, uint8_t new_link_margin);
+
+uint8_t thrd_rdb_link_hysteresis(uint8_t old_link_margin, uint8_t new_link_margin);
+
+uint8_t thrd_rdb_link_margin_get_lower_bound(uint8_t link_margin);
+
 thrd_rdb_id_t *thrd_rdb_rid_lookup(uint8_t destination);
 
 thrd_rdb_link_t *thrd_rdb_link_lookup(uint8_t router_id);
@@ -100,8 +119,7 @@ thrd_rdb_route_t *thrd_rdb_route_lookup(uint8_t destination);
 thrd_rdb_id_t *thrd_rdb_rid_add(uint8_t router_id);
 
 thrd_rdb_link_t *thrd_rdb_link_add(uint8_t router_id, uint8_t link_margin,
-		uint8_t incoming_quality, uint8_t outgoing_quality,
-		uint8_t age);
+		uint8_t outgoing_quality, uint8_t age);
 
 thrd_rdb_route_t *thrd_rdb_route_add(uint8_t destination, uint8_t next_hop,
 		uint8_t route_cost);
