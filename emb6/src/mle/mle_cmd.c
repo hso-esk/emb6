@@ -32,9 +32,7 @@ uint8_t mle_add_tlv_to_cmd(mle_cmd_t * cmd , const tlv_type_t type, const int8_t
 
 
 	/* carry about data buffer overflow*/
-	if ((cmd->used_data+ length +sizeof(tlv->type) + sizeof(tlv->length)) < MAX_TLV_DATA_SIZE)
-		tlv_init(&tlv,&cmd->tlv_data[cmd->used_data]);
-	else
+	if ((cmd->used_data+ length +sizeof(tlv->type) + sizeof(tlv->length)) >= MAX_TLV_DATA_SIZE)
 	{
 		printf("buffer overflow \n");
 		return 0;

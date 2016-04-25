@@ -395,6 +395,21 @@ trg += [{
 
 #NATIVE based ++++++++++++++++++++++++++++++++++++++++#
 
+
+
+trg += [{
+    'id'        : 'ap_luxsrv',
+    'apps_conf' : [ x86_srv, aptb_srv ],
+    'bsp'       : get_descr(bsp, 'native')
+}]
+
+trg += [{
+    'id'        : 'ap_luxcli',
+    'apps_conf' : [ x86_cli, aptb_cli ],
+    'bsp'       : get_descr(bsp, 'native')
+}]
+
+
 trg += [{
     'id'        : 'ap_luxsrv',
     'apps_conf' : [ x86_srv, aptb_srv ],

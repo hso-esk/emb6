@@ -40,11 +40,13 @@ static void  _mle_call_back(struct udp_socket *c, void *ptr, const uip_ipaddr_t 
 {
 
 	mle_cmd_t * cmd;
-	mle_create_cmd_from_buff(&cmd , (uint8_t * )data , datalen-40 );
+	mle_create_cmd_from_buff(&cmd , (uint8_t * )data , datalen - 40 );
 
 	PRINTF("data received length : %i \n", datalen);
 	PRINTF("data used : %i \n", cmd->used_data);
 	mle_print_cmd(*cmd);
+
+	udp_socket_sendto(&st_udp_mle_socket, (uint8_t*) cmd , cmd->used_data+1 , source_addr , MLE_UDP_RPORT);
 
 }
 
@@ -64,8 +66,7 @@ static void _mle_sendMsg(c_event_t c_event, p_data_t p_data )
 		mle_add_tlv_to_cmd( &cmd ,TLV_VERSION , 2 ,(uint8_t*) "haaaaaa" );
 		mle_add_tlv_to_cmd( &cmd ,TLV_STATUS , 4 , (uint8_t*) "hcch" );
 		mle_add_tlv_to_cmd( &cmd ,TLV_RESPONSE , 1 ,(uint8_t*)  "a" );
-		mle_add_tlv_to_cmd( &cmd ,TLV_SOURCE_ADDRESS , 2 ,(uint8_t*)  "aa" );
-		mle_add_tlv_to_cmd( &cmd ,TLV_SOURCE_ADDRESS , 2 ,(uint8_t*)  "bb" );
+		add_src_address_tlv_to_cmd(&cmd);
 		print_buffer((uint8_t*) &cmd , cmd.used_data+1);
 		//mle_print_cmd(cmd);
 
@@ -75,6 +76,7 @@ static void _mle_sendMsg(c_event_t c_event, p_data_t p_data )
 
 		//udp_socket_send(&st_udp_mle_socket, (uint8_t*) &cmd , cmd.used_data+1);
 		udp_socket_sendto(&st_udp_mle_socket, (uint8_t*) &cmd , cmd.used_data+1 , &s_destAddr,MLE_UDP_RPORT);
+
 
 		/************************************************************************/
 
@@ -173,23 +175,7 @@ uint8_t mle_init(void)
 	node.mode=NOT_LINKED;
 
 
-	/*
-	mle_cmd_t cmd;
-	mle_init_cmd(&cmd,LINK_ACCEPT);
-	mle_add_tlv_to_cmd(&cmd , TLV_SOURCE_ADDRESS, 5,  (uint8_t*) "haaah" );
-	mle_add_tlv_to_cmd(&cmd , TLV_MODE, 2,  (uint8_t*) "bbaah" );
-	mle_add_tlv_to_cmd( &cmd ,TLV_MODE , 5 ,(uint8_t*) "hello" );
-	mle_add_tlv_to_cmd( &cmd ,TLV_VERSION , 2 ,(uint8_t*) "haaaaaa" );
-	mle_add_tlv_to_cmd( &cmd ,TLV_STATUS , 4 , (uint8_t*) "hcch" );
-	mle_add_tlv_to_cmd( &cmd ,TLV_RESPONSE , 1 ,(uint8_t*)  "a" );
-	mle_add_tlv_to_cmd( &cmd ,TLV_RESPONSE , 1 ,(uint8_t*)  "a" );
-	mle_add_tlv_to_cmd( &cmd ,TLV_SOURCE_ADDRESS , 2 ,(uint8_t*)  "aa" );
-	mle_add_tlv_to_cmd( &cmd ,TLV_SOURCE_ADDRESS , 2 ,(uint8_t*)  "bb" );
-	print_buffer((uint8_t*) &cmd , cmd.used_data+1);
-	mle_print_cmd(cmd);
-	*/
-
-	etimer_set( &e_mle_udp_Timer,SEND_INTERVAL * bsp_get(E_BSP_GET_TRES), _mle_sendMsg);
+	//etimer_set( &e_mle_udp_Timer,SEND_INTERVAL * bsp_get(E_BSP_GET_TRES), _mle_sendMsg);
 
 
 

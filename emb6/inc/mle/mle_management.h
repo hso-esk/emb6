@@ -17,11 +17,6 @@
 #define		MLE_UDP_RPORT		         19788 /* MLE UDP Port  */
 #define     MAX_MLE_UDP_PAYLOAD_LEN      200    /* MLE UDP Payload length  */
 
-/** macro for a half of ipv6 address */
-#define     HALFIP6ADDR                 8
-/** full of ipv6 address */
-#define     IP6ADDRSIZE                 16
-
 
 /*==============================================================================
 									TYPEDEFS

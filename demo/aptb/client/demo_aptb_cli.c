@@ -191,6 +191,8 @@ static void  _aptb_callback(struct udp_socket *c, void *ptr,
 {
     if (data != NULL)
     {
+
+    	printf("data received length : %i \n", datalen);
         if (data[0] == EMB6_APTB_RESPONSE) {
             /* Skip packet type header */
             l_lastSeqId = (data[1] << 24) +
@@ -215,6 +217,8 @@ static void  _aptb_callback(struct udp_socket *c, void *ptr,
 /*----------------------------------------------------------------------------*/
 int8_t demo_aptbInit(void)
 {
+
+	static  uip_ipaddr_t                s_destAddr;
     /* The choice of server address determines its 6LoPAN header compression.
     * (Our address will be compressed Mode 3 since it is derived from our link-local address)
     * Obviously the choice made here must also be selected in udp-server.c.
@@ -234,7 +238,9 @@ int8_t demo_aptbInit(void)
 
     udp_socket_register(&st_udp_socket, NULL, _aptb_callback);
     udp_socket_bind(&st_udp_socket, _LOCAL_PORT);
-    udp_socket_connect(&st_udp_socket,&un_server_ipaddr, _REMOTE_PORT);
+
+    uip_ip6addr(&s_destAddr, 0xff02, 0, 0, 0, 0, 0, 0, 0x0001);
+    udp_socket_connect(&st_udp_socket,&s_destAddr, _REMOTE_PORT);
 
     LOG_INFO("%s", "Create connection with the server ");
     LOG_IP6ADDR(&un_server_ipaddr.u8);

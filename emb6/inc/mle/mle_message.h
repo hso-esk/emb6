@@ -24,10 +24,11 @@ typedef struct {
 								LOCAL FUNCTION
  =============================================================================*/
 
-/*static*/ uint16_t  get_16_MAC(void);
+static uint16_t  get_16_MAC(void);
+uint8_t  add_src_address_tlv_to_cmd(mle_cmd_t* cmd);
 
 /*
-static uint8_t mle_build_link_request_cmd(mle_cmd_t* mle_cmd);
+static uint8_t mle_build_link_request_cmd(mle_cmd_t* cmd);
 static uint8_t mle_build_link_accept_cmd(mle_cmd_t* mle_cmd);
 static uint8_t mle_build_link_accept_request_cmd(mle_cmd_t* mle_cmd);
 static uint8_t mle_build_link_reject_cmd(mle_cmd_t* mle_cmd);

@@ -130,6 +130,8 @@ static void  _aptb_callback(struct udp_socket *c, void *ptr,
 
     if (data != NULL)
     {
+
+    	printf("data received length : %i \n", datalen);
         if (data[0] == EMB6_APTB_REQUEST) {
             seqID = (data[1] << 24) + (data[2] << 16) +
                     (data[3] << 8)  + data[4];

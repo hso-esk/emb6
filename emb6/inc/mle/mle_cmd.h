@@ -76,29 +76,7 @@ void  mle_create_cmd_from_buff(mle_cmd_t** cmd , uint8_t* data , uint16_t datale
 
 
 
-/**
- * @brief  convert buffer to mle_cmd structure
 
- * @param  ptr	      pointer to the buffer to convert.
- * @param  mle_cmd	      pointer to the mle_cmd structure to parse in
-
- * @return
-        -  1 sucess
-        -  0 error
- */
-uint8_t mle_deserialize_cmd(const uint8_t* ptr , mle_cmd_t* mle_cmd  , int16_t cmd_length );
-
-/**
- * @brief  convert mle_cmd structure to buffer
- *
- * @param  mle_cmd	  mle_cmd structure to serialize
- * @param  ptr	      pointer to the buffer.
-
- * @return
-         -  1 sucess
-         -  0 error
- */
-uint8_t mle_serialize_cmd(const mle_cmd_t mle_cmd , uint8_t* ptr , uint16_t* result_length  );
 
 
 /**
