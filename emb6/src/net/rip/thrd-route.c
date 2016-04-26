@@ -247,9 +247,13 @@ thrd_rdb_calc_link_cost(uint8_t incoming_quality)
 
 /* --------------------------------------------------------------------------- */
 
+/* This define is used to round the calculated average using the first decimal
+ * place. */
+#define MOV_AVG_ROUND_MASK	0x0004
+
 /**
  * Determine the link margin using exponentially weighted moving average
- * calculation.
+ * calculation. Round the result using the first decimal place.
  * Formula: x(t)* = a * x(t) + (1 - a) * x(t - 1).
  * <=> (1 / a) * x(t)* = x(t) + ((1 / a) - 1) * x(t - 1).
  * @param link_margin	The measured link margin for messages received from the
@@ -262,11 +266,18 @@ thrd_rdb_link_margin_average(uint8_t old_link_margin, uint8_t new_link_margin)
 #if (THRD_EXP_WEIGHT_MOV_AVG == EXP_WEIGHT_MOV_AVG_1_8)
 	printf("\n= %d + (7 * %d) = %d + %d\n", new_link_margin, old_link_margin, new_link_margin, (7 * old_link_margin));
 	uint16_t link_margin_shifted = new_link_margin + (7 * old_link_margin);
+	// Round.
+	if ( (link_margin_shifted & MOV_AVG_ROUND_MASK) == 0x0004 )
+		return (uint8_t) ((link_margin_shifted >> 3) + 1);
+
 	printf("= %d\n", link_margin_shifted);
 	printf("= %d\n", ((uint8_t) (link_margin_shifted >> 3)));
 	return (uint8_t) (link_margin_shifted >> 3);
 #else
 	uint16_t link_margin_shifted = new_link_margin + (15 * old_link_margin);
+	// Round.
+	if ( (link_margin_shifted & MOV_AVG_ROUND_MASK) == 0x0004 )
+		return (uint8_t) ((link_margin_shifted >> 3) + 1);
 	return (uint8_t) (link_margin_shifted >> 4);
 #endif
 }
@@ -917,7 +928,7 @@ thrd_rdb_route_t
 
 /* --------------------------------------------------------------------------- */
 
-#ifdef RIP_DEBUG
+#if RIP_DEBUG
 
 void
 thrd_rdb_print_rid_set(void)
