@@ -16,6 +16,7 @@
 
 #include "demo_route_root.h"
 #include "thrd-route.h"
+#include "thrd-leader-db.h"
 
 #define		DEBUG		DEBUG_PRINT
 
@@ -133,6 +134,8 @@ static int8_t _mcast_sendMsg(void)
 
 	// --- NEW
 
+	/*
+	// Routing Database.
 	switch (cnt) {
 	case 0:
 		thrd_rdb_rid_add(2);
@@ -199,6 +202,45 @@ static int8_t _mcast_sendMsg(void)
 	if ( cnt <= 8 ) {
 		// Print all data of the routing database.
 		thrd_rdb_print_routing_database();
+	}
+	*/
+
+	// Leader Database.
+	switch (cnt) {
+	case 0:
+		thrd_ldb_ida_add(1, 2, 3);
+		break;
+	case 1:
+		thrd_ldb_ida_add(2, 2, 3);
+		break;
+	case 2:
+		thrd_ldb_ida_add(3, 2, 3);
+		break;
+	case 3:
+		thrd_ldb_ida_rm(thrd_ldb_ida_lookup(1));
+		break;
+	case 4:
+		thrd_ldb_ida_rm(thrd_ldb_ida_lookup(2));
+		break;
+	case 5:
+		thrd_ldb_ida_rm(thrd_ldb_ida_lookup(3));
+		break;
+	case 6:
+		thrd_ldb_ida_rm(thrd_ldb_ida_lookup(4));
+		break;
+	case 7:
+		thrd_ldb_ida_add(1, 2, 3);
+		break;
+	case 8:
+		break;
+	default:
+		exit(0);
+		break;
+	}
+
+	if ( cnt <= 8 ) {
+		// Print all data of the routing database.
+		thrd_ldb_print_leader_database();
 	}
 
 	cnt++;
@@ -321,6 +363,9 @@ int8_t demo_routeRootInit(void)
 
 	// Initialize routing database.
 	thrd_rdb_init();
+
+	// Initialize leader database.
+	thrd_ldb_init();
 
 	/* set the pointer to the udp-socket */
 	pst_udp_socket = &st_udp_socket;
