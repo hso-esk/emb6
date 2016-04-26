@@ -14,13 +14,6 @@
 #include "clist.h"
 #include "rip.h"
 
-#define ANSI_COLOR_RED     	"\x1b[31m"
-#define ANSI_COLOR_YELLOW  	"\x1b[33m"
-#define	ANSI_COLOR_GREEN	"\x1B[32m"
-#define ANSI_COLOR_CYAN    	"\x1b[36m"
-#define ANSI_COLOR_MAGENTA 	"\x1b[35m"
-#define ANSI_COLOR_RESET  	"\x1b[0m"
-
 void thrd_rdb_init(void);
 
 /**
@@ -132,13 +125,10 @@ void thrd_rdb_route_rm(thrd_rdb_route_t *route);
 
 thrd_rdb_route_t *thrd_rdb_route_update(uint8_t router_id, uint8_t destination, uint8_t cost_reported);
 
-#ifdef RIP_DEBUG
+#if RIP_DEBUG
 void thrd_rdb_print_rid_set(void);
-
 void thrd_rdb_print_link_set(void);
-
 void thrd_rdb_print_route_set(void);
-
 void thrd_rdb_print_routing_database(void);
 #endif /* RIP_DEBUG */
 
