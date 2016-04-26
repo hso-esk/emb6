@@ -140,7 +140,6 @@ static int8_t _mcast_sendMsg(void)
 
 		printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(5, 10));
 		printf("------------------------------------------\n\n");
-
 		break;
 	case 1:
 		thrd_rdb_rid_add(3);
@@ -177,12 +176,20 @@ static int8_t _mcast_sendMsg(void)
 		break;
 	case 6:
 		thrd_rdb_route_update(5, 3, 7);
+
+		printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(25, 15));
+		printf("------------------------------------------\n\n");
 		break;
 	case 7:
 		thrd_rdb_route_update(5, 2, 1);
+		printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(5, 0));
+		printf("------------------------------------------\n\n");
 		break;
 	case 8:
 		thrd_rdb_route_update(5, 3, 4);
+
+		printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(15, 0));
+		printf("------------------------------------------\n\n");
 		break;
 	default:
 		exit(0);
