@@ -88,7 +88,7 @@
 ===============================================================================*/
 
 /** Enable RIP DEBUG PRINT */
-#define	RIP_DEBUG							FALSE
+#define	RIP_DEBUG							TRUE
 
 /** Define the Multicast Engine to Roll Trickle Multicast */
 #define	UIP_CONF_IPV6_MULTICAST				TRUE
