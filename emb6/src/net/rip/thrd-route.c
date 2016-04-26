@@ -197,7 +197,7 @@ uint8_t
 *thrd_rdb_route_nexthop(thrd_rdb_route_t *route)
 {
 	if (route != NULL) {
-		return (uint8_t*) route->R_next_hop; // LZ.
+		return ((uint8_t*) (route->R_next_hop)); // LZ.
 	} else {
 		return NULL;
 	}
@@ -286,8 +286,6 @@ thrd_rdb_link_hysteresis(uint8_t old_link_margin, uint8_t new_link_margin)
 	uint8_t old_iq = thrd_rdb_link_calc_incoming_quality(old_link_margin);
 	uint8_t new_iq = thrd_rdb_link_calc_incoming_quality(new_link_margin);
 
-	printf("\nold_iq = %d | new_iq = %d\n", old_iq, new_iq);
-
 	/* Check whether the link margin changed in such a way that the incoming
 	 * quality for this link should change. To avoid frequent changes of the
 	 * quality of a link, a hysteresis of 2dB is applied.
@@ -295,21 +293,28 @@ thrd_rdb_link_hysteresis(uint8_t old_link_margin, uint8_t new_link_margin)
 	if ( old_iq != new_iq ) {
 		// Check whether the incoming quality should be increased.
 		if ( old_iq < new_iq ) {
+			if ( (new_iq - old_iq) > 1 ) {
+				PRINTF("\nIncreasing incoming quality from %d to %d\n", old_iq, new_iq);
+				return thrd_rdb_link_calc_incoming_quality(new_link_margin);
+			}
+
 			// Check hysteresis boundary.
-			uint8_t diff_db = new_link_margin - thrd_rdb_link_margin_get_lower_bound(new_iq);
-			printf("\ndiff_db = %d - %d = %d\n", new_link_margin, thrd_rdb_link_margin_get_lower_bound(new_iq), diff_db);
+			uint8_t diff_db = new_link_margin - thrd_rdb_link_margin_get_lower_bound(new_link_margin);
 			if ( diff_db >= 2 ) {
-				printf("\nIncreasing incoming quality from %d to %d\n", old_iq, new_iq);
-				return thrd_rdb_link_calc_incoming_quality(new_iq);
+				PRINTF("\nIncreasing incoming quality from %d to %d\n", old_iq, new_iq);
+				return thrd_rdb_link_calc_incoming_quality(new_link_margin);
 			}
 
 		} else {
+			if ( (old_iq - new_iq) > 1 ) {
+				PRINTF("\nDecreasing incoming quality from %d to %d\n", old_iq, new_iq);
+				return thrd_rdb_link_calc_incoming_quality(new_link_margin);
+			}
 			// The incoming quality should be decreased.
-			uint8_t diff_db = thrd_rdb_link_margin_get_lower_bound(old_iq) - new_link_margin;
-			printf("\ndiff_db = %d - %d = %d\n", thrd_rdb_link_margin_get_lower_bound(old_iq), new_link_margin, diff_db);
+			uint8_t diff_db = thrd_rdb_link_margin_get_lower_bound(old_link_margin) - new_link_margin;
 			if ( diff_db >= 2) {
-				printf("\nDecreasing incoming quality from %d to %d\n", old_iq, new_iq);
-				return thrd_rdb_link_calc_incoming_quality(new_iq);
+				PRINTF("\nDecreasing incoming quality from %d to %d\n", old_iq, new_iq);
+				return thrd_rdb_link_calc_incoming_quality(new_link_margin);
 			}
 		}
 	}
@@ -328,17 +333,23 @@ uint8_t
 thrd_rdb_link_margin_get_lower_bound(uint8_t link_margin)
 {
 	uint8_t quality = thrd_rdb_link_calc_incoming_quality(link_margin);
+	uint8_t lower_bound = 0;
 
 	switch (quality) {
 	case 3:
-		return 20;
+		lower_bound = 20;
+		break;
 	case 2:
-		return 10;
+		lower_bound = 10;
+		break;
 	case 1:
-		return 2;
+		lower_bound = 2;
+		break;
 	default:
-		return 0;
+		lower_bound = 0;
+		break;
 	}
+	return lower_bound;
 }
 
 /* --------------------------------------------------------------------------- */
