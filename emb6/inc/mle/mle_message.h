@@ -12,41 +12,28 @@ typedef struct {
 	uint8_t            mic ;           /**< MIC */
 }mle_msg_t ;
 
+/*==============================================================================
+								LOCAL FUNCTION
+ =============================================================================*/
+
+ uint8_t  add_tlv32_bit_to_cmd(mle_cmd_t* cmd , tlv_type_t type , uint32_t value);
 
 /*==============================================================================
                                  API FUNCTIONS
  =============================================================================*/
 
-//uint8_t mle_build_cmd( mle_cmd_type_t  cmd_type , mle_cmd_t* mle_cmd);
+uint16_t  get_16_MAC(void);
+uint8_t   add_src_address_to_cmd(mle_cmd_t* cmd);
+uint8_t   add_time_out_to_cmd(mle_cmd_t* cmd , uint32_t time);
+uint8_t   add_mode_RSDN_to_cmd(mle_cmd_t* cmd , uint8_t R , uint8_t S , uint8_t D, uint8_t N );
+uint8_t   add_scan_mask_to_cmd(mle_cmd_t* cmd , uint8_t R , uint8_t E );
+uint8_t   add_MLEframe_counter_to_cmd(mle_cmd_t* cmd , uint32_t frame) ;
+uint8_t   add_status_to_cmd(mle_cmd_t* cmd);
+uint8_t   add_version_to_cmd(mle_cmd_t* cmd);
 
 
-/*==============================================================================
-								LOCAL FUNCTION
- =============================================================================*/
-
-static uint16_t  get_16_MAC(void);
-uint8_t  add_src_address_tlv_to_cmd(mle_cmd_t* cmd);
 
 /*
-static uint8_t mle_build_link_request_cmd(mle_cmd_t* cmd);
-static uint8_t mle_build_link_accept_cmd(mle_cmd_t* mle_cmd);
-static uint8_t mle_build_link_accept_request_cmd(mle_cmd_t* mle_cmd);
-static uint8_t mle_build_link_reject_cmd(mle_cmd_t* mle_cmd);
-
-static uint8_t mle_build_advertisement_cmd(mle_cmd_t* mle_cmd);
-
-static uint8_t mle_build_data_request_cmd(mle_cmd_t* mle_cmd);
-static uint8_t mle_build_data_response_cmd(mle_cmd_t* mle_cmd);
-
-static uint8_t mle_build_parent_request_cmd(mle_cmd_t* mle_cmd);
-static uint8_t mle_build_parent_response_cmd(mle_cmd_t* mle_cmd);
-
-static uint8_t mle_build_child_id_request_cmd(mle_cmd_t* mle_cmd);
-static uint8_t mle_build_child_id_response_cmd(mle_cmd_t* mle_cmd);
-
-static uint8_t mle_build_child_update_cmd(mle_cmd_t* mle_cmd);
-static uint8_t mle_build_child_update_response_cmd(mle_cmd_t* mle_cmd);
-
 static uint8_t   get_Mode(void);
 
 static void *    generate_challenge(void);

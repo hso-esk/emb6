@@ -1,3 +1,9 @@
+/*
+ * mle_management.c
+ *
+ *      Author: Nidhal Mars
+ *      manage mle protcol
+ */
 
 /*==============================================================================
                                  INCLUDE FILES
@@ -12,6 +18,7 @@
 #include "rpl.h"
 #include "udp-socket.h"
 
+
 #define		DEBUG		DEBUG_PRINT
 
 #include "uip-debug.h"	// For debugging terminal output.
@@ -20,7 +27,7 @@
                           LOCAL VARIABLE DECLARATIONS
  =============================================================================*/
 
-static mle_node_t node;
+static mle_node_t MyNode;
 
 static  struct  udp_socket          st_udp_mle_socket;
 
@@ -46,7 +53,7 @@ static void  _mle_call_back(struct udp_socket *c, void *ptr, const uip_ipaddr_t 
 	PRINTF("data used : %i \n", cmd->used_data);
 	mle_print_cmd(*cmd);
 
-	udp_socket_sendto(&st_udp_mle_socket, (uint8_t*) cmd , cmd->used_data+1 , source_addr , MLE_UDP_RPORT);
+	//udp_socket_sendto(&st_udp_mle_socket, (uint8_t*) cmd , cmd->used_data+1 , source_addr , MLE_UDP_RPORT);
 
 }
 
@@ -62,11 +69,12 @@ static void _mle_sendMsg(c_event_t c_event, p_data_t p_data )
 		mle_cmd_t cmd;
 		mle_init_cmd(&cmd,LINK_ACCEPT);
 		mle_add_tlv_to_cmd(&cmd , TLV_SOURCE_ADDRESS, 5,  (uint8_t*) "haaah" );
-		mle_add_tlv_to_cmd(&cmd , TLV_MODE, 2,  (uint8_t*) "bbaah" );
-		mle_add_tlv_to_cmd( &cmd ,TLV_VERSION , 2 ,(uint8_t*) "haaaaaa" );
-		mle_add_tlv_to_cmd( &cmd ,TLV_STATUS , 4 , (uint8_t*) "hcch" );
-		mle_add_tlv_to_cmd( &cmd ,TLV_RESPONSE , 1 ,(uint8_t*)  "a" );
-		add_src_address_tlv_to_cmd(&cmd);
+		add_version_to_cmd(&cmd);
+		add_scan_mask_to_cmd(&cmd,1,1);
+		add_mode_RSDN_to_cmd(&cmd, 0 , 0 , 0 , 1 );
+		add_time_out_to_cmd (&cmd, MyNode.timeOut);
+		add_src_address_to_cmd(&cmd);
+		add_status_to_cmd(&cmd);
 		print_buffer((uint8_t*) &cmd , cmd.used_data+1);
 		//mle_print_cmd(cmd);
 
@@ -92,7 +100,8 @@ static void _mle_sendMsg(c_event_t c_event, p_data_t p_data )
 } /* _mle_sendMsg */
 
 
-static uint8_t join_mcast_group(void)
+
+uint8_t join_mcast_group(void)
 {
 	uip_ipaddr_t addr;
 
@@ -112,8 +121,7 @@ static uint8_t join_mcast_group(void)
 }
 
 
-
-static void print_local_addresses(void)
+void print_local_addresses(void)
 {
 	int i;
 	uint8_t state;
@@ -128,6 +136,7 @@ static void print_local_addresses(void)
 		}
 	}
 }
+
 
 
 /*==============================================================================
@@ -172,10 +181,16 @@ uint8_t mle_init(void)
 
 
 	/***********  Inisialize  mle node structure ***************/
-	node.mode=NOT_LINKED;
+	MyNode.OpMode=NOT_LINKED;
+	MyNode.timeOut=TIME_OUT;
 
 
-	//etimer_set( &e_mle_udp_Timer,SEND_INTERVAL * bsp_get(E_BSP_GET_TRES), _mle_sendMsg);
+	mle_nb_device_init();
+	mle_add_child(1, s_destAddr,  50441 ,0,3);
+	mle_add_child(2, s_destAddr,  441 ,2,1);
+	mle_print_table();
+
+	etimer_set( &e_mle_udp_Timer,SEND_INTERVAL * bsp_get(E_BSP_GET_TRES), _mle_sendMsg);
 
 
 
