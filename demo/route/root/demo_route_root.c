@@ -134,12 +134,12 @@ static int8_t _mcast_sendMsg(void)
 
 	// --- NEW
 
-	/*
+
 	// Routing Database.
 	switch (cnt) {
 	case 0:
 		thrd_rdb_rid_add(2);
-		thrd_rdb_link_add(2, 15, 25, 250);
+		thrd_rdb_link_update(2, 15, 25, 250);
 
 		printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(5, 10));
 		printf("------------------------------------------\n\n");
@@ -166,7 +166,7 @@ static int8_t _mcast_sendMsg(void)
 		break;
 	case 4:
 		thrd_rdb_rid_add(5);
-		thrd_rdb_link_add(5, 25, 25, 250);
+		thrd_rdb_link_update(5, 25, 25, 250);
 
 		printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(2, 25));
 		printf("------------------------------------------\n\n");
@@ -203,8 +203,9 @@ static int8_t _mcast_sendMsg(void)
 		// Print all data of the routing database.
 		thrd_rdb_print_routing_database();
 	}
-	*/
 
+
+	/*
 	// Leader Database.
 	switch (cnt) {
 	case 0:
@@ -242,6 +243,7 @@ static int8_t _mcast_sendMsg(void)
 		// Print all data of the routing database.
 		thrd_ldb_print_leader_database();
 	}
+	*/
 
 	cnt++;
 
