@@ -564,110 +564,6 @@ thrd_rdb_id_t
 
 /* --------------------------------------------------------------------------- */
 
-/**
- * Add a new link entry to the Link Set.
- * @param router_id			The router id.
- * @param link_margin		The measured link margin for messages received from
- * 							the neighbor.
- * @param outgoing_quality	The incoming link quality metric reported by the
- * 							neighbor for messages arriving from this Router.
- * @param age				The elapsed time since an advertisement was received
- * 							from the neighbor.
- * @return					A pointer to the added link entry, if successful.
- * 							NULL, else.
- */
-thrd_rdb_link_t
-*thrd_rdb_link_add(uint8_t router_id, uint8_t link_margin,
-		uint8_t outgoing_quality, uint8_t age)
-{
-	thrd_rdb_link_t *l;
-	thrd_rdb_id_t *rid;
-
-	/* Find the corresponding Router ID entry (Router ID Set). */
-	l = thrd_rdb_link_lookup(router_id);
-
-	/* Check whether the given router id already has an entry in the Link Set. */
-	if (l == NULL) {
-		PRINTF("thrd_rdb_link_add: router id unknown for ");
-		PRINTF("%d\n", router_id);
-		PRINTF("\n\r");
-
-		/* If there is no link entry, check if the given router id
-		 * is valid (Router ID Set). If valid, create one. We first need to
-		 * check if we have room for this link. If not, we remove the
-		 * least recently used one we have. */
-
-		/* We first check to see if the destination router is in our
-		 * Router ID Set (set of valid Router IDs). */
-		rid = thrd_rdb_rid_lookup(router_id);
-
-		if (rid == NULL) {
-			/* If the router did not have an entry in our Router ID Set,
-			 * return NULL. */
-
-			PRINTF(ANSI_COLOR_RED "thrd_rdb_link_add: Router with router id ");
-			PRINTF("%d is invalid.", router_id);
-			PRINTF(ANSI_COLOR_RESET "\n\r");
-
-			PRINTF("-----------------------------------------------------\n\r");
-			return NULL;
-		}
-
-		/* If there is no link entry, create one. We first need to
-		 * check if we have room for this link. If not, we remove the
-		 * least recently used one we have. */
-		if (thrd_rdb_link_num_links() == MAX_ROUTERS) {
-			/* Removing the oldest link entry from the Link Set. The
-			 * least recently used link is the first link on the set. */
-			thrd_rdb_link_t *oldest;
-
-			oldest = list_tail(link_list);
-			thrd_rdb_link_rm(oldest);
-		}
-
-		/* Allocate a link entry and populate it. */
-		l = memb_alloc(&link_memb);
-
-		if (l == NULL) {
-			/* This should not happen, as we explicitly deallocated one
-			 * link set entry above. */
-			PRINTF("thrd_rdb_link_add: could not allocate link\n");
-			return NULL;
-		}
-
-		l->L_router_id = router_id;
-		l->L_link_margin = link_margin;
-		l->L_incoming_quality = thrd_rdb_link_calc_incoming_quality(link_margin);
-		l->L_outgoing_quality = outgoing_quality;
-
-		/* Add new link first - assuming that there is a reason to add this
-		 * and that there is a packet coming soon. */
-		list_push(link_list, l);
-
-		num_links++;
-
-		PRINTF("thrd_rdb_link_add: num_links %d\n\r", num_links);
-
-	} else {
-
-		PRINTF(
-				ANSI_COLOR_RED "thrd_rdb_link_add: router id is already known for ");
-		PRINTF("%d\n", router_id);
-		PRINTF(ANSI_COLOR_RESET "\n\r");
-
-		PRINTF("thrd_rdb_link_add: num_links %d\n\r", num_links);
-		PRINTF("-----------------------------------------------------\n\r");
-
-		return NULL;
-	}
-
-	PRINTF("-----------------------------------------------------\n\r");
-
-	return l;
-}
-
-/* --------------------------------------------------------------------------- */
-
 thrd_rdb_route_t
 *thrd_rdb_route_add(uint8_t destination, uint8_t next_hop, uint8_t route_cost)
 {
@@ -827,6 +723,123 @@ thrd_rdb_route_rm(thrd_rdb_route_t *route)
 /* --------------------------------------------------------------------------- */
 
 /**
+ * Update the Link Set.
+ * @param router_id			The router id.
+ * @param link_margin		The measured link margin for messages received from
+ * 							the neighbor.
+ * @param outgoing_quality	The incoming link quality metric reported by the
+ * 							neighbor for messages arriving from this Router.
+ * @param age				The elapsed time since an advertisement was received
+ * 							from the neighbor.
+ * @return					The new/updated link entry.
+ * 							NULL, else (if nothing has changed, or an error occurred).
+ */
+thrd_rdb_link_t
+*thrd_rdb_link_update(uint8_t router_id, uint8_t link_margin,
+		uint8_t outgoing_quality, uint8_t age)
+{
+	thrd_rdb_link_t *l;
+	thrd_rdb_id_t *rid;
+
+	/* Find the corresponding Router ID entry (Router ID Set). */
+	l = thrd_rdb_link_lookup(router_id);
+
+	/* Check whether the given router id already has an entry in the Link Set. */
+	if ( l == NULL ) {
+		PRINTF("thrd_rdb_link_update: router id unknown for ");
+		PRINTF("%d\n", router_id);
+		PRINTF("\n\r");
+
+		/* If there is no link entry, check if the given router id
+		 * is valid (Router ID Set). If valid, create one. We first need to
+		 * check if we have room for this link. If not, we remove the
+		 * least recently used one we have. */
+
+		/* We first check to see if the destination router is in our
+		 * Router ID Set (set of valid Router IDs). */
+		rid = thrd_rdb_rid_lookup(router_id);
+
+		if (rid == NULL) {
+			/* If the router did not have an entry in our Router ID Set,
+			 * return NULL. */
+
+			PRINTF(ANSI_COLOR_RED "thrd_rdb_link_update: Router with router id ");
+			PRINTF("%d is invalid.", router_id);
+			PRINTF(ANSI_COLOR_RESET "\n\r");
+
+			PRINTF("-----------------------------------------------------\n\r");
+			return NULL;
+		}
+
+		/* If there is no link entry, create one. We first need to
+		 * check if we have room for this link. If not, we remove the
+		 * least recently used one we have. */
+		if ( thrd_rdb_link_num_links() == MAX_ROUTERS ) {
+			/* Removing the oldest link entry from the Link Set. The
+			 * least recently used link is the first link on the set. */
+			thrd_rdb_link_t *oldest;
+
+			oldest = list_tail(link_list);
+			thrd_rdb_link_rm(oldest);
+		}
+
+		/* Allocate a link entry and populate it. */
+		l = memb_alloc(&link_memb);
+
+		if (l == NULL) {
+			/* This should not happen, as we explicitly deallocated one
+			 * link set entry above. */
+			PRINTF("thrd_rdb_link_update: could not allocate link\n");
+			return NULL;
+		}
+
+		l->L_router_id = router_id;
+		l->L_link_margin = link_margin;
+		l->L_incoming_quality = thrd_rdb_link_calc_incoming_quality(link_margin);
+		l->L_outgoing_quality = outgoing_quality;
+
+		/* Add new link first - assuming that there is a reason to add this
+		 * and that there is a packet coming soon. */
+		list_push(link_list, l);
+
+		num_links++;
+
+		PRINTF("thrd_rdb_link_update: num_links %d\n\r", num_links);
+
+	} else {
+
+		PRINTF(ANSI_COLOR_RED "thrd_rdb_link_update: router id is already known for ");
+		PRINTF("%d\n", router_id);
+		PRINTF(ANSI_COLOR_RESET "\n\r");
+
+		PRINTF("thrd_rdb_link_update: num_links %d\n\r", num_links);
+		PRINTF("-----------------------------------------------------\n\r");
+
+		/* Calculate the new link margin using exponential weighted moving
+		 * averaging. */
+		uint8_t new_lm = thrd_rdb_link_margin_average(l->L_link_margin, link_margin);
+
+		l->L_link_margin = new_lm;
+		l->L_outgoing_quality = outgoing_quality;
+		l->L_age = age;
+
+		/* Check whether the incoming quality has changed. */
+		uint8_t new_iq = thrd_rdb_link_hysteresis(l->L_link_margin, new_lm);
+
+		if ( l->L_incoming_quality != new_iq ) {
+			l->L_incoming_quality = new_iq;
+			return l;
+		}
+		return NULL;
+	}
+
+	PRINTF("-----------------------------------------------------\n\r");
+	return l;
+}
+
+/* --------------------------------------------------------------------------- */
+
+/**
  * Update the Route Set. This function is part of 'Processing Route TLVs'.
  * @param router_id		The router id of the sender (of the advertisement).
  * @param destination	The router id of the destination router.
@@ -848,7 +861,7 @@ thrd_rdb_route_t
 	if ( cost_reported > 0 ) {
 
 		if ( r == NULL ) {
-			/* The doesn't exist so far. */
+			/* The route doesn't exist so far. */
 			PRINTF("thrd_rdb_route_update: Received new route from advertisement "
 					"(sender rid %d) ", router_id);
 			PRINTF("to destination router id %d", destination);

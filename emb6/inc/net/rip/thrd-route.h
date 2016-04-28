@@ -10,6 +10,7 @@
 #ifndef EMB6_INC_NET_RIP_THRD_ROUTE_H_
 #define EMB6_INC_NET_RIP_THRD_ROUTE_H_
 
+#include "emb6.h"
 #include "stimer.h"
 #include "clist.h"
 #include "rip.h"
@@ -111,9 +112,6 @@ thrd_rdb_route_t *thrd_rdb_route_lookup(uint8_t destination);
 
 thrd_rdb_id_t *thrd_rdb_rid_add(uint8_t router_id);
 
-thrd_rdb_link_t *thrd_rdb_link_add(uint8_t router_id, uint8_t link_margin,
-		uint8_t outgoing_quality, uint8_t age);
-
 thrd_rdb_route_t *thrd_rdb_route_add(uint8_t destination, uint8_t next_hop,
 		uint8_t route_cost);
 
@@ -123,7 +121,11 @@ void thrd_rdb_link_rm(thrd_rdb_link_t *link);
 
 void thrd_rdb_route_rm(thrd_rdb_route_t *route);
 
-thrd_rdb_route_t *thrd_rdb_route_update(uint8_t router_id, uint8_t destination, uint8_t cost_reported);
+thrd_rdb_link_t *thrd_rdb_link_update(uint8_t router_id, uint8_t link_margin,
+		uint8_t outgoing_quality, uint8_t age);
+
+thrd_rdb_route_t *thrd_rdb_route_update(uint8_t router_id, uint8_t destination,
+		uint8_t cost_reported);
 
 #if RIP_DEBUG
 void thrd_rdb_print_rid_set(void);
