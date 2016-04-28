@@ -264,8 +264,8 @@ uint8_t
 thrd_rdb_link_margin_average(uint8_t old_link_margin, uint8_t new_link_margin)
 {
 #if (THRD_EXP_WEIGHT_MOV_AVG == EXP_WEIGHT_MOV_AVG_1_8)
-	printf("\n= %d + (7 * %d) = %d + %d\n", new_link_margin, old_link_margin, new_link_margin, (7 * old_link_margin));
-	uint16_t link_margin_shifted = new_link_margin + (7 * old_link_margin);
+	printf("\n= %d + (7 * %d) = %d + %d\n", old_link_margin, new_link_margin, old_link_margin, (7 * new_link_margin));
+	uint16_t link_margin_shifted = old_link_margin + (7 * new_link_margin);
 	// Round.
 	if ( (link_margin_shifted & MOV_AVG_ROUND_MASK) == 0x0004 )
 		return (uint8_t) ((link_margin_shifted >> 3) + 1);
@@ -274,7 +274,7 @@ thrd_rdb_link_margin_average(uint8_t old_link_margin, uint8_t new_link_margin)
 	printf("= %d\n", ((uint8_t) (link_margin_shifted >> 3)));
 	return (uint8_t) (link_margin_shifted >> 3);
 #else
-	uint16_t link_margin_shifted = new_link_margin + (15 * old_link_margin);
+	uint16_t link_margin_shifted = old_link_margin + (15 * new_link_margin);
 	// Round.
 	if ( (link_margin_shifted & MOV_AVG_ROUND_MASK) == 0x0004 )
 		return (uint8_t) ((link_margin_shifted >> 3) + 1);
