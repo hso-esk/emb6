@@ -33,7 +33,7 @@
  * and memory for each entry is allocated from the idassign_memb memory block.
  * These routes are maintained on the idassign_list. */
 LIST(idassign_list);
-MEMB(idassign_memb, thrd_ldb_ida_t, MAX_ROUTERS); // TODO Check if MAX_ROUTERS is correct?
+MEMB(idassign_memb, thrd_ldb_ida_t, MAX_ROUTERS);
 
 /* Number of currently stored id assignments ids in the ID Assignment Set. */
 static int num_ida = 0;
