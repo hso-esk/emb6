@@ -264,14 +264,14 @@ uint8_t
 thrd_rdb_link_margin_average(uint8_t old_link_margin, uint8_t new_link_margin)
 {
 #if (THRD_EXP_WEIGHT_MOV_AVG == EXP_WEIGHT_MOV_AVG_1_8)
-	printf("\n= %d + (7 * %d) = %d + %d\n", old_link_margin, new_link_margin, old_link_margin, (7 * new_link_margin));
+	PRINTF("\n= %d + (7 * %d) = %d + %d\n", old_link_margin, new_link_margin, old_link_margin, (7 * new_link_margin));
 	uint16_t link_margin_shifted = old_link_margin + (7 * new_link_margin);
 	// Round.
 	if ( (link_margin_shifted & MOV_AVG_ROUND_MASK) == 0x0004 )
 		return (uint8_t) ((link_margin_shifted >> 3) + 1);
 
-	printf("= %d\n", link_margin_shifted);
-	printf("= %d\n", ((uint8_t) (link_margin_shifted >> 3)));
+	PRINTF("= %d\n", link_margin_shifted);
+	PRINTF("= %d\n", ((uint8_t) (link_margin_shifted >> 3)));
 	return (uint8_t) (link_margin_shifted >> 3);
 #else
 	uint16_t link_margin_shifted = old_link_margin + (15 * new_link_margin);
@@ -819,12 +819,12 @@ thrd_rdb_link_t
 		 * averaging. */
 		uint8_t new_lm = thrd_rdb_link_margin_average(l->L_link_margin, link_margin);
 
+		/* Check whether the incoming quality has changed. */
+		uint8_t new_iq = thrd_rdb_link_hysteresis(l->L_link_margin, new_lm);
+
 		l->L_link_margin = new_lm;
 		l->L_outgoing_quality = outgoing_quality;
 		l->L_age = age;
-
-		/* Check whether the incoming quality has changed. */
-		uint8_t new_iq = thrd_rdb_link_hysteresis(l->L_link_margin, new_lm);
 
 		if ( l->L_incoming_quality != new_iq ) {
 			l->L_incoming_quality = new_iq;
