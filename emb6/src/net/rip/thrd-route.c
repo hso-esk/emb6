@@ -207,17 +207,20 @@ uint8_t
 
 /**
  * Calculate the incoming quality based on the measured link margin.
- * @param link_margin	The measured link margin in dB.
+ * @param link_margin	The measured link margin in dB (shifted by
+ * 						THRD_EXP_WEIGHT_MOV_AVG to avoid rounding errors).
  * @return				The corresponding incoming quality.
  */
 uint8_t
-thrd_rdb_link_calc_incoming_quality(uint8_t link_margin)
+thrd_rdb_link_calc_incoming_quality(uint16_t link_margin)
 {
-	if ( link_margin > 20 )
+	if ( link_margin > (20 << THRD_EXP_WEIGHT_MOV_AVG) )
 		return 3;
-	else if ( (link_margin > 10) && (link_margin <= 20) )
+	else if ( (link_margin > (10 << THRD_EXP_WEIGHT_MOV_AVG))
+			&& (link_margin <= (20 << THRD_EXP_WEIGHT_MOV_AVG)) )
 		return 2;
-	else if ( (link_margin > 2) && (link_margin <= 10) )
+	else if ( (link_margin > (2 << THRD_EXP_WEIGHT_MOV_AVG))
+			&& (link_margin <= (10 << THRD_EXP_WEIGHT_MOV_AVG)) )
 		return 1;
 	else
 		return 0;
@@ -247,10 +250,6 @@ thrd_rdb_calc_link_cost(uint8_t incoming_quality)
 
 /* --------------------------------------------------------------------------- */
 
-/* This define is used to round the calculated average using the first decimal
- * place. */
-#define MOV_AVG_ROUND_MASK	0x0004
-
 /**
  * Determine the link margin using exponentially weighted moving average
  * calculation. Round the result using the first decimal place.
@@ -260,26 +259,20 @@ thrd_rdb_calc_link_cost(uint8_t incoming_quality)
  * 						neighbor.
  * @return				The calculated link margin, based on the previous value.
  */
-uint8_t
-thrd_rdb_link_margin_average(uint8_t old_link_margin, uint8_t new_link_margin)
+uint16_t
+thrd_rdb_link_margin_average(uint16_t old_link_margin, uint16_t new_link_margin)
 {
 #if (THRD_EXP_WEIGHT_MOV_AVG == EXP_WEIGHT_MOV_AVG_1_8)
+	// Weight: 1/8.
 	PRINTF("\n= %d + (7 * %d) = %d + %d\n", old_link_margin, new_link_margin, old_link_margin, (7 * new_link_margin));
-	uint16_t link_margin_shifted = old_link_margin + (7 * new_link_margin);
-	// Round.
-	if ( (link_margin_shifted & MOV_AVG_ROUND_MASK) == 0x0004 )
-		return (uint8_t) ((link_margin_shifted >> 3) + 1);
-
-	PRINTF("= %d\n", link_margin_shifted);
-	PRINTF("= %d\n", ((uint8_t) (link_margin_shifted >> 3)));
-	return (uint8_t) (link_margin_shifted >> 3);
+	uint16_t link_margin = new_link_margin + (7 * old_link_margin);
+	PRINTF("= %d\n", link_margin);
 #else
-	uint16_t link_margin_shifted = old_link_margin + (15 * new_link_margin);
+	// Weight: 1/16.
+	uint16_t link_margin = new_link_margin + (15 * old_link_margin);
 	// Round.
-	if ( (link_margin_shifted & MOV_AVG_ROUND_MASK) == 0x0004 )
-		return (uint8_t) ((link_margin_shifted >> 3) + 1);
-	return (uint8_t) (link_margin_shifted >> 4);
 #endif
+	return link_margin;
 }
 
 /* --------------------------------------------------------------------------- */
@@ -292,7 +285,7 @@ thrd_rdb_link_margin_average(uint8_t old_link_margin, uint8_t new_link_margin)
  * 							hysteresis.
  */
 uint8_t
-thrd_rdb_link_hysteresis(uint8_t old_link_margin, uint8_t new_link_margin)
+thrd_rdb_link_hysteresis(uint16_t old_link_margin, uint16_t new_link_margin)
 {
 	uint8_t old_iq = thrd_rdb_link_calc_incoming_quality(old_link_margin);
 	uint8_t new_iq = thrd_rdb_link_calc_incoming_quality(new_link_margin);
@@ -308,22 +301,20 @@ thrd_rdb_link_hysteresis(uint8_t old_link_margin, uint8_t new_link_margin)
 				PRINTF("\nIncreasing incoming quality from %d to %d\n", old_iq, new_iq);
 				return thrd_rdb_link_calc_incoming_quality(new_link_margin);
 			}
-
 			// Check hysteresis boundary.
-			uint8_t diff_db = new_link_margin - thrd_rdb_link_margin_get_lower_bound(new_link_margin);
-			if ( diff_db >= 2 ) {
+			uint16_t diff_lm = new_link_margin - thrd_rdb_link_margin_get_lower_bound(new_link_margin);
+			if ( diff_lm >= (2 << THRD_EXP_WEIGHT_MOV_AVG) ) {
 				PRINTF("\nIncreasing incoming quality from %d to %d\n", old_iq, new_iq);
 				return thrd_rdb_link_calc_incoming_quality(new_link_margin);
 			}
-
 		} else {
 			if ( (old_iq - new_iq) > 1 ) {
 				PRINTF("\nDecreasing incoming quality from %d to %d\n", old_iq, new_iq);
 				return thrd_rdb_link_calc_incoming_quality(new_link_margin);
 			}
 			// The incoming quality should be decreased.
-			uint8_t diff_db = thrd_rdb_link_margin_get_lower_bound(old_link_margin) - new_link_margin;
-			if ( diff_db >= 2) {
+			uint16_t diff_lm = thrd_rdb_link_margin_get_lower_bound(old_link_margin) - new_link_margin;
+			if ( diff_lm >= (2 << THRD_EXP_WEIGHT_MOV_AVG) ) {
 				PRINTF("\nDecreasing incoming quality from %d to %d\n", old_iq, new_iq);
 				return thrd_rdb_link_calc_incoming_quality(new_link_margin);
 			}
@@ -340,21 +331,21 @@ thrd_rdb_link_hysteresis(uint8_t old_link_margin, uint8_t new_link_margin)
  * @param link_margin
  * @return
  */
-uint8_t
-thrd_rdb_link_margin_get_lower_bound(uint8_t link_margin)
+uint16_t
+thrd_rdb_link_margin_get_lower_bound(uint16_t link_margin)
 {
 	uint8_t quality = thrd_rdb_link_calc_incoming_quality(link_margin);
-	uint8_t lower_bound = 0;
+	uint16_t lower_bound = 0;
 
 	switch (quality) {
 	case 3:
-		lower_bound = 20;
+		lower_bound = (20 << THRD_EXP_WEIGHT_MOV_AVG);
 		break;
 	case 2:
-		lower_bound = 10;
+		lower_bound = (10 << THRD_EXP_WEIGHT_MOV_AVG);
 		break;
 	case 1:
-		lower_bound = 2;
+		lower_bound = (2 << THRD_EXP_WEIGHT_MOV_AVG);
 		break;
 	default:
 		lower_bound = 0;
@@ -720,7 +711,11 @@ thrd_rdb_route_rm(thrd_rdb_route_t *route)
 	return;
 }
 
-/* --------------------------------------------------------------------------- */
+/*
+ ********************************************************************************
+ *                                 API FUNCTIONS
+ ********************************************************************************
+ */
 
 /**
  * Update the Link Set.
@@ -794,7 +789,7 @@ thrd_rdb_link_t
 		}
 
 		l->L_router_id = router_id;
-		l->L_link_margin = link_margin;
+		l->L_link_margin = (link_margin << THRD_EXP_WEIGHT_MOV_AVG);
 		l->L_incoming_quality = thrd_rdb_link_calc_incoming_quality(link_margin);
 		l->L_outgoing_quality = outgoing_quality;
 
@@ -832,7 +827,6 @@ thrd_rdb_link_t
 		}
 		return NULL;
 	}
-
 	PRINTF("-----------------------------------------------------\n\r");
 	return l;
 }
@@ -939,7 +933,11 @@ thrd_rdb_route_t
 	return NULL;
 }
 
-/* --------------------------------------------------------------------------- */
+/*
+ ********************************************************************************
+ *                                DEBUG FUNCTIONS
+ ********************************************************************************
+ */
 
 #if RIP_DEBUG
 

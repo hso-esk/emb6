@@ -42,7 +42,7 @@ typedef struct thrd_rdb_link {
 	struct thrd_rdb_link *next;
 
 	uint8_t L_router_id;
-	uint8_t L_link_margin;
+	uint16_t L_link_margin;
 	uint8_t L_incoming_quality;
 	uint8_t L_outgoing_quality;
 	uint8_t L_age;
@@ -94,15 +94,15 @@ thrd_rdb_route_t *thrd_rdb_route_next(thrd_rdb_route_t *r);
 
 uint8_t *thrd_rdb_route_nexthop(thrd_rdb_route_t *route);
 
-uint8_t thrd_rdb_link_calc_incoming_quality(uint8_t link_margin);
+uint8_t thrd_rdb_link_calc_incoming_quality(uint16_t link_margin);
 
 uint8_t thrd_rdb_calc_link_cost(uint8_t incoming_quality);
 
-uint8_t thrd_rdb_link_margin_average(uint8_t old_link_margin, uint8_t new_link_margin);
+uint16_t thrd_rdb_link_margin_average(uint16_t old_link_margin, uint16_t new_link_margin);
 
-uint8_t thrd_rdb_link_hysteresis(uint8_t old_link_margin, uint8_t new_link_margin);
+uint8_t thrd_rdb_link_hysteresis(uint16_t old_link_margin, uint16_t new_link_margin);
 
-uint8_t thrd_rdb_link_margin_get_lower_bound(uint8_t link_margin);
+uint16_t thrd_rdb_link_margin_get_lower_bound(uint16_t link_margin);
 
 thrd_rdb_id_t *thrd_rdb_rid_lookup(uint8_t destination);
 
@@ -121,11 +121,23 @@ void thrd_rdb_link_rm(thrd_rdb_link_t *link);
 
 void thrd_rdb_route_rm(thrd_rdb_route_t *route);
 
+/*
+ ********************************************************************************
+ *                                 API FUNCTIONS
+ ********************************************************************************
+ */
+
 thrd_rdb_link_t *thrd_rdb_link_update(uint8_t router_id, uint8_t link_margin,
 		uint8_t outgoing_quality, uint8_t age);
 
 thrd_rdb_route_t *thrd_rdb_route_update(uint8_t router_id, uint8_t destination,
 		uint8_t cost_reported);
+
+/*
+ ********************************************************************************
+ *                                DEBUG FUNCTIONS
+ ********************************************************************************
+ */
 
 #if RIP_DEBUG
 void thrd_rdb_print_rid_set(void);
