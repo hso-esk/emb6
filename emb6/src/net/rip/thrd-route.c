@@ -735,6 +735,7 @@ thrd_rdb_link_t
 {
 	thrd_rdb_link_t *l;
 	thrd_rdb_id_t *rid;
+	uint16_t link_margin_shifted = (link_margin << THRD_EXP_WEIGHT_MOV_AVG);
 
 	/* Find the corresponding Router ID entry (Router ID Set). */
 	l = thrd_rdb_link_lookup(router_id);
@@ -789,8 +790,8 @@ thrd_rdb_link_t
 		}
 
 		l->L_router_id = router_id;
-		l->L_link_margin = (link_margin << THRD_EXP_WEIGHT_MOV_AVG);
-		l->L_incoming_quality = thrd_rdb_link_calc_incoming_quality(link_margin);
+		l->L_link_margin = link_margin_shifted;
+		l->L_incoming_quality = thrd_rdb_link_calc_incoming_quality(link_margin_shifted);
 		l->L_outgoing_quality = outgoing_quality;
 
 		/* Add new link first - assuming that there is a reason to add this
