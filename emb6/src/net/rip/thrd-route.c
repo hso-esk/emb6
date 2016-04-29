@@ -272,7 +272,7 @@ thrd_rdb_link_margin_average(uint16_t old_link_margin, uint16_t new_link_margin)
 	uint16_t link_margin = new_link_margin + (15 * old_link_margin);
 	// Round.
 #endif
-	link_margin /= (1 << THRD_EXP_WEIGHT_MOV_AVG);
+	link_margin /= (0x0001 << THRD_EXP_WEIGHT_MOV_AVG);
 	return link_margin;
 }
 
