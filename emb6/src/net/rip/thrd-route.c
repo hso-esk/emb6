@@ -264,7 +264,7 @@ thrd_rdb_link_margin_average(uint16_t old_link_margin, uint16_t new_link_margin)
 {
 #if (THRD_EXP_WEIGHT_MOV_AVG == EXP_WEIGHT_MOV_AVG_1_8)
 	// Weight: 1/8.
-	PRINTF("\n= %d + (7 * %d) = %d + %d\n", old_link_margin, new_link_margin, old_link_margin, (7 * new_link_margin));
+	PRINTF("\n= %d + (7 * %d) = %d + %d\n", new_link_margin, old_link_margin, (7 * old_link_margin));
 	uint16_t link_margin = new_link_margin + (7 * old_link_margin);
 	PRINTF("= %d\n", link_margin);
 #else
@@ -273,6 +273,7 @@ thrd_rdb_link_margin_average(uint16_t old_link_margin, uint16_t new_link_margin)
 	// Round.
 #endif
 	link_margin /= (0x0001 << THRD_EXP_WEIGHT_MOV_AVG);
+	PRINTF("= %d\n", link_margin);
 	return link_margin;
 }
 
@@ -728,7 +729,6 @@ thrd_rdb_route_rm(thrd_rdb_route_t *route)
  * @param age				The elapsed time since an advertisement was received
  * 							from the neighbor.
  * @return					The new/updated link entry.
- * 							NULL, else (if nothing has changed, or an error occurred).
  */
 thrd_rdb_link_t
 *thrd_rdb_link_update(uint8_t router_id, uint8_t link_margin,
@@ -814,7 +814,7 @@ thrd_rdb_link_t
 
 		/* Calculate the new link margin using exponential weighted moving
 		 * averaging. */
-		uint8_t new_lm = thrd_rdb_link_margin_average(l->L_link_margin, link_margin);
+		uint8_t new_lm = thrd_rdb_link_margin_average(l->L_link_margin, link_margin_shifted);
 
 		/* Check whether the incoming quality has changed. */
 		uint8_t new_iq = thrd_rdb_link_hysteresis(l->L_link_margin, new_lm);
@@ -827,7 +827,7 @@ thrd_rdb_link_t
 			l->L_incoming_quality = new_iq;
 			return l;
 		}
-		return NULL;
+		// return NULL;
 	}
 	PRINTF("-----------------------------------------------------\n\r");
 	return l;
