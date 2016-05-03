@@ -263,17 +263,11 @@ uint16_t
 thrd_rdb_link_margin_average(uint16_t old_link_margin, uint16_t new_link_margin)
 {
 #if (THRD_EXP_WEIGHT_MOV_AVG == EXP_WEIGHT_MOV_AVG_1_8)
-	// Weight: 1/8.
-	PRINTF("\n= %d + (7 * %d) = %d + %d\n", new_link_margin, old_link_margin, (7 * old_link_margin));
 	uint16_t link_margin = new_link_margin + (7 * old_link_margin);
-	PRINTF("= %d\n", link_margin);
 #else
-	// Weight: 1/16.
 	uint16_t link_margin = new_link_margin + (15 * old_link_margin);
-	// Round.
 #endif
 	link_margin /= (0x0001 << THRD_EXP_WEIGHT_MOV_AVG);
-	PRINTF("= %d\n", link_margin);
 	return link_margin;
 }
 
