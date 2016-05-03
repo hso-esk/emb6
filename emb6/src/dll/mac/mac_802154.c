@@ -88,6 +88,8 @@ static void mac_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
 static void mac_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
 static void mac_txAck(uint8_t seq, e_nsErr_t *p_err);
 static void mac_csma(e_nsErr_t *p_err);
+static void mac_rxBufTimeout(s_rt_tmr_t *p_tmr, e_nsErr_t *p_err);
+
 
 /*
 ********************************************************************************
@@ -104,6 +106,7 @@ static s_ns_t          *pmac_netstk;
 static void            *pmac_cbTxArg;
 static nsTxCbFnct_t     mac_cbTxFnct;
 static e_nsErr_t        mac_txErr;
+static uint8_t          mac_hasData;
 
 
 /*
@@ -228,11 +231,10 @@ void mac_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 
   int is_broadcast;
   uint8_t is_tx_done;
-  uint8_t is_wfa_done;
   uint8_t tx_retries;
   uint8_t tx_retriesMax;
   packetbuf_attr_t is_ack_req;
-  e_rt_tmr_state_t wfa_tmr_state;
+
 
   /* find out if ACK is required */
   is_broadcast = packetbuf_holds_broadcast();
@@ -246,66 +248,74 @@ void mac_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
   tx_retriesMax = packetbuf_attr(PACKETBUF_ATTR_MAX_MAC_TRANSMISSIONS);
   tx_retries = 0;
   is_tx_done = FALSE;
-  is_wfa_done = FALSE;
-  do {
-    /* transmission attempt begins with CSMA operation */
-    mac_csma(&mac_txErr);
 
-    tx_retries++;
-    LOG_INFO("MAC_TX: Attempt %d.", tx_retries);
+  /* set result of TX process to default */
+  mac_txErr = NETSTK_ERR_TX_NOACK;
 
-    if (mac_txErr != NETSTK_ERR_CHANNEL_ACESS_FAILURE) {
-      /* when channel is clear, attempt to transmit packet */
-      pmac_netstk->phy->send(p_data, len, &mac_txErr);
+  /* perform CSMA-CA */
+  mac_csma(p_err);
 
-      if (mac_isAckReq == FALSE) {
-        is_tx_done = TRUE;
-      } else {
-        /* ACK is required then start Wait-For-ACK timer */
-        rt_tmr_stop(&mac_tmrWfa);
-        rt_tmr_start(&mac_tmrWfa);
+  /* was channel free? */
+  if (*p_err == NETSTK_ERR_NONE) {
+    /* then attempt to transmit the packet */
+    pmac_netstk->phy->send(p_data, len, p_err);
+  }
 
-        /* wait for ACK */
-        mac_txErr = NETSTK_ERR_TX_NOACK;
-        do {
-          /* poll for state of WFA timer */
-          wfa_tmr_state = rt_tmr_getState(&mac_tmrWfa);
-          pmac_netstk->phy->ioctrl(NETSTK_CMD_RX_BUF_READ, NULL, p_err);
-          /*
-           * Wait-For-ACK is declared as done if one of following
-           * conditions is met:
-           * (1)  WFA timeout is over
-           * (2)  MAC_TxErr is set to NETSTK_ERR_NONE, which is expected
-           *      to happen in MAC_Recv()
-           */
-          is_wfa_done = (wfa_tmr_state != E_RT_TMR_STATE_RUNNING) ||
-                        (mac_txErr == NETSTK_ERR_NONE);
-        } while (is_wfa_done == FALSE);
-
-        /* stop Wait-For-ACK timer */
-        rt_tmr_stop(&mac_tmrWfa);
+  /* is ACK required and packet was successfully transmitted? */
+  if ((mac_isAckReq == TRUE) && (*p_err == NETSTK_ERR_NONE)) {
+    /* then wait for ACK */
+    is_tx_done = FALSE;
+    do {
+      tx_retries++;
+      /* polling for ACK until timeout is expired */
+      mac_rxBufTimeout(&mac_tmrWfa, p_err);
+      /* was no packet arrived during AckWaitDuration? */
+      if (*p_err == NETSTK_ERR_FATAL) {
+        /* was number of retries smaller than maximum retry? */
+        if (tx_retries < tx_retriesMax) {
+          /* then check if channel is free */
+          mac_csma(p_err);
+          /* was the channel free? */
+          if (*p_err == NETSTK_ERR_NONE) {
+            /* then retransmit the frame */
+            pmac_netstk->phy->send(p_data, len, p_err);
+            /* has frame failed to transmit? */
+            if (*p_err != NETSTK_ERR_NONE) {
+              /* then terminate the transmission */
+              is_tx_done = TRUE;
+            }
+          }
+          /* was channel free or was the radio busy */
+          else {
+            is_tx_done = TRUE;
+          }
+        }
+        /* was number of retries equal or greater than the maximum retry? */
+        else {
+          /* then terminate the transmission process */
+          is_tx_done = TRUE;
+          *p_err = NETSTK_ERR_TX_NOACK;
+        }
       }
-    } else {
-      LOG_INFO("MAC_TX: CH-ERR.");
-    }
+      /* was a packet arrived during ACK-wait duration? */
+      else {
+        /* then TX result is set in mac_recv() and terminate the TX process */
+        *p_err = mac_txErr;
+        is_tx_done = TRUE;
+      }
+    } while (is_tx_done == FALSE);
+  }
 
-    /*
-     * Transmission attempt is declared as finished when one of following
-     * conditions is met.
-     * (1)  Transmission is succeeded
-     * (2)  CSMA declares channel busy while attempting to transmit
-     * (3)  Transmission retry exceeds maximum
-     */
-    is_tx_done = ((mac_txErr  == NETSTK_ERR_NONE) ||
-                  (tx_retries >= tx_retriesMax));
-  } while (is_tx_done == FALSE);
-  LOG_INFO("MAC_TX: --> Done - TX Status %d (%d/%d retries).", mac_txErr, tx_retries, tx_retriesMax);
-
-  /* signal upper layer */
+  /* reset local variables */
   mac_isAckReq = 0;
-  mac_cbTxFnct(pmac_cbTxArg, &mac_txErr);
   mac_txErr = NETSTK_ERR_NONE;
-  *p_err = mac_txErr;
+  LOG_INFO("MAC_TX: --> Done - TX Status %d (%d/%d retries).", *p_err, tx_retries, tx_retriesMax);
+
+  /* was transmission callback function set? */
+  if (mac_cbTxFnct) {
+    /* then signal the upper layer of the result of transmission process */
+    mac_cbTxFnct(pmac_cbTxArg, p_err);
+  }
 }
 
 
@@ -330,17 +340,19 @@ void mac_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 #endif
 
   int hdrlen;
+  uint8_t exp_seq;
   uint8_t is_acked;
-  uint8_t exp_pkt_seq;
   frame802154_t frame;
 
   /* set returned error code to default */
   *p_err = NETSTK_ERR_NONE;
+  mac_hasData = 1;
 
-  /* frames with length greater than supported by the packetbuf shall be
-   * discarded. Otherwise it leads to buffer overflow when using memcpy to
-   * store frame into the packet buffer */
+  /* was packet length larger than size of packet buffer? */
   if (len > PACKETBUF_SIZE) {
+    /* then discard the packet to avoid buffer overflow when using memcpy to
+    * store the frame into the packet buffer
+    */
     *p_err = NETSTK_ERR_INVALID_FRAME;
     return;
   }
@@ -352,21 +364,26 @@ void mac_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     return;
   }
 
+  /* was MAC waiting for ACK? */
   if (mac_isAckReq) {
-    /*
-     * When ACK is required, frames other than ACK shall be discarded
-     */
+    /* then frames other than ACK shall be discarded silently */
+
     /* check if this is expected ACK */
-    exp_pkt_seq = (uint8_t) packetbuf_attr(PACKETBUF_ATTR_MAC_SEQNO);
-    is_acked = ((frame.seq == exp_pkt_seq) &&
+    exp_seq = (uint8_t) packetbuf_attr(PACKETBUF_ATTR_MAC_SEQNO);
+    is_acked = ((frame.seq == exp_seq) &&
                 (frame.fcf.frame_type == FRAME802154_ACKFRAME));
     if (is_acked) {
+      /* valid ACK has arrived */
       mac_txErr = NETSTK_ERR_NONE;
+    } else {
+      /* unexpected packet arrives while waiting for ACK */
+      mac_txErr = NETSTK_ERR_TX_COLLISION;
     }
   } else {
     switch (frame.fcf.frame_type) {
       case FRAME802154_DATAFRAME:
       case FRAME802154_CMDFRAME:
+        /* perform Auto-ACK */
         if ((frame.fcf.ack_required == 1) &&
             (frame802154_broadcast(&frame) == 0) &&
             (linkaddr_cmp((linkaddr_t *) frame.dest_addr, &linkaddr_node_addr)) == 1) {
@@ -513,6 +530,48 @@ static void mac_csma(e_nsErr_t *p_err)
   }
   LOG_INFO("MAC_TX: NB %d.", nb);
 }
+
+
+/**
+ * @brief Polling for data until either the data is available or timeout is over
+ * @param p_tmr
+ * @param p_err NETSTK_ERR_NONE when data is available, otherwise NETSTK_ERR_MAC_ULE_NO_DATA
+ *
+ */
+static void mac_rxBufTimeout(s_rt_tmr_t *p_tmr, e_nsErr_t *p_err)
+{
+  e_rt_tmr_state_t tmr_state;
+
+  /* start polling timer */
+  rt_tmr_stop(p_tmr);
+  rt_tmr_start(p_tmr);
+  mac_hasData = 0;
+  do {
+    /* check if RF is in reception process */
+    pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_IS_RX_BUSY, NULL, p_err);
+    if (*p_err == NETSTK_ERR_BUSY) {
+      /* wait until RF has completed reception process */
+      do {
+        pmac_netstk->phy->ioctrl(NETSTK_CMD_RX_BUF_READ, NULL, p_err);
+      } while (mac_hasData == 0);
+      break;
+    }
+
+    /* get state of the timeout timer */
+    tmr_state = rt_tmr_getState(p_tmr);
+  } while (tmr_state == E_RT_TMR_STATE_RUNNING);
+
+  /* stop polling timer */
+  rt_tmr_stop(p_tmr);
+
+  /* set return error code */
+  if (mac_hasData == 0) {
+    *p_err = NETSTK_ERR_FATAL;
+  } else {
+    *p_err = NETSTK_ERR_NONE;
+  }
+}
+
 
 /*
 ********************************************************************************
