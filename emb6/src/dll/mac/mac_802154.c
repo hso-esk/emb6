@@ -395,6 +395,11 @@ void mac_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
         pmac_netstk->dllc->recv(p_data, len, p_err);
         break;
 
+      case FRAME802154_ACKFRAME:
+        /* silently discard unwanted ACK */
+        *p_err = NETSTK_ERR_NONE;
+        break;
+
       default:
         *p_err = NETSTK_ERR_INVALID_FRAME;
         break;
