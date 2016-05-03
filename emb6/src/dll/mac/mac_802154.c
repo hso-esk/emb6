@@ -477,39 +477,38 @@ static void mac_txAck(uint8_t seq, e_nsErr_t *p_err)
  */
 static void mac_csma(e_nsErr_t *p_err)
 {
-  uint32_t unit_backoff;
   uint32_t delay = 0;
   uint32_t max_random;
   uint8_t nb;
   uint8_t be;
-  uint8_t min_be = 3;
-  uint8_t max_be = 5;
-  uint8_t max_backoff = 4;
 
+  /* initialize CSMA variables */
   nb = 0;
-  be = min_be;
-  unit_backoff = 20 * 20; /* unit backoff period = 20 * symbol periods [us] */
+  be = NETSTK_CFG_CSMA_MIN_BE;
   *p_err = NETSTK_ERR_NONE;
 
   /* perform CCA maximum MaxBackoff time */
-  while (nb <= max_backoff) {
+  while (nb <= NETSTK_CFG_CSMA_MAX_BACKOFF) {
     /* delay for random (2^BE - 1) unit backoff periods */
     max_random = (1 << be) - 1;
-    delay = bsp_getrand(max_random);
-    delay *= unit_backoff; // us, symbol period is 20us @50kbps
+    delay  = bsp_getrand(max_random);
+    delay *= NETSTK_CFG_CSMA_UNIT_BACKOFF_US;
     bsp_delay_us(delay);
 
-    /*
-     * Perform CCA
-     */
+    /* perform CCA */
     pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_CCA_GET, 0, p_err);
-    if (*p_err == NETSTK_ERR_NONE) {
-      /* channel idle is detected, then terminate CSMA */
+    /* was channel free or was the radio busy? */
+    if ((*p_err == NETSTK_ERR_NONE) ||
+        (*p_err == NETSTK_ERR_BUSY)) {
+      /* then terminate CSMA */
       break;
-    } else {
-      /* channel busy is detected */
+    }
+    /* was channel busy? */
+    else {
+      /* then increase number of backoff by one */
       nb++;
-      be = ((be + 1) < max_be) ? (be + 1) : (max_be);
+      /* be = MIN((be + 1), MaxBE) */
+      be = ((be + 1) < NETSTK_CFG_CSMA_MAX_BE) ? (be + 1) : (NETSTK_CFG_CSMA_MAX_BE);
     }
   }
   LOG_INFO("MAC_TX: NB %d.", nb);

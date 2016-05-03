@@ -927,6 +927,12 @@ void uip_log(char *msg);
 #define NETSTK_CFG_LOW_POWER_MODE_EN                        FALSE
 #endif
 
+/*!< CSMA-CA parameters */
+#define NETSTK_CFG_CSMA_MIN_BE                    (uint8_t )(   3u )
+#define NETSTK_CFG_CSMA_MAX_BE                    (uint8_t )(   5u )
+#define NETSTK_CFG_CSMA_MAX_BACKOFF               (uint8_t )(   4u )
+#define NETSTK_CFG_CSMA_UNIT_BACKOFF_US           (uint32_t)( 400u )  /* @50kbps 2FSK */
+
 
 /*
 ********************************************************************************
