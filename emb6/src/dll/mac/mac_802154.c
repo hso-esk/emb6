@@ -385,6 +385,7 @@ void mac_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
       case FRAME802154_CMDFRAME:
         /* perform Auto-ACK */
         if ((frame.fcf.ack_required == 1) &&
+            (frame.dest_pid == mac_phy_config.pan_id) &&
             (frame802154_broadcast(&frame) == 0) &&
             (linkaddr_cmp((linkaddr_t *) frame.dest_addr, &linkaddr_node_addr)) == 1) {
           mac_txAck(frame.seq, p_err);
