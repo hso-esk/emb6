@@ -922,6 +922,11 @@ void uip_log(char *msg);
 #endif
 #define NETSTK_CFG_WOR_EN                                   FALSE
 
+/*!< Enable/Disable Data Whitening */
+#ifndef NETSTK_CFG_DATA_WHITENING_EN
+#define NETSTK_CFG_DATA_WHITENING_EN                        TRUE
+#endif
+
 /*!< Enable/Disable low power mode */
 #ifndef NETSTK_CFG_LOW_POWER_MODE_EN
 #define NETSTK_CFG_LOW_POWER_MODE_EN                        FALSE

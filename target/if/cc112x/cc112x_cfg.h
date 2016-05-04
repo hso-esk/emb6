@@ -190,6 +190,11 @@ static const s_regSettings_t cc112x_cfg_ieee802154g_default[] =
 
     {CC112X_PKT_CFG2,           0x04},  /* CCA_MODE=001b, indicating clear channel when RSSI is below threshold */
     {CC112X_PKT_CFG1,           0x00},  /* CRC_CFG = 00; CRC16 is disabled, APPEND_STATUS is disabled */
+#if (NETSTK_CFG_DATA_WHITENING_EN == TRUE)
+    {CC112X_PKT_CFG1,           0x40},
+#else
+    {CC112X_PKT_CFG1,           0x00},
+#endif
     {CC112X_PKT_CFG0,           0x20},
 
     {CC112X_RFEND_CFG0,         0x09},
