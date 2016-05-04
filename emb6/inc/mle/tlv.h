@@ -11,7 +11,8 @@
                                  INCLUDE FILES
  =============================================================================*/
 #include "emb6.h"
-
+#define		DEBUG		DEBUG_PRINT
+#include "uip-debug.h"	// For debugging terminal output.
 
 
 /*==============================================================================

@@ -39,80 +39,80 @@ int8_t tlv_write(tlv_t *tlv, tlv_type_t type, int8_t length, uint8_t * value )
 
 int8_t tlv_print(tlv_t* tlv)
 {
-	printf("  + ");
+	PRINTF("  + type :");
 	switch (tlv->type)
 	{
 	case TLV_SOURCE_ADDRESS:
-		printf("type : SOURCE_ADDRESS    ");
+		PRINTF(" SOURCE_ADDRESS    ");
 		break;
 	case TLV_MODE:
-		printf("type : MODE              ");
+		PRINTF(" MODE              ");
 		break;
 	case TLV_TIME_OUT:
-		printf("type : TIME_OUT 	     ");
+		PRINTF(" TIME_OUT 	     ");
 		break;
 	case TLV_CHALLENGE:
-		printf("type : CHALLENGE         ");
+		PRINTF(" CHALLENGE         ");
 		break;
 	case TLV_RESPONSE:
-		printf("type : RESPONSE          ");
+		PRINTF(" RESPONSE          ");
 		break;
 	case TLV_LINK_LAYER_FRAME_COUNTER:
-		printf("type : LINK_LAYER_FRAME_COUNTER");
+		printf(" LINK_LAYER_FRAME_COUNTER");
 		break;
 	case TLV_LINK_QUALITY:  // Not used in Thread Network
-		printf("type : LINK_QUALITY      ");
+		PRINTF(" LINK_QUALITY      ");
 		break;
 	case TLV_NETWORK_PARAMETER:  // Not used in Thread Network
-		printf("type : NETWORK_PARAMETER ");
+		PRINTF(" NETWORK_PARAMETER ");
 		break;
 	case TLV_MLE_FRAME_COUNTER:
-		printf("type : MLE_FRAME_COUNTER ");
+		PRINTF(" MLE_FRAME_COUNTER ");
 		break;
 	case TLV_ROUTER64:
-		printf("type : ROUTER64          ");
+		PRINTF(" ROUTER64          ");
 		break;
 	case TLV_ADDRESS16:
-		printf("type : ADDRESS16         ");
+		PRINTF(" ADDRESS16         ");
 		break;
 	case TLV_LEADER_DATA:
-		printf("type : LEADER_DATA       ");
+		PRINTF(" LEADER_DATA       ");
 		break;
 	case TLV_NETWORK_DATA:
-		printf("type : NETWORK_DATA      ");
+		PRINTF(" NETWORK_DATA      ");
 		break;
 	case TLV_TLV_REQUEST:
-		printf("type : TLV_REQUEST       ");
+		PRINTF(" TLV_REQUEST       ");
 		break;
 	case TLV_SCAN_MASK:
-		printf("type : SCAN_MASK         ");
+		PRINTF(" SCAN_MASK         ");
 		break;
 	case TLV_CONNECTIVITY:
-		printf("type : CONNECTIVITY      ");
+		PRINTF(" CONNECTIVITY      ");
 		break;
 	case TLV_LINK_MARGIN:
-		printf("type : LINK_MARGIN       ");
+		PRINTF(" LINK_MARGIN       ");
 		break;
 	case TLV_STATUS:
-		printf("type : STATUS            ");
+		PRINTF(" STATUS            ");
 		break;
 	case TLV_VERSION:
-		printf("type : VERSION           ");
+		PRINTF(" VERSION           ");
 		break;
 	case TLV_ADDRESS_REGISTRATION:
-		printf("type : ADDRESS_REGISTRATION");
+		PRINTF(" ADDRESS_REGISTRATION");
 		break;
 	 default:
-		printf("Error tlv type not recognized ");
+		 PRINTF("Error tlv type not recognized ");
 		return 0 ;
 		break;
 	}
-	printf(", length : %i , value :  ",tlv->length);
+	PRINTF(", length : %i , value :  ",tlv->length);
 
 	for(uint8_t i=0 ; i<tlv->length; i++) {
-		printf("%02x ", tlv->value[i]);
+		PRINTF("%02x ", tlv->value[i]);
 	}
-	printf("\r\n");
+	PRINTF("\r\n");
 	return 1;
 
 }

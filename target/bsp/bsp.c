@@ -50,7 +50,7 @@
     \brief  Board support package implementation.
 
    \version 0.0.1
-*/
+ */
 /*============================================================================*/
 
 /*==============================================================================
@@ -100,20 +100,20 @@ static    void _bsp_ledCallback(c_event_t c_event, p_data_t p_data);
 
 static    void _bsp_ledCallback(c_event_t c_event, p_data_t p_data)
 {
-    uint8_t j;
-    for (j = 0; j < LEDS_SUPPORTED; j++)
-    {
-        if (etimer_expired(&st_ledsTims[j]))
-        {
-            if ((&(st_ledsTims[j])) == (struct etimer *)p_data){
-                // Timer has been found , so we can turn it off.
-                hal_ledOff(j);
-                etimer_stop((struct etimer *)p_data);
-                break;
-            }
-        }
-    }
-        // Find etimer which was fired in the list
+	uint8_t j;
+	for (j = 0; j < LEDS_SUPPORTED; j++)
+	{
+		if (etimer_expired(&st_ledsTims[j]))
+		{
+			if ((&(st_ledsTims[j])) == (struct etimer *)p_data){
+				// Timer has been found , so we can turn it off.
+				hal_ledOff(j);
+				etimer_stop((struct etimer *)p_data);
+				break;
+			}
+		}
+	}
+	// Find etimer which was fired in the list
 }
 /*==============================================================================
                                  API FUNCTIONS
@@ -125,18 +125,18 @@ static    void _bsp_ledCallback(c_event_t c_event, p_data_t p_data)
 /*============================================================================*/
 uint8_t bsp_init (s_ns_t * ps_ns)
 {
-    /* Initialize hardware */
-    if (!hal_init())
-        return 0;
+	/* Initialize hardware */
+	if (!hal_init())
+		return 0;
 
-    /* Configure board */
-    if (!board_conf(ps_ns))
-        return 0;
+	/* Configure board */
+	if (!board_conf(ps_ns))
+		return 0;
 
-    random_init(hal_getrand());
+	random_init(hal_getrand());
 
-    /* Normal exit*/
-    return 1;
+	/* Normal exit*/
+	return 1;
 }/* bsp_init() */
 
 /*============================================================================*/
@@ -152,7 +152,7 @@ void bsp_start (void)
 /*============================================================================*/
 void bsp_entry (void)
 {
-    /* Nothing to do */
+	/* Nothing to do */
 }/* bsp_entry() */
 
 /*============================================================================*/
@@ -160,9 +160,9 @@ void bsp_entry (void)
 /*============================================================================*/
 int bsp_getChar (void)
 {
-    /* Return the next character received using the console UART */
-    /* Nothing to do */
-    return 0;
+	/* Return the next character received using the console UART */
+	/* Nothing to do */
+	return 0;
 } /* bsp_getChar() */
 
 /*============================================================================*/
@@ -170,22 +170,22 @@ int bsp_getChar (void)
 /*============================================================================*/
 uint16_t bsp_led(en_bspLedIdx_t ui_led, en_bspLedAction_t en_ledAction)
 {
-    switch (en_ledAction) {
-    case E_BSP_LED_ON:
-        hal_ledOn(ui_led);
-        break;
-    case E_BSP_LED_OFF:
-        hal_ledOff(ui_led);
-        break;
-    case E_BSP_LED_TOGGLE:
-        hal_ledOn(ui_led);
-        etimer_set(&st_ledsTims[ui_led],20, _bsp_ledCallback);
+	switch (en_ledAction) {
+	case E_BSP_LED_ON:
+		hal_ledOn(ui_led);
+		break;
+	case E_BSP_LED_OFF:
+		hal_ledOff(ui_led);
+		break;
+	case E_BSP_LED_TOGGLE:
+		hal_ledOn(ui_led);
+		etimer_set(&st_ledsTims[ui_led],20, _bsp_ledCallback);
 
-        break;
-    default:
-        break;
-    }
-    return 0;
+		break;
+	default:
+		break;
+	}
+	return 0;
 } /* bsp_led() */
 
 /*============================================================================*/
@@ -193,19 +193,19 @@ uint16_t bsp_led(en_bspLedIdx_t ui_led, en_bspLedAction_t en_ledAction)
 /*============================================================================*/
 uint8_t bsp_pin(en_bspPinAction_t e_pinAct, void * p_pin)
 {
-    switch (e_pinAct) {
-    case E_BSP_PIN_SET:
-        hal_pinSet(p_pin);
-        break;
-    case E_BSP_PIN_CLR:
-        hal_pinClr(p_pin);
-        break;
-    case E_BSP_PIN_GET:
-        return hal_pinGet(p_pin);
-    default:
-        return 1;
-    }
-    return 0;
+	switch (e_pinAct) {
+	case E_BSP_PIN_SET:
+		hal_pinSet(p_pin);
+		break;
+	case E_BSP_PIN_CLR:
+		hal_pinClr(p_pin);
+		break;
+	case E_BSP_PIN_GET:
+		return hal_pinGet(p_pin);
+	default:
+		return 1;
+	}
+	return 0;
 }
 
 
@@ -214,49 +214,49 @@ uint8_t bsp_pin(en_bspPinAction_t e_pinAct, void * p_pin)
 /*============================================================================*/
 void bsp_wdt(en_bspWdtAction_t en_wdtAct)
 {
-    switch (en_wdtAct) {
-        case E_BSP_WDT_RESET:
-            if (!c_wtgStop)
-                hal_watchdogReset();
-            break;
-        case E_BSP_WDT_START:
-            c_wtgStop--;
-            if (!c_wtgStop)
-                hal_watchdogStart();
-            break;
-        case E_BSP_WDT_STOP:
-            c_wtgStop++;
-            hal_watchdogStop();
-            break;
-        case E_BSP_WDT_PERIODIC:
-            if (!c_wtgStop)
-                hal_watchdogReset();
-            break;
-        default:
-            break;
-    }
+	switch (en_wdtAct) {
+	case E_BSP_WDT_RESET:
+		if (!c_wtgStop)
+			hal_watchdogReset();
+		break;
+	case E_BSP_WDT_START:
+		c_wtgStop--;
+		if (!c_wtgStop)
+			hal_watchdogStart();
+		break;
+	case E_BSP_WDT_STOP:
+		c_wtgStop++;
+		hal_watchdogStop();
+		break;
+	case E_BSP_WDT_PERIODIC:
+		if (!c_wtgStop)
+			hal_watchdogReset();
+		break;
+	default:
+		break;
+	}
 
 }
 
 uint32_t         bsp_get(en_bspParams_t en_param)
 {
-    uint32_t l_ret;
-    switch (en_param)
-    {
-        case E_BSP_GET_TICK:
-            l_ret = hal_getTick();
-            break;
-        case E_BSP_GET_SEC:
-            l_ret = hal_getSec();
-            break;
-        case E_BSP_GET_TRES:
-            l_ret = hal_getTRes();
-            break;
-        default:
-            l_ret = 0;
-            break;
-    }
-    return l_ret;
+	uint32_t l_ret;
+	switch (en_param)
+	{
+	case E_BSP_GET_TICK:
+		l_ret = hal_getTick();
+		break;
+	case E_BSP_GET_SEC:
+		l_ret = hal_getSec();
+		break;
+	case E_BSP_GET_TRES:
+		l_ret = hal_getTRes();
+		break;
+	default:
+		l_ret = 0;
+		break;
+	}
+	return l_ret;
 }
 
 
@@ -267,12 +267,14 @@ uint32_t         bsp_get(en_bspParams_t en_param)
  */
 uint32_t bsp_getrand(uint32_t max)
 {
-    uint32_t ret;
+	uint32_t ret;
 
-    /* generate random number in a range of 0 to max */
-    ret = (uint32_t)random_rand();
-    ret = ret % max;
-    return ret;
+	/* generate random number in a range of 0 to max */
+	ret = (uint32_t)random_rand();
+	if(max)
+		ret = ret % max;
+
+	return ret;
 }
 
 

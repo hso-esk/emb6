@@ -14,6 +14,7 @@
 #include "mle_table.h"
 #include "mle_message.h"
 #include "tcpip.h"
+#include "udp-socket.h"
 
 /*==============================================================================
                                      MACROS
@@ -28,8 +29,8 @@
 /******************* TLV parameters *****************************/
 
 #define		TIME_OUT		 		     10     /* time out   */
-
-
+#define		IS_RX_ON_WHEN_IDLE		 	     1     /* Set to ‘1’ if the sender has its receiver on when not transmitting   */
+#define		IS_FFD		 	     			 1
 /*==============================================================================
 									TYPEDEFS
  =============================================================================*/
@@ -43,11 +44,14 @@ typedef enum
 
 
 typedef struct {
+	struct udp_socket     udp_socket;
 	mle_mode_t     		  OpMode;                               /**< device operating mode */
-	uip_ipaddr_t          address;
 	uint32_t 			  timeOut;
-	uint32_t              thrMLEFrameCounter;                 /**< Outgoing frame counter */
-	uint8_t 			  NB_couter;
+	uint32_t              thrMLEFrameCounter;                   /**< Outgoing frame counter */
+	uint8_t 			  NB_router_couter;
+	uint8_t 			  childs_counter;
+ 	uint32_t 			  jp_challenge ;  					    /**< current join process challenge      */
+	uint8_t               rx_on_when_idle; 					    /**< Set to ‘1’ if the sender's receiver on when not transmitting; used for mode TLV  */
 }mle_node_t ;
 
 

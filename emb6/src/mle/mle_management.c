@@ -17,10 +17,9 @@
 #include "tcpip.h"
 #include "rpl.h"
 #include "udp-socket.h"
-
+#include "packetbuf.h"
 
 #define		DEBUG		DEBUG_PRINT
-
 #include "uip-debug.h"	// For debugging terminal output.
 
 /*==============================================================================
@@ -28,37 +27,138 @@
  =============================================================================*/
 
 static mle_node_t MyNode;
-
-static  struct  udp_socket          st_udp_mle_socket;
-
 static  uip_ipaddr_t                s_destAddr;
 struct  etimer                      e_mle_udp_Timer;
+struct  ctimer                      c_mle_udp_Timer;
 
 
 
-/** set the send interval */
-#define     SEND_INTERVAL                7
+
+typedef enum {
+	JP_SEND_MCAST_PR_TO_ROUTER,
+	JP_SEND_MCAST_PR_TO_ROUTER_REED,
+	JP_WAIT_1,
+	JP_WAIT_2,
+	JP_PARENT_SELECT,
+	JP_FAIL,
+}jp_state_t; // join process state
 
 /*==============================================================================
 								LOCAL FUNCTION
  =============================================================================*/
-static void  _mle_call_back(struct udp_socket *c, void *ptr, const uip_ipaddr_t *source_addr, uint16_t source_port,
+static uint8_t mle_send_msg(mle_cmd_t* cmd, const uip_ipaddr_t *dest_addr );
+
+static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const uip_ipaddr_t *source_addr, uint16_t source_port,
 		const uip_ipaddr_t *dest_addr, uint16_t dest_port, const uint8_t *data, uint16_t datalen)
 {
 
 	mle_cmd_t * cmd;
-	mle_create_cmd_from_buff(&cmd , (uint8_t * )data , datalen - 40 );
 
-	PRINTF("data received length : %i \n", datalen);
-	PRINTF("data used : %i \n", cmd->used_data);
+	/***********   To avoid the problem of the additional bytes until we fix it  ************/
+	if( uip_is_addr_linklocal_allrouters_mcast(dest_addr) || uip_is_addr_linklocal_allnodes_mcast(dest_addr))
+		mle_create_cmd_from_buff(&cmd , (uint8_t * )data , datalen - 40 );
+	else
+		mle_create_cmd_from_buff(&cmd , (uint8_t * )data , datalen );
+
+
+	PRINTF(ANSI_COLOR_CYAN "MLE msg received from : ");
+	PRINT6ADDR(source_addr);
+	PRINTF(ANSI_COLOR_RESET "\ndata received length : %i \n", datalen);
 	mle_print_cmd(*cmd);
 
-	//udp_socket_sendto(&st_udp_mle_socket, (uint8_t*) cmd , cmd->used_data+1 , source_addr , MLE_UDP_RPORT);
+	switch (cmd->type)
+	{
+	case LINK_REQUEST:
+		break;
+	case LINK_ACCEPT:
+		break;
+	case LINK_ACCEPT_AND_REQUEST:
+		break;
+	case LINK_REJECT:
+		break;
+	case ADVERTISEMENT:
+		break;
+	case UPDATE:
+		break;
+	case UPDATE_REQUEST:  // Not used in Thread Network
+		break;
+	case DATA_REQUEST:  // Not used in Thread Network
+		break;
+	case DATA_RESPONSE:
+		break;
+	case PARENT_REQUEST:
+		break;
+	case PARENT_RESPONSE:
+		break;
+	case CHILD_ID_REQUEST:
+		break;
+	case CHILD_ID_RESPONSE:
+		break;
+	case CHILD_UPDATE:
+		break;
+	case CHILD_UPDATE_RESPONSE:
+		break;
+	default :
+		PRINTFR( "Error MLE received command not recognized \n"ANSI_COLOR_RESET);
+		break;
+
+	}
+	//mle_send_msg(cmd,  source_addr );
 
 }
 
 
-static void _mle_sendMsg(c_event_t c_event, p_data_t p_data )
+
+
+
+static uint8_t mle_init_udp(void)
+{
+	udp_socket_close(&MyNode.udp_socket);
+	udp_socket_register(&MyNode.udp_socket, NULL, _mle_process_incoming_msg);
+	udp_socket_bind(&MyNode.udp_socket, MLE_UDP_LPORT);
+	udp_socket_connect(&MyNode.udp_socket,NULL, MLE_UDP_RPORT);
+
+	if (&MyNode.udp_socket.udp_conn == NULL)
+	{
+		PRINTF("No UDP connection available, error!\n");
+		return 0;
+	}
+
+	PRINTFY( "\nMLE UDP initialized : \n lport --> %u \n rport --> %u \n"ANSI_COLOR_RESET , UIP_HTONS(MyNode.udp_socket.udp_conn->lport),
+			UIP_HTONS(MyNode.udp_socket.udp_conn->rport));
+
+	return 1 ;
+}
+
+
+static uint8_t mle_send_msg(mle_cmd_t* cmd, const uip_ipaddr_t *dest_addr )
+{
+	if (&MyNode.udp_socket.udp_conn == NULL)
+	{
+		PRINTF("reinitialize UPD");
+		if(!mle_init_udp())
+			return 0;
+	}
+
+	PRINTF("data sent length : %i \n", cmd->used_data+1);
+	if(!udp_socket_sendto(&MyNode.udp_socket, (uint8_t*) cmd , cmd->used_data+1 , dest_addr ,MLE_UDP_RPORT))
+	{
+		PRINTF(ANSI_COLOR_RED "Failed to send MLE msg\n"ANSI_COLOR_RESET);
+		return 0;
+	}
+	PRINTF( ANSI_COLOR_GREEN "MLE msg  sent to : "  );
+	PRINT6ADDR(dest_addr);
+	PRINTF(ANSI_COLOR_RESET "\n"  );
+
+	return 1 ;
+
+
+} /* _mle_sendMsg */
+
+
+
+
+static void _mle_sendMsg(c_event_t c_event,  p_data_t p_data )
 {
 
 	if (etimer_expired(&e_mle_udp_Timer))
@@ -75,69 +175,86 @@ static void _mle_sendMsg(c_event_t c_event, p_data_t p_data )
 		add_time_out_to_cmd (&cmd, MyNode.timeOut);
 		add_src_address_to_cmd(&cmd);
 		add_status_to_cmd(&cmd);
-		print_buffer((uint8_t*) &cmd , cmd.used_data+1);
-		//mle_print_cmd(cmd);
+		add_rand_challenge_to_cmd(&cmd );
 
-
-		PRINTF("data sent length : %i ", cmd.used_data+1);
-		PRINTF("data used : %i \n", cmd.used_data);
-
-		//udp_socket_send(&st_udp_mle_socket, (uint8_t*) &cmd , cmd.used_data+1);
-		udp_socket_sendto(&st_udp_mle_socket, (uint8_t*) &cmd , cmd.used_data+1 , &s_destAddr,MLE_UDP_RPORT);
-
+		uip_create_linklocal_allrouters_mcast(&s_destAddr);
+		mle_send_msg( &cmd, &s_destAddr );
 
 		/************************************************************************/
 
-
-		PRINTF( "\nMLE command  sent to : " );
-		PRINT6ADDR(&s_destAddr);
-		PRINTF( "\n" );
 		etimer_restart(&e_mle_udp_Timer);
 	}
 
 
 
-} /* _mle_sendMsg */
-
-
-
-uint8_t join_mcast_group(void)
-{
-	uip_ipaddr_t addr;
-
-	uip_ip6addr(&addr, 0xff02, 0, 0, 0, 0, 0, 0x1, 0x0001);
-
-
-	if(uip_ds6_maddr_add(&addr)!= NULL) {
-		PRINTF("\nJoined multicast group: ");
-		PRINT6ADDR(&uip_ds6_maddr_lookup(&addr)->ipaddr);
-		PRINTF("\n");
-		return 1;
-	}
-	else
-	{PRINTF("unable to join the multicast group ...\n");
-	return 0 ;}
-
 }
 
 
-void print_local_addresses(void)
-{
-	int i;
-	uint8_t state;
 
-	PRINTF("Client IPv6 addresses: ");
-	for(i = 0; i < UIP_DS6_ADDR_NB; i++) {
-		state = uip_ds6_if.addr_list[i].state;
-		if(uip_ds6_if.addr_list[i].isused &&
-				(state == ADDR_TENTATIVE || state == ADDR_PREFERRED)) {
-			PRINT6ADDR(&uip_ds6_if.addr_list[i].ipaddr);
-			PRINTF("\n");
+/************************ join process ocal function ****************************/
+
+
+
+/**
+ * @brief Send multicast MLE parent request
+ * @return 1    OK.
+ * @return 0   FAIL.
+ *
+ */
+
+static uint8_t send_mle_parent_request( uint8_t R , uint8_t E )
+{
+	mle_cmd_t cmd;
+	mle_init_cmd(&cmd,PARENT_REQUEST);
+	add_mode_RSDN_to_cmd(&cmd, MyNode.rx_on_when_idle , 0 , IS_FFD , 1 );
+	MyNode.jp_challenge= add_rand_challenge_to_cmd(&cmd );
+	add_scan_mask_to_cmd(&cmd,R,E);
+	add_version_to_cmd(&cmd);
+	uip_create_linklocal_allrouters_mcast(&s_destAddr);
+	mle_send_msg( &cmd, &s_destAddr );
+	return 1 ;
+}
+
+void mle_join_process( void *ptr )
+{
+	static 	jp_state_t 		jp_state ;  // join process current state
+	uint8_t finish=0;
+
+	while(!finish)
+	{
+		switch(jp_state)
+		{
+		case JP_SEND_MCAST_PR_TO_ROUTER:
+			PRINTFG("Send mcast parent request to active router \n");PRESET();
+			send_mle_parent_request(1 ,0 );
+			jp_state=JP_WAIT_1;
+			break;
+		case JP_WAIT_1:
+			PRINTFG("Waiting for incoming response \n"); PRESET();
+			ctimer_set(&c_mle_udp_Timer, 5 * bsp_get(E_BSP_GET_TRES) , mle_join_process, NULL );
+			finish=1;
+			jp_state=JP_PARENT_SELECT;
+			break;
+		case JP_SEND_MCAST_PR_TO_ROUTER_REED:
+			send_mle_parent_request(1 ,0 );
+			jp_state=JP_WAIT_2;
+			break;
+		case JP_WAIT_2:
+			ctimer_set(&c_mle_udp_Timer, 5 * bsp_get(E_BSP_GET_TRES) , mle_join_process, NULL );
+			jp_state=JP_PARENT_SELECT;
+			finish=1;
+			break;
+		case JP_PARENT_SELECT:
+			etimer_reset(&e_mle_udp_Timer);
+			PRINTFG("JP Parent selection \n");PRESET();
+			finish=1;
+			break;
+		case JP_FAIL:
+			break;
 		}
 	}
+
 }
-
-
 
 /*==============================================================================
                                  API FUNCTIONS
@@ -148,54 +265,22 @@ void print_local_addresses(void)
  * @brief MLE protocol initialization
  *
  */
-
 uint8_t mle_init(void)
 {
 
-	/* PS: All Thread interfaces MUST subscribe to the Link-Local All Nodes multicast address (FF02::1).
-	 * All Thread interfaces operating in a Router, REED, or Border Router mode MUST subscribe to
-	 * the Link-Local All Routers multicast address (FF02::2)
-	 */
-
-	//if(!join_mcast_group()) {PRINTF("Failed to join multicast group.\n");}
-
 	/***********  Inisialize  mle udp connexion ***************/
+	if(!mle_init_udp()) return 0 ;
 
-	/* set the pointer to the udp-socket */
-	uip_ip6addr(&s_destAddr, 0xff02, 0, 0, 0, 0, 0, 0, 0x0001);
-
-	udp_socket_register(&st_udp_mle_socket, NULL, _mle_call_back);
-	udp_socket_bind(&st_udp_mle_socket, MLE_UDP_LPORT);
-	udp_socket_connect(&st_udp_mle_socket,NULL, MLE_UDP_RPORT);
-
-	if (st_udp_mle_socket.udp_conn == NULL)
-	{
-		PRINTF("No UDP connection available, error!\n");
-		return 0;
-	}
-
-	PRINTF("\nMLE UDP : \n lport --> %u \n rport --> %u \n", UIP_HTONS(st_udp_mle_socket.udp_conn->lport),
-			UIP_HTONS(st_udp_mle_socket.udp_conn->rport));
-
-
-
-
-	/***********  Inisialize  mle node structure ***************/
+	/***********  Inisialize  mle node structure **************/
 	MyNode.OpMode=NOT_LINKED;
 	MyNode.timeOut=TIME_OUT;
-
-
-	mle_nb_device_init();
-	mle_add_child(1, s_destAddr,  50441 ,0,3);
-	mle_add_child(2, s_destAddr,  441 ,2,1);
-	mle_print_table();
-
-	etimer_set( &e_mle_udp_Timer,SEND_INTERVAL * bsp_get(E_BSP_GET_TRES), _mle_sendMsg);
+	MyNode.rx_on_when_idle=IS_RX_ON_WHEN_IDLE;
 
 
 
-	PRINTF("MLE protocol initialized ...\n");
-
+	//etimer_set( &e_mle_udp_Timer, 2 * bsp_get(E_BSP_GET_TRES), mle_join_process);
+	ctimer_set(&c_mle_udp_Timer, 5 * bsp_get(E_BSP_GET_TRES) , mle_join_process, NULL );
+	PRINTFG( "MLE protocol initialized ...  \n");PRESET();
 	return 1;
 
 };

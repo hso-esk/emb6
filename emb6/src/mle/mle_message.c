@@ -1,7 +1,9 @@
 
 
 #include "mle_message.h"
+#include "bsp.h"
 
+#define MLE_MSG_RADNOM()		(rand=bsp_getrand(0) | (bsp_getrand(0)<< 16))
 
 
 
@@ -92,6 +94,27 @@ uint8_t  add_MLEframe_counter_to_cmd(mle_cmd_t* cmd , uint32_t frame)
 		return 0 ;
 }
 
+uint32_t  add_rand_challenge_to_cmd(mle_cmd_t* cmd )
+{
+	uint32_t rand;
+	do {rand=MLE_MSG_RADNOM();}
+	while(!rand);
+
+	if(add_tlv32_bit_to_cmd(cmd ,TLV_CHALLENGE ,rand ))
+		return rand ;
+	else
+		return 0 ;
+}
+
+uint32_t  add_response_to_cmd(mle_cmd_t* cmd , uint32_t resp )
+{
+
+	if(add_tlv32_bit_to_cmd(cmd ,TLV_RESPONSE ,resp ))
+		return 1 ;
+	else
+		return 0 ;
+}
+
 
 uint8_t  add_status_to_cmd(mle_cmd_t* cmd)
 {
@@ -114,7 +137,7 @@ uint8_t  add_version_to_cmd(mle_cmd_t* cmd)
 }
 
 
- uint8_t  add_tlv32_bit_to_cmd(mle_cmd_t* cmd , tlv_type_t type , uint32_t value)
+uint8_t  add_tlv32_bit_to_cmd(mle_cmd_t* cmd , tlv_type_t type , uint32_t value)
 {
 	uint8_t buf[4];
 
@@ -129,46 +152,20 @@ uint8_t  add_version_to_cmd(mle_cmd_t* cmd)
 		return 0 ;
 }
 
-/*
-mac_phy_config.pan_id = 0xabcd;
+
+/* In particular, frame counters MUST NOT be reused for any given key;
+ * if the outgoing MLE frame counter reaches its maximum value (0xFFFFFFFF),
+ * secured MLE messages MUST NOT be sent until a new key is available,
+ * at which point the outgoing MLE frame counter MAY be set back to zero.
  */
-
-
-
-
-/**
- * @brief Send multicast MLE link request to all routers
- *
- * @return 1   OK.
- * @return 0   FAIL
- *
- */
-/*
-uint8_t mle_link_request_to_routers()
+uint8_t  set_security_flag(mle_msg_t* msg, uint8_t flag)
 {
-
-} */
-
-
-/**
- * @brief Send multicast MLE parent request
- *
- * @param scan_mask       to indicate the types of devices that should reply for this request
- * 						  0x10 : Only active router
- * 						  0x01 : Only reed
- * 		     			  0x11 : both router and reed
- *
- * @return 1    OK.
- * @return 0   FAIL.
- *
- */
-/*
-uint8_t mle_parent_request( uint8_t scan_mask)
-{
-
+	if(msg!=NULL)
+		msg->secured=flag;
+	else
+		return 0;
+	return 1 ;
 }
-
- */
 
 
 

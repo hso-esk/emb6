@@ -80,7 +80,7 @@ uint8_t mle_print_cmd( mle_cmd_t cmd )
 	tlv_t * tlv;
 	uint8_t i=0;
 
-	printf("-----------------------------------------------------\n            MLE command : " );
+	printf("---------------------------------------------------------------\n            MLE command : " );
 	switch (cmd.type)
 	{
 	case LINK_REQUEST:
@@ -133,7 +133,7 @@ uint8_t mle_print_cmd( mle_cmd_t cmd )
 		return 0 ;
 		break;
 	}
-	printf("\n-----------------------------------------------------\n" );
+	printf("\n---------------------------------------------------------------\n" );
 
 	tlv_init(&tlv,cmd.tlv_data);
 	while( tlv < (tlv_t*)&cmd.tlv_data[cmd.used_data])
@@ -143,7 +143,7 @@ uint8_t mle_print_cmd( mle_cmd_t cmd )
 		tlv_init(&tlv,&cmd.tlv_data[i]);
 	}
 
-	printf("-----------------------------------------------------\n" );
+	printf("---------------------------------------------------------------\n" );
 	return 1 ;
 }
 

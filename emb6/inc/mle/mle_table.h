@@ -12,14 +12,6 @@
 #include "etimer.h"
 #include "tcpip.h"
 
-/** Debug print colors. */
-#define ANSI_COLOR_RED     	"\x1b[31m"
-#define ANSI_COLOR_YELLOW  	"\x1b[33m"
-#define	ANSI_COLOR_GREEN	"\x1B[32m"
-#define ANSI_COLOR_CYAN    	"\x1b[36m"
-#define ANSI_COLOR_MAGENTA 	"\x1b[35m"
-#define ANSI_COLOR_RESET  	"\x1b[0m"
-
 
 
 #define     MAX_NB_ROUTER               5
@@ -28,8 +20,8 @@
 
 
 
-typedef struct {
-	struct mle_neighbor_node_t 		*next;
+typedef struct nodemle {
+	struct nodemle 		*next;
 	uint8_t 			       		 id;
 	uip_ipaddr_t         			 address;						      /**< link-local address */
 	struct etimer        			 timeOut;
@@ -59,7 +51,9 @@ mle_neighbor_node_t * mle_add_nb_router(uint8_t id, uip_ipaddr_t  address, uint3
 uint8_t mle_rm_nb_router(mle_neighbor_node_t *nb);
 uint8_t mle_rm_child( mle_neighbor_node_t *nb);
 
+uint8_t count_neighbor_LQ(uint8_t N ); // The number of neighboring device with which the sender shares a link of quality N
 
-void mle_print_table(void);
+void  mle_print_child_table(void);
+void  mle_print_nb_router_table(void);
 
 #endif /* EMB6_INC_MLE_MLE_TABLE_H_ */
