@@ -326,9 +326,9 @@ typedef enum netstk_ioc_cmd
     NETSTK_CMD_RF_SYNC_SET,         /*!< Set SYNC words                 */
     NETSTK_CMD_RF_SYNC_GET,         /*!< Get SYNC words                 */
     NETSTK_CMD_RF_PROMISC_SET,      /*!< Set promisc mode                */
+    NETSTK_CMD_RF_RETX,             /*!< Request the radio to retransmit last frame */
     NETSTK_CMD_RF_CHAN_NUM_SET,     /*!< Set operation channel number */
     NETSTK_CMD_RF_OP_MODE_SET,      /*!< Set operation mode */
-
     NETSTK_CMD_RF_WOR_EN,           /*!< Enable/Disable WOR mode */
 
 }e_nsIocCmd_t;
