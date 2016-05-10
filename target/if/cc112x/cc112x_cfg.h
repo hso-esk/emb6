@@ -67,72 +67,6 @@
 
 
 /**
- * @brief   GPIOs configuration for CCA operation
- */
-static const s_regSettings_t cc112x_cfg_cca[] = {
-    {CC112X_IOCFG3,             0x0F},  /* CCA_DONE, rising */
-};
-
-
-/**
- * @brief   GPIOs configuration for transmission operation
- */
-static const s_regSettings_t cc112x_cfg_tx[] = {
-    /*
-     * Note 1:
-     *
-     * TX_FIFO_THR, asserted when TX FIFO is filled Above or Equal to
-     * (127-FIFO_CFG.FIGO_THR) or the end of packet is reached
-     * De-asserted when the TX FIFO is drained below the same threshold.
-     * This signal is also available in the MODEM_STATUS0 register.
-     *
-     * If byte_lefts is equal or above the threshold, an amount of byte equal to
-     * threshold is written into TX FIFO for transmission. This then causes
-     * TX_FIFO_THR interrupt. Here FIFO is configured to infinite packet length
-     * If the byte left is below the threshold, FIFO shall be configured to
-     * fixed packet length. Afterwards remaining bytes are written into TX FIFO
-     * for transmission. At the end of the transmission PKT_SYCN_RXTX is de-
-     * asserted.
-     */
-    {CC112X_IOCFG0,             0x02},  /* TX_FIFO_THR, rising */
-    {CC112X_IOCFG2,             0x06},  /* PKT_SYNC_RXTX, rising */
-
-    /*
-     * 0x00: fixed packet length mode
-     * 0x20: variable packet length mode. Packet length is configured by the
-     * first byte received after sync word;
-     * 0x40: infinite packet length mode
-     * By default the transceiver is configured to be infinite packet length
-     * mode (0x40). Upon number of remaining bytes regardless in transmission or
-     * reception, the packet length mode is configured accordingly (see note 1).
-     */
-    {CC112X_PKT_CFG0,           0x40},
-    {CC112X_FIFO_CFG,           0x78},  /* FIFO_THR = 120 */
-    /*
-     * Packet length
-     * In fixed length mode, this field indicates the packet length, and a value
-     * of 0 indicates the length to be 256 bytes.
-     * In variable packet length mode, this value indicates the maximum allowed
-     * packet lengths.
-     */
-    {CC112X_PKT_LEN,            0xFF},
-};
-
-/**
- * @brief   GPIOs configuration for reception operation with eWOR enabled
- */
-static const s_regSettings_t cc112x_cfg_rx_wor[] = {
-    {CC112X_IOCFG0,             0x00},  /* RXFIFO_THR, rising */
-    {CC112X_IOCFG2,             0x06},  /* PKT_SYNC_RXTX, rising */
-    {CC112X_IOCFG3,             0x06},  /* PKT_SYNC_RXTX, falling */
-
-    {CC112X_PKT_CFG0,           0x40},  /* packet length mode */
-    {CC112X_FIFO_CFG,           0x78},  /* FIFO_THR = 120 */
-    {CC112X_PKT_LEN,            0xFF},  /* packet length of 255 bytes */
-};
-
-
-/**
  * @brief   Default register settings for IEEE-802.15.4g
  *          Carrier Frequency:  863.125MHz
  *          Modulation format:  MR-FSK
@@ -148,10 +82,10 @@ static const s_regSettings_t cc112x_cfg_rx_wor[] = {
  */
 static const s_regSettings_t cc112x_cfg_ieee802154g_default[] =
 {
-    {CC112X_IOCFG0,             0xB0},  /* Impedance */
-    {CC112X_IOCFG2,             0xB0},  /* Impedance */
-    {CC112X_IOCFG3,             0xB0},  /* Impedance */
+    {CC112X_IOCFG3,             0x06},  /* Impedance TX_FINI */
+    {CC112X_IOCFG2,             0x06},  /* Impedance RX_FINI */
     {CC112X_IOCFG1,             0xB0},  /* Impedance */
+    {CC112X_IOCFG0,             0x06},  /* Impedance RX_SYNC */
 
     {CC112X_SYNC3,              0x90},  /* SFD[15-8] FEC not supported and phyMRFSKSFD = 0 -> SFD = 0x904E */
     {CC112X_SYNC2,              0x4E},  /* SFD[ 7-0] ... */
@@ -164,9 +98,15 @@ static const s_regSettings_t cc112x_cfg_ieee802154g_default[] =
     {CC112X_MODCFG_DEV_E,       0x05},  /* MOD_FORMAT = 2-FSK */
     {CC112X_DCFILT_CFG,         0x15},
 
-    {CC112X_PREAMBLE_CFG1,      0x19},  /* NUM_PREAMBLE = 4 bytes; PREAMBLE_WORD = 0x55 */
-    {CC112X_PREAMBLE_CFG0,      0x8A},  /* PQT_EN = 1, Preamble detection disabled; PQT = 1010, Soft Decision PQT*/
-
+#if (NETSTK_CFG_WOR_EN == TRUE)
+    /* WOR enabled */
+    {CC112X_PREAMBLE_CFG1,      0x31},  /* NUM_PREAMBLE = 24 bytes; PREAMBLE_WORD = 0x55 */
+    {CC112X_PREAMBLE_CFG0,      0x2A},  /* Preamble detection enabled; PQT_VALID_TIMEOUT=16 symbols; PQT=0x0A */
+#else
+    /* WOR disabled */
+    {CC112X_PREAMBLE_CFG1,      0x18},  /* NUM_PREAMBLE = 4 bytes; PREAMBLE_WORD = 0x55 */
+    {CC112X_PREAMBLE_CFG0,      0x2A},  /* Preamble detection enabled; PQT_VALID_TIMEOUT=16 symbols; PQT=0x0A */
+#endif
     {CC112X_FREQ_IF_CFG,        0x3A},
     {CC112X_IQIC,               0x00},
     {CC112X_CHAN_BW,            0x02},
@@ -177,33 +117,33 @@ static const s_regSettings_t cc112x_cfg_ieee802154g_default[] =
     {CC112X_SYMBOL_RATE0,       0x99},
 
     {CC112X_AGC_REF,            0x3C},
-    {CC112X_AGC_CS_THR,         0x02},  /* default 0C -90dBm; 0x02 -100dBm */
+    {CC112X_AGC_CS_THR,         0x2A},  /* default 0C -90dBm; 0x2A = -60dBm; 0x16 = -0x80dBm */
     {CC112X_AGC_CFG1,           0xA0},
     {CC112X_AGC_CFG0,           0xC0},  /* RSSI_VALID_CNT = 00b; 0x02 */
-    {CC112X_FIFO_CFG,           0x80},  /* Automatically flushes when CRC error occurred */
+    {CC112X_FIFO_CFG,           0x00},  /* Automatically flushes when CRC error occurred */
+
     {CC112X_SETTLING_CFG,       0x03},
     {CC112X_FS_CFG,             0x12},
 
-    {CC112X_WOR_CFG0,           0x20},
-    {CC112X_WOR_EVENT0_MSB,     0x00},
-    {CC112X_WOR_EVENT0_LSB,     0x78},  /* t_sleep = 3.102ms */
+    {CC112X_WOR_CFG1,           0x08},  /* eWOR mode = Normal Mode */
+    {CC112X_WOR_CFG0,           0x20},  /* RCOSC is running; RCOSC calibration disabled; Clock division enabled */
+    {CC112X_WOR_EVENT0_MSB,     0x00},  /* eWOR timeout = 3.102ms */
+    {CC112X_WOR_EVENT0_LSB,     0x78},  /* eWOR timeout = 3.102ms */
 
-    {CC112X_PKT_CFG2,           0x04},  /* CCA_MODE=001b, indicating clear channel when RSSI is below threshold */
-    {CC112X_PKT_CFG1,           0x00},  /* CRC_CFG = 00; CRC16 is disabled, APPEND_STATUS is disabled */
 #if (NETSTK_CFG_DATA_WHITENING_EN == TRUE)
-    {CC112X_PKT_CFG1,           0x40},
+    {CC112X_PKT_CFG1,           0x40},  /* CRC_CFG = 00; CRC16 is disabled, APPEND_STATUS is disabled */
 #else
-    {CC112X_PKT_CFG1,           0x00},
+    {CC112X_PKT_CFG1,           0x00},  /* CRC_CFG = 00; CRC16 is disabled, APPEND_STATUS is disabled */
 #endif
     {CC112X_PKT_CFG0,           0x20},
-
-    {CC112X_RFEND_CFG0,         0x09},
+    {CC112X_RFEND_CFG0,         0x00},  /* Terminate on bad packet is disabled; */
     {CC112X_PA_CFG0,            0x79},
-    {CC112X_PKT_LEN,            0xFF},
-    {CC112X_IF_MIX_CFG,         0x00},
-    {CC112X_TOC_CFG,            0x0A},
+    {CC112X_PKT_LEN,            0x80},  /* Maximum packet length is 128 bytes */
 
-    {CC112X_FREQ2,              0x6B},    /* Carrier frequency: 863.125MHz */
+    {CC112X_IF_MIX_CFG,         0x00},
+    {CC112X_FREQOFF_CFG,        0x22},
+    {CC112X_TOC_CFG,            0x0A},
+    {CC112X_FREQ2,              0x6B},  /* Carrier frequency: 863.125MHz */
     {CC112X_FREQ1,              0xE4},
     {CC112X_FREQ0,              0x00},
 

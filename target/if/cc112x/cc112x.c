@@ -46,12 +46,11 @@
  * @brief   Implementation of TI transceiver CC112X
  */
 
-
 /*
-********************************************************************************
-*                                   INCLUDES
-********************************************************************************
-*/
+ ********************************************************************************
+ *                                   INCLUDES
+ ********************************************************************************
+ */
 #include "emb6.h"
 #include "board_conf.h"
 
@@ -67,46 +66,43 @@
 #define  LOGGER_ENABLE        LOGGER_RADIO
 #include "logger.h"
 
+/*
+ ********************************************************************************
+ *                                LOCAL TYPEDEFS
+ ********************************************************************************
+ */
+typedef enum e_rf_state {
+  RF_STATE_NON_INIT,
+  RF_STATE_INIT,
+  RF_STATE_SLEEP,
+  RF_STATE_ERR,
+  RF_STATE_IDLE,
+
+  /* RX Submachine states */
+  RF_STATE_RX,
+  RF_STATE_RX_SYNC,
+  RF_STATE_RX_PORTION_MIDDLE,
+  RF_STATE_RX_PORTION_LAST,
+  RF_STATE_RX_FINI,
+
+  /* TX Submachine states */
+  RF_STATE_TX_STARTED,
+  RF_STATE_TX_BUSY,
+  RF_STATE_TX_FINI,
+  RF_STATE_TX_PORTION_MIDDLE,
+  RF_STATE_TX_PORTION_LAST,
+
+  /* CCA Submachine states */
+  RF_STATE_CCA_BUSY,
+  RF_STATE_CCA_FINI,
+
+} e_rfState_t;
 
 /*
-********************************************************************************
-*                                LOCAL TYPEDEFS
-********************************************************************************
-*/
-typedef enum e_rf_state
-{
-    RF_STATE_NON_INIT,
-    RF_STATE_INIT,
-    RF_STATE_SLEEP,
-    RF_STATE_ERR,
-    RF_STATE_IDLE,
-
-    /* RX Submachine states */
-    RF_STATE_RX_LISTENING,
-    RF_STATE_RX_SYNC,
-    RF_STATE_RX_PORTION_MIDDLE,
-    RF_STATE_RX_PORTION_LAST,
-    RF_STATE_RX_FINI,
-
-    /* TX Submachine states */
-    RF_STATE_TX_STARTED,
-    RF_STATE_TX_BUSY,
-    RF_STATE_TX_FINI,
-    RF_STATE_TX_PORTION_MIDDLE,
-    RF_STATE_TX_PORTION_LAST,
-
-    /* CCA Submachine states */
-    RF_STATE_CCA_BUSY,
-    RF_STATE_CCA_FINI,
-
-}e_rfState_t;
-
-
-/*
-********************************************************************************
-*                                LOCAL DEFINES
-********************************************************************************
-*/
+ ********************************************************************************
+ *                                LOCAL DEFINES
+ ********************************************************************************
+ */
 
 #ifndef CC112X_PART_NUMBER
 #define CC112X_PART_NUMBER                  0x48u
@@ -127,963 +123,703 @@ typedef enum e_rf_state
 #define RF_CHIP_STATE_IDLE                  (uint8_t)( 0x00 )
 #define RF_CHIP_STATE_RX                    (uint8_t)( 0x10 )
 #define RF_CHIP_STATE_TX                    (uint8_t)( 0x20 )
+#define RF_CHIP_STATE_FSTXON                (uint8_t)( 0x30 )
+#define RF_CHIP_STATE_CALIBRATE             (uint8_t)( 0x40 )
+#define RF_CHIP_STATE_SETTLING              (uint8_t)( 0x50 )
+#define RF_CHIP_STATE_RX_FIFO_ERR           (uint8_t)( 0x60 )
+#define RF_CHIP_STATE_TX_FIFO_ERR           (uint8_t)( 0x70 )
 
 #define RF_MARC_STATUS_NO_FAILURE           (uint8_t)( 0x00 )
 #define RF_MARC_STATUS_TX_FINI              (uint8_t)( 0x40 )
 #define RF_MARC_STATUS_RX_FINI              (uint8_t)( 0x80 )
 
+#define RF_MARC_STATUS_TX_OVERFLOW          (uint8_t)( 0x07 )
+#define RF_MARC_STATUS_TX_UNDERFLOW         (uint8_t)( 0x08 )
+#define RF_MARC_STATUS_RX_OVERFLOW          (uint8_t)( 0x09 )
+#define RF_MARC_STATUS_RX_UNDERFLOW         (uint8_t)( 0x0A )
+
+#define RF_RSSI0_CARRIER_SENSE_VALID        (uint8_t)( 0x02 )
+#define RF_RSSI0_CARRIER_DETECTED           (uint8_t)( 0x04 )
+
+#define RF_RSSI_VALID_MSK                   (0x01)
+#define RF_RSSI_LOW_LEN                     ( 4 )
+#define RF_RSSI_LOW_OFST                    ( 3 )
+#define RF_RSSI_OFFSET                      ( 102 )
+#define RF_RSSI_RES                         ( 0.0625 )
+
+
 #define RF_GET_CHIP_STATE(_chip_status)     (uint8_t)((_chip_status) & 0x70)
 
-/*!< Set RF to fixed packet length mode */
-#define RF_SET_FIXED_PKT_MODE() \
+/*!< Disable all RF interrupts */
+#define RF_INT_DISABLED()  \
     do {    \
-        uint8_t _wr_byte = RF_FIXED_PACKET_LENGTH;          \
-        cc112x_spiRegWrite(CC112X_PKT_CFG0, &_wr_byte, 1);  \
+        bsp_extIntDisable(RF_INT_CFG_RX_SYNC);  \
+        bsp_extIntDisable(RF_INT_CFG_RX_FINI);  \
+        bsp_extIntDisable(RF_INT_CFG_TX_FINI);  \
     } while (0)
 
-/*!< Disable all RF interrupts */
-#define RF_EXTI_DISABLED()  \
+#define RF_INT_TX_ENABLED() \
     do {    \
-        bsp_extIntDisable(E_TARGET_EXT_INT_0);  \
-        bsp_extIntDisable(E_TARGET_EXT_INT_1);  \
-        bsp_extIntDisable(E_TARGET_EXT_INT_2);  \
-        bsp_extIntClear(E_TARGET_EXT_INT_0);    \
-        bsp_extIntClear(E_TARGET_EXT_INT_1);    \
-        bsp_extIntClear(E_TARGET_EXT_INT_2);    \
-    } while (0)
+        bsp_extIntClear(RF_INT_CFG_TX_FINI);    \
+        bsp_extIntEnable(RF_INT_CFG_TX_FINI);   \
+    } while(0)
+
+#define RF_INT_RX_ENABLED() \
+    do {    \
+        bsp_extIntClear(RF_INT_CFG_RX_SYNC);    \
+        bsp_extIntClear(RF_INT_CFG_RX_FINI);    \
+        bsp_extIntEnable(RF_INT_CFG_RX_SYNC);   \
+        bsp_extIntEnable(RF_INT_CFG_RX_FINI);   \
+    } while(0)
+
+#define RF_CHIP_STATUS()  \
+  do {  \
+    uint8_t status_; \
+    status_ = cc112x_spiCmdStrobe(CC112X_SNOP);     \
+    TRACE_LOG_MAIN("RF_STATUS: cs=%02x", status_);  \
+  } while(0)
+
+#define RF_WR_REGS(regs_) \
+  do {  \
+    uint8_t len_; \
+    len_ = sizeof((regs_)) / sizeof(s_regSettings_t);   \
+    cc112x_configureRegs((regs_), len_);                \
+  } while(0)
 
 /*!< check if RF is in one of reception states */
 #define RF_IS_RX_BUSY() \
     ((rf_state == RF_STATE_RX_SYNC)             ||  \
-     (rf_state == RF_STATE_RX_PORTION_MIDDLE)   ||  \
-     (rf_state == RF_STATE_RX_PORTION_LAST)     ||  \
      (rf_state == RF_STATE_RX_FINI))
 
-/*!< Set RF to RX mode */
-#define RF_GOTO_RX()    \
-    do {    \
-        uint8_t _chip_status;                                           \
-        do {                                                            \
-            _chip_status = cc112x_spiCmdStrobe(CC112X_SRX);             \
-        } while (RF_GET_CHIP_STATE(_chip_status) != RF_CHIP_STATE_RX);  \
-    } while (0)
+#define RF_INT_CFG_RX_SYNC                  E_TARGET_EXT_INT_0
+#define RF_INT_CFG_RX_FINI                  E_TARGET_EXT_INT_1
+#define RF_INT_CFG_TX_FINI                  E_TARGET_EXT_INT_2
 
-/*
- * CC112x has 128-byte TX FIFO and 128-byte RX-FIFO
- * Threshold value is coded in opposite directions for the two FIFOs to give
- * equal margin to the overflow and underflow conditions when the threshold
- * is reached.
- *
- * Number of bytes in each FIFO is calculated as following:
- *      FIFO_SIZE = 128
- *      #Bytes_in_RX_FIFO = FIFO_THR + 1
- *      #Bytes_in_TX_FIFO = FIFO_SIZE - #Byte_in_RX_FIFO = FIFO_SIZE - (FIFO_THR + 1)
- *
- * i.e. (1) FIFO_THR=0 means that there are 127 bytes in the TX FIFO and 1 byte
- *          in the RX FIFO.
- *
- *      (2) FIFO_THR=127 means that there are 0 bytes in the TX FIFO and 128
- *          bytes in the RX FIFO
- *
- *      (3) FIFO_THR=120 means that
- *          #Bytes_in_RX_FIFO = FIFO_THR + 1 = 121
- *          #Bytes_in_TX_FIFO = FIFO_SIZE - (FIFO_THR + 1) = 128 - (120 + 1) = 7
- *          #Available_bytes_in_TX_FIFO = FIFO_THR + 1 = 121
- *
- */
-#define RF_CFG_FIFO_THR                     (uint8_t)( 120u )
-#define RF_CFG_MAX_VARIABLE_LENGTH          (uint8_t)( 255u )
-
-#define RF_CFG_BYTES_IN_RX_FIFO             (uint8_t)( 121u )
-
-#define RF_CFG_FIFO_SIZE                    (uint8_t)( 128u )
-#define RF_CFG_AVAI_BYTES_IN_TX_FIFO        (uint8_t)( 121u )   // in TI example using 122?
-#define RF_CFG_BYTES_IN_TX_FIFO             (uint8_t)( RF_CFG_FIFO_SIZE - RF_CFG_AVAI_BYTES_IN_TX_FIFO)
-
-#define RF_FIXED_PACKET_LENGTH              (uint8_t)( 0x00u )
-
-#define RF_INT_CFG_TX_FIFO_THR              E_TARGET_EXT_INT_0
-#define RF_INT_CFG_TX_FINI                  E_TARGET_EXT_INT_1
-#define RF_INT_CFG_TX_CCA_DONE              E_TARGET_EXT_INT_2
-
-#define RF_INT_CFG_EDGE_TX_FIFO_THR         E_TARGET_INT_EDGE_FALLING
-#define RF_INT_CFG_EDGE_TX_FINI             E_TARGET_INT_EDGE_FALLING
-#define RF_INT_CFG_EDGE_TX_CCA_DONE         E_TARGET_INT_EDGE_RISING
-
-#define RF_INT_CFG_RX_FIFO_THR              E_TARGET_EXT_INT_0
-#define RF_INT_CFG_RX_SYNC                  E_TARGET_EXT_INT_1
-#define RF_INT_CFG_RX_FINI                  E_TARGET_EXT_INT_2
-
-#define RF_INT_CFG_EDGE_RX_FIFO_THR         E_TARGET_INT_EDGE_RISING
 #define RF_INT_CFG_EDGE_RX_SYNC             E_TARGET_INT_EDGE_RISING
 #define RF_INT_CFG_EDGE_RX_FINI             E_TARGET_INT_EDGE_FALLING
+#define RF_INT_CFG_EDGE_TX_FINI             E_TARGET_INT_EDGE_FALLING
 
-#ifndef RF_WD_ENABLE
-#define RF_WD_ENABLE                        FALSE
-#endif /* #endif RF_WD_ENABLE */
-
-#if RF_WD_ENABLE
-#ifndef RF_WD_TIMER_MS
-#define RF_WD_TIMER_MS                      50
-#endif /* #ifndef RF_WD_TIMER_MS */
-#endif /* #if RF_WD_ENABLE */
 
 /*
-********************************************************************************
-*                                LOCAL VARIABLES
-********************************************************************************
-*/
-static s_ns_t      *rf_netstk;
-static uint8_t      rf_rxBuf[RF_CFG_MAX_PACKET_LENGTH];
-static uint16_t     rf_rxBufLen;
-static uint16_t     rf_byteLeft;
-static e_rfState_t  rf_state = RF_STATE_NON_INIT;
-
-static uint8_t      rf_fixedPktLenMode;
-static uint8_t      rf_iterations;
-static uint8_t     *rf_bufIx;
-static uint8_t      rf_txLastPortion;
-static uint8_t      rf_worEn;
-
-static uint8_t      rf_chanNum;
+ ********************************************************************************
+ *                                LOCAL VARIABLES
+ ********************************************************************************
+ */
+static s_ns_t *prf_netstk;
+static uint8_t rf_rxBuf[RF_CFG_MAX_PACKET_LENGTH ];
+static uint8_t rf_rxBufLen;
+static e_rfState_t volatile rf_state = RF_STATE_NON_INIT;
+static uint8_t rf_worEn;
+static uint8_t rf_chanNum;
 static e_nsRfOpMode rf_opMode;
-static uint8_t      rf_regVerify;
 
-#if RF_WD_ENABLE
-static s_rt_tmr_t   rf_tmrWD;
-#endif /* #if RF_WD_ENABLE */
+static uint8_t rf_txFirstPtr;
 
 
 /*
-********************************************************************************
-*                           LOCAL FUNCTIONS DECLARATION
-********************************************************************************
-*/
-static void cc112x_Init (void *p_netstk, e_nsErr_t *p_err);
-static void cc112x_On (e_nsErr_t *p_err);
-static void cc112x_Off (e_nsErr_t *p_err);
+ ********************************************************************************
+ *                           LOCAL FUNCTIONS DECLARATION
+ ********************************************************************************
+ */
+static void cc112x_Init(void *p_netstk, e_nsErr_t *p_err);
+static void cc112x_On(e_nsErr_t *p_err);
+static void cc112x_Off(e_nsErr_t *p_err);
 static void cc112x_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
 static void cc112x_Recv(uint8_t *p_buf, uint16_t len, e_nsErr_t *p_err);
 static void cc112x_Ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
 
-static void cc112x_rxByteLeftChk(void);
 static void cc112x_isrRxSyncReceived(void *p_arg);
-static void cc112x_isrRxFifoAboveThreshold(void *p_arg);
 static void cc112x_isrRxPacketReceived(void *p_arg);
-static void cc112x_isrTxFifoBelowThreshold(void *p_arg);
 static void cc112x_isrTxPacketSent(void *p_arg);
 
-#if RF_WD_ENABLE
-static void cc112x_wdCB(void*);
-#endif /* #if RF_WD_ENABLE */
-
-static void cc112x_errorHandler(void);
 static void cc112x_eventHandler(c_event_t c_event, p_data_t p_data);
+static void cc112x_rxFifoErrHandler(void);
+
 static void cc112x_configureRegs(const s_regSettings_t *p_regs, uint8_t len);
-static void cc112x_calibrateRF(void);
+static void cc112x_manualCalibration(void);
 static void cc112x_calibrateRCOsc(void);
 static void cc112x_cca(e_nsErr_t *p_err);
+static void cc112x_retx(e_nsErr_t *p_err);
 
 static void cc112x_reset(void);
 static void cc112x_chkPartnumber(e_nsErr_t *p_err);
-static void cc112x_chkReset(void);
 static void cc112x_waitRdy(void);
 static void cc112x_gotoSleep(void);
-static void cc112x_gotoRx(void);
+static void cc112x_gotoRX(void);
 static void cc112x_gotoIdle(void);
 static void cc112x_txPowerSet(int8_t power, e_nsErr_t *p_err);
 static void cc112x_txPowerGet(int8_t *p_power, e_nsErr_t *p_err);
 static void cc112x_chanNumSet(uint8_t chan_num, e_nsErr_t *p_err);
 static void cc112x_opModeSet(e_nsRfOpMode mode, e_nsErr_t *p_err);
-
-
+static void cc112x_readRSSI(int16_t *p_val, e_nsErr_t *p_err);
+static void cc112x_selfTest(e_nsErr_t *p_err);
 
 /*
 ********************************************************************************
 *                           LOCAL FUNCTIONS DEFINITIONS
 ********************************************************************************
 */
-static void cc112x_Init (void *p_netstk, e_nsErr_t *p_err)
+static void cc112x_Init(void *p_netstk, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
-    if (p_err == NULL) {
-        return;
-    }
+  if (p_err == NULL) {
+    return;
+  }
 
-    if (p_netstk == NULL) {
-        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
-        return;
-    }
+  if (p_netstk == NULL) {
+    *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+    return;
+  }
 #endif
 
-    uint8_t len;
 
-    RF_EXTI_DISABLED();
+  /* indicates radio is in state initialization */
+  rf_state = RF_STATE_INIT;
 
-    /* indicates radio is in state initialization */
-    rf_state = RF_STATE_INIT;
+  /* store pointer to global netstack structure */
+  prf_netstk = (s_ns_t *)p_netstk;
 
-    /* store pointer to global netstack structure */
-    rf_netstk = (s_ns_t *)p_netstk;
+  /* initialize SPI handle */
+  cc112x_spiInit();
 
-    /* initialize SPI handle */
-    cc112x_spiInit();
+  /* reset the transceiver. Afterwards the chip will be in IDLE state */
+  cc112x_reset();
 
-    /* reset the transceiver */
-    cc112x_reset();
+  /* check part number */
+  cc112x_chkPartnumber(p_err);
+  if (*p_err != NETSTK_ERR_NONE) {
+    emb6_errorHandler(p_err);
+  }
 
-    /* check part number */
-    cc112x_chkPartnumber(p_err);
-    if (*p_err != NETSTK_ERR_NONE) {
-        emb6_errorHandler(p_err);
-    }
+  /* configure RF registers */
+  RF_WR_REGS(cc112x_cfg_ieee802154g_default);
 
-    /* set RF registers to default values */
-    len = sizeof(cc112x_cfg_ieee802154g_default) / sizeof(s_regSettings_t);
-    cc112x_configureRegs(cc112x_cfg_ieee802154g_default, len);
+  /* calibrate radio according to cc112x errata */
+  cc112x_manualCalibration();
 
-    /* calibrate radio */
-    cc112x_calibrateRF();
+  /* calibrate RC oscillator */
+  cc112x_calibrateRCOsc();
 
-    /* calibrate RC oscillator */
-    cc112x_calibrateRCOsc();
+  /* configure interrupts */
+  bsp_extIntRegister(RF_INT_CFG_TX_FINI, RF_INT_CFG_EDGE_TX_FINI, cc112x_isrTxPacketSent);
+  bsp_extIntRegister(RF_INT_CFG_RX_SYNC, RF_INT_CFG_EDGE_RX_SYNC, cc112x_isrRxSyncReceived);
+  bsp_extIntRegister(RF_INT_CFG_RX_FINI, RF_INT_CFG_EDGE_RX_FINI, cc112x_isrRxPacketReceived);
 
-    /* initialize local variables */
-    evproc_regCallback(NETSTK_RF_EVENT, cc112x_eventHandler);
-    memset(rf_rxBuf, 0, sizeof(rf_rxBuf));
-    rf_rxBufLen = 0;
-    rf_worEn = FALSE;    /* enable WOR mode by default */
+  /* initialize local variables */
+  evproc_regCallback(NETSTK_RF_EVENT, cc112x_eventHandler);
+  memset(rf_rxBuf, 0, sizeof(rf_rxBuf));
+  rf_rxBufLen = 0;
+  rf_worEn = TRUE; /* enable WOR mode by default */
 
-    /* configure operating mode and channel number */
-    rf_chanNum = 0;
-    rf_opMode = NETSTK_RF_OP_MODE_CSM;
+  /* configure operating mode and channel number */
+  rf_chanNum = 0;
+  rf_opMode = NETSTK_RF_OP_MODE_CSM;
 
-#if RF_WD_ENABLE
-    /* create watchdog timer */
-    rt_tmr_create(&rf_tmrWD, E_RT_TMR_TYPE_ONE_SHOT, RF_WD_TIMER_MS, cc112x_wdCB, NULL);
-#endif /* #if RF_WD_ENABLE */
-
-    /* goto state idle */
-    cc112x_gotoIdle();
+  /* put radio to IDLE state */
+  cc112x_gotoIdle();
 }
 
-
-static void cc112x_On (e_nsErr_t *p_err)
+static void cc112x_On(e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
-    if (p_err == NULL) {
-        return;
-    }
+  if (p_err == NULL) {
+    return;
+  }
 #endif
 
-    /* first set RF to state idle */
+  /* put the radio to the IDLE state after waking up */
+  if (rf_state == RF_STATE_SLEEP) {
     cc112x_gotoIdle();
+  }
 
-    /* go to state RX */
-    cc112x_gotoRx();
+  /* go to state RX */
+  cc112x_gotoRX();
 
-    /* indicate successful operation */
-    *p_err = NETSTK_ERR_NONE;
+  /* indicate successful operation */
+  *p_err = NETSTK_ERR_NONE;
 }
 
-
-static void cc112x_Off (e_nsErr_t *p_err)
-{
+static void cc112x_Off(e_nsErr_t *p_err) {
 #if NETSTK_CFG_ARG_CHK_EN
-    if (p_err == NULL) {
-        return;
-    }
+  if (p_err == NULL) {
+    return;
+  }
 #endif
 
-    /* put transceiver to state idle */
-    cc112x_gotoIdle();
+  /* force the radio to go to the IDLE state */
+  cc112x_gotoIdle();
 
-    /* go to state sleep */
-    cc112x_gotoSleep();
+  /* then put it to SLEEP state */
+  cc112x_gotoSleep();
 
-    /* indicate successful operation */
-    *p_err = NETSTK_ERR_NONE;
+  /* indicate successful operation */
+  *p_err = NETSTK_ERR_NONE;
 }
 
-
-static void cc112x_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
-{
+static void cc112x_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
 #if NETSTK_CFG_ARG_CHK_EN
-    if (p_err == NULL) {
-        return;
-    }
+  if (p_err == NULL) {
+    return;
+  }
 
-    if ((p_data == NULL) ||
-        (len == 0)) {
-        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
-        return;
-    }
+  if ((p_data == NULL) || (len == 0) || (len > RF_CFG_MAX_PACKET_LENGTH)) {
+    *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+    return;
+  }
 #endif
 
-    if ((rf_state != RF_STATE_RX_LISTENING) &&
-        (rf_state != RF_STATE_IDLE)) {
-        *p_err = NETSTK_ERR_BUSY;
+#if (EMB6_CFG_CONTINUOUS_RX == TRUE)
+  *p_err = NETSTK_ERR_BUSY;
+  return;
+#endif
+
+  if ((rf_state != RF_STATE_RX) &&
+      (rf_state != RF_STATE_IDLE)) {
+    *p_err = NETSTK_ERR_BUSY;
+  } else {
+    uint8_t num_txbytes, chip_status;
+
+    /* entry:
+    * - go to the IDLE state
+    * - disable RX interrupt
+    */
+    RF_INT_DISABLED();
+    cc112x_gotoIdle();
+    cc112x_waitRdy();
+
+    /* do:
+    * - go to the TX_BUSY state
+    * - write packet to TX FIFO
+    * - verify number of bytes in TX FIFO
+    * - enable TX interrupts
+    * - issue STX strobe
+    */
+    rf_state = RF_STATE_TX_BUSY;
+    cc112x_spiTxFifoWrite(p_data, len);
+    chip_status = cc112x_spiRegRead(CC112X_NUM_TXBYTES, &num_txbytes, 1);
+    if (num_txbytes != len) {
+      TRACE_LOG_ERR("RF_TX: failed to write to TX FIFO %d / %d / %02x", num_txbytes, len, chip_status);
+    }
+
+    /* store TX first pointer for retransmission when required */
+    cc112x_spiRegRead(CC112X_TXFIRST, &rf_txFirstPtr, 1);
+
+    LED_TX_ON();
+    RF_INT_TX_ENABLED();
+    cc112x_spiCmdStrobe(CC112X_STX);
+
+    /* wait for packet to be sent */
+    uint16_t iteration = 0xffff;
+    while ((rf_state == RF_STATE_TX_BUSY) && (iteration > 0)) {
+      iteration--;
+    }
+    if (rf_state == RF_STATE_TX_FINI) {
+      /* TX finished successfully */
+      *p_err = NETSTK_ERR_NONE;
     } else {
-#if LOGGER_ENABLE
-        /*
-         * Logging
-         */
-        uint16_t data_len = len;
-        uint8_t *p_dataptr = p_data;
-        LOG_RAW("RADIO_TX: ");
-        while (data_len--) {
-            LOG_RAW("%02x", *p_dataptr++);
-        }
-        LOG_RAW("\n\r\n\r");
-#endif
-
-        if (len > RF_CFG_MAX_PACKET_LENGTH) {
-            /* packet length is out of range, and therefore transmission is
-             * refused */
-            *p_err = NETSTK_ERR_INVALID_ARGUMENT;
-            return;
-        }
-
-        /*
-         * entry actions
-         */
-        uint8_t reg_len, write_byte;
-
-        /* go to state IDLE and flush TX FIFO */
-        LED_TX_ON();
-        cc112x_spiCmdStrobe(CC112X_SIDLE);
-        cc112x_spiCmdStrobe(CC112X_SFTX);
-
-        /* disable RF external interrupts */
-        RF_EXTI_DISABLED();
-
-        /* configure RF GPIOs with infinite packet length mode */
-        rf_fixedPktLenMode = FALSE;
-        rf_txLastPortion = FALSE;
-        reg_len = sizeof(cc112x_cfg_tx) / sizeof(s_regSettings_t);
-        cc112x_configureRegs(cc112x_cfg_tx, reg_len);
-
-        /* set packet length mode based on length of packet to send */
-        if (len > RF_CFG_MAX_VARIABLE_LENGTH) {
-            /*
-             * do actions
-             */
-            rf_state = RF_STATE_TX_BUSY;
-            rf_byteLeft = len;
-            rf_bufIx = p_data;
-
-            /* set fixed packet length */
-            write_byte = len % (RF_CFG_MAX_VARIABLE_LENGTH + 1);
-            cc112x_spiRegWrite(CC112X_PKT_LEN, &write_byte, 1);
-
-            /* configure RF external interrupts */
-            bsp_extIntRegister(RF_INT_CFG_TX_FIFO_THR, RF_INT_CFG_EDGE_TX_FIFO_THR, cc112x_isrTxFifoBelowThreshold);
-            bsp_extIntRegister(RF_INT_CFG_TX_FINI, RF_INT_CFG_EDGE_TX_FINI, cc112x_isrTxPacketSent);
-
-            bsp_extIntEnable(RF_INT_CFG_TX_FIFO_THR);
-            bsp_extIntEnable(RF_INT_CFG_TX_FINI);
-
-            /* write packet to send into TX FIFO */
-            cc112x_spiTxFifoWrite(p_data, RF_CFG_FIFO_SIZE);
-            rf_byteLeft -= RF_CFG_FIFO_SIZE;
-            rf_bufIx += RF_CFG_FIFO_SIZE;
-            rf_iterations = (rf_byteLeft / RF_CFG_AVAI_BYTES_IN_TX_FIFO);
-
-            /* enter TX mode */
-            cc112x_spiCmdStrobe(CC112X_STX);
-        } else {
-            /*
-             * do actions
-             */
-            /* go to state TX_BUSY */
-            rf_state = RF_STATE_TX_BUSY;
-            rf_txLastPortion = TRUE;
-
-            /* set fixed packet length mode */
-            RF_SET_FIXED_PKT_MODE();
-            rf_fixedPktLenMode = TRUE;
-
-            /* set fixed packet length */
-            write_byte = (uint8_t)(len % (RF_CFG_MAX_VARIABLE_LENGTH + 1));
-            cc112x_spiRegWrite(CC112X_PKT_LEN, &write_byte, 1);
-
-            /* using only interrupt PKT_SYNC_RXTX on falling edge is sufficient */
-            bsp_extIntRegister(RF_INT_CFG_TX_FINI, RF_INT_CFG_EDGE_TX_FINI, cc112x_isrTxPacketSent);
-            bsp_extIntEnable(RF_INT_CFG_TX_FINI);
-
-            /* write packet to send into TX FIFO */
-            cc112x_spiTxFifoWrite(p_data, len);
-
-            /* enter TX mode */
-            cc112x_spiCmdStrobe(CC112X_STX);
-        }
-
-#if RF_WD_ENABLE
-        rt_tmr_stop( &rf_tmrWD );
-        rt_tmr_start( &rf_tmrWD );
-#endif /* #if RF_WD_ENABLE */
-
-        /* wait for packet to be sent */
-        uint16_t iteration = 0xffff;
-        while ((rf_state == RF_STATE_TX_BUSY) &&
-               (iteration > 0)) {
-            iteration--;
-        }
-
-        /*
-         * Exit actions
-         */
-        if (rf_state == RF_STATE_TX_FINI) {
-            *p_err = NETSTK_ERR_NONE;
-        } else {
-            cc112x_chkReset();
-            *p_err = NETSTK_ERR_TX_TIMEOUT;
-        }
-
-        LED_TX_OFF();
-        cc112x_gotoRx();
+      /* TX error handling */
+      *p_err = NETSTK_ERR_TX_TIMEOUT;
     }
+
+    /* exit:
+    * - force the radio to flush TX FIFO
+    * - go to state RX
+    */
+    LED_TX_OFF();
+    cc112x_gotoIdle();
+    cc112x_gotoRX();
+  }
 }
 
 
-static void cc112x_Recv(uint8_t *p_buf, uint16_t len, e_nsErr_t *p_err)
-{
+static void cc112x_Recv(uint8_t *p_buf, uint16_t len, e_nsErr_t *p_err) {
 #if NETSTK_CFG_ARG_CHK_EN
-    if (p_err == NULL) {
-        return;
-    }
+  if (p_err == NULL) {
+    return;
+  }
 #endif
-
 
 }
 
-
-static void cc112x_Ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
-{
+static void cc112x_Ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err) {
 #if NETSTK_CFG_ARG_CHK_EN
-    if (p_err == NULL) {
-        return;
-    }
+  if (p_err == NULL) {
+    return;
+  }
 #endif
 
-    *p_err = NETSTK_ERR_NONE;
-    switch (cmd) {
-        case NETSTK_CMD_RF_TXPOWER_SET:
-            cc112x_txPowerSet(*((int8_t *) p_val), p_err);
-            break;
+  *p_err = NETSTK_ERR_NONE;
+  switch (cmd) {
+    case NETSTK_CMD_RF_TXPOWER_SET:
+      cc112x_txPowerSet(*((int8_t *) p_val), p_err);
+      break;
 
-        case NETSTK_CMD_RF_TXPOWER_GET:
-            cc112x_txPowerGet(p_val, p_err);
-            break;
+    case NETSTK_CMD_RF_TXPOWER_GET:
+      cc112x_txPowerGet(p_val, p_err);
+      break;
 
-        case NETSTK_CMD_RF_CCA_GET:
-            cc112x_cca(p_err);
-            break;
+    case NETSTK_CMD_RF_CCA_GET:
+      cc112x_cca(p_err);
+      break;
 
-        case NETSTK_CMD_RF_IS_RX_BUSY:
-            if (RF_IS_RX_BUSY() == TRUE) {
-                *p_err = NETSTK_ERR_BUSY;
-            }
-            break;
+    case NETSTK_CMD_RF_RETX:
+      /* retransmit the last frame
+      * - write TxFirst to the previous value
+      */
+      cc112x_retx(p_err);
+      break;
 
-        case NETSTK_CMD_RF_CHAN_NUM_SET:
-            cc112x_chanNumSet(*((uint8_t *) p_val), p_err);
-            break;
+    case NETSTK_CMD_RF_IS_RX_BUSY:
+      if (RF_IS_RX_BUSY() == TRUE) {
+        *p_err = NETSTK_ERR_BUSY;
+      }
+      break;
 
-        case NETSTK_CMD_RF_OP_MODE_SET:
-            cc112x_opModeSet(*((e_nsRfOpMode *) p_val), p_err);
-            break;
 
-        case NETSTK_CMD_RF_WOR_EN:
-            if (p_val) {
-                rf_worEn = *((uint8_t *)p_val);
-            } else {
-                *p_err = NETSTK_ERR_INVALID_ARGUMENT;
-            }
-            break;
+    case NETSTK_CMD_RF_CHAN_NUM_SET:
+      cc112x_chanNumSet(*((uint8_t *) p_val), p_err);
+      break;
 
-        case NETSTK_CMD_RX_BUF_READ:
-            /*
-             * Signal upper layer if a packet has arrived by the time this
-             * command is issued.
-             * Trigger event-process manually
-             */
-            cc112x_eventHandler(NETSTK_RF_EVENT, NULL);
-            break;
+    case NETSTK_CMD_RF_OP_MODE_SET:
+      cc112x_opModeSet(*((e_nsRfOpMode *) p_val), p_err);
+      break;
 
-        case NETSTK_CMD_RF_RSSI_GET:
-        case NETSTK_CMD_RF_RF_SWITCH_SET:
-        case NETSTK_CMD_RF_ANT_DIV_SET:
-        case NETSTK_CMD_RF_SENS_SET:
-        case NETSTK_CMD_RF_SENS_GET:
-        default:
-            /* unsupported commands are treated in same way */
-            *p_err = NETSTK_ERR_CMD_UNSUPPORTED;
-            break;
-    }
+    case NETSTK_CMD_RF_WOR_EN:
+      if (p_val) {
+        rf_worEn = *((uint8_t *) p_val);
+      } else {
+        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+      }
+      break;
+
+    case NETSTK_CMD_RX_BUF_READ:
+      /*
+       * Signal upper layer if a packet has arrived by the time this
+       * command is issued.
+       * Trigger event-process manually
+       */
+      cc112x_eventHandler(NETSTK_RF_EVENT, NULL);
+      break;
+
+    case NETSTK_CMD_RF_RSSI_GET:
+      cc112x_readRSSI(p_val, p_err);
+      break;
+
+    case NETSTK_CMD_RF_SELFTEST:
+      cc112x_selfTest(p_err);
+      break;
+
+    case NETSTK_CMD_RF_RF_SWITCH_SET:
+    case NETSTK_CMD_RF_ANT_DIV_SET:
+    case NETSTK_CMD_RF_SENS_SET:
+    case NETSTK_CMD_RF_SENS_GET:
+    default:
+      /* unsupported commands are treated in same way */
+      *p_err = NETSTK_ERR_CMD_UNSUPPORTED;
+      break;
+  }
 }
-
-
 
 /*
 ********************************************************************************
 *                           STATE TRANSITION HANDLERS
 ********************************************************************************
 */
-static void cc112x_gotoSleep(void)
-{
-    /* disable RF external interrupts */
-    RF_EXTI_DISABLED();
+static void cc112x_gotoSleep(void) {
+  /* disable RF external interrupts */
+  RF_INT_DISABLED();
 
-    /* enter state Sleep */
-    rf_state = RF_STATE_SLEEP;
-    cc112x_spiCmdStrobe(CC112X_SPWD);
+  /* enter state Sleep */
+  rf_state = RF_STATE_SLEEP;
+  cc112x_spiCmdStrobe(CC112X_SPWD);
 }
 
 
-static void cc112x_gotoRx(void)
-{
-    uint8_t reg_len;
-    uint8_t write_byte;
+static void cc112x_gotoRX(void) {
+  if (rf_state == RF_STATE_IDLE) {
+    /* disable TX interrupt, enable RX interrupts */
+    RF_INT_DISABLED();
+    RF_INT_RX_ENABLED();
 
-    /* go to state IDLE and flush RX FIFO */
-    cc112x_spiCmdStrobe(CC112X_SIDLE);
-    cc112x_spiCmdStrobe(CC112X_SFRX);
-
-    /* disable RF external interrupts */
-    RF_EXTI_DISABLED();
-
-    /* configure RF GPIOs */
-    reg_len = sizeof(cc112x_cfg_rx_wor) / sizeof(s_regSettings_t);
-    cc112x_configureRegs(cc112x_cfg_rx_wor, reg_len);
-
-    /* infinite packet length mode by default */
-    rf_fixedPktLenMode = FALSE;
-
-    /* configure RF external interrupts */
-    bsp_extIntRegister(RF_INT_CFG_RX_SYNC, RF_INT_CFG_EDGE_RX_SYNC, cc112x_isrRxSyncReceived);
-    bsp_extIntRegister(RF_INT_CFG_RX_FIFO_THR, RF_INT_CFG_EDGE_RX_FIFO_THR, cc112x_isrRxFifoAboveThreshold);
-    bsp_extIntRegister(RF_INT_CFG_RX_FINI, RF_INT_CFG_EDGE_RX_FINI, cc112x_isrRxPacketReceived);
-
-    /* enable RX interrupts */
-    bsp_extIntEnable(RF_INT_CFG_RX_SYNC);
-    bsp_extIntEnable(RF_INT_CFG_RX_FIFO_THR);
-
-    /* set receive mode */
-    if (rf_worEn) {
-        /* enable RX termination on bad packets */
-        write_byte = 0x09;
-        cc112x_spiRegWrite(CC112X_RFEND_CFG0, &write_byte, 1);
-
-        /* set preamble length to 24 bytes */
-        write_byte = 0x31;
-        cc112x_spiRegWrite(CC112X_PREAMBLE_CFG1, &write_byte, 1);
-
-        /* enter state Sniff */
-        cc112x_spiCmdStrobe(CC112X_SWOR);
-    } else {
-        /* disable RX termination on bad packets regardless of the RXOFF_MODE */
-        write_byte = 0;
-        cc112x_spiRegWrite(CC112X_RFEND_CFG0, &write_byte, 1);
-
-        /* set preamble length to 4 bytes */
-        write_byte = 0x19;
-        cc112x_spiRegWrite(CC112X_PREAMBLE_CFG1, &write_byte, 1);
-
-        /* Strobe RX */
-        uint8_t chip_status;
-        do {
-            chip_status = cc112x_spiCmdStrobe(CC112X_SRX);
-        } while (RF_GET_CHIP_STATE(chip_status) != RF_CHIP_STATE_RX);
-    }
-    rf_state = RF_STATE_RX_LISTENING;
-}
-
-
-static void cc112x_gotoIdle(void)
-{
+    /* when eWOR strobe is sent on SPI, the radio will go to the SLEEP state when
+    * CSn is released.
+    */
+#if (NETSTK_CFG_WOR_EN == TRUE)
+    rf_state = RF_STATE_RX;
+    cc112x_spiCmdStrobe(CC112X_SWOR);
+#else
     uint8_t chip_status;
-
-    /* disable RF external interrupts */
-    RF_EXTI_DISABLED();
-
-    /* issue strobe IDLE */
-    do {
-        chip_status = cc112x_spiCmdStrobe(CC112X_SIDLE);
-    } while (RF_GET_CHIP_STATE(chip_status) != RF_CHIP_STATE_IDLE);
-
-    /* flush TXFIFO, RXFIFO */
-    cc112x_spiCmdStrobe(CC112X_SFRX);
-    cc112x_spiCmdStrobe(CC112X_SFTX);
-
-    /* set RF driver state to idle */
-    rf_state = RF_STATE_IDLE;
-}
-
-
-static void cc112x_reset(void)
-{
-    cc112x_spiCmdStrobe(CC112X_SRES);
-    cc112x_waitRdy();
-}
-
-
-static void cc112x_chkPartnumber(e_nsErr_t *p_err)
-{
-    uint8_t part_number;
-    uint8_t part_version;
-
-    /* set returned error to default */
-    *p_err = NETSTK_ERR_NONE;
-
-    /* get part number */
-    cc112x_spiRegRead(CC112X_PARTNUMBER, &part_number, 1);
-    if (part_number != CC112X_PART_NUMBER) {
-        *p_err = NETSTK_ERR_INIT;
-        return;
-    }
-
-    /* get part version */
-    cc112x_spiRegRead(CC112X_PARTVERSION, &part_version, 1);
-    if (part_version != CC112X_PART_VERSION) {
-        *p_err = NETSTK_ERR_INIT;
-        return;
-    }
-}
-
-static void cc112x_chkReset(void)
-{
-    e_nsErr_t err;
-    uint8_t read_byte;
-
-    /* check one of the registers */
-    cc112x_spiRegRead(CC112X_FREQ2, &read_byte, 1);
-
-    if (read_byte != rf_regVerify ) {
-        uint8_t rf_chanNum_st = rf_chanNum;
-        e_nsRfOpMode rf_opMode_st = rf_opMode;
-
-        cc112x_Init( rf_netstk, &err );
-        cc112x_opModeSet( rf_opMode_st, &err );
-        cc112x_chanNumSet( rf_chanNum_st, &err );
-    }
-}
-
-static void cc112x_waitRdy(void)
-{
-    rf_status_t chip_status;
-
-    do {
+    cc112x_spiCmdStrobe(CC112X_SRX);
+    if (rf_state == RF_STATE_IDLE) {
+      /* wait until PLL settling is complete */
+      do {
         chip_status = cc112x_spiCmdStrobe(CC112X_SNOP);
-    } while (chip_status & CC112X_STATE_CHIP_RDYn);
+      } while (RF_GET_CHIP_STATE(chip_status) == RF_CHIP_STATE_SETTLING);
+    }
+
+    chip_status = cc112x_spiCmdStrobe(CC112X_SNOP);
+    assert_equ("GotoRx: ", RF_CHIP_STATE_RX, RF_GET_CHIP_STATE(chip_status));
+    rf_state = RF_STATE_RX;
+#endif
+  }
 }
 
-static void cc112x_errorHandler(void)
-{
-  rf_state = RF_STATE_ERR;
-  evproc_putEvent(E_EVPROC_HEAD, NETSTK_RF_EVENT, NULL);
+
+static void cc112x_gotoIdle(void) {
+  uint8_t chip_status;
+
+  /* the SIDLE strobe command can always be used to force the radio to go to
+  * the IDLE state
+  */
+  if (rf_state != RF_STATE_IDLE) {
+    rf_state = RF_STATE_IDLE;
+    chip_status = cc112x_spiCmdStrobe(CC112X_SIDLE);
+    /* wait until the radio is in IDLE state */
+    while (RF_GET_CHIP_STATE(chip_status) != RF_CHIP_STATE_IDLE) {
+      chip_status = cc112x_spiCmdStrobe(CC112X_SIDLE);
+    }
+  }
 }
 
+
+static void cc112x_reset(void) {
+  /* by issuing a manual reset, all internal registers are set to their default
+  * values and the radio will go to the IDLE state
+  */
+  cc112x_spiCmdStrobe(CC112X_SRES);
+
+  /* wait for the crystal oscillator to stabilize */
+  cc112x_waitRdy();
+}
+
+static void cc112x_chkPartnumber(e_nsErr_t *p_err) {
+  uint8_t part_number;
+  uint8_t part_version;
+
+  /* set returned error to default */
+  *p_err = NETSTK_ERR_NONE;
+
+  /* get part number */
+  cc112x_spiRegRead(CC112X_PARTNUMBER, &part_number, 1);
+  if (part_number != CC112X_PART_NUMBER) {
+    *p_err = NETSTK_ERR_INIT;
+    return;
+  }
+
+  /* get part version */
+  cc112x_spiRegRead(CC112X_PARTVERSION, &part_version, 1);
+  if (part_version != CC112X_PART_VERSION) {
+    *p_err = NETSTK_ERR_INIT;
+    return;
+  }
+}
+
+
+static void cc112x_waitRdy(void) {
+  rf_status_t chip_status;
+  do {
+    chip_status = cc112x_spiCmdStrobe(CC112X_SNOP);
+  } while (chip_status & CC112X_STATE_CHIP_RDYn);
+}
 
 /*
 ********************************************************************************
 *                       INTERRUPT SUBROUTINE HANDLERS
 ********************************************************************************
 */
-static void cc112x_rxByteLeftChk(void)
-{
-    /* if incoming bytes can be stored in RX FIFO then set to fixed packet
-     * length mode */
-    if ((rf_byteLeft < (RF_CFG_MAX_VARIABLE_LENGTH + 1)) &&
-        (rf_fixedPktLenMode == FALSE)) {
-        /* set fixed packet length mode */
-        RF_SET_FIXED_PKT_MODE();
-        rf_fixedPktLenMode = TRUE;
-    }
-
-    /* disable RX FIFO THR when number of remaining bytes less than the
-     * threshold and go to a state to receive the last packet portion */
-    if (rf_byteLeft <= RF_CFG_BYTES_IN_RX_FIFO) {
-        rf_state = RF_STATE_RX_PORTION_LAST;
-        bsp_extIntDisable(RF_INT_CFG_RX_FIFO_THR);
-    }
-}
-
-static void cc112x_isrRxSyncReceived(void *p_arg)
-{
+static void cc112x_isrRxSyncReceived(void *p_arg) {
   uint8_t marc_status;
+  uint8_t chip_status;
 
   /* avoid compiler warning of unused parameters */
   (void) &p_arg;
+  TRACE_LOG_ENTER_ISR();
 
   /* clear ISR flag */
   bsp_extIntClear(RF_INT_CFG_RX_SYNC);
 
   /* achieve MARC_STATUS to determine what caused the interrupt */
-  cc112x_spiRegRead(CC112X_MARC_STATUS1, &marc_status, 1);
+  chip_status = cc112x_spiRegRead(CC112X_MARC_STATUS1, &marc_status, 1);
+  switch (marc_status) {
+    case RF_MARC_STATUS_RX_OVERFLOW:
+    case RF_MARC_STATUS_RX_UNDERFLOW:
+      TRACE_LOG_ERR("RF_RX_SYNC: FIFO ERR marc=%02x, cs=%02x, state=%d", marc_status, chip_status, rf_state);
+      cc112x_rxFifoErrHandler();
+      break;
 
-  if (rf_state == RF_STATE_RX_LISTENING) {
-    uint8_t num_rx_bytes;
-    uint16_t iteration;
-    uint16_t pkt_len;
-
-    /* go to state RX SYCN */
-    rf_state = RF_STATE_RX_SYNC;
-    LED_RX_ON();
-
-    /*
-     * Wait until entire PHY header is received or number of register-
-     * reading attempts exceeds the predefined max value
-     */
-    iteration = 0xffff;
-    num_rx_bytes = 0;
-    while ((num_rx_bytes < PHY_HEADER_LEN ) && (iteration > 0)) {
-      iteration--;
-      cc112x_spiRegRead(CC112X_NUM_RXBYTES, &num_rx_bytes, 1);
-    }
-
-    if (num_rx_bytes < PHY_HEADER_LEN) {
-      /* goto error handler */
-      cc112x_errorHandler();
-    } else {
-      /* parse PHY header for packet length */
-      cc112x_spiRxFifoRead(rf_rxBuf, PHY_HEADER_LEN);
-      pkt_len = phy_framer802154_getPktLen(rf_rxBuf, PHY_HEADER_LEN);
-
-      /* make sure that the packet length is acceptable */
-      if ((pkt_len == 0) || (pkt_len > RF_CFG_MAX_PACKET_LENGTH )) {
-        /* goto error handler */
-        cc112x_errorHandler();
-      } else {
-        rf_state = RF_STATE_RX_PORTION_MIDDLE;
-
-        /* set RX buffer attributes in corresponds to the incoming packet */
-        rf_rxBufLen = PHY_HEADER_LEN + pkt_len;
-        rf_byteLeft = pkt_len;
-        rf_bufIx = &rf_rxBuf[PHY_HEADER_LEN ];
-
-        /* check number of remaining bytes */
-        cc112x_rxByteLeftChk();
-
-        /* set fixed packet length */
-        uint8_t write_byte;
-        write_byte = rf_rxBufLen % (RF_CFG_MAX_VARIABLE_LENGTH + 1);
-        cc112x_spiRegWrite(CC112X_PKT_LEN, &write_byte, 1);
-
-        /* enable PKT_SYCN_RXTX interrupt on falling edge, indicating entire
-         * packet arrives */
-        bsp_extIntClear(RF_INT_CFG_RX_FINI);
-        bsp_extIntEnable(RF_INT_CFG_RX_FINI);
-
-        #if RF_WD_ENABLE
-        /* start the timeout and schedule an event*/
-        rt_tmr_stop(&rf_tmrWD);
-        rt_tmr_start(&rf_tmrWD);
-        #endif /* #if RF_WD_ENABLE */
+    case RF_MARC_STATUS_NO_FAILURE:
+      if (rf_state == RF_STATE_RX) {
+        /* go to state RX SYCN */
+        rf_state = RF_STATE_RX_SYNC;
+        LED_RX_ON();
       }
-    }
+      break;
+
+    case RF_MARC_STATUS_RX_FINI:
+      /* reception has finished successfully and the radio will go to the
+      * state indicated by RFEND_CFG1.RXOFF_MODE setting (default: IDLE)
+      */
+      rf_state = RF_STATE_RX_FINI;
+
+      /* read RX FIFO  */
+      cc112x_spiRegRead(CC112X_NUM_RXBYTES, &rf_rxBufLen, 1);
+      cc112x_spiRxFifoRead(rf_rxBuf, rf_rxBufLen);
+      LED_RX_OFF();
+      TRACE_LOG_MAIN("RF_RX: RX FIFO len=%d; seq=%02x;", rf_rxBufLen, rf_rxBuf[3]);
+
+      /* signal complete reception interrupt */
+      evproc_putEvent(E_EVPROC_HEAD, NETSTK_RF_EVENT, NULL);
+      break;
+
+    default:
+      TRACE_LOG_ERR("RF_RX_SYNC: unexpected marc=%02x, cs=%02x, state=%d", marc_status, chip_status, rf_state);
+      break;
   }
+  TRACE_LOG_INT("RF_RX_SYNC: marc=%02x, cs=%02x, state=%d", marc_status, chip_status, rf_state);
+  TRACE_LOG_EXIT_ISR();
 }
 
 
-static void cc112x_isrRxFifoAboveThreshold(void *p_arg)
-{
+static void cc112x_isrRxPacketReceived(void *p_arg) {
   uint8_t marc_status;
+  uint8_t chip_status;
 
   /* avoid compiler warning of unused parameters */
   (void) &p_arg;
-
-  /* clear ISR flag */
-  bsp_extIntClear(RF_INT_CFG_RX_FIFO_THR);
-
-  /* achieve MARC_STATUS to determine what caused the interrupt */
-  cc112x_spiRegRead(CC112X_MARC_STATUS1, &marc_status, 1);
-
-  /* only receive middle portions of packet here */
-  if (rf_state == RF_STATE_RX_PORTION_MIDDLE) {
-
-    /* read RF_CFG_BYTES_IN_RX_FIFO bytes from the RX FIFO */
-    cc112x_spiRxFifoRead(rf_bufIx, RF_CFG_BYTES_IN_RX_FIFO);
-    rf_byteLeft -= RF_CFG_BYTES_IN_RX_FIFO;
-    rf_bufIx += RF_CFG_BYTES_IN_RX_FIFO;
-
-    /* check number of remaining bytes */
-    cc112x_rxByteLeftChk();
-  }
-}
-
-
-static void cc112x_isrRxPacketReceived(void *p_arg)
-{
-  uint8_t marc_status;
-  uint8_t is_rx_ok;
-
-  /* avoid compiler warning of unused parameters */
-  (void) &p_arg;
+  TRACE_LOG_ENTER_ISR();
 
   /* clear ISR flag */
   bsp_extIntClear(RF_INT_CFG_RX_FINI);
 
   /* achieve MARC_STATUS to determine what caused the interrupt */
-  cc112x_spiRegRead(CC112X_MARC_STATUS1, &marc_status, 1);
+  chip_status = cc112x_spiRegRead(CC112X_MARC_STATUS1, &marc_status, 1);
+  switch (marc_status) {
+    case RF_MARC_STATUS_RX_FINI:
+    //case RF_MARC_STATUS_NO_FAILURE:
+      if (rf_state == RF_STATE_RX_SYNC) {
+        /* reception has finished successfully and the radio will go to the
+        * state indicated by RFEND_CFG1.RXOFF_MODE setting (default: IDLE)
+        */
+        rf_state = RF_STATE_RX_FINI;
 
-  /* check reception process result */
-  is_rx_ok = (rf_state == RF_STATE_RX_PORTION_LAST) &&
-             ((marc_status == RF_MARC_STATUS_RX_FINI) ||
-              (marc_status == RF_MARC_STATUS_NO_FAILURE));
-  if (is_rx_ok) {
-    /* indicate that reception process has finished */
-    rf_state = RF_STATE_RX_FINI;
+        /* read RX FIFO  */
+        cc112x_spiRegRead(CC112X_NUM_RXBYTES, &rf_rxBufLen, 1);
+        cc112x_spiRxFifoRead(rf_rxBuf, rf_rxBufLen);
+        LED_RX_OFF();
+        TRACE_LOG_MAIN("RF_RX: RX FIFO len=%d; seq=%02x;", rf_rxBufLen, rf_rxBuf[3]);
 
-    /* read remaining bytes */
-    cc112x_spiRxFifoRead(rf_bufIx, rf_byteLeft);
-    rf_byteLeft = 0;
+        /* signal complete reception interrupt */
+        evproc_putEvent(E_EVPROC_HEAD, NETSTK_RF_EVENT, NULL);
+      }
+      break;
 
-    /* signal complete reception interrupt */
-    evproc_putEvent(E_EVPROC_HEAD, NETSTK_RF_EVENT, NULL);
+    case RF_MARC_STATUS_RX_OVERFLOW:
+    case RF_MARC_STATUS_RX_UNDERFLOW:
+      TRACE_LOG_ERR("RF_RX_FINI: FIFO ERR marc=%02x, cs=%02x, state=%d", marc_status, chip_status, rf_state);
+      cc112x_rxFifoErrHandler();
+      break;
 
-#if RF_WD_ENABLE
-    /* stop WD timer */
-    rt_tmr_stop(&rf_tmrWD);
-#endif /* #if RF_WD_ENABLE */
+    default: {
+      if (rf_state == RF_STATE_RX_SYNC) {
+        /* bad packet is received, then try to read data from RX FIFO as for
+        * good packet
+        */
+        rf_state = RF_STATE_RX_FINI;
+
+        /* read RX FIFO  */
+        cc112x_spiRegRead(CC112X_NUM_RXBYTES, &rf_rxBufLen, 1);
+        cc112x_spiRxFifoRead(rf_rxBuf, rf_rxBufLen);
+        LED_RX_OFF();
+        TRACE_LOG_MAIN("RF_RX: RX FIFO len=%d; seq=%02x;", rf_rxBufLen, rf_rxBuf[3]);
+
+        /* signal complete reception interrupt */
+        evproc_putEvent(E_EVPROC_HEAD, NETSTK_RF_EVENT, NULL);
+      }
+      /* unexpected event? */
+      else {
+        TRACE_LOG_ERR("RF_RX_FINI: unexpected marc=%02x, cs=%02x, state=%d", marc_status, chip_status, rf_state);
+      }
+      break;
+    }
   }
-  LED_RX_OFF();
+  TRACE_LOG_INT("RF_RX_FINI: marc=%02x; cs=%02x; state=%d", marc_status, chip_status, rf_state);
+  TRACE_LOG_EXIT_ISR();
 }
 
 
-/**
- * @brief   This function runs every time the TX FIFO is drained below
- *          127 - FIFO_THR = 127 - 120 = 7 [bytes]
- * @param   p_arg
- */
-static void cc112x_isrTxFifoBelowThreshold(void *p_arg)
-{
+static void cc112x_isrTxPacketSent(void *p_arg) {
+  uint8_t marc_status;
+  uint8_t chip_status;
+
   /* avoid compiler warning of unused parameters */
   (void) &p_arg;
-
-  /* clear ISR flag */
-  bsp_extIntClear(RF_INT_CFG_TX_FIFO_THR);
-
-  if (rf_txLastPortion == TRUE) {
-    /* fill up the TX FIFO with remaining bytes */
-    cc112x_spiTxFifoWrite(rf_bufIx, rf_byteLeft);
-    rf_byteLeft = 0;
-
-    /* disable interrupt RF_INT_CFG_TX_FIFO_THR */
-    bsp_extIntDisable(RF_INT_CFG_TX_FIFO_THR);
-  } else {
-    /* fill up the TX FIFO */
-    cc112x_spiTxFifoWrite(rf_bufIx, RF_CFG_AVAI_BYTES_IN_TX_FIFO);
-
-    if ((rf_byteLeft < (RF_CFG_MAX_VARIABLE_LENGTH + 1 - RF_CFG_BYTES_IN_TX_FIFO )) && (rf_fixedPktLenMode == FALSE)) {
-      /* set fixed packet length mode */
-      RF_SET_FIXED_PKT_MODE();
-      rf_fixedPktLenMode = TRUE;
-    }
-
-    /* update TX attributes */
-    rf_byteLeft -= RF_CFG_AVAI_BYTES_IN_TX_FIFO;
-    rf_bufIx += RF_CFG_AVAI_BYTES_IN_TX_FIFO;
-
-    rf_iterations--;
-    if (rf_iterations == 0) {
-      rf_txLastPortion = TRUE;
-    }
-  }
-}
-
-static void cc112x_isrTxPacketSent(void *p_arg)
-{
-  uint8_t marc_status;
-  uint8_t is_tx_ok;
+  TRACE_LOG_ENTER_ISR();
 
   /* clear ISR flag */
   bsp_extIntClear(RF_INT_CFG_TX_FINI);
 
   /* achieve MARC_STATUS to determine what caused the interrupt */
-  cc112x_spiRegRead(CC112X_MARC_STATUS1, &marc_status, 1);
-
-  /* check TX process result */
-  is_tx_ok = (marc_status == RF_MARC_STATUS_TX_FINI) &&
-             (rf_state == RF_STATE_TX_BUSY) &&
-             (rf_txLastPortion == TRUE);
-  if (is_tx_ok) {
-    /* TX process has successfully finished */
+  chip_status = cc112x_spiRegRead(CC112X_MARC_STATUS1, &marc_status, 1);
+  if ((marc_status == RF_MARC_STATUS_TX_OVERFLOW) ||
+      (marc_status == RF_MARC_STATUS_TX_UNDERFLOW)) {
+    TRACE_LOG_ERR("RF_TX_FINI: FIFO ERR marc=%02x, cs=%02x, state=%d", marc_status, chip_status, rf_state);
+    /* TX FIFO error, the chip will remain in TX mode
+    * - flush TX FIFO
+    * - force the radio to go to the IDLE state
+    */
+    cc112x_spiCmdStrobe(CC112X_SFTX);
+    cc112x_gotoIdle();
+  } else if (marc_status == RF_MARC_STATUS_TX_FINI) {
+    /* the packet was successfully transmitted, the chip will go to the state
+     * indicated by the RFEND_CFG0.TXOFF_MODE setting (default: IDLE) */
     rf_state = RF_STATE_TX_FINI;
   } else {
-    /* flush TX FIFO */
-    cc112x_spiCmdStrobe(CC112X_SFTX);
-
-    /* error occurs, RF shall be reset */
-    rf_state = RF_STATE_ERR;
+    TRACE_LOG_ERR("RF_TX_FINI: unexpected marc=%02x; cs=%02x; state=%d", marc_status, chip_status, rf_state);
   }
-
-#if RF_WD_ENABLE
-  /* stop WD timer */
-  rt_tmr_stop(&rf_tmrWD);
-#endif /* #if RF_WD_ENABLE */
+  TRACE_LOG_INT("RF_TX: ISR_TX_FINI marc=%02x; cs=%02x; state=%d", marc_status, chip_status, rf_state);
+  TRACE_LOG_EXIT_ISR();
 }
 
-#if RF_WD_ENABLE
-static void cc112x_wdCB(void* param)
-{
-  cc112x_errorHandler();
-}
-#endif /* #if RF_WD_ENABLE */
 
-static void cc112x_eventHandler(c_event_t c_event, p_data_t p_data)
-{
-  /* set the error code to default */
-  e_nsErr_t err = NETSTK_ERR_NONE;
-  LED_RX_OFF();
+static void cc112x_eventHandler(c_event_t c_event, p_data_t p_data) {
+  TRACE_LOG_MAIN("RF_RX: signal state=%d", rf_state);
 
-  /* error handler */
-  if (rf_state == RF_STATE_ERR) {
-    /* check reset */
-    cc112x_chkReset();
-    /* reset RF */
-    cc112x_gotoRx();
-    return;
-  }
+  if (c_event == NETSTK_RF_EVENT) {
+    /* set the error code to default */
+    e_nsErr_t err = NETSTK_ERR_NONE;
 
-  /* finalize reception process */
-  if (rf_state == RF_STATE_RX_FINI) {
-    /*
-     * entry action
-     */
-    cc112x_gotoIdle();
+    /* finalize reception process */
+    if (rf_state == RF_STATE_RX_FINI) {
+      /* put the radio in the IDLE state */
+      cc112x_gotoIdle();
+      LED_RX_OFF();
 
-    /*
-     * do actions:
-     * (1)  Signal the next higher layer of the received frame
-     */
-#if LOGGER_ENABLE
-    /*
-     * Logging
-     */
-    uint16_t data_len = rf_rxBufLen;
-    uint8_t *p_dataptr = rf_rxBuf;
-    LOG_RAW("RADIO_RX: ");
-    while (data_len--) {
-      LOG_RAW("%02x", *p_dataptr++);
-    }
-    LOG_RAW("\n\r\n\r");
-#endif
-
-    rf_netstk->phy->recv(rf_rxBuf, rf_rxBufLen, &err);
-
-    /*
-     * exit actions
-     * (1)  Clear RX buffer if invalid CRC is present
-     * (2)  Enter idle listening state if the RF is not there yet
-     */
-    if (err != NETSTK_ERR_NONE) {
+      /* do:
+      * - signal the next higher layer of the received frame
+      */
+#if (EMB6_CFG_CONTINUOUS_RX == TRUE)
+      (void)&err;
+      /* always go to the RX state after complete reception when playing the
+      * role of 'sniffer'
+      */
+      cc112x_gotoRX();
+      /* print received frame on console */
+      trace_printHex("", rf_rxBuf, rf_rxBufLen);
+#else
+      prf_netstk->phy->recv(rf_rxBuf, rf_rxBufLen, &err);
+      if ((err != NETSTK_ERR_NONE) &&
+          (err != NETSTK_ERR_INVALID_ADDRESS)) {
+        /* the frame is discarded by upper layers */
+        TRACE_LOG_ERR("RF_RX: discarded e=-%d", err);
+        trace_printHex("RF_RX: discarded ", rf_rxBuf, rf_rxBufLen);
+      }
+      /* exit:
+      * - clear RX buffer
+      * - enter idle listening state if the RF is not there yet
+      */
       rf_rxBufLen = 0;
-      rf_bufIx = rf_rxBuf;
-      memset(rf_rxBuf, 0, sizeof(rf_rxBuf));
-    }
-    if (rf_state != RF_STATE_RX_LISTENING) {
-      cc112x_gotoRx();
+      cc112x_gotoRX();
+#endif
     }
   }
 }
@@ -1091,168 +827,296 @@ static void cc112x_eventHandler(c_event_t c_event, p_data_t p_data)
 
 
 /*
-********************************************************************************
-*                               MISCELLANEOUS
-********************************************************************************
-*/
-static void cc112x_configureRegs(const s_regSettings_t *p_regs, uint8_t len)
-{
-    uint8_t ix;
-    uint8_t data;
+ ********************************************************************************
+ *                               MISCELLANEOUS
+ ********************************************************************************
+ */
+static void cc112x_configureRegs(const s_regSettings_t *p_regs, uint8_t len) {
+  uint8_t ix;
+  uint8_t data;
 
-    for (ix = 0; ix < len; ix++) {
-        data = p_regs[ix].data;
-        cc112x_spiRegWrite(p_regs[ix].addr, &data, 1);
-    }
+  for (ix = 0; ix < len; ix++) {
+    data = p_regs[ix].data;
+    cc112x_spiRegWrite(p_regs[ix].addr, &data, 1);
+  }
 }
 
 
-static void cc112x_calibrateRF(void)
-{
-    uint8_t marc_state;
+#define VCDAC_START_OFFSET 2
+#define FS_VCO2_INDEX 0
+#define FS_VCO4_INDEX 1
+#define FS_CHP_INDEX 2
+static void cc112x_manualCalibration(void) {
+  uint8_t original_fs_cal2;
+  uint8_t calResults_for_vcdac_start_high[3];
+  uint8_t calResults_for_vcdac_start_mid[3];
+  uint8_t marcstate;
+  uint8_t writeByte;
+
+  // 1) Set VCO cap-array to 0 (FS_VCO2 = 0x00)
+  writeByte = 0x00;
+  cc112x_spiRegWrite(CC112X_FS_VCO2, &writeByte, 1);
+
+  // 2) Start with high VCDAC (original VCDAC_START + 2):
+  cc112x_spiRegRead(CC112X_FS_CAL2, &original_fs_cal2, 1);
+  writeByte = original_fs_cal2 + VCDAC_START_OFFSET;
+  cc112x_spiRegWrite(CC112X_FS_CAL2, &writeByte, 1);
+
+  // 3) Calibrate and wait for calibration to be done
+  //   (radio back in IDLE state)
+  cc112x_spiCmdStrobe(CC112X_SCAL);
+
+  do {
+    cc112x_spiRegRead(CC112X_MARCSTATE, &marcstate, 1);
+  } while (marcstate != 0x41);
+
+  // 4) Read FS_VCO2, FS_VCO4 and FS_CHP register obtained with
+  //    high VCDAC_START value
+  cc112x_spiRegRead(CC112X_FS_VCO2, &calResults_for_vcdac_start_high[FS_VCO2_INDEX], 1);
+  cc112x_spiRegRead(CC112X_FS_VCO4, &calResults_for_vcdac_start_high[FS_VCO4_INDEX], 1);
+  cc112x_spiRegRead(CC112X_FS_CHP, &calResults_for_vcdac_start_high[FS_CHP_INDEX], 1);
+
+  // 5) Set VCO cap-array to 0 (FS_VCO2 = 0x00)
+  writeByte = 0x00;
+  cc112x_spiRegWrite(CC112X_FS_VCO2, &writeByte, 1);
+
+  // 6) Continue with mid VCDAC (original VCDAC_START):
+  writeByte = original_fs_cal2;
+  cc112x_spiRegWrite(CC112X_FS_CAL2, &writeByte, 1);
+
+  // 7) Calibrate and wait for calibration to be done
+  //   (radio back in IDLE state)
+  cc112x_spiCmdStrobe(CC112X_SCAL);
+
+  do {
+    cc112x_spiRegRead(CC112X_MARCSTATE, &marcstate, 1);
+  } while (marcstate != 0x41);
+
+  // 8) Read FS_VCO2, FS_VCO4 and FS_CHP register obtained
+  //    with mid VCDAC_START value
+  cc112x_spiRegRead(CC112X_FS_VCO2, &calResults_for_vcdac_start_mid[FS_VCO2_INDEX], 1);
+  cc112x_spiRegRead(CC112X_FS_VCO4, &calResults_for_vcdac_start_mid[FS_VCO4_INDEX], 1);
+  cc112x_spiRegRead(CC112X_FS_CHP, &calResults_for_vcdac_start_mid[FS_CHP_INDEX], 1);
+
+  // 9) Write back highest FS_VCO2 and corresponding FS_VCO
+  //    and FS_CHP result
+  if (calResults_for_vcdac_start_high[FS_VCO2_INDEX] > calResults_for_vcdac_start_mid[FS_VCO2_INDEX]) {
+    writeByte = calResults_for_vcdac_start_high[FS_VCO2_INDEX];
+    cc112x_spiRegWrite(CC112X_FS_VCO2, &writeByte, 1);
+
+    writeByte = calResults_for_vcdac_start_high[FS_VCO4_INDEX];
+    cc112x_spiRegWrite(CC112X_FS_VCO4, &writeByte, 1);
+
+    writeByte = calResults_for_vcdac_start_high[FS_CHP_INDEX];
+    cc112x_spiRegWrite(CC112X_FS_CHP, &writeByte, 1);
+
+  } else {
+    writeByte = calResults_for_vcdac_start_mid[FS_VCO2_INDEX];
+    cc112x_spiRegWrite(CC112X_FS_VCO2, &writeByte, 1);
+
+    writeByte = calResults_for_vcdac_start_mid[FS_VCO4_INDEX];
+    cc112x_spiRegWrite(CC112X_FS_VCO4, &writeByte, 1);
+
+    writeByte = calResults_for_vcdac_start_mid[FS_CHP_INDEX];
+    cc112x_spiRegWrite(CC112X_FS_CHP, &writeByte, 1);
+  }
+}
 
 
-    /* calibrate radio and wait until the calibration is done */
-    cc112x_spiCmdStrobe(CC112X_SCAL);
+static void cc112x_calibrateRCOsc(void) {
+  uint8_t temp;
+
+  /* Read current register value */
+  cc112x_spiRegRead(CC112X_WOR_CFG0, &temp, 1);
+
+  /* Mask register bit fields and write new values */
+  temp = (temp & 0xF9) | (0x02 << 1);
+
+  /* Write new register value */
+  cc112x_spiRegWrite(CC112X_WOR_CFG0, &temp, 1);
+
+  /* Strobe IDLE to calibrate the RCOSC */
+  cc112x_spiCmdStrobe(CC112X_SIDLE);
+  //cc112x_waitRdy();
+
+  /* Disable RC calibration */
+  temp = (temp & 0xF9) | (0x00 << 1);
+  cc112x_spiRegWrite(CC112X_WOR_CFG0, &temp, 1);
+}
+
+
+static void cc112x_cca(e_nsErr_t *p_err) {
+#if NETSTK_CFG_ARG_CHK_EN
+  if (p_err == NULL) {
+    return;
+  }
+#endif
+
+  uint8_t rssi_status;
+
+  /* set the returned error code to default */
+  *p_err = NETSTK_ERR_NONE;
+
+  if ((rf_state != RF_STATE_RX) &&
+      (rf_state != RF_STATE_IDLE)) {
+    *p_err = NETSTK_ERR_BUSY;
+  } else {
+    TRACE_LOG_MAIN("RF: CCA");
+
+    /* entry:
+    * - go to the IDLE state
+    * - disable RF interrupts
+    */
+    cc112x_gotoIdle();
+    cc112x_waitRdy();
+    RF_INT_DISABLED();
+
+    /* do:
+    * - set RF state to CCA_BUSY
+    * - change the radio state to RX
+    * - poll for carrier sense valid
+    * - change the radio state to IDLE
+    * - read carrier sense
+    */
+    rf_state = RF_STATE_CCA_BUSY;
+
+    /* force the radio to go to the RX state */
+    uint8_t chip_status;
     do {
-        cc112x_spiRegRead(CC112X_MARCSTATE, &marc_state, 1);
-    } while (marc_state != 0x41);
-}
+      chip_status = cc112x_spiCmdStrobe(CC112X_SRX);
+      if (RF_GET_CHIP_STATE(chip_status) ==  0x60) {
+        /* RX FIFO error then flush RX FIFO */
+        cc112x_spiCmdStrobe(CC112X_SFRX);
+      }
+    } while (RF_GET_CHIP_STATE(chip_status) != RF_CHIP_STATE_RX );
 
+    /* poll for carrier sense valid */
+    do {
+      cc112x_spiRegRead(CC112X_RSSI0, &rssi_status, 1);
+    } while ((rssi_status & RF_RSSI0_CARRIER_SENSE_VALID) == 0);
 
-static void cc112x_calibrateRCOsc(void)
-{
-    uint8_t temp;
+    /* force the radio to go to the IDLE state and flush RX FIFO to avoid
+    * corrupted data received during CCA
+    */
+    cc112x_gotoIdle();
+    cc112x_spiCmdStrobe(CC112X_SFRX);
 
-    /* Read current register value */
-    cc112x_spiRegRead(CC112X_WOR_CFG0, &temp,1);
-
-    /* Mask register bit fields and write new values */
-    temp = (temp & 0xF9) | (0x02 << 1);
-
-    /* Write new register value */
-    cc112x_spiRegWrite(CC112X_WOR_CFG0, &temp,1);
-
-    /* Strobe IDLE to calibrate the RCOSC */
-    cc112x_spiCmdStrobe(CC112X_SIDLE);
-
-    /* Disable RC calibration */
-    temp = (temp & 0xF9) | (0x00 << 1);
-    cc112x_spiRegWrite(CC112X_WOR_CFG0, &temp, 1);
-}
-
-
-static void cc112x_cca(e_nsErr_t *p_err)
-{
-#if NETSTK_CFG_ARG_CHK_EN
-    if (p_err == NULL) {
-        return;
+    if (rssi_status & RF_RSSI0_CARRIER_DETECTED) {
+      *p_err = NETSTK_ERR_CHANNEL_ACESS_FAILURE;
     }
-#endif
 
-    uint8_t rssi_status;
-    rf_status_t chip_status;
-    uint8_t cca_mode;
-    e_rfState_t e_rf_state_store = rf_state;
+    /* exit:
+    * - go to the eWOR state
+    */
+    cc112x_gotoRX();
+  }
+}
 
-    /* set the returned error code to default */
-    *p_err = NETSTK_ERR_NONE;
+static void cc112x_retx(e_nsErr_t *p_err)
+{
+  if ((rf_state != RF_STATE_RX) &&
+      (rf_state != RF_STATE_IDLE)) {
+    *p_err = NETSTK_ERR_BUSY;
+  } else {
+    /* entry:
+    * - go to the IDLE state
+    * - disable RX interrupt
+    */
+    cc112x_gotoIdle();
+    cc112x_waitRdy();
+    RF_INT_DISABLED();
 
-    if ((rf_state != RF_STATE_RX_LISTENING) &&
-        (rf_state != RF_STATE_IDLE)) {
-        *p_err = NETSTK_ERR_BUSY;
+    /* do:
+    * - go to the TX_BUSY state
+    * - rewrite TX first pointer
+    * - enable TX interrupts
+    * - issue STX strobe
+    */
+    rf_state = RF_STATE_TX_BUSY;
+    cc112x_spiRegWrite(CC112X_TXFIRST, &rf_txFirstPtr, 1);
+
+    LED_TX_ON();
+    RF_INT_TX_ENABLED();
+    cc112x_spiCmdStrobe(CC112X_STX);
+
+    /* wait for packet to be sent */
+    uint16_t iteration = 0xffff;
+    while ((rf_state == RF_STATE_TX_BUSY) && (iteration > 0)) {
+      iteration--;
+    }
+    if (rf_state == RF_STATE_TX_FINI) {
+      /* TX finished successfully */
+      *p_err = NETSTK_ERR_NONE;
     } else {
-
-        /* disable RF external interrupts */
-        RF_EXTI_DISABLED();
-
-        /*
-         * Entry action
-         */
-        rf_state = RF_STATE_CCA_BUSY;
-
-
-        /*
-         * Do actions
-         */
-        /* enter CCA operation */
-        cca_mode = RF_CCA_MODE_RSSI_BELOW_THR;
-        cc112x_spiRegWrite(CC112X_PKT_CFG2, &cca_mode, 1);
-
-        /* Strobe RX */
-        do {
-            chip_status = cc112x_spiCmdStrobe(CC112X_SRX);
-            if (chip_status & 0x60) {
-                /* RX FIFO error then flush RX FIFO */
-                chip_status = cc112x_spiCmdStrobe(CC112X_SFRX);
-            }
-        } while (RF_GET_CHIP_STATE(chip_status) != RF_CHIP_STATE_RX);
-
-        do {
-            cc112x_spiRegRead(CC112X_RSSI0, &rssi_status, 1);
-        } while( (rssi_status & 0x02) == 0 );
-        if ( (rssi_status & 0x04) )
-            *p_err = NETSTK_ERR_CHANNEL_ACESS_FAILURE;
-        else
-            *p_err = NETSTK_ERR_NONE;
-
-        /*
-         * Exit actions
-         */
-        /* reset CCA_MODE */
-        cca_mode = RF_CCA_MODE_NONE;
-        cc112x_spiRegWrite(CC112X_PKT_CFG2, &cca_mode, 1);
-
-        if( e_rf_state_store == RF_STATE_IDLE )
-            cc112x_gotoIdle();
-        else
-            /* put transceiver to RX */
-            cc112x_gotoRx();
+      /* TX error handling */
+      *p_err = NETSTK_ERR_TX_TIMEOUT;
     }
+
+    /* exit:
+    * - go to state RX
+    */
+    LED_TX_OFF();
+    cc112x_gotoRX();
+  }
 }
 
 
-static void cc112x_txPowerSet(int8_t power, e_nsErr_t *p_err)
-{
-#if NETSTK_CFG_ARG_CHK_EN
-    if (p_err == NULL) {
-        return;
-    }
-#endif
 
-    uint8_t pa_power_ramp;
+static void cc112x_rxFifoErrHandler(void) {
+  /* readout any useful data, then flush RX FIFO */
+  cc112x_spiRegRead(CC112X_NUM_RXBYTES, &rf_rxBufLen, 1);
+  cc112x_spiRxFifoRead(rf_rxBuf, rf_rxBufLen);
+  rf_rxBufLen = 0;  // TODO signal upper layer of received bytes
 
-    /*
-     * Output power = (PA_POWER_RAMP+1)/2 - 18 [dBm]
-     * PA_POWER_RAMP = PA_CFG1[5:0] ~> PA_POWER_RAMP_MASK = 0x3F
-     */
-    pa_power_ramp = ((power + 18) * 2 - 1) & 0x3Fu;
-    cc112x_spiRegWrite(CC112X_PA_CFG1, &pa_power_ramp, 1);
-    *p_err = NETSTK_ERR_NONE;
+  /* force the radio to go to the IDLE state and flush RX FIFO */
+  cc112x_spiCmdStrobe(CC112X_SFRX);
+
+  /* put the radio to RX state */
+  cc112x_gotoIdle();
+  cc112x_gotoRX();
 }
 
-static void cc112x_txPowerGet(int8_t *p_power, e_nsErr_t *p_err)
-{
-#if NETSTK_CFG_ARG_CHK_EN
-    if (p_err == NULL) {
-        return;
-    }
 
-    if (p_power == NULL) {
-        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
-        return;
-    }
+static void cc112x_txPowerSet(int8_t power, e_nsErr_t *p_err) {
+#if NETSTK_CFG_ARG_CHK_EN
+  if (p_err == NULL) {
+    return;
+  }
 #endif
 
-    uint8_t pa_power_ramp;
+  uint8_t pa_power_ramp;
 
-    /*
-     * Output power = (PA_POWER_RAMP+1)/2 - 18 [dBm]
-     */
-    cc112x_spiRegRead(CC112X_PA_CFG1, &pa_power_ramp, 1);
-    pa_power_ramp &= 0x3F;
-    *p_power = ((pa_power_ramp + 1) / 2) - 18;
-    *p_err = NETSTK_ERR_NONE;
+  /*
+   * Output power = (PA_POWER_RAMP+1)/2 - 18 [dBm]
+   * PA_POWER_RAMP = PA_CFG1[5:0] ~> PA_POWER_RAMP_MASK = 0x3F
+   */
+  pa_power_ramp = ((power + 18) * 2 - 1) & 0x3Fu;
+  cc112x_spiRegWrite(CC112X_PA_CFG1, &pa_power_ramp, 1);
+  *p_err = NETSTK_ERR_NONE;
+}
+
+
+static void cc112x_txPowerGet(int8_t *p_power, e_nsErr_t *p_err) {
+#if NETSTK_CFG_ARG_CHK_EN
+  if (p_err == NULL) {
+    return;
+  }
+
+  if (p_power == NULL) {
+    *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+    return;
+  }
+#endif
+
+  uint8_t pa_power_ramp;
+
+  /*
+   * Output power = (PA_POWER_RAMP+1)/2 - 18 [dBm]
+   */
+  cc112x_spiRegRead(CC112X_PA_CFG1, &pa_power_ramp, 1);
+  pa_power_ramp &= 0x3F;
+  *p_power = ((pa_power_ramp + 1) / 2) - 18;
+  *p_err = NETSTK_ERR_NONE;
 }
 
 
@@ -1261,94 +1125,91 @@ static void cc112x_txPowerGet(int8_t *p_power, e_nsErr_t *p_err)
  * @param   chan_num    Channel number to select
  * @param   p_err       Pointer to variable holding returned error code
  */
-static void cc112x_chanNumSet(uint8_t chan_num, e_nsErr_t *p_err)
-{
+static void cc112x_chanNumSet(uint8_t chan_num, e_nsErr_t *p_err) {
 #if NETSTK_CFG_ARG_CHK_EN
-    if (p_err == NULL) {
-        return;
-    }
+  if (p_err == NULL) {
+    return;
+  }
 #endif
 
 #if NETSTK_CFG_IEEE_802154G_EN
-    uint32_t freq_reg = 0;
-    uint32_t freq_center = 0;
-    uint32_t freq_delta = 0;
-    uint8_t write_byte = 0;
+  uint32_t freq_reg = 0;
+  uint32_t freq_center = 0;
+  uint32_t freq_delta = 0;
+  uint8_t write_byte = 0;
 
-    /* set returned error value to default */
-    *p_err = NETSTK_ERR_NONE;
+  /* set returned error value to default */
+  *p_err = NETSTK_ERR_NONE;
 
-    /* configure operating channel frequency based on operation mode i.e. CSM,
-     * mode #1, mode #2, or mode #3 */
-    switch (rf_opMode) {
-        case NETSTK_RF_OP_MODE_CSM:
-            if (chan_num < NETSTK_RF_IEEE802154G_CHAN_QTY_CSM) {
-                freq_center = CC112X_CSM_CHAN_CENTER_FREQ;
-                freq_delta = CC112X_CSM_DELTA_FREQ;
-                rf_chanNum = chan_num;
-            } else {
-                *p_err = NETSTK_ERR_INVALID_ARGUMENT;
-            }
-            break;
+  /* configure operating channel frequency based on operation mode i.e. CSM,
+   * mode #1, mode #2, or mode #3 */
+  switch (rf_opMode) {
+    case NETSTK_RF_OP_MODE_CSM:
+    if (chan_num < NETSTK_RF_IEEE802154G_CHAN_QTY_CSM) {
+      freq_center = CC112X_CSM_CHAN_CENTER_FREQ;
+      freq_delta = CC112X_CSM_DELTA_FREQ;
+      rf_chanNum = chan_num;
+    } else {
+      *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+    }
+    break;
 
 #if (NETSTK_CFG_PHY_OP_MODE_1_EN == TRUE)
-        case NETSTK_RF_OP_MODE_1:
-            if (chan_num < NETSTK_RF_IEEE802154G_CHAN_QTY_OPMODE1) {
-                freq_center = CC112X_OPMODE1_CHAN_CENTER_FREQ;
-                freq_delta = CC112X_OPMODE1_DELTA_FREQ;
-                rf_chanNum = chan_num;
-            } else {
-                *p_err = NETSTK_ERR_INVALID_ARGUMENT;
-            }
-            break;
+    case NETSTK_RF_OP_MODE_1:
+    if (chan_num < NETSTK_RF_IEEE802154G_CHAN_QTY_OPMODE1) {
+      freq_center = CC112X_OPMODE1_CHAN_CENTER_FREQ;
+      freq_delta = CC112X_OPMODE1_DELTA_FREQ;
+      rf_chanNum = chan_num;
+    } else {
+      *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+    }
+    break;
 #endif
 
 #if (NETSTK_CFG_PHY_OP_MODE_2_EN == TRUE)
-        case NETSTK_RF_OP_MODE_2:
-            if (chan_num < NETSTK_RF_IEEE802154G_CHAN_QTY_OPMODE2) {
-                freq_center = CC112X_OPMODE2_CHAN_CENTER_FREQ;
-                freq_delta = CC112X_OPMODE2_DELTA_FREQ;
-                rf_chanNum = chan_num;
-            } else {
-                *p_err = NETSTK_ERR_INVALID_ARGUMENT;
-            }
-            break;
+    case NETSTK_RF_OP_MODE_2:
+    if (chan_num < NETSTK_RF_IEEE802154G_CHAN_QTY_OPMODE2) {
+      freq_center = CC112X_OPMODE2_CHAN_CENTER_FREQ;
+      freq_delta = CC112X_OPMODE2_DELTA_FREQ;
+      rf_chanNum = chan_num;
+    } else {
+      *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+    }
+    break;
 #endif
 
 #if (NETSTK_CFG_PHY_OP_MODE_3_EN == TRUE)
-        case NETSTK_RF_OP_MODE_3:
-            if (chan_num < NETSTK_RF_IEEE802154G_CHAN_QTY_OPMODE3) {
-                freq_center = CC112X_OPMODE3_CHAN_CENTER_FREQ;
-                freq_delta = CC112X_OPMODE3_DELTA_FREQ;
-                rf_chanNum = chan_num;
-            } else {
-                *p_err = NETSTK_ERR_INVALID_ARGUMENT;
-            }
-            break;
+    case NETSTK_RF_OP_MODE_3:
+    if (chan_num < NETSTK_RF_IEEE802154G_CHAN_QTY_OPMODE3) {
+      freq_center = CC112X_OPMODE3_CHAN_CENTER_FREQ;
+      freq_delta = CC112X_OPMODE3_DELTA_FREQ;
+      rf_chanNum = chan_num;
+    } else {
+      *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+    }
+    break;
 #endif
 
-        default:
-            *p_err = NETSTK_ERR_INVALID_ARGUMENT;
-            break;
-    }
+    default:
+    *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+    break;
+  }
 
+  /*
+   * configure frequency registers only when arguments are valid
+   */
+  if (*p_err == NETSTK_ERR_NONE) {
+    freq_reg = freq_center + rf_chanNum * freq_delta;
 
-    /*
-     * configure frequency registers only when arguments are valid
-     */
-    if (*p_err == NETSTK_ERR_NONE) {
-        freq_reg = freq_center + rf_chanNum * freq_delta;
+    write_byte = (freq_reg & 0x00FF0000) >> 16;
+    cc112x_spiRegWrite(CC112X_FREQ2, &write_byte, 1);
 
-        write_byte = (freq_reg & 0x00FF0000) >> 16;
-        cc112x_spiRegWrite(CC112X_FREQ2, &write_byte, 1);
-        rf_regVerify = write_byte;
+    write_byte = (freq_reg & 0x0000FF00) >> 8;
+    cc112x_spiRegWrite(CC112X_FREQ1, &write_byte, 1);
 
-        write_byte = (freq_reg & 0x0000FF00) >> 8;
-        cc112x_spiRegWrite(CC112X_FREQ1, &write_byte, 1);
-
-        write_byte = (freq_reg & 0x000000FF);
-        cc112x_spiRegWrite(CC112X_FREQ0, &write_byte, 1);
-    }
+    write_byte = (freq_reg & 0x000000FF);
+    cc112x_spiRegWrite(CC112X_FREQ0, &write_byte, 1);
+  }
 #endif /* #if NETSTK_CFG_IEEE_802154G_EN */
 }
 
@@ -1357,25 +1218,95 @@ static void cc112x_chanNumSet(uint8_t chan_num, e_nsErr_t *p_err)
  * @param   mode        Operating mode to select
  * @param   p_err       Pointer to variable holding returned error code
  */
-static void cc112x_opModeSet(e_nsRfOpMode mode, e_nsErr_t *p_err)
-{
-    if (rf_opMode < NETSTK_RF_OP_MODE_MAX) {
-        rf_opMode = mode;
-        *p_err = NETSTK_ERR_NONE;
-    } else {
-        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
-    }
+static void cc112x_opModeSet(e_nsRfOpMode mode, e_nsErr_t *p_err) {
+  if (rf_opMode < NETSTK_RF_OP_MODE_MAX) {
+    rf_opMode = mode;
+    *p_err = NETSTK_ERR_NONE;
+  } else {
+    *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+  }
+}
+
+
+/**
+ * @brief   Read Receiver Signal Strength Indicator
+ * @param p_val
+ * @param p_err
+ */
+static void cc112x_readRSSI(int16_t *p_val, e_nsErr_t *p_err) {
+  int16_t i_ret = 0;
+  uint8_t rssi2complMSB;
+  uint8_t rssi2complLSB;
+
+  /* read the RSSI register and wait for a valid value */
+  do {
+    cc112x_spiRegRead(CC112X_RSSI0, &rssi2complLSB, 1);
+  } while ((rssi2complLSB & RF_RSSI_VALID_MSK) == 0);
+
+  /* read 2nd RSSI register and add to value */
+  cc112x_spiRegRead(CC112X_RSSI1, &rssi2complMSB, 1);
+  i_ret = ((int8_t)(rssi2complMSB) << RF_RSSI_LOW_LEN) |
+          ((int8_t)(rssi2complLSB) >> RF_RSSI_LOW_OFST);
+
+  /* get real RSSI from offset and resolution */
+  *p_val = (int16_t)((i_ret * RF_RSSI_RES) - RF_RSSI_OFFSET);
+}
+
+
+/**
+ * @brief   Perform self-testing
+ * @param   p_err
+ */
+static void cc112x_selfTest(e_nsErr_t *p_err) {
+  uint8_t dummy_data[10] = {0x09, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88};
+  uint8_t ix;
+
+
+  trace_printf("RF_TEST");
+  /*
+  * turn the radio on
+  */
+  cc112x_On(p_err);
+
+  /*
+  * put radio to IDLE state
+  */
+  cc112x_gotoIdle();
+
+  /*
+  * put radio to RX state multiple times
+  */
+  cc112x_gotoRX();
+
+
+  /*
+  * alternate between IDLE and RX
+  */
+  for (ix = 0; ix < 10; ix++) {
+    cc112x_gotoIdle();
+    cc112x_gotoRX();
+  }
+
+  /*
+  * put radio to TX state
+  */
+  for (ix = 0; ix < 3; ix++) {
+    cc112x_Send(dummy_data, sizeof(dummy_data), p_err);
+    assert_equ("TX: ", NETSTK_ERR_NONE, *p_err);
+
+    /* delay 500ms*/
+    rt_tmr_delay(500);
+  }
 }
 
 
 /*
-********************************************************************************
-*                               DRIVER DEFINITION
-********************************************************************************
-*/
-const s_nsRF_t rf_driver_ticc112x =
-{
-   "CC112X",
+ ********************************************************************************
+ *                               DRIVER DEFINITION
+ ********************************************************************************
+ */
+const s_nsRF_t rf_driver_ticc112x = {
+    "CC112X",
     cc112x_Init,
     cc112x_On,
     cc112x_Off,
@@ -1384,9 +1315,8 @@ const s_nsRF_t rf_driver_ticc112x =
     cc112x_Ioctl,
 };
 
-
 /*
-********************************************************************************
-*                                   END OF FILE
-********************************************************************************
-*/
+ ********************************************************************************
+ *                                   END OF FILE
+ ********************************************************************************
+ */
