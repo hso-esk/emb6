@@ -297,8 +297,7 @@ typedef enum netstk_ioc_cmd
      * PHY command codes
      */
     NETSTK_CMD_PHY_RSVD = 300U,
-    NETSTK_CMD_PHY_LAST_PKT_TX,
-    NETSTK_CMD_PHY_CRC_LEN_SET,
+
 
     /*
      * LPR command codes
@@ -322,8 +321,6 @@ typedef enum netstk_ioc_cmd
     NETSTK_CMD_RF_SYNC_SET,         /*!< Set SYNC words                 */
     NETSTK_CMD_RF_SYNC_GET,         /*!< Get SYNC words                 */
     NETSTK_CMD_RF_PROMISC_SET,      /*!< Set promisc mode                */
-
-    NETSTK_CMD_RF_802154G_EU_CHAN,  /*!< Channel center for IEEE802.15.4 in Europe  */
     NETSTK_CMD_RF_CHAN_NUM_SET,     /*!< Set operation channel number */
     NETSTK_CMD_RF_OP_MODE_SET,      /*!< Set operation mode */
 
