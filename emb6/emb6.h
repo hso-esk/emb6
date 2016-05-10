@@ -103,6 +103,7 @@ typedef uint32_t                            clock_time_t;
 /** defines for the modulation type for RF transceiver */
 #define MODULATION_QPSK100          0
 #define MODULATION_BPSK20           1
+#define MODULATION_2FSK50           2
 
 
 /*==============================================================================
