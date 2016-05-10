@@ -933,6 +933,11 @@ void uip_log(char *msg);
 #define NETSTK_CFG_DATA_WHITENING_EN                        FALSE
 #endif
 
+/*!< Enable/Disable native retransmission support of the radio */
+#ifndef NETSTK_CFG_RF_RETX_EN
+#define NETSTK_CFG_RF_RETX_EN                               FALSE   /* this feature is currently unstable, then should not be enabled */
+#endif
+
 #define NETSTK_CFG_CSMA_MIN_BE                    (uint8_t )(   3u )
 #define NETSTK_CFG_CSMA_MAX_BE                    (uint8_t )(   5u )
 #define NETSTK_CFG_CSMA_MAX_BACKOFF               (uint8_t )(   4u )
