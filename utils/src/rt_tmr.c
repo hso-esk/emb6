@@ -245,6 +245,16 @@ void rt_tmr_delay(rt_tmr_tick_t delay)
 }
 
 /**
+ * @brief   Achieve value of current tick
+ * @return
+ */
+rt_tmr_tick_t rt_tmr_getCurrenTick(void)
+{
+  return TmrCurTick;
+}
+
+
+/**
  * @brief   Achieve remaining ticks of a timer until it interrupts.
  * @param   p_tmr   Point to the timer
  * @return
