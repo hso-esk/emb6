@@ -79,8 +79,8 @@ static void phy_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
 static void phy_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
 static void phy_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
 
+static void     phy_insertCrc(uint8_t *p_data, uint16_t len);
 static uint8_t *phy_insertHdr(uint8_t *p_data, uint16_t len);
-static uint16_t phy_insertCrc(uint8_t *p_data, uint16_t len);
 static uint16_t phy_crc16(uint8_t *p_data, uint16_t len);
 static uint32_t phy_crc32(uint8_t *p_data, uint16_t len);
 
@@ -91,7 +91,6 @@ static uint32_t phy_crc32(uint8_t *p_data, uint16_t len);
 ********************************************************************************
 */
 static s_ns_t   *pphy_netstk;
-static uint8_t   phy_fcslen;
 
 
 /*
@@ -139,20 +138,11 @@ static void phy_init(void *p_netstk, e_nsErr_t *p_err)
 
   /* set CRC size to default */
 #if NETSTK_CFG_IEEE_802154G_EN
-  phy_fcslen = 4; /* 32-bit CRC */
+  /* set operation mode */
+  pphy_netstk->rf->ioctrl(NETSTK_CMD_RF_OP_MODE_SET, &mac_phy_config.op_mode, p_err);
 
-  /* use MR-FSK operation mode #1 by default:
-   * - channel spacing
-   * - total number of channels
-   * - channel center frequency
-   */
-  uint8_t chan_num = 26;
-  e_nsRfOpMode mode = NETSTK_RF_OP_MODE_1;
-
-  pphy_netstk->rf->ioctrl(NETSTK_CMD_RF_OP_MODE_SET, &mode, p_err);
-  pphy_netstk->rf->ioctrl(NETSTK_CMD_RF_CHAN_NUM_SET, &chan_num, p_err);
-#else
-  phy_fcslen = 2; /* 16-bit CRC */
+  /* set operation frequency channel number */
+  pphy_netstk->rf->ioctrl(NETSTK_CMD_RF_CHAN_NUM_SET, &mac_phy_config.chan_num, p_err);
 #endif
 
 #if (NETSTK_CFG_WOR_EN == 1)
@@ -234,7 +224,8 @@ static void phy_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
   uint16_t pkt_len;
 
   /* insert MAC checksum */
-  pkt_len = phy_insertCrc(p_data, len);
+  phy_insertCrc(p_data, len);
+  pkt_len = len + mac_phy_config.fcs_len;
 
   /* insert PHY header */
   p_pkt = phy_insertHdr(p_data, pkt_len);
@@ -361,13 +352,13 @@ static void phy_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
   p_data += PHY_HEADER_LEN;
 
   /* verify CRC */
-  psdu_len -= phy_fcslen;
+  psdu_len -= mac_phy_config.fcs_len;
 
   /* calculated actual CRC */
   crc_act = phy_crc16(p_data, psdu_len);
 
   /* obtain CRC of the received frame */
-  memcpy(&crc_exp, &p_data[psdu_len], phy_fcslen);
+  memcpy(&crc_exp, &p_data[psdu_len], mac_phy_config.fcs_len);
   crc_exp = ((crc_exp & 0x00FF) << 8) |
             ((crc_exp & 0xFF00) >> 8);
   if (crc_act != crc_exp) {
@@ -486,7 +477,7 @@ static uint8_t * phy_insertHdr(uint8_t *p_data, uint16_t len)
   hdr = len;
 
 #if NETSTK_CFG_IEEE_802154G_EN
-  if (phy_fcslen == 2) {
+  if (mac_phy_config.fcs_len == 2) {
     hdr |= 0x1000u;
   }
 
@@ -506,16 +497,15 @@ static uint8_t * phy_insertHdr(uint8_t *p_data, uint16_t len)
 /**
  * @brief   Insert PHY checksum
  */
-static uint16_t phy_insertCrc(uint8_t *p_data, uint16_t len)
+static void phy_insertCrc(uint8_t *p_data, uint16_t len)
 {
   uint32_t crc = 0;
-  uint16_t ret_len;
   uint8_t *p_crc;
 
   /* get pointer to checksum field */
   p_crc = p_data + len;
 
-  if (phy_fcslen == 4) {
+  if (mac_phy_config.fcs_len == 4) {
     crc = phy_crc32(p_data, len);
     p_crc[0] = (crc & 0xFF000000u) >> 24;
     p_crc[1] = (crc & 0x00FF0000u) >> 16;
@@ -526,10 +516,6 @@ static uint16_t phy_insertCrc(uint8_t *p_data, uint16_t len)
     p_crc[0] = (crc & 0xFF00u) >> 8;
     p_crc[1] = (crc & 0x00FFu);
   }
-
-  /* return total length of the packet */
-  ret_len = len + phy_fcslen;
-  return ret_len;
 }
 
 
