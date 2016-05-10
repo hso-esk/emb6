@@ -458,22 +458,28 @@ void mac_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
  */
 static void mac_txAck(uint8_t seq, e_nsErr_t *p_err)
 {
+  uint8_t buf[9];
+  uint8_t ack_len;
+  uint8_t *p_ack;
   frame802154_t frame;
-  uint8_t hdr_len, alloc_ok;
-  /* initialize */
-  *p_err = NETSTK_ERR_NONE;
+
+  /* clear buffer, 2 is maximum PHY header length */
+  p_ack = &buf[2];
+  memset(buf, 0, sizeof(buf));
   memset(&frame, 0, sizeof(frame));
-  packetbuf_clear();
 
   /* Build the FCF. */
   frame.fcf.frame_type = FRAME802154_ACKFRAME;
-  frame.fcf.security_enabled = 0;
-  frame.fcf.frame_pending = 0;
-  frame.fcf.ack_required = 0;
-  frame.fcf.panid_compression = 0;
 
-  /* Insert IEEE 802.15.4 (2003) version bits. */
-  frame.fcf.frame_version = FRAME802154_IEEE802154_2003;
+  /* following fields are already set to zero
+  * - security enabled
+  * - frame pending
+  * - ACK-required
+  * - PAN-ID compression
+  */
+
+  /* Insert IEEE 802.15.4 (2006) version bits. */
+  frame.fcf.frame_version = FRAME802154_IEEE802154_2006;
 
   /* Increment and set the data sequence number. */
   frame.seq = seq;
@@ -482,19 +488,11 @@ static void mac_txAck(uint8_t seq, e_nsErr_t *p_err)
   frame.fcf.src_addr_mode = FRAME802154_NOADDR;
   frame.fcf.dest_addr_mode = FRAME802154_NOADDR;
 
-  /* allocate buffer for MAC header */
-  hdr_len = frame802154_hdrlen(&frame);
-  alloc_ok = packetbuf_hdralloc(hdr_len);
-  if (alloc_ok == 0) {
-    *p_err = NETSTK_ERR_BUF_OVERFLOW;
-    return;
-  }
-
   /* write the header */
-  frame802154_create(&frame, packetbuf_hdrptr());
+  ack_len = frame802154_create(&frame, p_ack);
 
   /* Issue next lower layer to transmit ACK */
-  pmac_netstk->phy->send(packetbuf_hdrptr(), packetbuf_totlen(), p_err);
+  pmac_netstk->phy->send(p_ack, ack_len, p_err);
   LOG_INFO("MAC_TX: ACK %d.", frame.seq);
 }
 
