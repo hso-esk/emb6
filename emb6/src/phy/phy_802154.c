@@ -381,31 +381,9 @@ static void phy_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
  */
 static void phy_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
 {
-  uint8_t crc_size;
-
   /* Set returned error code to default */
   *p_err = NETSTK_ERR_NONE;
-
   switch (cmd) {
-    case NETSTK_CMD_PHY_CRC_LEN_SET:
-#if NETSTK_CFG_IEEE_802154G_EN
-      crc_size = *((uint8_t *) p_val);
-      if ((crc_size != 4) && (crc_size != 2)) {
-        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
-      } else {
-        phy_fcslen = crc_size;
-      }
-#else
-      (void )&crc_size;
-      *p_err = NETSTK_ERR_INVALID_ARGUMENT;
-#endif
-      break;
-
-    case NETSTK_CMD_PHY_LAST_PKT_TX:
-      /* Issue next lower layer to transmit the prepared frame */
-      pphy_netstk->rf->send(packetbuf_hdrptr(), packetbuf_totlen(), p_err);
-      break;
-
     default:
       pphy_netstk->rf->ioctrl(cmd, p_val, p_err);
       break;
