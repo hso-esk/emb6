@@ -180,6 +180,13 @@ uint8_t loc_emb6NetstackInit(s_ns_t * ps_ns)
   ctimer_init();
   rt_tmr_init();
 
+  /* initialize trace */
+#if (TRACE_CFG_EN == TRUE)
+  trace_init();
+  trace_start();
+  trace_printf("Trace started\n");
+#endif
+
   /*
    * Verify stack submodule drivers
    */

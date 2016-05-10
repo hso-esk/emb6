@@ -74,6 +74,7 @@
 #include <stdint.h>
 #include <ctype.h>
 #include "bsp.h"
+#include "trace.h"
 
 #define IPV6ADDR_LEN    16
 #ifndef HEXDUMP_COLS
