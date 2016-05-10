@@ -137,31 +137,6 @@ typedef struct rpl_configuration
 extern s_rpl_conf_t     rpl_config;
 
 /*==============================================================================
-                         MAC & PHY Parameter Configuration
- =============================================================================*/
-
-/*! \struct mac_phy_configuration
-*   \brief for initial mac_phy parameter configuration,
-*   if changed during runtime RF-interface must be re-initialized
-*/
-typedef struct mac_phy_configuration
-{
-    /** MAC address, default value: { 0x00,0x50,0xc2,0xff,0xfe,0xa8,0xdd,0xdd}*/
-    uint8_t mac_address[8];
-    /** PAN ID, default value: 0xABCD */
-    uint16_t pan_id;
-    /** initial tx power, default value: 11 dBm */
-    int8_t init_power;
-    /** initial rx sensitivity, default value: -100 dBm */
-    int8_t init_sensitivity;
-    /** rf modulation type, default value BPSK20 */
-    uint8_t modulation;
-}s_mac_phy_conf_t;
-
-/*! MAC configuration struct, do not change */
-extern s_mac_phy_conf_t     mac_phy_config;
-
-/*==============================================================================
                                      ENUMS
 ==============================================================================*/
 /*! \enum e_radio_tx_status_t
@@ -540,6 +515,42 @@ struct netstack_framer
 
     int8_t (* parse)(void);
 };
+
+
+/*==============================================================================
+                         MAC & PHY Parameter Configuration
+ =============================================================================*/
+
+/*! \struct mac_phy_configuration
+*   \brief for initial mac_phy parameter configuration,
+*   if changed during runtime RF-interface must be re-initialized
+*/
+typedef struct mac_phy_configuration
+{
+    /** MAC address, default value: { 0x00,0x50,0xc2,0xff,0xfe,0xa8,0xdd,0xdd}*/
+    uint8_t mac_address[8];
+    /** PAN ID, default value: 0xABCD */
+    uint16_t pan_id;
+    /** initial tx power, default value: 11 dBm */
+    int8_t init_power;
+    /** initial rx sensitivity, default value: -100 dBm */
+    int8_t init_sensitivity;
+    /** rf modulation type, default value BPSK20 */
+    uint8_t modulation;
+
+    /** frame check sequence length (CRC size) */
+    uint8_t fcs_len;
+#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
+    /** IEEE Std. 802.15.4g operation channel number */
+    uint8_t chan_num;
+    /** IEEE Std. 802.15.4g operating mode */
+    e_nsRfOpMode op_mode;
+#endif
+
+}s_mac_phy_conf_t;
+
+/*! MAC configuration struct, do not change */
+extern s_mac_phy_conf_t     mac_phy_config;
 
 
 /*
