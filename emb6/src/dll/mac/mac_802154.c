@@ -278,7 +278,11 @@ void mac_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
           /* was the channel free? */
           if (*p_err == NETSTK_ERR_NONE) {
             /* then retransmit the frame */
+            #if (NETSTK_CFG_RF_RETX_EN == TRUE)
+            pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_RETX, NULL, p_err);
+            #else
             pmac_netstk->phy->send(p_data, len, p_err);
+            #endif
             /* has frame failed to transmit? */
             if (*p_err != NETSTK_ERR_NONE) {
               /* then terminate the transmission */
