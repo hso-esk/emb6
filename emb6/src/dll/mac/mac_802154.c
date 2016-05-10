@@ -562,10 +562,13 @@ static void mac_rxBufTimeout(s_rt_tmr_t *p_tmr, e_nsErr_t *p_err)
     /* check if RF is in reception process */
     pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_IS_RX_BUSY, NULL, p_err);
     if (*p_err == NETSTK_ERR_BUSY) {
-      /* wait until RF has completed reception process */
+      /* wait until RF has completed reception process i.e., the radio is not
+      * busy anymore
+      */
       do {
         pmac_netstk->phy->ioctrl(NETSTK_CMD_RX_BUF_READ, NULL, p_err);
-      } while (mac_hasData == 0);
+        pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_IS_RX_BUSY, NULL, p_err);
+      } while (*p_err == NETSTK_ERR_BUSY);
       break;
     }
 
