@@ -920,7 +920,6 @@ void uip_log(char *msg);
 #define NETSTK_CFG_PHY_OP_MODE_2_EN                         FALSE
 #define NETSTK_CFG_PHY_OP_MODE_3_EN                         FALSE
 #endif
-#define NETSTK_CFG_WOR_EN                                   FALSE
 
 /*!< Enable/Disable low power mode */
 #ifndef NETSTK_CFG_LOW_POWER_MODE_EN
@@ -931,6 +930,11 @@ void uip_log(char *msg);
  /*!< Enable/Disable Data Whitening */
 #ifndef NETSTK_CFG_DATA_WHITENING_EN
 #define NETSTK_CFG_DATA_WHITENING_EN                        FALSE
+#endif
+
+/*!< Enable/Disable eWOR support */
+#ifndef NETSTK_CFG_WOR_EN
+#define NETSTK_CFG_WOR_EN                                   FALSE
 #endif
 
 /*!< Enable/Disable native retransmission support of the radio */
