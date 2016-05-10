@@ -346,7 +346,6 @@ void mac_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 
   /* set returned error code to default */
   *p_err = NETSTK_ERR_NONE;
-  mac_hasData = 1;
 
   /* was packet length larger than size of packet buffer? */
   if (len > PACKETBUF_SIZE) {
@@ -363,6 +362,9 @@ void mac_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     *p_err = NETSTK_ERR_INVALID_FRAME;
     return;
   }
+
+  /* a valid frame has arrived */
+  mac_hasData = 1;
 
   /* was MAC waiting for ACK? */
   if (mac_isAckReq) {
