@@ -92,7 +92,7 @@ void  mle_create_cmd_from_buff(mle_cmd_t** cmd , uint8_t* data , uint16_t datale
 
 uint8_t mle_add_tlv_to_cmd(mle_cmd_t * mle_cmd , const tlv_type_t type, const int8_t length,  uint8_t * value);
 
-
+tlv_t* mle_find_tlv_in_cmd(mle_cmd_t * cmd , const tlv_type_t type );
 
 
 

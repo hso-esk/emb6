@@ -13,11 +13,7 @@ typedef struct {
 	uint8_t          			   mic ;           /**< MIC */
 }mle_msg_t ;
 
-/*==============================================================================
-								LOCAL FUNCTION
- =============================================================================*/
 
- uint8_t  add_tlv32_bit_to_cmd(mle_cmd_t* cmd , tlv_type_t type , uint32_t value);
 
 /*==============================================================================
                                  API FUNCTIONS
@@ -32,7 +28,11 @@ uint8_t   add_MLEframe_counter_to_cmd(mle_cmd_t* cmd, uint32_t frame) ;
 uint8_t   add_status_to_cmd(mle_cmd_t* cmd);
 uint8_t   add_version_to_cmd(mle_cmd_t* cmd);
 uint32_t   add_rand_challenge_to_cmd(mle_cmd_t* cmd );
-uint32_t  add_response_to_cmd(mle_cmd_t* cmd , uint32_t resp );
+uint8_t  add_response_to_cmd(mle_cmd_t* cmd , tlv_t* resp );
+uint8_t  add_Link_margin_to_cmd(mle_cmd_t* cmd, uint8_t lm);
+uint8_t  add_Cnnectivity_to_cmd(mle_cmd_t* cmd, uint8_t max_child, uint8_t child_count, uint8_t LQ3, uint8_t LQ2,
+									uint8_t LQ1, uint8_t Leader_cost,uint8_t id_sed);
+uint8_t  comp_resp_chall(uint32_t challenge , uint8_t * buf);
 
 uint8_t   set_security_flag(mle_msg_t* msg , uint8_t flag);
 

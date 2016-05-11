@@ -83,6 +83,17 @@ int8_t tlv_write(tlv_t *tlv , tlv_type_t type, int8_t length, uint8_t * value );
  */
 int8_t tlv_print(tlv_t * tlv);
 
+/**
+ * @brief  find tlv type in buffer
+ *
+ * @param  buf	          buffer
+ * @param  buf_length	  buffer length
+ * @param  type	  		  type of tlv to looking for
+*
+ * @return pointer to the tlv if exist
+ *         otherwise NULL
+ */
+tlv_t* tlv_find(uint8_t * buf, uint8_t buf_length, const tlv_type_t type);
 
 /*==============================================================================
                                  useful macros

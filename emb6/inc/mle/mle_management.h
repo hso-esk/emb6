@@ -22,18 +22,22 @@
 
 #define		MLE_UDP_LPORT		         19788   /* MLE UDP Port  */
 #define		MLE_UDP_RPORT		         19788   /* MLE UDP Port  */
-#define     MAX_MLE_UDP_PAYLOAD_LEN      200     /* MLE UDP Payload length  */
-
 
 
 /******************* TLV parameters *****************************/
 
 #define		TIME_OUT		 		     10     /* time out   */
-#define		IS_RX_ON_WHEN_IDLE		 	     1     /* Set to ‘1’ if the sender has its receiver on when not transmitting   */
-#define		IS_FFD		 	     			 1
+#define		IS_RX_ON_WHEN_IDLE		 	  1     /* Set to ‘1’ if the sender has its receiver on when not transmitting   */
+#define		IS_FFD		 	     		  1
 /*==============================================================================
 									TYPEDEFS
  =============================================================================*/
+
+typedef struct {
+	mle_cmd_t * rec_cmd;
+	uint8_t    rec_rssi; // incoming rssi
+	uip_ipaddr_t *source_addr;
+}mle_param_t ;
 
 typedef enum
 {
@@ -61,10 +65,8 @@ typedef struct {
  =============================================================================*/
 
 uint8_t mle_init(void);
-
-
-//uint8_t mle_build_cmd( mle_cmd_type_t  cmd_type , mle_cmd_t* mle_cmd);
-
+uint8_t mle_set_parent_mode(void);
+uint8_t mle_set_child_mode(void);
 
 
 

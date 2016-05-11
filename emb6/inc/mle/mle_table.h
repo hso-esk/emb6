@@ -9,7 +9,7 @@
 #ifndef EMB6_INC_MLE_MLE_TABLE_H_
 #define EMB6_INC_MLE_MLE_TABLE_H_
 
-#include "etimer.h"
+#include "ctimer.h"
 #include "tcpip.h"
 
 
@@ -24,7 +24,7 @@ typedef struct nodemle {
 	struct nodemle 		*next;
 	uint8_t 			       		 id;
 	uip_ipaddr_t         			 address;						      /**< link-local address */
-	struct etimer        			 timeOut;
+	struct ctimer        			 timeOut;
 	uint32_t            			 MLEFrameCounter;
 	uint8_t 						 modeTLV;
 	uint8_t 						 linkQuality;

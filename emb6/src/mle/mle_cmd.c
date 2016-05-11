@@ -16,20 +16,36 @@ void  mle_init_cmd(mle_cmd_t* mle_cmd , const mle_cmd_type_t type)
 
 void  mle_create_cmd_from_buff(mle_cmd_t** cmd , uint8_t* data , uint16_t datalen)
 {
-*cmd=(mle_cmd_t*) data;
-(*cmd)->used_data=datalen-1;
+	*cmd=(mle_cmd_t*) data;
+	(*cmd)->used_data=datalen-1;
 
 }
 
 
+tlv_t* mle_find_tlv_in_cmd(mle_cmd_t * cmd , const tlv_type_t type )
+{
+	tlv_t * tlv;
+	uint8_t i=0;
 
-
+	tlv_init(&tlv,cmd->tlv_data);
+	while( tlv < (tlv_t*)&cmd->tlv_data[cmd->used_data])
+	{
+		if (tlv->type==type )
+		{
+		//	printf(" TLV exist ...\n" );
+			return  tlv;
+		}
+		i+=(tlv->length+2);
+		tlv_init(&tlv,&cmd->tlv_data[i]);
+	}
+	return NULL;
+	//return	tlv_find(cmd->tlv_data,cmd->used_data,type);
+}
 
 uint8_t mle_add_tlv_to_cmd(mle_cmd_t * cmd , const tlv_type_t type, const int8_t length,   uint8_t * value )
 {
 	tlv_t * tlv;
 	uint8_t i=0;
-
 
 	/* carry about data buffer overflow*/
 	if ((cmd->used_data+ length +sizeof(tlv->type) + sizeof(tlv->length)) >= MAX_TLV_DATA_SIZE)
@@ -41,7 +57,9 @@ uint8_t mle_add_tlv_to_cmd(mle_cmd_t * cmd , const tlv_type_t type, const int8_t
 	/* an MLE message MUST NOT contain two or more TLVs of the same type
 	 * With the exceptions of the Source Address TLV and Parameter TLV */
 
-	tlv_init(&tlv,cmd->tlv_data);
+
+	/***************** use the existing function *********************/
+		tlv_init(&tlv,cmd->tlv_data);
 	while( tlv < (tlv_t*)&cmd->tlv_data[cmd->used_data])
 	{
 		if (tlv->type==type && type!=TLV_SOURCE_ADDRESS)
@@ -52,6 +70,7 @@ uint8_t mle_add_tlv_to_cmd(mle_cmd_t * cmd , const tlv_type_t type, const int8_t
 		i+=(tlv->length+2);
 		tlv_init(&tlv,&cmd->tlv_data[i]);
 	}
+
 
 	/* adding the tlv */
 	if(tlv_write(tlv, type,  length, value))

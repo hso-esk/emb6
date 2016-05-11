@@ -36,6 +36,26 @@ int8_t tlv_write(tlv_t *tlv, tlv_type_t type, int8_t length, uint8_t * value )
 }
 
 
+tlv_t* tlv_find(uint8_t * buf, uint8_t buf_length, const tlv_type_t type)
+{
+	tlv_t * tlv;
+	uint8_t i=0;
+
+	tlv_init(&tlv,buf);
+	while( tlv < (tlv_t*)&buf[buf_length])
+	{
+		if (tlv->type==type )
+		{
+			printf(" TLV exist ...\n" );
+			return  tlv;
+		}
+		i+=(tlv->length+2);
+		tlv_init(&tlv,&buf[i]);
+	}
+	return NULL;
+}
+
+
 
 int8_t tlv_print(tlv_t* tlv)
 {

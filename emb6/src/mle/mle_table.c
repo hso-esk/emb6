@@ -159,6 +159,19 @@ uint8_t mle_rm_child( mle_neighbor_node_t *nb)
 }
 
 
+uint8_t count_neighbor_LQ(uint8_t N )
+{
+/*	mle_neighbor_node_t *nb;
+
+	for (nb = mle_neigbhor_head(list); nb != NULL; nb = list_item_next(nb))
+	{
+		if (nb->id == id)
+			return nb;
+	} */
+
+return 1 ;
+}
+
 static void mle_print_table(list_t *list)
 {
 	mle_neighbor_node_t *i;
