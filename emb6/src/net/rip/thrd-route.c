@@ -380,15 +380,6 @@ thrd_rdb_id_t
 		PRINTF("thrd_rdb_rid_lookup: No router id found\n\r");
 	}
 
-	if (found_rid != NULL && found_rid != list_head(routerid_list)) {
-		/* If we found the router id, we put it at the start of the routerid_list
-		 list. The list is ordered by how recently we looked them up:
-		 the least recently used router id will be at the end of the
-		 list - for fast lookups (assuming multiple packets to the same node). */
-		list_remove(routerid_list, found_rid);
-		list_push(routerid_list, found_rid);
-	}
-
 	return found_rid;
 }
 
@@ -501,12 +492,11 @@ thrd_rdb_id_t
 		 * least recently used one we have. */
 
 		if (thrd_rdb_rid_num_rids() == MAX_ROUTER_ID) {
-			/* Removing the oldest router id entry from the Router ID Set. The
-			 * least recently used link is the first router id on the set. */
-			thrd_rdb_id_t *oldest;
+			/* Removing the last router id entry from the Router ID Set. */
+			thrd_rdb_id_t *last;
 
-			oldest = list_tail(routerid_list);
-			thrd_rdb_rid_rm(oldest);
+			last = list_tail(routerid_list);
+			thrd_rdb_rid_rm(last);
 		}
 
 		/* Allocate a router id entry and populate it. */
@@ -521,9 +511,21 @@ thrd_rdb_id_t
 
 		rid->router_id = router_id;
 
-		/* Add new router id first - assuming that there is a reason to add this
-		 * and that there is a packet coming soon. */
-		list_push(routerid_list, rid);
+		/* Sort the router ids in ascending order (this will facilitate Route64 creation). */
+		thrd_rdb_id_t *rid_prev;
+		thrd_rdb_id_t *rid_cur;
+		rid_prev = NULL;
+
+		for ( rid_cur = thrd_rdb_rid_head(); rid_cur != NULL; rid_cur = thrd_rdb_rid_next(rid_cur) ) {
+			if ( router_id < rid_cur->router_id )
+				break;
+			rid_prev = rid_cur;
+		}
+
+		if ( rid_prev == NULL )		// First element.
+			list_push(routerid_list, rid);
+		else
+			list_insert(routerid_list, rid_prev, rid);
 
 		PRINTF("thrd_rdb_rid_add: Added router id %d\n\r", router_id);
 
