@@ -511,7 +511,7 @@ thrd_rdb_id_t
 
 		rid->router_id = router_id;
 
-		/* Sort the router ids in ascending order (this will facilitate Route64 creation). */
+		/* Sort the router ids in ascending order (this will facilitate Route64 TLV creation). */
 		thrd_rdb_id_t *rid_prev;
 		thrd_rdb_id_t *rid_cur;
 		rid_prev = NULL;

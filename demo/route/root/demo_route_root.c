@@ -18,6 +18,8 @@
 #include "thrd-route.h"
 #include "thrd-leader-db.h"
 
+#include "thrd-route64.h"
+
 #define		DEBUG		DEBUG_PRINT
 
 #include "uip-debug.h"	// For debugging terminal output.
@@ -139,59 +141,76 @@ static int8_t _mcast_sendMsg(void)
 	switch (cnt) {
 	case 0:
 		thrd_rdb_rid_add(2);
-		thrd_rdb_link_update(2, 15, 25, 250);
+		thrd_rdb_link_update(2, 15, 2, 250);
 
-		printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(5, 10));
+		thrd_generate_route64();
+
+		// printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(5, 10));
 		printf("------------------------------------------\n\n");
 		break;
 	case 1:
 		thrd_rdb_rid_add(3);
 		thrd_rdb_route_update(2, 3, 6);
 
-		printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(5, 12));
+		thrd_generate_route64();
+
+		// printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(5, 12));
 		printf("------------------------------------------\n\n");
 		break;
 	case 2:
 		thrd_rdb_rid_add(4);
 		thrd_rdb_route_update(2, 4, 7);
 
-		printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(17, 25));
+		thrd_generate_route64();
+
+		// printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(17, 25));
 		printf("------------------------------------------\n\n");
 		break;
 	case 3:
 		thrd_rdb_route_update(2, 4, 2);
 
-		printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(0, 5));
+		// printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(0, 5));
 		printf("------------------------------------------\n\n");
 		break;
 	case 4:
 		thrd_rdb_rid_add(5);
-		thrd_rdb_link_update(5, 25, 25, 250);
+		thrd_rdb_link_update(5, 25, 3, 250);
 
-		printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(2, 25));
+		thrd_generate_route64();
+
+		// printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(2, 25));
 		printf("------------------------------------------\n\n");
 		break;
 	case 5:
 		thrd_rdb_route_update(5, 4, 6);
 
-		printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(0, 25));
+		thrd_generate_route64();
+
+		// printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(0, 25));
 		printf("------------------------------------------\n\n");
 		break;
 	case 6:
 		thrd_rdb_route_update(5, 3, 7);
 
-		printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(25, 15));
+		thrd_generate_route64();
+
+		// printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(25, 15));
 		printf("------------------------------------------\n\n");
 		break;
 	case 7:
 		thrd_rdb_route_update(5, 2, 1);
-		printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(5, 0));
+
+		thrd_generate_route64();
+
+		// printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(5, 0));
 		printf("------------------------------------------\n\n");
 		break;
 	case 8:
 		thrd_rdb_route_update(5, 3, 4);
 
-		printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(15, 0));
+		thrd_generate_route64();
+
+		// printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(15, 0));
 		printf("------------------------------------------\n\n");
 		break;
 	default:

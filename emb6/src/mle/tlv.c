@@ -5,7 +5,8 @@
 
 #include "tlv.h"
 
-
+#define DEBUG_PRINT
+#include "uip-debug.h"
 
 
 /*==============================================================================
@@ -69,8 +70,8 @@ int8_t tlv_print(tlv_t* tlv)
 	case TLV_MLE_FRAME_COUNTER:
 		PRINTF(" MLE_FRAME_COUNTER ");
 		break;
-	case TLV_ROUTER64:
-		PRINTF(" ROUTER64          ");
+	case TLV_ROUTE64:
+		PRINTF(" ROUTE64          ");
 		break;
 	case TLV_ADDRESS16:
 		PRINTF(" ADDRESS16         ");

@@ -30,7 +30,7 @@ typedef enum  {
 	TLV_LINK_QUALITY,  // Not used in Thread Network
 	TLV_NETWORK_PARAMETER,  // Not used in Thread Network
 	TLV_MLE_FRAME_COUNTER,
-	TLV_ROUTER64,
+	TLV_ROUTE64,
 	TLV_ADDRESS16,
 	TLV_LEADER_DATA,
 	TLV_NETWORK_DATA,
