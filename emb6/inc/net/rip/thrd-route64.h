@@ -13,7 +13,7 @@
 // TODO Check!
 #define MAX_ROUTE64_TLV_DATA_SIZE		41		// One plus ceiling (MAX_ROUTER_ID/8) plus the number of assigned router IDs.
 
-void thrd_process_route64(tlv_t *tlv);
+void thrd_process_route64(uint8_t rid_sender, tlv_t *tlv);
 
 tlv_t *thrd_generate_route64();
 
