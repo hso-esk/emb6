@@ -117,6 +117,8 @@ thrd_rdb_route_t *thrd_rdb_route_add(uint8_t destination, uint8_t next_hop,
 
 void thrd_rdb_rid_rm(thrd_rdb_id_t *rid);
 
+void thrd_rdb_rid_empty();
+
 void thrd_rdb_link_rm(thrd_rdb_link_t *link);
 
 void thrd_rdb_route_rm(thrd_rdb_route_t *route);

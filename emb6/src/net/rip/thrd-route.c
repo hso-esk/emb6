@@ -670,6 +670,24 @@ thrd_rdb_rid_rm(thrd_rdb_id_t *rid)
 
 /* --------------------------------------------------------------------------- */
 
+void
+thrd_rdb_rid_empty()
+{
+	thrd_rdb_id_t *rid;
+	thrd_rdb_id_t *rid_nxt;
+	PRINTF("thrd_rdb_rid_empty: removing all (%d) router ids from 'Router ID Set'.", num_rids);
+	PRINTF("\n\r");
+	rid = thrd_rdb_rid_head();
+	rid_nxt = rid;
+	while ( rid_nxt != NULL ) {
+		rid = rid_nxt;
+		rid_nxt = rid->next;
+		thrd_rdb_rid_rm(rid);
+	}
+}
+
+/* --------------------------------------------------------------------------- */
+
 void thrd_rdb_link_rm(thrd_rdb_link_t *link) {
 	if (link != NULL) {
 		PRINTF("thrd_rdb_link_rm: removing link with router id: ");
