@@ -50,6 +50,8 @@
 #define THRD_NET_TLV_MAX_NUM			10		// Maximum number of network layer TLVs.
 #define THRD_NET_TLV_MAX_SIZE			50		// Maximum size of network layer TLVs.
 
+// static uint8_t Router_ID;
+
 /** ------------------------- Structures ------------------------------- */
 
 
