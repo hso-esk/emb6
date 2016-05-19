@@ -23,19 +23,15 @@ void thrd_rdb_init(void);
  *
  */
 
+/** \brief The ID Sequence Number. */
+uint8_t ID_sequence_number;
+
 /** \brief A 'ID Set' entry in the 'Router ID Set' field in the routing database (rdb). */
 typedef struct thrd_rdb_id {
 	struct thrd_rdb_id *next;
 
 	uint8_t router_id;
 } thrd_rdb_id_t;
-
-/** \brief A 'Router ID Set' entry in the routing database (rdb). */
-typedef struct thrd_rdb_router_id {
-
-	thrd_rdb_id_t *ID_set;
-	uint8_t ID_sequence_number;
-} thrd_rdb_router_id_t;
 
 /** \brief A 'Link Set entry in the routing database (rdb). */
 typedef struct thrd_rdb_link {

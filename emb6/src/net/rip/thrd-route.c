@@ -46,7 +46,7 @@ MEMB(routerid_memb, thrd_rdb_id_t, MAX_ROUTERS); // TODO Check if MAX_ROUTERS is
 /* The 'Router ID Set' is represented by a thrd_rdb_router_id_t structure and
  memory is allocated from the routerid_memb memory
  block. These routes are maintained on the routerid_list. */
-MEMB(routeridset_memb, thrd_rdb_router_id_t, 1);
+// MEMB(routeridset_memb, thrd_rdb_router_id_t, 1);
 
 /* Each 'Link' is represented by a thrd_rdb_link_t structure and
  memory for each route is allocated from the link_memb memory
@@ -69,6 +69,8 @@ static int num_links = 0;
 /* Number of currently stored routes in the Route Set. */
 static int num_routes = 0;
 
+/* --------------------------------------------------------------------------- */
+
 /*
  ********************************************************************************
  *                               GLOBAL VARIABLES
@@ -89,7 +91,7 @@ thrd_rdb_init(void)
 	memb_init(&routerid_memb);
 	list_init(routerid_list);
 
-	memb_init(&routeridset_memb);
+	ID_sequence_number = 0;
 
 	memb_init(&link_memb);
 	list_init(link_list);
