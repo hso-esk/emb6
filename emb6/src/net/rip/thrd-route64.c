@@ -17,8 +17,47 @@
 
 // thrd_process_route64(tlv_t * tlv).
 
-void thrd_process_route64() {
+void thrd_process_route64(tlv_t *tlv) {
 
+	// thrd_rdb_id_t *rid;						// Router IDs.
+	// thrd_rdb_link_t *link;
+	// thrd_rdb_route_t *route;				// Routing entries.
+
+	if ( tlv->type == TLV_ROUTE64 && tlv->length >= 5 ) {
+
+		uint8_t id_seq_num = tlv->value[0];
+
+		if ( id_seq_num > ID_sequence_number ) {
+
+			// Empty the Router ID Set.
+			thrd_rdb_rid_empty();
+
+			ID_sequence_number = id_seq_num;
+
+			uint32_t router_id_mask = 0x00000000;
+			router_id_mask |= ( ((uint32_t) tlv->value[1] ) << 24 )
+					| ( ((uint32_t) tlv->value[2] ) << 16 )
+					| ( ((uint32_t) tlv->value[3] ) << 8 )
+					| ( ((uint32_t) tlv->value[4] ) );
+
+			// printf("router_id_mask = %02x\n", router_id_mask);
+
+			uint32_t bit_mask = 0x80000000;
+
+			// Replace the ID Set.
+			for ( uint8_t id_cnt = 0; id_cnt < 32; id_cnt++) {
+				if ( (router_id_mask & bit_mask) > 0 ) {
+					// printf("(router_id_mask & %02x) = (%02x & 0x80000000) = %d\n", bit_mask, router_id_mask, bit_mask, (router_id_mask && 0x80000000));
+					thrd_rdb_rid_add(id_cnt);
+				}
+				// TODO Process Link Quality and Route Data.
+
+				bit_mask >>= 1;
+			}
+		} else {
+		}
+	} else {
+	}
 }
 
 // Outgoing: Trickle timer expired.
@@ -31,17 +70,20 @@ tlv_t *
 thrd_generate_route64()
 {
 	tlv_t *tlv;								// TLV structure.
-	thrd_rdb_router_id_t *router_id_set;	// Router ID Set.
-	thrd_rdb_id_t *rid;				// Router IDs.
+	thrd_rdb_id_t *rid;						// Router IDs.
 	thrd_rdb_link_t *link;
 	thrd_rdb_route_t *route;				// Routing entries.
-	uint8_t tlv_len = 5;		// TLV length (value).
+	uint8_t tlv_len = 5;					// TLV length (value).
 
 	// TLV type.
 	route64_tlv[0] = TLV_ROUTE64;
 
+	printf("1\n");
+	printf("ID_sequence_number = %d\n", ID_sequence_number);
+	printf("2\n");
+
 	// ID Sequence number.
-	route64_tlv[2] = 5; // router_id_set->ID_sequence_number;
+	route64_tlv[2] = 5; //router_id_set->ID_sequence_number;
 
 	rid = thrd_rdb_rid_head();
 
@@ -86,9 +128,9 @@ thrd_generate_route64()
 
 	printf("\n");
 	// ---
-
-	tlv_print(tlv);
 	*/
+
+	// tlv_print(tlv);
 
 	return tlv;
 }
