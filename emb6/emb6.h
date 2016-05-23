@@ -94,6 +94,7 @@ typedef uint32_t                            clock_time_t;
                                 CONFIGURATIONS
 ==============================================================================*/
 #include "emb6_conf.h"
+#include "thread_conf.h"
 
 
 

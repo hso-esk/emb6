@@ -57,6 +57,7 @@
                                  INCLUDE FILES
  =============================================================================*/
 #include "emb6.h"
+#include "thread_conf.h"
 
 #include "tcpip.h"
 #include "bsp.h"
@@ -105,6 +106,13 @@ uip_lladdr_t uip_lladdr = {{0x00,0x06,0x98,0x00,0x02,0x32}};
 #endif /*UIP_CONF_LL_802154*/
 /** @} */
 
+// LZ ---
+/** Thread default Device Type Configuration. */
+thrd_dev_t thrd_dev = {
+		.type = THRD_DEV_TYPE,
+		.isFFD = THRD_DEV_FUNC,
+};
+// ---
 
 /** RPL default Configuration */
 s_rpl_conf_t rpl_config = {
