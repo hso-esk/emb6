@@ -225,7 +225,7 @@ thrd_ldb_ida_rm(thrd_ldb_ida_t *ida)
 /* --------------------------------------------------------------------------- */
 
 void
-thrd_rdb_ida_empty()
+thrd_ldb_ida_empty()
 {
 	thrd_ldb_ida_t *ida;
 	thrd_ldb_ida_t *ida_nxt;

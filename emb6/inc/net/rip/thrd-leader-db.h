@@ -45,7 +45,7 @@ thrd_ldb_ida_t *thrd_ldb_ida_add(uint8_t router_id, uint8_t owner, uint8_t reuse
 
 void thrd_ldb_ida_rm(thrd_ldb_ida_t *ida);
 
-void thrd_rdb_ida_empty();
+void thrd_ldb_ida_empty();
 
 #if RIP_DEBUG
 void thrd_ldb_print_leader_database(void);
