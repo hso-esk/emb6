@@ -10,6 +10,7 @@
 #include "emb6.h"
 #include "thread_conf.h"
 #include "thrd-partition.h"
+#include "rip.h"
 
 #include "thrd-router-id.h"
 
@@ -34,17 +35,31 @@ thrd_partition_init(void)
 		ID_sequence_number = (uint8_t) random_rand();
 		Partition_weight = 64;
 
-		PRINTF("THRD_PARTITION: Initialized new Thread partition:\n"
-				"Partition_ID = %lu\n"
-				"VN_version = %d\n"
-				"VN_stable_version = %d\n"
-				"ID_sequence_number = %d\n"
-				"Partition_weight = %d\n",
-				Partition_ID, VN_version, VN_stable_version, ID_sequence_number,
-				Partition_weight);
+		thrd_print_partition_data();
 	}
 }
 
 /* --------------------------------------------------------------------------- */
+
+/*
+ ********************************************************************************
+ *                                DEBUG FUNCTIONS
+ ********************************************************************************
+ */
+
+void
+thrd_print_partition_data()
+{
+	PRINTF(ANSI_COLOR_CYAN "|================================== THREAD PARTITION ===================================|" ANSI_COLOR_RESET "\n\r");;
+	PRINTF("| Partition_ID | VN_version | VN_stable_version | ID_sequence_number | Partition_weight |\n");
+	PRINTF("-----------------------------------------------------------------------------------------\n\r");
+	PRINTF("| " ANSI_COLOR_YELLOW "%12d" ANSI_COLOR_RESET
+			" | " ANSI_COLOR_YELLOW "%10d" ANSI_COLOR_RESET
+			" | " ANSI_COLOR_YELLOW "%17d" ANSI_COLOR_RESET
+			" | " ANSI_COLOR_YELLOW "%18d" ANSI_COLOR_RESET
+			" | " ANSI_COLOR_YELLOW "%16d" ANSI_COLOR_RESET
+			" |\n", Partition_ID, VN_version, VN_stable_version, ID_sequence_number, Partition_weight);
+	PRINTF(ANSI_COLOR_CYAN "=========================================================================================" ANSI_COLOR_RESET "\n\r");
+}
 
 /* --------------------------------------------------------------------------- */

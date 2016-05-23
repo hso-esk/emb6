@@ -19,4 +19,12 @@ uint8_t Partition_weight;
 
 void thrd_partition_init(void);
 
+/*
+ ********************************************************************************
+ *                                DEBUG FUNCTIONS
+ ********************************************************************************
+ */
+
+void thrd_print_partition_data();
+
 #endif /* EMB6_INC_NET_RIP_THRD_PARTITION_H_ */
