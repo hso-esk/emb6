@@ -54,7 +54,7 @@ thrd_leader_init(void)
 }
 
 clock_time_t
-*thrd_next_period(uint8_t sec)
+thrd_next_period(uint8_t sec)
 {
 	return (clock_time_t)(sec * bsp_get(E_BSP_GET_TRES));
 }
@@ -89,3 +89,4 @@ thrd_request_router_id(uint8_t router_id)
 {
 
 }
+

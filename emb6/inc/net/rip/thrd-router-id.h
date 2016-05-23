@@ -17,7 +17,7 @@
 
 extern void thrd_leader_init(void);
 
-clock_time_t *thrd_next_period(uint8_t sec);
+clock_time_t thrd_next_period(uint8_t sec);
 
 /*=============================================================================
                                Router ID Assignment
