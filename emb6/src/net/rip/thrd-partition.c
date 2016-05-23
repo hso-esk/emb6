@@ -25,9 +25,12 @@
  * Starting a new Partition.
  */
 void
-thrd_partition_init(void)
+thrd_partition_start(void)
 {
 	if ( (thrd_dev.type == THRD_DEV_TYPE_ROUTER) || (thrd_dev.type == THRD_DEV_TYPE_REED) ) {
+
+		PRINTF("thrd_partition_start: Starting new Thread Partition.\n");
+		thrd_leader_init();		// Initialize itself as the leader.
 
 		Partition_ID = random_rand();
 		VN_version = (uint8_t) random_rand();

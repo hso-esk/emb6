@@ -17,7 +17,7 @@ uint8_t ID_sequence_number;
 
 uint8_t Partition_weight;
 
-void thrd_partition_init(void);
+void thrd_partition_start(void);
 
 /*
  ********************************************************************************
