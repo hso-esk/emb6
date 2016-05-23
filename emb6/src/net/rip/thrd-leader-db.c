@@ -224,6 +224,24 @@ thrd_ldb_ida_rm(thrd_ldb_ida_t *ida)
 
 /* --------------------------------------------------------------------------- */
 
+void
+thrd_rdb_ida_empty()
+{
+	thrd_ldb_ida_t *ida;
+	thrd_ldb_ida_t *ida_nxt;
+	PRINTF("thrd_rdb_ida_empty: removing all (%d) assigned router ids from 'ID Assignment Set'.", num_ida);
+	PRINTF("\n\r");
+	ida = thrd_ldb_ida_head();
+	ida_nxt = ida;
+	while ( ida_nxt != NULL ) {
+		ida = ida_nxt;
+		ida_nxt = ida->next;
+		thrd_ldb_ida_rm(ida);
+	}
+}
+
+/* --------------------------------------------------------------------------- */
+
 #if RIP_DEBUG
 void
 thrd_ldb_print_leader_database(void)

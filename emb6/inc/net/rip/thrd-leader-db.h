@@ -23,7 +23,7 @@ void thrd_ldb_init(void);
 /** \brief An 'ID Assignment Set' records the state of each Router ID.
  * The leader database (ldb) is a set of thrd_ldb_id_assign_t structs. */
 typedef struct thrd_ldb_ida {
-	struct thrd_ldb_id *next;
+	struct thrd_ldb_ida_t *next;
 
 	uint8_t ID_id;			// A Router ID.
 	uint8_t ID_owner;		// The IEEE 802.15.4 Extended Address of the Router.
@@ -44,6 +44,8 @@ thrd_ldb_ida_t *thrd_ldb_ida_lookup(uint8_t router_id);
 thrd_ldb_ida_t *thrd_ldb_ida_add(uint8_t router_id, uint8_t owner, uint8_t reuse_time);
 
 void thrd_ldb_ida_rm(thrd_ldb_ida_t *ida);
+
+void thrd_rdb_ida_empty();
 
 #if RIP_DEBUG
 void thrd_ldb_print_leader_database(void);
