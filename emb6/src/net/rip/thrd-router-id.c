@@ -25,21 +25,18 @@
 void
 thrd_leader_init(void)
 {
-	thrd_dev_t *dev;
 	// Starting a new Partition as the Leader.
-	dev->type = THRD_DEV_TYPE_LEADER;
+	thrd_dev.type = THRD_DEV_TYPE_LEADER;
 
-	thrd_ldb_init();	// Initialize leader database.
+	thrd_rdb_ida_empty();	// Empty ID Assignment Set.
 }
-
-
 
 /*=============================================================================
                                Router ID Assignment
 ===============================================================================*/
 
 /**
- * Trigger an Address Solicit Request message to obtain a router id from the
+ * Send an Address Solicit Request message to obtain a router id from the
  * leader.
  * @param router_id The desired router id [0..62].
  */
