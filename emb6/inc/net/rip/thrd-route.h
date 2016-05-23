@@ -13,7 +13,7 @@
 #include "emb6.h"
 #include "stimer.h"
 #include "clist.h"
-#include "rip.h"
+#include "thread_conf.h"
 
 void thrd_rdb_init(void);
 

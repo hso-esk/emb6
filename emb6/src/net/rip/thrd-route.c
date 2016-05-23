@@ -19,6 +19,7 @@
 #include "clist.h"
 #include "memb.h"
 #include "rip.h"
+#include "thread_conf.h"
 
 #include "thrd-route.h"
 
