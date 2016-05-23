@@ -41,7 +41,7 @@ typedef struct thrd_rdb_link {
 	uint16_t L_link_margin;
 	uint8_t L_incoming_quality;
 	uint8_t L_outgoing_quality;
-	uint8_t L_age;
+	clock_time_t L_age;
 } thrd_rdb_link_t;
 
 /** \brief A 'Route Set' entry in the routing database (rdb). */
@@ -126,7 +126,7 @@ void thrd_rdb_route_rm(thrd_rdb_route_t *route);
  */
 
 thrd_rdb_link_t *thrd_rdb_link_update(uint8_t router_id, uint8_t link_margin,
-		uint8_t outgoing_quality, uint8_t age);
+		uint8_t outgoing_quality, clock_time_t age);
 
 thrd_rdb_route_t *thrd_rdb_route_update(uint8_t router_id, uint8_t destination,
 		uint8_t cost_reported);

@@ -749,7 +749,7 @@ thrd_rdb_route_rm(thrd_rdb_route_t *route)
  */
 thrd_rdb_link_t
 *thrd_rdb_link_update(uint8_t router_id, uint8_t link_margin,
-		uint8_t outgoing_quality, uint8_t age)
+		uint8_t outgoing_quality, clock_time_t age)
 {
 	thrd_rdb_link_t *l;
 	thrd_rdb_id_t *rid;
