@@ -11,6 +11,7 @@
 #include "stdlib.h"
 #include "clist.h"
 #include "memb.h"
+#include "thread_conf.h"
 
 #include "thrd-leader-db.h"
 
