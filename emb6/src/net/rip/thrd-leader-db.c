@@ -133,7 +133,7 @@ thrd_ldb_ida_t
 /* --------------------------------------------------------------------------- */
 
 thrd_ldb_ida_t
-*thrd_ldb_ida_add(uint8_t router_id, uint8_t owner, uint8_t reuse_time)
+*thrd_ldb_ida_add(uint8_t router_id, uint8_t owner, clock_time_t reuse_time)
 {
 	thrd_ldb_ida_t *ida;
 
