@@ -11,7 +11,8 @@
 #include "bsp.h"
 #include "ctimer.h"
 #include "random.h"
-#include "rip.h"
+#include "thread_conf.h"
+#include "thrd-send-adv.h"
 
 #define DEBUG DEBUG_PRINT
 #include "uip-debug.h"
@@ -69,8 +70,8 @@ thrd_random_interval(clock_time_t i_min, uint8_t d)
 {
 	clock_time_t min = TRICKLE_TIME(i_min >> 1, d);
 
-	PRINTF("SEND ADV: Random [%lu, %lu)\n", (unsigned long) min,
-			(unsigned long)(TRICKLE_TIME(i_min, d)));
+	PRINTF("THRD_SEND_ADV: Random [%lu, %lu)\n", (unsigned long) min,
+		 	(unsigned long)(TRICKLE_TIME(i_min, d)));
 
 	return min + (random_rand() % (TRICKLE_TIME(i_min, d) - 1 - min));
 }
@@ -107,7 +108,7 @@ thrd_double_interval(void *ptr)
 	param->t_next = next;
 	ctimer_set(&param->ct, param->t_next, thrd_handle_timer, (void *)param);
 
-	PRINTF("SEND ADV: Doubling at %lu (offset %d), Start %lu, End %lu,"
+	PRINTF("THRD_SEND_ADV: Doubling at %lu (offset %d), Start %lu, End %lu,"
 			" Periodic in %lu\n", bsp_getTick(), offset,
 			(unsigned long)param->t_start,
 			(unsigned long)param->t_end, (unsigned long)param->t_next);
@@ -133,7 +134,7 @@ thrd_handle_timer(void *ptr)
 		return;
 	}
 
-	PRINTF("SEND ADV: Periodic at %lu, last=%lu\n",
+	PRINTF("THRD_SEND_ADV: Periodic at %lu, last=%lu\n",
 			(unsigned long)bsp_getTick(),
 			(unsigned long)param->t_last_trigger);
 
@@ -144,17 +145,19 @@ thrd_handle_timer(void *ptr)
 	param->t_last_trigger = param->t_next;
 
 	PRINTF
-	("SEND ADV: Periodic diff from last %lu, from start %lu\n",
+	("THRD_SEND_ADV: Periodic diff from last %lu, from start %lu\n",
 			(unsigned long) diff_last, (unsigned long) diff_start);
 
 	param->t_next = param->t_end - param->t_next;
 
 	PRINTF
-	("SEND ADV: Periodic at %lu, Interval End at %lu in %lu\n",
+	("THRD_SEND_ADV: Periodic at %lu, Interval End at %lu in %lu\n",
 			(unsigned long)bsp_getTick(), (unsigned long)param->t_end,
 			(unsigned long)param->t_next);
 
 	ctimer_set(&param->ct, param->t_next, thrd_double_interval, (void *)param);
+
+	printf("TEST");
 
 	return;
 }
@@ -170,9 +173,34 @@ thrd_reset_trickle_timer()
 	t.t_next = thrd_random_interval(t.i_min, t.i_current);
 
 	PRINTF
-	("SEND ADV: Reset at %lu, Start %lu, End %lu, New Interval %lu\n",
+	("THRD_SEND_ADV: Reset at %lu, Start %lu, End %lu, New Interval %lu\n",
 			(unsigned long)t.t_start, (unsigned long)t.t_start,
 			(unsigned long)t.t_end, (unsigned long)t.t_next);
 
 	ctimer_set(&t.ct, t.t_next, thrd_handle_timer, (void *)&t);
 }
+
+/*---------------------------------------------------------------------------*/
+void
+init(void)
+{
+	PRINTF("THRD_SEND_ADV: Sending Advertisements.\n");
+
+	// memset(t, 0, sizeof(t));
+
+	// ROLL_TM_STATS_INIT();
+	// UIP_MCAST6_STATS_INIT(&stats);
+
+	// Register the ICMPv6 input handler.
+	// uip_icmp6_register_input_handler(&roll_tm_icmp_handler);
+
+	TIMER_CONFIGURE();
+
+	PRINTF("THRD_SEND_ADV: imin = %lu, imax = %lu\n", t.i_min, t.i_max);
+
+	thrd_reset_trickle_timer();
+	return;
+}
+/*---------------------------------------------------------------------------*/
+
+
