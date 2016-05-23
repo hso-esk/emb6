@@ -10,10 +10,19 @@
 
 #include "emb6.h"
 
+/*=============================================================================
+                                    DEVICE TYPE
+===============================================================================*/
+
+#define THRD_DEV_TYPE			THRD_DEV_TYPE_ROUTER		// Router.
+#define THRD_DEV_FUNC			THRD_DEV_FUNC_FFD			// FFD.
+
 /**
  * The Router ID.
  */
+#if ( (THRD_DEV_TYPE == THRD_DEV_TYOE_ROUTER) || (THRD_DEV_TYPE == THRD_DEV_TYOE_REED) )
 uint8_t Router_ID;
+#endif
 
 /**
  * Thread Device Types.
@@ -46,13 +55,6 @@ typedef struct
 
 /*! Thread Device Type Configuration. */
 extern thrd_dev_t thrd_dev;
-
-/*=============================================================================
-                                    DEVICE TYPE
-===============================================================================*/
-
-#define THRD_DEV_TYPE			THRD_DEV_TYPE_ROUTER		// Router.
-#define THRD_DEV_FUNC			THRD_DEV_FUNC_FFD			// FFD.
 
 /*=============================================================================
                                 NETWORK LAYER SECTION
