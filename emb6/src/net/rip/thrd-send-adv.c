@@ -21,13 +21,12 @@
 struct trickle_param {
 	clock_time_t i_min;
 	clock_time_t i_max;			/* Max number of doublings. */
-	clock_time_t t_start;         /* Start of the interval (absolute clock_time). */
-	clock_time_t t_end;           /* End of the interval (absolute clock_time). */
-	clock_time_t t_next;          /* Clock ticks, randomised in [I/2, I). */
-	uint8_t i_current;            /* Current doublings from i_min */
+	clock_time_t t_start;		/* Start of the interval (absolute clock_time). */
+	clock_time_t t_end;			/* End of the interval (absolute clock_time). */
+	clock_time_t t_next;		/* Clock ticks, randomised in [I/2, I). */
+	uint8_t i_current;			/* Current doublings from i_min */
 	clock_time_t t_last_trigger;
 	uint8_t k;
-	struct ctimer ct;
 };
 
 
@@ -56,6 +55,7 @@ struct trickle_param {
 /* Internal Data Structures */
 /*---------------------------------------------------------------------------*/
 static struct trickle_param t;
+static struct ctimer ct;
 /*---------------------------------------------------------------------------*/
 /* Local function prototypes */
 /*---------------------------------------------------------------------------*/
@@ -63,8 +63,19 @@ static void thrd_reset_trickle_timer();
 static void thrd_handle_timer(void *);
 
 /*---------------------------------------------------------------------------*/
-/* Return a random number in [I/2, I), for a timer with Imin when the timer's
- * current number of doublings is d */
+/* Return a random number in [Imin, Imax]. */
+static clock_time_t
+thrd_random_start_interval()
+{
+	// Random number between 1 and 32.
+	t.i_current = (random_rand() & 0x001F);
+	t.i_current = (t.i_current != 0) ? t.i_current : 1;
+
+	return (t.i_current * bsp_get(E_BSP_GET_TRES));
+}
+
+/*---------------------------------------------------------------------------*/
+/* Return a random number in [I/2, I). */
 static clock_time_t
 thrd_random_interval(clock_time_t i_min, uint8_t d)
 {
@@ -106,7 +117,7 @@ thrd_double_interval(void *ptr)
 		next = 0;
 	}
 	param->t_next = next;
-	ctimer_set(&param->ct, param->t_next, thrd_handle_timer, (void *)param);
+	ctimer_set(&ct, param->t_next, thrd_handle_timer, (void *)param);
 
 	PRINTF("THRD_SEND_ADV: Doubling at %lu (offset %d), Start %lu, End %lu,"
 			" Periodic in %lu\n", bsp_getTick(), offset,
@@ -122,6 +133,8 @@ thrd_double_interval(void *ptr)
 static void
 thrd_handle_timer(void *ptr)
 {
+	PRINTF("HELLO WORLD!\n");
+
 	struct trickle_param *param;
 	clock_time_t diff_last;       /* Time diff from last pass */
 	clock_time_t diff_start;      /* Time diff from interval start */
@@ -155,9 +168,7 @@ thrd_handle_timer(void *ptr)
 			(unsigned long)bsp_getTick(), (unsigned long)param->t_end,
 			(unsigned long)param->t_next);
 
-	ctimer_set(&param->ct, param->t_next, thrd_double_interval, (void *)param);
-
-	printf("TEST");
+	ctimer_set(&ct, param->t_next, thrd_double_interval, (void *)param);
 
 	return;
 }
@@ -170,14 +181,13 @@ thrd_reset_trickle_timer()
 	t.t_start = bsp_getTick();
 	t.t_end = t.t_start + (t.i_min);
 	t.i_current = 0;
-	t.t_next = thrd_random_interval(t.i_min, t.i_current);
+	t.t_next = thrd_random_start_interval();
 
 	PRINTF
-	("THRD_SEND_ADV: Reset at %lu, Start %lu, End %lu, New Interval %lu\n",
-			(unsigned long)t.t_start, (unsigned long)t.t_start,
-			(unsigned long)t.t_end, (unsigned long)t.t_next);
+	("thrd_reset_trickle_timer: Timer will expire in %lu secs.\n",
+			(unsigned long)t.t_next / bsp_get(E_BSP_GET_TRES));
 
-	ctimer_set(&t.ct, t.t_next, thrd_handle_timer, (void *)&t);
+	ctimer_set(&ct, t.t_next, thrd_handle_timer, (void *)&t);
 }
 
 /*---------------------------------------------------------------------------*/
