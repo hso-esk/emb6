@@ -177,7 +177,7 @@ thrd_reset_trickle_timer()
 
 /*---------------------------------------------------------------------------*/
 void
-init(void)
+thrd_trickle_init(void)
 {
 	TIMER_CONFIGURE();
 
@@ -187,7 +187,7 @@ init(void)
 /*---------------------------------------------------------------------------*/
 
 void
-reset(void)
+thrd_trickle_reset(void)
 {
 	thrd_reset_trickle_timer();
 }

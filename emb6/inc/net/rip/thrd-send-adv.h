@@ -10,8 +10,8 @@
 #ifndef EMB6_INC_NET_RIP_THRD_SEND_ADV_H_
 #define EMB6_INC_NET_RIP_THRD_SEND_ADV_H_
 
-extern void init(void);
+extern void thrd_trickle_init(void);
 
-extern void reset(void);
+extern void thrd_trickle_reset(void);
 
 #endif /* EMB6_INC_NET_RIP_THRD_SEND_ADV_H_ */
