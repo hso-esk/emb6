@@ -21,12 +21,8 @@
 struct trickle_param {
 	clock_time_t i_min;			/* The minimum interval size. */
 	uint8_t i_max;				/* Max number of doublings. */
-	clock_time_t t_start;		/* Start of the interval (absolute clock_time). */
-	clock_time_t t_end;			/* End of the interval (absolute clock_time). */
 	clock_time_t t_next;		/* Clock ticks, randomised in [I/2, I). */
 	clock_time_t interval;		/* I. */
-	uint8_t i_current;			/* Current doublings from i_min */
-	clock_time_t t_last_trigger;
 	uint8_t k;
 };
 
@@ -135,8 +131,6 @@ thrd_double_interval(void *ptr)
 static void
 thrd_start_trickle_timer()
 {
-	t.t_start = bsp_getTick();
-	t.t_end = t.t_start + (t.i_min);
 	t.interval = thrd_random_start_interval(t.i_min, t.i_max);	// I.
 	t.t_next = thrd_random_interval();	// t.
 
@@ -156,11 +150,10 @@ thrd_start_trickle_timer()
 static void
 thrd_reset_trickle_timer()
 {
+	// Reset old timers.
 	ctimer_reset(&ci);
 	ctimer_reset(&ct);
 
-	t.t_start = bsp_getTick();
-	t.t_end = t.t_start + (t.i_min);
 	t.interval = t.i_min;				// I.
 	t.t_next = thrd_random_interval();	// t.
 
