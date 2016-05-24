@@ -10,7 +10,6 @@
 #include "emb6.h"
 #include "bsp.h"
 #include "ctimer.h"
-#include "random.h"
 #include "thread_conf.h"
 #include "thrd-send-adv.h"
 
@@ -65,7 +64,7 @@ static void thrd_handle_send_timer(void *);
 static clock_time_t
 thrd_random_start_interval(clock_time_t min, uint8_t d)
 {
-	return ((random_rand() % (TRICKLE_TIME(min, d) - min + 1)) + min);
+	return ((bsp_getrand(0) % (TRICKLE_TIME(min, d) - min + 1)) + min);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -80,7 +79,7 @@ thrd_random_interval()
 		min = 1;
 	if ( max == 0 )
 		max = 1;
-	return ((random_rand() % (max - min + 1)) + min);
+	return ((bsp_getrand(0) % (max - min + 1)) + min);
 }
 
 
