@@ -73,10 +73,10 @@ extern thrd_dev_t thrd_dev;
 #define THRD_EXP_WEIGHT_MOV_AVG			EXP_WEIGHT_MOV_AVG_1_8
 
 /** Network Layer defines. */
-#define	ADVERTISEMENT_I_MIN				1
-#define	ADVERTISEMENT_I_MAX				32
+#define	ADVERTISEMENT_I_MIN				1		// 1 sec.
+#define	ADVERTISEMENT_I_MAX				5		// 2⁵ = 32.
 #define	ID_REUSE_DELAY					100
-#define	ID_SEQUENCE_PERIOD				10
+#define	ID_SEQUENCE_PERIOD				1
 #define	MAX_NEIGHBOR_AGE				100
 #define	MAX_ROUTE_COST					16
 #define	MAX_ROUTER_ID					5 // 62
