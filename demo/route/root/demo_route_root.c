@@ -2,7 +2,7 @@
  * demo_mcast_root.c
  *
  *  Created on: 4 Apr 2016
- *      Author: osboxes
+ *  Author: Lukas Zimmermann <lzimmer1@stud.hs-offenburg.de>
  */
 
 #include "emb6.h"
@@ -15,10 +15,16 @@
 #include "uip-udp-packet.h"
 
 #include "demo_route_root.h"
+
+#include "thrd-adv.h"
 #include "thrd-route.h"
 #include "thrd-leader-db.h"
 
-#include "thrd-route64.h"
+#include "thrd-partition.h"
+
+#include "thrd-send-adv.h"
+
+#include "tlv.h"
 
 #define		DEBUG		DEBUG_PRINT
 
@@ -115,6 +121,11 @@ uint8_t cnt = 0;
 
 uint8_t l_m = 5;
 
+// TLV value buffers.
+static uint8_t source_tlv[4];
+static uint8_t route64_tlv[MAX_ROUTE64_TLV_DATA_SIZE];
+static uint8_t leader_tlv[10];
+
 static int8_t _mcast_sendMsg(void)
 {
 
@@ -136,32 +147,105 @@ static int8_t _mcast_sendMsg(void)
 
 	// --- NEW
 
+	tlv_t *tlv_source;
+	tlv_t *tlv_route64;
+	tlv_t *tlv_leader;
 
 	// Routing Database.
 	switch (cnt) {
 	case 0:
+
+		// thrd_trickle_init();
+
+		thrd_partition_start();
+
+		// thrd_rdb_rid_empty();
+
+
+
+		// Build Source TLV.
+		source_tlv[0] = TLV_SOURCE_ADDRESS;
+		source_tlv[1] = 2;
+		source_tlv[2] = 0x04;
+		source_tlv[3] = 0x00;
+		tlv_init(&tlv_source, source_tlv);
+		tlv_print(tlv_source);
+
+		// Build Route64 TLV.
+		route64_tlv[0] = TLV_ROUTE64;
+		route64_tlv[2] = 1;
+		uint32_t router_id_mask = 0xD5000000;
+		route64_tlv[7] = 0x64;	// RID = 0.
+		route64_tlv[8] = 0xB7;	// RID = 1.
+		route64_tlv[9] = 0xC5;	// RID = 3.
+		route64_tlv[10] = 0x9A;	// RID = 5.
+		route64_tlv[11] = 0x71;	// RID = 7.
+		route64_tlv[6] = (uint8_t) router_id_mask;
+		for ( uint8_t i = 5; i > 2; i-- ) {
+			router_id_mask >>= 8;
+			route64_tlv[i] = (uint8_t) router_id_mask;
+		}
+		route64_tlv[1] = 10;
+		tlv_init(&tlv_route64, route64_tlv);
+		tlv_print(tlv_route64);
+
+		// Build Leader TLV.
+		leader_tlv[0] = TLV_LEADER_DATA;
+		leader_tlv[1] = 8;
+		leader_tlv[2] = 0x00;
+		leader_tlv[3] = 0x00;
+		leader_tlv[4] = 0x00;
+		leader_tlv[5] = 0x01;
+		leader_tlv[6] = 64;
+		leader_tlv[7] = 7;
+		leader_tlv[8] = 5;
+		leader_tlv[9] = 3;
+		tlv_init(&tlv_leader, leader_tlv);
+		tlv_print(tlv_leader);
+
+		thrd_process_adv(tlv_source, tlv_route64, tlv_leader);
+
+
+
+		/*
+
 		thrd_rdb_rid_add(2);
 		thrd_rdb_link_update(2, 15, 2, 250);
 
 		thrd_generate_route64();
 
+		*/
+
 		// printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(5, 10));
 		printf("------------------------------------------\n\n");
 		break;
 	case 1:
+
+		// thrd_trickle_reset();
+
+		/*
 		thrd_rdb_rid_add(3);
 		thrd_rdb_route_update(2, 3, 6);
 
 		thrd_generate_route64();
-
+		*/
 		// printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(5, 12));
 		printf("------------------------------------------\n\n");
 		break;
 	case 2:
+
+		// tlv = thrd_generate_route64();
+
+		// thrd_rdb_rid_empty();
+
+		// thrd_process_route64(2, tlv);
+
+		/*
 		thrd_rdb_rid_add(4);
 		thrd_rdb_route_update(2, 4, 7);
 
 		thrd_generate_route64();
+		*/
 
 		// printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(17, 25));
 		printf("------------------------------------------\n\n");
@@ -220,7 +304,7 @@ static int8_t _mcast_sendMsg(void)
 
 	if ( cnt <= 8 ) {
 		// Print all data of the routing database.
-		thrd_rdb_print_routing_database();
+		// thrd_rdb_print_routing_database();
 	}
 
 
