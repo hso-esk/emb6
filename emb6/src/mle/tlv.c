@@ -5,7 +5,7 @@
 
 #include "tlv.h"
 
-#define DEBUG_PRINT
+#define DEBUG DEBUG_PRINT
 #include "uip-debug.h"
 
 
