@@ -133,13 +133,36 @@ thrd_double_interval(void *ptr)
 /*---------------------------------------------------------------------------*/
 
 static void
-thrd_reset_trickle_timer()
+thrd_start_trickle_timer()
 {
 	t.t_start = bsp_getTick();
 	t.t_end = t.t_start + (t.i_min);
 	t.interval = thrd_random_start_interval(t.i_min, t.i_max);	// I.
 	t.t_next = thrd_random_interval();	// t.
 
+	PRINTF
+	("thrd_reset_trickle_timer: Timer (I) will expire in %lu secs.\n",
+			(unsigned long)t.interval / bsp_get(E_BSP_GET_TRES));
+	PRINTF
+	("thrd_reset_trickle_timer: Timer (t) will expire in %lu secs.\n",
+			(unsigned long)t.t_next / bsp_get(E_BSP_GET_TRES));
+
+	ctimer_set(&ci, t.interval, thrd_double_interval, (void *)&t);
+	ctimer_set(&ct, t.t_next, thrd_handle_send_timer, (void *)&t);
+}
+
+/*---------------------------------------------------------------------------*/
+
+static void
+thrd_reset_trickle_timer()
+{
+	ctimer_reset(&ci);
+	ctimer_reset(&ct);
+
+	t.t_start = bsp_getTick();
+	t.t_end = t.t_start + (t.i_min);
+	t.interval = t.i_min;				// I.
+	t.t_next = thrd_random_interval();	// t.
 
 	PRINTF
 	("thrd_reset_trickle_timer: Timer (I) will expire in %lu secs.\n",
@@ -156,15 +179,17 @@ thrd_reset_trickle_timer()
 void
 init(void)
 {
-	PRINTF("THRD_SEND_ADV: Sending Advertisements.\n");
-
 	TIMER_CONFIGURE();
 
-	PRINTF("THRD_SEND_ADV: imin = %lu, imax = %lu\n", t.i_min, t.i_max);
-
-	thrd_reset_trickle_timer();
+	thrd_start_trickle_timer();
 	return;
 }
 /*---------------------------------------------------------------------------*/
+
+void
+reset(void)
+{
+	thrd_reset_trickle_timer();
+}
 
 

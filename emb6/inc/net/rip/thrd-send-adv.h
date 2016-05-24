@@ -12,4 +12,6 @@
 
 extern void init(void);
 
+extern void reset(void);
+
 #endif /* EMB6_INC_NET_RIP_THRD_SEND_ADV_H_ */
