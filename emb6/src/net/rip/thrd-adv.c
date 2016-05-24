@@ -12,6 +12,7 @@
 #include "net_tlv.h"
 #include "thrd-route.h"
 #include "tlv.h"
+#include "thrd-partition.h"
 
 /*==============================================================================
                           LOCAL VARIABLE DECLARATIONS
@@ -25,7 +26,7 @@ static uint8_t route64_tlv[MAX_ROUTE64_TLV_DATA_SIZE];
 
 static uint16_t thrd_process_source(tlv_t *source_tlv);
 static void thrd_process_route64(uint8_t rid_sender, tlv_t *route64_tlv);
-static void thrd_process_leader(tlv_t *leader_tlv);
+static uint8_t thrd_get_id_seq_number(tlv_t *route64_tlv);
 
 /*==============================================================================
                                     LOCAL FUNCTIONS
@@ -110,24 +111,10 @@ thrd_process_route64(uint8_t rid_sender, tlv_t *route64_tlv)
 
 /* -------------------------------------------------------------------------- */
 
-static void
-thrd_process_leader(tlv_t *leader_tlv)
+static uint8_t
+thrd_get_id_seq_number(tlv_t *route64_tlv)
 {
-	if ( (leader_tlv->type == TLV_LEADER_DATA) && (leader_tlv->length == 8) ) {
-		uint32_t partition_id = (leader_tlv->value[0] << 24)
-					| (leader_tlv->value[1] << 16)
-					| (leader_tlv->value[2] << 8)
-					| (leader_tlv->value[3]);
-		uint8_t weight = leader_tlv->value[4];
-		uint8_t data_version = leader_tlv->value[5];
-		uint8_t stable_data_version = leader_tlv->value[6];
-		uint8_t leader_router_id = leader_tlv->value[7];
-
-		PRINTF("partition_id: %lu, weight: %d, data_version: %d, stable_data_version = %d, leader_router_id= %d\n",
-				partition_id, weight, data_version, stable_data_version, leader_router_id);
-
-		// TODO I think this is the place where partitioning should be handled.
-	}
+	return route64_tlv->value[0];
 }
 
 /*==============================================================================
@@ -140,7 +127,7 @@ thrd_process_adv(tlv_t *source_tlv, tlv_t *route64_tlv, tlv_t *leader_tlv)
 	// Obtain the router id of the sender.
 	uint8_t sender_rid = (thrd_process_source(source_tlv) & 0xFC00) >> 10;
 	thrd_process_route64(sender_rid, route64_tlv);
-	thrd_process_leader(leader_tlv);
+	thrd_partition_process(thrd_get_id_seq_number(route64_tlv), leader_tlv);
 }
 
 /* -------------------------------------------------------------------------- */
