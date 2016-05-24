@@ -267,13 +267,16 @@ uint32_t         bsp_get(en_bspParams_t en_param)
  */
 uint32_t bsp_getrand(uint32_t max)
 {
-    uint32_t ret;
+	uint32_t ret;
 
-    /* generate random number in a range of 0 to max */
-    ret = (uint32_t)random_rand();
-    ret = ret % max;
-    return ret;
+	/* generate random number in a range of 0 to max */
+	ret = (uint32_t)random_rand();
+	if(max)
+		ret = ret % max;
+
+	return ret;
 }
+
 
 
 /** @} */
