@@ -51,6 +51,7 @@ typedef struct
 {
 	uint8_t type;	// thrd_dev_type_t.
 	uint8_t isFFD;
+	uint8_t isRX_off_when_idle;
 } thrd_dev_t;
 
 /*! Thread Device Type Configuration. */
