@@ -20,7 +20,7 @@
 /**
  * The Router ID.
  */
-#if ( (THRD_DEV_TYPE == THRD_DEV_TYOE_ROUTER) || (THRD_DEV_TYPE == THRD_DEV_TYOE_REED) )
+#if ( (THRD_DEV_TYPE == THRD_DEV_TYPE_ROUTER) || (THRD_DEV_TYPE == THRD_DEV_TYPE_REED) )
 uint8_t Router_ID;
 #endif
 
