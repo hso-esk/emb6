@@ -18,8 +18,7 @@
                                      API FUNCTIONS
  =============================================================================*/
 
-void
-thrd_process_adv(tlv_t *source_tlv, tlv_t *route64_tlv, tlv_t *leader_tlv);
+void thrd_process_adv(uint16_t source_addr, tlv_route64_t *route64_tlv, tlv_leader_t *leader_tlv);
 
 tlv_t *thrd_generate_route64();
 
