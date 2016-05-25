@@ -5,14 +5,12 @@
 
 #include "tlv.h"
 
-#define DEBUG DEBUG_PRINT
-#include "uip-debug.h"
+
 
 
 /*==============================================================================
                                  API FUNCTIONS
  =============================================================================*/
-
 
 int8_t tlv_init(tlv_t ** tlv, uint8_t * ptr )
 {
@@ -25,6 +23,38 @@ int8_t tlv_init(tlv_t ** tlv, uint8_t * ptr )
 }
 
 
+int8_t tlv_leader_init(tlv_leader_t **tlv, uint8_t * ptr )
+{
+	if( ptr == NULL)
+		return 0 ;
+
+
+	*tlv= (tlv_leader_t* )  ptr;
+	return 1 ;
+}
+
+int8_t tlv_route64_init(tlv_route64_t **tlv, uint8_t * ptr )
+{
+	if( ptr == NULL)
+		return 0 ;
+
+
+	*tlv= (tlv_route64_t* )  ptr;
+	return 1 ;
+}
+
+int8_t tlv_connectivity_init(tlv_connectivity_t **tlv, uint8_t * ptr )
+{
+	if( ptr == NULL)
+		return 0 ;
+
+
+	*tlv= (tlv_connectivity_t* )  ptr;
+	return 1 ;
+
+}
+
+
 int8_t tlv_write(tlv_t *tlv, tlv_type_t type, int8_t length, uint8_t * value )
 {
 	if(tlv == NULL )
@@ -34,6 +64,26 @@ int8_t tlv_write(tlv_t *tlv, tlv_type_t type, int8_t length, uint8_t * value )
 	tlv->length=length;
 	memcpy(tlv->value, value, tlv->length);
 	return 1 ;
+}
+
+
+tlv_t* tlv_find(uint8_t * buf, uint8_t buf_length, const tlv_type_t type)
+{
+	tlv_t * tlv;
+	uint8_t i=0;
+
+	tlv_init(&tlv,buf);
+	while( tlv < (tlv_t*)&buf[buf_length])
+	{
+		if (tlv->type==type )
+		{
+			printf(" TLV exist ...\n" );
+			return  tlv;
+		}
+		i+=(tlv->length+2);
+		tlv_init(&tlv,&buf[i]);
+	}
+	return NULL;
 }
 
 
@@ -103,8 +153,8 @@ int8_t tlv_print(tlv_t* tlv)
 	case TLV_ADDRESS_REGISTRATION:
 		PRINTF(" ADDRESS_REGISTRATION");
 		break;
-	 default:
-		 PRINTF("Error tlv type not recognized ");
+	default:
+		PRINTF("Error tlv type not recognized ");
 		return 0 ;
 		break;
 	}
