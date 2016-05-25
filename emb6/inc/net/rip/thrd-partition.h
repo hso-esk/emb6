@@ -23,13 +23,15 @@ uint8_t ID_sequence_number;
 
 uint8_t Partition_weight;
 
+// uint8_t Leader_router_id; // ???
+
 /*==============================================================================
                                      API FUNCTIONS
  =============================================================================*/
 
 void thrd_partition_start(void);
 
-void thrd_partition_process(uint8_t id_sequence_number, tlv_t *leader_tlv);
+uint8_t thrd_partition_process(uint8_t id_sequence_number, tlv_leader_t *leader_tlv);
 
 void thrd_partition_empty(void);
 
