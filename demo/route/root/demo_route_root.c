@@ -219,17 +219,16 @@ static int8_t _mcast_sendMsg(void)
 		break;
 	case 1:
 
-		/*
+
 		rt64_tlv = thrd_generate_route64();
 
-		PRINTF("rt64_tlv->id_seq = %02x\n", rt64_tlv->id_seq);
+		PRINTF("rt64_tlv->id_sequence_number = %02x\n", rt64_tlv->id_sequence_number);
 		PRINTF("rt64_tlv->router_id_mask = %16x\n", rt64_tlv->router_id_mask);
-		PRINTF("rt64_tlv->lq[0] = %02x\n", rt64_tlv->lq[0]);
-		PRINTF("rt64_tlv->lq[1] = %02x\n", rt64_tlv->lq[1]);
-		PRINTF("rt64_tlv->lq[2] = %02x\n", rt64_tlv->lq[2]);
-		PRINTF("rt64_tlv->lq[3] = %02x\n", rt64_tlv->lq[3]);
-		PRINTF("rt64_tlv->lq[4] = %02x\n", rt64_tlv->lq[4]);
-		*/
+		PRINTF("rt64_tlv->lq[0] = %02x\n", rt64_tlv->lq_rd[0]);
+		PRINTF("rt64_tlv->lq[1] = %02x\n", rt64_tlv->lq_rd[1]);
+		PRINTF("rt64_tlv->lq[2] = %02x\n", rt64_tlv->lq_rd[2]);
+		PRINTF("rt64_tlv->lq[3] = %02x\n", rt64_tlv->lq_rd[3]);
+		PRINTF("rt64_tlv->lq[4] = %02x\n", rt64_tlv->lq_rd[4]);
 
 		// thrd_trickle_reset();
 
@@ -481,6 +480,8 @@ int8_t demo_routeRootInit(void)
 
 	// Initialize leader database.
 	thrd_ldb_init();
+
+	Router_ID = 1;
 
 	/* set the pointer to the udp-socket */
 	pst_udp_socket = &st_udp_socket;
