@@ -18,7 +18,7 @@
                           LOCAL VARIABLE DECLARATIONS
  =============================================================================*/
 
-static uint8_t route64_tlv[MAX_ROUTE64_TLV_DATA_SIZE];
+static uint8_t route64_data[MAX_ROUTE64_TLV_DATA_SIZE];
 
 /*==============================================================================
                                LOCAL FUNCTION PROTOTYPES
@@ -98,21 +98,63 @@ thrd_get_id_seq_number(tlv_route64_t  *route64_tlv)
 void
 thrd_process_adv(uint16_t source_addr, tlv_route64_t *route64_tlv, tlv_leader_t *leader_tlv)
 {
+	thrd_partition_process(thrd_get_id_seq_number(route64_tlv), leader_tlv);
+	thrd_process_route64((source_addr & 0xFC00) >> 10, route64_tlv);
+
+	/* Correct solution:
 	if ( thrd_partition_process(thrd_get_id_seq_number(route64_tlv), leader_tlv) ) {
 		thrd_process_route64((source_addr & 0xFC00) >> 10, route64_tlv);
 	}
+	*/
 }
 
 /* -------------------------------------------------------------------------- */
 
-tlv_t *
-thrd_generate_route64()
+tlv_route64_t
+*thrd_generate_route64()
 {
-	tlv_t *tlv;								// TLV structure.
+	tlv_route64_t *route64_tlv;				// Route64 TLV structure.
 	thrd_rdb_id_t *rid;						// Router IDs.
 	thrd_rdb_link_t *link;
 	thrd_rdb_route_t *route;				// Routing entries.
-	uint8_t tlv_len = 5;					// TLV length (value).
+	uint8_t lq_rq_pos = 9;					// Position of the first link quality and route data byte.
+
+	route64_data[0] = ID_sequence_number;
+
+	rid = thrd_rdb_rid_head();
+
+	// Router ID Mask and Link Quality and Router Data.
+	uint64_t router_id_mask = 0x0000000000000000;
+	for ( rid = thrd_rdb_rid_head(); rid != NULL; rid = thrd_rdb_rid_next(rid) ) {
+
+		uint8_t lq_rd = 0x00;	// Link Quality and Route Data.
+
+		router_id_mask |= (0x8000000000000000 >> rid->router_id);
+		// Link Set entry.
+		link = thrd_rdb_link_lookup(rid->router_id);
+		if ( link != NULL ) {
+			lq_rd |= (link->L_outgoing_quality << 6);
+			lq_rd |= (link->L_incoming_quality << 4);
+		}
+		// Routing entry.
+		route = thrd_rdb_route_lookup(rid->router_id);
+		if ( route != NULL ) {
+			lq_rd |= (route->R_route_cost);
+		}
+		route64_data[lq_rq_pos] = lq_rd;
+		lq_rq_pos++;
+	}
+
+	route64_data[8] = (uint8_t) router_id_mask;
+	for ( uint8_t i = 7; i > 0; i-- ) {
+		router_id_mask >>= 8;
+		route64_data[i] = (uint8_t) router_id_mask;
+	}
+
+	if ( tlv_route64_init(&route64_tlv, route64_data) == 0 )
+		return NULL;
+
+	/*
 
 	// TLV type.
 	route64_tlv[0] = TLV_ROUTE64;
@@ -156,6 +198,8 @@ thrd_generate_route64()
 	if ( tlv_init(&tlv, route64_tlv) == 0 )
 		return NULL;
 
-	return tlv;
+	*/
+
+	return route64_tlv;
 }
 
