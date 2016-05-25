@@ -53,9 +53,9 @@ typedef struct __attribute__((__packed__)) {
 
 
 typedef struct __attribute__((__packed__)) {
-	uint8_t  id_seq    ;
+	uint8_t  id_sequence_number    ;
 	uint64_t router_id_mask  ;
-	uint8_t  lq[1]   ;
+	uint8_t  lq_rd[1]   ;
 }  tlv_route64_t   ;
 
 
