@@ -122,13 +122,11 @@ uint8_t cnt = 0;
 uint8_t l_m = 5;
 
 // TLV value buffers.
-static uint8_t source_tlv[4];
-static uint8_t route64_tlv[MAX_ROUTE64_TLV_DATA_SIZE];
-static uint8_t leader_tlv[10];
+static uint8_t route64_data[MAX_ROUTE64_TLV_DATA_SIZE];
+static uint8_t leader_data[8];
 
 static int8_t _mcast_sendMsg(void)
 {
-
 	uint32_t id;
 
 	id = uip_htonl(seq_id);
@@ -147,9 +145,11 @@ static int8_t _mcast_sendMsg(void)
 
 	// --- NEW
 
-	tlv_t *tlv_source;
 	tlv_t *tlv_route64;
 	tlv_t *tlv_leader;
+
+	tlv_route64_t *rt64_tlv;
+	tlv_leader_t *ld_tlv;
 
 	// Routing Database.
 	switch (cnt) {
@@ -157,53 +157,51 @@ static int8_t _mcast_sendMsg(void)
 
 		// thrd_trickle_init();
 
-		thrd_partition_start();
+		// thrd_partition_start();
 
 		// thrd_rdb_rid_empty();
 
 
-
-		// Build Source TLV.
-		source_tlv[0] = TLV_SOURCE_ADDRESS;
-		source_tlv[1] = 2;
-		source_tlv[2] = 0x04;
-		source_tlv[3] = 0x00;
-		tlv_init(&tlv_source, source_tlv);
-		tlv_print(tlv_source);
-
 		// Build Route64 TLV.
-		route64_tlv[0] = TLV_ROUTE64;
-		route64_tlv[2] = 1;
-		uint32_t router_id_mask = 0xD5000000;
-		route64_tlv[7] = 0x64;	// RID = 0.
-		route64_tlv[8] = 0xB7;	// RID = 1.
-		route64_tlv[9] = 0xC5;	// RID = 3.
-		route64_tlv[10] = 0x9A;	// RID = 5.
-		route64_tlv[11] = 0x71;	// RID = 7.
-		route64_tlv[6] = (uint8_t) router_id_mask;
-		for ( uint8_t i = 5; i > 2; i-- ) {
+		route64_data[0] = TLV_ROUTE64;
+		route64_data[2] = 1;
+		uint64_t router_id_mask = uip_htonll( 0xD500000000000000 ); //-> 1101 0101 0000 0000 ....
+													  //-> OUT IN ROUTE
+		route64_data[11] = 0x64;	// RID = 0. 		-> 01  10 0100
+		route64_data[12] = 0xB7;	// RID = 1. 		-> 10  11 0111
+		route64_data[13] = 0xC5;	// RID = 3. 		-> 11  00 0101
+		route64_data[14] = 0x9A;	// RID = 5. 		-> 10  01 1010
+		route64_data[15] = 0x71;	// RID = 7. 		-> 01  11 0001
+		route64_data[10] = (uint8_t) router_id_mask;
+		for ( uint8_t i = 9; i > 2; i-- ) {
 			router_id_mask >>= 8;
-			route64_tlv[i] = (uint8_t) router_id_mask;
+			route64_data[i] = (uint8_t) router_id_mask;
 		}
-		route64_tlv[1] = 10;
-		tlv_init(&tlv_route64, route64_tlv);
+		route64_data[1] = 14;
+		tlv_init(&tlv_route64, route64_data);
 		tlv_print(tlv_route64);
 
+		tlv_route64_init(&rt64_tlv, tlv_route64->value);
+
+
 		// Build Leader TLV.
-		leader_tlv[0] = TLV_LEADER_DATA;
-		leader_tlv[1] = 8;
-		leader_tlv[2] = 0x00;
-		leader_tlv[3] = 0x00;
-		leader_tlv[4] = 0x00;
-		leader_tlv[5] = 0x01;
-		leader_tlv[6] = 64;
-		leader_tlv[7] = 7;
-		leader_tlv[8] = 5;
-		leader_tlv[9] = 3;
-		tlv_init(&tlv_leader, leader_tlv);
+		leader_data[0] = TLV_LEADER_DATA;
+		leader_data[1] = 8;
+		leader_data[2] = 0x00;
+		leader_data[3] = 0x00;
+		leader_data[4] = 0x00;
+		leader_data[5] = 0x01;
+		leader_data[6] = 64;
+		leader_data[7] = 7;
+		leader_data[8] = 5;
+		leader_data[9] = 3;
+		tlv_init(&tlv_leader, leader_data);
 		tlv_print(tlv_leader);
 
-		thrd_process_adv(tlv_source, tlv_route64, tlv_leader);
+		tlv_leader_init(&ld_tlv, tlv_leader->value);
+
+
+		thrd_process_adv(0x0400, rt64_tlv, ld_tlv);
 
 
 
@@ -220,6 +218,18 @@ static int8_t _mcast_sendMsg(void)
 		printf("------------------------------------------\n\n");
 		break;
 	case 1:
+
+		/*
+		rt64_tlv = thrd_generate_route64();
+
+		PRINTF("rt64_tlv->id_seq = %02x\n", rt64_tlv->id_seq);
+		PRINTF("rt64_tlv->router_id_mask = %16x\n", rt64_tlv->router_id_mask);
+		PRINTF("rt64_tlv->lq[0] = %02x\n", rt64_tlv->lq[0]);
+		PRINTF("rt64_tlv->lq[1] = %02x\n", rt64_tlv->lq[1]);
+		PRINTF("rt64_tlv->lq[2] = %02x\n", rt64_tlv->lq[2]);
+		PRINTF("rt64_tlv->lq[3] = %02x\n", rt64_tlv->lq[3]);
+		PRINTF("rt64_tlv->lq[4] = %02x\n", rt64_tlv->lq[4]);
+		*/
 
 		// thrd_trickle_reset();
 
@@ -304,7 +314,7 @@ static int8_t _mcast_sendMsg(void)
 
 	if ( cnt <= 8 ) {
 		// Print all data of the routing database.
-		// thrd_rdb_print_routing_database();
+		thrd_rdb_print_routing_database();
 	}
 
 
