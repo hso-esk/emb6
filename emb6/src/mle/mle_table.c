@@ -77,7 +77,7 @@ mle_neighbor_node_t * mle_find_child( uint8_t id)
 
 
 
-static mle_neighbor_node_t * mle_add_neigbhor(struct memb* m , list_t *list , uint8_t id, uip_ipaddr_t  address, uint32_t  MLEFrameCounter ,
+static mle_neighbor_node_t * mle_add_neigbhor(struct memb* m , list_t *list , uint8_t id, uip_ipaddr_t * address, uint32_t  MLEFrameCounter ,
 		uint8_t modeTLV, uint8_t  linkQuality)
 {
 	mle_neighbor_node_t *nb;
@@ -103,7 +103,7 @@ static mle_neighbor_node_t * mle_add_neigbhor(struct memb* m , list_t *list , ui
 		nb->id = id;
 		//uip_ip6addr(&nb->address, 0xff02, 0, 0, 0, 0, 0, 0, 0x0001);
 
-		uip_ip6addr_copy(&nb->address ,&address);
+		uip_ip6addr_copy(&nb->address ,address);
 		nb->MLEFrameCounter = MLEFrameCounter;
 		nb->linkQuality=linkQuality;
 		nb->modeTLV = modeTLV;
@@ -123,13 +123,13 @@ static mle_neighbor_node_t * mle_add_neigbhor(struct memb* m , list_t *list , ui
 	return nb;
 }
 
-mle_neighbor_node_t * mle_add_child(uint8_t id, uip_ipaddr_t  address, uint32_t  MLEFrameCounter ,
+mle_neighbor_node_t * mle_add_child(uint8_t id, uip_ipaddr_t * address, uint32_t  MLEFrameCounter ,
 		uint8_t modeTLV, uint8_t  linkQuality)
 {
 	return mle_add_neigbhor(&childs_memb , &childs_list ,  id,   address,   MLEFrameCounter , modeTLV,   linkQuality);
 }
 
-mle_neighbor_node_t * mle_add_nb_router(uint8_t id, uip_ipaddr_t  address, uint32_t  MLEFrameCounter ,
+mle_neighbor_node_t * mle_add_nb_router(uint8_t id, uip_ipaddr_t * address, uint32_t  MLEFrameCounter ,
 		uint8_t modeTLV, uint8_t  linkQuality)
 {
 	return mle_add_neigbhor(&nb_router_memb ,  &nb_router_list ,  id,   address,   MLEFrameCounter , modeTLV,   linkQuality);

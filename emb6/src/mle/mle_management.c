@@ -34,7 +34,7 @@ static  uip_ipaddr_t                s_destAddr;
 struct  ctimer                      c_mle_Timer;
 static 	mle_cmd_t 					cmd; // command buffer
 static mle_param_t					param;
-#define get_rssi()		             20 //sicslowpan_get_last_rssi()
+#define get_rssi()		             30 //sicslowpan_get_last_rssi()
 
 
 typedef enum {
@@ -43,6 +43,8 @@ typedef enum {
 	JP_WAIT_1,
 	JP_WAIT_2,
 	JP_PARENT_SELECT,
+	JP_SEND_CHILD_REQ,
+	JP_SAVE_PARENT,
 	JP_FAIL,
 }jp_state_t; // join process state
 
@@ -50,6 +52,8 @@ typedef enum {
 								LOCAL FUNCTION
  =============================================================================*/
 static uint8_t  		mle_send_msg(mle_cmd_t* cmd,  uip_ipaddr_t *dest_addr);
+#define routerMask(scanMask)			(BIT_CHECK(scanMask,7))
+#define ReedMask(scanMask)				(BIT_CHECK(scanMask,6))
 
 /************************ join process function ****************************/
 
@@ -73,7 +77,7 @@ static uint8_t send_mle_parent_request(uint8_t R, uint8_t E)
 }
 
 
-static uint8_t reply_for_mle_parent_request(void *ptr)
+static void reply_for_mle_parent_request(void *ptr)
 {
 
 
@@ -93,22 +97,48 @@ static uint8_t reply_for_mle_parent_request(void *ptr)
 		// connectivity tlv
 		//add_Cnnectivity_to_cmd(&cmd,MAX_CHILD,MyNode.childs_counter,count_neighbor_LQ(3),count_neighbor_LQ(2),count_neighbor_LQ(1),0,0);
 		add_version_to_cmd(&cmd);
+
 		mle_send_msg( &cmd,param.source_addr);
 
 	}
-	return 1 ;
+
 }
+
+static uint8_t mapRSSI(uint8_t rssi )
+{
+	if ( rssi > 20)
+		return 3;
+	else if ( (rssi > 10 )
+			&& (rssi <= 20  ))
+		return 2;
+	else if ( (rssi > 2 )
+			&& (rssi <= 10  ))
+		return 1;
+	else
+		return 0;
+
+}
+
+
 
 static uint8_t calculate_two_way_LQ(uint8_t my_rssi , uint8_t rec_rssi)
 {
-
+if (my_rssi<rec_rssi)
+	return mapRSSI(my_rssi);
+else
+	return mapRSSI(rec_rssi);
 }
+
+
+
 
 void mle_join_process(void *ptr)
 {
 	static 	jp_state_t 		jp_state ;  // join process current state
+	mle_parent_t parent; // parent candidate
+	tlv_t * tlv;
 	uint8_t finish=0;
-	static  uint8_t 		flag=0; // parent response with highest link quality received || parent response received
+	static  uint8_t 		flag=0; // parent response received
 
 
 	if(MyNode.OpMode==NOT_LINKED)
@@ -123,12 +153,18 @@ void mle_join_process(void *ptr)
 				jp_state=JP_WAIT_1;
 				PRINTF("JP Waiting for incoming response form active Router\n"ANSI_COLOR_RESET);
 				ctimer_set(&c_mle_Timer, 3 * bsp_get(E_BSP_GET_TRES) , mle_join_process, NULL);
+
+				parent.two_way_LQ=0;
+				parent.jp_challenge=0;
+				parent.is_Router=0;
+				parent.LQ3=0;
+
 				finish=1;
 				break;
 			case JP_WAIT_1:
 				if(ctimer_expired(&c_mle_Timer)) // that means that this function was triggered by the ctimer
 				{
-					if(!flag)
+					if(!flag || parent.LQ3 < 3)
 						jp_state=JP_SEND_MCAST_PR_TO_ROUTER_REED;
 					else
 						jp_state=JP_PARENT_SELECT;
@@ -136,6 +172,12 @@ void mle_join_process(void *ptr)
 				else
 				{
 					PRINTF("JP received response from active Router \n"ANSI_COLOR_RESET);
+					tlv=mle_find_tlv_in_cmd(param.rec_cmd,TLV_LINK_MARGIN);
+					if(parent.two_way_LQ<calculate_two_way_LQ(tlv->value[0], param.rec_rssi))
+						parent.two_way_LQ=calculate_two_way_LQ(tlv->value[0], param.rec_rssi);
+					//else if (parent.is_Router<)
+
+					flag=1;
 					finish=1;
 				}
 				break;
@@ -163,6 +205,16 @@ void mle_join_process(void *ptr)
 				break;
 			case JP_PARENT_SELECT:
 				PRINTF("JP Parent selection \n"ANSI_COLOR_RESET);
+
+				finish=1;
+				break ;
+			case JP_SEND_CHILD_REQ:
+				PRINTF("JP send Child ID Request \n"ANSI_COLOR_RESET);
+
+				finish=1;
+				break ;
+			case JP_SAVE_PARENT:
+				PRINTF("JP Parent Stored \n"ANSI_COLOR_RESET);
 
 				finish=1;
 				break ;
@@ -218,7 +270,7 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 	case LINK_REJECT:
 		break;
 	case ADVERTISEMENT:
-		tlv=mle_find_tlv_in_cmd(cmd,TLV_ROUTER64);
+		tlv=mle_find_tlv_in_cmd(cmd,TLV_ROUTE64);
 		// Lukas_process_route64(tlv->length , tlv->value);
 		break;
 	case UPDATE:
@@ -240,19 +292,38 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 		 	Its current routing path cost to the Leader is infinite.
 			 */
 
-
 			// generate random number depending on scan mask and then reply
-
 
 			/* check the scan mask TLV to know if i should reply or not */
 			tlv=mle_find_tlv_in_cmd(cmd,TLV_SCAN_MASK);
-			if((MyNode.OpMode==PARENT && BIT_CHECK(tlv->value[0],7) ) || (MyNode.OpMode==CHILD && BIT_CHECK(tlv->value[0],6) ) )
+			if((MyNode.OpMode==PARENT && routerMask(tlv->value[0]) ) || (MyNode.OpMode==CHILD && ReedMask(tlv->value[0]) ) )
 			{
+				uint16_t MaxRand; //random delay before reply
+				if(ReedMask(tlv->value[0]))
+					MaxRand=1000;// max response after 1000 ms
+				else
+					MaxRand=500;// max response after 500 ms
+
+
+/*
+				mle_neighbor_node_t * nb;
+				tlv=mle_find_tlv_in_cmd(cmd,TLV_MODE);
+				uint8_t id=0;
+				do
+				{
+					id++;
+					nb=mle_add_child( id ,(uip_ipaddr_t *) source_addr,  0 , tlv->value[0],  get_rssi());
+
+				}while (nb==NULL);
+				ctimer_set(&nb->timeOut, bsp_getrand(MaxRand) * bsp_get(E_BSP_GET_TRES)/1000 , reply_for_mle_parent_request, (void *) id );
+
+*/
+
 				// prepare param
 				param.rec_cmd=cmd;
 				param.rec_rssi=get_rssi();
-				param.source_addr=(uip_ipaddr_t *)source_addr;
-				reply_for_mle_parent_request(NULL);
+				param.source_addr=(uip_ipaddr_t *) source_addr;
+				ctimer_set(&c_mle_Timer, bsp_getrand(MaxRand) * (bsp_get(E_BSP_GET_TRES)/1000) , reply_for_mle_parent_request, (void *) NULL );
 			}
 		}
 		break;
@@ -261,7 +332,14 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 		/* check the response TLV before processing the parent response */
 		tlv=mle_find_tlv_in_cmd(cmd,TLV_RESPONSE);
 		if(comp_resp_chall(MyNode.jp_challenge,tlv->value))
+		{
+			param.rec_cmd=cmd;
+			param.rec_rssi=get_rssi();
+			param.source_addr=(uip_ipaddr_t *) source_addr;
+
 			mle_join_process(NULL);
+
+		}
 		break;
 	case CHILD_ID_REQUEST:
 		// dont forget to increment the child counter
@@ -317,15 +395,18 @@ static uint8_t mle_send_msg(mle_cmd_t* cmd,  uip_ipaddr_t *dest_addr )
 			return 0;
 	}
 
+
+		PRINTFC( "MLE msg  sent to : "  );
+		PRINT6ADDR(dest_addr);
+		PRINTF(ANSI_COLOR_RESET "\n"  );
+
 	//	PRINTF("data sent length : %i \n", cmd->used_data+1);
 	if(!udp_socket_sendto(&MyNode.udp_socket, (uint8_t*) cmd , cmd->used_data+1 , dest_addr ,MLE_UDP_RPORT))
 	{
 		PRINTF(ANSI_COLOR_RED "Failed to send MLE msg\n"ANSI_COLOR_RESET);
 		return 0;
 	}
-	PRINTFC( "MLE msg  sent to : "  );
-	PRINT6ADDR(dest_addr);
-	PRINTF(ANSI_COLOR_RESET "\n"  );
+
 
 	return 1 ;
 

@@ -59,6 +59,12 @@ typedef struct {
 }mle_node_t ;
 
 
+typedef struct {
+ 	uint32_t 	jp_challenge ;
+	uint8_t  	two_way_LQ  ;
+	uint8_t  	is_Router  ;  // the parent candidate is active router
+	uint8_t  	LQ3  ; // LQ3 from connectivity
+}mle_parent_t ;  // store best parent candidate
 
 /*==============================================================================
                                  API FUNCTIONS

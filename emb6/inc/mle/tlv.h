@@ -30,7 +30,7 @@ typedef enum  {
 	TLV_LINK_QUALITY,  // Not used in Thread Network
 	TLV_NETWORK_PARAMETER,  // Not used in Thread Network
 	TLV_MLE_FRAME_COUNTER,
-	TLV_ROUTER64,
+	TLV_ROUTE64,
 	TLV_ADDRESS16,
 	TLV_LEADER_DATA,
 	TLV_NETWORK_DATA,
@@ -53,18 +53,18 @@ typedef struct __attribute__((__packed__)) {
 
 
 typedef struct __attribute__((__packed__)) {
-	uint8_t  id_seq    ;
-	uint8_t	 router_id_msk[8]  ;
-	uint8_t  lq[1]   ;
+	uint8_t  id_sequence_number    ;
+	uint64_t router_id_mask  ;
+	uint8_t  lq_rd[1]   ;
 }  tlv_route64_t   ;
 
 
 typedef struct __attribute__((__packed__)) {
 	uint32_t  partition_id  ;
-	uint8_t	  weighting  ;
+	uint8_t	  weight  ;
 	uint8_t   data_version  ;
 	uint8_t   stable_data_version  ;
-	uint8_t   Leader_routerID  ;
+	uint8_t   leader_router_id  ;
 }  tlv_leader_t   ;
 
 
