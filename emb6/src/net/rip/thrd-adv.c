@@ -40,12 +40,12 @@ thrd_process_route64(uint8_t rid_sender, tlv_route64_t *route64_tlv)
 
 	if ( route64_tlv != NULL ) {
 
-		if ( route64_tlv->id_seq > ID_sequence_number ) {
+		if ( route64_tlv->id_sequence_number > ID_sequence_number ) {
 
 			// Empty the Router ID Set.
 			thrd_rdb_rid_empty();
 
-			ID_sequence_number = route64_tlv->id_seq;
+			ID_sequence_number = route64_tlv->id_sequence_number;
 
 			// printf("router_id_mask = %02x\n", router_id_mask);
 
@@ -63,13 +63,13 @@ thrd_process_route64(uint8_t rid_sender, tlv_route64_t *route64_tlv)
 					// Process Link Quality and Route Data.
 
 					// Incoming quality.
-					uint8_t lq_rd_data = (route64_tlv->lq[data_cnt] & 0x30) >> 6;
+					uint8_t lq_rd_data = (route64_tlv->lq_rd[data_cnt] & 0x30) >> 6;
 					if ( lq_rd_data != 0 ) {
 						link = thrd_rdb_link_lookup(id_cnt);
 						link->L_outgoing_quality = lq_rd_data;
 					}
 					// Route data.
-					lq_rd_data = (route64_tlv->lq[data_cnt] & 0x0F);
+					lq_rd_data = (route64_tlv->lq_rd[data_cnt] & 0x0F);
 					// TODO Check whether the destination differs to the current router id. (Otherwise, we would create a loop).
 					thrd_rdb_route_update(rid_sender, id_cnt, lq_rd_data);
 
@@ -88,7 +88,7 @@ thrd_process_route64(uint8_t rid_sender, tlv_route64_t *route64_tlv)
 static uint8_t
 thrd_get_id_seq_number(tlv_route64_t  *route64_tlv)
 {
-	return route64_tlv->id_seq;
+	return route64_tlv->id_sequence_number;
 }
 
 /*==============================================================================
@@ -130,17 +130,24 @@ tlv_route64_t
 		uint8_t lq_rd = 0x00;	// Link Quality and Route Data.
 
 		router_id_mask |= (0x8000000000000000 >> rid->router_id);
-		// Link Set entry.
-		link = thrd_rdb_link_lookup(rid->router_id);
-		if ( link != NULL ) {
-			lq_rd |= (link->L_outgoing_quality << 6);
-			lq_rd |= (link->L_incoming_quality << 4);
+
+		if ( rid->router_id != Router_ID ) {
+
+			// Link Set entry.
+			link = thrd_rdb_link_lookup(rid->router_id);
+			if ( link != NULL ) {
+				lq_rd |= (link->L_outgoing_quality << 6);
+				lq_rd |= (link->L_incoming_quality << 4);
+			}
+			// Routing entry.
+			route = thrd_rdb_route_lookup(rid->router_id);
+			if ( route != NULL ) {
+				lq_rd |= (route->R_route_cost);
+			}
+		} else {
+			lq_rd = 0x01;
 		}
-		// Routing entry.
-		route = thrd_rdb_route_lookup(rid->router_id);
-		if ( route != NULL ) {
-			lq_rd |= (route->R_route_cost);
-		}
+
 		route64_data[lq_rq_pos] = lq_rd;
 		lq_rq_pos++;
 	}
@@ -153,52 +160,6 @@ tlv_route64_t
 
 	if ( tlv_route64_init(&route64_tlv, route64_data) == 0 )
 		return NULL;
-
-	/*
-
-	// TLV type.
-	route64_tlv[0] = TLV_ROUTE64;
-
-	// ID Sequence number.
-	route64_tlv[2] = ID_sequence_number;
-
-	rid = thrd_rdb_rid_head();
-
-	// Router ID Mask and Link Quality and Router Data.
-	uint32_t router_id_mask = 0;
-	for ( rid = thrd_rdb_rid_head(); rid != NULL; rid = thrd_rdb_rid_next(rid) ) {
-
-		uint8_t lq_rd = 0x00;	// Link Quality and Route Data.
-
-		router_id_mask |= (0x80000000 >> rid->router_id);
-		// Link Set entry.
-		link = thrd_rdb_link_lookup(rid->router_id);
-		if ( link != NULL ) {
-			lq_rd |= (link->L_outgoing_quality << 6);
-			lq_rd |= (link->L_incoming_quality << 4);
-		}
-		// Routing entry.
-		route = thrd_rdb_route_lookup(rid->router_id);
-		if ( route != NULL ) {
-			lq_rd |= (route->R_route_cost);
-		}
-		route64_tlv[tlv_len + 2] = lq_rd;
-		tlv_len++;
-	}
-
-	route64_tlv[6] = (uint8_t) router_id_mask;
-	for ( uint8_t i = 5; i > 2; i-- ) {
-		router_id_mask >>= 8;
-		route64_tlv[i] = (uint8_t) router_id_mask;
-	}
-
-	// Add length.
-	route64_tlv[1] = tlv_len;
-
-	if ( tlv_init(&tlv, route64_tlv) == 0 )
-		return NULL;
-
-	*/
 
 	return route64_tlv;
 }
