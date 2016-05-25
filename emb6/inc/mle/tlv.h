@@ -51,12 +51,45 @@ typedef struct __attribute__((__packed__)) {
 	uint8_t  value[1]   ; // pointer to the value
 }  tlv_t   ;
 
+
+typedef struct __attribute__((__packed__)) {
+	uint8_t  id_seq    ;
+	uint8_t	 router_id_msk[8]  ;
+	uint8_t  lq[1]   ;
+}  tlv_route64_t   ;
+
+
+typedef struct __attribute__((__packed__)) {
+	uint32_t  partition_id  ;
+	uint8_t	  weighting  ;
+	uint8_t   data_version  ;
+	uint8_t   stable_data_version  ;
+	uint8_t   Leader_routerID  ;
+}  tlv_leader_t   ;
+
+
+typedef struct __attribute__((__packed__)) {
+	uint8_t   maxChild  ;
+	uint8_t	  child_count  ;
+	uint8_t   LQ3  ;
+	uint8_t   LQ2  ;
+	uint8_t   LQ1  ;
+	uint8_t   LeaderCost  ;
+	uint8_t   id_seq  ;
+}  tlv_connectivity_t   ;
+
 /*==============================================================================
 								API FUNCTION
  =============================================================================*/
 
-
 int8_t tlv_init(tlv_t **tlv, uint8_t * ptr );
+
+int8_t tlv_leader_init(tlv_leader_t **tlv, uint8_t * ptr );
+
+int8_t tlv_route64_init(tlv_route64_t **tlv, uint8_t * ptr );
+
+int8_t tlv_connectivity_init(tlv_connectivity_t **tlv, uint8_t * ptr );
+
 
 /**
  * @brief  write on tlv object

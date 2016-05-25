@@ -231,8 +231,19 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 		break;
 	case PARENT_REQUEST:
 		// check if child table is not full
-		if(MyNode.childs_counter<MAX_CHILD) // generate random number depending on scan mask and then reply
+		if(MyNode.childs_counter<MAX_CHILD)
 		{
+			/* check: A Router MUST NOT send an MLE  Parent Response if:
+			It is disconnected from its Partition (that is, it has not received
+			an updated ID sequence number within LEADER_TIMEOUT seconds
+			OR
+		 	Its current routing path cost to the Leader is infinite.
+			 */
+
+
+			// generate random number depending on scan mask and then reply
+
+
 			/* check the scan mask TLV to know if i should reply or not */
 			tlv=mle_find_tlv_in_cmd(cmd,TLV_SCAN_MASK);
 			if((MyNode.OpMode==PARENT && BIT_CHECK(tlv->value[0],7) ) || (MyNode.OpMode==CHILD && BIT_CHECK(tlv->value[0],6) ) )
@@ -253,7 +264,13 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 			mle_join_process(NULL);
 		break;
 	case CHILD_ID_REQUEST:
-		// dont fprget to incremnt the child counter
+		// dont forget to increment the child counter
+
+		/*
+		 * If the Mode TLV indicates that the sender is an rx-off-when-idle device, it
+		 * MUST begin sending IEEE 802.15.4 data requests after sending the Child ID request
+		 */
+
 		break;
 	case CHILD_ID_RESPONSE:
 		break;
@@ -300,7 +317,7 @@ static uint8_t mle_send_msg(mle_cmd_t* cmd,  uip_ipaddr_t *dest_addr )
 			return 0;
 	}
 
-//	PRINTF("data sent length : %i \n", cmd->used_data+1);
+	//	PRINTF("data sent length : %i \n", cmd->used_data+1);
 	if(!udp_socket_sendto(&MyNode.udp_socket, (uint8_t*) cmd , cmd->used_data+1 , dest_addr ,MLE_UDP_RPORT))
 	{
 		PRINTF(ANSI_COLOR_RED "Failed to send MLE msg\n"ANSI_COLOR_RESET);

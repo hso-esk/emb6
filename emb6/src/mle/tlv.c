@@ -12,7 +12,6 @@
                                  API FUNCTIONS
  =============================================================================*/
 
-
 int8_t tlv_init(tlv_t ** tlv, uint8_t * ptr )
 {
 	if( ptr == NULL)
@@ -21,6 +20,38 @@ int8_t tlv_init(tlv_t ** tlv, uint8_t * ptr )
 
 	*tlv= (tlv_t* )  ptr;
 	return 1 ;
+}
+
+
+int8_t tlv_leader_init(tlv_leader_t **tlv, uint8_t * ptr )
+{
+	if( ptr == NULL)
+		return 0 ;
+
+
+	*tlv= (tlv_leader_t* )  ptr;
+	return 1 ;
+}
+
+int8_t tlv_route64_init(tlv_route64_t **tlv, uint8_t * ptr )
+{
+	if( ptr == NULL)
+		return 0 ;
+
+
+	*tlv= (tlv_route64_t* )  ptr;
+	return 1 ;
+}
+
+int8_t tlv_connectivity_init(tlv_connectivity_t **tlv, uint8_t * ptr )
+{
+	if( ptr == NULL)
+		return 0 ;
+
+
+	*tlv= (tlv_connectivity_t* )  ptr;
+	return 1 ;
+
 }
 
 
@@ -122,8 +153,8 @@ int8_t tlv_print(tlv_t* tlv)
 	case TLV_ADDRESS_REGISTRATION:
 		PRINTF(" ADDRESS_REGISTRATION");
 		break;
-	 default:
-		 PRINTF("Error tlv type not recognized ");
+	default:
+		PRINTF("Error tlv type not recognized ");
 		return 0 ;
 		break;
 	}
