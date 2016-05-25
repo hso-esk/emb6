@@ -48,16 +48,13 @@ thrd_partition_start(void)
 		PRINTF("thrd_partition_start: Starting new Thread Partition.\n");
 		thrd_leader_init();		// Initialize itself as the leader.
 
-		Partition_ID = (bsp_getrand(0) << 24) //
-				| (bsp_getrand(0) << 16)
-				| (bsp_getrand(0) << 8)
-				| (bsp_getrand(0));
+		Partition_ID = (bsp_getrand(0) << 16) | (bsp_getrand(0));
 		VN_version = (uint8_t) bsp_getrand(0);
 		VN_stable_version = (uint8_t) bsp_getrand(0);
 		ID_sequence_number = (uint8_t) bsp_getrand(0);
 		Partition_weight = 64;
 
-		// thrd_print_partition_data();
+		thrd_print_partition_data();
 	}
 }
 
