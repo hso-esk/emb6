@@ -88,7 +88,7 @@ void uip_debug_lladdr_print(const uip_lladdr_t *addr);
 #define PRINTFG(...) printf(ANSI_COLOR_GREEN __VA_ARGS__ )
 #define PRINTFC(...) printf(ANSI_COLOR_CYAN __VA_ARGS__ )
 #define PRINTFM(...) printf(ANSI_COLOR_MAGENTA __VA_ARGS__ )
-#define PRESET()     printf(ANSI_COLOR_RESET "\n")
+#define PRESET()     printf(ANSI_COLOR_RESET " \n")
 #endif
 #define PRINT6ADDR(addr) uip_debug_ipaddr_print(addr)
 #define PRINTLLADDR(lladdr) uip_debug_lladdr_print(lladdr)
