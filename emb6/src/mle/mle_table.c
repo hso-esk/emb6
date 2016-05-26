@@ -17,11 +17,11 @@
 
 
 LIST(nb_router_list);
-MEMB(nb_router_memb, mle_neighbor_node_t, MAX_NB_ROUTER);
+MEMB(nb_router_memb, mle_neighbor_t, MAX_NB_ROUTER);
 
 
 LIST(childs_list);
-MEMB(childs_memb, mle_neighbor_node_t, MAX_CHILD);
+MEMB(childs_memb, mle_neighbor_t, MAX_CHILD);
 
 
 /******  functions to manipulate the neighbors list   *******/
@@ -36,16 +36,16 @@ void mle_nb_device_init(void)
 }
 
 
-static mle_neighbor_node_t * mle_neigbhor_head(list_t* list)
+static mle_neighbor_t * mle_neigbhor_head(list_t* list)
 {
 	return list_head(*list);
 }
 
-mle_neighbor_node_t * mle_childs_head(void)
+mle_neighbor_t * mle_childs_head(void)
 {
 	return mle_neigbhor_head(&childs_list);
 }
-mle_neighbor_node_t * mle_nb_router_head(void)
+mle_neighbor_t * mle_nb_router_head(void)
 {
 	return mle_neigbhor_head(&nb_router_list);
 }
@@ -53,9 +53,9 @@ mle_neighbor_node_t * mle_nb_router_head(void)
 
 
 
-static mle_neighbor_node_t * mle_find_neigbhor(list_t *list, uint8_t id)
+static mle_neighbor_t * mle_find_neigbhor(list_t *list, uint8_t id)
 {
-	mle_neighbor_node_t *nb;
+	mle_neighbor_t *nb;
 
 	for (nb = mle_neigbhor_head(list); nb != NULL; nb = list_item_next(nb))
 	{
@@ -66,21 +66,21 @@ static mle_neighbor_node_t * mle_find_neigbhor(list_t *list, uint8_t id)
 	return NULL ;
 }
 
-mle_neighbor_node_t * mle_find_nb_router(uint8_t id)
+mle_neighbor_t * mle_find_nb_router(uint8_t id)
 {
 	return mle_find_neigbhor(&nb_router_list,  id) ;
 }
-mle_neighbor_node_t * mle_find_child( uint8_t id)
+mle_neighbor_t * mle_find_child( uint8_t id)
 {
 	return mle_find_neigbhor(&childs_list,  id) ;
 }
 
 
 
-static mle_neighbor_node_t * mle_add_neigbhor(struct memb* m , list_t *list , uint8_t id, uip_ipaddr_t * address, uint32_t  MLEFrameCounter ,
+static mle_neighbor_t * mle_add_neigbhor(struct memb* m , list_t *list , uint8_t id, /*uip_ipaddr_t * */ uint16_t address, uint32_t  MLEFrameCounter ,
 		uint8_t modeTLV, uint8_t  linkQuality)
 {
-	mle_neighbor_node_t *nb;
+	mle_neighbor_t *nb;
 
 	/* find the neighbor by id */
 
@@ -103,15 +103,16 @@ static mle_neighbor_node_t * mle_add_neigbhor(struct memb* m , list_t *list , ui
 		nb->id = id;
 		//uip_ip6addr(&nb->address, 0xff02, 0, 0, 0, 0, 0, 0, 0x0001);
 
-		uip_ip6addr_copy(&nb->address ,address);
+	//	uip_ip6addr_copy(&nb->address ,address);
+		nb->address16=address;
 		nb->MLEFrameCounter = MLEFrameCounter;
-		nb->linkQuality=linkQuality;
+		nb->LQ=linkQuality;
 		nb->modeTLV = modeTLV;
 
 		/* add the neighbor */
 		list_push(*list, nb);
 
-		PRINTFG("Neighbor added  : id = %d \n\r" ANSI_COLOR_RESET , id);
+		//PRINTFG("Neighbor added  : id = %d \n\r" ANSI_COLOR_RESET , id);
 
 		// if i will use a counter a should increment it
 	}
@@ -123,13 +124,13 @@ static mle_neighbor_node_t * mle_add_neigbhor(struct memb* m , list_t *list , ui
 	return nb;
 }
 
-mle_neighbor_node_t * mle_add_child(uint8_t id, uip_ipaddr_t * address, uint32_t  MLEFrameCounter ,
+mle_neighbor_t * mle_add_child(uint8_t id, uint16_t address, uint32_t  MLEFrameCounter ,
 		uint8_t modeTLV, uint8_t  linkQuality)
 {
 	return mle_add_neigbhor(&childs_memb , &childs_list ,  id,   address,   MLEFrameCounter , modeTLV,   linkQuality);
 }
 
-mle_neighbor_node_t * mle_add_nb_router(uint8_t id, uip_ipaddr_t * address, uint32_t  MLEFrameCounter ,
+mle_neighbor_t * mle_add_nb_router(uint8_t id, uint16_t address, uint32_t  MLEFrameCounter ,
 		uint8_t modeTLV, uint8_t  linkQuality)
 {
 	return mle_add_neigbhor(&nb_router_memb ,  &nb_router_list ,  id,   address,   MLEFrameCounter , modeTLV,   linkQuality);
@@ -137,7 +138,7 @@ mle_neighbor_node_t * mle_add_nb_router(uint8_t id, uip_ipaddr_t * address, uint
 
 
 
-static uint8_t mle_rm_neigbhor(struct memb* m , list_t *list ,mle_neighbor_node_t *nb)
+static uint8_t mle_rm_neigbhor(struct memb* m , list_t *list ,mle_neighbor_t *nb)
 {
 	if (nb != NULL) {
 		/* Remove the router id from the Router ID Set. */
@@ -148,12 +149,12 @@ static uint8_t mle_rm_neigbhor(struct memb* m , list_t *list ,mle_neighbor_node_
 	return 0 ;
 }
 
-uint8_t mle_rm_nb_router(mle_neighbor_node_t *nb)
+uint8_t mle_rm_nb_router(mle_neighbor_t *nb)
 {
 	return mle_rm_neigbhor(&nb_router_memb ,  &nb_router_list, nb) ;
 }
 
-uint8_t mle_rm_child( mle_neighbor_node_t *nb)
+uint8_t mle_rm_child( mle_neighbor_t *nb)
 {
 	return mle_rm_neigbhor(&childs_memb , &childs_list, nb) ;
 }
@@ -161,7 +162,7 @@ uint8_t mle_rm_child( mle_neighbor_node_t *nb)
 
 uint8_t count_neighbor_LQ(uint8_t N )
 {
-/*	mle_neighbor_node_t *nb;
+/*	mle_neighbor_t *nb;
 
 	for (nb = mle_neigbhor_head(list); nb != NULL; nb = list_item_next(nb))
 	{
@@ -174,15 +175,15 @@ return 1 ;
 
 static void mle_print_table(list_t *list)
 {
-	mle_neighbor_node_t *i;
-	PRINTF("| id | modeTLV | MLEFrameCounter | Ipv6 address  \n");
+	mle_neighbor_t *i;
+	PRINTF("| id | modeTLV | MLEFrameCounter |  address  \n");
 	PRINTF("---------------------------------------------------------\n\r");
 	for (i = mle_neigbhor_head(list); i != NULL; i = list_item_next(i)) {
 		PRINTF("| " ANSI_COLOR_YELLOW "%2d" ANSI_COLOR_RESET
 				" | " ANSI_COLOR_YELLOW "%7d" ANSI_COLOR_RESET
 				" | " ANSI_COLOR_YELLOW "%15d" ANSI_COLOR_RESET
 				" |  ", i->id, i->modeTLV, i->MLEFrameCounter);
-		PRINT6ADDR(&i->address);
+		//PRINT6ADDR(&i->address);
 		PRINTF("\n");
 	}
 	PRINTF("---------------------------------------------------------\n\r");

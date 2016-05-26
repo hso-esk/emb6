@@ -34,6 +34,8 @@ static  uip_ipaddr_t                s_destAddr;
 struct  ctimer                      c_mle_Timer;
 static 	mle_cmd_t 					cmd; // command buffer
 static mle_param_t					param;
+static mle_neighbor_t*				nb;
+
 #define get_rssi()		             30 //sicslowpan_get_last_rssi()
 
 
@@ -76,6 +78,19 @@ static uint8_t send_mle_parent_request(uint8_t R, uint8_t E)
 	return 1 ;
 }
 
+static uint8_t send_mle_childID_request()
+{
+	mle_init_cmd(&cmd,CHILD_ID_REQUEST);
+	// response tlv
+	// link-layer frame counter tlv
+	// MLE Frame Counter tlv
+	add_mode_RSDN_to_cmd(&cmd, MyNode.rx_on_when_idle, 0, IS_FFD, 0);
+	MyNode.jp_challenge=add_rand_challenge_to_cmd(&cmd);
+	add_version_to_cmd(&cmd);
+	uip_create_linklocal_allrouters_mcast(&s_destAddr);
+	mle_send_msg(&cmd, &s_destAddr);
+	return 1 ;
+}
 
 static void reply_for_mle_parent_request(void *ptr)
 {
@@ -92,7 +107,7 @@ static void reply_for_mle_parent_request(void *ptr)
 		// MLE Frame Counter tlv
 		add_response_to_cmd(&cmd, mle_find_tlv_in_cmd(param.rec_cmd,TLV_CHALLENGE));
 		// i should save the challenge for the current child
-		add_rand_challenge_to_cmd(&cmd);
+	/*  child.challenge = */	add_rand_challenge_to_cmd(&cmd);
 		add_Link_margin_to_cmd(&cmd,param.rec_rssi);
 		// connectivity tlv
 		//add_Cnnectivity_to_cmd(&cmd,MAX_CHILD,MyNode.childs_counter,count_neighbor_LQ(3),count_neighbor_LQ(2),count_neighbor_LQ(1),0,0);
@@ -135,7 +150,8 @@ static uint8_t calculate_two_way_LQ(uint8_t my_rssi , uint8_t rec_rssi)
 void mle_join_process(void *ptr)
 {
 	static 	jp_state_t 		jp_state ;  // join process current state
-	static mle_parent_t parent; // parent candidate
+	static mle_parent_t 	parent; // parent candidate
+
 
 	tlv_connectivity_t* connectivity;
 	tlv_t * tlv;
@@ -157,18 +173,28 @@ void mle_join_process(void *ptr)
 				PRINTF("JP Waiting for incoming response form active Router\n"ANSI_COLOR_RESET);
 				ctimer_set(&c_mle_Timer, 4 * bsp_get(E_BSP_GET_TRES) , mle_join_process, NULL);
 
-				parent.two_way_LQ=0;
-				parent.jp_challenge=0;
-				parent.is_Router=0;
-				parent.LQ3=0;
+				//parent.two_way_LQ=0;
+				//parent.jp_challenge=0;
+				//parent.is_Router=0;
+				//parent.LQ3=0;
+				nb=mle_add_nb_router(0, 0, 0, 0, 0);
+				if(nb==NULL)
+					nb=mle_find_nb_router(0);
+				nb->state=0;
+				nb->LQ=0;
+				nb->address16=0;
+
 
 				finish=1;
 				break;
 			case JP_WAIT_1:
 				if(ctimer_expired(&c_mle_Timer)) // that means that this function was triggered by the ctimer
 				{
-					if(!flag /*|| parent.two_way_LQ < 3*/)
+					if(!flag  || parent.LQ < 3)
+					{
 						jp_state=JP_SEND_MCAST_PR_TO_ROUTER_REED;
+						flag=0;
+					}
 					else
 						jp_state=JP_PARENT_SELECT;
 				}
@@ -179,18 +205,19 @@ void mle_join_process(void *ptr)
 
 					PRINTF("rssi of parent : %i \n"ANSI_COLOR_RESET, param.rec_rssi);
 					PRINTF("my rssi : %i \n"ANSI_COLOR_RESET, tlv->value[0]);
-					PRINTF("two-way quality : %i \n"ANSI_COLOR_RESET, calculate_two_way_LQ(tlv->value[0], param.rec_rssi));
 
+					parent.LQ=calculate_two_way_LQ(tlv->value[0], param.rec_rssi);
+					PRINTF("two-way quality : %i \n"ANSI_COLOR_RESET, parent.LQ);
 
-					if(parent.two_way_LQ < calculate_two_way_LQ(tlv->value[0], param.rec_rssi))
+					if( nb->LQ < parent.LQ)
 					{
-						parent.two_way_LQ=calculate_two_way_LQ(tlv->value[0], param.rec_rssi);
+						nb->LQ=parent.LQ;
 						tlv=mle_find_tlv_in_cmd(param.rec_cmd,TLV_CONNECTIVITY);
-						tlv_connectivity_init(&connectivity,tlv->value );
-						parent.LQ3=connectivity->LQ3;
+					//	tlv_connectivity_init(&connectivity,tlv->value );
+					//	parent.LQ3=connectivity->LQ3;
 						//parent.is_Router=....;
 					}
-					//else if (parent.is_Router<)
+
 
 					flag=1;
 					finish=1;
@@ -215,14 +242,35 @@ void mle_join_process(void *ptr)
 				else
 				{
 					PRINTF("JP received response from active Router or REED \n"ANSI_COLOR_RESET);
+
+					tlv=mle_find_tlv_in_cmd(param.rec_cmd,TLV_LINK_MARGIN);
+
+					PRINTF("rssi of parent : %i \n"ANSI_COLOR_RESET, param.rec_rssi);
+					PRINTF("my rssi : %i \n"ANSI_COLOR_RESET, tlv->value[0]);
+
+					parent.LQ=calculate_two_way_LQ(tlv->value[0], param.rec_rssi);
+					PRINTF("two-way quality : %i \n"ANSI_COLOR_RESET, parent.LQ);
+
+					if( nb->LQ < parent.LQ)
+					{
+						nb->LQ=parent.LQ;
+						tlv=mle_find_tlv_in_cmd(param.rec_cmd,TLV_CONNECTIVITY);
+					//	tlv_connectivity_init(&connectivity,tlv->value );
+						//parent.LQ3=connectivity->LQ3;
+						//parent.is_Router=....;
+					}
+
+					flag=1;
 					finish=1;
 				}
 				break;
 			case JP_PARENT_SELECT:
 				PRINTF("JP Parent selection \n"ANSI_COLOR_RESET);
-				PRINTFG("link quality with parent : %i \n"ANSI_COLOR_RESET, parent.two_way_LQ);
+				PRINTFG("link quality with parent : %i \n"ANSI_COLOR_RESET, nb->LQ);
 
-				finish=1;
+
+
+				jp_state=JP_SEND_CHILD_REQ;;
 				break ;
 			case JP_SEND_CHILD_REQ:
 				PRINTF("JP send Child ID Request \n"ANSI_COLOR_RESET);
@@ -300,7 +348,8 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 		break;
 	case PARENT_REQUEST:
 		// check if child table is not full
-		if(MyNode.childs_counter<MAX_CHILD)
+
+		if(MyNode.childs_counter<MAX_CHILD && MyNode.OpMode!= NOT_LINKED)
 		{
 			/* check: A Router MUST NOT send an MLE  Parent Response if:
 			It is disconnected from its Partition (that is, it has not received
@@ -368,9 +417,24 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 		 * If the Mode TLV indicates that the sender is an rx-off-when-idle device, it
 		 * MUST begin sending IEEE 802.15.4 data requests after sending the Child ID request
 		 */
+			/* check the response TLV before processing the parent response */
+
+			//find child using source address
+
+		    // get child challenge
+
+
+			tlv=mle_find_tlv_in_cmd(cmd,TLV_RESPONSE);
+			if(1 /*comp_resp_chall(child.challenge ,tlv->value)*/)
+			{
+
+
+
+			}
 
 		break;
 	case CHILD_ID_RESPONSE:
+
 		break;
 	case CHILD_UPDATE:
 		break;
