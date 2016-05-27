@@ -14,8 +14,8 @@
 
 
 
-#define     MAX_NB_ROUTER               5
-#define     MAX_CHILD                   7
+#define     MAX_NB_ROUTER               4
+#define     MAX_CHILD                   5
 
 
 
@@ -25,8 +25,14 @@ typedef struct nodemle {
 	uint8_t 			       		 id;
 
 	uint8_t 			       		 state; // pending:0 // linked:1 // ....
-	uint16_t         			     challenge;	// but length is variable for other device !!!
+	uint32_t         			     challenge;	// but length is variable for other device !!!
 	uint16_t         			     address16;						      /**< link-local address */
+
+
+   uip_ipaddr_t                tmp; // to remove because it is generated from address 16
+
+
+
 	struct ctimer        			 timeOut;
 	uint32_t            			 MLEFrameCounter;
 	uint8_t 						 modeTLV;

@@ -26,7 +26,7 @@
 
 /******************* TLV parameters *****************************/
 
-#define		TIME_OUT		 		     10     /* time out   */
+#define		TIME_OUT		 		     30     /* time out   */
 #define		IS_RX_ON_WHEN_IDLE		 	  1     /* Set to ‘1’ if the sender has its receiver on when not transmitting   */
 #define		IS_FFD		 	     		  1
 /*==============================================================================
@@ -36,7 +36,7 @@
 typedef struct {
 	mle_cmd_t * rec_cmd;
 	uint8_t    rec_rssi; // incoming rssi
-	uip_ipaddr_t *source_addr;
+	uip_ipaddr_t  source_addr;
 }mle_param_t ;
 
 typedef enum

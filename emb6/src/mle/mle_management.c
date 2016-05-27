@@ -78,17 +78,17 @@ static uint8_t send_mle_parent_request(uint8_t R, uint8_t E)
 	return 1 ;
 }
 
-static uint8_t send_mle_childID_request()
+static uint8_t send_mle_childID_request(uip_ipaddr_t *dest_addr)
 {
 	mle_init_cmd(&cmd,CHILD_ID_REQUEST);
 	// response tlv
+	add_response32_to_cmd(&cmd, nb->challenge);
 	// link-layer frame counter tlv
 	// MLE Frame Counter tlv
 	add_mode_RSDN_to_cmd(&cmd, MyNode.rx_on_when_idle, 0, IS_FFD, 0);
-	MyNode.jp_challenge=add_rand_challenge_to_cmd(&cmd);
+	add_time_out_to_cmd(&cmd,TIME_OUT);
 	add_version_to_cmd(&cmd);
-	uip_create_linklocal_allrouters_mcast(&s_destAddr);
-	mle_send_msg(&cmd, &s_destAddr);
+	mle_send_msg(&cmd, dest_addr);
 	return 1 ;
 }
 
@@ -107,16 +107,46 @@ static void reply_for_mle_parent_request(void *ptr)
 		// MLE Frame Counter tlv
 		add_response_to_cmd(&cmd, mle_find_tlv_in_cmd(param.rec_cmd,TLV_CHALLENGE));
 		// i should save the challenge for the current child
-	/*  child.challenge = */	add_rand_challenge_to_cmd(&cmd);
+		/*  child.challenge = */	add_rand_challenge_to_cmd(&cmd);
 		add_Link_margin_to_cmd(&cmd,param.rec_rssi);
 		// connectivity tlv
-		//add_Cnnectivity_to_cmd(&cmd,MAX_CHILD,MyNode.childs_counter,count_neighbor_LQ(3),count_neighbor_LQ(2),count_neighbor_LQ(1),0,0);
+		add_Cnnectivity_to_cmd(&cmd,MAX_CHILD,MyNode.childs_counter,count_neighbor_LQ(3),count_neighbor_LQ(2),count_neighbor_LQ(1),0,0);
 		add_version_to_cmd(&cmd);
 
-		mle_send_msg( &cmd,param.source_addr);
+		mle_send_msg( &cmd,&param.source_addr);
 
 	}
 
+}
+
+
+static void reply_for_mle_childID_request(void *ptr)
+{
+
+
+
+		if(MyNode.OpMode == CHILD)
+		{
+			// send request to become a router and then reply
+			PRINTFC("Sending request to become a Router \n"ANSI_COLOR_RESET);
+			mle_set_parent_mode();
+
+			mle_init_cmd(&cmd,CHILD_ID_RESPONSE);
+			add_src_address_to_cmd(&cmd);
+			// leader data tlv :: from Network layer
+			// address16
+			// router64
+			mle_send_msg( &cmd,&param.source_addr);
+		}
+		else if (MyNode.OpMode == PARENT)
+		{
+		mle_init_cmd(&cmd,CHILD_ID_RESPONSE);
+		add_src_address_to_cmd(&cmd);
+		// leader data tlv :: from Network layer
+		// address16
+		// router64
+		mle_send_msg( &cmd,&param.source_addr);
+		}
 }
 
 static uint8_t mapRSSI(uint8_t rssi )
@@ -168,11 +198,8 @@ void mle_join_process(void *ptr)
 			{
 			case JP_SEND_MCAST_PR_TO_ROUTER:
 				PRINTF("JP Send mcast parent request to active router \n"ANSI_COLOR_RESET);
-				send_mle_parent_request(1,0);
-				jp_state=JP_WAIT_1;
-				PRINTF("JP Waiting for incoming response form active Router\n"ANSI_COLOR_RESET);
-				ctimer_set(&c_mle_Timer, 4 * bsp_get(E_BSP_GET_TRES) , mle_join_process, NULL);
 
+				/* Init the parent*/
 				//parent.two_way_LQ=0;
 				//parent.jp_challenge=0;
 				//parent.is_Router=0;
@@ -185,12 +212,17 @@ void mle_join_process(void *ptr)
 				nb->address16=0;
 
 
+				jp_state=JP_WAIT_1;
+				send_mle_parent_request(1,0);
+				PRINTF("JP Waiting for incoming response form active Router\n"ANSI_COLOR_RESET);
+				ctimer_set(&c_mle_Timer, 4 * bsp_get(E_BSP_GET_TRES) , mle_join_process, NULL);
+
 				finish=1;
 				break;
 			case JP_WAIT_1:
 				if(ctimer_expired(&c_mle_Timer)) // that means that this function was triggered by the ctimer
 				{
-					if(!flag  || parent.LQ < 3)
+					if(!flag  || nb->LQ < 3)
 					{
 						jp_state=JP_SEND_MCAST_PR_TO_ROUTER_REED;
 						flag=0;
@@ -212,10 +244,22 @@ void mle_join_process(void *ptr)
 					if( nb->LQ < parent.LQ)
 					{
 						nb->LQ=parent.LQ;
+
+						/* get the challenge tlv from the parent condidate */
+						tlv=mle_find_tlv_in_cmd(param.rec_cmd,TLV_CHALLENGE);
+						nb->challenge= (tlv->value[3]) | (tlv->value[2] << 8) | (tlv->value[1] << 16)| (tlv->value[0] << 24);
+						//nb->challenge=0xABCDEF55;
+						/* get number of neighbors with lq3 of the parent condidate */
 						tlv=mle_find_tlv_in_cmd(param.rec_cmd,TLV_CONNECTIVITY);
-					//	tlv_connectivity_init(&connectivity,tlv->value );
-					//	parent.LQ3=connectivity->LQ3;
+						tlv_connectivity_init(&connectivity,tlv->value );
+						parent.LQ3=connectivity->LQ3;
+
+					    /* save the address (to remplace with source address  tlv)  */
+						uip_ip6addr_copy(&nb->tmp , &param.source_addr);
+
+						/* identify the type of parent : router or reed from the sourse address */
 						//parent.is_Router=....;
+
 					}
 
 
@@ -225,8 +269,8 @@ void mle_join_process(void *ptr)
 				break;
 			case JP_SEND_MCAST_PR_TO_ROUTER_REED:
 				PRINTF("JP Send mcast parent request to active Router and REED \n"ANSI_COLOR_RESET);
-				send_mle_parent_request(1,1);
 				jp_state=JP_WAIT_2;
+				send_mle_parent_request(1,1);
 				PRINTF("JP Waiting for incoming response from active Router and REED \n"); PRESET();
 				ctimer_set(&c_mle_Timer, 6 * bsp_get(E_BSP_GET_TRES) , mle_join_process, NULL);
 				finish=1;
@@ -254,12 +298,23 @@ void mle_join_process(void *ptr)
 					if( nb->LQ < parent.LQ)
 					{
 						nb->LQ=parent.LQ;
-						tlv=mle_find_tlv_in_cmd(param.rec_cmd,TLV_CONNECTIVITY);
-					//	tlv_connectivity_init(&connectivity,tlv->value );
-						//parent.LQ3=connectivity->LQ3;
-						//parent.is_Router=....;
-					}
 
+						/* get the challenge tlv from the parent condidate */
+						tlv=mle_find_tlv_in_cmd(param.rec_cmd,TLV_CHALLENGE);
+						nb->challenge= (tlv->value[3]) | (tlv->value[2] << 8) | (tlv->value[1] << 16)| (tlv->value[0] << 24);
+						//nb->challenge=0xABCDEF55;
+						/* get number of neighbors with lq3 of the parent condidate */
+						tlv=mle_find_tlv_in_cmd(param.rec_cmd,TLV_CONNECTIVITY);
+						tlv_connectivity_init(&connectivity,tlv->value );
+						parent.LQ3=connectivity->LQ3;
+
+					    /* save the address (to remplace with source address  tlv)  */
+						uip_ip6addr_copy(&nb->tmp , &param.source_addr);
+
+						/* identify the type of parent : router or reed from the sourse address */
+						//parent.is_Router=....;
+
+					}
 					flag=1;
 					finish=1;
 				}
@@ -274,12 +329,12 @@ void mle_join_process(void *ptr)
 				break ;
 			case JP_SEND_CHILD_REQ:
 				PRINTF("JP send Child ID Request \n"ANSI_COLOR_RESET);
-
+				send_mle_childID_request(&nb->tmp);
+				jp_state=JP_SAVE_PARENT;
 				finish=1;
 				break ;
 			case JP_SAVE_PARENT:
 				PRINTF("JP Parent Stored \n"ANSI_COLOR_RESET);
-
 				mle_set_child_mode();
 				finish=1;
 				break ;
@@ -316,12 +371,6 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 
 	PRINTF(ANSI_COLOR_CYAN "MLE msg received from : "ANSI_COLOR_RESET);
 	PRINT6ADDR(source_addr); PRESET();
-	//PRINTF( "\ndata received length : %i \n", datalen);
-	//PRINTF( "RSSI : %i \n", sicslowpan_get_last_rssi());
-	//PRINTF( "LQ : %d \n",packetbuf_attr(PACKETBUF_ATTR_LINK_QUALITY));
-	//PRINTF( "NET ID : %d \n",packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID));
-	//PRINTF( "Channel : %d \n",packetbuf_attr(PACKETBUF_ATTR_CHANNEL));
-	//LOG_HEXDUMP(data, datalen);
 	mle_print_cmd(*cmd);
 
 	switch (cmd->type)
@@ -388,7 +437,8 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 				// prepare param
 				param.rec_cmd=cmd;
 				param.rec_rssi=get_rssi();
-				param.source_addr=(uip_ipaddr_t *) source_addr;
+				//param.source_addr=(uip_ipaddr_t *) source_addr;
+				uip_ip6addr_copy(&param.source_addr,source_addr);
 				ctimer_set(&c_mle_Timer, /*bsp_getrand(MaxRand)*/ 1 * (bsp_get(E_BSP_GET_TRES) /*/1000*/) , reply_for_mle_parent_request, (void *) NULL );
 			}
 		}
@@ -403,7 +453,9 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 			{
 				param.rec_cmd=cmd;
 				param.rec_rssi=get_rssi();
-				param.source_addr=(uip_ipaddr_t *) source_addr;
+				//param.source_addr=(uip_ipaddr_t *) source_addr;
+				uip_ip6addr_copy(&param.source_addr,source_addr);
+
 
 				mle_join_process(NULL);
 
@@ -417,24 +469,27 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 		 * If the Mode TLV indicates that the sender is an rx-off-when-idle device, it
 		 * MUST begin sending IEEE 802.15.4 data requests after sending the Child ID request
 		 */
-			/* check the response TLV before processing the parent response */
+		/* check the response TLV before processing the parent response */
 
-			//find child using source address
+		//find child using source address
 
-		    // get child challenge
-
-
-			tlv=mle_find_tlv_in_cmd(cmd,TLV_RESPONSE);
-			if(1 /*comp_resp_chall(child.challenge ,tlv->value)*/)
-			{
+		// get child challenge
 
 
+		//tlv=mle_find_tlv_in_cmd(cmd,TLV_RESPONSE); // i should save the challenge when i send the parent response
+		if(1 /*comp_resp_chall(child.challenge ,tlv->value)*/)
+		{
 
-			}
+			param.rec_cmd=cmd;
+			param.rec_rssi=get_rssi();
+			//param.source_addr=(uip_ipaddr_t *) source_addr;
+			uip_ip6addr_copy(&param.source_addr,source_addr);
+			reply_for_mle_childID_request(NULL);
+		}
 
 		break;
 	case CHILD_ID_RESPONSE:
-
+		mle_join_process(NULL);
 		break;
 	case CHILD_UPDATE:
 		break;
@@ -479,18 +534,15 @@ static uint8_t mle_send_msg(mle_cmd_t* cmd,  uip_ipaddr_t *dest_addr )
 			return 0;
 	}
 
-
-	PRINTFC( "MLE msg  sent to : "  );
-	PRINT6ADDR(dest_addr);
-	PRINTF(ANSI_COLOR_RESET "\n"  );
-
 	//	PRINTF("data sent length : %i \n", cmd->used_data+1);
 	if(!udp_socket_sendto(&MyNode.udp_socket, (uint8_t*) cmd , cmd->used_data+1 , dest_addr ,MLE_UDP_RPORT))
 	{
 		PRINTF(ANSI_COLOR_RED "Failed to send MLE msg\n"ANSI_COLOR_RESET);
 		return 0;
 	}
-
+	PRINTFC( "MLE msg  sent to : "  );
+	PRINT6ADDR(dest_addr);
+	PRINTF(ANSI_COLOR_RESET "\n"  );
 
 	return 1 ;
 
@@ -519,7 +571,7 @@ uint8_t mle_init(void)
 	MyNode.childs_counter=0;
 
 	/************* just for test: to verify when the join process will be triggered  **********/
-	ctimer_set(&c_mle_Timer, 2 * bsp_get(E_BSP_GET_TRES) , mle_join_process, (void *) NULL );
+	ctimer_set(&c_mle_Timer, 1 * bsp_get(E_BSP_GET_TRES) , mle_join_process, (void *) NULL );
 
 
 	PRINTFG( "MLE protocol initialized ...  \n");PRESET();
@@ -531,6 +583,7 @@ uint8_t mle_set_parent_mode(void)
 {
 	MyNode.OpMode=PARENT; // router
 	PRINTFG( "MLE : Node operate as Parent ... \n"ANSI_COLOR_RESET);
+	PRESET();
 	// may be start synchronisation with other routers
 	return 1 ;
 }
@@ -539,6 +592,7 @@ uint8_t mle_set_child_mode(void)
 {
 	MyNode.OpMode=CHILD; // router
 	PRINTFG( "MLE : Node operate as Child ... \n"ANSI_COLOR_RESET);
+	PRESET();
 	// may be remove neighbors etc // start join process etc
 	return 1 ;
 }

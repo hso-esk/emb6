@@ -136,6 +136,15 @@ uint8_t  add_response_to_cmd(mle_cmd_t* cmd , tlv_t* resp )
 		return 0 ;
 }
 
+uint8_t  add_response32_to_cmd(mle_cmd_t* cmd ,  uint32_t value )
+{
+
+	if(add_tlv32_bit_to_cmd(cmd , TLV_RESPONSE ,  value))
+		return 1 ;
+	else
+		return 0 ;
+}
+
 
 uint8_t  add_status_to_cmd(mle_cmd_t* cmd)
 {
