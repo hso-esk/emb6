@@ -118,6 +118,7 @@ void print_buffer(uint8_t* buffer  ,uint8_t length);
 uint8_t mle_print_cmd(  mle_cmd_t mle_cmd );
 
 
+uint8_t mle_print_type_cmd( mle_cmd_t cmd );
 
 
 /*==============================================================================

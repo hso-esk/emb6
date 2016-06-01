@@ -200,6 +200,20 @@ trg += [{
 #GECKOO based ++++++++++++++++++++++++++++++++++++++++#
 
 trg += [{
+    'id'        : 'th_stk3600',
+    'apps_conf' : [ thread_root ],
+    'bsp'       : get_descr(bsp, 'efm32stk3600_cc120x')
+}]
+
+
+trg += [{
+    'id'        : 'th_sink_stk3600',
+    'apps_conf' : [ thread_sink ],
+    'bsp'       : get_descr(bsp, 'efm32stk3600_cc120x')
+}]
+
+
+trg += [{
     'id'        : 'dc_stk3600',
     'apps_conf' : [ dtls_cli ],
     'bsp'       : get_descr(bsp, 'efm32stk3600_rf212b')

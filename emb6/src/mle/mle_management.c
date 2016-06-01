@@ -125,28 +125,28 @@ static void reply_for_mle_childID_request(void *ptr)
 
 
 
-		if(MyNode.OpMode == CHILD)
-		{
-			// send request to become a router and then reply
-			PRINTFC("Sending request to become a Router \n"ANSI_COLOR_RESET);
-			mle_set_parent_mode();
+	if(MyNode.OpMode == CHILD)
+	{
+		// send request to become a router and then reply
+		PRINTFC("Sending request to become a Router \n"ANSI_COLOR_RESET);
+		mle_set_parent_mode();
 
-			mle_init_cmd(&cmd,CHILD_ID_RESPONSE);
-			add_src_address_to_cmd(&cmd);
-			// leader data tlv :: from Network layer
-			// address16
-			// router64
-			mle_send_msg( &cmd,&param.source_addr);
-		}
-		else if (MyNode.OpMode == PARENT)
-		{
 		mle_init_cmd(&cmd,CHILD_ID_RESPONSE);
 		add_src_address_to_cmd(&cmd);
 		// leader data tlv :: from Network layer
 		// address16
 		// router64
 		mle_send_msg( &cmd,&param.source_addr);
-		}
+	}
+	else if (MyNode.OpMode == PARENT)
+	{
+		mle_init_cmd(&cmd,CHILD_ID_RESPONSE);
+		add_src_address_to_cmd(&cmd);
+		// leader data tlv :: from Network layer
+		// address16
+		// router64
+		mle_send_msg( &cmd,&param.source_addr);
+	}
 }
 
 static uint8_t mapRSSI(uint8_t rssi )
@@ -197,6 +197,7 @@ void mle_join_process(void *ptr)
 			switch(jp_state)
 			{
 			case JP_SEND_MCAST_PR_TO_ROUTER:
+				PRINTFG("[+] "ANSI_COLOR_RESET);
 				PRINTF("JP Send mcast parent request to active router \n"ANSI_COLOR_RESET);
 
 				/* Init the parent*/
@@ -214,7 +215,8 @@ void mle_join_process(void *ptr)
 
 				jp_state=JP_WAIT_1;
 				send_mle_parent_request(1,0);
-				PRINTF("JP Waiting for incoming response form active Router\n"ANSI_COLOR_RESET);
+				PRINTFG("[+] "ANSI_COLOR_RESET);
+				PRINTF("JP Waiting for incoming response from active Router\n"ANSI_COLOR_RESET);
 				ctimer_set(&c_mle_Timer, 4 * bsp_get(E_BSP_GET_TRES) , mle_join_process, NULL);
 
 				finish=1;
@@ -232,6 +234,7 @@ void mle_join_process(void *ptr)
 				}
 				else
 				{
+					PRINTFG("[+] "ANSI_COLOR_RESET);
 					PRINTF("JP received response from active Router \n"ANSI_COLOR_RESET);
 					tlv=mle_find_tlv_in_cmd(param.rec_cmd,TLV_LINK_MARGIN);
 
@@ -254,7 +257,7 @@ void mle_join_process(void *ptr)
 						tlv_connectivity_init(&connectivity,tlv->value );
 						parent.LQ3=connectivity->LQ3;
 
-					    /* save the address (to remplace with source address  tlv)  */
+						/* save the address (to remplace with source address  tlv)  */
 						uip_ip6addr_copy(&nb->tmp , &param.source_addr);
 
 						/* identify the type of parent : router or reed from the sourse address */
@@ -268,9 +271,11 @@ void mle_join_process(void *ptr)
 				}
 				break;
 			case JP_SEND_MCAST_PR_TO_ROUTER_REED:
+				PRINTFG("[+] "ANSI_COLOR_RESET);
 				PRINTF("JP Send mcast parent request to active Router and REED \n"ANSI_COLOR_RESET);
 				jp_state=JP_WAIT_2;
 				send_mle_parent_request(1,1);
+				PRINTFG("[+] "ANSI_COLOR_RESET);
 				PRINTF("JP Waiting for incoming response from active Router and REED \n"); PRESET();
 				ctimer_set(&c_mle_Timer, 6 * bsp_get(E_BSP_GET_TRES) , mle_join_process, NULL);
 				finish=1;
@@ -285,6 +290,7 @@ void mle_join_process(void *ptr)
 				}
 				else
 				{
+					PRINTFG("[+] "ANSI_COLOR_RESET);
 					PRINTF("JP received response from active Router or REED \n"ANSI_COLOR_RESET);
 
 					tlv=mle_find_tlv_in_cmd(param.rec_cmd,TLV_LINK_MARGIN);
@@ -308,7 +314,7 @@ void mle_join_process(void *ptr)
 						tlv_connectivity_init(&connectivity,tlv->value );
 						parent.LQ3=connectivity->LQ3;
 
-					    /* save the address (to remplace with source address  tlv)  */
+						/* save the address (to remplace with source address  tlv)  */
 						uip_ip6addr_copy(&nb->tmp , &param.source_addr);
 
 						/* identify the type of parent : router or reed from the sourse address */
@@ -320,6 +326,7 @@ void mle_join_process(void *ptr)
 				}
 				break;
 			case JP_PARENT_SELECT:
+				PRINTFG("[+] "ANSI_COLOR_RESET);
 				PRINTF("JP Parent selection \n"ANSI_COLOR_RESET);
 				PRINTFG("link quality with parent : %i \n"ANSI_COLOR_RESET, nb->LQ);
 
@@ -328,12 +335,14 @@ void mle_join_process(void *ptr)
 				jp_state=JP_SEND_CHILD_REQ;;
 				break ;
 			case JP_SEND_CHILD_REQ:
+				PRINTFG("[+] "ANSI_COLOR_RESET);
 				PRINTF("JP send Child ID Request \n"ANSI_COLOR_RESET);
 				send_mle_childID_request(&nb->tmp);
 				jp_state=JP_SAVE_PARENT;
 				finish=1;
 				break ;
 			case JP_SAVE_PARENT:
+				PRINTFG("[+] "ANSI_COLOR_RESET);
 				PRINTF("JP Parent Stored \n"ANSI_COLOR_RESET);
 				mle_set_child_mode();
 				finish=1;
@@ -363,13 +372,14 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 	tlv_t * tlv;
 
 	/***********   To avoid the problem of the additional bytes until we fix it  ************/
-	if( uip_is_addr_linklocal_allrouters_mcast(dest_addr) || uip_is_addr_linklocal_allnodes_mcast(dest_addr))
-		mle_create_cmd_from_buff(&cmd , (uint8_t * )data , datalen - 40 );
-	else
-		mle_create_cmd_from_buff(&cmd , (uint8_t * )data , datalen );
+	//	if( uip_is_addr_linklocal_allrouters_mcast(dest_addr) || uip_is_addr_linklocal_allnodes_mcast(dest_addr))
+			mle_create_cmd_from_buff(&cmd , (uint8_t * )data , datalen - 40 );
+	//	else
+	//		mle_create_cmd_from_buff(&cmd , (uint8_t * )data , datalen );
 
-
-	PRINTF(ANSI_COLOR_CYAN "MLE msg received from : "ANSI_COLOR_RESET);
+	PRINTFC("MLE ");
+	mle_print_type_cmd(*cmd);
+	PRINTFC(" received from : ");
 	PRINT6ADDR(source_addr); PRESET();
 	mle_print_cmd(*cmd);
 
@@ -540,7 +550,10 @@ static uint8_t mle_send_msg(mle_cmd_t* cmd,  uip_ipaddr_t *dest_addr )
 		PRINTF(ANSI_COLOR_RED "Failed to send MLE msg\n"ANSI_COLOR_RESET);
 		return 0;
 	}
-	PRINTFC( "MLE msg  sent to : "  );
+
+	PRINTFC("MLE ");
+	mle_print_type_cmd(*cmd);
+	PRINTFC( " sent to : "  );
 	PRINT6ADDR(dest_addr);
 	PRINTF(ANSI_COLOR_RESET "\n"  );
 

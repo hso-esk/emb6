@@ -94,25 +94,22 @@ void print_buffer(uint8_t* buffer ,uint8_t length)
 
 }
 
-uint8_t mle_print_cmd( mle_cmd_t cmd )
-{
-	tlv_t * tlv;
-	uint8_t i=0;
 
-	printf("---------------------------------------------------------------\n            MLE command : " );
+uint8_t mle_print_type_cmd( mle_cmd_t cmd )
+{
 	switch (cmd.type)
 	{
 	case LINK_REQUEST:
-		printf("LINK_REQUEST");
+		printf("LINK REQUEST");
 		break;
 	case LINK_ACCEPT:
-		printf("LINK_ACCEPT");
+		printf("LINK ACCEPT");
 		break;
 	case LINK_ACCEPT_AND_REQUEST:
-		printf("LINK_ACCEPT_AND_REQUEST");
+		printf("LINK ACCEPT AND REQUEST");
 		break;
 	case LINK_REJECT:
-		printf("LINK_REJECT");
+		printf("LINK REJECT");
 		break;
 	case ADVERTISEMENT:
 		printf("ADVERTISEMENT");
@@ -121,37 +118,49 @@ uint8_t mle_print_cmd( mle_cmd_t cmd )
 		printf("UPDATE");
 		break;
 	case UPDATE_REQUEST:  // Not used in Thread Network
-		printf("UPDATE_REQUEST");
+		printf("UPDATE REQUEST");
 		break;
 	case DATA_REQUEST:  // Not used in Thread Network
-		printf("DATA_REQUEST");
+		printf("DATA REQUEST");
 		break;
 	case DATA_RESPONSE:
-		printf("DATA_RESPONSE");
+		printf("DATA RESPONSE");
 		break;
 	case PARENT_REQUEST:
-		printf("PARENT_REQUEST");
+		printf("PARENT REQUEST");
 		break;
 	case PARENT_RESPONSE:
-		printf("PARENT_RESPONSE");
+		printf("PARENT RESPONSE");
 		break;
 	case CHILD_ID_REQUEST:
-		printf("CHILD_ID_REQUEST");
+		printf("CHILD ID REQUEST");
 		break;
 	case CHILD_ID_RESPONSE:
-		printf("CHILD_ID_RESPONSE");
+		printf("CHILD ID RESPONSE");
 		break;
 	case CHILD_UPDATE:
-		printf("CHILD_UPDATE");
+		printf("CHILD UPDATE");
 		break;
 	case CHILD_UPDATE_RESPONSE:
-		printf("CHILD_UPDATE_RESPONSE");
+		printf("CHILD UPDATE RESPONSE");
 		break;
 	default :
 		printf("error mle command type not recognized ");
 		return 0 ;
 		break;
 	}
+	return 1 ;
+}
+
+
+uint8_t mle_print_cmd( mle_cmd_t cmd )
+{
+	tlv_t * tlv;
+	uint8_t i=0;
+
+	printf("---------------------------------------------------------------\n            MLE command : " );
+	if(!mle_print_type_cmd(cmd ))
+		return 0 ;
 	printf("\n---------------------------------------------------------------\n" );
 
 	tlv_init(&tlv,cmd.tlv_data);

@@ -54,3 +54,4 @@ target/arch/msp430/msp430f5/ti/toolchain/IAR/demo-coap/CC112x_SRV/*/*
 
 doc/html/
 doc/latex/
+/us_stk3600_cc120x/

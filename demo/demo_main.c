@@ -443,6 +443,7 @@ int main(void)
         emb6_errorHandler(&err);
     }
 
+
     /* Start the emb6 stack */
     emb6_process(EMB6_PROC_DELAY);
 
