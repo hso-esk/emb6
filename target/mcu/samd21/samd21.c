@@ -59,9 +59,8 @@
 /*==============================================================================
  INCLUDE FILES
  ==============================================================================*/
-
 #include "emb6.h"
-#include "emb6_conf.h"
+
 #include "board_conf.h"
 #include "math.h"
 #include "target.h"
@@ -386,14 +385,12 @@ void hal_ledOn( uint16_t ui_led )
 /*==============================================================================
  hal_extIntInit()
  =============================================================================*/
-uint8_t hal_extIntInit( en_targetExtInt_t e_intSource,
+void hal_extiRegister( en_targetExtInt_t e_extInt, en_targetIntEdge_t e_edge,
         pfn_intCallb_t pfn_intCallback )
 {
-    int8_t c_ret = 0;
-
     if( pfn_intCallback != NULL )
     {
-        switch( e_intSource )
+        switch( e_extInt )
         {
             case E_TARGET_RADIO_INT:
                 //! [setup_init]
@@ -432,7 +429,7 @@ uint8_t hal_extIntInit( en_targetExtInt_t e_intSource,
                 //! [conf_channel]
                 //! [setup_init]
                 system_interrupt_enable_global();
-                c_ret = 1;
+                hal_extiDisable(e_extInt);
                 break;
             case E_TARGET_USART_INT:
                 break;
@@ -440,9 +437,55 @@ uint8_t hal_extIntInit( en_targetExtInt_t e_intSource,
                 break;
         }
     }
-    return c_ret;
 
 } /* hal_extIntInit() */
+
+
+/*==============================================================================
+  hal_extiClear()
+ =============================================================================*/
+void hal_extiClear(en_targetExtInt_t e_extInt)
+{
+    /* not needed */
+} /* hal_extiClear() */
+
+
+/*==============================================================================
+  hal_extiEnable()
+ =============================================================================*/
+void hal_extiEnable(en_targetExtInt_t e_extInt)
+{
+    switch( e_extInt )
+    {
+        case E_TARGET_RADIO_INT:
+
+            extint_chan_enable_callback( (uint8_t)radio_extInt.l_line, //EXT1_IRQ_INPUT,
+                    EXTINT_CALLBACK_TYPE_DETECT );
+            break;
+        default:
+            break;
+    }
+    return;
+} /* hal_extiEnable() */
+
+/*==============================================================================
+  hal_extiDisable()
+ =============================================================================*/
+void hal_extiDisable(en_targetExtInt_t e_extInt)
+{
+    switch( e_extInt )
+    {
+        case E_TARGET_RADIO_INT:
+
+            extint_chan_disable_callback( (uint8_t)radio_extInt.l_line, //EXT1_IRQ_INPUT,
+                    EXTINT_CALLBACK_TYPE_DETECT );
+            break;
+        default:
+            break;
+    }
+    return;
+} /* hal_extiDisable() */
+
 
 /*==============================================================================
  hal_delay_us()

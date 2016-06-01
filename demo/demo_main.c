@@ -53,7 +53,8 @@
  */
 /*! \file   demo_main.c
 
-    \author Artem Yushev, 
+    \author Artem Yushev,
+            Phuong Nguyen
 
     \brief  Main function.
 
@@ -70,8 +71,15 @@
 #include "bsp.h"
 #include "etimer.h"
 
+#define  LOGGER_ENABLE        LOGGER_MAIN
+#include "logger.h"
+
 #if DEMO_USE_UDP
 #include "demo_udp.h"
+#endif
+
+#if DEMO_USE_UDP_SOCKET
+#include "demo_udp_socket.h"
 #endif
 
 #if DEMO_USE_COAP
@@ -79,6 +87,14 @@
 #include "demo_coap_srv.h"
 #else
 #include "demo_coap_cli.h"
+#endif
+#endif
+
+#if DEMO_USE_MDNS
+#if CONF_USE_SERVER
+#include "demo_mdns_srv.h"
+#else
+#include "demo_mdns_cli.h"
 #endif
 #endif
 
@@ -95,7 +111,7 @@
 #endif
 
 #if DEMO_USE_MQTT
-#include "demo_mqtt.h"
+#include "mqtt.h"
 #endif
 
 #if DEMO_USE_TESTSUITE
@@ -107,6 +123,14 @@
 #include "slip.h"
 #endif
 
+#if DEMO_USE_DTLS
+#if CONF_USE_SERVER
+#include "demo_dtls_srv.h"
+#else
+#include "demo_dtls_cli.h"
+#endif
+#endif
+
 #if UIP_CONF_IPV6_RPL
 #include "rpl.h"
 #endif
@@ -114,6 +138,10 @@
 /*==============================================================================
                                      MACROS
  =============================================================================*/
+
+#ifndef EMB6_PROC_DELAY
+#define EMB6_PROC_DELAY                     500
+#endif /* #ifndef EMB6_PROC_DELAY */
 
 /*==============================================================================
                                      ENUMS
@@ -129,14 +157,14 @@
 /*==============================================================================
                            LOCAL FUNCTION PROTOTYPES
  =============================================================================*/
-static void loc_initialConfig(uint16_t);
-static uint16_t loc_parseMac(const char*, uint16_t);
-static uint8_t loc_demoAppsConf(s_ns_t* pst_netStack);
+static void loc_stackConf(uint16_t mac_addr_word);
+static void loc_demoAppsConf(s_ns_t* pst_netStack, e_nsErr_t *p_err);
 static uint8_t loc_demoAppsInit(void);
+
 /*==============================================================================
                                 LOCAL FUNCTIONS
  =============================================================================*/
-static void loc_initialConfig(uint16_t mac_addr_word)
+static void loc_stackConf(uint16_t mac_addr_word)
 {
     /* set last byte of mac address */
     mac_phy_config.mac_address[7] = (uint8_t)mac_addr_word;            // low byte
@@ -166,99 +194,154 @@ static uint16_t loc_parseMac(const char* mac, uint16_t defaultMac)
     return defaultMac;
 }
 
-static uint8_t loc_demoAppsConf(s_ns_t* pst_netStack)
+static void loc_demoAppsConf(s_ns_t* pst_netStack, e_nsErr_t *p_err)
 {
-    #if DEMO_USE_EXTIF
-    demo_extifConf(pst_netStack);
-    #endif
+#if NETSTK_CFG_ARG_CHK_EN
+  if (p_err == NULL) {
+      emb6_errorHandler(p_err);
+  }
 
-    #if DEMO_USE_COAP
-    demo_coapConf(pst_netStack);
-    #endif
+  if (pst_netStack == NULL) {
+      *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+      return;
+  }
+#endif
 
-    #if DEMO_USE_SNIFFER
-    demo_sniffConf(pst_netStack);
-    #endif
+  #if DEMO_USE_EXTIF
+  demo_extifConf(pst_netStack);
+  #endif
 
-    #if DEMO_USE_UDPALIVE
-    demo_udpAliveConf(pst_netStack);
-    #endif
+  #if DEMO_USE_COAP
+  demo_coapConf(pst_netStack);
+  #endif
 
-    #if DEMO_USE_APTB
-    demo_aptbConf(pst_netStack);
-    #endif
+  #if DEMO_USE_MDNS
+  demo_mdnsConf(pst_netStack);
+  #endif
 
-    #if DEMO_USE_UDP
-    demo_udpSockConf(pst_netStack);
-    #endif
+  #if DEMO_USE_SNIFFER
+  demo_sniffConf(pst_netStack);
+  #endif
 
-    #if DEMO_USE_MQTT
-    demo_mqttConf(pst_netStack);
-    #endif
+  #if DEMO_USE_UDPALIVE
+  demo_udpAliveConf(pst_netStack);
+  #endif
 
-    #if DEMO_USE_TESTSUITE
-    demo_testsuiteConf(pst_netStack);
-    #endif
+  #if DEMO_USE_UDP_SOCKET
+  demo_udpSocketCfg(pst_netStack);
+  #endif
 
-    if (pst_netStack == NULL)
-        return 0;
-    else
-        return 1;
+  #if DEMO_USE_APTB
+  demo_aptbConf(pst_netStack);
+  #endif
+
+  #if DEMO_USE_UDP
+  demo_udpSockConf(pst_netStack);
+  #endif
+
+  #if DEMO_USE_MQTT
+  demo_mqttConf(pst_netStack);
+  #endif
+
+  #if DEMO_USE_TESTSUITE
+  demo_testsuiteConf(pst_netStack);
+  #endif
+
+  #if DEMO_USE_DTLS
+  demo_dtlsConf(pst_netStack);
+  #endif
+
+  /* set returned error code */
+  *p_err = NETSTK_ERR_NONE;
 }
 
 static uint8_t loc_demoAppsInit(void)
 {
 
-    #if DEMO_USE_EXTIF
-    if (!demo_extifInit()) {
-        return 0;
-    }
-    #endif
+  #if DEMO_USE_EXTIF
+  if (!demo_extifInit()) {
+      return 0;
+  }
+  #endif
 
-    #if DEMO_USE_COAP
-    if (!demo_coapInit()) {
-        return 0;
-    }
-    #endif
+  #if DEMO_USE_COAP
+  if (!demo_coapInit()) {
+      return 0;
+  }
+  #endif
 
-    #if DEMO_USE_SNIFFER
-    if (!demo_sniffInit()) {
-        return 0;
-    }
-    #endif
+  #if DEMO_USE_MDNS
+  if (!demo_mdnsInit()) {
+    return 0;
+  }
+  #endif
 
-    #if DEMO_USE_UDPALIVE
-    if (!demo_udpAliveInit()) {
-        return 0;
-    }
-    #endif
+  #if DEMO_USE_SNIFFER
+  if (!demo_sniffInit()) {
+      return 0;
+  }
+  #endif
 
-    #if DEMO_USE_APTB
-    if (!demo_aptbInit()) {
-        return 0;
-    }
-    #endif
+  #if DEMO_USE_UDPALIVE
+  if (!demo_udpAliveInit()) {
+      return 0;
+  }
+  #endif
 
-    #if DEMO_USE_UDP
-    if (!demo_udpSockInit()) {
-        return 0;
-    }
-    #endif
+  #if DEMO_USE_UDP_SOCKET
+  if (!demo_udpSocketInit()) {
+      return 0;
+  }
+  #endif
 
-    #if DEMO_USE_MQTT
-    if (!demo_mqttInit()) {
-        return 0;
-    }
-    #endif
+  #if DEMO_USE_APTB
+  if (!demo_aptbInit()) {
+      return 0;
+  }
+  #endif
 
-    #if DEMO_USE_TESTSUITE
-    if (!demo_testsuiteInit()) {
-        return 0;
-    }
-    #endif
+  #if DEMO_USE_UDP
+  if (!demo_udpSockInit()) {
+      return 0;
+  }
+  #endif
 
-    return 1;
+  #if DEMO_USE_MQTT
+  if (!mqtt_init()) {
+      return 0;
+  }
+  #endif
+
+  #if DEMO_USE_TESTSUITE
+  if (!demo_testsuiteInit()) {
+      return 0;
+  }
+  #endif
+
+  #if DEMO_USE_DTLS
+  if (!demo_dtlsInit()) {
+    return 0;
+  }
+  #endif
+
+  return 1;
 }
+
+
+/*==============================================================================
+ emb6_errorHandler()
+==============================================================================*/
+void emb6_errorHandler(e_nsErr_t *p_err)
+{
+  /* turns LEDs on to indicate error */
+  bsp_led(E_BSP_LED_0, E_BSP_LED_ON);
+  LOG_ERR("Program failed");
+
+  /* error handling */
+  while (1) {
+  }
+}
+
 
 /*==============================================================================
  main()
@@ -267,54 +350,59 @@ int main(int argc, char **argv)
 {
     char *pc_mac_addr = NULL;
     uint16_t mac_addr_word;
-    s_ns_t st_netstack;
+  s_ns_t st_netstack;
+  uint8_t ret;
+  e_nsErr_t err;
 
-    /*
-     * By default stack is disabled
-     */
-    st_netstack.c_configured = 0;
+  /* Initialize variables */
+  err = NETSTK_ERR_NONE;
+  memset(&st_netstack, 0, sizeof(st_netstack));
 
-    /*
-    * set initial stack parameters
-    */
-    if (argc > 1) {
-        pc_mac_addr = malloc(strlen(argv[1])+1);
-        strcpy(pc_mac_addr, argv[1]);
-    }
-    mac_addr_word = loc_parseMac(pc_mac_addr, MAC_ADDR_WORD);
-    loc_initialConfig(mac_addr_word);
+  if (argc > 1) {
+    pc_mac_addr = malloc(strlen(argv[1])+1);
+    strcpy(pc_mac_addr, argv[1]);
+  }
+  mac_addr_word = loc_parseMac(pc_mac_addr, MAC_ADDR_WORD);
+  free(pc_mac_addr);
 
-    /*
-    * set proper stack pointers
-    * If ok, pointer will points to network stack structure
-    * @ref s_ns_t
-    */
-    if (!loc_demoAppsConf(&st_netstack)) {
-        return 0;
-    }
+  /* Initialize BSP */
+  ret = bsp_init(&st_netstack);
+  if (ret != 1) {
+    err = NETSTK_ERR_INIT;
+    emb6_errorHandler(&err);
+  }
 
-    /*
-    * Initialize emb6-stack - call all initialization functions
-    */
-    if (emb6_init(&st_netstack))
-    {
-        /* initialize demo apps */
-        if(!loc_demoAppsInit())
-        {
-            return 0;
-        }
+  /* Configure applications */
+  loc_demoAppsConf(&st_netstack, &err);
+  if (err != NETSTK_ERR_NONE) {
+    emb6_errorHandler(&err);
+  }
 
-        /* SHow that stack has been launched */
-        bsp_led(E_BSP_LED_GREEN,E_BSP_LED_ON);
-        bsp_delay_us(2000000);
-        bsp_led(E_BSP_LED_GREEN,E_BSP_LED_OFF);
+  /* Initialize stack */
+  loc_stackConf(mac_addr_word);
+  emb6_init(&st_netstack, &err);
+  if (err != NETSTK_ERR_NONE) {
+    emb6_errorHandler(&err);
+  }
 
-        /* call process function with delay in us */
-        emb6_process(500);  /* default: 500 us delay */
-    }
-    bsp_led(E_BSP_LED_RED,E_BSP_LED_ON);
-    printf("Program failed.");
-    while(1);
+  /* Show that stack has been launched */
+  bsp_led(E_BSP_LED_2, E_BSP_LED_ON);
+  bsp_delay_us(2000000);
+  bsp_led(E_BSP_LED_2, E_BSP_LED_OFF);
+
+  /* Initialize applications */
+  ret = loc_demoAppsInit();
+  if (ret == 0) {
+    LOG_ERR("Demo APP failed to initialize");
+    err = NETSTK_ERR_INIT;
+    emb6_errorHandler(&err);
+  }
+
+  /* Start the emb6 stack */
+  emb6_process(EMB6_PROC_DELAY);
+
+  /* the program should never come here */
+  return -1;
 }
 /** @} */
 /** @} */

@@ -77,7 +77,7 @@ slipnet_input(void)
   slip_send_packet(uip_buf, uip_len);
 }
 /*---------------------------------------------------------------------------*/
-const s_nsHeadComp_t slipnet_driver = {
+const s_nsHeadComp_t hc_driver_slipnet = {
   "slipnet",
   slipnet_init,
   slipnet_input

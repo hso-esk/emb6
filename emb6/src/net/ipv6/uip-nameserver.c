@@ -40,8 +40,6 @@
  *         uIP Name Server interface
  * \author Víctor Ariño <victor.arino@tado.com>
  */
-
-#include "emb6_conf.h"
 #include "emb6.h"
 #include "uip.h"
 #include "uip-nameserver.h"

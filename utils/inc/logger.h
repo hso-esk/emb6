@@ -95,7 +95,11 @@ inline static void log_ip6addr( const uint8_t* pc_addr)
     for( i = 0, f = 0; i < IPV6ADDR_LEN; i += 2 )
     {
         i_addr_byte = ( pc_addr[i] << 8 ) + pc_addr[i + 1];
-        if( i_addr_byte == 0 && f >= 0 )
+#if 1
+        if( i_addr_byte == 0)
+#else
+        if( i_addr_byte == 0 && f >= 0 )        /* FIXME pointless comparison of unsigned interger with 0: f >= 0 */
+#endif
         {
             if( f++ == 0 )
             {

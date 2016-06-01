@@ -164,33 +164,49 @@ static void signal_handler_interrupt(int signum)
 /*==============================================================================
  hal_extIntInit()
  =============================================================================*/
-uint8_t hal_extIntInit( en_targetExtInt_t e_intSource,
-        pfn_intCallb_t pfn_intCallback )
+void hal_extiRegister( en_targetExtInt_t e_extInt, en_targetIntEdge_t e_edge,
+		pfn_intCallb_t pfn_intCallback )
 {
-    int8_t c_ret = 0;
     hal_enterCritical();
 
-    if( pfn_intCallback == NULL )
+    if( pfn_intCallback != NULL )
     {
-        return 0;
-    }
-
-    switch( e_intSource )
-    {
-        case E_TARGET_RADIO_INT:
-            break;
+		switch( e_extInt )
+		{
+			case E_TARGET_RADIO_INT:
+				break;
 #if DEMO_USE_EXTIF
-        case E_TARGET_USART_INT:
-            isr_rxCallb = pfn_intCallback;
-            break;
+			case E_TARGET_USART_INT:
+				isr_rxCallb = pfn_intCallback;
+				break;
 #endif /* DEMO_USE_EXTIF */
-        default:
-            c_ret = 0;
-            break;
+			default:
+				break;
+		}
     }
     hal_exitCritical();
-    return c_ret;
 } /* hal_extIntInit() */
+
+/*==============================================================================
+ hal_extiClear()
+ =============================================================================*/
+void hal_extiClear(en_targetExtInt_t e_extInt)
+{
+} /* hal_extiClear() */
+
+/*==============================================================================
+ hal_extiEnable()
+ =============================================================================*/
+void hal_extiEnable(en_targetExtInt_t e_extInt)
+{
+} /* hal_extiEnable() */
+
+/*==============================================================================
+ hal_extiDisable()
+ =============================================================================*/
+void hal_extiDisable(en_targetExtInt_t e_extInt)
+{
+} /* hal_extiDisable() */
 
 /*==============================================================================
   hal_delay_us()

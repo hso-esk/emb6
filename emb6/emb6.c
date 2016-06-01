@@ -50,20 +50,20 @@
 
     \brief  emb6 stack initialization source file
 
-    \version 0.0.1
+    \version 0.0.2
 */
 
 /*==============================================================================
                                  INCLUDE FILES
  =============================================================================*/
-
 #include "emb6.h"
-#include "emb6_conf.h"
+
 #include "tcpip.h"
 #include "bsp.h"
 #include "queuebuf.h"
 #include "linkaddr.h"
 #include "ctimer.h"
+#include "rt_tmr.h"
 #include "random.h"
 
 #if NETSTACK_CONF_WITH_IPV6
@@ -107,7 +107,7 @@ uip_lladdr_t uip_lladdr = {{0x00,0x06,0x98,0x00,0x02,0x32}};
 
 /** RPL default Configuration */
 s_rpl_conf_t rpl_config = {
-            .DIOintmin          = 8,
+            .DIOintmin          = 10,
             .DIOintdoub         = 12,
             /* This value decides which DAG instance we should
              * participate in by default. */
@@ -171,23 +171,59 @@ static int8_t loc_emb6DagRootInit(void)
 
 uint8_t loc_emb6NetstackInit(s_ns_t * ps_ns)
 {
-    uint8_t     c_err = 0;
-    /* Initialize stack protocols */
-    queuebuf_init();
-    ctimer_init();
-    if ((ps_ns->hc != NULL) && (ps_ns->llsec != NULL) && (ps_ns->hmac != NULL) &&
-        (ps_ns->lmac != NULL) && (ps_ns->frame != NULL) && (ps_ns->inif != NULL)) {
-        if (ps_ns->frame->init(ps_ns))
-        {
-            /* This drivers belong to Contiki and retval are't tracked */
-            ps_ns->lmac->init(ps_ns);
-            ps_ns->hmac->init(ps_ns);
-            ps_ns->llsec->init(ps_ns);
-            ps_ns->hc->init(ps_ns);
-            tcpip_init();
-            c_err = 1;
-        }
+  uint8_t c_err = 0;
+  uint8_t is_valid;
+  e_nsErr_t err;
+
+  /* Initialize stack protocols */
+  queuebuf_init();
+  ctimer_init();
+  rt_tmr_init();
+
+  /*
+   * Verify stack submodule drivers
+   */
+  is_valid = (ps_ns->rf     != NULL) &&
+             (ps_ns->phy    != NULL) &&
+             (ps_ns->mac    != NULL) &&
+             (ps_ns->dllc   != NULL) &&
+             (ps_ns->dllsec != NULL) &&
+             (ps_ns->hc     != NULL);
+  if (is_valid) {
+    /*
+     * Netstack submodule initializations
+     */
+    ps_ns->rf->init(ps_ns, &err);
+    if (err != NETSTK_ERR_NONE) {
+      emb6_errorHandler(&err);
     }
+
+    ps_ns->phy->init(ps_ns, &err);
+    if (err != NETSTK_ERR_NONE) {
+      emb6_errorHandler(&err);
+    }
+
+    ps_ns->mac->init(ps_ns, &err);
+    if (err != NETSTK_ERR_NONE) {
+      emb6_errorHandler(&err);
+    }
+
+    ps_ns->dllc->init(ps_ns, &err);
+    if (err != NETSTK_ERR_NONE) {
+      emb6_errorHandler(&err);
+    }
+
+    ps_ns->dllsec->init(ps_ns); /* logical link security    */
+    ps_ns->hc->init(ps_ns);     /* header compressor        */
+    ps_ns->frame->init(ps_ns);  /* sicslowpan driver        */
+
+    /*
+     * Initialize TCP/IP stack
+     */
+    tcpip_init();
+    c_err = 1;
+  }
+
 
 #if EMB6_INIT_ROOT==TRUE
     if (!c_err || !loc_emb6DagRootInit()) {
@@ -201,24 +237,32 @@ uint8_t loc_emb6NetstackInit(s_ns_t * ps_ns)
 /*==============================================================================
                                  API FUNCTIONS
  =============================================================================*/
-uint8_t emb6_init(s_ns_t * ps_ns)
+void emb6_init(s_ns_t* ps_ns, e_nsErr_t *p_err)
 {
-    uint8_t c_err = 1;
-
-    if (!bsp_init(ps_ns)) {
-        ps_ns = NULL;
-        c_err = 0;
+#if NETSTK_CFG_ARG_CHK_EN
+    if (p_err == NULL) {
+        emb6_errorHandler(p_err);
     }
 
-    if (!loc_emb6NetstackInit(ps_ns) && c_err) {
-        ps_ns = NULL;
-        LOG_ERR("Failed to initialise emb6 stack");
-        c_err = 0;
+    if (ps_ns == NULL) {
+        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+        return;
+    }
+#endif
+
+    uint8_t ret;
+
+    /* set return error code to default */
+    *p_err = NETSTK_ERR_NONE;
+
+    /* initialize netstack */
+    ret = loc_emb6NetstackInit(ps_ns);
+    if (ret == 0) {
+        *p_err = NETSTK_ERR_INIT;
+        LOG_ERR("Failed to initialize emb6 stack");
     }else {
         ps_emb6Stack = ps_ns;
     }
-
-    return (c_err);
 }
 
 s_ns_t * emb6_get(void)
@@ -229,6 +273,14 @@ s_ns_t * emb6_get(void)
 
 void emb6_process(uint16_t us_delay)
 {
+    e_nsErr_t   err;
+
+    /* turn the netstack on */
+    ps_emb6Stack->dllc->on(&err);
+    if (err != NETSTK_ERR_NONE) {
+        emb6_errorHandler(&err);
+    }
+
     /* Attention: emb6 main process loop !! do not change !! */
     while(1)
     {
@@ -240,3 +292,4 @@ void emb6_process(uint16_t us_delay)
 
 /** @} */
 /** @} */
+

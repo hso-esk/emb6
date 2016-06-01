@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<Workspace>
+  <ConfigDictionary>
+    
+  <CurrentConfigs><Project>demo-mdns/CC112x_CLI</Project></CurrentConfigs></ConfigDictionary>
+  <Desktop>
+    <Static>
+      <Workspace>
+        <ColumnWidths>
+          
+          
+          
+          
+        <Column0>502</Column0><Column1>27</Column1><Column2>27</Column2><Column3>27</Column3></ColumnWidths>
+      </Workspace>
+      <Build>
+        
+        
+        
+        
+      <ColumnWidth0>20</ColumnWidth0><ColumnWidth1>1215</ColumnWidth1><ColumnWidth2>324</ColumnWidth2><ColumnWidth3>81</ColumnWidth3></Build>
+      <TerminalIO/>
+    <Debug-Log><ColumnWidth0>18</ColumnWidth0><ColumnWidth1>1623</ColumnWidth1></Debug-Log></Static>
+    <Windows>
+      
+      
+    <Wnd0>
+        <Tabs>
+          <Tab>
+            <Identity>TabID-31263-19845</Identity>
+            <TabName>Workspace</TabName>
+            <Factory>Workspace</Factory>
+            <Session>
+              
+            <NodeDict><ExpandedNode>demo-mdns</ExpandedNode><ExpandedNode>demo-mdns/emb6</ExpandedNode><ExpandedNode>demo-mdns/emb6/demo</ExpandedNode><ExpandedNode>demo-mdns/emb6/demo/dtls</ExpandedNode><ExpandedNode>demo-mdns/emb6/demo/mdns</ExpandedNode><ExpandedNode>demo-mdns/emb6/demo/mdns/client</ExpandedNode><ExpandedNode>demo-mdns/emb6/demo/mdns/server</ExpandedNode><ExpandedNode>demo-mdns/emb6/target</ExpandedNode><ExpandedNode>demo-mdns/emb6/target/if</ExpandedNode><ExpandedNode>demo-mdns/emb6/utils</ExpandedNode><ExpandedNode>demo-mdns/emb6/utils/src</ExpandedNode></NodeDict></Session>
+          </Tab>
+        </Tabs>
+        
+      <SelectedTab>0</SelectedTab></Wnd0><Wnd1>
+        <Tabs>
+          <Tab>
+            <Identity>TabID-13489-20178</Identity>
+            <TabName>Build</TabName>
+            <Factory>Build</Factory>
+            <Session/>
+          </Tab>
+        <Tab><Identity>TabID-13050-22438</Identity><TabName>Debug Log</TabName><Factory>Debug-Log</Factory><Session/></Tab></Tabs>
+        
+      <SelectedTab>0</SelectedTab></Wnd1></Windows>
+    <Editor>
+      
+      
+      
+      
+    <Pane><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\..\..\..\..\..\..\..\..\emb6\src\net\dtls\ccm.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>0</YPos2><SelStart2>1266</SelStart2><SelEnd2>1266</SelEnd2></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\..\..\..\..\..\..\..\..\demo\mdns\client\demo_mdns_cli.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>57</YPos2><SelStart2>2985</SelStart2><SelEnd2>2991</SelEnd2></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\..\..\..\..\..\..\..\..\demo\demo_main.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>306</YPos2><SelStart2>8534</SelStart2><SelEnd2>8534</SelEnd2></Tab><ActiveTab>2</ActiveTab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\..\..\..\device\msp430f5xxx\src\int.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>180</YPos2><SelStart2>7232</SelStart2><SelEnd2>7232</SelEnd2></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\..\..\..\..\..\..\..\..\emb6\emb6.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>240</YPos2><SelStart2>8626</SelStart2><SelEnd2>8626</SelEnd2></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\..\..\..\..\..\..\..\bsp\ti_trxeb_cc120x\board_conf.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>0</YPos2><SelStart2>892</SelStart2><SelEnd2>892</SelEnd2></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\..\..\..\..\..\..\..\..\emb6\src\apl\dns\resolv.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>577</YPos2><SelStart2>0</SelStart2><SelEnd2>0</SelEnd2></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\..\..\..\..\..\..\..\..\emb6\src\dll\dllsec\dllsec_null.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>127</YPos2><SelStart2>4288</SelStart2><SelEnd2>4288</SelEnd2></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\..\..\..\..\..\..\..\..\emb6\src\dll\dllc\dllc_null.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>36</YPos2><SelStart2>0</SelStart2><SelEnd2>0</SelEnd2></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\..\..\..\..\..\..\..\..\demo\mdns\server\demo_mdns_srv.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>120</YPos2><SelStart2>5356</SelStart2><SelEnd2>5369</SelEnd2></Tab></Pane><ActivePane>0</ActivePane><Sizes><Pane><X>1000000</X><Y>1000000</Y></Pane></Sizes><SplitMode>1</SplitMode></Editor>
+    <Positions>
+      
+      
+      
+      
+      
+    <Top><Row0><Sizes><Toolbar-0118f498><key>iaridepm.enu1</key></Toolbar-0118f498></Sizes></Row0><Row1><Sizes/></Row1><Row2><Sizes/></Row2><Row3><Sizes/></Row3><Row4><Sizes/></Row4><Row5><Sizes/></Row5><Row6><Sizes/></Row6><Row7><Sizes/></Row7><Row8><Sizes/></Row8><Row9><Sizes/></Row9><Row10><Sizes/></Row10><Row11><Sizes/></Row11><Row12><Sizes/></Row12><Row13><Sizes/></Row13><Row14><Sizes/></Row14><Row15><Sizes/></Row15><Row16><Sizes/></Row16><Row17><Sizes/></Row17><Row18><Sizes/></Row18><Row19><Sizes/></Row19><Row20><Sizes/></Row20><Row21><Sizes/></Row21><Row22><Sizes/></Row22><Row23><Sizes/></Row23><Row24><Sizes/></Row24></Top><Left><Row0><Sizes><Wnd0><Rect><Top>-2</Top><Left>-2</Left><Bottom>750</Bottom><Right>576</Right><x>-2</x><y>-2</y><xscreen>123</xscreen><yscreen>152</yscreen><sizeHorzCX>73214</sizeHorzCX><sizeHorzCY>150794</sizeHorzCY><sizeVertCX>344048</sizeVertCX><sizeVertCY>746032</sizeVertCY></Rect></Wnd0></Sizes></Row0></Left><Right><Row0><Sizes/></Row0></Right><Bottom><Row0><Sizes><Wnd1><Rect><Top>-2</Top><Left>-2</Left><Bottom>213</Bottom><Right>1682</Right><x>-2</x><y>-2</y><xscreen>1684</xscreen><yscreen>215</yscreen><sizeHorzCX>1002381</sizeHorzCX><sizeHorzCY>213294</sizeHorzCY><sizeVertCX>73214</sizeVertCX><sizeVertCY>150794</sizeVertCY></Rect></Wnd1></Sizes></Row0></Bottom><Float><Sizes/></Float></Positions>
+  </Desktop>
+</Workspace>
+
+

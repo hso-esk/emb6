@@ -43,7 +43,6 @@
 
 //#include "contiki.h"
 //#include "contiki-net.h"
-#include "emb6_conf.h"
 #include "emb6.h"
 #include "bsp.h"
 #include "uip-mcast6.h"
@@ -62,7 +61,7 @@
 /* Macros */
 /*---------------------------------------------------------------------------*/
 /* CCI */
-#define SMRF_FWD_DELAY()  emb6_get()->lmac->channel_check_interval()
+#define SMRF_FWD_DELAY()        0     //emb6_get()->lmac->channel_check_interval()  /* FIXME */
 /* Number of slots in the next 500ms */
 #define SMRF_INTERVAL_COUNT  ((bsp_get(E_BSP_GET_TRES) >> 2) / fwd_delay)
 /*---------------------------------------------------------------------------*/

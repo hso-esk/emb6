@@ -85,7 +85,7 @@ res_get_handler(void *request, void *response, uint8_t *buffer, uint16_t preferr
 static void
 res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
 {
-    bsp_led(E_BSP_LED_YELLOW,E_BSP_LED_TOGGLE);
-    bsp_led(E_BSP_LED_RED,E_BSP_LED_TOGGLE);
-    bsp_led(E_BSP_LED_GREEN,E_BSP_LED_TOGGLE);
+    bsp_led(E_BSP_LED_1,E_BSP_LED_TOGGLE);
+    bsp_led(E_BSP_LED_0,E_BSP_LED_TOGGLE);
+    bsp_led(E_BSP_LED_2,E_BSP_LED_TOGGLE);
 }

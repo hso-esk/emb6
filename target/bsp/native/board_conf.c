@@ -56,33 +56,39 @@
     \version 0.0.1
 */
 
+/*
+********************************************************************************
+*                                   INCLUDES
+********************************************************************************
+*/
+#include "emb6.h"
+
+#include "board_conf.h"
+#include "hwinit.h"
+#include "etimer.h"
+#include "etimer.h"
+#include "bsp.h"
+#include "logger.h"
 
 /** Enable or disable logging */
 #define        LOGGER_ENABLE          LOGGER_BSP
 
-#include "../native/board_conf.h"
-#include "hwinit.h"
-#include "emb6.h"
-#include "emb6_conf.h"
-#include "etimer.h"
-#include "logger.h"
-#include "bsp.h"
-
-uint8_t board_conf(s_ns_t* ps_nStack)
+uint8_t board_conf(s_ns_t* p_netstk)
 {
-    uint8_t c_ret = 0;
+  uint8_t c_ret = 0;
 
-    if (ps_nStack != NULL) {
-        ps_nStack->inif = &native_driver;
-        etimer_init();
-        c_ret = ps_nStack->inif->init(ps_nStack);
-    }
-    else {
-        LOG_ERR("Network stack pointer is NULL");
-    }
+  if (p_netstk != NULL) {
+    p_netstk->dllc = &dllc_driver_802154;
+    p_netstk->mac  = &mac_driver_null;
+    p_netstk->phy  = &phy_driver_802154;
+    p_netstk->rf   = &rf_driver_native;
+    etimer_init();
+    c_ret = 1;
+  } else {
+    LOG_ERR("Network stack pointer is NULL");
+  }
 
-
-    return c_ret;
+  return c_ret;
 }
 /** @} */
 /** @} */

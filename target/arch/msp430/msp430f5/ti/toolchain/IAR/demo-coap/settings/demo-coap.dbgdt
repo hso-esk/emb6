@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<Project>
+  <Desktop>
+    <Static>
+      <Debug-Log>
+        
+        
+      <ColumnWidth0>20</ColumnWidth0><ColumnWidth1>1621</ColumnWidth1></Debug-Log>
+      <Build>
+        
+        
+        
+        
+      <ColumnWidth0>20</ColumnWidth0><ColumnWidth1>1215</ColumnWidth1><ColumnWidth2>324</ColumnWidth2><ColumnWidth3>81</ColumnWidth3></Build>
+      <Workspace>
+        <ColumnWidths>
+          
+          
+          
+          
+        <Column0>287</Column0><Column1>27</Column1><Column2>27</Column2><Column3>27</Column3></ColumnWidths>
+      </Workspace>
+      <Disassembly>
+        <col-names>
+          
+          
+        <item>Disassembly</item><item>_I0</item></col-names>
+        <col-widths>
+          
+          
+        <item>500</item><item>20</item></col-widths>
+        <DisasmHistory/>
+        
+        
+      <ShowCodeCoverage>1</ShowCodeCoverage><ShowInstrProfiling>1</ShowInstrProfiling></Disassembly>
+    </Static>
+    <Windows>
+      
+      
+      
+    <Wnd0>
+        <Tabs>
+          <Tab>
+            <Identity>TabID-10773-21174</Identity>
+            <TabName>Debug Log</TabName>
+            <Factory>Debug-Log</Factory>
+            <Session/>
+          </Tab>
+          <Tab>
+            <Identity>TabID-10250-21184</Identity>
+            <TabName>Build</TabName>
+            <Factory>Build</Factory>
+            <Session/>
+          </Tab>
+        <Tab><Identity>TabID-12592-22778</Identity><TabName>Breakpoints</TabName><Factory>Breakpoints</Factory></Tab></Tabs>
+        
+      <SelectedTab>2</SelectedTab></Wnd0><Wnd1>
+        <Tabs>
+          <Tab>
+            <Identity>TabID-21521-21178</Identity>
+            <TabName>Workspace</TabName>
+            <Factory>Workspace</Factory>
+            <Session>
+              
+            <NodeDict><ExpandedNode>demo-coap</ExpandedNode><ExpandedNode>demo-coap/demo</ExpandedNode><ExpandedNode>demo-coap/emb6</ExpandedNode><ExpandedNode>demo-coap/emb6/demo</ExpandedNode><ExpandedNode>demo-coap/emb6/demo/coap</ExpandedNode><ExpandedNode>demo-coap/emb6/demo/coap/server</ExpandedNode><ExpandedNode>demo-coap/emb6/demo/udp_alive</ExpandedNode><ExpandedNode>demo-coap/emb6/demo/udp_socket</ExpandedNode></NodeDict></Session>
+          </Tab>
+        </Tabs>
+        
+      <SelectedTab>0</SelectedTab></Wnd1><Wnd2>
+        <Tabs>
+          <Tab>
+            <Identity>TabID-32270-21181</Identity>
+            <TabName>Disassembly</TabName>
+            <Factory>Disassembly</Factory>
+            <Session/>
+          </Tab>
+        </Tabs>
+        
+      <SelectedTab>0</SelectedTab></Wnd2></Windows>
+    <Editor>
+      
+      
+      
+      
+    <Pane><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\..\..\..\..\..\..\..\..\demo\demo_main.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd><XPos2>0</XPos2><YPos2>312</YPos2><SelStart2>8737</SelStart2><SelEnd2>8737</SelEnd2></Tab><ActiveTab>0</ActiveTab></Pane><ActivePane>0</ActivePane><Sizes><Pane><X>1000000</X><Y>1000000</Y></Pane></Sizes><SplitMode>1</SplitMode></Editor>
+    <Positions>
+      
+      
+      
+      
+      
+    <Top><Row0><Sizes><Toolbar-027821c8><key>iaridepm.enu1</key></Toolbar-027821c8></Sizes></Row0><Row1><Sizes><Toolbar-0d626d08><key>debuggergui.enu1</key></Toolbar-0d626d08></Sizes></Row1><Row2><Sizes><Toolbar-0d6275a0><key>430fet1</key></Toolbar-0d6275a0></Sizes></Row2><Row3><Sizes/></Row3><Row4><Sizes/></Row4><Row5><Sizes/></Row5><Row6><Sizes/></Row6><Row7><Sizes/></Row7><Row8><Sizes/></Row8><Row9><Sizes/></Row9><Row10><Sizes/></Row10><Row11><Sizes/></Row11><Row12><Sizes/></Row12><Row13><Sizes/></Row13></Top><Left><Row0><Sizes><Wnd1><Rect><Top>-2</Top><Left>-2</Left><Bottom>677</Bottom><Right>361</Right><x>-2</x><y>-2</y><xscreen>200</xscreen><yscreen>200</yscreen><sizeHorzCX>119048</sizeHorzCX><sizeHorzCY>206612</sizeHorzCY><sizeVertCX>216071</sizeVertCX><sizeVertCY>701446</sizeVertCY></Rect></Wnd1></Sizes></Row0></Left><Right><Row0><Sizes><Wnd2><Rect><Top>-2</Top><Left>-2</Left><Bottom>677</Bottom><Right>198</Right><x>-2</x><y>-2</y><xscreen>200</xscreen><yscreen>200</yscreen><sizeHorzCX>119048</sizeHorzCX><sizeHorzCY>206612</sizeHorzCY><sizeVertCX>119048</sizeVertCX><sizeVertCY>701446</sizeVertCY></Rect></Wnd2></Sizes></Row0></Right><Bottom><Row0><Sizes><Wnd0><Rect><Top>-2</Top><Left>-2</Left><Bottom>198</Bottom><Right>1682</Right><x>-2</x><y>-2</y><xscreen>1684</xscreen><yscreen>200</yscreen><sizeHorzCX>1002381</sizeHorzCX><sizeHorzCY>206612</sizeHorzCY><sizeVertCX>119048</sizeVertCX><sizeVertCY>206612</sizeVertCY></Rect></Wnd0></Sizes></Row0></Bottom><Float><Sizes/></Float></Positions>
+  </Desktop>
+</Project>
+
+

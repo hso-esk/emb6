@@ -42,7 +42,7 @@
  * \author Mathilde Durvy <mdurvy@cisco.com>
  */
 
-#include "emb6_conf.h"
+#include "emb6.h"
 #include <string.h>
 #include "uip-ds6.h"
 #include "uip-icmp6.h"

@@ -4,17 +4,21 @@ extif = {
 	'emb6' : [
 		'sock',
 		'ipv6',
+		'sicslowpan',
 		'slip',
-		'llsec',
-		'nullmac',
-		'nullframer',
+		'dllsec',
+		'dllc',
+		'mac',
+		'framer',
+		'phy',
 	],
 	'utils' : [
 		'*',
 	],
 # C global defines
 	'CPPDEFINES' : [
-		('DEMO_USE_EXTIF',1),
+		('DEMO_USE_EXTIF', 1),
+		('LOGGER_LEVEL', 0),
 	],
 # GCC flags
 	'CFLAGS' : [

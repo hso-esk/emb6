@@ -1,0 +1,41 @@
+brd_conf = {
+# Micro Controller Unit description (HEAD/arch/<arch>/<mcu_fam>/<vendor> folder)
+    'arch'          : 'arm',
+    'family'        : 'cm3',
+    'vendor'        : 'silabs',
+    'cpu'           : 'efm32lg',
+    'toolchain'     : 'GCC',
+
+# Device driver description (HEAD/target/mcu folder)
+    'mcu'           : 'efm32lg990f256',
+
+# Transceiver source description (HEAD/target/if folder)
+    'if'            : 'cc112x',
+
+    'startupfile': 'GCC/startup_efm32lg.S',
+    'scriptfile' : 'GCC/efm32lg.ld'
+}
+
+std_conf = {
+# C code global defined symbols
+    'CPPDEFINES' : [
+            'EXTINT_CALLBACK_MODE=true',
+            'RTC_COUNT_ASYNC=true',
+            'EFM32LG990F256',
+            'BOARD_EFM32STK3600',
+            '_PACK_STRUCT_END=',
+    ],
+
+# GCC flags
+    'CFLAGS' : [
+    ],
+
+# LINKER flags
+    'LINKFLAGS' : [
+            '--entry=Reset_Handler',
+    ]
+}
+
+board_conf = {'brd' : brd_conf, 'std' : std_conf}
+
+Return('board_conf')

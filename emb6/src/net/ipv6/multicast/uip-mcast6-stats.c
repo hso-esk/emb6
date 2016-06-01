@@ -38,7 +38,6 @@
  * \author
  *    George Oikonomou - <oikonomou@users.sourceforge.net>
  */
-#include "emb6_conf.h"
 #include "emb6.h"
 #include "uip-mcast6-stats.h"
 
