@@ -93,7 +93,7 @@ int8_t demo_threadSinkInit(void)
 
 	if(!mle_init()){return 0; }
 
-	PRINTF("Thread sink demo initialized ... \n");
+	//PRINTF("Thread sink demo initialized ... \n");
 
 
 

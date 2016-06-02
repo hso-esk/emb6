@@ -92,7 +92,7 @@ int8_t demo_threadRootInit(void)
 	if(!mle_init()){return 0; }
 	//mle_set_parent_mode();
 	//mle_set_child_mode();
-	PRINTF("Thread root demo initialized ... \n");
+	//PRINTF("Thread root demo initialized ... \n");
 
 
 	return 1;

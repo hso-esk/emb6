@@ -128,7 +128,7 @@ static void reply_for_mle_childID_request(void *ptr)
 	if(MyNode.OpMode == CHILD)
 	{
 		// send request to become a router and then reply
-		PRINTFC("Sending request to become a Router \n"ANSI_COLOR_RESET);
+		PRINTFY("Sending request to become a Router \n"ANSI_COLOR_RESET);
 		mle_set_parent_mode();
 
 		mle_init_cmd(&cmd,CHILD_ID_RESPONSE);
@@ -377,7 +377,7 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 	//	else
 	//		mle_create_cmd_from_buff(&cmd , (uint8_t * )data , datalen );
 
-	PRINTFC("MLE ");
+	PRINTFC("<== MLE ");
 	mle_print_type_cmd(*cmd);
 	PRINTFC(" received from : ");
 	PRINT6ADDR(source_addr); PRESET();
@@ -551,7 +551,7 @@ static uint8_t mle_send_msg(mle_cmd_t* cmd,  uip_ipaddr_t *dest_addr )
 		return 0;
 	}
 
-	PRINTFC("MLE ");
+	PRINTFC("==> MLE ");
 	mle_print_type_cmd(*cmd);
 	PRINTFC( " sent to : "  );
 	PRINT6ADDR(dest_addr);
@@ -587,7 +587,7 @@ uint8_t mle_init(void)
 	ctimer_set(&c_mle_Timer, 1 * bsp_get(E_BSP_GET_TRES) , mle_join_process, (void *) NULL );
 
 
-	PRINTFG( "MLE protocol initialized ...  \n");PRESET();
+	PRINTFG( "MLE protocol initialized ... ");PRESET();
 	return 1;
 
 };
@@ -595,7 +595,7 @@ uint8_t mle_init(void)
 uint8_t mle_set_parent_mode(void)
 {
 	MyNode.OpMode=PARENT; // router
-	PRINTFG( "MLE : Node operate as Parent ... \n"ANSI_COLOR_RESET);
+	PRINTFG( "MLE : Node operate as Parent ... "ANSI_COLOR_RESET);
 	PRESET();
 	// may be start synchronisation with other routers
 	return 1 ;
@@ -604,7 +604,7 @@ uint8_t mle_set_parent_mode(void)
 uint8_t mle_set_child_mode(void)
 {
 	MyNode.OpMode=CHILD; // router
-	PRINTFG( "MLE : Node operate as Child ... \n"ANSI_COLOR_RESET);
+	PRINTFG( "MLE : Node operate as Child ... "ANSI_COLOR_RESET);
 	PRESET();
 	// may be remove neighbors etc // start join process etc
 	return 1 ;
