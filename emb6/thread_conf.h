@@ -18,13 +18,6 @@
 #define THRD_DEV_FUNC			THRD_DEV_FUNC_FFD			// FFD.
 
 /**
- * The Router ID.
- */
-#if ( (THRD_DEV_TYPE == THRD_DEV_TYPE_ROUTER) || (THRD_DEV_TYPE == THRD_DEV_TYPE_REED) )
-uint8_t Router_ID;
-#endif
-
-/**
  * Thread Device Types.
  */
 typedef enum
@@ -53,6 +46,9 @@ typedef struct
 	uint8_t type;	// thrd_dev_type_t.
 	uint8_t isFFD;
 	uint8_t isRX_off_when_idle;
+#if ( (THRD_DEV_TYPE == THRD_DEV_TYPE_ROUTER) || (THRD_DEV_TYPE == THRD_DEV_TYPE_REED) )
+	uint8_t Router_ID;	// Router ID.
+#endif
 } thrd_dev_t;
 
 /*! Thread Device Type Configuration. */
