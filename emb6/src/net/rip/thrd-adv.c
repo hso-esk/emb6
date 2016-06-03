@@ -131,7 +131,7 @@ tlv_route64_t
 
 		router_id_mask |= (0x8000000000000000 >> rid->router_id);
 
-		if ( rid->router_id != Router_ID ) {
+		if ( rid->router_id != thrd_dev.Router_ID ) {
 
 			// Link Set entry.
 			link = thrd_rdb_link_lookup(rid->router_id);

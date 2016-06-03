@@ -481,7 +481,7 @@ int8_t demo_routeRootInit(void)
 	// Initialize leader database.
 	thrd_ldb_init();
 
-	Router_ID = 1;
+	thrd_dev.Router_ID = 1;
 
 	/* set the pointer to the udp-socket */
 	pst_udp_socket = &st_udp_socket;
