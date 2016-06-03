@@ -21,6 +21,7 @@ typedef struct {
 
 uint16_t  get_16_MAC(void);
 uint8_t   add_src_address_to_cmd(mle_cmd_t* cmd);
+uint8_t  add_address16_to_cmd(mle_cmd_t* cmd , uint16_t address);
 uint8_t   add_time_out_to_cmd(mle_cmd_t* cmd , uint32_t time);
 uint8_t   add_mode_RSDN_to_cmd(mle_cmd_t* cmd , uint8_t R , uint8_t S , uint8_t D , uint8_t N );
 uint8_t   add_scan_mask_to_cmd(mle_cmd_t* cmd , uint8_t R , uint8_t E );

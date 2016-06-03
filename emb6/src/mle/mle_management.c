@@ -37,7 +37,7 @@ static mle_param_t					param;
 static mle_neighbor_t*				nb;
 
 #define get_rssi()		             30 //sicslowpan_get_last_rssi()
-
+#define get_routerID()		         0xff //sicslowpan_get_last_rssi()
 
 typedef enum {
 	JP_SEND_MCAST_PR_TO_ROUTER,
@@ -119,11 +119,13 @@ static void reply_for_mle_parent_request(void *ptr)
 
 }
 
+static uint16_t assign_address16(uint8_t id)
+{
+return   (( get_routerID() << 10) |  id | 0x0000  );
+}
 
 static void reply_for_mle_childID_request(void *ptr)
 {
-
-
 
 	if(MyNode.OpMode == CHILD)
 	{
@@ -134,7 +136,7 @@ static void reply_for_mle_childID_request(void *ptr)
 		mle_init_cmd(&cmd,CHILD_ID_RESPONSE);
 		add_src_address_to_cmd(&cmd);
 		// leader data tlv :: from Network layer
-		// address16
+		add_address16_to_cmd(&cmd , assign_address16(5));
 		// router64
 		mle_send_msg( &cmd,&param.source_addr);
 	}
@@ -143,7 +145,7 @@ static void reply_for_mle_childID_request(void *ptr)
 		mle_init_cmd(&cmd,CHILD_ID_RESPONSE);
 		add_src_address_to_cmd(&cmd);
 		// leader data tlv :: from Network layer
-		// address16
+		add_address16_to_cmd(&cmd , assign_address16(5));
 		// router64
 		mle_send_msg( &cmd,&param.source_addr);
 	}
@@ -372,10 +374,10 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 	tlv_t * tlv;
 
 	/***********   To avoid the problem of the additional bytes until we fix it  ************/
-	//	if( uip_is_addr_linklocal_allrouters_mcast(dest_addr) || uip_is_addr_linklocal_allnodes_mcast(dest_addr))
+		if( uip_is_addr_linklocal_allrouters_mcast(dest_addr) || uip_is_addr_linklocal_allnodes_mcast(dest_addr))
 			mle_create_cmd_from_buff(&cmd , (uint8_t * )data , datalen - 40 );
-	//	else
-	//		mle_create_cmd_from_buff(&cmd , (uint8_t * )data , datalen );
+		else
+			mle_create_cmd_from_buff(&cmd , (uint8_t * )data , datalen );
 
 	PRINTFC("<== MLE ");
 	mle_print_type_cmd(*cmd);
@@ -431,7 +433,7 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 
 
 				/*
-				mle_neighbor_node_t * nb;
+				mle_neighbor_t * nb;
 				tlv=mle_find_tlv_in_cmd(cmd,TLV_MODE);
 				uint8_t id=0;
 				do
@@ -449,7 +451,7 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 				param.rec_rssi=get_rssi();
 				//param.source_addr=(uip_ipaddr_t *) source_addr;
 				uip_ip6addr_copy(&param.source_addr,source_addr);
-				ctimer_set(&c_mle_Timer, /*bsp_getrand(MaxRand)*/ 1 * (bsp_get(E_BSP_GET_TRES) /*/1000*/) , reply_for_mle_parent_request, (void *) NULL );
+				ctimer_set(&c_mle_Timer, /*bsp_getrand(MaxRand)* */ (bsp_get(E_BSP_GET_TRES) /*/ 1000*/ ) , reply_for_mle_parent_request, (void *) NULL );
 			}
 		}
 		break;
@@ -583,8 +585,28 @@ uint8_t mle_init(void)
 	MyNode.rx_on_when_idle=IS_RX_ON_WHEN_IDLE;
 	MyNode.childs_counter=0;
 
+
+	 mle_add_child(1, 0x00aa,  50441 ,0,3 );
+	mle_add_child(2, 0x00aa,  441 ,4,1);
+	mle_add_child(3, 0x00aa,  50 ,1,3);
+	mle_add_child(4, 0x00aa,  444 ,2,3);
+	//mle_rm_child( mle_find_child(2));
+	mle_print_child_table();
+
+	mle_add_nb_router(1, 0x00aa,  50441 ,0,3);
+	mle_add_nb_router(2, 0x00aa,  441 ,4,1);
+	mle_add_nb_router(3, 0x00aa,  50 ,1,2);
+	mle_add_nb_router(4, 0x00aa,  444 ,2,3);
+	//mle_rm_nb_router( mle_find_nb_router(1));
+	mle_print_nb_router_table();
+
+	PRINTF("nb of lq 3  : %i \n"ANSI_COLOR_RESET, count_neighbor_LQ(3));
+	PRINTF("nb of lq 2  : %i \n"ANSI_COLOR_RESET, count_neighbor_LQ(2));
+	PRINTF("nb of lq 1  : %i \n"ANSI_COLOR_RESET, count_neighbor_LQ(1));
+
+
 	/************* just for test: to verify when the join process will be triggered  **********/
-	ctimer_set(&c_mle_Timer, 1 * bsp_get(E_BSP_GET_TRES) , mle_join_process, (void *) NULL );
+	//ctimer_set(&c_mle_Timer, 1 * bsp_get(E_BSP_GET_TRES) , mle_join_process, (void *) NULL );
 
 
 	PRINTFG( "MLE protocol initialized ... ");PRESET();

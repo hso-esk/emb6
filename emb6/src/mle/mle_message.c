@@ -25,6 +25,18 @@ static uint8_t  add_tlv32_bit_to_cmd(mle_cmd_t* cmd , tlv_type_t type , uint32_t
 		return 0 ;
 }
 
+static uint8_t  add_tlv16_bit_to_cmd(mle_cmd_t* cmd , tlv_type_t type , uint16_t value)
+{
+
+	buf[0]= (uint8_t) (value >> 8) & 0xFF ;
+	buf[1]= (uint8_t) value  & 0xFF ;
+
+	if (mle_add_tlv_to_cmd( cmd , type , 2 , (uint8_t*) buf ))
+		return 1 ;
+	else
+		return 0 ;
+}
+
 /*==============================================================================
                                  API FUNCTIONS
  =============================================================================*/
@@ -40,6 +52,14 @@ uint16_t  get_16_MAC(void)
 uint8_t  add_src_address_to_cmd(mle_cmd_t* cmd)
 {
 	if (mle_add_tlv_to_cmd( cmd ,TLV_SOURCE_ADDRESS , 2 ,(uint8_t*) &mac_phy_config.mac_address[6] ))
+		return 1 ;
+	else
+		return 0 ;
+}
+
+uint8_t  add_address16_to_cmd(mle_cmd_t* cmd , uint16_t address)
+{
+	if (add_tlv16_bit_to_cmd( cmd ,TLV_ADDRESS16 ,address ))
 		return 1 ;
 	else
 		return 0 ;

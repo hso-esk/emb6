@@ -162,15 +162,22 @@ uint8_t mle_rm_child( mle_neighbor_t *nb)
 
 uint8_t count_neighbor_LQ(uint8_t N )
 {
-/*	mle_neighbor_t *nb;
+	mle_neighbor_t *nb;
+	uint8_t count=0;
 
-	for (nb = mle_neigbhor_head(list); nb != NULL; nb = list_item_next(nb))
+	for (nb = mle_neigbhor_head(&childs_list); nb != NULL; nb = list_item_next(nb))
 	{
-		if (nb->id == id)
-			return nb;
-	} */
-
-return 1 ;
+		//if(nb!= NULL)
+		if(nb->LQ == N)
+			count++;
+	}
+	for (nb = mle_neigbhor_head(&nb_router_list); nb != NULL; nb = list_item_next(nb))
+	{
+		//if(nb!= NULL)
+		if(nb->LQ == N)
+			count++;
+	}
+return count ;
 }
 
 static void mle_print_table(list_t *list)

@@ -76,26 +76,6 @@ uint8_t mle_set_child_mode(void);
 
 
 /*
-static uint8_t mle_build_link_request_cmd(mle_cmd_t* cmd);
-static uint8_t mle_build_link_accept_cmd(mle_cmd_t* mle_cmd);
-static uint8_t mle_build_link_accept_request_cmd(mle_cmd_t* mle_cmd);
-static uint8_t mle_build_link_reject_cmd(mle_cmd_t* mle_cmd);
-
-static uint8_t mle_build_advertisement_cmd(mle_cmd_t* mle_cmd);
-
-static uint8_t mle_build_data_request_cmd(mle_cmd_t* mle_cmd);
-static uint8_t mle_build_data_response_cmd(mle_cmd_t* mle_cmd);
-
-static uint8_t mle_build_parent_request_cmd(mle_cmd_t* mle_cmd);
-static uint8_t mle_build_parent_response_cmd(mle_cmd_t* mle_cmd);
-
-static uint8_t mle_build_child_id_request_cmd(mle_cmd_t* mle_cmd);
-static uint8_t mle_build_child_id_response_cmd(mle_cmd_t* mle_cmd);
-
-static uint8_t mle_build_child_update_cmd(mle_cmd_t* mle_cmd);
-static uint8_t mle_build_child_update_response_cmd(mle_cmd_t* mle_cmd);
-
-
 
 static uint8_t mle_link_request_to_routers(int8_t pan_id);
 static uint8_t mle_parent_request(int8_t nwk_id , uint8_t Scan_Mask);*/
