@@ -93,6 +93,10 @@ extern thrd_dev_t thrd_dev;
 #define THRD_NET_TLV_MAX_NUM			10		// Maximum number of network layer TLVs.
 #define THRD_NET_TLV_MAX_SIZE			50		// Maximum size of network layer TLVs.
 
+// --------------- THREAD EID-to-RLOC Mapping -------------------
+
+#define THRD_MAX_LOCAL_ADDRESSES		10		// Maximum number of local addresses (Local Address Set).
+
 // --------------------------------------------------------------
 
 #endif /* EMB6_THREAD_CONF_H_ */
