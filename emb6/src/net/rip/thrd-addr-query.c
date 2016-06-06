@@ -12,6 +12,7 @@
 #include "clist.h"
 #include "memb.h"
 #include "rip.h"
+#include "net_tlv.h"
 
 #include "thrd-addr-query.h"
 
@@ -597,7 +598,7 @@ thrd_addr_qr_empty()
 // TODO Section 5.4.2 Address Query.
 
 void
-thrd_addr_qr_request(tlv_target_eid_t)
+thrd_addr_qr_request(net_tlv_target_eid_t *target_tlv)
 {
 
 }

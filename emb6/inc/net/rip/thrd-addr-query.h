@@ -12,6 +12,7 @@
 #include "emb6.h"
 #include "clist.h"
 #include "uip.h"
+#include "net_tlv.h"
 
 // #define THRD_AQ_TIMEOUT
 // #define THRD_AQ_INITIAL_RETRY_DELAY
@@ -142,6 +143,11 @@ void thrd_addr_qr_rm(thrd_addr_qr_t *addrQr);
 
 void thrd_addr_qr_empty();
 
+/* --------------------------------------------------------------------------- */
+/* ----------------------------- Address Query ------------------------------- */
+/* --------------------------------------------------------------------------- */
+
+void thrd_addr_qr_request(net_tlv_target_eid_t *target_tlv);
 
 /* --------------------------------------------------------------------------- */
 /* --------------------------------- DEBUG ----------------------------------- */
