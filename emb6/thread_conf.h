@@ -96,6 +96,7 @@ extern thrd_dev_t thrd_dev;
 // --------------- THREAD EID-to-RLOC Mapping -------------------
 
 #define THRD_MAX_LOCAL_ADDRESSES		10		// Maximum number of local addresses (Local Address Set).
+#define THRD_MAX_RFD_CHILD_ADDRESSES	10		// Maximum number of RFD Child Addresses (RFD Child Address Set).
 
 // --------------------------------------------------------------
 
