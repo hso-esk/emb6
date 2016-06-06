@@ -34,7 +34,7 @@ typedef struct thrd_local_addr {
 typedef struct thrd_rfd_addr {
 	struct thrd_rfd_addr *next;
 
-	uip_ipaddr_t addr;
+	uip_ipaddr_t childAddr;
 } thrd_rfd_addr_t;
 
 /**
@@ -109,12 +109,28 @@ void thrd_local_addr_empty();
 /* --------------------------------------------------------------------------- */
 
 
+
+uint8_t thrd_rfd_child_addr_num();
+
+thrd_rfd_addr_t *thrd_rfd_child_addr_head(void);
+
+thrd_rfd_addr_t *thrd_rfd_child_addr_next(thrd_rfd_addr_t *i);
+
+thrd_rfd_addr_t *thrd_rfd_child_addr_lookup(uip_ipaddr_t child_addr);
+
+thrd_rfd_addr_t *thrd_rfd_child_addr_add(uip_ipaddr_t child_addr);
+
+void thrd_rfd_child_addr_rm(thrd_rfd_addr_t *child_addr);
+
+void thrd_rfd_child_addr_empty();
+
 /* --------------------------------------------------------------------------- */
 /* --------------------------------- DEBUG ----------------------------------- */
 /* --------------------------------------------------------------------------- */
 
 #if RIP_DEBUG
 void thrd_local_addr_set_print(void);
+void thrd_rfd_child_addr_set_print();
 #endif /* RIP_DEBUG */
 
 
