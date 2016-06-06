@@ -31,8 +31,7 @@ typedef struct thrd_ldb_ida {
 	clock_time_t ID_reuse_time;	// The time at which this Router ID MAY be reassigned.
 } thrd_ldb_ida_t;
 
-/** \name Routing Database basic routines */
-/** @{ */
+
 
 int thrd_ldb_num_ida(void);
 
