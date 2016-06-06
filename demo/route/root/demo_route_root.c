@@ -24,6 +24,8 @@
 
 #include "thrd-send-adv.h"
 
+#include "thrd-addr-query.h"
+
 #include "tlv.h"
 
 #define		DEBUG		DEBUG_PRINT
@@ -155,6 +157,36 @@ static int8_t _mcast_sendMsg(void)
 	switch (cnt) {
 	case 0:
 
+		thrd_eid_rloc_db_init();
+
+		uip_ipaddr_t ipaddr;
+
+		uip_ip6addr(&ipaddr, 0xaaaa, 0, 0, 0, 0, 0, 0, 0);
+		thrd_local_addr_add(ipaddr);
+
+		uip_ip6addr(&ipaddr, 0xbbbb, 0, 0, 0, 0, 0, 0, 0);
+		thrd_local_addr_add(ipaddr);
+
+		uip_ip6addr(&ipaddr, 0xcccc, 0, 0, 0, 0, 0, 0, 0);
+		thrd_local_addr_add(ipaddr);
+
+		uip_ip6addr(&ipaddr, 0xdddd, 0, 0, 0, 0, 0, 0, 0);
+		thrd_local_addr_add(ipaddr);
+
+		thrd_local_addr_set_print();
+
+		uip_ip6addr(&ipaddr, 0xbbbb, 0, 0, 0, 0, 0, 0, 0);
+		thrd_local_addr_rm(thrd_local_addr_lookup(ipaddr));
+
+		thrd_local_addr_set_print();
+
+		thrd_local_addr_empty();
+
+		thrd_local_addr_set_print();
+
+
+		/*
+
 		// thrd_trickle_init();
 
 		// thrd_partition_start();
@@ -183,7 +215,6 @@ static int8_t _mcast_sendMsg(void)
 
 		tlv_route64_init(&rt64_tlv, tlv_route64->value);
 
-
 		// Build Leader TLV.
 		leader_data[0] = TLV_LEADER_DATA;
 		leader_data[1] = 8;
@@ -199,22 +230,10 @@ static int8_t _mcast_sendMsg(void)
 		tlv_print(tlv_leader);
 
 		tlv_leader_init(&ld_tlv, tlv_leader->value);
-
-
 		thrd_process_adv(0x0400, rt64_tlv, ld_tlv);
-
-
-
-		/*
-
-		thrd_rdb_rid_add(2);
-		thrd_rdb_link_update(2, 15, 2, 250);
-
-		thrd_generate_route64();
 
 		*/
 
-		// printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(5, 10));
 		printf("------------------------------------------\n\n");
 		break;
 	case 1:
