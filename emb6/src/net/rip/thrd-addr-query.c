@@ -46,7 +46,7 @@ MEMB(rfdChildAddrSet_memb, thrd_rfd_addr_t, MAX_ROUTERS);
  * Address Query Set.
  */
 LIST(addrQuerySet_list);
-MEMB(addrQuerySet_memb, thrd_addr_qr_set_t, MAX_ROUTERS);
+MEMB(addrQuerySet_memb, thrd_addr_qr_t, MAX_ROUTERS);
 
 /* Number of currently stored EIDs in the Local Address Set. */
 static uint8_t num_eids = 0;
@@ -67,14 +67,6 @@ static uint8_t num_addr_qr = 0;
 
 /* --------------------------------------------------------------------------- */
 
-uint8_t
-thrd_local_addr_num()
-{
-	return num_eids;
-}
-
-/* --------------------------------------------------------------------------- */
-
 void
 thrd_eid_rloc_db_init(void)
 {
@@ -90,6 +82,14 @@ thrd_eid_rloc_db_init(void)
 
 /* --------------------------------------------------------------------------- */
 /* --------------------------- Local Address Set ----------------------------- */
+/* --------------------------------------------------------------------------- */
+
+uint8_t
+thrd_local_addr_num()
+{
+	return num_eids;
+}
+
 /* --------------------------------------------------------------------------- */
 
 thrd_local_addr_t
@@ -422,6 +422,173 @@ thrd_rfd_child_addr_empty()
 /* --------------------------- Address Query Set ----------------------------- */
 /* --------------------------------------------------------------------------- */
 
+uint8_t
+thrd_addr_qr_num()
+{
+	return num_addr_qr;
+}
+
+/* --------------------------------------------------------------------------- */
+
+thrd_addr_qr_t
+*thrd_addr_qr_head(void)
+{
+	return list_head(addrQuerySet_list);
+}
+
+/* --------------------------------------------------------------------------- */
+
+thrd_addr_qr_t
+*thrd_addr_qr_next(thrd_addr_qr_t *i)
+{
+	if ( i != NULL ) {
+		thrd_addr_qr_t *n = list_item_next(i);
+		return n;
+	}
+	return NULL;
+}
+
+/* --------------------------------------------------------------------------- */
+
+thrd_addr_qr_t
+*thrd_addr_qr_lookup(uip_ipaddr_t eid)
+{
+	thrd_addr_qr_t *addrQr;
+	thrd_addr_qr_t *found_addrQr;
+
+	PRINTF("thrd_addr_qr_lookup: Looking up Address Query for EID: ");
+	PRINT6ADDR(&eid);
+	PRINTF("\n\r");
+
+	found_addrQr = NULL;
+	for ( addrQr = thrd_addr_qr_head(); addrQr != NULL; addrQr = thrd_addr_qr_next(addrQr) ) {
+		if ( uip_ipaddr_cmp(&eid, &(addrQr->EID)) ) {
+			found_addrQr = addrQr;
+			break;
+		}
+	}
+
+	if ( found_addrQr != NULL ) {
+		PRINTF("thrd_addr_qr_lookup: Found Address Query for EID: ");
+		PRINT6ADDR(&eid);
+		PRINTF("\n\r");
+	} else {
+		PRINTF("thrd_addr_qr_lookup: No Address Query for EID found.\n\r");
+	}
+	return found_addrQr;
+}
+
+/* --------------------------------------------------------------------------- */
+
+thrd_addr_qr_t
+*thrd_addr_qr_add(uip_ipaddr_t eid, clock_time_t timeout, clock_time_t retry_delay)
+{
+	thrd_addr_qr_t *addrQr;
+
+	/* Find the corresponding Router ID entry (Router ID Set). */
+
+	addrQr = thrd_addr_qr_lookup(eid);
+
+	/* Check whether the given router id already has an entry in the Router ID Set. */
+	if ( addrQr == NULL ) {
+		PRINTF("thrd_addr_qr_add: Unknown Address Query for EID: ");
+		PRINT6ADDR(&eid);
+		PRINTF("\n\r");
+
+		/* If there is no router id entry, create one. We first need to
+		 * check if we have room for this router id. If not, we remove the
+		 * least recently used one we have. */
+
+		if ( thrd_addr_qr_num() == THRD_MAX_ADDRESS_QUERIES ) {
+			/* Removing the oldest router id entry from the Router ID Set. The
+			 * least recently used link is the first router id on the set. */
+			thrd_addr_qr_t *oldest;
+
+			oldest = list_tail(addrQuerySet_list);
+			thrd_addr_qr_rm(oldest);
+		}
+
+		/* Allocate a router id entry and populate it. */
+		addrQr = memb_alloc(&addrQuerySet_memb);
+
+		if ( addrQr == NULL ) {
+			/* This should not happen, as we explicitly deallocated one
+			 * link set entry above. */
+			PRINTF("thrd_addr_qr_add: Could not allocate Address Query.\n");
+			return NULL;
+		}
+
+		addrQr->EID = eid;
+		addrQr->AQ_Timeout = timeout;
+		addrQr->AQ_Failures = 0;
+		addrQr->AQ_Retry_Delay = retry_delay;
+
+		/* Add new router id first - assuming that there is a reason to add this
+		 * and that there is a packet coming soon. */
+		list_push(addrQuerySet_list, addrQr);
+
+		PRINTF("thrd_addr_qr_add: Added Address Query for EID: ");
+		PRINT6ADDR(&eid);
+		PRINTF("\n\r");
+
+		num_addr_qr++;
+
+		PRINTF("thrd_addr_qr_add: num_addr_qr %d\n\r", num_addr_qr);
+
+	} else {
+
+		PRINTF(ANSI_COLOR_RED "thrd_addr_qr_add: Address Query is already known for EID ");
+		PRINTF("%d\n", eid);
+		PRINTF(ANSI_COLOR_RESET "\n\r");
+
+		PRINTF("thrd_addr_qr_add: num_addr_qr %d\n\r", num_addr_qr);
+		PRINTF("-----------------------------------------------------\n\r");
+
+		return NULL;
+	}
+
+	PRINTF("-----------------------------------------------------\n\r");
+
+	return addrQr;
+}
+
+/* --------------------------------------------------------------------------- */
+
+void
+thrd_addr_qr_rm(thrd_addr_qr_t *addrQr)
+{
+	if ( addrQr != NULL ) {
+		PRINTF("thrd_local_addr_rm: Removing Address Query from 'Address Query Set' with EID: ");
+		PRINT6ADDR(&addrQr->EID);
+		PRINTF("\n\r");
+
+		/* Remove the router id from the Router ID Set. */
+		list_remove(addrQuerySet_list, addrQr);
+		memb_free(&addrQuerySet_memb, addrQr);
+
+		num_addr_qr--;
+
+		PRINTF("thrd_addr_qr_rm: num_addr_qr %d\n\r", num_addr_qr);
+	}
+}
+
+/* --------------------------------------------------------------------------- */
+
+void
+thrd_addr_qr_empty()
+{
+	thrd_addr_qr_t *addrQr;
+	thrd_addr_qr_t *addrQr_nxt;
+	PRINTF("thrd_addr_qr_empty: Removing all (%d) assigned Address Queries from 'Address Query Set'.", num_addr_qr);
+	PRINTF("\n\r");
+	addrQr = thrd_addr_qr_head();
+	addrQr_nxt = addrQr;
+	while ( addrQr_nxt != NULL ) {
+		addrQr = addrQr_nxt;
+		addrQr_nxt = addrQr->next;
+		thrd_addr_qr_rm(addrQr);
+	}
+}
 
 /* --------------------------------------------------------------------------- */
 /* --------------------------------- DEBUG ----------------------------------- */
@@ -466,6 +633,30 @@ thrd_rfd_child_addr_set_print()
 		printf(ANSI_COLOR_RESET " |\n");
 	}
 	printf("-------------------------\n\r");
+	printf(ANSI_COLOR_RED
+			"|===============================================================================|"
+			ANSI_COLOR_RESET "\n\r");
+}
+
+void
+thrd_addr_qr_set_print()
+{
+	thrd_addr_qr_t *i;
+	printf(ANSI_COLOR_RED
+			"|============================= ADDRESS QUERY SET ===============================|"
+			ANSI_COLOR_RESET "\n\r");
+	printf("---------------------------------------------------------------------------------\n");
+	printf("|      EID      | AQ_Timeout | AQ_Failures | AQ_Retry_Delay |\n");
+	printf("---------------------------------------------------------------------------------\n\r");
+	for (i = thrd_addr_qr_head(); i != NULL; i = thrd_addr_qr_next(i)) {
+		printf("| ");
+		PRINT6ADDR(&i->EID);
+		printf( " | " ANSI_COLOR_YELLOW "%10d" ANSI_COLOR_RESET
+				" | " ANSI_COLOR_YELLOW "%11d" ANSI_COLOR_RESET
+				" | " ANSI_COLOR_YELLOW "%14d" ANSI_COLOR_RESET
+				" |\n", i->AQ_Timeout, i->AQ_Failures, i->AQ_Retry_Delay);
+	}
+	printf("---------------------------------------------------------------------------------\n\r");
 	printf(ANSI_COLOR_RED
 			"|===============================================================================|"
 			ANSI_COLOR_RESET "\n\r");

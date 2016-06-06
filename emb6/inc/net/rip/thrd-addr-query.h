@@ -47,14 +47,14 @@ typedef struct thrd_rfd_child_set {
 /**
  * Address Query Set.
  */
-typedef struct thrd_addr_qr_set {
-	struct thrd_addr_qr_set *next;
+typedef struct thrd_addr_qr {
+	struct thrd_addr_qr *next;
 
 	uip_ipaddr_t EID;
 	clock_time_t AQ_Timeout;
 	uint8_t AQ_Failures;
 	clock_time_t AQ_Retry_Delay;
-} thrd_addr_qr_set_t;
+} thrd_addr_qr_t;
 
 /* --------------------------------------------------------------------------- */
 /* --------------------------- Local Address Set ----------------------------- */
@@ -125,12 +125,32 @@ void thrd_rfd_child_addr_rm(thrd_rfd_addr_t *child_addr);
 void thrd_rfd_child_addr_empty();
 
 /* --------------------------------------------------------------------------- */
+/* --------------------------- Address Query Set ----------------------------- */
+/* --------------------------------------------------------------------------- */
+
+uint8_t thrd_addr_qr_num();
+
+thrd_addr_qr_t *thrd_addr_qr_head(void);
+
+thrd_addr_qr_t *thrd_addr_qr_next(thrd_addr_qr_t *i);
+
+thrd_addr_qr_t *thrd_addr_qr_lookup(uip_ipaddr_t eid);
+
+thrd_addr_qr_t *thrd_addr_qr_add(uip_ipaddr_t eid, clock_time_t timeout, clock_time_t retry_delay);
+
+void thrd_addr_qr_rm(thrd_addr_qr_t *addrQr);
+
+void thrd_addr_qr_empty();
+
+
+/* --------------------------------------------------------------------------- */
 /* --------------------------------- DEBUG ----------------------------------- */
 /* --------------------------------------------------------------------------- */
 
 #if RIP_DEBUG
 void thrd_local_addr_set_print(void);
 void thrd_rfd_child_addr_set_print();
+void thrd_addr_qr_set_print();
 #endif /* RIP_DEBUG */
 
 
