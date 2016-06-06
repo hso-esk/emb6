@@ -162,27 +162,27 @@ static int8_t _mcast_sendMsg(void)
 		uip_ipaddr_t ipaddr;
 
 		uip_ip6addr(&ipaddr, 0xaaaa, 0, 0, 0, 0, 0, 0, 0);
-		thrd_local_addr_add(ipaddr);
+		thrd_addr_qr_add(ipaddr, 0, 0);
 
 		uip_ip6addr(&ipaddr, 0xbbbb, 0, 0, 0, 0, 0, 0, 0);
-		thrd_local_addr_add(ipaddr);
+		thrd_addr_qr_add(ipaddr, 0, 0);
 
 		uip_ip6addr(&ipaddr, 0xcccc, 0, 0, 0, 0, 0, 0, 0);
-		thrd_local_addr_add(ipaddr);
+		thrd_addr_qr_add(ipaddr, 0, 0);
 
 		uip_ip6addr(&ipaddr, 0xdddd, 0, 0, 0, 0, 0, 0, 0);
-		thrd_local_addr_add(ipaddr);
+		thrd_addr_qr_add(ipaddr, 0, 0);
 
-		thrd_local_addr_set_print();
+		thrd_addr_qr_set_print();
 
 		uip_ip6addr(&ipaddr, 0xbbbb, 0, 0, 0, 0, 0, 0, 0);
-		thrd_local_addr_rm(thrd_local_addr_lookup(ipaddr));
+		thrd_addr_qr_rm(thrd_addr_qr_lookup(ipaddr));
 
-		thrd_local_addr_set_print();
+		thrd_addr_qr_set_print();
 
-		thrd_local_addr_empty();
+		thrd_addr_qr_empty();
 
-		thrd_local_addr_set_print();
+		thrd_addr_qr_set_print();
 
 
 		/*
