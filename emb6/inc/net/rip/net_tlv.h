@@ -37,7 +37,7 @@ typedef struct __attribute__((__packed__)) {
  * Target EID TLV.
  */
 typedef struct __attribute__((__packed__)) {
-	uint8_t target_eid;
+	uint8_t target_eid;	// TODO
 }  net_tlv_target_eid_t;
 
 /**
