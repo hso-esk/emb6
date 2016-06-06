@@ -27,11 +27,53 @@ typedef enum
 /**
  * \brief Network Layer TLV.
  */
-typedef struct {
+typedef struct __attribute__((__packed__)) {
 	net_tlv_type_t type;    // type
 	uint8_t length;   // length
 	uint8_t *value; // pointer to the value
 } net_tlv_t;
+
+/**
+ * Target EID TLV.
+ */
+typedef struct __attribute__((__packed__)) {
+	uint8_t target_eid;
+}  net_tlv_target_eid_t;
+
+/**
+ * RLOC16 TLV.
+ */
+typedef struct __attribute__((__packed__)) {
+	uint8_t rloc16;
+}  net_tlv_rloc16_t;
+
+/**
+ * ML-EID TLV.
+ */
+typedef struct __attribute__((__packed__)) {
+	uint8_t ml_eid;
+}  net_tlv_ml_eid_t;
+
+/**
+ * Status TLV.
+ */
+typedef struct __attribute__((__packed__)) {
+	uint8_t status;
+}  net_tlv_status_t;
+
+/**
+ * Last Transaction Time TLV.
+ */
+typedef struct __attribute__((__packed__)) {
+	uint32_t last_transaction_time;
+}  net_tlv_last_transaction_t   ;
+
+/**
+ * Router Mask TLV.
+ */
+typedef struct __attribute__((__packed__)) {
+	uint64_t router_id_mask;
+}  net_tlv_router_mask_t;
 
 /*
  ********************************************************************************
