@@ -1,6 +1,7 @@
 /*
  * thrd-res-an.c
  *
+ *  Created on: 7 Jun 2016
  *  Author: Lukas Zimmermann <lzimmer1@stud.hs-offenburg.de>
  *  CoAP Resource - (Proactive) Address Notification /a/an.
  */
