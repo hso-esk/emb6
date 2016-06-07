@@ -701,9 +701,7 @@ void
 thrd_addr_ntf_response(uip_ipaddr_t *target_eid, uint16_t *rloc16,
 		uint8_t *ml_eid_tlv, clock_time_t *last_trans_time)
 {
-	uint8_t payload_len = 0;
-	// Create Address Notification Response payload.
-	payload_len = create_addr_ntf_resp_payload(addr_qry_buf, target_eid, rloc16, ml_eid_tlv, last_trans_time);
+	uint8_t payload_len = create_addr_ntf_resp_payload(addr_qry_buf, target_eid, rloc16, ml_eid_tlv, last_trans_time);
 
 	coap_init_message(packet, COAP_TYPE_CON, COAP_POST, 0);
 	coap_set_header_uri_path(packet, service_urls[1]);
