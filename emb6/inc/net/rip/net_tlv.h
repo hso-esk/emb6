@@ -25,15 +25,6 @@ typedef enum
 } net_tlv_type_t;
 
 /**
- * \brief Network Layer TLV.
- */
-typedef struct __attribute__((__packed__)) {
-	net_tlv_type_t type;    // type
-	uint8_t length;   // length
-	uint8_t *value; // pointer to the value
-} net_tlv_t;
-
-/**
  * Target EID TLV.
  */
 typedef struct __attribute__((__packed__)) {
@@ -80,8 +71,5 @@ typedef struct __attribute__((__packed__)) {
  *                           LOCAL FUNCTION DEFINITIONS
  ********************************************************************************
  */
-
-net_tlv_t *net_tlv_write(net_tlv_t *net_tlv, net_tlv_type_t type, uint8_t length, uint8_t *value,
-		uint8_t *ptr_to_buffer);
 
 #endif /* EMB6_INC_NET_RIP_NET_TLV_H_ */
