@@ -22,6 +22,7 @@ emb6 = {
 		'mle/*',
 	],
 	'rip' : [
+		'net/rip/resources/*',
 		'net/rip/*',
 	],
 	'mdns' : [
