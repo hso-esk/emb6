@@ -34,11 +34,15 @@ thrd_eid_rloc_cache_t *thrd_eid_rloc_cache_next(thrd_eid_rloc_cache_t *i);
 
 thrd_eid_rloc_cache_t *thrd_eid_rloc_cache_lookup(uip_ipaddr_t eid);
 
-thrd_eid_rloc_cache_t *thrd_eid_rloc_cache_add(uip_ipaddr_t eid, uip_ipaddr_t rloc, clock_time_t age);
-
 void thrd_eid_rloc_cache_rm(thrd_eid_rloc_cache_t *entry);
 
 void thrd_eid_rloc_cache_empty();
+
+/**
+ * Managing EID-to-RLOC Map Cache Entries.
+ * @return
+ */
+thrd_eid_rloc_cache_t *thrd_eid_rloc_cache_update(uip_ipaddr_t eid, uip_ipaddr_t rloc);
 
 /* --------------------------------------------------------------------------- */
 /* --------------------------------- DEBUG ----------------------------------- */

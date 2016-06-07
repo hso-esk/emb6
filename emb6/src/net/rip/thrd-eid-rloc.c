@@ -12,6 +12,7 @@
 #include "clist.h"
 #include "memb.h"
 #include "rip.h"
+#include "bsp.h"
 
 #include "thrd-eid-rloc.h"
 
@@ -121,85 +122,6 @@ thrd_eid_rloc_cache_t
 
 /* --------------------------------------------------------------------------- */
 
-thrd_eid_rloc_cache_t
-*thrd_eid_rloc_cache_add(uip_ipaddr_t eid, uip_ipaddr_t rloc, clock_time_t age)
-{
-	thrd_eid_rloc_cache_t *entry;
-
-	/* Find the corresponding Router ID entry (Router ID Set). */
-
-	entry = thrd_eid_rloc_cache_lookup(eid);
-
-	/* Check whether the given router id already has an entry in the Router ID Set. */
-	if ( entry == NULL ) {
-		PRINTF("thrd_eid_rloc_cache_add: Unknown EID: ");
-		PRINT6ADDR(&eid);
-		PRINTF("\n\r");
-
-		/* If there is no router id entry, create one. We first need to
-		 * check if we have room for this router id. If not, we remove the
-		 * least recently used one we have. */
-
-		if ( thrd_eid_rloc_cache_num() == THRD_MAX_EID_RLOC_MAP_CACHE_SIZE ) {
-			/* Removing the oldest router id entry from the Router ID Set. The
-			 * least recently used link is the first router id on the set. */
-			thrd_eid_rloc_cache_t *oldest;
-
-			oldest = list_tail(eidRlocMapCache_list);
-			thrd_eid_rloc_cache_rm(oldest);
-		}
-
-		/* Allocate a router id entry and populate it. */
-		entry = memb_alloc(&eidRlocMapCache_memb);
-
-		if ( entry == NULL ) {
-			/* This should not happen, as we explicitly deallocated one
-			 * link set entry above. */
-			PRINTF("thrd_eid_rloc_cache_add: Could not allocate EID-to-RLOC entry.\n");
-			return NULL;
-		}
-
-		entry->EID = eid;
-		entry->RLOC = rloc;
-		entry->Age = age;
-
-		/* Add new router id first - assuming that there is a reason to add this
-		 * and that there is a packet coming soon. */
-		list_push(eidRlocMapCache_list, entry);
-
-		PRINTF("thrd_eid_rloc_cache_add: Added EID-to-RLOC entry:\n"
-				"EID = ");
-		PRINT6ADDR(&eid);
-		PRINTF("\n"
-				"RLOC = ");
-		PRINT6ADDR(&rloc);
-		PRINTF("\n"
-				"AGE = ", age);
-		PRINTF("\n\r");
-
-		num_entries++;
-
-		PRINTF("thrd_eid_rloc_cache_add: num_entries %d\n\r", num_entries);
-
-	} else {
-
-		PRINTF(ANSI_COLOR_RED "thrd_eid_rloc_cache_add: EID is already known for ");
-		PRINTF("%d\n", eid);
-		PRINTF(ANSI_COLOR_RESET "\n\r");
-
-		PRINTF("thrd_eid_rloc_cache_add: num_entries %d\n\r", num_entries);
-		PRINTF("-----------------------------------------------------\n\r");
-
-		return NULL;
-	}
-
-	PRINTF("-----------------------------------------------------\n\r");
-
-	return entry;
-}
-
-/* --------------------------------------------------------------------------- */
-
 void
 thrd_eid_rloc_cache_rm(thrd_eid_rloc_cache_t *entry)
 {
@@ -212,10 +134,7 @@ thrd_eid_rloc_cache_rm(thrd_eid_rloc_cache_t *entry)
 		/* Remove the router id from the Router ID Set. */
 		list_remove(eidRlocMapCache_list, entry);
 		memb_free(&eidRlocMapCache_memb, entry);
-
 		num_entries--;
-
-		PRINTF("thrd_eid_rloc_cache_rm: num_entries %d\n\r", num_entries);
 	}
 }
 
@@ -236,6 +155,58 @@ thrd_eid_rloc_cache_empty()
 		entry_nxt = entry->next;
 		thrd_eid_rloc_cache_rm(entry);
 	}
+}
+
+/* --------------------------------------------------------------------------- */
+
+thrd_eid_rloc_cache_t
+*thrd_eid_rloc_cache_update(uip_ipaddr_t eid, uip_ipaddr_t rloc)
+{
+	thrd_eid_rloc_cache_t *entry;
+	entry = thrd_eid_rloc_cache_lookup(eid);
+
+	if ( entry == NULL ) {
+		if ( thrd_eid_rloc_cache_num() == THRD_MAX_EID_RLOC_MAP_CACHE_SIZE ) {
+			thrd_eid_rloc_cache_t *oldest;
+
+			oldest = list_tail(eidRlocMapCache_list);
+			thrd_eid_rloc_cache_rm(oldest);
+		}
+		entry = memb_alloc(&eidRlocMapCache_memb);
+
+		if ( entry == NULL ) {
+			/* This should not happen, as we explicitly deallocated one
+			 * link set entry above. */
+			PRINTF("thrd_eid_rloc_cache_add: Could not allocate EID-to-RLOC entry.\n");
+			return NULL;
+		}
+
+		entry->EID = eid;
+		entry->RLOC = rloc;
+		entry->Age = bsp_get(E_BSP_GET_TICK);
+
+		list_push(eidRlocMapCache_list, entry);
+
+		PRINTF("thrd_eid_rloc_cache_add: Added EID-to-RLOC entry:\n"
+				"EID = ");
+		PRINT6ADDR(&entry->EID);
+		PRINTF("\n"
+				"RLOC = ");
+		PRINT6ADDR(&entry->RLOC);
+		PRINTF("\n"
+				"AGE = ", entry->Age);
+		PRINTF("\n\r");
+
+		num_entries++;
+	} else {
+
+		PRINTF(ANSI_COLOR_RED "thrd_eid_rloc_cache_add: EID is already known for ");
+		PRINTF("%d\n", eid);
+		PRINTF(ANSI_COLOR_RESET "\n\r");
+
+		return NULL;
+	}
+	return entry;
 }
 
 /* --------------------------------------------------------------------------- */
