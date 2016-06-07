@@ -10,6 +10,8 @@
 #ifndef EMB6_INC_NET_RIP_NET_TLV_H_
 #define EMB6_INC_NET_RIP_NET_TLV_H_
 
+#include "uip.h"
+
 /**
  * Network Layer TLV types.
  */
@@ -28,21 +30,21 @@ typedef enum
  * Target EID TLV.
  */
 typedef struct __attribute__((__packed__)) {
-	uint8_t target_eid;	// TODO
+	uip_ipaddr_t target_eid;
 }  net_tlv_target_eid_t;
 
 /**
  * RLOC16 TLV.
  */
 typedef struct __attribute__((__packed__)) {
-	uint8_t rloc16;
+	uint16_t rloc16;
 }  net_tlv_rloc16_t;
 
 /**
  * ML-EID TLV.
  */
 typedef struct __attribute__((__packed__)) {
-	uint8_t ml_eid;
+	uint8_t ml_eid[8];
 }  net_tlv_ml_eid_t;
 
 /**
