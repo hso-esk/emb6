@@ -17,7 +17,12 @@
 // #define THRD_AQ_TIMEOUT
 // #define THRD_AQ_INITIAL_RETRY_DELAY
 
+/* Number of URIs that can be queried. */
+#define NUMBER_OF_URLS 2
+
 extern void thrd_eid_rloc_db_init(void);
+
+void thrd_eid_rloc_coap_init();
 
 /**
  * Local Address Set.
@@ -147,7 +152,23 @@ void thrd_addr_qr_empty();
 /* ----------------------------- Address Query ------------------------------- */
 /* --------------------------------------------------------------------------- */
 
-void thrd_addr_qr_request(net_tlv_target_eid_t *target_tlv);
+void thrd_addr_qry_request(net_tlv_target_eid_t *target_tlv);
+
+/**
+ * Send an Address Notification Response message.
+ * @param target_eid The Target EID.
+ * @param rloc16 The corresponding RLOC16.
+ * @param ml_eid_tlv The corresonding ML-EID of the target.
+ * @param last_trans_time The Last Transaction Time (Optional). NULL if not used.
+ */
+void thrd_addr_ntf_response(uip_ipaddr_t *target_eid, uint16_t *rloc16,
+		uint8_t *ml_eid_tlv, clock_time_t *last_trans_time);
+
+/*
+void thrd_addr_ntf_response(net_tlv_target_eid_t *target_tlv,
+		net_tlv_rloc16_t *rloc16_tlv,
+		net_tlv_ml_eid_t *ml_eid_tlv);
+*/
 
 /* --------------------------------------------------------------------------- */
 /* --------------------------------- DEBUG ----------------------------------- */
