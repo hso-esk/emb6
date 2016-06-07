@@ -26,6 +26,8 @@
 
 #include "thrd-addr-query.h"
 
+#include "thrd-eid-rloc.h"
+
 #include "tlv.h"
 
 #define		DEBUG		DEBUG_PRINT
@@ -157,32 +159,37 @@ static int8_t _mcast_sendMsg(void)
 	switch (cnt) {
 	case 0:
 
-		thrd_eid_rloc_db_init();
+		thrd_eid_rloc_cache_init();
 
-		uip_ipaddr_t ipaddr;
+		uip_ipaddr_t eid;
+		uip_ipaddr_t rloc;
 
-		uip_ip6addr(&ipaddr, 0xaaaa, 0, 0, 0, 0, 0, 0, 0);
-		thrd_addr_qr_add(ipaddr, 0, 0);
+		uip_ip6addr(&eid, 0xaaaa, 0, 0, 0, 0, 0, 0, 0);
+		uip_ip6addr(&rloc, 0xaaaa, 0, 0, 0, 0, 0, 0, 1);
+		thrd_eid_rloc_cache_add(eid, rloc, 0);
 
-		uip_ip6addr(&ipaddr, 0xbbbb, 0, 0, 0, 0, 0, 0, 0);
-		thrd_addr_qr_add(ipaddr, 0, 0);
+		uip_ip6addr(&eid, 0xbbbb, 0, 0, 0, 0, 0, 0, 0);
+		uip_ip6addr(&rloc, 0xbbbb, 0, 0, 0, 0, 0, 0, 1);
+		thrd_eid_rloc_cache_add(eid, rloc, 0);
 
-		uip_ip6addr(&ipaddr, 0xcccc, 0, 0, 0, 0, 0, 0, 0);
-		thrd_addr_qr_add(ipaddr, 0, 0);
+		uip_ip6addr(&eid, 0xcccc, 0, 0, 0, 0, 0, 0, 0);
+		uip_ip6addr(&rloc, 0xcccc, 0, 0, 0, 0, 0, 0, 1);
+		thrd_eid_rloc_cache_add(eid, rloc, 0);
 
-		uip_ip6addr(&ipaddr, 0xdddd, 0, 0, 0, 0, 0, 0, 0);
-		thrd_addr_qr_add(ipaddr, 0, 0);
+		uip_ip6addr(&eid, 0xdddd, 0, 0, 0, 0, 0, 0, 0);
+		uip_ip6addr(&rloc, 0xdddd, 0, 0, 0, 0, 0, 0, 1);
+		thrd_eid_rloc_cache_add(eid, rloc, 0);
 
-		thrd_addr_qr_set_print();
+		thrd_eid_rloc_cache_print();
 
-		uip_ip6addr(&ipaddr, 0xbbbb, 0, 0, 0, 0, 0, 0, 0);
-		thrd_addr_qr_rm(thrd_addr_qr_lookup(ipaddr));
+		uip_ip6addr(&eid, 0xbbbb, 0, 0, 0, 0, 0, 0, 0);
+		thrd_eid_rloc_cache_rm(thrd_eid_rloc_cache_lookup(eid));
 
-		thrd_addr_qr_set_print();
+		thrd_eid_rloc_cache_print();
 
-		thrd_addr_qr_empty();
+		thrd_eid_rloc_cache_empty();
 
-		thrd_addr_qr_set_print();
+		thrd_eid_rloc_cache_print();
 
 
 		/*
