@@ -28,6 +28,28 @@
  ********************************************************************************
  */
 
+/**
+* Create Address Notification Payload.
+* @param buf A buffer of (at least) size 38 (octets).
+* @param target_eid The Target EID.
+* @param rloc16 The Corresponding RLOC16.
+* @param ml_eid The Corresponding ML-EID.
+* @param last_trans_time The last transaction time (optional). NULL if not used.
+ * @return The payload length.
+ */
+static uint8_t create_addr_ntf_resp_payload(uint8_t *buf, uip_ipaddr_t *target_eid,
+		uint16_t *rloc16, uint8_t *ml_eid, clock_time_t *last_trans_time);
+
+/* --------------------------------------------------------------------------- */
+
+/**
+ * Create Address Query Request Payload.
+ * @param buf A buffer of (at least) size 18 (octets).
+ * @param target_eid The Target EID.
+ * @return The payload length.
+ */
+static uint8_t create_addr_qry_req_payload(uint8_t *buf, uip_ipaddr_t *target_eid);
+
 /*
  ********************************************************************************
  *                               LOCAL VARIABLES
@@ -77,28 +99,6 @@ static uint8_t num_addr_qry = 0;
  ********************************************************************************
  */
 
-/**
-* Create Address Notification Payload.
-* @param buf A buffer of (at least) size 38 (octets).
-* @param target_eid The Target EID.
-* @param rloc16 The Corresponding RLOC16.
-* @param ml_eid The Corresponding ML-EID.
-* @param last_trans_time The last transaction time (optional). NULL if not used.
- * @return The payload length.
- */
-static uint8_t create_addr_ntf_resp_payload(uint8_t *buf, uip_ipaddr_t *target_eid,
-		uint16_t *rloc16, uint8_t *ml_eid, clock_time_t *last_trans_time);
-
-/**
- * Create Address Query Request Payload.
- * @param buf A buffer of (at least) size 18 (octets).
- * @param target_eid The Target EID.
- * @return The payload length.
- */
-static uint8_t create_addr_qry_req_payload(uint8_t *buf, uip_ipaddr_t *target_eid);
-
-/* --------------------------------------------------------------------------- */
-
 void
 thrd_eid_rloc_db_init(void)
 {
@@ -113,6 +113,8 @@ thrd_eid_rloc_db_init(void)
 
 	// thrd_eid_rloc_coap_init();
 }
+
+/* --------------------------------------------------------------------------- */
 
 void
 thrd_eid_rloc_coap_init()
