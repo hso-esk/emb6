@@ -53,14 +53,14 @@ typedef struct thrd_rfd_child_set {
 /**
  * Address Query Set.
  */
-typedef struct thrd_addr_qr {
-	struct thrd_addr_qr *next;
+typedef struct thrd_addr_qry {
+	struct thrd_addr_qry *next;
 
 	uip_ipaddr_t EID;
 	clock_time_t AQ_Timeout;
 	uint8_t AQ_Failures;
 	clock_time_t AQ_Retry_Delay;
-} thrd_addr_qr_t;
+} thrd_addr_qry_t;
 
 /* --------------------------------------------------------------------------- */
 /* --------------------------- Local Address Set ----------------------------- */
@@ -114,39 +114,75 @@ void thrd_local_addr_empty();
 /* ------------------------- RFD Child Address Set --------------------------- */
 /* --------------------------------------------------------------------------- */
 
-
-
+/**
+ * Get the number of the currently stored RFD Child Addresses in the
+ * RFD Child Address Set.
+ * @return The number of currently stored RFD Child Addresses.
+ */
 uint8_t thrd_rfd_child_addr_num();
 
+/**
+ * Get a pointer to the first element of the RFD Child Address Set.
+ * @return A pointer to the first element.
+ */
 thrd_rfd_addr_t *thrd_rfd_child_addr_head(void);
 
+/**
+ * Get the subsequent element of the given entry in the RFD Child Address Set.
+ * @param i A thrd_rfd_addr_t element.
+ * @return A pointer to the subsequent element.
+ */
 thrd_rfd_addr_t *thrd_rfd_child_addr_next(thrd_rfd_addr_t *i);
 
+/**
+ * Look up a given RFD Child Address entry in the RFD Child Address Set.
+ * @param child_addr The Endpoint Identifier of the child.
+ * @return The corresponding thrd_rfd_addr_t entry (if exist).
+ */
 thrd_rfd_addr_t *thrd_rfd_child_addr_lookup(uip_ipaddr_t child_addr);
 
+/**
+ * Add a given RFD Child Address to the RFD Child Address Set.
+ * @param child_addr The Endpoint Identifier of the child.
+ * @return A pointer to the currently inserted thrd_rfd_addr_t entry.
+ */
 thrd_rfd_addr_t *thrd_rfd_child_addr_add(uip_ipaddr_t child_addr);
 
+/**
+ * Remove a given RFD Child Address element of the RFD Child Address Set.
+ * @param child_addr A thrd_rfd_addr_t element.
+ */
 void thrd_rfd_child_addr_rm(thrd_rfd_addr_t *child_addr);
 
+/**
+ * Empty RFD Child Address Set.
+ */
 void thrd_rfd_child_addr_empty();
 
 /* --------------------------------------------------------------------------- */
 /* --------------------------- Address Query Set ----------------------------- */
 /* --------------------------------------------------------------------------- */
 
-uint8_t thrd_addr_qr_num();
+uint8_t thrd_addr_qry_num();
 
-thrd_addr_qr_t *thrd_addr_qr_head(void);
+thrd_addr_qry_t *thrd_addr_qry_head(void);
 
-thrd_addr_qr_t *thrd_addr_qr_next(thrd_addr_qr_t *i);
+thrd_addr_qry_t *thrd_addr_qry_next(thrd_addr_qry_t *i);
 
-thrd_addr_qr_t *thrd_addr_qr_lookup(uip_ipaddr_t eid);
+thrd_addr_qry_t *thrd_addr_qry_lookup(uip_ipaddr_t eid);
 
-thrd_addr_qr_t *thrd_addr_qr_add(uip_ipaddr_t eid, clock_time_t timeout, clock_time_t retry_delay);
+thrd_addr_qry_t *thrd_addr_qry_add(uip_ipaddr_t eid, clock_time_t timeout, clock_time_t retry_delay);
 
-void thrd_addr_qr_rm(thrd_addr_qr_t *addrQr);
+/**
+ * Remove a given Address uery element of the Address Query Set.
+ * @param child_addr A thrd_addr_qr_t element.
+ */
+void thrd_addr_qry_rm(thrd_addr_qry_t *addrQr);
 
-void thrd_addr_qr_empty();
+/**
+ * Empty Address Query Set.
+ */
+void thrd_addr_qry_empty();
 
 /* --------------------------------------------------------------------------- */
 /* ----------------------------- Address Query ------------------------------- */
@@ -163,12 +199,6 @@ void thrd_addr_qry_request(uip_ipaddr_t *target_eid);
  */
 void thrd_addr_ntf_response(uip_ipaddr_t *target_eid, uint16_t *rloc16,
 		uint8_t *ml_eid_tlv, clock_time_t *last_trans_time);
-
-/*
-void thrd_addr_ntf_response(net_tlv_target_eid_t *target_tlv,
-		net_tlv_rloc16_t *rloc16_tlv,
-		net_tlv_ml_eid_t *ml_eid_tlv);
-*/
 
 /* --------------------------------------------------------------------------- */
 /* --------------------------------- DEBUG ----------------------------------- */
