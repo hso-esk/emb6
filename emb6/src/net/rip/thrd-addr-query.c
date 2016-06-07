@@ -35,19 +35,19 @@
  * Local Address Set
  */
 LIST(localAddrSet_list);
-MEMB(localAddrSet_memb, thrd_local_addr_t, MAX_ROUTERS);
+MEMB(localAddrSet_memb, thrd_local_addr_t, THRD_MAX_LOCAL_ADDRESSES);
 
 /**
  * Address Set.
  */
 LIST(rfdChildAddrSet_list);
-MEMB(rfdChildAddrSet_memb, thrd_rfd_addr_t, MAX_ROUTERS);
+MEMB(rfdChildAddrSet_memb, thrd_rfd_addr_t, THRD_MAX_RFD_CHILD_ADDRESSES);
 
 /**
  * Address Query Set.
  */
 LIST(addrQuerySet_list);
-MEMB(addrQuerySet_memb, thrd_addr_qr_t, MAX_ROUTERS);
+MEMB(addrQuerySet_memb, thrd_addr_qr_t, THRD_MAX_ADDRESS_QUERIES);
 
 /* Number of currently stored EIDs in the Local Address Set. */
 static uint8_t num_eids = 0;
@@ -125,7 +125,7 @@ thrd_local_addr_t
 
 	found_localAddr = NULL;
 	for ( localAddr = thrd_local_addr_head(); localAddr != NULL; localAddr = thrd_local_addr_next(localAddr) ) {
-		if ( uip_ipaddr_cmp(&eid, &(localAddr->eid)) ) {
+		if ( uip_ipaddr_cmp(&eid, &(localAddr->EID)) ) {
 			found_localAddr = localAddr;
 			break;
 		}
@@ -181,7 +181,7 @@ thrd_local_addr_t
 			return NULL;
 		}
 
-		localAddr->eid = eid;
+		localAddr->EID = eid;
 
 		/* Add new router id first - assuming that there is a reason to add this
 		 * and that there is a packet coming soon. */
@@ -219,7 +219,7 @@ thrd_local_addr_rm(thrd_local_addr_t *localAddr)
 {
 	if ( localAddr != NULL ) {
 		PRINTF("thrd_local_addr_rm: Removing EID from 'Local Address Set' with EID: ");
-		PRINT6ADDR(&localAddr->eid);
+		PRINT6ADDR(&localAddr->EID);
 		PRINTF("\n\r");
 
 		/* Remove the router id from the Router ID Set. */
@@ -619,9 +619,8 @@ thrd_local_addr_set_print(void)
 	printf("|          EID          |\n");
 	printf("-------------------------\n\r");
 	for (i = thrd_local_addr_head(); i != NULL; i = thrd_local_addr_next(i)) {
-		// printf("| " ANSI_COLOR_YELLOW "%21d" ANSI_COLOR_RESET " |\n", PRINT6ADDR(&i->eid));
 		printf("| " ANSI_COLOR_YELLOW);
-		PRINT6ADDR(&i->eid);
+		PRINT6ADDR(&i->EID);
 		printf(ANSI_COLOR_RESET " |\n");
 	}
 	printf("-------------------------\n\r");

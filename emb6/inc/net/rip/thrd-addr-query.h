@@ -25,7 +25,7 @@ extern void thrd_eid_rloc_db_init(void);
 typedef struct thrd_local_addr {
 	struct thrd_local_addr *next;
 
-	uip_ipaddr_t eid;
+	uip_ipaddr_t EID;
 } thrd_local_addr_t;
 
 /**
