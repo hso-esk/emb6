@@ -6,6 +6,7 @@
  */
 
 #include "emb6.h"
+#include "stdlib.h"
 #include "bsp.h"
 #include "etimer.h"
 #include "evproc.h"
@@ -155,10 +156,67 @@ static int8_t _mcast_sendMsg(void)
 	tlv_route64_t *rt64_tlv;
 	tlv_leader_t *ld_tlv;
 
+	uip_ipaddr_t test_eid;
+	uip_ipaddr_t test_eid2;
+
+	net_tlv_target_eid_t *target_eid_tlv;
+	net_tlv_rloc16_t *rloc16_tlv;
+	net_tlv_ml_eid_t *ml_eid_tlv;
+
+	uint16_t test_rloc16 = 0x1010;
+
+	uint8_t test_buf[16];
+
 	// Routing Database.
 	switch (cnt) {
 	case 0:
 
+		/*
+		uip_ip6addr(&test_eid, 0xfe80, 0x0000, 0x0000, 0x0000, 0x0250, 0xc2ff, 0xfea8, 0xdddd);
+
+		memcpy(test_buf, &test_eid, 16);
+
+		for( uint8_t i = 0; i < 16; i++ ) {
+			printf("test_buf[%d] = %02x\n", i, test_buf[i]);
+		}
+
+		uip_ip6addr_u8(&test_eid2, test_buf[0], test_buf[1], test_buf[2], test_buf[3],
+				test_buf[4], test_buf[5], test_buf[6], test_buf[7], test_buf[8],
+				test_buf[9], test_buf[10], test_buf[11], test_buf[12], test_buf[13],
+				test_buf[14], test_buf[15]);
+
+		PRINT6ADDR(&test_eid2);
+		 */
+
+		// ---
+
+		/*
+		uip_ip6addr(&test_eid, 0xfe80, 0x0000, 0x0000, 0x0000, 0x0250, 0xc2ff, 0xfea8, 0xdddd);
+		tlv_target_eid_init(&target_eid_tlv, test_eid.u8);
+
+		uint8_t rloc16[2] = { 0x10, 0x10 };
+
+		tlv_rloc16_init(&rloc16_tlv, rloc16);
+		uint8_t ml_eid[8] = { 0xF0, 0x00,
+				0x00, 0x00,
+				0x00, 0x00,
+				0x00, 0x0F };
+		tlv_ml_eid_init(&ml_eid_tlv, ml_eid);
+
+		thrd_addr_ntf_response(target_eid_tlv, rloc16_tlv, ml_eid_tlv);
+		*/
+
+		uip_ip6addr(&test_eid, 0xfe80, 0x0000, 0x0000, 0x0000, 0x0250, 0xc2ff, 0xfea8, 0xdddd);
+
+		uint16_t rloc16 = 0x1010;
+		uint8_t ml_eid[8] = { 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0F };
+		clock_time_t time = 0x80000008;
+
+		thrd_addr_ntf_response(&test_eid, &rloc16, ml_eid, NULL);
+
+		// ---
+
+		/*
 		thrd_eid_rloc_cache_init();
 
 		uip_ipaddr_t eid;
@@ -190,7 +248,7 @@ static int8_t _mcast_sendMsg(void)
 		thrd_eid_rloc_cache_empty();
 
 		thrd_eid_rloc_cache_print();
-
+		*/
 
 		/*
 
