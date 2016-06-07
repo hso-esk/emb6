@@ -79,7 +79,7 @@ static uint8_t num_addr_qr = 0;
 
 /**
 * Create Address Notification Payload.
-* @param buf A buffer of (at least) size 26 (octects).
+* @param buf A buffer of (at least) size 38 (octets).
 * @param target_eid The Target EID.
 * @param rloc16 The Corresponding RLOC16.
 * @param ml_eid The Corresponding ML-EID.
@@ -88,6 +88,14 @@ static uint8_t num_addr_qr = 0;
  */
 static uint8_t create_addr_ntf_resp_payload(uint8_t *buf, uip_ipaddr_t *target_eid,
 		uint16_t *rloc16, uint8_t *ml_eid, clock_time_t *last_trans_time);
+
+/**
+ * Create Address Query Request Payload.
+ * @param buf A buffer of (at least) size 18 (octets).
+ * @param target_eid The Target EID.
+ * @return The payload length.
+ */
+static uint8_t create_addr_qry_req_payload(uint8_t *buf, uip_ipaddr_t *target_eid);
 
 /* --------------------------------------------------------------------------- */
 
@@ -631,45 +639,76 @@ thrd_addr_qr_empty()
 
 // TODO Section 5.4.2 Address Query.
 
-static coap_packet_t packet[1];      /* This way the packet can be treated as pointer as usual. */
+/**
+ * Address Query Payload Buffer (MUST be at least 38 octets).
+ */
+static uint8_t addr_qry_buf[38] = { 0 };
+
+static coap_packet_t packet[1]; /* This way the packet can be treated as pointer as usual. */
+
+/* --------------------------------------------------------------------------- */
+
+/* This function is will be passed to coap_nonblocking_request() to handle responses. */
+void
+thrd_addr_ntf_chunk_handler(void *response)
+{
+    const uint8_t *chunk;
+    if ( !response ) {
+
+    } else {
+    	int payload_len = coap_get_payload(response, &chunk);
+    	if ( payload_len == 32 ) {
+    		// TODO Process payload -> Receipt of Address Query Messages.
+    	} else if ( payload_len == 38 ) {
+    		// TODO Process payload -> Receipt of Address Query Messages.
+    	}
+    }
+}
 
 void
-thrd_addr_qry_request(net_tlv_target_eid_t *target_tlv)
+thrd_addr_qry_request(uip_ipaddr_t *target_eid)
 {
-	// coap_init_message(packet, COAP_TYPE_CON, COAP_POST, 0);
-	// coap_set_header_uri_path(packet, service_urls[0]);
+	uint8_t payload_len = create_addr_qry_req_payload(addr_qry_buf, target_eid);
 
-	// coap_set_payload(void *packet, const void *payload, size_t length).
-	// coap_set_payload(packet, target_tlv->target_eid, sizeof(target_tlv->target_eid));
-
-	// coap_nonblocking_request(&rlar_ipaddr, THRD_MGMT_COAP_PORT, packet, _client_chunk_handler);
+	if ( payload_len > 0 ) {
+		coap_init_message(packet, COAP_TYPE_CON, COAP_POST, 0);
+		coap_set_header_uri_path(packet, service_urls[0]);
+		coap_set_payload(packet, addr_qry_buf, payload_len);
+		coap_nonblocking_request(&rlar_ipaddr, THRD_MGMT_COAP_PORT, packet, thrd_addr_ntf_chunk_handler);
+	}
 }
 
 /* --------------------------------------------------------------------------- */
 
-/**
- * Address Notification Response Payload Buffer (fixed length).
- */
-static uint8_t addr_ntf_buf[38] = { 0 };
+static uint8_t
+create_addr_qry_req_payload(uint8_t *buf, uip_ipaddr_t *target_eid)
+{
+	if ( sizeof(buf) >= 18 ) {
+		if ( buf != NULL && target_eid != NULL ) {
+			// Create Target EID TLV.
+			buf[0] = NET_TLV_TARGET_EID;
+			buf[1] = 16;
+			memcpy(&buf[2], target_eid, 16);
+			return 18;
+		}
+	}
+	return 0;
+}
+
+/* --------------------------------------------------------------------------- */
 
 void
 thrd_addr_ntf_response(uip_ipaddr_t *target_eid, uint16_t *rloc16,
 		uint8_t *ml_eid_tlv, clock_time_t *last_trans_time)
 {
-	// Create Address Notification Response Payload.
-	create_addr_ntf_resp_payload(addr_ntf_buf, target_eid, rloc16, ml_eid_tlv, last_trans_time));
+	uint8_t payload_len = 0;
+	// Create Address Notification Response payload.
+	payload_len = create_addr_ntf_resp_payload(addr_qry_buf, target_eid, rloc16, ml_eid_tlv, last_trans_time);
 
-	for( uint8_t i = 32; i < 38; i++ ) {
-		printf("addr_ntf_buf[%d] = %02x\n", i, addr_ntf_buf[i]);
-	}
-
-	// coap_init_message(packet, COAP_TYPE_CON, COAP_POST, 0);
-	// coap_set_header_uri_path(packet, service_urls[1]);
-
-	// coap_set_payload(void *packet, const void *payload, size_t length).
-	// coap_set_payload(packet, buf, 26);
-
-	// coap_nonblocking_request(&rlar_ipaddr, THRD_MGMT_COAP_PORT, packet, _client_chunk_handler);
+	coap_init_message(packet, COAP_TYPE_CON, COAP_POST, 0);
+	coap_set_header_uri_path(packet, service_urls[1]);
+	coap_set_payload(packet, addr_qry_buf, payload_len);
+	coap_nonblocking_request(&rlar_ipaddr, THRD_MGMT_COAP_PORT, packet, NULL);
 }
 
 /* --------------------------------------------------------------------------- */
@@ -678,44 +717,29 @@ static uint8_t
 create_addr_ntf_resp_payload(uint8_t *buf, uip_ipaddr_t *target_eid, uint16_t *rloc16,
 		uint8_t *ml_eid, clock_time_t *last_trans_time)
 {
-	if ( buf != NULL && target_eid != NULL && rloc16 != NULL && ml_eid != NULL ) {
-		// Create Target EID TLV.
-		buf[0] = NET_TLV_TARGET_EID;
-		buf[1] = 16;
-		memcpy(&buf[2], target_eid, 16);
-		// Create RLOC16 TLV.
-		buf[18] = NET_TLV_RLOC16;
-		buf[19] = 2;
-		memcpy(&buf[20], rloc16, 2);
-		buf[22] = NET_TLV_ML_EID;
-		buf[23] = 8;
-		memcpy(&buf[24], ml_eid, 8);
-		if ( last_trans_time != NULL ) {
-			buf[32] = NET_TLV_LAST_TRANSACTION_TIME;
-			buf[33] = 4;
-			memcpy(&buf[34], last_trans_time, 4);
-			return 38;
+	if ( sizeof(buf) >= 38 ) {
+		if ( buf != NULL && target_eid != NULL && rloc16 != NULL && ml_eid != NULL ) {
+			// Create Target EID TLV.
+			buf[0] = NET_TLV_TARGET_EID;
+			buf[1] = 16;
+			memcpy(&buf[2], target_eid, 16);
+			// Create RLOC16 TLV.
+			buf[18] = NET_TLV_RLOC16;
+			buf[19] = 2;
+			memcpy(&buf[20], rloc16, 2);
+			buf[22] = NET_TLV_ML_EID;
+			buf[23] = 8;
+			memcpy(&buf[24], ml_eid, 8);
+			if ( last_trans_time != NULL ) {
+				buf[32] = NET_TLV_LAST_TRANSACTION_TIME;
+				buf[33] = 4;
+				memcpy(&buf[34], last_trans_time, 4);
+				return 38;
+			}
+			return 32;
 		}
-		return 32;
 	}
 	return 0;
-}
-
-/* --------------------------------------------------------------------------- */
-
-/* This function is will be passed to coap_nonblocking_request() to handle responses. */
-void thrd_addr_ntf_response_handler(void *response)
-{
-    const uint8_t *chunk;
-    if(!response) {
-        // LOG_INFO("%s\n\r","Restart Timer (no response)");
-    } else {
-        // LOG_INFO("%s\n\r","response payload:");
-//        int len = coap_get_payload(response, &chunk);
-//        printf("%d|%s", len, (char *)chunk);
-//        printf("\n\r");
-//        printf("\n\r");
-    }
 }
 
 /* --------------------------------------------------------------------------- */

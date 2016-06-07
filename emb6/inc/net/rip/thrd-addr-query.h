@@ -152,7 +152,7 @@ void thrd_addr_qr_empty();
 /* ----------------------------- Address Query ------------------------------- */
 /* --------------------------------------------------------------------------- */
 
-void thrd_addr_qry_request(net_tlv_target_eid_t *target_tlv);
+void thrd_addr_qry_request(uip_ipaddr_t *target_eid);
 
 /**
  * Send an Address Notification Response message.
