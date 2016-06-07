@@ -166,19 +166,19 @@ static int8_t _mcast_sendMsg(void)
 
 		uip_ip6addr(&eid, 0xaaaa, 0, 0, 0, 0, 0, 0, 0);
 		uip_ip6addr(&rloc, 0xaaaa, 0, 0, 0, 0, 0, 0, 1);
-		thrd_eid_rloc_cache_add(eid, rloc, 0);
+		thrd_eid_rloc_cache_update(eid, rloc);
 
 		uip_ip6addr(&eid, 0xbbbb, 0, 0, 0, 0, 0, 0, 0);
 		uip_ip6addr(&rloc, 0xbbbb, 0, 0, 0, 0, 0, 0, 1);
-		thrd_eid_rloc_cache_add(eid, rloc, 0);
+		thrd_eid_rloc_cache_update(eid, rloc);
 
 		uip_ip6addr(&eid, 0xcccc, 0, 0, 0, 0, 0, 0, 0);
 		uip_ip6addr(&rloc, 0xcccc, 0, 0, 0, 0, 0, 0, 1);
-		thrd_eid_rloc_cache_add(eid, rloc, 0);
+		thrd_eid_rloc_cache_update(eid, rloc);
 
 		uip_ip6addr(&eid, 0xdddd, 0, 0, 0, 0, 0, 0, 0);
 		uip_ip6addr(&rloc, 0xdddd, 0, 0, 0, 0, 0, 0, 1);
-		thrd_eid_rloc_cache_add(eid, rloc, 0);
+		thrd_eid_rloc_cache_update(eid, rloc);
 
 		thrd_eid_rloc_cache_print();
 
