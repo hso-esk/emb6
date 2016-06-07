@@ -171,6 +171,8 @@ static int8_t _mcast_sendMsg(void)
 	switch (cnt) {
 	case 0:
 
+		thrd_eid_rloc_db_init();
+
 		/*
 		uip_ip6addr(&test_eid, 0xfe80, 0x0000, 0x0000, 0x0000, 0x0250, 0xc2ff, 0xfea8, 0xdddd);
 
