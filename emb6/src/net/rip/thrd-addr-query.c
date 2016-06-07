@@ -13,6 +13,7 @@
 #include "memb.h"
 #include "rip.h"
 #include "net_tlv.h"
+#include "uip.h"
 
 #include "er-coap.h"
 #include "er-coap-engine.h"
@@ -21,6 +22,8 @@
 
 #define DEBUG DEBUG_PRINT
 #include "uip-debug.h"
+
+#define REALM_LOCAL_ALL_ROUTERS_ADDR(ipaddr)	uip_ip6addr(ipaddr, 0xff03, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0002)
 
 /*
  ********************************************************************************
@@ -88,6 +91,13 @@ static uint8_t num_rfd_addr = 0;
 static uint8_t num_addr_qry = 0;
 
 /*
+ * CoAP Resources to be activated need to be imported through the extern keyword.
+ */
+extern resource_t
+	thrd_res_a_aq,
+	thrd_res_a_an;
+
+/*
  ********************************************************************************
  *                               GLOBAL VARIABLES
  ********************************************************************************
@@ -111,7 +121,7 @@ thrd_eid_rloc_db_init(void)
 	memb_init(&addrQuerySet_memb);
 	list_init(addrQuerySet_list);
 
-	// thrd_eid_rloc_coap_init();
+	thrd_eid_rloc_coap_init();
 }
 
 /* --------------------------------------------------------------------------- */
@@ -119,10 +129,14 @@ thrd_eid_rloc_db_init(void)
 void
 thrd_eid_rloc_coap_init()
 {
-	// PRINTF("thrd_eid_rloc_coap_init: Starting EID-to-RLOC Mapping (CoAP).\n\r");
-	// REALM_LOCAL_ALL_ROUTERS(rlar_ipaddr);
+	PRINTF("thrd_eid_rloc_coap_init: Starting EID-to-RLOC Mapping (CoAP).\n\r");
+	REALM_LOCAL_ALL_ROUTERS_ADDR(&rlar_ipaddr);
 	/* Receives all CoAP messages */
-	// coap_init_engine();
+	coap_init_engine();
+
+	// Bind the resources to their Uri-Path.
+	rest_activate_resource(&thrd_res_a_aq, "a/aq");
+	rest_activate_resource(&thrd_res_a_an, "a/an");
 }
 
 /* --------------------------------------------------------------------------- */
