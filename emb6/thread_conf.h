@@ -99,6 +99,10 @@ extern thrd_dev_t thrd_dev;
 #define THRD_MAX_RFD_CHILD_ADDRESSES	10		// Maximum number of RFD Child Addresses (RFD Child Address Set).
 #define THRD_MAX_ADDRESS_QUERIES		32		// Maximum number of Address Queries (Address Query Set).
 
+// --------------- THREAD EID-to-RLOC Map Cache -----------------
+
+#define THRD_MAX_EID_RLOC_MAP_CACHE_SIZE	10		// Maximum number of EID-to-RLOC Map Cache entries.
+
 // --------------------------------------------------------------
 
 #endif /* EMB6_THREAD_CONF_H_ */
