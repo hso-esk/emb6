@@ -23,8 +23,6 @@
 #define DEBUG DEBUG_PRINT
 #include "uip-debug.h"
 
-#define REALM_LOCAL_ALL_ROUTERS_ADDR(ipaddr)	uip_ip6addr(ipaddr, 0xff03, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0002)
-
 /*
  ********************************************************************************
  *                          LOCAL FUNCTION DECLARATIONS

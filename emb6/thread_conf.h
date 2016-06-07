@@ -54,7 +54,9 @@ typedef struct
 /*! Thread Device Type Configuration. */
 extern thrd_dev_t thrd_dev;
 
-#define REALM_LOCAL_ALL_ROUTERS(ipaddr)   uip_ip6addr(ipaddr, 0xff03, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0002)
+// ---------------- THREAD IPv6 ADRESSES ------------------------
+
+#define REALM_LOCAL_ALL_ROUTERS_ADDR(ipaddr)	uip_ip6addr(ipaddr, 0xff03, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0002)
 
 // ----------------- IANA CONSIDERATIONS ------------------------
 
