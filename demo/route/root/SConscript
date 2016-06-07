@@ -12,6 +12,7 @@ routeroot = {
 		'ipv6mc',
 		'mle',
 		'rip',
+		'coap',
 	],
 	'utils' : [
 		'*',
@@ -19,6 +20,7 @@ routeroot = {
 # C global defines
 	'CPPDEFINES' : [
 		('DEMO_USE_ROUTE_ROOT',1),
+		('DEMO_USE_COAP',1),
 		#('DEMO_USE_UDPALIVE',1),
 		('NET_USE_RPL',1),
 	],
