@@ -1,0 +1,32 @@
+thrd_coap = {
+	'demo' : [
+	],
+	'emb6' : [
+		'coap',
+		'sock',
+		'rpl',
+		'ipv6',
+		'sicslowpan',
+		'dllsec',
+		'dllc',
+		'mac',
+		'framer',
+		'phy',
+		'ipv6mc',
+		'mle',
+		'rip',
+	],
+	'utils' : [
+		'*',
+	],
+# C global defines
+	'CPPDEFINES' : [
+		('DEMO_USE_THRD_COAP',1),
+		('NET_USE_RPL',1),
+	],
+# GCC flags
+	'CFLAGS' : [
+	]	
+}
+
+Return('thrd_coap')
