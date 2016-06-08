@@ -23,6 +23,8 @@ mcastroot	= ('mcast', 'root')
 mcastsink	= ('mcast', 'sink')
 routeroot	= ('route', 'root')
 routesink	= ('route', 'sink')
+thrd_coap_srv    = ('thrd_coap','server')
+thrd_coap_cli    = ('thrd_coap','client')
 
 trg         = []
 
@@ -455,6 +457,18 @@ trg += [{
 trg += [{
     'id'        : 'cs_luxroutesink',
     'apps_conf' : [ x86_cli, coap_srv, routesink ],
+    'bsp'       : get_descr(bsp, 'native')
+}]
+
+trg += [{
+    'id'        : 'cs_thrdcoapsrv',
+    'apps_conf' : [ x86_srv, thrd_coap_srv ],
+    'bsp'       : get_descr(bsp, 'native')
+}]
+
+trg += [{
+    'id'        : 'cs_thrdcoapsink',
+    'apps_conf' : [ x86_srv, thrd_coap_cli ],
     'bsp'       : get_descr(bsp, 'native')
 }]
 
