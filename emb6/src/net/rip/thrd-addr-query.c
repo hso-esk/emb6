@@ -17,6 +17,7 @@
 
 #include "er-coap.h"
 #include "er-coap-engine.h"
+#include "rest-engine.h"
 
 #include "thrd-addr-query.h"
 
@@ -131,6 +132,9 @@ thrd_eid_rloc_coap_init()
 	REALM_LOCAL_ALL_ROUTERS_ADDR(&rlar_ipaddr);
 	/* Receives all CoAP messages */
 	coap_init_engine();
+
+	/* Initialize the REST engine. */
+	rest_init_engine();
 
 	// Bind the resources to their Uri-Path.
 	rest_activate_resource(&thrd_res_a_aq, "a/aq");
@@ -666,6 +670,7 @@ static coap_packet_t packet[1]; /* This way the packet can be treated as pointer
 void
 thrd_addr_ntf_chunk_handler(void *response)
 {
+	PRINTF("thrd_addr_ntf_chunk_handler: Got called!");
     const uint8_t *chunk;
     if ( !response ) {
 
@@ -679,16 +684,22 @@ thrd_addr_ntf_chunk_handler(void *response)
     }
 }
 
+/* --------------------------------------------------------------------------- */
+
 void
 thrd_addr_qry_request(uip_ipaddr_t *target_eid)
 {
-	uint8_t payload_len = create_addr_qry_req_payload(addr_qry_buf, target_eid);
+	PRINTF("sizeof(addr_qry_buf) = %d\n", sizeof(addr_qry_buf));
+	uint8_t payload_len = create_addr_qry_req_payload(&addr_qry_buf[0], target_eid);
+
+	PRINTF("thrd_addr_qry_request: payload_len = %d\n", payload_len);
 
 	if ( payload_len > 0 ) {
-		coap_init_message(packet, COAP_TYPE_CON, COAP_POST, 0);
+		coap_init_message(packet, COAP_TYPE_NON, COAP_POST, 0);
 		coap_set_header_uri_path(packet, service_urls[0]);
 		coap_set_payload(packet, addr_qry_buf, payload_len);
-		coap_nonblocking_request(&rlar_ipaddr, THRD_MGMT_COAP_PORT, packet, thrd_addr_ntf_chunk_handler);
+		// coap_nonblocking_request(&rlar_ipaddr, THRD_MGMT_COAP_PORT, packet, thrd_addr_ntf_chunk_handler);
+		coap_nonblocking_request(&rlar_ipaddr, UIP_HTONS(COAP_DEFAULT_PORT), packet, thrd_addr_ntf_chunk_handler);
 	}
 }
 
@@ -697,14 +708,12 @@ thrd_addr_qry_request(uip_ipaddr_t *target_eid)
 static uint8_t
 create_addr_qry_req_payload(uint8_t *buf, uip_ipaddr_t *target_eid)
 {
-	if ( sizeof(buf) >= 18 ) {
-		if ( buf != NULL && target_eid != NULL ) {
-			// Create Target EID TLV.
-			buf[0] = NET_TLV_TARGET_EID;
-			buf[1] = 16;
-			memcpy(&buf[2], target_eid, 16);
-			return 18;
-		}
+	if ( buf != NULL && target_eid != NULL ) {
+		// Create Target EID TLV.
+		buf[0] = NET_TLV_TARGET_EID;
+		buf[1] = 16;
+		memcpy(&buf[2], target_eid, 16);
+		return 18;
 	}
 	return 0;
 }
@@ -720,7 +729,8 @@ thrd_addr_ntf_response(uip_ipaddr_t *target_eid, uint16_t *rloc16,
 	coap_init_message(packet, COAP_TYPE_CON, COAP_POST, 0);
 	coap_set_header_uri_path(packet, service_urls[1]);
 	coap_set_payload(packet, addr_qry_buf, payload_len);
-	coap_nonblocking_request(&rlar_ipaddr, THRD_MGMT_COAP_PORT, packet, NULL);
+	// coap_nonblocking_request(&rlar_ipaddr, THRD_MGMT_COAP_PORT, packet, NULL);
+	coap_nonblocking_request(&rlar_ipaddr, UIP_HTONS(COAP_DEFAULT_PORT), packet, NULL);
 }
 
 /* --------------------------------------------------------------------------- */
@@ -729,27 +739,25 @@ static uint8_t
 create_addr_ntf_resp_payload(uint8_t *buf, uip_ipaddr_t *target_eid, uint16_t *rloc16,
 		uint8_t *ml_eid, clock_time_t *last_trans_time)
 {
-	if ( sizeof(buf) >= 38 ) {
-		if ( buf != NULL && target_eid != NULL && rloc16 != NULL && ml_eid != NULL ) {
-			// Create Target EID TLV.
-			buf[0] = NET_TLV_TARGET_EID;
-			buf[1] = 16;
-			memcpy(&buf[2], target_eid, 16);
-			// Create RLOC16 TLV.
-			buf[18] = NET_TLV_RLOC16;
-			buf[19] = 2;
-			memcpy(&buf[20], rloc16, 2);
-			buf[22] = NET_TLV_ML_EID;
-			buf[23] = 8;
-			memcpy(&buf[24], ml_eid, 8);
-			if ( last_trans_time != NULL ) {
-				buf[32] = NET_TLV_LAST_TRANSACTION_TIME;
-				buf[33] = 4;
-				memcpy(&buf[34], last_trans_time, 4);
-				return 38;
-			}
-			return 32;
+	if ( buf != NULL && target_eid != NULL && rloc16 != NULL && ml_eid != NULL ) {
+		// Create Target EID TLV.
+		buf[0] = NET_TLV_TARGET_EID;
+		buf[1] = 16;
+		memcpy(&buf[2], target_eid, 16);
+		// Create RLOC16 TLV.
+		buf[18] = NET_TLV_RLOC16;
+		buf[19] = 2;
+		memcpy(&buf[20], rloc16, 2);
+		buf[22] = NET_TLV_ML_EID;
+		buf[23] = 8;
+		memcpy(&buf[24], ml_eid, 8);
+		if ( last_trans_time != NULL ) {
+			buf[32] = NET_TLV_LAST_TRANSACTION_TIME;
+			buf[33] = 4;
+			memcpy(&buf[34], last_trans_time, 4);
+			return 38;
 		}
+		return 32;
 	}
 	return 0;
 }
