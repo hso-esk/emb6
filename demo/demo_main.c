@@ -150,6 +150,14 @@
 #include "demo_route_sink.h"
 #endif
 
+#if DEMO_USE_THRD_COAP
+#if CONF_USE_SERVER
+#include "demo_coap_srv.h"
+#else
+#include "demo_coap_cli.h"
+#endif
+#endif
+
 /*==============================================================================
                                      MACROS
  =============================================================================*/
@@ -269,6 +277,10 @@ static void loc_demoAppsConf(s_ns_t* pst_netStack, e_nsErr_t *p_err)
 	demo_routeSinkConf(pst_netStack);
 	#endif
 
+	#if DEMO_USE_THRD_COAP
+	demo_thrdCoapConf(pst_netStack);
+	#endif
+
     /* set returned error code */
     *p_err = NETSTK_ERR_NONE;
 }
@@ -362,6 +374,12 @@ static uint8_t loc_demoAppsInit(void)
 
 	#if DEMO_USE_ROUTE_SINK
 	if (!demo_routeSinkInit()) {
+		return 0;
+	}
+	#endif
+
+	#if DEMO_USE_THRD_COAP
+	if (!demo_thrdCoapInit()) {
 		return 0;
 	}
 	#endif
