@@ -9,6 +9,11 @@
 #include "emb6.h"
 #include "bsp.h"
 #include "er-coap.h"
+#include "tlv.h"
+#include "net_tlv.h"
+#include "uip.h"
+
+#include "thrd-addr-query.h"
 
 #define DEBUG DEBUG_PRINT
 #include "uip-debug.h"
@@ -26,6 +31,10 @@ static void res_post_handler(void *request, void *response, uint8_t *buffer, uin
  *                               LOCAL VARIABLES
  ********************************************************************************
  */
+
+static size_t len = 0;						// CoAP payload length.
+static tlv_t *tlv;
+static net_tlv_target_eid_t *target_eid_tlv;
 
 /**
  * Address Query CoAP Resource (/a/aq).
@@ -59,21 +68,32 @@ res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t prefer
 	printf("res_post_handler: Receiving CoAP packet!\n");
 
 	const uint8_t *chunk;
-	if ( !response ) {
 
-	} else {
-		int payload_len = coap_get_payload(request, &chunk);
-		if ( payload_len == 32 ) {
-			// TODO Process payload -> Receipt of Address Query Messages.
-		} else if ( payload_len == 38 ) {
-			// TODO Process payload -> Receipt of Address Query Messages.
-		}
-		printf("res_post_handler: payload_len = %d\n", payload_len);
+	if ( (len = coap_get_payload(request, &chunk)) > 0) {
+		// TODO Process payload -> Receipt of Address Query Request.
+		tlv = (tlv_t*) chunk;
+		if ( tlv->type == NET_TLV_TARGET_EID && tlv->length == 16 ) {
+			target_eid_tlv = (net_tlv_target_eid_t*) tlv->value;
+			PRINTF("res_post_handler: Target EID = ");
+			PRINT6ADDR(&target_eid_tlv->target_eid);
+			PRINTF("\n");
 
-		for ( uint8_t i = 0; i < payload_len; i++ ) {
-			PRINTF("chunk[%d] = %02x\n", i, chunk[i]);
+			// Receipt of Address Query Messages.
+			thrd_local_addr_t *local_addr;
+			thrd_rfd_addr_t *rfd_addr;
+			local_addr = thrd_local_addr_lookup(target_eid_tlv->target_eid);
+			rfd_addr = thrd_rfd_child_addr_lookup(target_eid_tlv->target_eid);
+
+			if ( local_addr != NULL || rfd_addr != NULL ) {
+				// Sending Address Notification.
+				uint16_t rloc16 = 0x1010;
+				uint8_t ml_eid[8] = { 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0F };
+				clock_time_t time = 0x80000008;
+				thrd_addr_ntf_response(&target_eid_tlv->target_eid, &rloc16, ml_eid, &time);
+			}
 		}
 	}
+	printf("res_post_handler: len = %d\n", len);
 }
 
 /* --------------------------------------------------------------------------- */
