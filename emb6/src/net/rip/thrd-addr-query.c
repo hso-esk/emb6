@@ -693,6 +693,18 @@ thrd_addr_ntf_chunk_handler(void *response)
 void
 thrd_addr_qry_request(uip_ipaddr_t *target_eid)
 {
+	thrd_addr_qry_t *addr_qry;
+	addr_qry = thrd_addr_qry_lookup(*target_eid);
+	if (addr_qry == NULL  ) {
+		// Add a new entry to the Address Query Set.
+		thrd_addr_qry_add(*target_eid,
+				THRD_AQ_TIMEOUT * bsp_get(E_BSP_GET_TRES),
+				THRD_AQ_INITIAL_RETRY_DELAY * bsp_get(E_BSP_GET_TRES));
+	} else {
+
+	}
+
+
 	size_t len = create_addr_qry_req_payload(&addr_qry_buf[0], target_eid);
 
 	PRINTF("thrd_addr_qry_request: payload_len = %d\n", len);
