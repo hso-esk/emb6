@@ -69,7 +69,7 @@ res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t prefer
 
 	const uint8_t *chunk;
 
-	if ( (len = coap_get_payload(request, &chunk)) > 0) {
+	if ( (len = coap_get_payload(request, &chunk)) == 18 ) {
 		// TODO Process payload -> Receipt of Address Query Request.
 		tlv = (tlv_t*) chunk;
 		if ( tlv->type == NET_TLV_TARGET_EID && tlv->length == 16 ) {

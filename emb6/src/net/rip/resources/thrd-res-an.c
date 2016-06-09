@@ -71,7 +71,7 @@ res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t prefer
 
 	const uint8_t *chunk;
 
-	if ( (len = coap_get_payload(request, &chunk)) > 0) {
+	if ( (len = coap_get_payload(request, &chunk)) >= 32 ) {
 		// TODO Process payload -> Receipt of Address Query Request.
 		tlv = (tlv_t*) &chunk[0];
 		if ( tlv->type == NET_TLV_TARGET_EID && tlv->length == 16 ) {
@@ -91,10 +91,12 @@ res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t prefer
 			PRINTF("res_post_handler: ML-EID = ");
 			print_ml_eid(ml_eid_tlv);
 		}
-		tlv = (tlv_t*) &chunk[32];
-		if ( tlv->type == NET_TLV_LAST_TRANSACTION_TIME && tlv->length == 4 ) {
-			last_transaction_tlv = (net_tlv_last_transaction_t*) tlv->value;
-			PRINTF("res_post_handler: Last Transaction Time = %08x\n", last_transaction_tlv->last_transaction_time);
+		if ( len == 38 ) {
+			tlv = (tlv_t*) &chunk[32];
+			if ( tlv->type == NET_TLV_LAST_TRANSACTION_TIME && tlv->length == 4 ) {
+				last_transaction_tlv = (net_tlv_last_transaction_t*) tlv->value;
+				PRINTF("res_post_handler: Last Transaction Time = %08x\n", last_transaction_tlv->last_transaction_time);
+			}
 		}
 	}
 	printf("res_post_handler: len = %d\n", len);
