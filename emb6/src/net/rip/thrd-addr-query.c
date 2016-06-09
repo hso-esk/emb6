@@ -14,6 +14,7 @@
 #include "rip.h"
 #include "net_tlv.h"
 #include "uip.h"
+#include "uip-ds6.h"
 
 #include "ctimer.h"
 
@@ -59,6 +60,8 @@ static size_t create_addr_qry_req_payload(uint8_t *buf, uip_ipaddr_t *target_eid
  *                               LOCAL VARIABLES
  ********************************************************************************
  */
+
+uip_ipaddr_t ipaddr;
 
 static struct ctimer aq_timer;		// Timer for AQ_Timeout.
 
@@ -123,6 +126,14 @@ thrd_eid_rloc_db_init(void)
 
 	memb_init(&addrQuerySet_memb);
 	list_init(addrQuerySet_list);
+
+	// Subscribe to Router and REED addresses.
+	// Link-Local-Add-Routers Address.
+	THRD_LINK_LOCAL_ALL_ROUTERS_ADDR(&ipaddr);
+	uip_ds6_maddr_add(&ipaddr);
+	// Realm-Local-All-Routers Address.
+	THRD_REALM_LOCAL_ALL_ROUTERS_ADDR(&ipaddr);
+	uip_ds6_maddr_add(&ipaddr);
 
 	thrd_eid_rloc_coap_init();
 }
@@ -696,9 +707,12 @@ static void
 thrd_handle_timeout(void *ptr)
 {
 	thrd_addr_qry_t *addr_qry = (thrd_addr_qry_t*) ptr;
+
 	PRINTF("Address Query Timer: Timer expired for Address Query Entry with EID = ");
 	PRINT6ADDR(&addr_qry->EID);
 	PRINTF("\n\r");
+
+	// TODO
 
 	return;
 }
@@ -708,20 +722,21 @@ thrd_handle_timeout(void *ptr)
 void
 thrd_addr_qry_request(uip_ipaddr_t *target_eid)
 {
+
 	thrd_addr_qry_t *addr_qry;
 	addr_qry = thrd_addr_qry_lookup(*target_eid);
 	if (addr_qry == NULL  ) {
 		// Add a new entry to the Address Query Set.
-		thrd_addr_qry_add(*target_eid,
+		addr_qry = thrd_addr_qry_add(*target_eid,
 				THRD_AQ_TIMEOUT * bsp_get(E_BSP_GET_TRES),
 				THRD_AQ_INITIAL_RETRY_DELAY * bsp_get(E_BSP_GET_TRES));
-		ctimer_set(&aq_timer, THRD_AQ_TIMEOUT * bsp_get(E_BSP_GET_TRES), thrd_handle_timeout, (void *) &addr_qry);
+		ctimer_set(&aq_timer, THRD_AQ_TIMEOUT * bsp_get(E_BSP_GET_TRES), thrd_handle_timeout, addr_qry);
 	} else {
 		if ( addr_qry->AQ_Timeout != 0 ) {
-
+			// TODO
 		}
 		if ( addr_qry->AQ_Timeout == 0 && addr_qry->AQ_Retry_Delay == 0 ) {
-
+			// TODO
 		}
 		if ( addr_qry->AQ_Timeout == 0 && addr_qry->AQ_Retry_Delay != 0 ) {
 			// Drop the packet.
