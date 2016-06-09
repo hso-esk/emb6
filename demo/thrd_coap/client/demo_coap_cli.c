@@ -68,6 +68,9 @@
 #include "er-coap-engine.h"
 #include "evproc.h"
 #include "demo_coap_cli.h"
+#include "uip-ds6.h"
+
+#include "thread_conf.h"
 
 #include "thrd-route.h"
 #include "thrd-leader-db.h"
@@ -89,6 +92,8 @@
 /*==============================================================================
                           LOCAL VARIABLE DECLARATIONS
  =============================================================================*/
+
+uip_ipaddr_t addr;
 
 uip_ipaddr_t rfd_eid;
 
@@ -125,6 +130,10 @@ int8_t demo_thrdCoapInit(void)
 	thrd_ldb_init();
 
 	thrd_dev.Router_ID = 2;
+
+	// Add Realm-Local-All-Routers address.
+	THRD_REALM_LOCAL_ALL_ROUTERS_ADDR(&addr);
+	uip_ds6_maddr_add(&addr);
 
 	// Initialize EID-to-RLOC Mapping Database.
 	thrd_eid_rloc_db_init();
