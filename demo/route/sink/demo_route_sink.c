@@ -15,6 +15,12 @@
 
 #include "demo_route_sink.h"
 
+#include "thread_conf.h"
+
+#include "thrd-route.h"
+#include "thrd-leader-db.h"
+#include "thrd-addr-query.h"
+
 #define		DEBUG		DEBUG_PRINT
 
 #include "uip-debug.h"	// For debugging terminal output.
@@ -103,7 +109,8 @@ static uip_ds6_maddr_t * join_mcast_group(void)
 	 * IPHC will use stateless multicast compression for this destination
 	 * (M=1, DAC=0), with 32 inline bits (1E 89 AB CD)
 	 */
-	uip_ip6addr(&addr, 0xFF1E,0,0,0,0,0,0x89,0xABCD);	// Global-Scope Multicast Address.
+	// uip_ip6addr(&addr, 0xFF1E,0,0,0,0,0,0x89,0xABCD);	// Global-Scope Multicast Address.
+	REALM_LOCAL_ALL_ROUTERS_ADDR(&addr);
 
 	// uip_ip6addr(&addr, 0xFF12,0,0,0,0,0,0,0xaa);
 
@@ -162,11 +169,21 @@ uint8_t demo_routeSinkConf(s_ns_t* pst_netStack)
 /*---------------------------------------------------------------------------*/
 int8_t demo_routeSinkInit(void)
 {
+	// Initialize routing database.
+	thrd_rdb_init();
+
+	// Initialize leader database.
+	thrd_ldb_init();
+
+	thrd_dev.Router_ID = 2;
+
+	thrd_eid_rloc_db_init();
 
 	if(join_mcast_group() == NULL) {
 		PRINTF("Failed to join multicast group.\n");
 	}
 
+	/*
 	// Create a UDP 'connection' with IP 0:0:0:0:0:0 and port 0 as remote host.
 	// This means the stack will accept UDP datagrams from any node and any source-port.
 	sink_conn = udp_new(NULL, UIP_HTONS(0), NULL);
@@ -181,6 +198,8 @@ int8_t demo_routeSinkInit(void)
 	evproc_regCallback(EVENT_TYPE_TCPIP, _printMessage);
 
 	PRINTF("Multicast Sink demo initialized, waiting for connection...");
+
+	*/
 
 	return 1;
 }/* demo_mcastInit()  */

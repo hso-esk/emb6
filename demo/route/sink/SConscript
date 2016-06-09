@@ -10,7 +10,9 @@ routesink = {
 		'nullmac',
 		'802154framer',
 		'ipv6mc',
+		'mle',
 		'rip',
+		'coap',
 	],
 	'utils' : [
 		'*',
@@ -18,6 +20,7 @@ routesink = {
 # C global defines
 	'CPPDEFINES' : [
 		('DEMO_USE_ROUTE_SINK',1),
+		('DEMO_USE_COAP',1),
 		#('DEMO_USE_UDPALIVE',1),
 		('NET_USE_RPL',1),
 	],

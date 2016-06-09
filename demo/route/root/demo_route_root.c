@@ -171,7 +171,7 @@ static int8_t _mcast_sendMsg(void)
 	switch (cnt) {
 	case 0:
 
-		thrd_eid_rloc_db_init();
+		// thrd_eid_rloc_db_init();
 
 		/*
 		uip_ip6addr(&test_eid, 0xfe80, 0x0000, 0x0000, 0x0000, 0x0250, 0xc2ff, 0xfea8, 0xdddd);
@@ -212,9 +212,10 @@ static int8_t _mcast_sendMsg(void)
 
 		uint16_t rloc16 = 0x1010;
 		uint8_t ml_eid[8] = { 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0F };
-		clock_time_t time = 0x80000008;
+		// clock_time_t time = 0x80000008;
 
-		thrd_addr_ntf_response(&test_eid, &rloc16, ml_eid, NULL);
+		// thrd_addr_ntf_response(&test_eid, &rloc16, ml_eid, NULL);
+		thrd_addr_qry_request(&test_eid);
 
 		// ---
 
@@ -305,7 +306,12 @@ static int8_t _mcast_sendMsg(void)
 		break;
 	case 1:
 
+		thrd_addr_qry_request(&test_eid);
 
+		// thrd_addr_ntf_response(&test_eid, &rloc16, ml_eid, NULL);
+
+
+		/*
 		rt64_tlv = thrd_generate_route64();
 
 		PRINTF("rt64_tlv->id_sequence_number = %02x\n", rt64_tlv->id_sequence_number);
@@ -315,79 +321,40 @@ static int8_t _mcast_sendMsg(void)
 		PRINTF("rt64_tlv->lq[2] = %02x\n", rt64_tlv->lq_rd[2]);
 		PRINTF("rt64_tlv->lq[3] = %02x\n", rt64_tlv->lq_rd[3]);
 		PRINTF("rt64_tlv->lq[4] = %02x\n", rt64_tlv->lq_rd[4]);
+		*/
 
 		// thrd_trickle_reset();
 
-		/*
-		thrd_rdb_rid_add(3);
-		thrd_rdb_route_update(2, 3, 6);
-
-		thrd_generate_route64();
-		*/
-		// printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(5, 12));
 		printf("------------------------------------------\n\n");
 		break;
 	case 2:
 
-		// tlv = thrd_generate_route64();
-
-		// thrd_rdb_rid_empty();
-
-		// thrd_process_route64(2, tlv);
-
-		/*
-		thrd_rdb_rid_add(4);
-		thrd_rdb_route_update(2, 4, 7);
-
-		thrd_generate_route64();
-		*/
-
-		// printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(17, 25));
 		printf("------------------------------------------\n\n");
 		break;
 	case 3:
-		thrd_rdb_route_update(2, 4, 2);
 
-		// printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(0, 5));
 		printf("------------------------------------------\n\n");
 		break;
 	case 4:
-		thrd_rdb_rid_add(5);
-		thrd_rdb_link_update(5, 25, 3, 250);
 
-		thrd_generate_route64();
-
-		// printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(2, 25));
 		printf("------------------------------------------\n\n");
 		break;
 	case 5:
-		thrd_rdb_route_update(5, 4, 6);
-
-		thrd_generate_route64();
 
 		// printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(0, 25));
 		printf("------------------------------------------\n\n");
 		break;
 	case 6:
-		thrd_rdb_route_update(5, 3, 7);
-
-		thrd_generate_route64();
 
 		// printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(25, 15));
 		printf("------------------------------------------\n\n");
 		break;
 	case 7:
-		thrd_rdb_route_update(5, 2, 1);
-
-		thrd_generate_route64();
 
 		// printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(5, 0));
 		printf("------------------------------------------\n\n");
 		break;
 	case 8:
-		thrd_rdb_route_update(5, 3, 4);
-
-		thrd_generate_route64();
 
 		// printf("[%d] | link hysteresis: %d\n", cnt, thrd_rdb_link_hysteresis(15, 0));
 		printf("------------------------------------------\n\n");
@@ -399,7 +366,7 @@ static int8_t _mcast_sendMsg(void)
 
 	if ( cnt <= 8 ) {
 		// Print all data of the routing database.
-		thrd_rdb_print_routing_database();
+		// thrd_rdb_print_routing_database();
 	}
 
 
@@ -568,6 +535,8 @@ int8_t demo_routeRootInit(void)
 	thrd_ldb_init();
 
 	thrd_dev.Router_ID = 1;
+
+	thrd_eid_rloc_db_init();
 
 	/* set the pointer to the udp-socket */
 	pst_udp_socket = &st_udp_socket;
