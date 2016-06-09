@@ -67,9 +67,6 @@
 #include "etimer.h"
 #include "uip.h"
 #include "bsp.h"
-#include "uip-ds6.h"
-
-#include "thread_conf.h"
 
 #include "thrd-route.h"
 #include "thrd-leader-db.h"
@@ -84,9 +81,7 @@
 
 #define     SEND_INTERVAL               5
 
-uip_ipaddr_t addr;
-
-struct etimer timer;
+static struct etimer timer;
 
 uint8_t cnt = 0;
 uip_ipaddr_t test_eid;
@@ -164,10 +159,6 @@ int8_t demo_thrdCoapInit(void)
 	thrd_ldb_init();
 
 	thrd_dev.Router_ID = 2;
-
-	// Add Realm-Local-All-Routers address.
-	THRD_REALM_LOCAL_ALL_ROUTERS_ADDR(&addr);
-	uip_ds6_maddr_add(&addr);
 
 	thrd_eid_rloc_db_init();
 
