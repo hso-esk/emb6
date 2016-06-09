@@ -56,8 +56,13 @@ extern thrd_dev_t thrd_dev;
 
 // ---------------- THREAD IPv6 ADRESSES ------------------------
 
-// #define REALM_LOCAL_ALL_ROUTERS_ADDR(ipaddr)	uip_ip6addr(ipaddr, 0xff03, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0002)
-#define REALM_LOCAL_ALL_ROUTERS_ADDR(ipaddr)	uip_ip6addr(ipaddr, 0xff02, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x001A)
+// #define THRD_LINK_LOCAL_ALL_NODES_ADDR(ipaddr)	uip_ip6addr(ipaddr, 0xff02, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0001)
+// #define THRD_LINK_LOCAL_ALL_ROUTERS_ADDR(ipaddr)	uip_ip6addr(ipaddr, 0xff02, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0002)
+// #define THRD_REALM_LOCAL_ALL_NODES_ADDR(ipaddr)	uip_ip6addr(ipaddr, 0xff03, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0001)
+// #define THRD_REALM_LOCAL_ALL_ROUTERS_ADDR(ipaddr)	uip_ip6addr(ipaddr, 0xff03, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0002)
+#define THRD_REALM_LOCAL_ALL_ROUTERS_ADDR(ipaddr)	uip_ip6addr(ipaddr, 0xff02, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x001A)
+// #define THRD_REALM_LOCAL_ALL_MPL_FORWARDERS_ADDR(ipaddr)	uip_ip6addr(ipaddr, 0xff03, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x00fc)
+
 // ----------------- IANA CONSIDERATIONS ------------------------
 
 #define THRD_MGMT_COAP_PORT				19789 // UIP_HTONS(19789)		// Thread Network Management (:MM).
