@@ -14,8 +14,8 @@
 #include "uip.h"
 #include "net_tlv.h"
 
-#define THRD_AQ_TIMEOUT						5		// Value not specified in Thread Specification (v1.0).
-#define THRD_AQ_INITIAL_RETRY_DELAY			5		// Value not specified in Thread Specification (v1.0).
+#define THRD_AQ_TIMEOUT						2		// Value not specified in Thread Specification (v1.0).
+#define THRD_AQ_INITIAL_RETRY_DELAY			2		// Value not specified in Thread Specification (v1.0).
 
 /* Number of URIs that can be queried. */
 #define NUMBER_OF_URLS 2

@@ -688,6 +688,21 @@ thrd_addr_ntf_chunk_handler(void *response)
     }
 }
 
+/*---------------------------------------------------------------------------*/
+/*
+ * Called after Address Query Timer has expired.
+ */
+static void
+thrd_handle_timeout(void *ptr)
+{
+	thrd_addr_qry_t *addr_qry = (thrd_addr_qry_t*) ptr;
+	PRINTF("Address Query Timer: Timer expired for Address Query Entry with EID = ");
+	PRINT6ADDR(&addr_qry->EID);
+	PRINTF("\n\r");
+
+	return;
+}
+
 /* --------------------------------------------------------------------------- */
 
 void
@@ -700,8 +715,18 @@ thrd_addr_qry_request(uip_ipaddr_t *target_eid)
 		thrd_addr_qry_add(*target_eid,
 				THRD_AQ_TIMEOUT * bsp_get(E_BSP_GET_TRES),
 				THRD_AQ_INITIAL_RETRY_DELAY * bsp_get(E_BSP_GET_TRES));
+		ctimer_set(&aq_timer, THRD_AQ_TIMEOUT * bsp_get(E_BSP_GET_TRES), thrd_handle_timeout, (void *) &addr_qry);
 	} else {
+		if ( addr_qry->AQ_Timeout != 0 ) {
 
+		}
+		if ( addr_qry->AQ_Timeout == 0 && addr_qry->AQ_Retry_Delay == 0 ) {
+
+		}
+		if ( addr_qry->AQ_Timeout == 0 && addr_qry->AQ_Retry_Delay != 0 ) {
+			// Drop the packet.
+			return;
+		}
 	}
 
 
