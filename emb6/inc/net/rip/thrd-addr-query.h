@@ -14,8 +14,8 @@
 #include "uip.h"
 #include "net_tlv.h"
 
-// #define THRD_AQ_TIMEOUT
-// #define THRD_AQ_INITIAL_RETRY_DELAY
+#define THRD_AQ_TIMEOUT						5		// Value not specified in Thread Specification (v1.0).
+#define THRD_AQ_INITIAL_RETRY_DELAY			5		// Value not specified in Thread Specification (v1.0).
 
 /* Number of URIs that can be queried. */
 #define NUMBER_OF_URLS 2
@@ -198,7 +198,7 @@ void thrd_addr_qry_request(uip_ipaddr_t *target_eid);
  * @param last_trans_time The Last Transaction Time (Optional). NULL if not used.
  */
 void thrd_addr_ntf_response(uip_ipaddr_t *target_eid, uint16_t *rloc16,
-		uint8_t *ml_eid_tlv, clock_time_t *last_trans_time);
+		uint8_t *ml_eid, clock_time_t *last_trans_time);
 
 /* --------------------------------------------------------------------------- */
 /* --------------------------------- DEBUG ----------------------------------- */

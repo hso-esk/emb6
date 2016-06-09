@@ -15,6 +15,8 @@
 #include "net_tlv.h"
 #include "uip.h"
 
+#include "ctimer.h"
+
 #include "er-coap.h"
 #include "er-coap-engine.h"
 #include "rest-engine.h"
@@ -50,13 +52,15 @@ static uint8_t create_addr_ntf_resp_payload(uint8_t *buf, uip_ipaddr_t *target_e
  * @param target_eid The Target EID.
  * @return The payload length.
  */
-static uint8_t create_addr_qry_req_payload(uint8_t *buf, uip_ipaddr_t *target_eid);
+static size_t create_addr_qry_req_payload(uint8_t *buf, uip_ipaddr_t *target_eid);
 
 /*
  ********************************************************************************
  *                               LOCAL VARIABLES
  ********************************************************************************
  */
+
+static struct ctimer aq_timer;		// Timer for AQ_Timeout.
 
 char *service_urls[NUMBER_OF_URLS] =
 { "a/aq", "a/an"};
@@ -129,7 +133,7 @@ void
 thrd_eid_rloc_coap_init()
 {
 	PRINTF("thrd_eid_rloc_coap_init: Starting EID-to-RLOC Mapping (CoAP).\n\r");
-	REALM_LOCAL_ALL_ROUTERS_ADDR(&rlar_ipaddr);
+	THRD_REALM_LOCAL_ALL_ROUTERS_ADDR(&rlar_ipaddr);
 	/* Receives all CoAP messages */
 	coap_init_engine();
 
@@ -689,23 +693,22 @@ thrd_addr_ntf_chunk_handler(void *response)
 void
 thrd_addr_qry_request(uip_ipaddr_t *target_eid)
 {
-	PRINTF("sizeof(addr_qry_buf) = %d\n", sizeof(addr_qry_buf));
-	uint8_t payload_len = create_addr_qry_req_payload(&addr_qry_buf[0], target_eid);
+	size_t len = create_addr_qry_req_payload(&addr_qry_buf[0], target_eid);
 
-	PRINTF("thrd_addr_qry_request: payload_len = %d\n", payload_len);
+	PRINTF("thrd_addr_qry_request: payload_len = %d\n", len);
 
-	if ( payload_len > 0 ) {
+	if ( len > 0 ) {
 		coap_init_message(packet, COAP_TYPE_NON, COAP_POST, 0);
 		coap_set_header_uri_path(packet, service_urls[0]);
-		coap_set_payload(packet, addr_qry_buf, payload_len);
+		coap_set_payload(packet, addr_qry_buf, len);
 		// coap_nonblocking_request(&rlar_ipaddr, THRD_MGMT_COAP_PORT, packet, thrd_addr_ntf_chunk_handler);
-		coap_nonblocking_request(&rlar_ipaddr, UIP_HTONS(COAP_DEFAULT_PORT), packet, thrd_addr_ntf_chunk_handler);
+		coap_nonblocking_request(&rlar_ipaddr, UIP_HTONS(COAP_DEFAULT_PORT), packet, NULL);
 	}
 }
 
 /* --------------------------------------------------------------------------- */
 
-static uint8_t
+static size_t
 create_addr_qry_req_payload(uint8_t *buf, uip_ipaddr_t *target_eid)
 {
 	if ( buf != NULL && target_eid != NULL ) {
@@ -722,15 +725,15 @@ create_addr_qry_req_payload(uint8_t *buf, uip_ipaddr_t *target_eid)
 
 void
 thrd_addr_ntf_response(uip_ipaddr_t *target_eid, uint16_t *rloc16,
-		uint8_t *ml_eid_tlv, clock_time_t *last_trans_time)
+		uint8_t *ml_eid, clock_time_t *last_trans_time)
 {
-	uint8_t payload_len = create_addr_ntf_resp_payload(addr_qry_buf, target_eid, rloc16, ml_eid_tlv, last_trans_time);
+	uint8_t payload_len = create_addr_ntf_resp_payload(addr_qry_buf, target_eid, rloc16, ml_eid, last_trans_time);
 
 	coap_init_message(packet, COAP_TYPE_CON, COAP_POST, 0);
 	coap_set_header_uri_path(packet, service_urls[1]);
 	coap_set_payload(packet, addr_qry_buf, payload_len);
 	// coap_nonblocking_request(&rlar_ipaddr, THRD_MGMT_COAP_PORT, packet, NULL);
-	coap_nonblocking_request(&rlar_ipaddr, UIP_HTONS(COAP_DEFAULT_PORT), packet, NULL);
+	coap_nonblocking_request(&rlar_ipaddr, UIP_HTONS(COAP_DEFAULT_PORT), packet, thrd_addr_ntf_chunk_handler);
 }
 
 /* --------------------------------------------------------------------------- */
