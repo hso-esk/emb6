@@ -61,20 +61,15 @@ RESOURCE(thrd_res_a_aq,
 static void
 res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
 {
-	/* TODO Process incoming payload.
-	 * --> Call thrd_addr_ntf_response(uip_ipaddr_t *target_eid, uint16_t *rloc16,
-	 * 				uint8_t *ml_eid_tlv, clock_time_t *last_trans_time);
-	 */
-	printf("res_post_handler: Receiving CoAP packet (Res: a/aq)!\n");
-
 	const uint8_t *chunk;
+	PRINTF("========================== CoAP ==========================\n");
+	PRINTF("Receiving CoAP packet (Res: a/aq)!\n");
 
 	if ( (len = coap_get_payload(request, &chunk)) == 18 ) {
-		// TODO Process payload -> Receipt of Address Query Request.
 		tlv = (tlv_t*) chunk;
 		if ( tlv->type == NET_TLV_TARGET_EID && tlv->length == 16 ) {
 			target_eid_tlv = (net_tlv_target_eid_t*) tlv->value;
-			PRINTF("res_post_handler: Target EID = ");
+			PRINTF("Target EID = ");
 			PRINT6ADDR(&target_eid_tlv->target_eid);
 			PRINTF("\n");
 
@@ -98,7 +93,7 @@ res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t prefer
 			}
 		}
 	}
-	printf("res_post_handler: len = %d\n", len);
+	PRINTF("==========================================================\n");
 }
 
 /* --------------------------------------------------------------------------- */
