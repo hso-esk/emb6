@@ -712,6 +712,9 @@ thrd_handle_timeout(void *ptr)
 	PRINT6ADDR(&addr_qry->EID);
 	PRINTF("\n\r");
 
+	addr_qry->AQ_Failures++;
+	addr_qry->AQ_Retry_Delay = THRD_AQ_INITIAL_RETRY_DELAY << addr_qry->AQ_Failures;
+
 	// TODO
 
 	return;
@@ -743,8 +746,6 @@ thrd_addr_qry_request(uip_ipaddr_t *target_eid)
 			return;
 		}
 	}
-
-
 	size_t len = create_addr_qry_req_payload(&addr_qry_buf[0], target_eid);
 
 	PRINTF("thrd_addr_qry_request: payload_len = %d\n", len);

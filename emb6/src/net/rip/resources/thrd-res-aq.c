@@ -86,9 +86,9 @@ res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t prefer
 
 			if ( local_addr != NULL || rfd_addr != NULL ) {
 				// Sending Address Notification.
-				uint16_t rloc16 = 0x1010;
-				uint8_t ml_eid[8] = { 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0F };
-				clock_time_t time = 0x80000008;
+				uint16_t rloc16 = 0x1010;	// TODO Including the RLOC of itself.
+				uint8_t ml_eid[8] = { 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0F };	// TODO
+				clock_time_t time = 0x80000008;	// TODO
 				// uip_ipaddr_t addr;
 				uip_ipaddr_t addr = UIP_IP_BUF->srcipaddr;
 				PRINTF("Responding to Address Query Request received from IP Address: ");
