@@ -89,7 +89,12 @@ res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t prefer
 				uint16_t rloc16 = 0x1010;
 				uint8_t ml_eid[8] = { 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0F };
 				clock_time_t time = 0x80000008;
-				thrd_addr_ntf_response(&target_eid_tlv->target_eid, &rloc16, ml_eid, &time);
+				// uip_ipaddr_t addr;
+				uip_ipaddr_t addr = UIP_IP_BUF->srcipaddr;
+				PRINTF("Responding to Address Query Request received from IP Address: ");
+				PRINT6ADDR(&addr);
+				PRINTF("\n\r");
+				thrd_addr_ntf_response(&addr, &target_eid_tlv->target_eid, &rloc16, ml_eid, &time);
 			}
 		}
 	}

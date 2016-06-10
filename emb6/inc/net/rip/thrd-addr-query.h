@@ -192,12 +192,13 @@ void thrd_addr_qry_request(uip_ipaddr_t *target_eid);
 
 /**
  * Send an Address Notification Response message.
+ * @param dest_addr The destination IPv6 address.
  * @param target_eid The Target EID.
  * @param rloc16 The corresponding RLOC16.
  * @param ml_eid_tlv The corresonding ML-EID of the target.
  * @param last_trans_time The Last Transaction Time (Optional). NULL if not used.
  */
-void thrd_addr_ntf_response(uip_ipaddr_t *target_eid, uint16_t *rloc16,
+void thrd_addr_ntf_response(uip_ipaddr_t *dest_addr, uip_ipaddr_t *target_eid, uint16_t *rloc16,
 		uint8_t *ml_eid, clock_time_t *last_trans_time);
 
 /* --------------------------------------------------------------------------- */

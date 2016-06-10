@@ -753,8 +753,7 @@ thrd_addr_qry_request(uip_ipaddr_t *target_eid)
 		coap_init_message(packet, COAP_TYPE_NON, COAP_POST, 0);
 		coap_set_header_uri_path(packet, service_urls[0]);
 		coap_set_payload(packet, addr_qry_buf, len);
-		// coap_nonblocking_request(&rlar_ipaddr, THRD_MGMT_COAP_PORT, packet, thrd_addr_ntf_chunk_handler);
-		coap_nonblocking_request(&rlar_ipaddr, UIP_HTONS(COAP_DEFAULT_PORT), packet, NULL);
+		coap_nonblocking_request(&rlar_ipaddr, UIP_HTONS(COAP_DEFAULT_PORT), packet, NULL); // TODO Changing CoAP Port.
 	}
 }
 
@@ -776,7 +775,7 @@ create_addr_qry_req_payload(uint8_t *buf, uip_ipaddr_t *target_eid)
 /* --------------------------------------------------------------------------- */
 
 void
-thrd_addr_ntf_response(uip_ipaddr_t *target_eid, uint16_t *rloc16,
+thrd_addr_ntf_response(uip_ipaddr_t *dest_addr, uip_ipaddr_t *target_eid, uint16_t *rloc16,
 		uint8_t *ml_eid, clock_time_t *last_trans_time)
 {
 	uint8_t payload_len = create_addr_ntf_resp_payload(addr_qry_buf, target_eid, rloc16, ml_eid, last_trans_time);
@@ -784,8 +783,7 @@ thrd_addr_ntf_response(uip_ipaddr_t *target_eid, uint16_t *rloc16,
 	coap_init_message(packet, COAP_TYPE_CON, COAP_POST, 0);
 	coap_set_header_uri_path(packet, service_urls[1]);
 	coap_set_payload(packet, addr_qry_buf, payload_len);
-	// coap_nonblocking_request(&rlar_ipaddr, THRD_MGMT_COAP_PORT, packet, NULL);
-	coap_nonblocking_request(&rlar_ipaddr, UIP_HTONS(COAP_DEFAULT_PORT), packet, thrd_addr_ntf_chunk_handler);
+	coap_nonblocking_request(dest_addr, UIP_HTONS(COAP_DEFAULT_PORT), packet, thrd_addr_ntf_chunk_handler); // TODO Changing CoAP Port.
 }
 
 /* --------------------------------------------------------------------------- */
