@@ -18,7 +18,7 @@
 #define THRD_AQ_INITIAL_RETRY_DELAY			2		// Value not specified in Thread Specification (v1.0).
 
 /* Number of URIs that can be queried. */
-#define NUMBER_OF_URLS 2
+#define NUMBER_OF_URLS 3
 
 extern void thrd_eid_rloc_db_init(void);
 
@@ -188,6 +188,10 @@ void thrd_addr_qry_empty();
 /* ----------------------------- Address Query ------------------------------- */
 /* --------------------------------------------------------------------------- */
 
+/**
+ * Send an Address Query Request message.
+ * @param target_eid The Target EID.
+ */
 void thrd_addr_qry_request(uip_ipaddr_t *target_eid);
 
 /**
@@ -200,6 +204,15 @@ void thrd_addr_qry_request(uip_ipaddr_t *target_eid);
  */
 void thrd_addr_ntf_response(uip_ipaddr_t *dest_addr, uip_ipaddr_t *target_eid, uint16_t *rloc16,
 		uint8_t *ml_eid, clock_time_t *last_trans_time);
+
+/**
+ * Send an Address Error Notification message.
+ * @param dest_addr The destination IPv6 address.
+ * @param target_eid The Target EID.
+ * @param ml_eid The corresponding ML-EID.
+ */
+void thrd_addr_err_ntf_send(uip_ipaddr_t *dest_addr, uip_ipaddr_t *target_eid,
+		uint8_t *ml_eid);
 
 /* --------------------------------------------------------------------------- */
 /* --------------------------------- DEBUG ----------------------------------- */

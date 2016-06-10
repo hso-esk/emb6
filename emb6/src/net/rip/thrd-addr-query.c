@@ -55,6 +55,18 @@ static uint8_t create_addr_ntf_resp_payload(uint8_t *buf, uip_ipaddr_t *target_e
  */
 static size_t create_addr_qry_req_payload(uint8_t *buf, uip_ipaddr_t *target_eid);
 
+/* --------------------------------------------------------------------------- */
+
+/**
+ * Create Address Error Notification Payload.
+ * @param buf A buffer of (at least) size 28 (octets).
+ * @param target_eid The Target EID.
+ * @param ml_eid The corresponding ML-EID.
+ * @return
+ */
+static uint8_t create_addr_err_ntf_payload(uint8_t *buf, uip_ipaddr_t *target_eid,
+		uint8_t *ml_eid);
+
 /*
  ********************************************************************************
  *                               LOCAL VARIABLES
@@ -66,7 +78,7 @@ uip_ipaddr_t ipaddr;
 static struct ctimer aq_timer;		// Timer for AQ_Timeout.
 
 char *service_urls[NUMBER_OF_URLS] =
-{ "a/aq", "a/an"};
+{ "a/aq", "a/an", "a/ae"};
 
 /**
  * Realm-Local-All-Routers address.
@@ -101,7 +113,8 @@ static uint8_t num_addr_qry = 0;
  */
 extern resource_t
 	thrd_res_a_aq,
-	thrd_res_a_an;
+	thrd_res_a_an,
+	thrd_res_a_ae;
 
 /*
  ********************************************************************************
@@ -154,6 +167,7 @@ thrd_eid_rloc_coap_init()
 	// Bind the resources to their Uri-Path.
 	rest_activate_resource(&thrd_res_a_aq, "a/aq");
 	rest_activate_resource(&thrd_res_a_an, "a/an");
+	rest_activate_resource(&thrd_res_a_ae, "a/ae");
 }
 
 /* --------------------------------------------------------------------------- */
@@ -812,6 +826,37 @@ create_addr_ntf_resp_payload(uint8_t *buf, uip_ipaddr_t *target_eid, uint16_t *r
 			return 38;
 		}
 		return 32;
+	}
+	return 0;
+}
+
+/* --------------------------------------------------------------------------- */
+
+void
+thrd_addr_err_ntf_send(uip_ipaddr_t *dest_addr, uip_ipaddr_t *target_eid, uint8_t *ml_eid)
+{
+	uint8_t payload_len = create_addr_err_ntf_payload(addr_qry_buf, target_eid, ml_eid);
+
+	coap_init_message(packet, COAP_TYPE_NON, COAP_POST, 0);
+	coap_set_header_uri_path(packet, service_urls[2]);
+	coap_set_payload(packet, addr_qry_buf, payload_len);
+	coap_nonblocking_request(dest_addr, UIP_HTONS(COAP_DEFAULT_PORT), packet, NULL); // TODO Changing CoAP Port.
+}
+
+/* --------------------------------------------------------------------------- */
+
+static uint8_t
+create_addr_err_ntf_payload(uint8_t *buf, uip_ipaddr_t *target_eid, uint8_t *ml_eid)
+{
+	if ( buf != NULL && target_eid && ml_eid != NULL ) {
+		// Create Target EID TLV.
+		buf[0] = NET_TLV_TARGET_EID;
+		buf[1] = 16;
+		memcpy(&buf[2], target_eid, 16);
+		buf[18] = NET_TLV_ML_EID;
+		buf[19] = 8;
+		memcpy(&buf[20], ml_eid, 8);
+		return 28;
 	}
 	return 0;
 }
