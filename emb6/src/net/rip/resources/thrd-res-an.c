@@ -43,7 +43,7 @@ static net_tlv_last_transaction_t *last_transaction_tlv;
  * (Proactive) Address Notification CoAP Resource (/a/an).
  */
 RESOURCE(thrd_res_a_an,
-         "title=\"Address Query: POST\";rt=\"Text\"",
+         "title=\"Address Notification: POST\";rt=\"Text\"",
          NULL,
          res_post_handler,
          NULL,
