@@ -10,6 +10,7 @@
 #define EMB6_INC_NET_RIP_THRD_ROUTER_ID_H_
 
 #include "emb6.h"
+#include "thrd-leader-db.h"
 
 /* Number of URIs that can be queried. */
 #define NUMBER_OF_URLS 2
@@ -21,6 +22,15 @@
 extern void thrd_leader_init(void);
 
 clock_time_t thrd_next_period(uint8_t sec);
+
+/**
+ * Assign a new Router ID.
+ * @param router_id The desired Router ID (optional).
+ * @return A pointer to the created ID Assignment Set entry.
+ */
+thrd_ldb_ida_t *thrd_leader_assign_rid(uint8_t *router_id);
+
+void thrd_leader_dealloc_rid(uint8_t router_id);
 
 /*=============================================================================
                                Router ID Assignment

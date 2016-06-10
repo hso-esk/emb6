@@ -116,6 +116,14 @@ thrd_next_period(uint8_t sec)
 
 /* --------------------------------------------------------------------------- */
 
+thrd_ldb_ida_t
+*thrd_leader_assign_rid(uint8_t *router_id)
+{
+	return NULL;
+}
+
+/* --------------------------------------------------------------------------- */
+
 void
 thrd_leader_dealloc_rid(uint8_t router_id)
 {
