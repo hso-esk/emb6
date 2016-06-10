@@ -71,6 +71,7 @@
 #include "thrd-route.h"
 #include "thrd-leader-db.h"
 #include "thrd-addr-query.h"
+#include "thrd-router-id.h"
 
 #define DEBUG DEBUG_PRINT
 #include "uip-debug.h"	// For debugging terminal output.
@@ -125,6 +126,7 @@ execute_routine(void)
 
 		// thrd_addr_ntf_response(&test_eid, &rloc16, ml_eid, NULL);
 		thrd_addr_qry_request(&test_eid);
+
 		PRINTF("----------------------------------------------------\n");
 		break;
 	case 1:
