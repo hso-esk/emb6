@@ -94,8 +94,7 @@ res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t prefer
 				PRINTF("Responding to Address Query Request received from IP Address: ");
 				PRINT6ADDR(&addr);
 				PRINTF("\n\r");
-				// thrd_addr_ntf_response(&addr, &target_eid_tlv->target_eid, &rloc16, ml_eid, &time);
-				thrd_addr_err_ntf_send(&addr, &target_eid_tlv->target_eid, ml_eid);
+				thrd_addr_ntf_response(&addr, &target_eid_tlv->target_eid, &rloc16, ml_eid, &time);
 			}
 		}
 	}
