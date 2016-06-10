@@ -65,6 +65,7 @@ typedef struct __attribute__((__packed__)) {
  * Router Mask TLV.
  */
 typedef struct __attribute__((__packed__)) {
+	uint8_t id_sequence_number;
 	uint64_t router_id_mask;
 }  net_tlv_router_mask_t;
 
