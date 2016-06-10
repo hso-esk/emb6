@@ -12,6 +12,9 @@
 #include "net_tlv.h"
 #include "uip.h"
 
+#include "thrd-partition.h"
+#include "thrd-router-id.h"
+
 #define DEBUG DEBUG_PRINT
 #include "uip-debug.h"
 
@@ -21,7 +24,11 @@
  ********************************************************************************
  */
 
-static void res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset);
+static void res_post_handler(void *request, void *response, uint8_t *buffer,
+		uint16_t preferred_size, int32_t *offset);
+
+static size_t create_response_payload(uint8_t *buf, uint8_t status,
+		uint16_t *rloc16, uint8_t *id_sequence, uint64_t *router_mask);
 
 static void print_ml_eid(net_tlv_ml_eid_t *ml_eid_tlv);
 
@@ -30,6 +37,8 @@ static void print_ml_eid(net_tlv_ml_eid_t *ml_eid_tlv);
  *                               LOCAL VARIABLES
  ********************************************************************************
  */
+
+static uint8_t payload_buf[16] = { 0 };
 
 static size_t len = 0;						// CoAP payload length.
 static tlv_t *tlv;
@@ -67,6 +76,7 @@ res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t prefer
 
 	if ( (len = coap_get_payload(request, &chunk)) >= 20 ) {
 		tlv = (tlv_t*) &chunk[0];
+		uint8_t router_id = 63;	// Invalid Router ID.
 		if ( tlv->type == NET_TLV_ML_EID && tlv->length == 8 ) {
 			ml_eid_tlv_ = (net_tlv_ml_eid_t*) tlv->value;
 			PRINTF("ML-EID = ");
@@ -77,11 +87,58 @@ res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t prefer
 			if ( tlv->type == NET_TLV_RLOC16 && tlv->length == 2 ) {
 				rloc16_tlv = (net_tlv_rloc16_t*) tlv->value;
 				PRINTF("RLOC16 = %04x \n", rloc16_tlv->rloc16);
+				router_id = (uint8_t) (rloc16_tlv->rloc16 >> 10);
 			}
 		}
 		// TODO Assign a Router ID to the REED if one is available.
+		thrd_ldb_ida_t *ida;
+		if ( router_id == 63 ) {
+			ida = thrd_leader_assign_rid(NULL);
+		} else {
+			ida = thrd_leader_assign_rid(&router_id);
+		}
+		if ( ida != NULL ) {
+			// Success.
+			uint64_t router_id_mask = 0x0000000000000000; // TODO Create Router ID Mask.
+			uint16_t rloc16 = THRD_CREATE_RLOC16(ida->ID_id, 0);
+			len = create_response_payload(payload_buf, 0, &rloc16, &ID_sequence_number, &router_id_mask);
+		} else {
+			// Could not assign a Router ID.
+			len = create_response_payload(payload_buf, 1, NULL, NULL, NULL);
+			REST.set_response_status(response, REST.status.CHANGED);
+			REST.set_response_payload(response, payload_buf, len);
+		}
+
+		REST.set_response_status(response, REST.status.CHANGED);
+		//REST.set_response_payload(...);
 	}
 	PRINTF("==========================================================\n");
+}
+
+/* --------------------------------------------------------------------------- */
+
+static size_t
+create_response_payload(uint8_t *buf, uint8_t status, uint16_t *rloc16, uint8_t *id_sequence, uint64_t *router_mask)
+{
+	if ( buf != NULL ) {
+		// Create Status TLV.
+		buf[0] = NET_TLV_STATUS;
+		buf[1] = 1;
+		buf[2] = status;
+		if ( rloc16 != NULL && id_sequence != NULL && router_mask != NULL ) {
+			// Create RLOC16 TLV.
+			buf[3] = NET_TLV_RLOC16;
+			buf[4] = 2;
+			memcpy(&buf[5], rloc16, 2);
+			buf[7] = NET_TLV_ROUTER_MASK;
+			buf[8] = 9;
+			memcpy(&buf[9], id_sequence, 1);
+			memcpy(&buf[10], router_mask, 8);
+			return 16;
+		}
+		return 3;
+	}
+	return 0;
 }
 
 /* --------------------------------------------------------------------------- */
