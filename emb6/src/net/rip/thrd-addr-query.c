@@ -34,6 +34,11 @@
  */
 
 /**
+ * Initialize CoAP Engine and related resources.
+ */
+static void coap_init();
+
+/**
 * Create Address Notification Payload.
 * @param buf A buffer of (at least) size 38 (octets).
 * @param target_eid The Target EID.
@@ -42,7 +47,7 @@
 * @param last_trans_time The last transaction time (optional). NULL if not used.
  * @return The payload length.
  */
-static uint8_t create_addr_ntf_resp_payload(uint8_t *buf, uip_ipaddr_t *target_eid,
+static size_t create_addr_ntf_resp_payload(uint8_t *buf, uip_ipaddr_t *target_eid,
 		uint16_t *rloc16, uint8_t *ml_eid, clock_time_t *last_trans_time);
 
 /* --------------------------------------------------------------------------- */
@@ -77,7 +82,7 @@ uip_ipaddr_t ipaddr;
 
 static struct ctimer aq_timer;		// Timer for AQ_Timeout.
 
-char *service_urls[NUMBER_OF_URLS] =
+static char *service_urls[NUMBER_OF_URLS] =
 { "a/aq", "a/an", "a/ae"};
 
 /**
@@ -148,13 +153,13 @@ thrd_eid_rloc_db_init(void)
 	THRD_REALM_LOCAL_ALL_ROUTERS_ADDR(&ipaddr);
 	uip_ds6_maddr_add(&ipaddr);
 
-	thrd_eid_rloc_coap_init();
+	coap_init();
 }
 
 /* --------------------------------------------------------------------------- */
 
-void
-thrd_eid_rloc_coap_init()
+static void
+coap_init()
 {
 	PRINTF("thrd_eid_rloc_coap_init: Starting EID-to-RLOC Mapping (CoAP).\n\r");
 	THRD_REALM_LOCAL_ALL_ROUTERS_ADDR(&rlar_ipaddr);
@@ -684,8 +689,6 @@ thrd_addr_qry_empty()
 /* ----------------------------- Address Query ------------------------------- */
 /* --------------------------------------------------------------------------- */
 
-// TODO Section 5.4.2 Address Query.
-
 /**
  * Address Query Payload Buffer (MUST be at least 38 octets).
  */
@@ -803,7 +806,7 @@ thrd_addr_ntf_response(uip_ipaddr_t *dest_addr, uip_ipaddr_t *target_eid, uint16
 
 /* --------------------------------------------------------------------------- */
 
-static uint8_t
+static size_t
 create_addr_ntf_resp_payload(uint8_t *buf, uip_ipaddr_t *target_eid, uint16_t *rloc16,
 		uint8_t *ml_eid, clock_time_t *last_trans_time)
 {

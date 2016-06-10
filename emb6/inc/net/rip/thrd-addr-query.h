@@ -22,8 +22,6 @@
 
 extern void thrd_eid_rloc_db_init(void);
 
-void thrd_eid_rloc_coap_init();
-
 /**
  * Local Address Set.
  */
