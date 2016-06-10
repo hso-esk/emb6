@@ -68,7 +68,7 @@ res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t prefer
 	 * --> Call thrd_addr_ntf_response(uip_ipaddr_t *target_eid, uint16_t *rloc16,
 	 * 				uint8_t *ml_eid_tlv, clock_time_t *last_trans_time);
 	 */
-	printf("res_post_handler: Receiving CoAP packet!\n");
+	printf("res_post_handler: Receiving CoAP packet! (Res: a/an)\n");
 
 	const uint8_t *chunk;
 

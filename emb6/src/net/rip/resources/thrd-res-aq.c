@@ -65,7 +65,7 @@ res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t prefer
 	 * --> Call thrd_addr_ntf_response(uip_ipaddr_t *target_eid, uint16_t *rloc16,
 	 * 				uint8_t *ml_eid_tlv, clock_time_t *last_trans_time);
 	 */
-	printf("res_post_handler: Receiving CoAP packet!\n");
+	printf("res_post_handler: Receiving CoAP packet (Res: a/aq)!\n");
 
 	const uint8_t *chunk;
 
@@ -94,7 +94,8 @@ res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t prefer
 				PRINTF("Responding to Address Query Request received from IP Address: ");
 				PRINT6ADDR(&addr);
 				PRINTF("\n\r");
-				thrd_addr_ntf_response(&addr, &target_eid_tlv->target_eid, &rloc16, ml_eid, &time);
+				// thrd_addr_ntf_response(&addr, &target_eid_tlv->target_eid, &rloc16, ml_eid, &time);
+				thrd_addr_err_ntf_send(&addr, &target_eid_tlv->target_eid, ml_eid);
 			}
 		}
 	}
