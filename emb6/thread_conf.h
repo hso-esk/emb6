@@ -54,7 +54,10 @@ typedef struct
 /*! Thread Device Type Configuration. */
 extern thrd_dev_t thrd_dev;
 
-// ---------------- THREAD IPv6 ADRESSES ------------------------
+// -------------------- THREAD RLOC16 ----------------------------
+#define THRD_CREATE_RLOC16(router_id, child_id)		((uint16_t) (0x0000 | ((router_id << 10) | (child_id) )))
+
+// ---------------- THREAD IPv6 ADDRESSES ------------------------
 #define THRD_CREATE_RLOC_ADDR(ipaddr, rloc16)	uip_ip6addr(ipaddr, 0xaaaa, 0x0000, 0x0000, 0x0000, 0x0000, 0x00ff, 0xfe00, rloc16);
 
 #define THRD_LINK_LOCAL_ALL_NODES_ADDR(ipaddr)	uip_ip6addr(ipaddr, 0xff02, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0001)
