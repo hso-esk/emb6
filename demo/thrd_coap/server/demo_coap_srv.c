@@ -127,6 +127,16 @@ execute_routine(void)
 		// thrd_addr_ntf_response(&test_eid, &rloc16, ml_eid, NULL);
 		thrd_addr_qry_request(&test_eid);
 
+		thrd_rfd_child_addr_add(test_eid);
+
+		uip_ip6addr(&test_eid, 0xfe80, 0x0000, 0x0000, 0x0001, 0x0250, 0xc2ff, 0xfea8, 0xdddd);
+		thrd_rfd_child_addr_add(test_eid);
+
+		uip_ip6addr(&test_eid, 0xaaaa, 0x0000, 0x0000, 0x0000, 0x0250, 0xc2ff, 0xfea8, 0xdddd);
+		thrd_rfd_child_addr_add(test_eid);
+
+		thrd_rfd_child_addr_rm(&test_eid);
+
 		PRINTF("----------------------------------------------------\n");
 		break;
 	case 1:
