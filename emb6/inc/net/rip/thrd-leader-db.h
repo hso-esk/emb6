@@ -27,8 +27,8 @@ typedef struct thrd_ldb_ida {
 	struct thrd_ldb_ida *next;
 
 	uint8_t ID_id;			// A Router ID.
-	uint8_t ID_owner;		// The IEEE 802.15.4 Extended Address of the Router.
-	clock_time_t ID_reuse_time;	// The time at which this Router ID MAY be reassigned.
+	uint64_t ID_owner;		// The IEEE 802.15.4 Extended Address of the Router.
+	clock_time_t ID_reuse_time;	// The time at which this Router ID MAY be reassigned (in seconds).
 } thrd_ldb_ida_t;
 
 
@@ -41,7 +41,7 @@ thrd_ldb_ida_t *thrd_ldb_ida_next(thrd_ldb_ida_t *i);
 
 thrd_ldb_ida_t *thrd_ldb_ida_lookup(uint8_t router_id);
 
-thrd_ldb_ida_t *thrd_ldb_ida_add(uint8_t router_id, uint8_t owner, clock_time_t reuse_time);
+thrd_ldb_ida_t *thrd_ldb_ida_add(uint8_t router_id, uint64_t owner, clock_time_t reuse_time);
 
 void thrd_ldb_ida_rm(thrd_ldb_ida_t *ida);
 
