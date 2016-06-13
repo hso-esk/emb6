@@ -110,9 +110,6 @@ res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t prefer
 			REST.set_response_status(response, REST.status.CHANGED);
 			REST.set_response_payload(response, payload_buf, len);
 		}
-
-		REST.set_response_status(response, REST.status.CHANGED);
-		//REST.set_response_payload(...);
 	}
 	PRINTF("==========================================================\n");
 }
