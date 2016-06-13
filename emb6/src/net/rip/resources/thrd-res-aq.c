@@ -75,7 +75,7 @@ res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t prefer
 
 			// Receipt of Address Query Messages.
 			thrd_local_addr_t *local_addr;
-			thrd_rfd_addr_t *rfd_addr;
+			thrd_rfd_child_addr_t *rfd_addr;
 			local_addr = thrd_local_addr_lookup(target_eid_tlv->target_eid);
 			rfd_addr = thrd_rfd_child_addr_lookup(target_eid_tlv->target_eid);
 
