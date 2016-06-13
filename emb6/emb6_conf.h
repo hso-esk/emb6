@@ -49,10 +49,11 @@
 /*! \file   emb6_conf.h
 
     \author Peter Lehmann peter.lehmann@hs-offenburg.de
+            Phuong Nguyen minh.nguyen@hs-offenburg.de
 
     \brief  emb6 compile-time parameter configuration
 
-    \version 0.0.1
+    \version 0.0.2
 */
 
 #ifndef EMB6_CONF_H_
