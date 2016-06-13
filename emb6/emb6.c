@@ -134,10 +134,8 @@ s_mac_phy_conf_t mac_phy_config = {
     .init_sensitivity = -100,
     .modulation       = MODULATION_BPSK20,    /* this attribute can be appropriately overwritten by BSP */
     .fcs_len          = 2,                    /* 16-bit CRC */
-#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
     .op_mode          = NETSTK_RF_OP_MODE_1,  /* 2-FSK */
-    .chan_num         = 26,                   /* 863.125 MHz */
-#endif
+    .chan_num         = 26,                   /* 868.325 MHz */
 };
 
 

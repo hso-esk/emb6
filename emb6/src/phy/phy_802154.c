@@ -136,14 +136,11 @@ static void phy_init(void *p_netstk, e_nsErr_t *p_err)
   /* store pointer to netstack structure */
   pphy_netstk = (s_ns_t *) p_netstk;
 
-  /* set CRC size to default */
-#if NETSTK_CFG_IEEE_802154G_EN
   /* set operation mode */
   pphy_netstk->rf->ioctrl(NETSTK_CMD_RF_OP_MODE_SET, &mac_phy_config.op_mode, p_err);
 
   /* set operation frequency channel number */
   pphy_netstk->rf->ioctrl(NETSTK_CMD_RF_CHAN_NUM_SET, &mac_phy_config.chan_num, p_err);
-#endif
 
 #if (NETSTK_CFG_WOR_EN == 1)
   uint8_t wor_en = TRUE;

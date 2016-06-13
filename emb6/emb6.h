@@ -363,12 +363,10 @@ typedef enum netstk_rf_operating_mode
 } e_nsRfOpMode;
 
 
-#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
 #define NETSTK_RF_IEEE802154G_CHAN_QTY_CSM                  34u
 #define NETSTK_RF_IEEE802154G_CHAN_QTY_OPMODE1              34u
 #define NETSTK_RF_IEEE802154G_CHAN_QTY_OPMODE2              17u
 #define NETSTK_RF_IEEE802154G_CHAN_QTY_OPMODE3              17u
-#endif
 
 
 /*
@@ -542,12 +540,10 @@ typedef struct mac_phy_configuration
 
     /** frame check sequence length (CRC size) */
     uint8_t fcs_len;
-#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
     /** IEEE Std. 802.15.4g operation channel number */
     uint8_t chan_num;
     /** IEEE Std. 802.15.4g operating mode */
     e_nsRfOpMode op_mode;
-#endif
 
 }s_mac_phy_conf_t;
 

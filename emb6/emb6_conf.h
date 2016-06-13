@@ -919,7 +919,6 @@ void uip_log(char *msg);
 #define NETSTK_CFG_PHY_OP_MODE_1_EN                         TRUE
 #define NETSTK_CFG_PHY_OP_MODE_2_EN                         FALSE
 #define NETSTK_CFG_PHY_OP_MODE_3_EN                         FALSE
-#endif
 
 /*!< Enable/Disable low power mode */
 #ifndef NETSTK_CFG_LOW_POWER_MODE_EN
