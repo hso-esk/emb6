@@ -652,31 +652,39 @@ thrd_rfd_child_addr_rm(thrd_rfd_child_addr_t *child_addr)
 
 		switch ( prefix_type ) {
 		case THRD_RFD_CHILD_PREFIX_LL:
-			/* Remove the router id from the Router ID Set. */
-			list_remove(rfdChildLLAddrSet_list, child_addr);
-			memb_free(&rfdChildLLAddrSet_memb, child_addr);
-			num_rfd_ll_addr--;
+			if ( num_rfd_ll_addr > 0 ) {
+				/* Remove the router id from the Router ID Set. */
+				list_remove(rfdChildLLAddrSet_list, child_addr);
+				memb_free(&rfdChildLLAddrSet_memb, child_addr);
+				num_rfd_ll_addr--;
+			}
 			PRINTF("thrd_rfd_child_addr_rm: num_rfd_ll_addr %d\n\r", num_rfd_ll_addr);
 			break;
 		case THRD_RFD_CHILD_PREFIX_ML:
-			/* Remove the router id from the Router ID Set. */
-			list_remove(rfdChildMLAddrSet_list, child_addr);
-			memb_free(&rfdChildMLAddrSet_memb, child_addr);
-			num_rfd_ml_addr--;
+			if ( num_rfd_ml_addr > 0 ) {
+				/* Remove the router id from the Router ID Set. */
+				list_remove(rfdChildMLAddrSet_list, child_addr);
+				memb_free(&rfdChildMLAddrSet_memb, child_addr);
+				num_rfd_ml_addr--;
+			}
 			PRINTF("thrd_rfd_child_addr_rm: num_rfd_ml_addr %d\n\r", num_rfd_ml_addr);
 			break;
 		case THRD_RFD_CHILD_PREFIX_OS:
-			/* Remove the router id from the Router ID Set. */
-			list_remove(rfdChildOSAddrSet_list, child_addr);
-			memb_free(&rfdChildOSAddrSet_memb, child_addr);
-			num_rfd_os_addr--;
+			if ( num_rfd_os_addr > 0 ) {
+				/* Remove the router id from the Router ID Set. */
+				list_remove(rfdChildOSAddrSet_list, child_addr);
+				memb_free(&rfdChildOSAddrSet_memb, child_addr);
+				num_rfd_os_addr--;
+			}
 			PRINTF("thrd_rfd_child_addr_rm: num_rfd_os_addr %d\n\r", num_rfd_os_addr);
 			break;
 		default:
-			/* Remove the router id from the Router ID Set. */
-			list_remove(rfdChildOSAddrSet_list, child_addr);
-			memb_free(&rfdChildOSAddrSet_memb, child_addr);
-			num_rfd_os_addr--;
+			if ( num_rfd_os_addr > 0 ) {
+				/* Remove the router id from the Router ID Set. */
+				list_remove(rfdChildOSAddrSet_list, child_addr);
+				memb_free(&rfdChildOSAddrSet_memb, child_addr);
+				num_rfd_os_addr--;
+			}
 			PRINTF("thrd_rfd_child_addr_rm: num_rfd_os_addr %d\n\r", num_rfd_os_addr);
 			break;
 		}
