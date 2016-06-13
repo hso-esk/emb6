@@ -138,6 +138,8 @@ static void dllc_init(void *p_netstk, e_nsErr_t *p_err)
   dllc_cbTxFnct = 0;
   pdllc_cbtxarg = NULL;
   dllc_dsn = random_rand() & 0xFF;
+  packetbuf_set_attr(PACKETBUF_ATTR_MAC_PAN_ID, mac_phy_config.pan_id);
+  packetbuf_set_attr(PACKETBUF_ATTR_MAC_FCS_LEN, mac_phy_config.fcs_len);
   *p_err = NETSTK_ERR_NONE;
 }
 
@@ -216,6 +218,9 @@ static void dllc_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     params.fcf.ack_required = packetbuf_attr(PACKETBUF_ATTR_RELIABLE);
   }
 
+  /* set MAC ACK required attribute accordingly */
+  packetbuf_set_attr(PACKETBUF_ATTR_MAC_ACK, params.fcf.ack_required);
+
   /* PAN ID compression */
   params.fcf.panid_compression = 0;
 
@@ -230,7 +235,7 @@ static void dllc_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
   }
 
   /* addressing fields */
-  params.dest_pid = mac_phy_config.pan_id;
+  params.dest_pid = packetbuf_attr(PACKETBUF_ATTR_MAC_PAN_ID);
   if (is_broadcast == 1) {
     /* Broadcast requires short address mode. */
     params.fcf.dest_addr_mode = FRAME802154_SHORTADDRMODE;
@@ -241,7 +246,7 @@ static void dllc_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     params.fcf.dest_addr_mode = FRAME802154_LONGADDRMODE;
   }
 
-  params.src_pid = mac_phy_config.pan_id;
+  params.src_pid = packetbuf_attr(PACKETBUF_ATTR_MAC_PAN_ID);
   if (LINKADDR_SIZE == 2UL) {
     params.fcf.src_addr_mode = FRAME802154_SHORTADDRMODE;
   } else {
@@ -443,12 +448,15 @@ static void dllc_verifyAddr(frame802154_t *p_frame, e_nsErr_t *p_err)
 {
   int is_addr_matched;
   uint8_t is_broadcast;
+  packetbuf_attr_t dev_pan_id;
+
 
   /*
    * Verify destination address
    */
+  dev_pan_id = packetbuf_attr(PACKETBUF_ATTR_MAC_PAN_ID);
   if (p_frame->fcf.dest_addr_mode) {
-    if ((p_frame->dest_pid != mac_phy_config.pan_id) &&
+    if ((p_frame->dest_pid != dev_pan_id) &&
         (p_frame->dest_pid != FRAME802154_BROADCASTPANDID)) {
       *p_err = NETSTK_ERR_FATAL;
       return;

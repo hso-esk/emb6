@@ -147,8 +147,27 @@ static void phy_init(void *p_netstk, e_nsErr_t *p_err)
   pphy_netstk->rf->ioctrl(NETSTK_CMD_RF_WOR_EN, &wor_en, p_err);
 #endif
 
-  /* set returned error */
-  *p_err = NETSTK_ERR_NONE;
+  /* initialize PHY PIB attributes */
+  packetbuf_attr_t symbol_period;
+
+  if (mac_phy_config.modulation == MODULATION_2FSK50) {
+    /* 2FSK, 50kbps => symbol period = 20us */
+    symbol_period = 20;
+    packetbuf_set_attr(PACKETBUF_ATTR_PHY_SYMBOL_PERIOD, symbol_period);
+
+    packetbuf_set_attr(PACKETBUF_ATTR_PHY_SYMBOLS_PER_OCTET, 8); /* 2-FSK */
+    packetbuf_set_attr(PACKETBUF_ATTR_PHY_PREAMBLE_SYMBOL_LEN, 32); /* 4-byte preamble */
+    packetbuf_set_attr(PACKETBUF_ATTR_PHY_MAX_PACKET_SIZE, 127); /* 127-byte PSDU */
+    packetbuf_set_attr(PACKETBUF_ATTR_PHY_SHR_DURATION, ((32 + 16) * symbol_period)); /* SHR = 4-byte preamble + 2-byte SYNC */
+    packetbuf_set_attr(PACKETBUF_ATTR_PHY_TURNAROUND_TIME, (12 * symbol_period));
+
+    /* set returned error */
+    *p_err = NETSTK_ERR_NONE;
+  }
+  else {
+    /* currently other modulation schemes are not supported by the driver */
+    *p_err = NETSTK_ERR_FATAL;
+  }
 }
 
 /**
@@ -267,8 +286,18 @@ static void phy_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 #endif
 
   /*
-   * Parse PHY header
-   */
+  * Parse PHY header
+  */
+  uint8_t psdu_len;
+  packetbuf_attr_t fcs_len;
+  fcs_len = packetbuf_attr(PACKETBUF_ATTR_MAC_FCS_LEN);
+
+
+#if (NETSTK_CFG_RF_ADDR_FILTER_EN == TRUE)
+  p_data += PHY_HEADER_LEN;
+  psdu_len = (len - PHY_HEADER_LEN) - fcs_len;
+
+#else
 #if NETSTK_CFG_IEEE_802154G_EN
   uint8_t crc_size;
   uint16_t phr, psdu_len;
@@ -452,7 +481,9 @@ static uint8_t * phy_insertHdr(uint8_t *p_data, uint16_t len)
   hdr = len;
 
 #if NETSTK_CFG_IEEE_802154G_EN
-  if (mac_phy_config.fcs_len == 2) {
+  uint8_t chksumLen;
+  chksumLen = packetbuf_attr(PACKETBUF_ATTR_MAC_FCS_LEN);
+  if (chksumLen == 2) {
     hdr |= 0x1000u;
   }
 
@@ -474,13 +505,15 @@ static uint8_t * phy_insertHdr(uint8_t *p_data, uint16_t len)
  */
 static void phy_insertCrc(uint8_t *p_data, uint16_t len)
 {
-  uint32_t crc = 0;
   uint8_t *p_crc;
+  uint32_t crc = 0;
+  packetbuf_attr_t fcs_len;
 
   /* get pointer to checksum field */
   p_crc = p_data + len;
 
-  if (mac_phy_config.fcs_len == 4) {
+  fcs_len = packetbuf_attr(PACKETBUF_ATTR_MAC_FCS_LEN);
+  if (fcs_len == 4) {
     crc = phy_crc32(p_data, len);
     p_crc[0] = (crc & 0xFF000000u) >> 24;
     p_crc[1] = (crc & 0x00FF0000u) >> 16;

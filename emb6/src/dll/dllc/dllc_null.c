@@ -131,6 +131,8 @@ static void dllc_init(void *p_netstk, e_nsErr_t *p_err)
   pdllc_netstk = p_netstk;
   dllc_cbTxFnct = 0;
   pdllc_cbTxArg = NULL;
+  packetbuf_set_attr(PACKETBUF_ATTR_MAC_PAN_ID, mac_phy_config.pan_id);
+  packetbuf_set_attr(PACKETBUF_ATTR_MAC_FCS_LEN, mac_phy_config.fcs_len);
   *p_err = NETSTK_ERR_NONE;
 }
 
@@ -149,6 +151,13 @@ static void dllc_off(e_nsErr_t *p_err)
 
 static void dllc_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 {
+  uint8_t is_ack_required = 0;
+  if (packetbuf_holds_broadcast() == 0) {
+    is_ack_required = packetbuf_attr(PACKETBUF_ATTR_RELIABLE);
+  }
+  /* set MAC ACK required attribute accordingly */
+  packetbuf_set_attr(PACKETBUF_ATTR_MAC_ACK, is_ack_required);
+
   pdllc_netstk->mac->ioctrl(NETSTK_CMD_TX_CBFNCT_SET, (void *)dllc_cbTx, p_err);
   pdllc_netstk->mac->ioctrl(NETSTK_CMD_TX_CBARG_SET, NULL, p_err);
   pdllc_netstk->mac->send(p_data, len, p_err);

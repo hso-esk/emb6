@@ -168,6 +168,27 @@ void mac_init(void *p_netstk, e_nsErr_t *p_err)
   memcpy(&uip_lladdr.addr, &mac_phy_config.mac_address, 8);
   linkaddr_set_node_addr((linkaddr_t *) mac_phy_config.mac_address);
 
+  /* initialize MAC PIB attributes */
+  packetbuf_attr_t macAckWaitDuration;
+  packetbuf_attr_t macUnitBackoffPeriod;
+  packetbuf_attr_t phyTurnaroundTime;
+  packetbuf_attr_t phySHRDuration;
+  packetbuf_attr_t phySymbolsPerOctet;
+  packetbuf_attr_t phySymbolPeriod;
+
+  phySHRDuration = packetbuf_attr(PACKETBUF_ATTR_PHY_SHR_DURATION);
+  phyTurnaroundTime = packetbuf_attr(PACKETBUF_ATTR_PHY_TURNAROUND_TIME);
+  phySymbolsPerOctet = packetbuf_attr(PACKETBUF_ATTR_PHY_SYMBOLS_PER_OCTET);
+  phySymbolPeriod = packetbuf_attr(PACKETBUF_ATTR_PHY_SYMBOL_PERIOD);
+
+  macUnitBackoffPeriod = 20 * phySymbolPeriod;
+  packetbuf_set_attr(PACKETBUF_ATTR_MAC_UNIT_BACKOFF_PERIOD, macUnitBackoffPeriod);
+
+  /* compute and set macAckWaitDuration attribute */
+  macAckWaitDuration = macUnitBackoffPeriod + phyTurnaroundTime +
+      phySHRDuration + 6 * phySymbolsPerOctet * phySymbolPeriod;
+  packetbuf_set_attr(PACKETBUF_ATTR_MAC_ACK_WAIT_DURATION, macAckWaitDuration);
+
   /* set returned error */
   *p_err = NETSTK_ERR_NONE;
 }
@@ -237,10 +258,7 @@ void mac_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 
 
   /* find out if ACK is required */
-  is_broadcast = packetbuf_holds_broadcast();
-  is_ack_req = packetbuf_attr(PACKETBUF_ATTR_RELIABLE);
-  mac_isAckReq = (is_ack_req == 1) &&
-                 (is_broadcast == 0);
+  mac_isAckReq = packetbuf_attr(PACKETBUF_ATTR_MAC_ACK);
 
   /*
    * Transmission handling
