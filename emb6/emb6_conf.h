@@ -135,12 +135,6 @@
 #endif /* LLSEC802154_CONF_SECURITY_LEVEL */
 
 
-/*=============================================================================
-                                DLL/PHY SECTIONS
-==============================================================================*/
-#define NETSTK_CFG_IEEE_802154G_EN              FALSE
-
-
 /*==============================================================================
                         Neighbor Discovery Configuration
  =============================================================================*/
@@ -915,7 +909,16 @@ void uip_log(char *msg);
 *                          NETSTACK CONFIGURATIONS
 ********************************************************************************
 */
+#ifndef NETSTK_CFG_IEEE_802154G_EN
+#define NETSTK_CFG_IEEE_802154G_EN                          FALSE
+#endif
+
 #if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
+  #ifndef NETSTK_CFG_2K_FRAME_EN
+    #define NETSTK_CFG_2K_FRAME_EN                          FALSE
+  #endif /* NETSTK_CFG_2K_FRAME_EN */
+#endif /* NETSTK_CFG_IEEE_802154G_EN */
+
 #define NETSTK_CFG_PHY_OP_MODE_1_EN                         TRUE
 #define NETSTK_CFG_PHY_OP_MODE_2_EN                         FALSE
 #define NETSTK_CFG_PHY_OP_MODE_3_EN                         FALSE
