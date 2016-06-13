@@ -17,6 +17,7 @@
 #include "uip-ds6.h"
 
 #include "ctimer.h"
+#include "etimer.h"
 
 #include "er-coap.h"
 #include "er-coap-engine.h"
@@ -86,8 +87,6 @@ static thrd_rfd_child_prefix_type_t get_rfd_child_addr_prefix_type(uip_ipaddr_t 
  */
 
 uip_ipaddr_t ipaddr;
-
-static struct ctimer aq_timer;		// Timer for AQ_Timeout.
 
 static char *service_urls[NUMBER_OF_URLS] =
 { "a/aq", "a/an", "a/ae"};
@@ -938,14 +937,17 @@ thrd_handle_timeout(void *ptr)
 {
 	thrd_addr_qry_t *addr_qry = (thrd_addr_qry_t*) ptr;
 
-	PRINTF("Address Query Timer: Timer expired for Address Query Entry with EID = ");
-	PRINT6ADDR(&addr_qry->EID);
-	PRINTF("\n\r");
+	PRINTF("Address Query Timer: Timer expired");
+	if ( addr_qry != NULL ) {
+		PRINTF(" for Address Query Entry with EID = ");
+		PRINT6ADDR(&addr_qry->EID);
+		PRINTF("\n\r");
 
-	addr_qry->AQ_Failures++;
-	addr_qry->AQ_Retry_Delay = THRD_AQ_INITIAL_RETRY_DELAY << addr_qry->AQ_Failures;
+		addr_qry->AQ_Failures++;
+		addr_qry->AQ_Retry_Delay = THRD_AQ_INITIAL_RETRY_DELAY << addr_qry->AQ_Failures;
 
-	// TODO
+		// TODO
+	}
 
 	return;
 }
@@ -958,12 +960,15 @@ thrd_addr_qry_request(uip_ipaddr_t *target_eid)
 
 	thrd_addr_qry_t *addr_qry;
 	addr_qry = thrd_addr_qry_lookup(*target_eid);
-	if (addr_qry == NULL  ) {
+	if ( addr_qry == NULL ) {
 		// Add a new entry to the Address Query Set.
 		addr_qry = thrd_addr_qry_add(*target_eid,
 				THRD_AQ_TIMEOUT * bsp_get(E_BSP_GET_TRES),
 				THRD_AQ_INITIAL_RETRY_DELAY * bsp_get(E_BSP_GET_TRES));
-		ctimer_set(&aq_timer, THRD_AQ_TIMEOUT * bsp_get(E_BSP_GET_TRES), thrd_handle_timeout, addr_qry);
+		if ( addr_qry != NULL ) {
+			ctimer_set(&addr_qry->timer, THRD_AQ_TIMEOUT * bsp_get(E_BSP_GET_TRES), thrd_handle_timeout, addr_qry);
+		}
+
 	} else {
 		if ( addr_qry->AQ_Timeout != 0 ) {
 			// TODO

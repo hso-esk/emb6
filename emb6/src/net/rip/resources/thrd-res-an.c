@@ -43,11 +43,11 @@ static net_tlv_last_transaction_t *last_transaction_tlv;
  * (Proactive) Address Notification CoAP Resource (/a/an).
  */
 RESOURCE(thrd_res_a_an,
-         "title=\"Address Notification: POST\";rt=\"Text\"",
-         NULL,
-         res_post_handler,
-         NULL,
-         NULL);
+		"title=\"Address Notification: POST\";rt=\"Text\"",
+		NULL,
+		res_post_handler,
+		NULL,
+		NULL);
 
 /*
  ********************************************************************************
@@ -94,11 +94,23 @@ res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t prefer
 				PRINTF("Last Transaction Time = %08x\n", last_transaction_tlv->last_transaction_time);
 			}
 		}
-		// Update EID-to-RLOC Set (Map Cache).
-		uip_ipaddr_t rloc_addr;
-		THRD_CREATE_RLOC_ADDR(&rloc_addr, rloc16_tlv->rloc16);
-		thrd_eid_rloc_cache_update(target_eid_tlv->target_eid, rloc_addr);
-		thrd_eid_rloc_cache_print();
+		// Receipt of Address Notification Messages.
+		thrd_addr_qry_t *addr_qry;
+		addr_qry = thrd_addr_qry_lookup(target_eid_tlv->target_eid);
+		if ( addr_qry != NULL ) {
+			// Check whether the response has been received within valid time.
+			if ( ctimer_expired(&addr_qry->timer) == 0 ) {
+				// Stop timer.
+				ctimer_stop(&addr_qry->timer);
+				addr_qry->AQ_Timeout = 0;
+				addr_qry->AQ_Retry_Delay = 0;
+				// Update EID-to-RLOC Set (Map Cache).
+				uip_ipaddr_t rloc_addr;
+				THRD_CREATE_RLOC_ADDR(&rloc_addr, rloc16_tlv->rloc16);
+				thrd_eid_rloc_cache_update(target_eid_tlv->target_eid, rloc_addr);
+				thrd_eid_rloc_cache_print();
+			}
+		}
 	}
 	PRINTF("==========================================================\n");
 }

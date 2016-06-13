@@ -13,6 +13,7 @@
 #include "clist.h"
 #include "uip.h"
 #include "net_tlv.h"
+#include "ctimer.h"
 
 #define THRD_AQ_TIMEOUT						2		// Value not specified in Thread Specification (v1.0).
 #define THRD_AQ_INITIAL_RETRY_DELAY			2		// Value not specified in Thread Specification (v1.0).
@@ -65,6 +66,7 @@ typedef struct thrd_addr_qry {
 	clock_time_t AQ_Timeout;
 	uint8_t AQ_Failures;
 	clock_time_t AQ_Retry_Delay;
+	struct ctimer timer;
 } thrd_addr_qry_t;
 
 /* --------------------------------------------------------------------------- */
