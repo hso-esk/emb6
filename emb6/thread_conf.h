@@ -112,7 +112,9 @@ extern thrd_dev_t thrd_dev;
 // --------------- THREAD EID-to-RLOC Mapping -------------------
 
 #define THRD_MAX_LOCAL_ADDRESSES		10		// Maximum number of local addresses (Local Address Set).
-#define THRD_MAX_RFD_CHILD_ADDRESSES	10		// Maximum number of RFD Child Addresses (RFD Child Address Set).
+#define THRD_MAX_RFD_CHILD_ADDRESSES_LL	10		// Maximum number of Link-Local RFD Child Addresses (RFD Child Address Set).
+#define THRD_MAX_RFD_CHILD_ADDRESSES_ML	10		// Maximum number of Mesh-Local RFD Child Addresses (RFD Child Address Set).
+#define THRD_MAX_RFD_CHILD_ADDRESSES_OS	10		// Maximum number of Other-Scope RFD Child Addresses (RFD Child Address Set).
 #define THRD_MAX_ADDRESS_QUERIES		32		// Maximum number of Address Queries (Address Query Set).
 
 // --------------- THREAD EID-to-RLOC Map Cache -----------------
