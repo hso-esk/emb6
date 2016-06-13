@@ -12,9 +12,6 @@
 #include "emb6.h"
 #include "thrd-leader-db.h"
 
-/* Number of URIs that can be queried. */
-#define NUMBER_OF_URLS 2
-
 /*=============================================================================
                                Router ID Management
 ===============================================================================*/

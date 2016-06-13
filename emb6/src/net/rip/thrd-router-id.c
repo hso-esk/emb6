@@ -28,7 +28,7 @@
                                Router ID Management
 ===============================================================================*/
 
-static char *service_urls[NUMBER_OF_URLS] =
+static char *service_urls[2] =
 { "a/as", "a/ar"};
 
 static struct ctimer leader_ct;
