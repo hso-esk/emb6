@@ -239,9 +239,13 @@ static void phy_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
   uint8_t *p_pkt;
   uint16_t pkt_len;
 
+#if (NETSTK_CFG_RF_ADDR_FILTER_EN == TRUE)
+  pkt_len = len;
+#else
   /* insert MAC checksum */
   phy_insertCrc(p_data, len);
   pkt_len = len + mac_phy_config.fcs_len;
+#endif
 
   /* insert PHY header */
   p_pkt = phy_insertHdr(p_data, pkt_len);
@@ -391,6 +395,7 @@ static void phy_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     *p_err = NETSTK_ERR_CRC;
     return;
   }
+#endif
 #endif
 
   /* Inform the next higher layer */
