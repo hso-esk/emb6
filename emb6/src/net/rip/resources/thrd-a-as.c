@@ -93,9 +93,9 @@ res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t prefer
 		// TODO Assign a Router ID to the REED if one is available.
 		thrd_ldb_ida_t *ida;
 		if ( router_id == 63 ) {
-			ida = thrd_leader_assign_rid(NULL);
+			ida = thrd_leader_assign_rid(NULL, 0);	// TODO IEEE 802.15.4 Extended Address.
 		} else {
-			ida = thrd_leader_assign_rid(&router_id);
+			ida = thrd_leader_assign_rid(&router_id, 0);	// TODO IEEE 802.15.4 Extended Address.
 		}
 		if ( ida != NULL ) {
 			// Success.
