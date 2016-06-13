@@ -135,7 +135,14 @@ execute_routine(void)
 		uip_ip6addr(&test_eid, 0xaaaa, 0x0000, 0x0000, 0x0000, 0x0250, 0xc2ff, 0xfea8, 0xdddd);
 		thrd_rfd_child_addr_add(test_eid);
 
-		thrd_rfd_child_addr_rm(&test_eid);
+		thrd_rfd_child_addr_t *entry = thrd_rfd_child_addr_lookup(test_eid);
+		thrd_rfd_child_addr_rm(entry);
+
+		thrd_rfd_child_addr_set_print();
+
+		thrd_rfd_child_addr_rm(entry);
+
+		thrd_rfd_child_addr_set_print();
 
 		PRINTF("----------------------------------------------------\n");
 		break;
