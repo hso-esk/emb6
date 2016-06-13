@@ -7,13 +7,13 @@ brd_conf = {
     'toolchain'     : 'GCC',
 
 # Device driver description (HEAD/target/mcu folder)
-    'mcu'           : 'efm32lg840f128',
+    'mcu'           : 'efm32lg840f256',
 
 # Transceiver source description (HEAD/target/if folder)
     'if'            : 'cc112x',
 
     'startupfile': 'GCC/startup_efm32lg.S',
-    'scriptfile' : 'GCC/efm32lg840f128.ld'
+    'scriptfile' : 'GCC/efm32lg.ld'
 }
 
 std_conf = {
@@ -21,8 +21,7 @@ std_conf = {
     'CPPDEFINES' : [
             'EXTINT_CALLBACK_MODE=true',
             'RTC_COUNT_ASYNC=true',
-            'EFM32LG840F128',
-            'BOARD_EFM32STK3600',
+            'EFM32LG840F256',
             '_PACK_STRUCT_END=',
     ],
 

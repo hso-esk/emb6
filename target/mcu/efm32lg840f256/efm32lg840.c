@@ -60,10 +60,10 @@
                                  INCLUDE FILES
 ==============================================================================*/
 
+#include "../efm32lg840f256/hwinit.h"
 #include "emb6.h"
 
 #include "target.h"
-#include "hwinit.h"
 #include "bsp.h"
 #include "board_conf.h"
 
@@ -684,7 +684,7 @@ void hal_extiDisable(en_targetExtInt_t e_extInt)
 void hal_delay_us( uint32_t i_delay )
 {
   volatile int i = 0, j = 0;
-  uint32_t l_ticks = ((SystemCoreClockGet() / 1000000) * i_delay) / 10;
+  uint32_t l_ticks = ((SystemCoreClockGet() / 1000000) * i_delay) / 20;
   for (i = 0; i < l_ticks; i++) {
     j++;  /* prevent for-loop to be removed during optimization */
   }
