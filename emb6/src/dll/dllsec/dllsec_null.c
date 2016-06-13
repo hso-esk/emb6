@@ -43,12 +43,28 @@
  */
 
 #include "emb6.h"
+#include "logger.h"
+#include "evproc.h"
+#include "packetbuf.h"
 #include "dllsec_null.h"
 #include "framer_802154.h"
-#include "packetbuf.h"
 
 static s_ns_t *pdllsec_netstk;
 static mac_callback_t dllsec_txCbFnct;
+
+
+/**
+ * @brief   Event handler
+ *
+ * @param   c_event
+ * @param   p_data
+ */
+static void dllsec_eventHandler(c_event_t c_event, p_data_t p_data) {
+  if (c_event == NETSTK_DLLSEC_RX_EVENT) {
+    pdllsec_netstk->hc->input();
+  }
+}
+
 
 /**
  * @brief   Transmission callback function handler
@@ -94,6 +110,10 @@ static void dllsec_cbTx(void *p_arg, e_nsErr_t *p_err)
 /*---------------------------------------------------------------------------*/
 static void dllsec_send(mac_callback_t sent, void *p_arg)
 {
+#if (EMB6_CFG_CONTINUOUS_RX == TRUE)
+  return;
+#endif
+
   e_nsErr_t err = NETSTK_ERR_NONE;
 
   dllsec_txCbFnct = sent;
@@ -120,7 +140,7 @@ static int dllsec_onFrameCreated(void)
 /*---------------------------------------------------------------------------*/
 static void dllsec_input(void)
 {
-  pdllsec_netstk->hc->input();
+  evproc_putEvent(E_EVPROC_HEAD, NETSTK_DLLSEC_RX_EVENT, NULL);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -142,6 +162,7 @@ static void dllsec_init(s_ns_t *p_netstk)
 
   pdllsec_netstk = p_netstk;
   pdllsec_netstk->dllc->ioctrl(NETSTK_CMD_RX_CBFNT_SET, (void *) dllsec_input, &err);
+  evproc_regCallback(NETSTK_DLLSEC_RX_EVENT, dllsec_eventHandler);
 }
 
 /*---------------------------------------------------------------------------*/

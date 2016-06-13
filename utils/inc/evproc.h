@@ -80,6 +80,7 @@
                             EVENT_TYPE_TCPIP,               \
                             EVENT_TYPE_SLIP_POLL,           \
                             NETSTK_APP_EVENT_TX,            \
+                            NETSTK_DLLSEC_RX_EVENT,         \
                             NETSTK_MAC_ULE_EVENT,           \
                             NETSTK_RF_EVENT,                \
                             EVENT_TYPE_PCK_LL}
@@ -97,6 +98,7 @@
  * New event defines
  */
 #define NETSTK_APP_EVENT_TX                 (  8U )
+#define NETSTK_DLLSEC_RX_EVENT              (  9U )
 #define NETSTK_MAC_ULE_EVENT                ( 10U )
 #define NETSTK_RF_EVENT                     ( 11U )
 
