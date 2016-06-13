@@ -143,6 +143,11 @@
 #define CC112X_PART_VERSION                 ((uint8_t) 0x23u)
 
 
+#ifndef MODULATION
+#define MODULATION                          MODULATION_2FSK50
+#endif
+
+
 /*============================================================================*/
 /*!
 \brief    emb6 board configuration fuction
