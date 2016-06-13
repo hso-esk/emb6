@@ -244,10 +244,6 @@ typedef enum netstk_err
      * MAC error codes
      */
     NETSTK_ERR_MAC_XXX                      = 200U,
-#if NETSTK_CFG_IEEE_802154_IGNACK
-    NETSTK_ERR_MAC_ACKOFF,
-#endif /* NETSTK_CFG_IEEE_802154_IGNACK */
-
     NETSTK_ERR_MAC_ULE_XXX                  = 250U,
     NETSTK_ERR_MAC_ULE_UNSUPPORTED_FRAME,
     NETSTK_ERR_MAC_ULE_LAST_STROBE,
