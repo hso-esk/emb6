@@ -128,9 +128,8 @@ thrd_ldb_ida_t
 	if ( ida == NULL ) {
 		ida = thrd_ldb_ida_add(*router_id, id_owner, 0);
 		return ida;
-	}
+	} else {
 	// If the desired Router ID currently is in use.
-	if ( ida != NULL ) {
 		clock_time_t now = bsp_get(E_BSP_GET_SEC);
 		// Check reassignment delay.
 		if ( ida->ID_reuse_time == 0 || ida->ID_reuse_time < now ) {
@@ -254,6 +253,20 @@ thrd_addr_solicit_chunk_handler(void *response)
     		}
     	}
     }
+}
+
+/* --------------------------------------------------------------------------- */
+
+uint64_t
+thrd_create_router_id_mask()
+{
+	thrd_rdb_id_t *rid;
+	// Router ID Mask and Link Quality and Router Data.
+	uint64_t router_id_mask = 0x0000000000000000;
+	for ( rid = thrd_rdb_rid_head(); rid != NULL; rid = thrd_rdb_rid_next(rid) ) {
+		router_id_mask |= (0x8000000000000000 >> rid->router_id);
+	}
+	return router_id_mask;
 }
 
 /* --------------------------------------------------------------------------- */

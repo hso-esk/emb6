@@ -57,4 +57,10 @@ extern void thrd_request_router_id(uip_ipaddr_t *leader_addr, uint8_t *ml_eid,
  */
 extern void thrd_addr_solicit_chunk_handler(void *response);
 
+/**
+ * Create Assigned Router ID Mask based on the ID Assignment Set.
+ * @return The Assigned Router ID Mask.
+ */
+uint64_t thrd_create_router_id_mask();
+
 #endif /* EMB6_INC_NET_RIP_THRD_ROUTER_ID_H_ */
