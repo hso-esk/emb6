@@ -132,7 +132,8 @@ int8_t demo_thrdCoapInit(void)
 	uip_ip6addr(&rfd_eid, 0xfe80, 0x0000, 0x0000, 0x0000, 0x0250, 0xc2ff, 0xfea8, 0xdddd);
 
 	// Adding
-	thrd_local_addr_add(rfd_eid);
+	// thrd_local_addr_add(rfd_eid);
+	thrd_rfd_child_addr_add(rfd_eid);
 	// thrd_rfd_child_addr_add(rfd_eid);
 
     return 1;
