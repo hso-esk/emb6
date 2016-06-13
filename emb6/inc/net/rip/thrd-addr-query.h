@@ -22,6 +22,8 @@
 
 extern void thrd_eid_rloc_db_init(void);
 
+/* --------------------------------------------------------------------------- */
+
 /**
  * Local Address Set.
  */
@@ -31,22 +33,27 @@ typedef struct thrd_local_addr {
 	uip_ipaddr_t EID;
 } thrd_local_addr_t;
 
-/**
- * AddressSet - A set of IPv6 addresses assigned to the RFD Child's
- * Thread interface.
- */
-typedef struct thrd_rfd_addr {
-	struct thrd_rfd_addr *next;
-
-	uip_ipaddr_t childAddr;
-} thrd_rfd_addr_t;
+/* --------------------------------------------------------------------------- */
 
 /**
  * RFD Child Address Set.
+ * Set for child addresses.
+ */
+typedef struct thrd_rfd_child_addr {
+	struct thrd_rfd_child_addr *next;
+
+	uip_ipaddr_t childAddr;
+} thrd_rfd_child_addr_t;
+
+/**
+ * RFD Child Address Set.
+ * Pointers to Address Sets for all different scopes.
  */
 typedef struct thrd_rfd_child_set {
-	thrd_rfd_addr_t *AddressSet;
+	thrd_rfd_child_addr_t *childAddr;
 } thrd_rfd_child_set_t;
+
+/* --------------------------------------------------------------------------- */
 
 /**
  * Address Query Set.
@@ -113,44 +120,69 @@ void thrd_local_addr_empty();
 /* --------------------------------------------------------------------------- */
 
 /**
- * Get the number of the currently stored RFD Child Addresses in the
- * RFD Child Address Set.
- * @return The number of currently stored RFD Child Addresses.
+ * RFD Child IPv6 Prefix type.
  */
-uint8_t thrd_rfd_child_addr_num();
+typedef enum {
+	THRD_RFD_CHILD_PREFIX_LL = 0,//!< THRD_RFD_CHILD_PREFIX_LL
+	THRD_RFD_CHILD_PREFIX_ML = 1,//!< THRD_RFD_CHILD_PREFIX_ML
+	THRD_RFD_CHILD_PREFIX_OS = 2,//!< THRD_RFD_CHILD_PREFIX_OS
+} thrd_rfd_child_prefix_type_t;
+
+/**
+ * Get the number of currently stored RFD Child Addresses in the
+ * RFD Child Address Set (Link-Local Scope addresses).
+ * @return The number of currently stored RFD Child Addresses (LL).
+ */
+size_t thrd_rfd_child_ll_addr_num();
+
+/**
+ * Get the number of currently stored RFD Child Addresses in the
+ * RFD Child Address Set (Other-Scope addresses).
+ * @return The number of currently stored RFD Child Addresses (OS).
+ */
+size_t thrd_rfd_child_ml_addr_num();
+
+
+/**
+ * Get the number of currently stored RFD Child Addresses in the
+ * RFD Child Address Set (Linl-Local Scope addresses).
+ * @return The number of currently stored RFD Child Addresses (LL).
+ */
+size_t thrd_rfd_child_os_addr_num();
 
 /**
  * Get a pointer to the first element of the RFD Child Address Set.
+ * @param addr_type The address type as thrd_rfd_child_prefix_type_t.
  * @return A pointer to the first element.
  */
-thrd_rfd_addr_t *thrd_rfd_child_addr_head(void);
+thrd_rfd_child_addr_t *thrd_rfd_child_addr_head(thrd_rfd_child_prefix_type_t addr_type);
 
 /**
  * Get the subsequent element of the given entry in the RFD Child Address Set.
  * @param i A thrd_rfd_addr_t element.
  * @return A pointer to the subsequent element.
  */
-thrd_rfd_addr_t *thrd_rfd_child_addr_next(thrd_rfd_addr_t *i);
+thrd_rfd_child_addr_t *thrd_rfd_child_addr_next(thrd_rfd_child_addr_t *i);
 
 /**
  * Look up a given RFD Child Address entry in the RFD Child Address Set.
  * @param child_addr The Endpoint Identifier of the child.
- * @return The corresponding thrd_rfd_addr_t entry (if exist).
+ * @return The corresponding thrd_rfd_child_addr_t entry (if exist).
  */
-thrd_rfd_addr_t *thrd_rfd_child_addr_lookup(uip_ipaddr_t child_addr);
+thrd_rfd_child_addr_t *thrd_rfd_child_addr_lookup(uip_ipaddr_t child_addr);
 
 /**
  * Add a given RFD Child Address to the RFD Child Address Set.
  * @param child_addr The Endpoint Identifier of the child.
- * @return A pointer to the currently inserted thrd_rfd_addr_t entry.
+ * @return A pointer to the currently inserted thrd_rfd_child_addr_t entry.
  */
-thrd_rfd_addr_t *thrd_rfd_child_addr_add(uip_ipaddr_t child_addr);
+thrd_rfd_child_addr_t *thrd_rfd_child_addr_add(uip_ipaddr_t child_addr);
 
 /**
  * Remove a given RFD Child Address element of the RFD Child Address Set.
  * @param child_addr A thrd_rfd_addr_t element.
  */
-void thrd_rfd_child_addr_rm(thrd_rfd_addr_t *child_addr);
+void thrd_rfd_child_addr_rm(thrd_rfd_child_addr_t *child_addr);
 
 /**
  * Empty RFD Child Address Set.

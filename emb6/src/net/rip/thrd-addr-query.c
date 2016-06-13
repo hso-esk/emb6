@@ -72,6 +72,13 @@ static size_t create_addr_qry_req_payload(uint8_t *buf, uip_ipaddr_t *target_eid
 static uint8_t create_addr_err_ntf_payload(uint8_t *buf, uip_ipaddr_t *target_eid,
 		uint8_t *ml_eid);
 
+/**
+ * Get the RFD Child IPv6 Address Prefix Type.
+ * @param ip_addr An IPv6 address.
+ * @return The address type as thrd_rfd_child_prefix_type_t.
+ */
+static thrd_rfd_child_prefix_type_t get_rfd_child_addr_prefix_type(uip_ipaddr_t *ip_addr);
+
 /*
  ********************************************************************************
  *                               LOCAL VARIABLES
@@ -97,10 +104,25 @@ LIST(localAddrSet_list);
 MEMB(localAddrSet_memb, thrd_local_addr_t, THRD_MAX_LOCAL_ADDRESSES);
 
 /**
- * Address Set.
+ * RFD Child Address Set.
+ * Link-Local child addresses.
  */
-LIST(rfdChildAddrSet_list);
-MEMB(rfdChildAddrSet_memb, thrd_rfd_addr_t, THRD_MAX_RFD_CHILD_ADDRESSES);
+LIST(rfdChildLLAddrSet_list);
+MEMB(rfdChildLLAddrSet_memb, thrd_rfd_child_addr_t, THRD_MAX_RFD_CHILD_ADDRESSES_LL);
+
+/**
+ * RFD Child Address Set.
+ * Mesh-Local child addresses.
+ */
+LIST(rfdChildMLAddrSet_list);
+MEMB(rfdChildMLAddrSet_memb, thrd_rfd_child_addr_t, THRD_MAX_RFD_CHILD_ADDRESSES_ML);
+
+/**
+ * RFD Child Address Set.
+ * Other-Scope child addresses.
+ */
+LIST(rfdChildOSAddrSet_list);
+MEMB(rfdChildOSAddrSet_memb, thrd_rfd_child_addr_t, THRD_MAX_RFD_CHILD_ADDRESSES_OS);
 
 /**
  * Address Query Set.
@@ -110,8 +132,12 @@ MEMB(addrQuerySet_memb, thrd_addr_qry_t, THRD_MAX_ADDRESS_QUERIES);
 
 /* Number of currently stored EIDs in the Local Address Set. */
 static uint8_t num_eids = 0;
-static uint8_t num_rfd_addr = 0;
+static uint8_t num_rfd_ll_addr = 0;
+static uint8_t num_rfd_ml_addr = 0;
+static uint8_t num_rfd_os_addr = 0;
 static uint8_t num_addr_qry = 0;
+
+static uip_ipaddr_t prefix_ll, prefix_ml;
 
 /*
  * CoAP Resources to be activated need to be imported through the extern keyword.
@@ -136,14 +162,26 @@ extern resource_t
 void
 thrd_eid_rloc_db_init(void)
 {
+	// Initialize Local Address Set.
 	memb_init(&localAddrSet_memb);
 	list_init(localAddrSet_list);
 
-	memb_init(&rfdChildAddrSet_memb);
-	list_init(rfdChildAddrSet_list);
+	// Initialize RFD Child Address Set.
+	memb_init(&rfdChildLLAddrSet_memb);		// Link-Local child addresses.
+	list_init(rfdChildLLAddrSet_list);
 
+	memb_init(&rfdChildMLAddrSet_memb);		// Mesh-Local child addresses.
+	list_init(rfdChildMLAddrSet_list);
+
+	memb_init(&rfdChildOSAddrSet_memb);		// Other-Scope child addresses.
+	list_init(rfdChildOSAddrSet_list);
+
+	// Initialize Address Query Set.
 	memb_init(&addrQuerySet_memb);
 	list_init(addrQuerySet_list);
+
+	uip_ip6addr(&prefix_ll, 0xfe80, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000);
+	uip_ip6addr(&prefix_ml, 0xfe80, 0x0000, 0x0000, 0x0001, 0x0000, 0x0000, 0x0000, 0x0000);
 
 	// Subscribe to Router and REED addresses.
 	// Link-Local-Add-Routers Address.
@@ -173,6 +211,20 @@ coap_init()
 	rest_activate_resource(&thrd_res_a_aq, "a/aq");
 	rest_activate_resource(&thrd_res_a_an, "a/an");
 	rest_activate_resource(&thrd_res_a_ae, "a/ae");
+}
+
+/* --------------------------------------------------------------------------- */
+
+static thrd_rfd_child_prefix_type_t
+get_rfd_child_addr_prefix_type(uip_ipaddr_t *ip_addr)
+{
+	if ( uip_ipaddr_prefixcmp(&prefix_ll, ip_addr, 64) ) {
+		return THRD_RFD_CHILD_PREFIX_LL;
+	} else if ( uip_ipaddr_prefixcmp(&prefix_ml, ip_addr, 64) ) {
+		return THRD_RFD_CHILD_PREFIX_ML;
+	} else {
+		return THRD_RFD_CHILD_PREFIX_OS;
+	}
 }
 
 /* --------------------------------------------------------------------------- */
@@ -348,27 +400,55 @@ thrd_local_addr_empty()
 /* ------------------------- RFD Child Address Set --------------------------- */
 /* --------------------------------------------------------------------------- */
 
-uint8_t
-thrd_rfd_child_addr_num()
+size_t
+thrd_rfd_child_ll_addr_num()
 {
-	return num_rfd_addr;
+	return num_rfd_ll_addr;
 }
 
 /* --------------------------------------------------------------------------- */
 
-thrd_rfd_addr_t
-*thrd_rfd_child_addr_head(void)
+size_t
+thrd_rfd_child_ml_addr_num()
 {
-	return list_head(rfdChildAddrSet_list);
+	return num_rfd_ml_addr;
 }
 
 /* --------------------------------------------------------------------------- */
 
-thrd_rfd_addr_t
-*thrd_rfd_child_addr_next(thrd_rfd_addr_t *i)
+size_t
+thrd_rfd_child_os_addr_num()
+{
+	return num_rfd_os_addr;
+}
+
+/* --------------------------------------------------------------------------- */
+
+thrd_rfd_child_addr_t
+*thrd_rfd_child_addr_head(thrd_rfd_child_prefix_type_t addr_type)
+{
+	switch (addr_type) {
+	case THRD_RFD_CHILD_PREFIX_LL:
+		return list_head(rfdChildLLAddrSet_list);
+		break;
+	case THRD_RFD_CHILD_PREFIX_ML:
+		return list_head(rfdChildMLAddrSet_list);
+		break;
+	case THRD_RFD_CHILD_PREFIX_OS:
+		return list_head(rfdChildOSAddrSet_list);
+		break;
+	default:
+		return list_head(rfdChildOSAddrSet_list);
+	}
+}
+
+/* --------------------------------------------------------------------------- */
+
+thrd_rfd_child_addr_t
+*thrd_rfd_child_addr_next(thrd_rfd_child_addr_t *i)
 {
 	if ( i != NULL ) {
-		thrd_rfd_addr_t *n = list_item_next(i);
+		thrd_rfd_child_addr_t *n = list_item_next(i);
 		return n;
 	}
 	return NULL;
@@ -376,18 +456,19 @@ thrd_rfd_addr_t
 
 /* --------------------------------------------------------------------------- */
 
-thrd_rfd_addr_t
+thrd_rfd_child_addr_t
 *thrd_rfd_child_addr_lookup(uip_ipaddr_t child_addr)
 {
-	thrd_rfd_addr_t *childAddr;
-	thrd_rfd_addr_t *found_childAddr;
+	thrd_rfd_child_addr_t *childAddr;
+	thrd_rfd_child_addr_t *found_childAddr;
 
 	PRINTF("thrd_rfd_child_addr_lookup: Looking up EID: ");
 	PRINT6ADDR(&child_addr);
 	PRINTF("\n\r");
 
 	found_childAddr = NULL;
-	for ( childAddr = thrd_rfd_child_addr_head(); childAddr != NULL; childAddr = thrd_rfd_child_addr_next(childAddr) ) {
+	for ( childAddr = thrd_rfd_child_addr_head(get_rfd_child_addr_prefix_type(&child_addr));
+			childAddr != NULL; childAddr = thrd_rfd_child_addr_next(childAddr) ) {
 		if ( uip_ipaddr_cmp(&child_addr, &(childAddr->childAddr)) ) {
 			found_childAddr = childAddr;
 			break;
@@ -406,10 +487,11 @@ thrd_rfd_addr_t
 
 /* --------------------------------------------------------------------------- */
 
-thrd_rfd_addr_t
+thrd_rfd_child_addr_t
 *thrd_rfd_child_addr_add(uip_ipaddr_t child_addr)
 {
-	thrd_rfd_addr_t *childAddr;
+	thrd_rfd_child_addr_t *childAddr;
+	thrd_rfd_child_prefix_type_t prefix_type = get_rfd_child_addr_prefix_type(&child_addr);
 
 	/* Find the corresponding Router ID entry (Router ID Set). */
 
@@ -425,46 +507,128 @@ thrd_rfd_addr_t
 		 * check if we have room for this router id. If not, we remove the
 		 * least recently used one we have. */
 
-		if ( thrd_rfd_child_addr_num() == THRD_MAX_RFD_CHILD_ADDRESSES ) {
-			/* Removing the oldest router id entry from the Router ID Set. The
-			 * least recently used link is the first router id on the set. */
-			thrd_rfd_addr_t *oldest;
+		thrd_rfd_child_addr_t *oldest;
 
-			oldest = list_tail(rfdChildAddrSet_list);
-			thrd_rfd_child_addr_rm(oldest);
+		switch (prefix_type) {
+		case THRD_RFD_CHILD_PREFIX_LL:
+			if ( thrd_rfd_child_ll_addr_num() == THRD_MAX_RFD_CHILD_ADDRESSES_LL ) {
+				oldest = list_tail(rfdChildLLAddrSet_list);
+				thrd_rfd_child_addr_rm(oldest);
+			}
+			/* Allocate a router id entry and populate it. */
+			childAddr = memb_alloc(&rfdChildLLAddrSet_memb);
+
+			if ( childAddr == NULL ) {
+				/* This should not happen, as we explicitly deallocated one
+				 * link set entry above. */
+				PRINTF("thrd_rfd_child_addr_add: Could not allocate RFD Child Address.\n");
+				return NULL;
+			}
+
+			childAddr->childAddr = child_addr;
+
+			/* Add new router id first - assuming that there is a reason to add this
+			 * and that there is a packet coming soon. */
+			list_push(rfdChildLLAddrSet_list, childAddr);
+
+			PRINTF("thrd_rfd_child_addr_add: Added Link-Local RFD Child Address ");
+			PRINT6ADDR(&child_addr);
+			PRINTF("\n\r");
+
+			num_rfd_ll_addr++;
+			PRINTF("thrd_rfd_child_addr_add: num_rfd_ll_addr %d\n\r", num_rfd_ll_addr);
+			break;
+		case THRD_RFD_CHILD_PREFIX_ML:
+			if ( thrd_rfd_child_ml_addr_num() == THRD_MAX_RFD_CHILD_ADDRESSES_ML ) {
+				oldest = list_tail(rfdChildMLAddrSet_list);
+				thrd_rfd_child_addr_rm(oldest);
+			}
+			/* Allocate a router id entry and populate it. */
+			childAddr = memb_alloc(&rfdChildMLAddrSet_memb);
+
+			if ( childAddr == NULL ) {
+				/* This should not happen, as we explicitly deallocated one
+				 * link set entry above. */
+				PRINTF("thrd_rfd_child_addr_add: Could not allocate RFD Child Address.\n");
+				return NULL;
+			}
+
+			childAddr->childAddr = child_addr;
+
+			/* Add new router id first - assuming that there is a reason to add this
+			 * and that there is a packet coming soon. */
+			list_push(rfdChildMLAddrSet_list, childAddr);
+
+			PRINTF("thrd_rfd_child_addr_add: Added Mesh-Local RFD Child Address ");
+			PRINT6ADDR(&child_addr);
+			PRINTF("\n\r");
+
+			num_rfd_ml_addr++;
+			PRINTF("thrd_rfd_child_addr_add: num_rfd_ml_addr %d\n\r", num_rfd_ml_addr);
+			break;
+		case THRD_RFD_CHILD_PREFIX_OS:
+			if ( thrd_rfd_child_os_addr_num() == THRD_MAX_RFD_CHILD_ADDRESSES_OS ) {
+				oldest = list_tail(rfdChildOSAddrSet_list);
+				thrd_rfd_child_addr_rm(oldest);
+			}
+			/* Allocate a router id entry and populate it. */
+			childAddr = memb_alloc(&rfdChildOSAddrSet_memb);
+
+			if ( childAddr == NULL ) {
+				/* This should not happen, as we explicitly deallocated one
+				 * link set entry above. */
+				PRINTF("thrd_rfd_child_addr_add: Could not allocate RFD Child Address.\n");
+				return NULL;
+			}
+
+			childAddr->childAddr = child_addr;
+
+			/* Add new router id first - assuming that there is a reason to add this
+			 * and that there is a packet coming soon. */
+			list_push(rfdChildOSAddrSet_list, childAddr);
+
+			PRINTF("thrd_rfd_child_addr_add: Added Other-Scope RFD Child Address ");
+			PRINT6ADDR(&child_addr);
+			PRINTF("\n\r");
+
+			num_rfd_os_addr++;
+			PRINTF("thrd_rfd_child_addr_add: num_rfd_os_addr %d\n\r", num_rfd_os_addr);
+			break;
+		default:
+			if ( thrd_rfd_child_os_addr_num() == THRD_MAX_RFD_CHILD_ADDRESSES_OS ) {
+				oldest = list_tail(rfdChildOSAddrSet_list);
+				thrd_rfd_child_addr_rm(oldest);
+			}
+			/* Allocate a router id entry and populate it. */
+			childAddr = memb_alloc(&rfdChildOSAddrSet_memb);
+
+			if ( childAddr == NULL ) {
+				/* This should not happen, as we explicitly deallocated one
+				 * link set entry above. */
+				PRINTF("thrd_rfd_child_addr_add: Could not allocate RFD Child Address.\n");
+				return NULL;
+			}
+
+			childAddr->childAddr = child_addr;
+
+			/* Add new router id first - assuming that there is a reason to add this
+			 * and that there is a packet coming soon. */
+			list_push(rfdChildOSAddrSet_list, childAddr);
+
+			PRINTF("thrd_rfd_child_addr_add: Added Other-Scope RFD Child Address ");
+			PRINT6ADDR(&child_addr);
+			PRINTF("\n\r");
+
+			num_rfd_os_addr++;
+			PRINTF("thrd_rfd_child_addr_add: num_rfd_os_addr %d\n\r", num_rfd_os_addr);
+			break;
 		}
-
-		/* Allocate a router id entry and populate it. */
-		childAddr = memb_alloc(&rfdChildAddrSet_memb);
-
-		if ( childAddr == NULL ) {
-			/* This should not happen, as we explicitly deallocated one
-			 * link set entry above. */
-			PRINTF("thrd_rfd_child_addr_add: Could not allocate RFD Child Address.\n");
-			return NULL;
-		}
-
-		childAddr->childAddr = child_addr;
-
-		/* Add new router id first - assuming that there is a reason to add this
-		 * and that there is a packet coming soon. */
-		list_push(rfdChildAddrSet_list, childAddr);
-
-		PRINTF("thrd_rfd_child_addr_add: Added RFD Child Address ");
-		PRINT6ADDR(&child_addr);
-		PRINTF("\n\r");
-
-		num_rfd_addr++;
-
-		PRINTF("thrd_rfd_child_addr_add: num_rfd_addr %d\n\r", num_rfd_addr);
 
 	} else {
 
 		PRINTF(ANSI_COLOR_RED "thrd_rfd_child_addr_add: RFD Child Address is already known for ");
 		PRINT6ADDR(&child_addr);
 		PRINTF(ANSI_COLOR_RESET "\n\r");
-
-		PRINTF("thrd_rfd_child_addr_add: num_rfd_addr %d\n\r", num_rfd_addr);
 		PRINTF("-----------------------------------------------------\n\r");
 
 		return NULL;
@@ -478,20 +642,44 @@ thrd_rfd_addr_t
 /* --------------------------------------------------------------------------- */
 
 void
-thrd_rfd_child_addr_rm(thrd_rfd_addr_t *child_addr)
+thrd_rfd_child_addr_rm(thrd_rfd_child_addr_t *child_addr)
 {
 	if ( child_addr != NULL ) {
+		thrd_rfd_child_prefix_type_t prefix_type = get_rfd_child_addr_prefix_type(&child_addr->childAddr);
 		PRINTF("thrd_rfd_child_addr_rm: Removing RFD Child Address from 'RFD Child Address Set' with EID: ");
 		PRINT6ADDR(&child_addr->childAddr);
 		PRINTF("\n\r");
 
-		/* Remove the router id from the Router ID Set. */
-		list_remove(rfdChildAddrSet_list, child_addr);
-		memb_free(&rfdChildAddrSet_memb, child_addr);
-
-		num_rfd_addr--;
-
-		PRINTF("thrd_rfd_child_addr_rm: num_rfd_addr %d\n\r", num_rfd_addr);
+		switch ( prefix_type ) {
+		case THRD_RFD_CHILD_PREFIX_LL:
+			/* Remove the router id from the Router ID Set. */
+			list_remove(rfdChildLLAddrSet_list, child_addr);
+			memb_free(&rfdChildLLAddrSet_memb, child_addr);
+			num_rfd_ll_addr--;
+			PRINTF("thrd_rfd_child_addr_rm: num_rfd_ll_addr %d\n\r", num_rfd_ll_addr);
+			break;
+		case THRD_RFD_CHILD_PREFIX_ML:
+			/* Remove the router id from the Router ID Set. */
+			list_remove(rfdChildMLAddrSet_list, child_addr);
+			memb_free(&rfdChildMLAddrSet_memb, child_addr);
+			num_rfd_ml_addr--;
+			PRINTF("thrd_rfd_child_addr_rm: num_rfd_ml_addr %d\n\r", num_rfd_ml_addr);
+			break;
+		case THRD_RFD_CHILD_PREFIX_OS:
+			/* Remove the router id from the Router ID Set. */
+			list_remove(rfdChildOSAddrSet_list, child_addr);
+			memb_free(&rfdChildOSAddrSet_memb, child_addr);
+			num_rfd_os_addr--;
+			PRINTF("thrd_rfd_child_addr_rm: num_rfd_os_addr %d\n\r", num_rfd_os_addr);
+			break;
+		default:
+			/* Remove the router id from the Router ID Set. */
+			list_remove(rfdChildOSAddrSet_list, child_addr);
+			memb_free(&rfdChildOSAddrSet_memb, child_addr);
+			num_rfd_os_addr--;
+			PRINTF("thrd_rfd_child_addr_rm: num_rfd_os_addr %d\n\r", num_rfd_os_addr);
+			break;
+		}
 	}
 }
 
@@ -500,11 +688,28 @@ thrd_rfd_child_addr_rm(thrd_rfd_addr_t *child_addr)
 void
 thrd_rfd_child_addr_empty()
 {
-	thrd_rfd_addr_t *childAddr;
-	thrd_rfd_addr_t *childAddr_nxt;
-	PRINTF("thrd_rfd_child_addr_empty: Removing all (%d) assigned EIDs from 'RFD Child Address Set'.", num_rfd_addr);
+	thrd_rfd_child_addr_t *childAddr;
+	thrd_rfd_child_addr_t *childAddr_nxt;
+	PRINTF("thrd_rfd_child_addr_empty: Removing all (%d) assigned EIDs from 'RFD Child Address Set'.", num_rfd_ll_addr + num_rfd_ml_addr + num_rfd_os_addr);
 	PRINTF("\n\r");
-	childAddr = thrd_rfd_child_addr_head();
+	// Empty Link-Local RFD Child Address Set.
+	childAddr = thrd_rfd_child_addr_head(THRD_RFD_CHILD_PREFIX_LL);
+	childAddr_nxt = childAddr;
+	while ( childAddr_nxt != NULL ) {
+		childAddr = childAddr_nxt;
+		childAddr_nxt = childAddr->next;
+		thrd_rfd_child_addr_rm(childAddr);
+	}
+	// Empty Mesh-Local RFD Child Address Set.
+	childAddr = thrd_rfd_child_addr_head(THRD_RFD_CHILD_PREFIX_ML);
+	childAddr_nxt = childAddr;
+	while ( childAddr_nxt != NULL ) {
+		childAddr = childAddr_nxt;
+		childAddr_nxt = childAddr->next;
+		thrd_rfd_child_addr_rm(childAddr);
+	}
+	// Empty Other-Scope RFD Child Address Set.
+	childAddr = thrd_rfd_child_addr_head(THRD_RFD_CHILD_PREFIX_OS);
 	childAddr_nxt = childAddr;
 	while ( childAddr_nxt != NULL ) {
 		childAddr = childAddr_nxt;
@@ -893,14 +1098,24 @@ thrd_local_addr_set_print(void)
 void
 thrd_rfd_child_addr_set_print()
 {
-	thrd_rfd_addr_t *i;
+	thrd_rfd_child_addr_t *i;
 	printf(ANSI_COLOR_RED
 			"|=========================== RFD Child Address Set =============================|"
 			ANSI_COLOR_RESET "\n\r");
 	printf("-------------------------\n");
 	printf("|          EID          |\n");
 	printf("-------------------------\n\r");
-	for (i = thrd_rfd_child_addr_head(); i != NULL; i = thrd_rfd_child_addr_next(i)) {
+	for (i = thrd_rfd_child_addr_head(THRD_RFD_CHILD_PREFIX_LL); i != NULL; i = thrd_rfd_child_addr_next(i)) {
+		printf("| " ANSI_COLOR_YELLOW);
+		PRINT6ADDR(&i->childAddr);
+		printf(ANSI_COLOR_RESET " |\n");
+	}
+	for (i = thrd_rfd_child_addr_head(THRD_RFD_CHILD_PREFIX_ML); i != NULL; i = thrd_rfd_child_addr_next(i)) {
+		printf("| " ANSI_COLOR_YELLOW);
+		PRINT6ADDR(&i->childAddr);
+		printf(ANSI_COLOR_RESET " |\n");
+	}
+	for (i = thrd_rfd_child_addr_head(THRD_RFD_CHILD_PREFIX_OS); i != NULL; i = thrd_rfd_child_addr_next(i)) {
 		printf("| " ANSI_COLOR_YELLOW);
 		PRINT6ADDR(&i->childAddr);
 		printf(ANSI_COLOR_RESET " |\n");
