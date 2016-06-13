@@ -79,6 +79,8 @@ thrd_leader_init(void)
 	// Starting a new Partition as the Leader.
 	thrd_dev.type = THRD_DEV_TYPE_LEADER;
 
+	thrd_ldb_init(); // TODO Call this function during compile process.
+
 	coap_init();
 
 	thrd_ldb_ida_empty();	// Empty ID Assignment Set.
@@ -117,8 +119,47 @@ thrd_next_period(uint8_t sec)
 /* --------------------------------------------------------------------------- */
 
 thrd_ldb_ida_t
-*thrd_leader_assign_rid(uint8_t *router_id)
+*thrd_leader_assign_rid(uint8_t *router_id, uint64_t id_owner)
 {
+	thrd_ldb_ida_t *ida;
+
+	// Check whether desired Router ID is available.
+	ida = thrd_ldb_ida_lookup(*router_id);
+	if ( ida == NULL ) {
+		ida = thrd_ldb_ida_add(*router_id, id_owner, 0);
+		return ida;
+	}
+	// If the desired Router ID currently is in use.
+	if ( ida != NULL ) {
+		clock_time_t now = bsp_get(E_BSP_GET_SEC);
+		// Check reassignment delay.
+		if ( ida->ID_reuse_time == 0 || ida->ID_reuse_time < now ) {
+			// Router ID is not available --> Looking for an unassigned Router ID.
+			uint8_t id_cnt = 0;
+			ida = thrd_ldb_ida_lookup(id_cnt);
+
+			while ( ida != NULL && id_cnt < 63 ) {
+				// Check whether the current Router ID is in use.
+				if ( ida->ID_reuse_time != 0 ) {
+					break;
+				}
+				id_cnt++;
+				ida = thrd_ldb_ida_lookup(id_cnt);
+			}
+			// Create Router ID if available.
+			if ( id_cnt < 63 ) {
+				ida = thrd_ldb_ida_add(id_cnt, id_owner, 0);
+				return ida;
+			} else {
+				return NULL;
+			}
+		} else {
+			// Reassignment delay expired --> Router ID available.
+			ida->ID_owner = id_owner;
+			ida->ID_reuse_time = 0;
+			return ida;
+		}
+	}
 	return NULL;
 }
 

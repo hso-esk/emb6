@@ -26,10 +26,15 @@ clock_time_t thrd_next_period(uint8_t sec);
 /**
  * Assign a new Router ID.
  * @param router_id The desired Router ID (optional).
- * @return A pointer to the created ID Assignment Set entry.
+ * @return A pointer to the created ID Assignment Set entry (NULL if no free
+ * Router ID is available..
  */
-thrd_ldb_ida_t *thrd_leader_assign_rid(uint8_t *router_id);
+thrd_ldb_ida_t *thrd_leader_assign_rid(uint8_t *router_id, uint64_t id_owner);
 
+/**
+ * Deallocate a Router ID.
+ * @param router_id The Router ID to be deallocated.
+ */
 void thrd_leader_dealloc_rid(uint8_t router_id);
 
 /*=============================================================================
