@@ -65,6 +65,10 @@
 #define CC112X_OPMODE3_DELTA_FREQ           0x000CCCu   /*!<   0.400 MHz */
 #define CC112X_OPMODE3_CHAN_CENTER_FREQ     0x6BE733u   /*!< 863.225 MHz */
 
+#define CC112X_PKT_LEN_MODE_INFINITE      (uint8_t)( 0x40 )
+#define CC112X_PKT_LEN_MODE_VARIABLE      (uint8_t)( 0x20 )
+#define CC112X_PKT_LEN_MODE_FIXED         (uint8_t)( 0x00 )
+
 
 /**
  * @brief   Default register settings for IEEE-802.15.4g
@@ -82,10 +86,11 @@
  */
 static const s_regSettings_t cc112x_cfg_ieee802154g_default[] =
 {
-    {CC112X_IOCFG3,             0x06},  /* Impedance TX_FINI */
-    {CC112X_IOCFG2,             0x06},  /* Impedance RX_FINI */
     {CC112X_IOCFG1,             0xB0},  /* Impedance */
-    {CC112X_IOCFG0,             0x06},  /* Impedance RX_SYNC */
+
+    {CC112X_IOCFG0,             0x06},  /* PKT_BEGIN */
+    {CC112X_IOCFG2,             0x00},  /* RXFIFO_THR */
+    {CC112X_IOCFG3,             0x06},  /* PKT_END */
 
     {CC112X_SYNC3,              0x90},  /* SFD[15-8] FEC not supported and phyMRFSKSFD = 0 -> SFD = 0x904E */
     {CC112X_SYNC2,              0x4E},  /* SFD[ 7-0] ... */
@@ -104,7 +109,7 @@ static const s_regSettings_t cc112x_cfg_ieee802154g_default[] =
     {CC112X_PREAMBLE_CFG0,      0x2A},  /* Preamble detection enabled; PQT_VALID_TIMEOUT=16 symbols; PQT=0x0A */
 #else
     /* WOR disabled */
-    {CC112X_PREAMBLE_CFG1,      0x18},  /* NUM_PREAMBLE = 4 bytes; PREAMBLE_WORD = 0x55 */
+    {CC112X_PREAMBLE_CFG1,      0x19},  /* NUM_PREAMBLE = 4 bytes; PREAMBLE_WORD = 0x55 */
     {CC112X_PREAMBLE_CFG0,      0x2A},  /* Preamble detection enabled; PQT_VALID_TIMEOUT=16 symbols; PQT=0x0A */
 #endif
     {CC112X_FREQ_IF_CFG,        0x3A},
@@ -131,9 +136,9 @@ static const s_regSettings_t cc112x_cfg_ieee802154g_default[] =
     {CC112X_WOR_EVENT0_LSB,     0x78},  /* eWOR timeout = 3.102ms */
 
 #if (NETSTK_CFG_DATA_WHITENING_EN == TRUE)
-    {CC112X_PKT_CFG1,           0x40},  /* CRC_CFG = 00; CRC16 is disabled, APPEND_STATUS is disabled */
+    {CC112X_PKT_CFG1,           0x41},  /* CRC_CFG = 00; CRC16 is disabled, APPEND_STATUS is disabled */
 #else
-    {CC112X_PKT_CFG1,           0x00},  /* CRC_CFG = 00; CRC16 is disabled, APPEND_STATUS is disabled */
+    {CC112X_PKT_CFG1,           0x01},  /* CRC_CFG = 00; CRC16 is disabled, APPEND_STATUS is enabled */
 #endif
     {CC112X_PKT_CFG0,           0x20},
     {CC112X_RFEND_CFG0,         0x00},  /* Terminate on bad packet is disabled; */
