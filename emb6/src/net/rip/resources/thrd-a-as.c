@@ -93,13 +93,13 @@ res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t prefer
 		// TODO Assign a Router ID to the REED if one is available.
 		thrd_ldb_ida_t *ida;
 		if ( router_id == 63 ) {
-			ida = thrd_leader_assign_rid(NULL, 0);	// TODO IEEE 802.15.4 Extended Address.
+			ida = thrd_leader_assign_rid(NULL, 0);	// TODO Add IEEE 802.15.4 Extended Address.
 		} else {
-			ida = thrd_leader_assign_rid(&router_id, 0);	// TODO IEEE 802.15.4 Extended Address.
+			ida = thrd_leader_assign_rid(&router_id, 0);	// TODO Add IEEE 802.15.4 Extended Address.
 		}
 		if ( ida != NULL ) {
 			// Success.
-			uint64_t router_id_mask = 0x0000000000000000; // TODO Create Router ID Mask.
+			uint64_t router_id_mask = thrd_create_router_id_mask();
 			uint16_t rloc16 = THRD_CREATE_RLOC16(ida->ID_id, 0);
 			len = create_response_payload(payload_buf, 0, &rloc16, &ID_sequence_number, &router_id_mask);
 			REST.set_response_status(response, REST.status.CHANGED);
