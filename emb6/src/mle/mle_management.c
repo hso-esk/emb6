@@ -12,7 +12,10 @@
 #include "emb6.h"
 #include "bsp.h"
 #include "mle_management.h"
+
 #include "thrd-adv.h"
+#include "thrd-partition.h"
+
 #include "etimer.h"
 #include "evproc.h"
 #include "tcpip.h"
@@ -68,13 +71,17 @@ static uint8_t  		mle_send_msg(mle_cmd_t* cmd,  uip_ipaddr_t *dest_addr);
 
 uint8_t send_mle_advertisement(tlv_route64_t* route, uint8_t len, tlv_leader_t* lead)
 {
+	if(MyNode.OpMode == PARENT)
+	{
 	mle_init_cmd(&cmd,ADVERTISEMENT);
 	add_src_address_to_cmd(&cmd);
 	add_route64_to_cmd(&cmd,route,len);
 	add_leader_to_cmd(&cmd,lead);
 	uip_create_linklocal_allnodes_mcast(&s_destAddr);
 	mle_send_msg(&cmd, &s_destAddr);
+	}
 	return 1 ;
+
 }
 
 
@@ -364,7 +371,9 @@ void mle_join_process(void *ptr)
 			case JP_FAIL:
 				PRINTFR("Join process fail ... \n"ANSI_COLOR_RESET);
 				PRINTFG("starting new partition ... \n"ANSI_COLOR_RESET);
-				// call to Lukas start partition function
+
+				thrd_partition_start();
+
 				mle_set_parent_mode();
 				PRESET();
 				finish=1;
@@ -418,7 +427,9 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 			tlv=mle_find_tlv_in_cmd(cmd,TLV_LEADER_DATA);
 			tlv_leader_init(&leader_tlv,tlv->value);
 			tlv=mle_find_tlv_in_cmd(cmd,TLV_SOURCE_ADDRESS);
-			thrd_process_adv(tlv->value[1] | (tlv->value[0] << 8), route64_tlv,leader_tlv);
+			thrd_process_adv( tlv->value[1] | (tlv->value[0] << 8), route64_tlv,leader_tlv);
+			PRINTFY("MLE advertisement processed ... \n" ANSI_COLOR_RESET );
+
 		}
 		break;
 
