@@ -86,8 +86,6 @@ thrd_random_interval()
 	return ((bsp_getrand(0) % (max - min + 1)) + min);
 }
 
-static tlv_route64_t route64_tlv;
-
 /*---------------------------------------------------------------------------*/
 /*
  * Called after a random time in [I/2, I) has expired.
@@ -99,8 +97,10 @@ thrd_handle_send_timer(void *ptr)
 
 	// TODO Send MLE Advertisement.
 	tlv_leader_t *leader_tlv = thrd_generate_leader_data_tlv();
-	size_t route64_len = thrd_generate_route64(&route64_tlv);
-	send_mle_advertisement(&route64_tlv, route64_len, leader_tlv);
+	size_t route64_len = 0;
+	tlv_route64_t *route64_tlv = thrd_generate_route64(&route64_len);
+	printf("route64_len = %d\n", route64_len);
+	send_mle_advertisement(route64_tlv, route64_len, leader_tlv);
 	return;
 }
 

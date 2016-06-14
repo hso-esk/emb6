@@ -134,6 +134,7 @@ thrd_ldb_ida_t
 	ida = thrd_ldb_ida_lookup(*router_id);
 	if ( ida == NULL ) {
 		ida = thrd_ldb_ida_add(*router_id, id_owner, 0);
+		PRINTF("Router ID Assignment: Assigned Router ID = %d\n", ida->ID_id);
 		return ida;
 	} else {
 	// If the desired Router ID currently is in use.
@@ -152,9 +153,11 @@ thrd_ldb_ida_t
 				id_cnt++;
 				ida = thrd_ldb_ida_lookup(id_cnt);
 			}
+			PRINTF("TEST!\n");
 			// Create Router ID if available.
 			if ( id_cnt < 63 ) {
 				ida = thrd_ldb_ida_add(id_cnt, id_owner, 0);
+				PRINTF("Router ID Assignment: Assigned Router ID = %d\n", ida->ID_id);
 				return ida;
 			} else {
 				return NULL;

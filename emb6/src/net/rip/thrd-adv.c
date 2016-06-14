@@ -110,11 +110,11 @@ thrd_process_adv(uint16_t source_addr, tlv_route64_t *route64_tlv, tlv_leader_t 
 
 /* -------------------------------------------------------------------------- */
 
-size_t
-thrd_generate_route64(tlv_route64_t *route64_tlv)
+tlv_route64_t*
+thrd_generate_route64(size_t *len)
 {
-	size_t len = 9;
-	// tlv_route64_t *route64_tlv;				// Route64 TLV structure.
+	*len = 9;
+	tlv_route64_t *route64_tlv;				// Route64 TLV structure.
 	thrd_rdb_id_t *rid;						// Router IDs.
 	thrd_rdb_link_t *link;
 	thrd_rdb_route_t *route;				// Routing entries.
@@ -151,7 +151,7 @@ thrd_generate_route64(tlv_route64_t *route64_tlv)
 
 		route64_data[lq_rq_pos] = lq_rd;
 		lq_rq_pos++;
-		len++;
+		*len++;
 	}
 
 	route64_data[8] = (uint8_t) router_id_mask;
@@ -161,9 +161,9 @@ thrd_generate_route64(tlv_route64_t *route64_tlv)
 	}
 
 	if ( tlv_route64_init(&route64_tlv, route64_data) == 0 )
-		return 0;
+		return NULL;
 
-	return len;
+	return route64_tlv;
 }
 
 /* --------------------------------------------------------------------------- */
