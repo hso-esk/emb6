@@ -12,6 +12,7 @@
 #include "emb6.h"
 #include "bsp.h"
 #include "mle_management.h"
+#include "thrd-adv.h"
 #include "etimer.h"
 #include "evproc.h"
 #include "tcpip.h"
@@ -64,6 +65,18 @@ static uint8_t  		mle_send_msg(mle_cmd_t* cmd,  uip_ipaddr_t *dest_addr);
  * @return 0   FAIL.
  *
  */
+
+uint8_t send_mle_advertisement(tlv_route64_t* route, uint8_t len, tlv_leader_t* lead)
+{
+	mle_init_cmd(&cmd,ADVERTISEMENT);
+	add_src_address_to_cmd(&cmd);
+	add_route64_to_cmd(&cmd,route,len);
+	add_leader_to_cmd(&cmd,lead);
+	uip_create_linklocal_allnodes_mcast(&s_destAddr);
+	mle_send_msg(&cmd, &s_destAddr);
+	return 1 ;
+}
+
 
 static uint8_t send_mle_parent_request(uint8_t R, uint8_t E)
 {
@@ -120,7 +133,7 @@ static void reply_for_mle_parent_request(void *ptr)
 
 static uint16_t assign_address16(uint8_t id)
 {
-return   (( get_routerID() << 10) |  id | 0x0000  );
+	return   (( get_routerID() << 10) |  id | 0x0000  );
 }
 
 static void reply_for_mle_childID_request(void *ptr)
@@ -369,14 +382,16 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 		const uip_ipaddr_t *dest_addr, uint16_t dest_port, const uint8_t *data, uint16_t datalen)
 {
 
-	mle_cmd_t * cmd;
-	tlv_t * tlv;
+	mle_cmd_t * 	cmd;
+	tlv_t* 			tlv;
+	tlv_route64_t* 	route64_tlv;
+	tlv_leader_t* 	leader_tlv;
 
 	/***********   To avoid the problem of the additional bytes until we fix it  ************/
-		if( uip_is_addr_linklocal_allrouters_mcast(dest_addr) || uip_is_addr_linklocal_allnodes_mcast(dest_addr))
-			mle_create_cmd_from_buff(&cmd , (uint8_t * )data , datalen - 40 );
-		else
-			mle_create_cmd_from_buff(&cmd , (uint8_t * )data , datalen );
+	//		if( uip_is_addr_linklocal_allrouters_mcast(dest_addr) || uip_is_addr_linklocal_allnodes_mcast(dest_addr))
+	mle_create_cmd_from_buff(&cmd , (uint8_t * )data , datalen - 40 );
+	//		else
+	//			mle_create_cmd_from_buff(&cmd , (uint8_t * )data , datalen );
 
 	PRINTFC("<== MLE ");
 	mle_print_type_cmd(*cmd);
@@ -395,9 +410,18 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 	case LINK_REJECT:
 		break;
 	case ADVERTISEMENT:
-		tlv=mle_find_tlv_in_cmd(cmd,TLV_ROUTE64);
-		// Lukas_process_route64(tlv->length , tlv->value);
+
+		if(MyNode.OpMode == PARENT)
+		{
+			tlv=mle_find_tlv_in_cmd(cmd,TLV_ROUTE64);
+			tlv_route64_init(&route64_tlv,tlv->value);
+			tlv=mle_find_tlv_in_cmd(cmd,TLV_LEADER_DATA);
+			tlv_leader_init(&leader_tlv,tlv->value);
+			tlv=mle_find_tlv_in_cmd(cmd,TLV_SOURCE_ADDRESS);
+			thrd_process_adv(tlv->value[1] | (tlv->value[0] << 8), route64_tlv,leader_tlv);
+		}
 		break;
+
 	case UPDATE:
 		break;
 	case UPDATE_REQUEST:  // Not used in Thread Network
