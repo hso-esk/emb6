@@ -579,31 +579,15 @@ uint8_t mle_init(void)
 	/***********  Inisialize  mle udp connexion ***************/
 	if(!mle_init_udp()) return 0 ;
 
+	/***********  Inisialize  nb table ***************/
+	mle_nb_device_init();
+
 	/***********  Inisialize  mle node structure **************/
 	MyNode.OpMode=NOT_LINKED;
 	MyNode.timeOut=TIME_OUT;
 	MyNode.rx_on_when_idle=IS_RX_ON_WHEN_IDLE;
 	MyNode.childs_counter=0;
 
-/*
-	 mle_add_child(1, 0x00aa,  50441 ,0,3 );
-	mle_add_child(2, 0x00aa,  441 ,4,1);
-	mle_add_child(3, 0x00aa,  50 ,1,3);
-	mle_add_child(4, 0x00aa,  444 ,2,3);
-	//mle_rm_child( mle_find_child(2));
-	mle_print_child_table();
-
-	mle_add_nb_router(1, 0x00aa,  50441 ,0,3);
-	mle_add_nb_router(2, 0x00aa,  441 ,4,1);
-	mle_add_nb_router(3, 0x00aa,  50 ,1,2);
-	mle_add_nb_router(4, 0x00aa,  444 ,2,3);
-	//mle_rm_nb_router( mle_find_nb_router(1));
-	mle_print_nb_router_table();
-
-	PRINTF("nb of lq 3  : %i \n"ANSI_COLOR_RESET, count_neighbor_LQ(3));
-	PRINTF("nb of lq 2  : %i \n"ANSI_COLOR_RESET, count_neighbor_LQ(2));
-	PRINTF("nb of lq 1  : %i \n"ANSI_COLOR_RESET, count_neighbor_LQ(1));
-*/
 
 	/************* just for test: to verify when the join process will be triggered  **********/
 	ctimer_set(&c_mle_Timer, 1 * bsp_get(E_BSP_GET_TRES) , mle_join_process, (void *) NULL );
