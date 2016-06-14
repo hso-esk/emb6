@@ -110,7 +110,7 @@ coap_init()
 static void
 handle_timer(void *ptr)
 {
-	ID_sequence_number++;
+	thrd_partition.ID_sequence_number++;
 	thrd_print_partition_data();
 	ctimer_set(&leader_ct, (clock_time_t)thrd_next_period(ID_SEQUENCE_PERIOD), handle_timer, NULL);
 }
@@ -206,6 +206,20 @@ thrd_request_router_id(uip_ipaddr_t *leader_addr, uint8_t *ml_eid, uint8_t *rout
 	coap_nonblocking_request(leader_addr, UIP_HTONS(COAP_DEFAULT_PORT), packet, thrd_addr_solicit_chunk_handler); // TODO Changing CoAP Port.
 }
 
+/* --------------------------------------------------------------------------- */
+/*
+void
+thrd_request_router_id(uint8_t *router_id)
+{
+	uint16_t rloc16 = THRD_CREATE_RLOC16(*router_id, 0); // Create RLOC16.
+	len = create_addr_solicit_req_payload(addr_solicit_buf, ml_eid, &rloc16);
+
+	coap_init_message(packet, COAP_TYPE_CON, COAP_POST, 0);
+	coap_set_header_uri_path(packet, service_urls[0]);
+	coap_set_payload(packet, addr_solicit_buf, len);
+	coap_nonblocking_request(leader_addr, UIP_HTONS(COAP_DEFAULT_PORT), packet, thrd_addr_solicit_chunk_handler); // TODO Changing CoAP Port.
+}
+*/
 /* --------------------------------------------------------------------------- */
 
 static size_t

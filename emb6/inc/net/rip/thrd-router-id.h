@@ -49,6 +49,12 @@ extern void thrd_request_router_id(uip_ipaddr_t *leader_addr, uint8_t *ml_eid,
 		uint8_t *router_id);
 
 /**
+ * Send an Address Solicit Request message to obtain a Router ID from the leader.
+ * @param router_id The desired Router ID (optional).
+ */
+// extern void thrd_request_router_id(uint8_t *router_id);
+
+/**
  * Response handler for Address Solicit Request.
  * @param response A pointer to the response.
  */
