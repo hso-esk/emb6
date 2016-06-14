@@ -16,6 +16,7 @@
 
 uint16_t llframe_parse(llframe_attr_t *p_frame, uint8_t *p_buf, uint16_t len) {
   uint8_t *p_mhr;
+  uint8_t frameType;
   uint8_t destAddrMode;
   uint16_t numRemBytes;
   uint16_t pktLen;
@@ -41,6 +42,16 @@ uint16_t llframe_parse(llframe_attr_t *p_frame, uint8_t *p_buf, uint16_t len) {
 
   /* MHR */
   p_mhr = &p_buf[PHY_HEADER_LEN];
+
+  /* frame type filtering */
+  frameType = p_mhr[0] & 0x07;
+  if ((frameType != FRAME802154_DATAFRAME) &&
+      (frameType != FRAME802154_ACKFRAME) &&
+      (frameType != FRAME802154_CMDFRAME)) {
+    /* unsupported frame types */
+    return 0;
+  }
+
   p_frame->is_ack_required = (p_mhr[0] & 0x20) >> 5;
   p_frame->seq_no = p_mhr[2];
   p_frame->min_addr_len = 2;
