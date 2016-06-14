@@ -101,7 +101,7 @@ res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t prefer
 			// Success.
 			uint64_t router_id_mask = thrd_create_router_id_mask();
 			uint16_t rloc16 = THRD_CREATE_RLOC16(ida->ID_id, 0);
-			len = create_response_payload(payload_buf, 0, &rloc16, &ID_sequence_number, &router_id_mask);
+			len = create_response_payload(payload_buf, 0, &rloc16, &thrd_partition.ID_sequence_number, &router_id_mask);
 			REST.set_response_status(response, REST.status.CHANGED);
 			REST.set_response_payload(response, payload_buf, len);
 		} else {

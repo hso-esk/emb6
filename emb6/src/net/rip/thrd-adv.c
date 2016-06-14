@@ -40,12 +40,12 @@ thrd_process_route64(uint8_t rid_sender, tlv_route64_t *route64_tlv)
 
 	if ( route64_tlv != NULL ) {
 
-		if ( route64_tlv->id_sequence_number > ID_sequence_number ) {
+		if ( route64_tlv->id_sequence_number > thrd_partition.ID_sequence_number ) {
 
 			// Empty the Router ID Set.
 			thrd_rdb_rid_empty();
 
-			ID_sequence_number = route64_tlv->id_sequence_number;
+			thrd_partition.ID_sequence_number = route64_tlv->id_sequence_number;
 
 			// printf("router_id_mask = %02x\n", router_id_mask);
 
@@ -120,7 +120,7 @@ thrd_generate_route64(size_t *len)
 	thrd_rdb_route_t *route;				// Routing entries.
 	uint8_t lq_rq_pos = 9;					// Position of the first link quality and route data byte.
 
-	route64_data[0] = ID_sequence_number;
+	route64_data[0] = thrd_partition.ID_sequence_number;
 
 	rid = thrd_rdb_rid_head();
 
@@ -174,11 +174,11 @@ thrd_generate_leader_data_tlv(void)
 	uint8_t tlv_buf[8] = { 0 };
 	tlv_leader_t *ld_tlv;
 
-	memcpy(&tlv_buf[0], &Partition_ID, 4);
-	tlv_buf[4] = Partition_weight;
-	tlv_buf[5] = VN_version;
-	tlv_buf[6] = VN_stable_version;
-	tlv_buf[7] = leader_router_id;
+	memcpy(&tlv_buf[0], &thrd_partition.Partition_ID, 4);
+	tlv_buf[4] = thrd_partition.Partition_weight;
+	tlv_buf[5] = thrd_partition.VN_version;
+	tlv_buf[6] = thrd_partition.VN_stable_version;
+	tlv_buf[7] = thrd_partition.leader_router_id;
 	tlv_leader_init(&ld_tlv, &tlv_buf[0]);
 	return ld_tlv;
 }
