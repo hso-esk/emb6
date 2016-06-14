@@ -195,6 +195,23 @@ uint8_t  add_Link_margin_to_cmd(mle_cmd_t* cmd, uint8_t lm)
 		return 0 ;
 }
 
+uint8_t  add_route64_to_cmd(mle_cmd_t* cmd, tlv_route64_t* route , uint8_t len)
+{
+	if (mle_add_tlv_to_cmd( cmd ,TLV_ROUTE64 , len  ,(uint8_t*) route ))
+		return 1 ;
+	else
+		return 0 ;
+}
+
+
+uint8_t  add_leader_to_cmd(mle_cmd_t* cmd, tlv_leader_t* lead)
+{
+	if (mle_add_tlv_to_cmd( cmd ,TLV_LEADER_DATA , 8  ,(uint8_t*) lead ))
+		return 1 ;
+	else
+		return 0 ;
+}
+
 
 uint8_t  add_Cnnectivity_to_cmd(mle_cmd_t* cmd, uint8_t max_child, uint8_t child_count, uint8_t LQ3, uint8_t LQ2,
 									uint8_t LQ1, uint8_t Leader_cost,uint8_t id_sed)

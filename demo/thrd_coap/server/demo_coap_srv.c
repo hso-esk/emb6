@@ -159,7 +159,6 @@ int8_t demo_thrdCoapInit(void)
 	if ( !mle_init() ){ return 0; }
 	//mle_set_parent_mode();
 	//mle_set_child_mode();
-	PRINTF("Thread root demo initialized ... \n");
 
 	// Initialize routing database.
 	thrd_rdb_init();
@@ -172,7 +171,7 @@ int8_t demo_thrdCoapInit(void)
 	thrd_eid_rloc_db_init();
 
 	/* set periodic timer */
-	etimer_set(&timer, SEND_INTERVAL * bsp_get(E_BSP_GET_TRES), timer_callback);
+	//etimer_set(&timer, SEND_INTERVAL * bsp_get(E_BSP_GET_TRES), timer_callback);
 
     return 1;
 }

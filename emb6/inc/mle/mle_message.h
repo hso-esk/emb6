@@ -32,6 +32,8 @@ uint32_t   add_rand_challenge_to_cmd(mle_cmd_t* cmd );
 uint8_t  add_response_to_cmd(mle_cmd_t* cmd , tlv_t* resp );
 uint8_t  add_response32_to_cmd(mle_cmd_t* cmd ,  uint32_t value );
 uint8_t  add_Link_margin_to_cmd(mle_cmd_t* cmd, uint8_t lm);
+uint8_t  add_route64_to_cmd(mle_cmd_t* cmd, tlv_route64_t* route , uint8_t len);
+uint8_t  add_leader_to_cmd(mle_cmd_t* cmd, tlv_leader_t* lead);
 uint8_t  add_Cnnectivity_to_cmd(mle_cmd_t* cmd, uint8_t max_child, uint8_t child_count, uint8_t LQ3, uint8_t LQ2,
 									uint8_t LQ1, uint8_t Leader_cost,uint8_t id_sed);
 uint8_t  comp_resp_chall(uint32_t challenge , uint8_t * buf);
