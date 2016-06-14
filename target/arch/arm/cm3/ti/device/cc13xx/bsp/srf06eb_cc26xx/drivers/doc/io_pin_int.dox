@@ -1,0 +1,112 @@
+//*****************************************************************************
+//! @file       io_pin_int.dox
+//! @brief      Board Support Package IO pin interrupt handler chapter.
+//!
+//! Revised     $Date: 2012-12-05 13:46:53 +0100 (Wed, 05 Dec 2012) $
+//! Revision    $Revision: 8964 $
+//
+//  Copyright (C) 2011 Texas Instruments Incorporated - http://www.ti.com/
+//
+//
+//  Redistribution and use in source and binary forms, with or without
+//  modification, are permitted provided that the following conditions
+//  are met:
+//
+//    Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//
+//    Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//
+//    Neither the name of Texas Instruments Incorporated nor the names of
+//    its contributors may be used to endorse or promote products derived
+//    from this software without specific prior written permission.
+//
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+//  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+//  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+//  A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+//  OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+//  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+//  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+//  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+//  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+//  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//****************************************************************************/
+
+/*! \page io_pin_int_chapter
+\latexonly
+\chapter{I/O Pin Interrupt Handler}
+\jumptext{io_pin_int_intro}{Introduction}\\
+\jumptext{group__io__pin__int__api}{API Functions}\\
+\jumptext{io_pin_int_code_example}{Programming Example}\\
+\input{io_pin_int_intro}
+\input{group__io__pin__int__api}
+\input{io_pin_int_code_example}
+\endlatexonly
+*/
+
+/*! \page io_pin_int_intro Introduction
+The CCBOARD BSP includes an I/O pin interrupt handler. The
+I/O pin interrupt handler is an extension to functionality in the CCDEVICE
+peripheral driver library, allowing GPIO pins on the same GPIO port to have
+different interrupt handlers.
+
+The I/O pin interrupt handler registers a generic interrupt service routine 
+(ISR) to the interrupt vector of the GPIO port. The generic ISR calls the 
+appropriate interrupt handler for each GPIO pin, passing the event mask
+to it as a void pointer.
+
+The driver files are in <tt>bsp/CCFOLDER/drivers</tt>.
+- <tt>source/io_pin_int.c</tt> contains the function implementations for 
+  CCDEVICE on CCBOARD.
+- <tt>source/io_pin_int.h</tt> contains the API definitions for use by 
+  applications.
+
+
+\defgroup io_pin_int_api API Functions
+\latexonly \label{sec:io_pin_int_api} \endlatexonly
+The I/O pin interrupt handler has two functions, ioPinIntRegister() and
+ioPinIntUnregister().
+
+The I/O pin interrupt handler module may be excluded from the CCBOARD BSP by 
+defining \b IO_PIN_INT_EXCLUDE. \warning Define \b IO_PIN_INT_EXCLUDED should 
+be used with care as other CCBOARD BSP modules use the I/O pin interrupt 
+handler. For more information on how to configure the CCBOARD BSP for CCDEVICE 
+precompiled library, see Section 
+\latexonly \ref{sect:bsp_use_configure}\endlatexonly.
+*/
+
+/*! \page io_pin_int_code_example Programming Example
+The following code example shows how to register function myIsr() as the 
+interrupt handler for rising edge interrupts on GPIO port A pin 3. For examples 
+using the I/O pin interrupt handler, see <tt>bsp/CCFOLDER/examples/keys</tt>.
+
+\code
+    //
+    // Assuming interrupts are disabled
+    //
+
+    //
+    // Register interrupt handler myIsr() to GPIO port A pin 3
+    //
+    ioPinIntRegister(GPIO_PIN_3, &myIsr);
+
+    //
+    // Set interrupt type to rising edge (driverlib function)
+    //
+    GPIOIntTypeSet(GPIO_A_BASE, GPIO_PIN_3, GPIO_RISING_EDGE);
+    
+    //
+    // Enable pin interrupt (driverlib function)
+    //
+    GPIOPinIntEnable(GPIO_A_BASE, GPIO_PIN_3);
+    
+    //
+    // Enable master interrupt (driverlib function)
+    //
+    IntMasterEnable();
+\endcode
+*/

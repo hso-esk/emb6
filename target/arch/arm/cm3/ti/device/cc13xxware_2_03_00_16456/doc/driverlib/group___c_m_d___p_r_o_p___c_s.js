@@ -1,0 +1,38 @@
+var group___c_m_d___p_r_o_p___c_s =
+[
+    [ "rfc_CMD_PROP_CS_s", "structrfc___c_m_d___p_r_o_p___c_s__s.html", [
+      [ "__dummy0", "structrfc___c_m_d___p_r_o_p___c_s__s.html#a97d1a8ea6febda5a72155d5018159fe4", null ],
+      [ "bEnaCmd", "structrfc___c_m_d___p_r_o_p___c_s__s.html#a41c04c352eea3be5d1befd2e390ca023", null ],
+      [ "bEnaCorr", "structrfc___c_m_d___p_r_o_p___c_s__s.html#af51f24d015afca634571bd6576eed26c", null ],
+      [ "bEnaRssi", "structrfc___c_m_d___p_r_o_p___c_s__s.html#a28b8063654d45731894dc71f2c6ceeba", null ],
+      [ "bFsOffBusy", "structrfc___c_m_d___p_r_o_p___c_s__s.html#a3d431d2b8c7d77d51ac2408c0a2446b2", null ],
+      [ "bFsOffIdle", "structrfc___c_m_d___p_r_o_p___c_s__s.html#ab7cbe36d94f9f933cdaca9e8fcba5004", null ],
+      [ "busyOp", "structrfc___c_m_d___p_r_o_p___c_s__s.html#a97feb5515423ce590b92442c879d8d8b", null ],
+      [ "commandNo", "structrfc___c_m_d___p_r_o_p___c_s__s.html#a5d4713d7e79380cdf1e24582df415548", null ],
+      [ "condition", "structrfc___c_m_d___p_r_o_p___c_s__s.html#a00aabaa26f39f188c077afc165313657", null ],
+      [ "corrConfig", "structrfc___c_m_d___p_r_o_p___c_s__s.html#adf75690e9a7331a75f1e66b65c6f94fe", null ],
+      [ "corrPeriod", "structrfc___c_m_d___p_r_o_p___c_s__s.html#add21cf6b20ea90001213885400acc101", null ],
+      [ "csConf", "structrfc___c_m_d___p_r_o_p___c_s__s.html#a9ea54425b332992fef2c89c12c0ef474", null ],
+      [ "csEndTime", "structrfc___c_m_d___p_r_o_p___c_s__s.html#a6f30454203db6a95fbd338dbd45504c9", null ],
+      [ "csEndTrigger", "structrfc___c_m_d___p_r_o_p___c_s__s.html#a186113f0aa13434696bd16929a5f6ea6", null ],
+      [ "csFsConf", "structrfc___c_m_d___p_r_o_p___c_s__s.html#a6a08929ba9a71b15f089c6cc9b93411b", null ],
+      [ "idleOp", "structrfc___c_m_d___p_r_o_p___c_s__s.html#ad1b4c71ed25b4b2f2ad02b783a5095c0", null ],
+      [ "nSkip", "structrfc___c_m_d___p_r_o_p___c_s__s.html#a84841b54cc807098dbb6eca773fa289a", null ],
+      [ "numCorrBusy", "structrfc___c_m_d___p_r_o_p___c_s__s.html#a781cf2b953f101cdbb207c32b20b5e67", null ],
+      [ "numCorrInv", "structrfc___c_m_d___p_r_o_p___c_s__s.html#affb2603ec7ef852c98a2317b7ca824d0", null ],
+      [ "numRssiBusy", "structrfc___c_m_d___p_r_o_p___c_s__s.html#a81afd387a5edacaae05a7bfd164322a7", null ],
+      [ "numRssiIdle", "structrfc___c_m_d___p_r_o_p___c_s__s.html#a3d102077bf57a5803eb351f61a37f506", null ],
+      [ "operation", "structrfc___c_m_d___p_r_o_p___c_s__s.html#a6fef4ba1459199882de92a43467cf326", null ],
+      [ "pastTrig", "structrfc___c_m_d___p_r_o_p___c_s__s.html#a37a9c2c65817b0a24e955bb077199d3e", null ],
+      [ "pNextOp", "structrfc___c_m_d___p_r_o_p___c_s__s.html#a4542d9653acc656c893dd72ca22f49ba", null ],
+      [ "rssiThr", "structrfc___c_m_d___p_r_o_p___c_s__s.html#a046419dd62db7c903c31df440e071159", null ],
+      [ "rule", "structrfc___c_m_d___p_r_o_p___c_s__s.html#a524b9febae0d029cd37f1bc97b6e8ec1", null ],
+      [ "startTime", "structrfc___c_m_d___p_r_o_p___c_s__s.html#ae7819b9708a227505e141379cbcd0a1f", null ],
+      [ "startTrigger", "structrfc___c_m_d___p_r_o_p___c_s__s.html#ab88db21b52bffdeb1424950ae23274c6", null ],
+      [ "status", "structrfc___c_m_d___p_r_o_p___c_s__s.html#a837b9f635667f9373ad52f99cb05c216", null ],
+      [ "timeoutRes", "structrfc___c_m_d___p_r_o_p___c_s__s.html#a7235e54a06c00fd215f0c61fafcea118", null ],
+      [ "triggerNo", "structrfc___c_m_d___p_r_o_p___c_s__s.html#a2ac671712acf21ee674a6fedd208ee5a", null ],
+      [ "triggerType", "structrfc___c_m_d___p_r_o_p___c_s__s.html#a4b3d5e899540e9bdaa696232e015af59", null ]
+    ] ],
+    [ "CMD_PROP_CS", "group___c_m_d___p_r_o_p___c_s.html#ga951c4501c02aaa5e4a14ed35dfa50e5b", null ]
+];

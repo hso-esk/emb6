@@ -1,0 +1,168 @@
+//*****************************************************************************
+//
+// conventions.dox - DriverLib documentation conventsions.
+//
+// Copyright (c) 2007 Texas Instruments Incorporated.  All rights reserved.
+// TI Information - Selective Disclosure
+//
+//*****************************************************************************
+
+/*! \page conventions_chapter
+\if INTERNAL
+\latexonly
+\setcounter{chapter}{-1}
+%\tocsections*{Documentation Conventions}
+\chapter{Documentation Conventions}
+\input{conventions}
+\endlatexonly
+\endif
+*/
+
+/*! \page conventions
+\note This chapter does not appear in the public version of this document.
+
+The following are a list of documentation conventions that apply to this 
+document (some of which are common Stellaris documentation conventions):
+
+<ul>
+<li>
+Do not refer to the library as ``DriverLib''.  It should be ``peripheral driver
+library'' or ``Stellaris Peripheral Driver Library''.
+</li>
+<br><br>
+<li>
+Do not use ``e.g.'', ``i.e.'', and ``etc.''  Instead, use ``for example,'',
+``that is,'', and ``and so on'', respectively.  If the ``etc.'' being replaced
+is in the middle of a sentence, it should be followed by a comma.
+</li>
+
+<li>
+References to API functions should be followed by ``()''.  This convention 
+causes Doxygen to automatically hyperlink the function name, resulting in blue 
+text. If the API shows up in the document as normal, black text, then the name 
+is incorrect or the target API is not properly documented and therefore does not
+appear in the document.  Examples:  SysCtlClockSet() is a proper link, while
+SysCtlClockSet is not, and PurposelyBrokenLink() is not either.
+
+There are explicit cases where the API has ``()'' but not hyperlink.  For
+APIs that have been renamed, there is no documentation of the API with the
+old name, but comments that refer to the API by the old name.  In this case,
+the function is referred to properly but does not hyperlink as there is
+no target for the hyperlink.
+</li>
+
+<li>
+References to API parameters should be italicized by using
+``<tt>\\e param</tt>'' in the source.  For example, the \e ulConfig parameter
+to SysCtlClockSet() is italicized by using ``<tt>\\e ulConfig</tt>'' in the
+source.
+</li>
+
+<li>
+References to define values should be bolded by using ``<tt>\\b define</tt>''
+in the source.  For example, the \b SYSCTL_USE_PLL define that can be passed to
+SysCtlClockSet() is bolded by using ``<tt>\\b SYSCTL_USE_PLL</tt>'' in the
+source.
+</li>
+
+<li>
+\b true and \b false, when referring to the tBoolean values (for example, as a
+boolean argument to a function or the boolean return from a function), should
+be bolded by using ``<tt>\\b true</tt>'' and ``<tt>\\b false</tt>''.
+</li>
+
+<li>
+The double quote character should not be used in the source (it appears in the
+document as ", which is strictly vertical).  Instead, paired back-quotes
+(<tt>``</tt>) should be used as open double quotes and paired quotes
+(<tt>''</tt>) should be used as close double quotes.  They appear as `` and ''
+in the document.  This applies to the <tt>.dox</tt> files in the <tt>doc</tt>
+directory as well as the Doxygen comments in the source files.  The one
+``exception'' to this is the use of the \\ref Doxygen operator, that has the 
+syntax of ``\\ref \<name\> ["(text)"]''; the optional text must be enclosed in 
+double quotes in order to be properly hyperlinked (see the EK-LM3S2965/6965 rev 
+A/C chapter documentation for an example).
+</li>
+
+<li>
+For board examples, the group for the example description is \<board_dir\>_list.
+For example, for the hello example in the <tt>boards/ek-fury_rit</tt> 
+directory, the example description should be put into the 
+<tt>ek_fury_rit_list</tt> group.  This modifier is picked up by the scripts to
+generate the board-specific chapters seen by the customer.
+</li>
+
+<li>
+If there is text that should appear in certain versions of the release, that
+text must be marked appropriately.  Note that this requirement applies only 
+to text in the <tt>doc</tt> directory; text in source code must be generic.  The 
+text is marked as follows:
+
+  <ul>
+  <li>
+  <tt>\\if LMI</tt>/<tt>\\endif</tt> for text that should appear only in the
+  LMI release.  Typically, this is text that refers to the various tool chains,
+  things done in the code to accommodate the various tool chains, etc.
+  </li>
+
+  <li>
+  <tt>\\if CODERED</tt>/<tt>\\endif</tt> for text that should appear in the LMI
+  release and in the code_red release, but not in other releases (such as the
+  Keil release).
+  </li>
+
+  <li>
+  <tt>\\if IAR</tt>/<tt>\\endif</tt> for text that should appear in the LMI
+  release and in the IAR release, but not in other releases (such as the Keil
+  release).
+  </li>
+
+  <li>
+  <tt>\\if KEIL</tt>/<tt>\\endif</tt> for text that should appear in the LMI
+  release and in the Keil release, but not in other releases (such as the IAR
+  release).
+  </li>
+
+  <li>
+  <tt>\\if NOTLMI</tt>/<tt>\\endif</tt> for text that should be removed from
+  the LMI release but left in all other releases.
+  </li>
+
+  <li>
+  <tt>\\if NOTCODERED</tt>/<tt>\\endif</tt> for text that should be removed
+  from the code_red release but left in all other releases.
+  </li>
+
+  <li>
+  <tt>\\if NOTIAR</tt>/<tt>\\endif</tt> for text that should be removed from
+  the IAR release but left in all other releases.
+  </li>
+
+  <li>
+  <tt>\\if NOTKEIL</tt>/<tt>\\endif</tt> for text that should be removed from
+  the Keil release but left in all other releases.
+  </li>
+
+  <li>
+  <tt>\\if INTERNAL</tt>/<tt>\\endif</tt> for text that should be removed from
+  all releases, always.  The text of this chapter is a perfect example.
+  </li>
+  </ul>
+
+If text within a <tt>\\latexonly</tt>/<tt>\\endlatexonly</tt> block must
+be conditionally removed, it gets trickier because Doxygen gets confused by
+nested conditionals with a \latexonly \LaTeX \endlatexonly &nbsp;only block
+within it.  See <tt>doc/intro.dox</tt> and <tt>doc/chapters.dox</tt> for
+examples.
+
+In order to easily build the various versions of the document, look in the
+<tt>Doxyfile</tt> and select one of the various values for
+<tt>ENABLED_SECTIONS</tt>.  By default, you'll get the internal version that
+has unannounced and internal text.  The other settings can be chosen to get the
+LMI version, Keil version, IAR version, or code_red version of the document.
+The heading at the top of the Introduction chapter indicates which version
+the document is; that text is removed from the real release document (as part
+of the release process).
+</li>
+</ul>
+*/

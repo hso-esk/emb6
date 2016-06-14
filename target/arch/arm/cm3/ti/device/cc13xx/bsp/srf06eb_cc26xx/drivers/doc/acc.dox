@@ -1,0 +1,120 @@
+//*****************************************************************************
+//! @file       acc.dox
+//! @brief      Accelerometer chapter.
+//!
+//! Revised     $Date: 2012-12-12 10:20:32 +0100 (Wed, 12 Dec 2012) $
+//! Revision    $Revision: 9000 $
+//
+//  Copyright (C) 2011 Texas Instruments Incorporated - http://www.ti.com/
+//
+//
+//  Redistribution and use in source and binary forms, with or without
+//  modification, are permitted provided that the following conditions
+//  are met:
+//
+//    Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//
+//    Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//
+//    Neither the name of Texas Instruments Incorporated nor the names of
+//    its contributors may be used to endorse or promote products derived
+//    from this software without specific prior written permission.
+//
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+//  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+//  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+//  A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+//  OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+//  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+//  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+//  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+//  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+//  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//****************************************************************************/
+
+/*! \page acc_chapter
+\latexonly
+\chapter{Accelerometer}
+\jumptext{acc_intro}{Introduction}\\
+\jumptext{group__acc__api}{API Functions}\\
+\jumptext{acc_code_example}{Programming Example}\\
+\input{acc_intro}
+\input{group__acc__api}
+\input{acc_code_example}
+\endlatexonly
+*/
+
+/*! \page acc_intro Introduction
+The accelerometer on the CCBOARD is a BMA250 3-axis digital accelerometer.
+The CCBOARD BSP drivers provides a set of functions for 
+configuring and accessing the accelerometer.
+
+The driver files are in <tt>bsp/CCFOLDER/drivers</tt>.
+- <tt>source/acc_CCFBOARD.c</tt> contains the function implementations for CCDEVICE 
+  on CCBOARD.
+- <tt>source/acc_bma250.h</tt> contains the API definitions for use by 
+  applications and accelerometer register definitions.
+  
+Accelerometer register definitions are prefixed using \b ACC_ (for example
+\b ACC_CHIPID).
+
+\defgroup acc_api API Functions
+The accelerometer API is broken into two groups of functions: those that 
+access the accelerometer, and those that deal with interrupts from the 
+accelerometer on the CCDEVICE.
+
+The following functions configure and access the accelerometer:
+- accInit()
+- accDisable()
+- accReadReg()
+- accWriteReg()
+- accReadData()
+
+The following functions configure accelerometer interrupts:
+- accIntRegister()
+- accIntUnregister()
+- accIntEnable()
+- accIntDisable()
+- accIntClear()
+- accIntTypeSet()
+
+The accelerometer driver may be excluded from the CCBOARD BSP
+by defining \b ACC_EXCLUDE. For more information on how to configure the 
+CCBOARD BSP for CCDEVICE precompiled library, see Section 
+\latexonly \ref{sect:bsp_use_configure}\endlatexonly.
+*/
+
+/*! \page acc_code_example Programming Example
+The following code example initializes the accelerometer and periodically reads
+the X, Y and Z axis data. For more accelerometer code examples, see 
+<tt>bsp/CCFOLDER/examples/accelerometer</tt>.
+
+\code
+    #include <bsp.h>
+    #include <acc_bma250.h>
+
+    unsigned short x, y, z, i;
+    
+    //
+    // Initialize the SPI interface
+    //
+    bspSpiInit(BSP_SPI_CLK_SPD);
+    
+    //
+    // Initialize the accelerometer (interrupts disabled, 2g mode)
+    //
+    accInit();
+    
+    while(1)
+    {
+        accReadData(&x, &y, &z);
+        
+        // Simple wait
+        for(i=0; i<65000; i++);
+    }
+\endcode
+*/

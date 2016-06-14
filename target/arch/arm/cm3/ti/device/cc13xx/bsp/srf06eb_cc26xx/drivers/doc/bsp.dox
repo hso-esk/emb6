@@ -1,0 +1,111 @@
+//*****************************************************************************
+//! @file       bsp.dox
+//! @brief      Board Support Package LED chapter.
+//!
+//! Revised     $Date: 2012-05-03 14:55:14 +0200 (to, 03 mai 2012) $
+//! Revision    $Revision: 7500 $
+//
+//  Copyright (C) 2011 Texas Instruments Incorporated - http://www.ti.com/
+//
+//
+//  Redistribution and use in source and binary forms, with or without
+//  modification, are permitted provided that the following conditions
+//  are met:
+//
+//    Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//
+//    Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//
+//    Neither the name of Texas Instruments Incorporated nor the names of
+//    its contributors may be used to endorse or promote products derived
+//    from this software without specific prior written permission.
+//
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+//  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+//  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+//  A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+//  OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+//  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+//  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+//  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+//  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+//  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//****************************************************************************/
+
+/*! \page bsp_chapter
+\latexonly
+\chapter{BSP Base Functions}
+\jumptext{bsp_intro}{Introduction}\\
+\jumptext{group__bsp__api}{API Functions}\\
+\jumptext{bsp_code_example}{Programming Example}\\
+\input{bsp_intro}
+\input{group__bsp__api}
+\input{bsp_code_example}
+\endlatexonly
+*/
+
+/*! \page bsp_intro Introduction
+The CCBOARD BSP Base functions provide a set of 
+functions for initializing the CCDEVICE and CCBOARD for operation, configuring 
+the SPI interface to the CCBOARD peripherals, and controlling the CCBOARD 
+3.3-V domain.
+
+The CCBOARD Board Support Pacakge base module source files are contained in 
+<tt>bsp/CCFOLDER/drivers</tt>.
+- <tt>source/bsp.c</tt> contains the function implementations for CCDEVICE 
+  on CCBOARD.
+- <tt>source/bsp.h</tt> contains the API definitions for use by 
+  applications.
+
+\defgroup bsp_api API Functions
+The CCBOARD BSP base API is broken into three main groups
+of functions: 
+- Those that initialize the CCDEVICE I/O for use 
+- Those that deal with the SPI interface to the CCBOARD peripherals 
+- Those that deal with the CCBOARD 3.3-V domain
+
+Function bspInit() configures the CCDEVICE main clock and its I/O for operation 
+on the CCBOARD. bspInit() should be the first function called when using 
+the CCBOARD BSP.
+
+The following functions are used for configuring the SPI interface between the 
+CCBOARD peripherals and the CCDEVICE: 
+- bspSpiInit() 
+- bspSpiClockSpeedSet()
+- bspSpiClockSpeedGet() 
+
+The following functions control the 3.3-V domain on the CCBOARD 
+(\latexonly\hyperref[lcd_intro]{LCD} \endlatexonly and 
+\latexonly\hyperref[sdcard_intro]{SD Card Reader}\endlatexonly):
+- bsp3V3DomainEnable() 
+- bsp3V3DomainDisable()
+- bsp3V3DomainDisableForced()
+- bsp3V3DomainEnabled()
+
+Function bspAssert() is provided as a utility function.
+*/
+
+/*! \page bsp_code_example Programming Example
+Software examples for the CCBOARD BSP are in <tt>bsp/CCFOLDER/examples</tt> .
+
+The following example initializes the CCDEVICE to its default clock speed and
+configures the necessary CCDEVICE I/O. The CCDEVICE SPI interface to the
+CCBOARD SPI peripherals is initialized.
+\code
+    #include "bsp.h"
+
+    //
+    // Initialize the CCFDEVICE clock and CCFBOARD I/O
+    //
+    bspInit(BSP_SYS_CLK_SPD);
+
+    //
+    // Initialize the SPI interface to its default speed
+    //
+    bspSpiInit(BSP_SPI_CLK_SPD);
+\endcode
+*/
