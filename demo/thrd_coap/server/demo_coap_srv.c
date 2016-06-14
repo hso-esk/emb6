@@ -68,6 +68,8 @@
 #include "uip.h"
 #include "bsp.h"
 
+#include "mle_management.h"
+
 #include "thrd-route.h"
 #include "thrd-leader-db.h"
 #include "thrd-addr-query.h"
@@ -154,6 +156,11 @@ execute_routine(void)
 
 int8_t demo_thrdCoapInit(void)
 {
+	if ( !mle_init() ){ return 0; }
+	//mle_set_parent_mode();
+	//mle_set_child_mode();
+	PRINTF("Thread root demo initialized ... \n");
+
 	// Initialize routing database.
 	thrd_rdb_init();
 
