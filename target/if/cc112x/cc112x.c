@@ -416,7 +416,7 @@ static void rf_init(void *p_netstk, e_nsErr_t *p_err)
   RF_WR_REGS(cc112x_cfg_ieee802154g_default);
   RF_SET_FIFO_THR(RF_CFG_FIFO_THR);
 
-  /* set TXOFF_MODE to TX */
+  /* set TXOFF_MODE to RX */
   uint8_t rfend_cfg0;
   cc112x_spiRegRead(CC112X_RFEND_CFG0, &rfend_cfg0, 1);
   rfend_cfg0 |= 0x30;
