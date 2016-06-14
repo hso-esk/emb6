@@ -452,7 +452,7 @@ static void rf_init(void *p_netstk, e_nsErr_t *p_err)
 #endif
 
   /* initial transition to IDLE state */
-  rf_gotoIdle(p_ctx);
+  rf_idle_entry(p_ctx);
 }
 
 
@@ -471,7 +471,7 @@ static void rf_on(e_nsErr_t *p_err)
   struct s_rf_ctx *p_ctx = &rf_ctx;
 
   /* go to state IDLE */
-  rf_gotoIdle(p_ctx);
+  rf_idle_entry(p_ctx);
 
   /* enable radio interrupts */
   RF_INT_ENABLED();
@@ -705,23 +705,6 @@ static void rf_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err) {
       /* unsupported commands are treated in same way */
       *p_err = NETSTK_ERR_CMD_UNSUPPORTED;
       break;
-  }
-}
-
-/*
-********************************************************************************
-*                           STATE TRANSITION HANDLERS
-********************************************************************************
-*/
-
-static void rf_gotoIdle(struct s_rf_ctx *p_ctx) {
-  LED_RX_OFF();
-  LED_TX_OFF();
-
-  p_ctx->state = RF_STATE_IDLE;
-  cc112x_spiCmdStrobe(CC112X_SIDLE);
-  while (RF_READ_CHIP_STATE() != RF_CHIP_STATE_IDLE) {
-    /* wait until the chip goes to IDLE state */
   }
 }
 
@@ -1017,6 +1000,27 @@ static void rf_pktRxTxEndISR(void *p_arg) {
   TRACE_LOG_MAIN("+++ RF: PKT_END_EXIT    state=%02x, cs=%02x, marc=%02x", p_ctx->state, chip_state, marc_status);
 }
 
+
+/*
+********************************************************************************
+*                           STATE-EVENT HANDLING
+********************************************************************************
+*/
+
+/**
+ * @brief handle entry function of IDLE state
+ * @param p_ctx point to variable holding radio context structure
+ */
+static void rf_idle_entry(struct s_rf_ctx *p_ctx) {
+  LED_RX_OFF();
+  LED_TX_OFF();
+
+  p_ctx->state = RF_STATE_IDLE;
+  cc112x_spiCmdStrobe(CC112X_SIDLE);
+  while (RF_READ_CHIP_STATE() != RF_CHIP_STATE_IDLE) {
+    /* wait until the chip goes to IDLE state */
+  }
+}
 
 
 /**
