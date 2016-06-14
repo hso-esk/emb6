@@ -1,0 +1,18 @@
+arch = {
+	'extra' : [
+		'device/cc13xx',
+		'device/cc13xx/rflib',
+		'device/cc13xx/rf_settings',
+		'device/cc13xx/bsp/srf06eb_cc26xx/drivers/source',
+		'device/cc13xxware_2_03_00_16456',
+		'device/cc13xxware_2_03_00_16456/driverlib',
+	],
+# C global defines
+	'defines' : [
+	],
+# GCC flags
+	'cflags' : [
+	]	
+}
+
+Return('arch')

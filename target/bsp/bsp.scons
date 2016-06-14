@@ -78,4 +78,10 @@ bsp += [{
     'txrx'      : ['0','0'],              'mode'     : qpsk100
 }]
 
+bsp += [{
+    'id'        : 'ti_cc13xx',            'mac_addr' : '0x2121',
+    'txrx'      : ['0','0'],              'mode'     : qpsk100
+}]
+
+
 Return('bsp')

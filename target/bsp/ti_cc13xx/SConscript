@@ -1,0 +1,37 @@
+brd_conf = {
+# Micro Controller Unit description (HEAD/arch/<arch>/<mcu_fam>/<vendor> folder)
+	'arch'          : 'arm',
+	'family'        : 'cm3',
+	'vendor'        : 'ti',
+	'cpu'           : 'cc13xx',
+	'toolchain'     : 'GCC',
+
+
+# Device driver description (HEAD/target/mcu folder)
+	'mcu'           : 'cc13xx',
+
+# Transceiver source description (HEAD/target/if folder)
+	'if'            : 'cc13xx',	
+	'startupfile'   : 'cc13xxware_2_03_00_16456/startup_files/startup_gcc.c',
+}
+
+std_conf = {
+# C code global defined symbols
+    'CPPDEFINES' : [
+            '',
+    ],
+
+# GCC flags
+    'CFLAGS' : [
+            '',
+    ],
+
+# LINKER flags
+    'LINKFLAGS' : [
+            '',
+    ]
+}
+
+board_conf = {'brd' : brd_conf, 'std' : std_conf}
+
+Return('board_conf')

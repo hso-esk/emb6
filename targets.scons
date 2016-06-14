@@ -439,4 +439,11 @@ trg += [{
 }]
 
 
+
+trg += [{
+    'id'        : 'cs_cc13xx',
+    'apps_conf' : [ coap_srv, udp_alive, udp_cli ],
+    'bsp'       : get_descr(bsp, 'ti_cc13xx')
+}]
+
 Return('trg')
