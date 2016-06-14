@@ -150,6 +150,14 @@ static void reply_for_mle_childID_request(void *ptr)
 	{
 		// send request to become a router and then reply
 		PRINTFY("Sending request to become a Router \n"ANSI_COLOR_RESET);
+
+		//send_req(NULL);
+		/*
+		void send_req(uint8_t *router_id)
+		{
+		thrd_request_router_id(uip_ipaddr_t *leader_addr, uint8_t *ml_eid, uint8_t *router_id)
+		}
+		*/
 		mle_set_parent_mode();
 
 		mle_init_cmd(&cmd,CHILD_ID_RESPONSE);
