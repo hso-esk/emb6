@@ -278,5 +278,6 @@ uint32_t bsp_getrand(uint32_t max)
 }
 
 
+
 /** @} */
 /** @} */

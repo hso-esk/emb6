@@ -4,6 +4,7 @@
  =============================================================================*/
 
 #include "tlv.h"
+#include "net_tlv.h"
 
 
 
@@ -53,6 +54,37 @@ int8_t tlv_connectivity_init(tlv_connectivity_t **tlv, uint8_t * ptr )
 	return 1 ;
 
 }
+
+// LZ. -------------------------------------------------------------------------
+
+int8_t tlv_target_eid_init(net_tlv_target_eid_t **tlv, uint8_t *ptr)
+{
+	if( ptr == NULL )
+		return 0 ;
+
+	*tlv= (net_tlv_target_eid_t*) ptr;
+	return 1 ;
+}
+
+int8_t tlv_rloc16_init(net_tlv_rloc16_t **tlv, uint8_t *ptr)
+{
+	if( ptr == NULL )
+		return 0 ;
+
+	*tlv= (net_tlv_rloc16_t*) ptr;
+	return 1 ;
+}
+
+int8_t tlv_ml_eid_init(net_tlv_ml_eid_t **tlv, uint8_t *ptr)
+{
+	if( ptr == NULL )
+		return 0 ;
+
+	*tlv= (net_tlv_ml_eid_t*) ptr;
+	return 1 ;
+}
+
+// -----------------------------------------------------------------------------
 
 
 int8_t tlv_write(tlv_t *tlv, tlv_type_t type, int8_t length, uint8_t * value )
@@ -121,7 +153,7 @@ int8_t tlv_print(tlv_t* tlv)
 		PRINTF(" MLE_FRAME_COUNTER ");
 		break;
 	case TLV_ROUTE64:
-		PRINTF(" ROUTER64          ");
+		PRINTF(" ROUTE64          ");
 		break;
 	case TLV_ADDRESS16:
 		PRINTF(" ADDRESS16         ");

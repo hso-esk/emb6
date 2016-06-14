@@ -21,6 +21,10 @@ mdns_cli    = ('mdns','client')
 mdns_srv    = ('mdns','server')
 mcastroot	= ('mcast', 'root')
 mcastsink	= ('mcast', 'sink')
+routeroot	= ('route', 'root')
+routesink	= ('route', 'sink')
+thrd_coap_srv    = ('thrd_coap','server')
+thrd_coap_cli    = ('thrd_coap','client')
 
 thread_root	= ('thread', 'root')
 thread_sink	= ('thread', 'sink')
@@ -492,17 +496,28 @@ trg += [{
 }]
 
 trg += [{
-    'id'        : 'cs_luxthrdroot',
-    'apps_conf' : [ x86_srv, coap_srv, thread_root ],
+    'id'        : 'cs_luxrouteroot',
+    'apps_conf' : [ x86_cli, coap_srv, routeroot ],
     'bsp'       : get_descr(bsp, 'native')
 }]
 
 trg += [{
-    'id'        : 'cs_luxthrdsink',
-    'apps_conf' : [ x86_cli, coap_srv, thread_sink ],
+    'id'        : 'cs_luxroutesink',
+    'apps_conf' : [ x86_cli, coap_srv, routesink ],
     'bsp'       : get_descr(bsp, 'native')
 }]
 
+trg += [{
+    'id'        : 'cs_thrdcoapsrv',
+    'apps_conf' : [ x86_srv, thrd_coap_srv ],
+    'bsp'       : get_descr(bsp, 'native')
+}]
+
+trg += [{
+    'id'        : 'cs_thrdcoapsink',
+    'apps_conf' : [ x86_srv, thrd_coap_cli ],
+    'bsp'       : get_descr(bsp, 'native')
+}]
 
 
 Return('trg')

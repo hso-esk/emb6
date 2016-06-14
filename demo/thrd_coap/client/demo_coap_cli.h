@@ -37,61 +37,53 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-/**  \addtogroup emb6
+/*============================================================================*/
+/**
+ *      \addtogroup emb6
  *      @{
- *      \addtogroup bsp Board Support Package
+ *   \addtogroup demo
  *   @{
- *   \addtogroup board
+ *   \defgroup demo_coap CoAP demos
+ *
+ *   CoAP client and server functionalities are demonstrated.
  *   @{
- *      \addtogroup x86 x86 emulation with a TCPIP based fake radio interface
- *      				   specific configuration
+ *   \defgroup demo_coap_client CoAP client
+ *
+ *   Simple example of a CoAP-client requesting several resources.
  *   @{
- */
-/*! \file   x86/board_conf.c
+*/
+/*! \file   demo_coap_cli.h
 
-    \author Artem Yushev, 
+    \author Peter Lehmann, peter.lehmann@hs-offenburg.de
 
-    \brief  Board Configuration for x86 emulation
+    \brief  This is the header file of the demo CoAP client application
 
     \version 0.0.1
 */
+#ifndef DEMO_COAP_CLI_H_
+#define DEMO_COAP_CLI_H_
 
-/*
-********************************************************************************
-*                                   INCLUDES
-********************************************************************************
+/*==============================================================================
+                         FUNCTION PROTOTYPES OF THE API
+==============================================================================*/
+/*============================================================================*/
+/*!
+   \brief Initialization of the CoAP client application.
+
 */
-#include "emb6.h"
+/*============================================================================*/
+int8_t demo_thrdCoapInit(void);
 
-#include "../native/board_conf.h"
-#include "hwinit.h"
-#include "etimer.h"
-#include "etimer.h"
-#include "bsp.h"
-#include "logger.h"
+/*============================================================================*/
+/*!
+    \brief Configuration of the CoAP client application.
 
-/** Enable or disable logging */
-#define        LOGGER_ENABLE          LOGGER_BSP
+    \return 0 - error, 1 - success
+*/
+/*============================================================================*/
+uint8_t demo_thrdCoapConf(s_ns_t* pst_netStack);
 
-uint8_t board_conf(s_ns_t* p_netstk)
-{
-    uint8_t 	c_ret = 0;
-
-
-    if (p_netstk != NULL) {
-		p_netstk->dllc = &DLLCDrv802154;
-		p_netstk->mac = &MACDrvNull;
-		p_netstk->phy = &PHYDrvNull; // &PHYDrv802154;
-		p_netstk->rf  = &RFDrvNative;
-		etimer_init();
-		c_ret = 1;
-    }
-    else {
-            LOG_ERR("Network stack pointer is NULL");
-    }
-
-    return c_ret;
-}
+#endif /* DEMO_COAP_CLI_H_ */
 /** @} */
 /** @} */
 /** @} */

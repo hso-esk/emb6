@@ -18,6 +18,13 @@ emb6 = {
 		'net/dtls/ecc/*',
 		'net/dtls/sha2/*',
 	],
+	'mle' : [
+		'mle/*',
+	],
+	'rip' : [
+		'net/rip/resources/*',
+		'net/rip/*',
+	],
 	'mdns' : [
 		'apl/dns/*',
 	],

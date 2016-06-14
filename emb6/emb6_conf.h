@@ -87,9 +87,19 @@
                                 NETWORK LAYER SECTION
 ===============================================================================*/
 
+/** Enable RIP DEBUG PRINT */
+#define	RIP_DEBUG							TRUE
+
 /** Define the Multicast Engine to Roll Trickle Multicast */
 #define	UIP_CONF_IPV6_MULTICAST				TRUE
 #define UIP_MCAST6_CONF_ENGINE				UIP_MCAST6_ENGINE_ROLL_TM
+
+// --------------- THREAD ROUTING PROTOCOL ----------------------
+
+
+
+// --------------------------------------------------------------
+
 
 /** Define IPv6 as based protocol (should not be undefined) */
 #define UIP_CONF_IPV6                        TRUE

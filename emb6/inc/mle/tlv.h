@@ -11,6 +11,8 @@
                                  INCLUDE FILES
  =============================================================================*/
 #include "emb6.h"
+#include "net_tlv.h"
+
 #define		DEBUG		DEBUG_PRINT
 #include "uip-debug.h"	// For debugging terminal output.
 
@@ -89,6 +91,16 @@ int8_t tlv_leader_init(tlv_leader_t **tlv, uint8_t * ptr );
 int8_t tlv_route64_init(tlv_route64_t **tlv, uint8_t * ptr );
 
 int8_t tlv_connectivity_init(tlv_connectivity_t **tlv, uint8_t * ptr );
+
+// LZ. -------------------------------------------------------------------------
+
+int8_t tlv_target_eid_init(net_tlv_target_eid_t **tlv, uint8_t *ptr);
+
+int8_t tlv_rloc16_init(net_tlv_rloc16_t **tlv, uint8_t *ptr);
+
+int8_t tlv_ml_eid_init(net_tlv_ml_eid_t **tlv, uint8_t *ptr);
+
+// -----------------------------------------------------------------------------
 
 
 /**

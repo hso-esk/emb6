@@ -146,12 +146,20 @@
 #include "demo_mcast_sink.h"
 #endif
 
-#if DEMO_USE_THREAD_ROOT
-#include "demo_thread_root.h"
+#if DEMO_USE_ROUTE_ROOT
+#include "demo_route_root.h"
 #endif
 
-#if DEMO_USE_THREAD_SINK
-#include "demo_thread_sink.h"
+#if DEMO_USE_ROUTE_SINK
+#include "demo_route_sink.h"
+#endif
+
+#if DEMO_USE_THRD_COAP
+#if CONF_USE_SERVER
+#include "demo_coap_srv.h"
+#else
+#include "demo_coap_cli.h"
+#endif
 #endif
 
 /*==============================================================================
@@ -269,12 +277,16 @@ static void loc_demoAppsConf(s_ns_t* pst_netStack, e_nsErr_t *p_err)
     demo_mcastSinkConf(pst_netStack);
 	#endif
 
-	#if DEMO_USE_THREAD_ROOT
-	demo_threadRootConf(pst_netStack);
+	#if DEMO_USE_ROUTE_ROOT
+	demo_routeRootConf(pst_netStack);
 	#endif
 
-	#if DEMO_USE_THREAD_SINK
-	demo_threadSinkConf(pst_netStack);
+	#if DEMO_USE_ROUTE_SINK
+	demo_routeSinkConf(pst_netStack);
+	#endif
+
+	#if DEMO_USE_THRD_COAP
+	demo_thrdCoapConf(pst_netStack);
 	#endif
 
     /* set returned error code */
@@ -368,17 +380,24 @@ static uint8_t loc_demoAppsInit(void)
     }
 	#endif
 
-	#if DEMO_USE_THREAD_ROOT
-	if (!demo_threadRootInit()) {
+	#if DEMO_USE_ROUTE_ROOT
+	if (!demo_routeRootInit()) {
 		return 0;
 	}
 	#endif
 
-	#if DEMO_USE_THREAD_SINK
-	if (!demo_threadSinkInit()) {
+	#if DEMO_USE_ROUTE_SINK
+	if (!demo_routeSinkInit()) {
 		return 0;
 	}
-#endif
+	#endif
+
+	#if DEMO_USE_THRD_COAP
+	if (!demo_thrdCoapInit()) {
+		return 0;
+	}
+	#endif
+
     return 1;
 }
 
