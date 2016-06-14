@@ -76,6 +76,7 @@
 #include "thrd-router-id.h"
 #include "thrd-partition.h"
 #include "thrd-adv.h"
+#include "thrd-send-adv.h"
 
 #define DEBUG DEBUG_PRINT
 #include "uip-debug.h"	// For debugging terminal output.
@@ -176,6 +177,8 @@ int8_t demo_thrdCoapInit(void)
 	thrd_dev.Router_ID = 2;
 
 	thrd_eid_rloc_db_init();
+
+	thrd_trickle_init();
 
 	// thrd_partition_start();
 

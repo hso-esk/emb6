@@ -15,6 +15,7 @@
 #include "tlv.h"
 #include "thrd-partition.h"
 #include "thrd-adv.h"
+#include "mle_management.h"
 
 #define DEBUG DEBUG_PRINT
 #include "uip-debug.h"
@@ -98,8 +99,8 @@ thrd_handle_send_timer(void *ptr)
 
 	// TODO Send MLE Advertisement.
 	tlv_leader_t *leader_tlv = thrd_generate_leader_data_tlv();
-	thrd_generate_route64(&route64_tlv);
-
+	size_t route64_len = thrd_generate_route64(&route64_tlv);
+	send_mle_advertisement(&route64_tlv, route64_len, leader_tlv);
 	return;
 }
 
