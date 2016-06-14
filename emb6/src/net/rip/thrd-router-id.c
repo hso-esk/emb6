@@ -80,10 +80,17 @@ thrd_leader_init(void)
 	thrd_dev.type = THRD_DEV_TYPE_LEADER;
 
 	thrd_ldb_init(); // TODO Call this function during compile process.
+	thrd_ldb_ida_empty();	// Empty ID Assignment Set.
+
+	// Get a Router ID.
+	uint8_t desired_rid = 0;
+	thrd_ldb_ida_t *ida = thrd_leader_assign_rid(&desired_rid, 0);	// TODO Add my MAC Extended Address here.
+	if ( ida != NULL ) {
+		thrd_dev.Router_ID = ida->ID_id;
+	}
 
 	coap_init();
 
-	thrd_ldb_ida_empty();	// Empty ID Assignment Set.
 	ctimer_set(&leader_ct, (clock_time_t)thrd_next_period(ID_SEQUENCE_PERIOD), handle_timer, NULL);
 }
 

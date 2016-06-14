@@ -110,10 +110,11 @@ thrd_process_adv(uint16_t source_addr, tlv_route64_t *route64_tlv, tlv_leader_t 
 
 /* -------------------------------------------------------------------------- */
 
-tlv_route64_t
-*thrd_generate_route64()
+size_t
+thrd_generate_route64(tlv_route64_t *route64_tlv)
 {
-	tlv_route64_t *route64_tlv;				// Route64 TLV structure.
+	size_t len = 9;
+	// tlv_route64_t *route64_tlv;				// Route64 TLV structure.
 	thrd_rdb_id_t *rid;						// Router IDs.
 	thrd_rdb_link_t *link;
 	thrd_rdb_route_t *route;				// Routing entries.
@@ -150,6 +151,7 @@ tlv_route64_t
 
 		route64_data[lq_rq_pos] = lq_rd;
 		lq_rq_pos++;
+		len++;
 	}
 
 	route64_data[8] = (uint8_t) router_id_mask;
@@ -159,8 +161,45 @@ tlv_route64_t
 	}
 
 	if ( tlv_route64_init(&route64_tlv, route64_data) == 0 )
-		return NULL;
+		return 0;
 
-	return route64_tlv;
+	return len;
+}
+
+/* --------------------------------------------------------------------------- */
+
+tlv_leader_t*
+thrd_generate_leader_data_tlv(void)
+{
+	uint8_t tlv_buf[8] = { 0 };
+	tlv_leader_t *ld_tlv;
+
+	memcpy(&tlv_buf[0], &Partition_ID, 4);
+	tlv_buf[4] = Partition_weight;
+	tlv_buf[5] = VN_version;
+	tlv_buf[6] = VN_stable_version;
+	tlv_buf[7] = leader_router_id;
+	tlv_leader_init(&ld_tlv, &tlv_buf[0]);
+	return ld_tlv;
+}
+
+/* --------------------------------------------------------------------------- */
+
+void
+print_leader_data_tlv(tlv_leader_t * leader_tlv)
+{
+	printf(ANSI_COLOR_RED
+			"|============================== LEADER DATA TLV ================================|"
+			ANSI_COLOR_RESET "\n\r");
+	printf("| " ANSI_COLOR_YELLOW);
+	printf("Partition ID = %d\n", leader_tlv->partition_id);
+	printf("Weight = %d\n", leader_tlv->weight);
+	printf("Data Version = %d\n", leader_tlv->data_version);
+	printf("Stable Data Version = %d\n", leader_tlv->stable_data_version);
+	printf("Leader Router ID = %d\n", leader_tlv->leader_router_id);
+	printf(ANSI_COLOR_RESET " |\n");
+	printf(ANSI_COLOR_RED
+			"|===============================================================================|"
+			ANSI_COLOR_RESET "\n\r");
 }
 

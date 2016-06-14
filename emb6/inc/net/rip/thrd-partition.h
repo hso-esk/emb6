@@ -16,6 +16,7 @@
                           LOCAL VARIABLE DECLARATIONS
  =============================================================================*/
 
+uint8_t leader_router_id;
 uint32_t Partition_ID;
 uint8_t VN_version;
 uint8_t VN_stable_version;

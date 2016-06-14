@@ -12,6 +12,9 @@
 #include "ctimer.h"
 #include "thread_conf.h"
 #include "thrd-send-adv.h"
+#include "tlv.h"
+#include "thrd-partition.h"
+#include "thrd-adv.h"
 
 #define DEBUG DEBUG_PRINT
 #include "uip-debug.h"
@@ -82,6 +85,7 @@ thrd_random_interval()
 	return ((bsp_getrand(0) % (max - min + 1)) + min);
 }
 
+static tlv_route64_t route64_tlv;
 
 /*---------------------------------------------------------------------------*/
 /*
@@ -93,6 +97,8 @@ thrd_handle_send_timer(void *ptr)
 	PRINTF("thrd_handle_send_timer: Sending MLE Advertisement!\n");
 
 	// TODO Send MLE Advertisement.
+	tlv_leader_t *leader_tlv = thrd_generate_leader_data_tlv();
+	thrd_generate_route64(&route64_tlv);
 
 	return;
 }
