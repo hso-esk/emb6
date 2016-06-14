@@ -37,8 +37,7 @@ static mle_param_t					param;
 static mle_neighbor_t*				nb;
 
 #define get_rssi()		             30 //sicslowpan_get_last_rssi()
-#define get_routerID()		         0xff //sicslowpan_get_last_rssi()
-
+#define get_routerID()		         0xff
 typedef enum {
 	JP_SEND_MCAST_PR_TO_ROUTER,
 	JP_SEND_MCAST_PR_TO_ROUTER_REED,
@@ -452,6 +451,7 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 				//param.source_addr=(uip_ipaddr_t *) source_addr;
 				uip_ip6addr_copy(&param.source_addr,source_addr);
 				ctimer_set(&c_mle_Timer, /*bsp_getrand(MaxRand)* */ (bsp_get(E_BSP_GET_TRES) /*/ 1000*/ ) , reply_for_mle_parent_request, (void *) NULL );
+
 			}
 		}
 		break;
@@ -585,7 +585,7 @@ uint8_t mle_init(void)
 	MyNode.rx_on_when_idle=IS_RX_ON_WHEN_IDLE;
 	MyNode.childs_counter=0;
 
-
+/*
 	 mle_add_child(1, 0x00aa,  50441 ,0,3 );
 	mle_add_child(2, 0x00aa,  441 ,4,1);
 	mle_add_child(3, 0x00aa,  50 ,1,3);
@@ -603,10 +603,10 @@ uint8_t mle_init(void)
 	PRINTF("nb of lq 3  : %i \n"ANSI_COLOR_RESET, count_neighbor_LQ(3));
 	PRINTF("nb of lq 2  : %i \n"ANSI_COLOR_RESET, count_neighbor_LQ(2));
 	PRINTF("nb of lq 1  : %i \n"ANSI_COLOR_RESET, count_neighbor_LQ(1));
-
+*/
 
 	/************* just for test: to verify when the join process will be triggered  **********/
-	//ctimer_set(&c_mle_Timer, 1 * bsp_get(E_BSP_GET_TRES) , mle_join_process, (void *) NULL );
+	ctimer_set(&c_mle_Timer, 1 * bsp_get(E_BSP_GET_TRES) , mle_join_process, (void *) NULL );
 
 
 	PRINTFG( "MLE protocol initialized ... ");PRESET();

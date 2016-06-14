@@ -519,5 +519,17 @@ trg += [{
     'bsp'       : get_descr(bsp, 'native')
 }]
 
+trg += [{
+    'id'        : 'cs_luxthrdroot',
+    'apps_conf' : [ x86_srv, coap_srv, thread_root ],
+    'bsp'       : get_descr(bsp, 'native')
+}]
+
+trg += [{
+    'id'        : 'cs_luxthrdsink',
+    'apps_conf' : [ x86_cli, coap_srv, thread_sink ],
+    'bsp'       : get_descr(bsp, 'native')
+}]
+
 
 Return('trg')
