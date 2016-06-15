@@ -66,6 +66,9 @@ void sf_mcu_sleep(E_MCU_SLEEP_MODE_t e_sleepMode)
      ge_sleepMode = E_MCU_SLEEP_MODE_DEEPSLEEP;
      /* ToDo Enter LPMx, interrupts enabled */
      break;
+
+   default:
+     break;
  }/* switch() */
 } /* sf_mcu_sleep() */
 

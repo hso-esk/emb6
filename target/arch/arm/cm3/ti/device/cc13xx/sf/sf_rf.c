@@ -1293,6 +1293,9 @@ void sf_rf_run(void)
         gl_interruptFlag = 0x00U;
       }/* if */
       break;
+
+    default:
+      break;
   }/* switch */
 }/* sf_rf_run() */
 
