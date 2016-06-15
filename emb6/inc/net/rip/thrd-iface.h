@@ -43,6 +43,20 @@
 		(addr)->u16[6] = UIP_HTONS(0xfe00);			\
 		(addr)->u16[7] = UIP_HTONS(rloc16);			\
 } while(0)
+/**
+ * Create IID of a EUI-64 Bit IPv6 Address.
+ */
+#define thrd_create_eui_64_bit_iid(addr, mac) do {	\
+		(addr)->u8[8] = mac[0];						\
+		(addr)->u8[8] ^= 1 << 1;					\
+		(addr)->u8[9] = mac[1];						\
+		(addr)->u8[10] = mac[2];					\
+		(addr)->u8[11] = mac[3];					\
+		(addr)->u8[12] = mac[4];					\
+		(addr)->u8[13] = mac[5];					\
+		(addr)->u8[14] = mac[6];					\
+		(addr)->u8[15] = mac[7];					\
+} while(0)
 
 typedef struct {
 	uint16_t rloc16;
