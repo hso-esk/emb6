@@ -161,7 +161,7 @@ static void dllc_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
   pdllc_netstk->mac->ioctrl(NETSTK_CMD_TX_CBFNCT_SET, (void *)dllc_cbTx, p_err);
   pdllc_netstk->mac->ioctrl(NETSTK_CMD_TX_CBARG_SET, NULL, p_err);
 
-#if (NETSTK_CFG_RF_ADDR_FILTER_EN == TRUE)
+#if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
 #include <crc.h>
   uint8_t *p_mfr;
   uint32_t fcs;

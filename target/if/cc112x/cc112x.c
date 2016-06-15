@@ -68,7 +68,12 @@
 #define  LOGGER_ENABLE        LOGGER_RADIO
 #include "logger.h"
 
-#if (NETSTK_CFG_RF_AUTOACK_EN == TRUE)
+/* enable SW auto-acknowledgment feature by default */
+#ifndef NETSTK_CFG_RF_SW_AUTOACK_EN
+#define NETSTK_CFG_RF_SW_AUTOACK_EN         TRUE
+#endif
+
+#if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
 #include "crc.h"
 #endif
 
@@ -533,7 +538,6 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
 
   uint32_t tickstart;
   struct s_rf_ctx *p_ctx = &rf_ctx;
-  packetbuf_attr_t waitForAckTimeoutInTicks;
 
   if (p_ctx->state != RF_STATE_RX_IDLE) {
     /* the radio is currently busy then terminate transmission request */
@@ -580,8 +584,10 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
       rf_rx_entry(p_ctx);
     }
   }
+#if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
   else if (p_ctx->txStatus == RF_TX_STATUS_WFA) {
     /* wait for ACK for maximum macAckWaitDuration (2.6ms) */
+    packetbuf_attr_t waitForAckTimeoutInTicks;
     waitForAckTimeoutInTicks = packetbuf_attr(PACKETBUF_ATTR_MAC_ACK_WAIT_DURATION) / RT_TMR_CFG_TICK_FREQ_IN_HZ;
 
     /* make sure a time period of at least [macAckWaitDuration + 1] ms has passed */
@@ -602,6 +608,7 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
     /* enter RX state */
     rf_rx_entry(p_ctx);
   }
+#endif /* NETSTK_CFG_RF_CC112X_AUTOACK_EN */
   else {
     *p_err = NETSTK_ERR_TX_TIMEOUT;
 
@@ -866,6 +873,7 @@ static void rf_rxFifoThresholdISR(void *p_arg) {
       rf_setPktLen(CC112X_PKT_LEN_MODE_FIXED, p_ctx->rxBytesCounter);
 #endif
 
+#if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
       /* does incoming frame require ACK? */
       if (p_ctx->rxFrame.is_ack_required == TRUE) {
         /* indicate incoming frame requiring ACK */
@@ -883,6 +891,7 @@ static void rf_rxFifoThresholdISR(void *p_arg) {
         p_ctx->txDataLen = ack_len;
 #endif /* NETSTK_CFG_IEEE_802154G_EN */
       }
+#endif /* NETSTK_CFG_RF_SW_AUTOACK_EN */
 
       /* initialize checksum */
       p_ctx->rxChksum = llframe_crcInit(&p_ctx->rxFrame);
@@ -893,6 +902,7 @@ static void rf_rxFifoThresholdISR(void *p_arg) {
       if (p_ctx->rxNumRemBytes >= numRxBytes) {
         p_ctx->rxNumRemBytes -= numRxBytes;
 
+#if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
         /* compute length of checksum data */
         if (p_ctx->rxNumRemBytes < p_ctx->rxFrame.crc_len) {
           numChksumBytes = numRxBytes - (p_ctx->rxFrame.crc_len - p_ctx->rxNumRemBytes);
@@ -915,6 +925,7 @@ static void rf_rxFifoThresholdISR(void *p_arg) {
             rf_rx_term(p_ctx);
           }
         }
+#endif /* NETSTK_CFG_RF_SW_AUTOACK_EN */
       }
       else {
         /* ignore unexpected ISRs */
@@ -922,9 +933,11 @@ static void rf_rxFifoThresholdISR(void *p_arg) {
       }
     }
 
+#if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
     /* update checksum */
     p_ctx->rxChksum = crc_16_updateN(p_ctx->rxChksum, &p_ctx->rxBuf[p_ctx->rxLastChksumPtr], numChksumBytes);
     p_ctx->rxLastChksumPtr += numChksumBytes;
+#endif /* NETSTK_CFG_RF_CC112X_AUTOACK_EN */
   }
 
   /* exit */
@@ -954,10 +967,12 @@ static void rf_pktRxTxEndISR(void *p_arg) {
         /* checksum verification */
         rf_rx_chksum(p_ctx);
       }
+#if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
       else if (p_ctx->state == RF_STATE_TX_RXACK_SYNC) {
         /* ACK verification */
         rf_tx_rxAck(p_ctx);
       }
+#endif /* NETSTK_CFG_RF_SW_AUTOACK_EN */
       else {
         TRACE_LOG_ERR("+++ RF: PKT_END unexpected event state=%02x, cs=%02x, marc=%02x", p_ctx->state, chip_state, marc_status);
       }
@@ -1096,6 +1111,7 @@ static void rf_rx_chksum(struct s_rf_ctx *p_ctx) {
   /* read remaining bytes from RX FIFO */
   rf_readRxFifo(p_ctx, p_ctx->rxNumRemBytes);
 
+#if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
   /* update checksum */
   if (p_ctx->rxLastDataPtr > (p_ctx->rxFrame.crc_len + p_ctx->rxLastChksumPtr)) {
     numChksumBytes = p_ctx->rxLastDataPtr - (p_ctx->rxLastChksumPtr + p_ctx->rxFrame.crc_len);
@@ -1107,13 +1123,19 @@ static void rf_rx_chksum(struct s_rf_ctx *p_ctx) {
                                     p_ctx->rxChksum,
                                    &p_ctx->rxBuf[p_ctx->rxLastChksumPtr],
                                     p_ctx->rxFrame.crc_len);
+#else /* NETSTK_CFG_RF_SW_AUTOACK_EN */
+  /* checksum verification is handled by upper layer */
+  isChecksumOK = TRUE;
+#endif /* NETSTK_CFG_RF_SW_AUTOACK_EN */
 
   /* is checksum valid? */
   if (isChecksumOK == TRUE) {
+#if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
     if (p_ctx->rxReqAck == TRUE) {
       /* commence ACK transmission */
       cc112x_spiCmdStrobe(CC112X_STX);
     }
+#endif /* NETSTK_CFG_RF_CC112X_AUTOACK_EN */
 
     /* read status bytes */
     rf_readRxStatus(p_ctx);
@@ -1242,11 +1264,13 @@ static void rf_tx_fini(struct s_rf_ctx *p_ctx) {
     /* indicate the TX process has finished */
     p_ctx->txStatus = RF_TX_STATUS_DONE;
   }
+#if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
   else {
     /* indicate the radio is waiting for ACK as response to the transmitted
     * frame */
     p_ctx->txStatus = RF_TX_STATUS_WFA;
   }
+#endif /* NETSTK_CFG_RF_CC112X_AUTOACK_EN */
 
   /* is IEEE Std. 802.15.4g supported? */
 #if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
@@ -1258,6 +1282,7 @@ static void rf_tx_fini(struct s_rf_ctx *p_ctx) {
 }
 
 
+#if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
 /**
  * @brief handle event of ACK reception in TX state
  * @param p_ctx point to variable holding radio context structure
@@ -1306,6 +1331,7 @@ static void rf_tx_rxAck(struct s_rf_ctx *p_ctx) {
   p_ctx->txStatus = RF_TX_STATUS_DONE;
   TRACE_LOG_MAIN("+++ RF: RX_ACK seq=%02x, err=-%d", p_ctx->rxBuf[PHY_HEADER_LEN + 2], p_ctx->txErr);
 }
+#endif
 
 
 /**

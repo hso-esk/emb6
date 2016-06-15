@@ -239,7 +239,7 @@ static void phy_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
   uint8_t *p_pkt;
   uint16_t pkt_len;
 
-#if (NETSTK_CFG_RF_ADDR_FILTER_EN == TRUE)
+#if (NETSTK_CFG_RF_CC112X_AUTOACK_EN == TRUE)
   pkt_len = len;
 #else
   /* insert MAC checksum */
@@ -292,12 +292,11 @@ static void phy_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
   /*
   * Parse PHY header
   */
-  uint8_t psdu_len;
   packetbuf_attr_t fcs_len;
   fcs_len = packetbuf_attr(PACKETBUF_ATTR_MAC_FCS_LEN);
 
-
-#if (NETSTK_CFG_RF_ADDR_FILTER_EN == TRUE)
+#if (NETSTK_CFG_RF_CC112X_AUTOACK_EN == TRUE)
+  uint8_t psdu_len;
   p_data += PHY_HEADER_LEN;
   psdu_len = (len - PHY_HEADER_LEN) - fcs_len;
 
@@ -382,13 +381,13 @@ static void phy_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
   p_data += PHY_HEADER_LEN;
 
   /* verify CRC */
-  psdu_len -= mac_phy_config.fcs_len;
+  psdu_len -= fcs_len;
 
   /* calculated actual CRC */
   crc_act = phy_crc16(p_data, psdu_len);
 
   /* obtain CRC of the received frame */
-  memcpy(&crc_exp, &p_data[psdu_len], mac_phy_config.fcs_len);
+  memcpy(&crc_exp, &p_data[psdu_len], fcs_len);
   crc_exp = ((crc_exp & 0x00FF) << 8) |
             ((crc_exp & 0xFF00) >> 8);
   if (crc_act != crc_exp) {

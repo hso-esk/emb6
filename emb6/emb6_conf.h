@@ -949,10 +949,6 @@ void uip_log(char *msg);
 #define NETSTK_CFG_RF_RETX_EN                               FALSE   /* this feature is currently unstable, then should not be enabled */
 #endif
 
-#ifndef NETSTK_CFG_RF_AUTOACK_EN
-#define NETSTK_CFG_RF_AUTOACK_EN                            TRUE
-#endif
-
 #ifndef NETSTK_CFG_RF_ADDR_FILTER_EN
 #define NETSTK_CFG_RF_ADDR_FILTER_EN                        TRUE
 #endif
