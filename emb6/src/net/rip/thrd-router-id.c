@@ -88,7 +88,7 @@ thrd_leader_init(void)
 
 	// Get a Router ID.
 	uint8_t desired_rid = 0;
-	thrd_ldb_ida_t *ida = thrd_leader_assign_rid(&desired_rid, 0);	// TODO Add my MAC Extended Address here (owner).
+	thrd_ldb_ida_t *ida = thrd_leader_assign_rid(&desired_rid, mac_phy_config.mac_address);	// TODO Add my MAC Extended Address here (owner).
 	if ( ida != NULL ) {
 		thrd_iface.router_id = ida->ID_id;
 		thrd_partition.leader_router_id = ida->ID_id;
@@ -131,7 +131,7 @@ thrd_next_period(uint8_t sec)
 /* --------------------------------------------------------------------------- */
 
 thrd_ldb_ida_t
-*thrd_leader_assign_rid(uint8_t *router_id, uint64_t id_owner)
+*thrd_leader_assign_rid(uint8_t *router_id, uint8_t *id_owner)
 {
 	thrd_ldb_ida_t *ida;
 
@@ -169,7 +169,8 @@ thrd_ldb_ida_t
 			}
 		} else {
 			// Reassignment delay expired --> Router ID available.
-			ida->ID_owner = id_owner;
+			memcpy(&ida->ID_owner, id_owner, 8);
+			// ida->ID_owner = id_owner;
 			ida->ID_reuse_time = 0;
 			return ida;
 		}

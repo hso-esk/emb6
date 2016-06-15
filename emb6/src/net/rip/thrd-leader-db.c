@@ -133,7 +133,7 @@ thrd_ldb_ida_t
 /* --------------------------------------------------------------------------- */
 
 thrd_ldb_ida_t
-*thrd_ldb_ida_add(uint8_t router_id, uint64_t owner, clock_time_t reuse_time)
+*thrd_ldb_ida_add(uint8_t router_id, uint8_t *owner, clock_time_t reuse_time)
 {
 	thrd_ldb_ida_t *ida;
 
@@ -171,7 +171,8 @@ thrd_ldb_ida_t
 		}
 
 		ida->ID_id = router_id;
-		ida->ID_owner = owner;
+		memcpy(&ida->ID_owner, owner, 8);
+		// ida->ID_owner = owner;
 		ida->ID_reuse_time = reuse_time;
 
 		/* Add new router id first - assuming that there is a reason to add this
@@ -250,16 +251,17 @@ thrd_ldb_print_leader_database(void)
 	printf(ANSI_COLOR_RED
 			"|============================== LEADER DATABASE ================================|"
 			ANSI_COLOR_RESET "\n\r");
-	printf("--------- ID ASSIGNMENT SET --------\n");
-	printf("| ID_id | ID_owner | ID_reuse_time |\n");
-	printf("------------------------------------\n\r");
+	printf("---------------- ID ASSIGNMENT SET ----------------\n");
+	printf("| ID_id |        ID_owner         | ID_reuse_time |\n");
+	printf("---------------------------------------------------\n\r");
 	for (i = thrd_ldb_ida_head(); i != NULL; i = thrd_ldb_ida_next(i)) {
-		printf("| " ANSI_COLOR_YELLOW "%5d" ANSI_COLOR_RESET
-				" | " ANSI_COLOR_YELLOW "%8d" ANSI_COLOR_RESET
-				" | " ANSI_COLOR_YELLOW "%13d" ANSI_COLOR_RESET
-				" |\n", i->ID_id, i->ID_owner, i->ID_reuse_time);
+		printf("| " ANSI_COLOR_YELLOW "%5d" ANSI_COLOR_RESET " ", i->ID_id);
+		printf("| " ANSI_COLOR_YELLOW "%02x %02x %02x %02x %02x %02x %02x %02x" ANSI_COLOR_RESET " ",
+				i->ID_owner[0], i->ID_owner[1], i->ID_owner[2], i->ID_owner[3],
+				i->ID_owner[4],i->ID_owner[5], i->ID_owner[6], i->ID_owner[7]);
+		printf("| " ANSI_COLOR_YELLOW "%13d" ANSI_COLOR_RESET " |\n", i->ID_reuse_time);
 	}
-	printf("------------------------------------\n\r");
+	printf("---------------------------------------------------\n\r");
 	printf(ANSI_COLOR_RED
 			"|===============================================================================|"
 			ANSI_COLOR_RESET "\n\r");
