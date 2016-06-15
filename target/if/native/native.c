@@ -87,6 +87,8 @@ static const s_nsPHY_t* p_phy = NULL;
 extern uip_lladdr_t uip_lladdr;
 static lcm_t *ps_lcm;
 static char pc_publish_ch[NODE_INFO_MAX];
+static char *pc_subscribe_ch;
+static lcm_subscription_t *subscr;
 /*==============================================================================
                                  GLOBAL CONSTANTS
  ==============================================================================*/
@@ -107,8 +109,9 @@ static void _native_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
 static void _native_read( const lcm_recv_buf_t *rbuf, const char * channel,
         void * p_macAddr );
 static void _native_handler( c_event_t c_event, p_data_t p_data );
-
-
+static void _beautiful_split_messages( const lcm_recv_buf_t *rps_rbuf,
+        const char * rpc_channel, void * userdata );
+static void _beautiful_comand_parser( const char *line);
 /*==============================================================================
                              STRUCTURES AND OTHER TYPEDEFS
  ==============================================================================*/
@@ -136,6 +139,7 @@ const s_nsRF_t rf_driver_native = {
 /*----------------------------------------------------------------------------*/
 static void _printAndExit( const char* rpc_reason )
 {
+    // TODO: LOG_ERR(...);
     fputs( strerror( errno ), stderr );
     fputs( ": ", stderr );
     fputs( rpc_reason, stderr );
@@ -156,6 +160,7 @@ static void _native_init( void *p_netstk, e_nsErr_t *p_err )
     FILE* fp;
     char pc_node_info[NODE_INFO_MAX];
     char* pch;
+    char defaultChannel[20];
 
     uint16_t addr;    // mac address of node read from configuration file
     uint8_t  addr_6;  // high byte of two last parts of mac address
@@ -189,6 +194,17 @@ static void _native_init( void *p_netstk, e_nsErr_t *p_err )
         _printAndExit( "Can't open this file\n" );
     }
 
+    /* subscribe to default channel if config not found */
+    // TODO: perhaps, excess regex
+    sprintf(defaultChannel, ".*_0x%02X%02X_.*\0",
+        mac_phy_config.mac_address[6],
+        mac_phy_config.mac_address[7]);
+    pc_subscribe_ch = (char *)malloc((strlen(defaultChannel)+1)*sizeof(char));
+    strcpy(pc_subscribe_ch, defaultChannel);
+    subscr = lcm_subscribe( ps_lcm, pc_subscribe_ch, _beautiful_split_messages, NULL );
+    LOG1_INFO("Subscription channel = %s (default)", pc_subscribe_ch);
+    
+
     /* assemble the parser command */
     while( !feof(fp) )
     {
@@ -209,18 +225,20 @@ static void _native_init( void *p_netstk, e_nsErr_t *p_err )
         if( addr_6 != mac_phy_config.mac_address[6] ||
             addr_7 != mac_phy_config.mac_address[7] )
             continue;
-        fprintf( stderr, "\n addr=0x%04X", addr );
+        LOG1_INFO("addr=0x%04X", addr);
 
         /* read for the subscribe channel */
         if ( pch != NULL )
         {
             int tmpChLen = strlen(pch) + 10;
             char* tmpCh = malloc( tmpChLen );
+            pc_subscribe_ch = malloc( tmpChLen );
             if( tmpCh != NULL )
             {
                 snprintf( tmpCh, tmpChLen, ".*_%s_.*", pch );
-                lcm_subscribe( ps_lcm, tmpCh, _native_read, NULL );
-                fprintf( stderr,"\n subscribe channel =  %s", tmpCh );
+                subscr = lcm_subscribe( ps_lcm, tmpCh, _beautiful_split_messages, NULL );
+                LOG1_INFO("Subscription channel = %s", tmpCh);
+                strcpy(pc_subscribe_ch, tmpCh);
                 free( tmpCh );
             }
             else
@@ -239,14 +257,13 @@ static void _native_init( void *p_netstk, e_nsErr_t *p_err )
                     (NODE_INFO_MAX-strlen(pc_publish_ch)), "_%s_", pch );
             pch = strtok ( NULL, " \t\n," );
         }
-        fprintf( stderr,"\n public channel = %s", pc_publish_ch );
-        fprintf( stderr, "\n +++++++++++ " );
+        LOG1_INFO("Publication channel = %s", pc_publish_ch);
     }
 
     /* Close the file */
     fclose(fp);
 
-    LOG_INFO( "native driver was initialized" );
+    LOG1_OK( "Native driver init" );
 
     /* Mac address should not be NULL pointer, although it can't be, but still
      *  */
@@ -260,7 +277,7 @@ static void _native_init( void *p_netstk, e_nsErr_t *p_err )
     memcpy( &uip_lladdr.addr, &un_addr.u8, 8 );
     linkaddr_set_node_addr( &un_addr );
 
-    LOG_INFO( "MAC address %x:%x:%x:%x:%x:%x:%x:%x", un_addr.u8[0],
+    LOG1_INFO( "MAC address %x:%x:%x:%x:%x:%x:%x:%x", un_addr.u8[0],
             un_addr.u8[1], un_addr.u8[2], un_addr.u8[3], un_addr.u8[4],
             un_addr.u8[5], un_addr.u8[6], un_addr.u8[7] );
 
@@ -451,6 +468,77 @@ static void _native_handler( c_event_t c_event, p_data_t p_data )
 
     }
 }
+
+/*----------------------------------------------------------------------------*/
+/** \brief  "BEAUTIFUL" split messages reception
+ *          You think this is funny?
+ *  \param  rps_rbuf      Pointer to a payload.
+ *  \param  rpc_channel   Reception channel
+ *  \param  userdata      Not used.
+ *  \return void
+ */
+/*----------------------------------------------------------------------------*/
+static void _beautiful_split_messages( const lcm_recv_buf_t *rps_rbuf,
+        const char * rpc_channel, void * userdata )
+{
+    const char *message = (const char *)rps_rbuf->data;
+    if (strncmp(message, "CMD line", 4) == 0)
+    {
+        int length = strlen(message)-3;
+        char *line = (char *)malloc(length*sizeof(char));
+        memset(line, '\0', length);
+        strcpy(line, message+4);
+        //LOG_INFO("%s:\n\t\"%s\"\n", "I've got a CMD", line);
+        printf("%s:\n\t\"%s\"\n", "I've got a CMD", line);
+        _beautiful_comand_parser(line);
+    }
+    else
+    {
+        _native_read(rps_rbuf, rpc_channel, userdata);
+    }
+    return;
+} /* _beautiful_split_messages() */
+
+/*----------------------------------------------------------------------------*/
+/** \brief  "BEAUTIFUL" split messages reception
+ *          You think this is funny?
+ *  \param  rps_rbuf      Pointer to a payload.
+ *  \param  rpc_channel   Reception channel
+ *  \param  userdata      Not used.
+ *  \return void
+ */
+/*----------------------------------------------------------------------------*/
+static void _beautiful_comand_parser( const char *line)
+{
+    if (strncmp(line, "subscribe name", 10) == 0)
+    {
+        int length = strlen(line)-10+1;
+        char *new_channel = (char *)malloc(length*sizeof(char));
+        memset(new_channel, '\0', length);
+        strcpy(new_channel, line+10);
+        if (strcmp(new_channel, pc_subscribe_ch) == 0) return;
+        pc_subscribe_ch = new_channel;
+        lcm_unsubscribe(ps_lcm, subscr);
+        subscr = lcm_subscribe( ps_lcm, pc_subscribe_ch, _beautiful_split_messages, NULL );
+        lcm_publish( ps_lcm, "EMB6COMMAND", pc_subscribe_ch, strlen(pc_subscribe_ch)+1 );
+    }
+    if (strncmp(line, "publish name", 8) == 0)
+    {
+        int length = strlen(line)-8+1;
+        char *new_channel = (char *)malloc(length*sizeof(char));
+        memset(new_channel, '\0', length);
+        strcpy(new_channel, line+8);
+        if (strcmp(new_channel, pc_publish_ch) == 0) return;
+        memset( pc_publish_ch, '\0', NODE_INFO_MAX );
+        strncpy(pc_publish_ch, new_channel, length);
+        lcm_publish( ps_lcm, "EMB6COMMAND", pc_publish_ch, strlen(pc_publish_ch)+1 );
+    }
+    if (strncmp(line, "exit", 4) == 0)
+    {
+        _printAndExit("I've got command to EXIT. Bye!\n");
+    }
+    return;
+} /* _beautiful_split_messages() */
 
 /*==============================================================================
  API FUNCTIONS

@@ -854,9 +854,9 @@ void uip_log(char *msg);
 #define LOGGER_RADIO                       	FALSE
 #endif
 
-/** DEMO UDP socket example                 (see demo_udp_socket.c) */
+/** DEMO UDP socket example                 	(see demo_udp_socket.c) */
 #ifndef LOGGER_DEMO_UDP_SOCKET
-#define LOGGER_DEMO_UDP_SOCKET              FALSE
+#define LOGGER_DEMO_UDP_SOCKET              	FALSE
 #endif
 
 /** DEMO UDP example                       	(see demo_exudp.c) */

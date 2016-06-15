@@ -157,18 +157,18 @@
 /*==============================================================================
                            LOCAL FUNCTION PROTOTYPES
  =============================================================================*/
-static void loc_stackConf(void);
+static void loc_stackConf(uint16_t mac_addr_word);
 static void loc_demoAppsConf(s_ns_t* pst_netStack, e_nsErr_t *p_err);
 static uint8_t loc_demoAppsInit(void);
 
 /*==============================================================================
                                 LOCAL FUNCTIONS
  =============================================================================*/
-static void loc_stackConf(void)
+static void loc_stackConf(uint16_t mac_addr_word)
 {
     /* set last byte of mac address */
-    mac_phy_config.mac_address[7] = (uint8_t)(MAC_ADDR_WORD);           // low byte
-    mac_phy_config.mac_address[6] = (uint8_t)(MAC_ADDR_WORD >> 8);      // high byte
+    mac_phy_config.mac_address[7] = (uint8_t)mac_addr_word;            // low byte
+    mac_phy_config.mac_address[6] = (uint8_t)(mac_addr_word >> 8);     // high byte
 
     /* initial TX Power Output in dBm */
     mac_phy_config.init_power = TX_POWER;
@@ -180,6 +180,19 @@ static void loc_stackConf(void)
     mac_phy_config.modulation = MODULATION;
 }
 
+static uint16_t loc_parseMac(const char* mac, uint16_t defaultMac)
+{
+    uint16_t mac_addr_word;
+    if (!mac) return defaultMac;
+
+    if (sscanf(mac, "0x%X", &mac_addr_word)) 
+        return mac_addr_word;
+
+    if (sscanf(mac, "%X", &mac_addr_word)) 
+        return mac_addr_word;
+
+    return defaultMac;
+}
 
 static void loc_demoAppsConf(s_ns_t* pst_netStack, e_nsErr_t *p_err)
 {
@@ -333,8 +346,10 @@ void emb6_errorHandler(e_nsErr_t *p_err)
 /*==============================================================================
  main()
 ==============================================================================*/
-int main(void)
+int main(int argc, char **argv)
 {
+    char *pc_mac_addr = NULL;
+    uint16_t mac_addr_word;
   s_ns_t st_netstack;
   uint8_t ret;
   e_nsErr_t err;
@@ -342,6 +357,13 @@ int main(void)
   /* Initialize variables */
   err = NETSTK_ERR_NONE;
   memset(&st_netstack, 0, sizeof(st_netstack));
+
+  if (argc > 1) {
+    pc_mac_addr = malloc(strlen(argv[1])+1);
+    strcpy(pc_mac_addr, argv[1]);
+  }
+  mac_addr_word = loc_parseMac(pc_mac_addr, MAC_ADDR_WORD);
+  free(pc_mac_addr);
 
   /* Initialize BSP */
   ret = bsp_init(&st_netstack);
@@ -357,7 +379,7 @@ int main(void)
   }
 
   /* Initialize stack */
-  loc_stackConf();
+  loc_stackConf(mac_addr_word);
   emb6_init(&st_netstack, &err);
   if (err != NETSTK_ERR_NONE) {
     emb6_errorHandler(&err);
