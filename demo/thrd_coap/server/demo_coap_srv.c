@@ -68,10 +68,15 @@
 #include "uip.h"
 #include "bsp.h"
 
+#include "mle_management.h"
+
 #include "thrd-route.h"
 #include "thrd-leader-db.h"
 #include "thrd-addr-query.h"
 #include "thrd-router-id.h"
+#include "thrd-partition.h"
+#include "thrd-adv.h"
+#include "thrd-send-adv.h"
 
 #define DEBUG DEBUG_PRINT
 #include "uip-debug.h"	// For debugging terminal output.
@@ -127,6 +132,11 @@ execute_routine(void)
 		// thrd_addr_ntf_response(&test_eid, &rloc16, ml_eid, NULL);
 		thrd_addr_qry_request(&test_eid);
 
+		thrd_partition_start();
+
+		tlv_leader_t *ld_tlv = thrd_generate_leader_data_tlv();
+		print_leader_data_tlv(ld_tlv);
+
 		PRINTF("----------------------------------------------------\n");
 		break;
 	case 1:
@@ -154,18 +164,26 @@ execute_routine(void)
 
 int8_t demo_thrdCoapInit(void)
 {
+	if ( !mle_init() ){ return 0; }
+	//mle_set_parent_mode();
+	//mle_set_child_mode();
+
 	// Initialize routing database.
 	thrd_rdb_init();
 
 	// Initialize leader database.
-	thrd_ldb_init();
+	// thrd_ldb_init();
 
 	thrd_dev.Router_ID = 2;
 
 	thrd_eid_rloc_db_init();
 
+	thrd_trickle_init();
+
+	// thrd_partition_start();
+
 	/* set periodic timer */
-	etimer_set(&timer, SEND_INTERVAL * bsp_get(E_BSP_GET_TRES), timer_callback);
+	//etimer_set(&timer, SEND_INTERVAL * bsp_get(E_BSP_GET_TRES), timer_callback);
 
     return 1;
 }

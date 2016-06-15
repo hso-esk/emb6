@@ -51,8 +51,22 @@ typedef struct
 #endif
 } thrd_dev_t;
 
+/**
+ * Thread Network Partition.
+ */
+typedef struct {
+	uint8_t leader_router_id;
+	uint32_t Partition_ID;
+	uint8_t VN_version;
+	uint8_t VN_stable_version;
+	uint8_t ID_sequence_number;
+	uint8_t Partition_weight;
+} thrd_partition_t;
+
 /*! Thread Device Type Configuration. */
 extern thrd_dev_t thrd_dev;
+/*! Thread Network Partition. */
+extern thrd_partition_t thrd_partition;
 
 // -------------------- THREAD RLOC16 ----------------------------
 #define THRD_CREATE_RLOC16(router_id, child_id)		((uint16_t) (0x0000 | ((router_id << 10) | (child_id) )))

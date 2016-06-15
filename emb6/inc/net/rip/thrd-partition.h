@@ -16,15 +16,6 @@
                           LOCAL VARIABLE DECLARATIONS
  =============================================================================*/
 
-uint32_t Partition_ID;
-uint8_t VN_version;
-uint8_t VN_stable_version;
-uint8_t ID_sequence_number;
-
-uint8_t Partition_weight;
-
-// uint8_t Leader_router_id; // ???
-
 /*==============================================================================
                                      API FUNCTIONS
  =============================================================================*/

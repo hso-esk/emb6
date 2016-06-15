@@ -81,6 +81,10 @@
 #include "demo_udp_socket.h"
 #endif
 
+#if DEMO_USE_THREAD
+#include "thread_demo.h"
+#endif
+
 #if DEMO_USE_COAP
 #if CONF_USE_SERVER
 #include "demo_coap_srv.h"
@@ -241,6 +245,10 @@ static void loc_demoAppsConf(s_ns_t* pst_netStack, e_nsErr_t *p_err)
     demo_udpSocketCfg(pst_netStack);
     #endif
 
+	#if DEMO_USE_THREAD
+	demo_threadCfg(pst_netStack);
+	#endif
+
     #if DEMO_USE_APTB
     demo_aptbConf(pst_netStack);
     #endif
@@ -323,6 +331,12 @@ static uint8_t loc_demoAppsInit(void)
         return 0;
     }
     #endif
+
+	#if DEMO_USE_THREAD
+	if (!demo_threadInit()) {
+		return 0;
+	}
+	#endif
 
     #if DEMO_USE_APTB
     if (!demo_aptbInit()) {
@@ -447,6 +461,7 @@ int main(void)
         err = NETSTK_ERR_INIT;
         emb6_errorHandler(&err);
     }
+
 
     /* Start the emb6 stack */
     emb6_process(EMB6_PROC_DELAY);

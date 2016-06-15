@@ -80,10 +80,17 @@ thrd_leader_init(void)
 	thrd_dev.type = THRD_DEV_TYPE_LEADER;
 
 	thrd_ldb_init(); // TODO Call this function during compile process.
+	thrd_ldb_ida_empty();	// Empty ID Assignment Set.
+
+	// Get a Router ID.
+	uint8_t desired_rid = 0;
+	thrd_ldb_ida_t *ida = thrd_leader_assign_rid(&desired_rid, 0);	// TODO Add my MAC Extended Address here.
+	if ( ida != NULL ) {
+		thrd_dev.Router_ID = ida->ID_id;
+	}
 
 	coap_init();
 
-	thrd_ldb_ida_empty();	// Empty ID Assignment Set.
 	ctimer_set(&leader_ct, (clock_time_t)thrd_next_period(ID_SEQUENCE_PERIOD), handle_timer, NULL);
 }
 
@@ -103,7 +110,7 @@ coap_init()
 static void
 handle_timer(void *ptr)
 {
-	ID_sequence_number++;
+	thrd_partition.ID_sequence_number++;
 	thrd_print_partition_data();
 	ctimer_set(&leader_ct, (clock_time_t)thrd_next_period(ID_SEQUENCE_PERIOD), handle_timer, NULL);
 }
@@ -127,6 +134,7 @@ thrd_ldb_ida_t
 	ida = thrd_ldb_ida_lookup(*router_id);
 	if ( ida == NULL ) {
 		ida = thrd_ldb_ida_add(*router_id, id_owner, 0);
+		PRINTF("Router ID Assignment: Assigned Router ID = %d\n", ida->ID_id);
 		return ida;
 	} else {
 	// If the desired Router ID currently is in use.
@@ -145,9 +153,11 @@ thrd_ldb_ida_t
 				id_cnt++;
 				ida = thrd_ldb_ida_lookup(id_cnt);
 			}
+			PRINTF("TEST!\n");
 			// Create Router ID if available.
 			if ( id_cnt < 63 ) {
 				ida = thrd_ldb_ida_add(id_cnt, id_owner, 0);
+				PRINTF("Router ID Assignment: Assigned Router ID = %d\n", ida->ID_id);
 				return ida;
 			} else {
 				return NULL;
@@ -196,6 +206,20 @@ thrd_request_router_id(uip_ipaddr_t *leader_addr, uint8_t *ml_eid, uint8_t *rout
 	coap_nonblocking_request(leader_addr, UIP_HTONS(COAP_DEFAULT_PORT), packet, thrd_addr_solicit_chunk_handler); // TODO Changing CoAP Port.
 }
 
+/* --------------------------------------------------------------------------- */
+/*
+void
+thrd_request_router_id(uint8_t *router_id)
+{
+	uint16_t rloc16 = THRD_CREATE_RLOC16(*router_id, 0); // Create RLOC16.
+	len = create_addr_solicit_req_payload(addr_solicit_buf, ml_eid, &rloc16);
+
+	coap_init_message(packet, COAP_TYPE_CON, COAP_POST, 0);
+	coap_set_header_uri_path(packet, service_urls[0]);
+	coap_set_payload(packet, addr_solicit_buf, len);
+	coap_nonblocking_request(leader_addr, UIP_HTONS(COAP_DEFAULT_PORT), packet, thrd_addr_solicit_chunk_handler); // TODO Changing CoAP Port.
+}
+*/
 /* --------------------------------------------------------------------------- */
 
 static size_t

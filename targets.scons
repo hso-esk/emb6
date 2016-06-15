@@ -26,6 +26,10 @@ routesink	= ('route', 'sink')
 thrd_coap_srv    = ('thrd_coap','server')
 thrd_coap_cli    = ('thrd_coap','client')
 
+thread_root	= ('thread', 'root')
+thread_sink	= ('thread', 'sink')
+
+
 trg         = []
 
 # Read Board Support Package Scons file
@@ -198,6 +202,20 @@ trg += [{
 }]
 
 #GECKOO based ++++++++++++++++++++++++++++++++++++++++#
+
+trg += [{
+    'id'        : 'th_stk3600',
+    'apps_conf' : [ thread_root ],
+    'bsp'       : get_descr(bsp, 'efm32stk3600_cc120x')
+}]
+
+
+trg += [{
+    'id'        : 'th_sink_stk3600',
+    'apps_conf' : [ thread_sink ],
+    'bsp'       : get_descr(bsp, 'efm32stk3600_cc120x')
+}]
+
 
 trg += [{
     'id'        : 'dc_stk3600',
@@ -394,6 +412,34 @@ trg += [{
 }]
 
 #NATIVE based ++++++++++++++++++++++++++++++++++++++++#
+
+
+
+trg += [{
+    'id'        : 'ap_luxsrv',
+    'apps_conf' : [ x86_srv, aptb_srv ],
+    'bsp'       : get_descr(bsp, 'native')
+}]
+
+trg += [{
+    'id'        : 'ap_luxcli',
+    'apps_conf' : [ x86_cli, aptb_cli ],
+    'bsp'       : get_descr(bsp, 'native')
+}]
+
+
+trg += [{
+    'id'        : 'ap_luxsrv',
+    'apps_conf' : [ x86_srv, aptb_srv ],
+    'bsp'       : get_descr(bsp, 'native')
+}]
+
+trg += [{
+    'id'        : 'ap_luxcli',
+    'apps_conf' : [ x86_cli, aptb_cli ],
+    'bsp'       : get_descr(bsp, 'native')
+}]
+
 trg += [{
     'id'        : 'cs_luxsrv',
     'apps_conf' : [ x86_srv, coap_srv, udp_alive ],
@@ -405,6 +451,7 @@ trg += [{
     'apps_conf' : [ x86_cli, coap_srv, udp_alive ],
     'bsp'       : get_descr(bsp, 'native')
 }]
+
 
 trg += [{
     'id'        : 'if_lux',
@@ -469,6 +516,18 @@ trg += [{
 trg += [{
     'id'        : 'cs_thrdcoapsink',
     'apps_conf' : [ x86_srv, thrd_coap_cli ],
+    'bsp'       : get_descr(bsp, 'native')
+}]
+
+trg += [{
+    'id'        : 'cs_luxthrdroot',
+    'apps_conf' : [ x86_srv, coap_srv, thread_root ],
+    'bsp'       : get_descr(bsp, 'native')
+}]
+
+trg += [{
+    'id'        : 'cs_luxthrdsink',
+    'apps_conf' : [ x86_cli, coap_srv, thread_sink ],
     'bsp'       : get_descr(bsp, 'native')
 }]
 

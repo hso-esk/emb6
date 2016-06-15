@@ -48,11 +48,11 @@ thrd_partition_start(void)
 		PRINTF("thrd_partition_start: Starting new Thread Partition.\n");
 		thrd_leader_init();		// Initialize itself as the leader.
 
-		Partition_ID = (bsp_getrand(0) << 16) | (bsp_getrand(0));
-		VN_version = (uint8_t) bsp_getrand(0);
-		VN_stable_version = (uint8_t) bsp_getrand(0);
-		ID_sequence_number = (uint8_t) bsp_getrand(0);
-		Partition_weight = 64;
+		thrd_partition.Partition_ID = (bsp_getrand(0) << 16) | (bsp_getrand(0));
+		thrd_partition.VN_version = (uint8_t) bsp_getrand(0);
+		thrd_partition.VN_stable_version = (uint8_t) bsp_getrand(0);
+		thrd_partition.ID_sequence_number = (uint8_t) bsp_getrand(0);
+		thrd_partition.Partition_weight = 64;
 
 		thrd_print_partition_data();
 	}
@@ -75,18 +75,18 @@ thrd_partition_process(uint8_t id_sequence_number, tlv_leader_t *leader_tlv)
 	if ( leader_tlv != NULL ) {
 
 		// Compare partition values.
-		if ( leader_tlv->weight > Partition_weight ) {
+		if ( leader_tlv->weight > thrd_partition.Partition_weight ) {
 			attach:
 			// TODO Try to attach to other partition.
 			PRINTF("thrd_partition_process: Try to attach to other partition!\n");
 			return 0;
-		} else if ( leader_tlv->weight == Partition_weight ) {
-			if ( leader_tlv->partition_id > Partition_ID ) {
+		} else if ( leader_tlv->weight == thrd_partition.Partition_weight ) {
+			if ( leader_tlv->partition_id > thrd_partition.Partition_ID ) {
 				goto attach;
-			} else if ( leader_tlv->partition_id == Partition_ID ) {
-				if ( (leader_tlv->data_version > VN_version)
-						&& (leader_tlv->stable_data_version > VN_stable_version)
-						&& (id_sequence_number > ID_sequence_number)) {
+			} else if ( leader_tlv->partition_id == thrd_partition.Partition_ID ) {
+				if ( (leader_tlv->data_version > thrd_partition.VN_version)
+						&& (leader_tlv->stable_data_version > thrd_partition.VN_stable_version)
+						&& (id_sequence_number > thrd_partition.ID_sequence_number)) {
 					// Inconsistency detected -> Start a new Partition.
 					thrd_partition_start();
 					return 0;
@@ -128,7 +128,7 @@ thrd_print_partition_data()
 			" | " ANSI_COLOR_YELLOW "%17d" ANSI_COLOR_RESET
 			" | " ANSI_COLOR_YELLOW "%18d" ANSI_COLOR_RESET
 			" | " ANSI_COLOR_YELLOW "%16d" ANSI_COLOR_RESET
-			" |\n", Partition_ID, VN_version, VN_stable_version, ID_sequence_number, Partition_weight);
+			" |\n", thrd_partition.Partition_ID, thrd_partition.VN_version, thrd_partition.VN_stable_version, thrd_partition.ID_sequence_number, thrd_partition.Partition_weight);
 	PRINTF(ANSI_COLOR_CYAN "=========================================================================================" ANSI_COLOR_RESET "\n\r");
 }
 

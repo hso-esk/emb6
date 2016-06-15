@@ -92,7 +92,7 @@ thrd_rdb_init(void)
 	memb_init(&routerid_memb);
 	list_init(routerid_list);
 
-	ID_sequence_number = 0;
+	thrd_partition.ID_sequence_number = 0;
 
 	memb_init(&link_memb);
 	list_init(link_list);
@@ -200,7 +200,7 @@ uint8_t
 *thrd_rdb_route_nexthop(thrd_rdb_route_t *route)
 {
 	if (route != NULL) {
-		return ((uint8_t*) (route->R_next_hop)); // LZ.
+		return &route->R_next_hop;
 	} else {
 		return NULL;
 	}

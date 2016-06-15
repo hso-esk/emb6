@@ -20,6 +20,10 @@
 
 void thrd_process_adv(uint16_t source_addr, tlv_route64_t *route64_tlv, tlv_leader_t *leader_tlv);
 
-tlv_route64_t *thrd_generate_route64();
+tlv_route64_t* thrd_generate_route64(size_t *len);
+
+tlv_leader_t* thrd_generate_leader_data_tlv(void);
+
+void print_leader_data_tlv(tlv_leader_t * leader_tlv);
 
 #endif /* EMB6_INC_NET_RIP_THRD_ADV_H_ */

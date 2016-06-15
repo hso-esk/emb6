@@ -12,6 +12,7 @@ udp_socket = {
 		'mac',
 		'framer',
 		'phy',
+		'ipv6mc',
 	],
 	'utils' : [
 		'*',

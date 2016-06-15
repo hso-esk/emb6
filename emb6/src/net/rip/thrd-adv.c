@@ -40,12 +40,12 @@ thrd_process_route64(uint8_t rid_sender, tlv_route64_t *route64_tlv)
 
 	if ( route64_tlv != NULL ) {
 
-		if ( route64_tlv->id_sequence_number > ID_sequence_number ) {
+		if ( route64_tlv->id_sequence_number > thrd_partition.ID_sequence_number ) {
 
 			// Empty the Router ID Set.
 			thrd_rdb_rid_empty();
 
-			ID_sequence_number = route64_tlv->id_sequence_number;
+			thrd_partition.ID_sequence_number = route64_tlv->id_sequence_number;
 
 			// printf("router_id_mask = %02x\n", router_id_mask);
 
@@ -110,16 +110,17 @@ thrd_process_adv(uint16_t source_addr, tlv_route64_t *route64_tlv, tlv_leader_t 
 
 /* -------------------------------------------------------------------------- */
 
-tlv_route64_t
-*thrd_generate_route64()
+tlv_route64_t*
+thrd_generate_route64(size_t *len)
 {
+	*len = 9;
 	tlv_route64_t *route64_tlv;				// Route64 TLV structure.
 	thrd_rdb_id_t *rid;						// Router IDs.
 	thrd_rdb_link_t *link;
 	thrd_rdb_route_t *route;				// Routing entries.
 	uint8_t lq_rq_pos = 9;					// Position of the first link quality and route data byte.
 
-	route64_data[0] = ID_sequence_number;
+	route64_data[0] = thrd_partition.ID_sequence_number;
 
 	rid = thrd_rdb_rid_head();
 
@@ -150,6 +151,7 @@ tlv_route64_t
 
 		route64_data[lq_rq_pos] = lq_rd;
 		lq_rq_pos++;
+		*len++;
 	}
 
 	route64_data[8] = (uint8_t) router_id_mask;
@@ -162,5 +164,42 @@ tlv_route64_t
 		return NULL;
 
 	return route64_tlv;
+}
+
+/* --------------------------------------------------------------------------- */
+
+tlv_leader_t*
+thrd_generate_leader_data_tlv(void)
+{
+	uint8_t tlv_buf[8] = { 0 };
+	tlv_leader_t *ld_tlv;
+
+	memcpy(&tlv_buf[0], &thrd_partition.Partition_ID, 4);
+	tlv_buf[4] = thrd_partition.Partition_weight;
+	tlv_buf[5] = thrd_partition.VN_version;
+	tlv_buf[6] = thrd_partition.VN_stable_version;
+	tlv_buf[7] = thrd_partition.leader_router_id;
+	tlv_leader_init(&ld_tlv, &tlv_buf[0]);
+	return ld_tlv;
+}
+
+/* --------------------------------------------------------------------------- */
+
+void
+print_leader_data_tlv(tlv_leader_t * leader_tlv)
+{
+	printf(ANSI_COLOR_RED
+			"|============================== LEADER DATA TLV ================================|"
+			ANSI_COLOR_RESET "\n\r");
+	printf("| " ANSI_COLOR_YELLOW);
+	printf("Partition ID = %d\n", leader_tlv->partition_id);
+	printf("Weight = %d\n", leader_tlv->weight);
+	printf("Data Version = %d\n", leader_tlv->data_version);
+	printf("Stable Data Version = %d\n", leader_tlv->stable_data_version);
+	printf("Leader Router ID = %d\n", leader_tlv->leader_router_id);
+	printf(ANSI_COLOR_RESET " |\n");
+	printf(ANSI_COLOR_RED
+			"|===============================================================================|"
+			ANSI_COLOR_RESET "\n\r");
 }
 

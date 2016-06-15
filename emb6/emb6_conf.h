@@ -825,7 +825,7 @@ void uip_log(char *msg);
  =============================================================================*/
  /** Define a deepness of the logger helper (see logger.h)*/
 #ifndef LOGGER_LEVEL
-#define LOGGER_LEVEL                        0
+#define LOGGER_LEVEL                        3
 #endif
 /** Core logging, should be TRUE for almost all cases except for production
 * (see emb6.c) */
@@ -845,7 +845,7 @@ void uip_log(char *msg);
 
 /** Main functions                         	(see emb6_main.c) */
 #ifndef LOGGER_MAIN
-#define LOGGER_MAIN                        	TRUE
+#define LOGGER_MAIN                        	FALSE
 #endif
 
 /** Event process functions                	(see llc_xxx.c) */
@@ -880,7 +880,7 @@ void uip_log(char *msg);
 
 /** DEMO APTB example                      	(see demo_aptb_xxx.c) */
 #ifndef LOGGER_DEMO_APTB
-#define LOGGER_DEMO_APTB                   	FALSE
+#define LOGGER_DEMO_APTB                   	TRUE
 #endif
 
 /** DEMO COAP example                      	(see demo_coap_*.c) */
