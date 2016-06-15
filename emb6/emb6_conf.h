@@ -919,6 +919,11 @@ void uip_log(char *msg);
   #endif /* NETSTK_CFG_2K_FRAME_EN */
 #endif /* NETSTK_CFG_IEEE_802154G_EN */
 
+
+#ifndef NETSTK_CFG_MAC_SW_AUTOACK_EN
+#define NETSTK_CFG_MAC_SW_AUTOACK_EN                        FALSE
+#endif
+
 #define NETSTK_CFG_PHY_OP_MODE_1_EN                         TRUE
 #define NETSTK_CFG_PHY_OP_MODE_2_EN                         FALSE
 #define NETSTK_CFG_PHY_OP_MODE_3_EN                         FALSE

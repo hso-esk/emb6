@@ -87,11 +87,10 @@ static void mac_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
 static void mac_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
 static void mac_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
 
-#if (NETSTK_CFG_RF_AUTOACK_EN == TRUE)
-#else
+#if (NETSTK_CFG_MAC_SW_AUTOACK_EN == TRUE)
 static void mac_txAck(uint8_t seq, e_nsErr_t *p_err);
 static void mac_rxBufTimeout(s_rt_tmr_t *p_tmr, e_nsErr_t *p_err);
-#endif
+#endif /* NETSTK_CFG_MAC_SW_AUTOACK_EN */
 
 static void mac_csma(e_nsErr_t *p_err);
 
@@ -283,8 +282,9 @@ void mac_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 
   /* is ACK required? */
   if (mac_isAckReq == TRUE) {
-/* does the radio support auto-acknowledgment? */
-#if (NETSTK_CFG_RF_AUTOACK_EN == TRUE)
+
+  /* is software Auto-ACK feature of MAC disabled? */
+#if (NETSTK_CFG_MAC_SW_AUTOACK_EN == FALSE)
     {
       /* has the frame not been acknowledged? */
       if (*p_err == NETSTK_ERR_TX_NOACK) {
@@ -472,8 +472,7 @@ void mac_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     switch (frame.fcf.frame_type) {
       case FRAME802154_DATAFRAME:
       case FRAME802154_CMDFRAME:
-#if (NETSTK_CFG_RF_AUTOACK_EN == TRUE)
-#else
+#if (NETSTK_CFG_MAC_SW_AUTOACK_EN == TRUE)
         /* perform Auto-ACK */
         if ((frame.fcf.ack_required == 1) &&
             (frame.dest_pid == mac_phy_config.pan_id) &&
@@ -481,22 +480,10 @@ void mac_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
             (linkaddr_cmp((linkaddr_t *) frame.dest_addr, &linkaddr_node_addr)) == 1) {
           mac_txAck(frame.seq, p_err);
         }
-#endif
+#endif /* NETSTK_CFG_MAC_SW_AUTOACK_EN */
 
-        #if (EMB6_CFG_CONTINUOUS_RX == TRUE)
-          /* drop frames in continuous RX mode */
-          if (frame.seq != exp_seq) {
-            /* drop unexpected frames */
-            *p_err = NETSTK_ERR_FATAL;
-          } else {
-            *p_err = NETSTK_ERR_NONE;
-          }
-          exp_seq = frame.seq + 1;
-        #else
-          /* signal upper layer of the received packet */
-          pmac_netstk->dllc->recv(p_data, len, p_err);
-        #endif
-
+        /* signal upper layer of the received packet */
+        pmac_netstk->dllc->recv(p_data, len, p_err);
         break;
 
       case FRAME802154_ACKFRAME:
@@ -548,8 +535,7 @@ void mac_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
   }
 }
 
-#if (NETSTK_CFG_RF_AUTOACK_EN == TRUE)
-#else
+#if (NETSTK_CFG_MAC_SW_AUTOACK_EN == TRUE)
 /**
  * @brief   ACK transmission
  *
@@ -594,7 +580,7 @@ static void mac_txAck(uint8_t seq, e_nsErr_t *p_err)
   pmac_netstk->phy->send(p_ack, ack_len, p_err);
   LOG_INFO("MAC_TX: ACK %d.", frame.seq);
 }
-#endif
+#endif /* NETSTK_CFG_MAC_SW_AUTOACK_EN */
 
 
 /**
@@ -641,8 +627,7 @@ static void mac_csma(e_nsErr_t *p_err)
   LOG_INFO("MAC_TX: NB %d.", nb);
 }
 
-#if (NETSTK_CFG_RF_AUTOACK_EN == TRUE)
-#else
+#if (NETSTK_CFG_MAC_SW_AUTOACK_EN == TRUE)
 /**
  * @brief Polling for data until either the data is available or timeout is over
  * @param p_tmr
@@ -685,7 +670,7 @@ static void mac_rxBufTimeout(s_rt_tmr_t *p_tmr, e_nsErr_t *p_err)
     *p_err = NETSTK_ERR_NONE;
   }
 }
-#endif
+#endif /* NETSTK_CFG_MAC_SW_AUTOACK_EN */
 
 
 /*
