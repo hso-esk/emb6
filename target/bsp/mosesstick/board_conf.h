@@ -147,6 +147,7 @@
 #define MODULATION                          MODULATION_2FSK50
 #endif
 
+#define NETSTK_CFG_RF_SW_AUTOACK_EN         TRUE
 
 /*============================================================================*/
 /*!
