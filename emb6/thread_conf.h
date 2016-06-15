@@ -9,6 +9,7 @@
 #define EMB6_THREAD_CONF_H_
 
 #include "emb6.h"
+#include "thrd-dev.h"
 
 /*=============================================================================
                                     DEVICE TYPE
@@ -16,57 +17,6 @@
 
 #define THRD_DEV_TYPE			THRD_DEV_TYPE_ROUTER		// Router.
 #define THRD_DEV_FUNC			THRD_DEV_FUNC_FFD			// FFD.
-
-/**
- * Thread Device Types.
- */
-typedef enum
-{
-	THRD_DEV_TYPE_NONE = 0x00,	 //!< DEV_TYPE_NONE
-	THRD_DEV_TYPE_END = 0x01,   //!< DEV_TYPE_END
-	THRD_DEV_TYPE_REED = 0x02,  //!< DEV_TYPE_REED
-	THRD_DEV_TYPE_ROUTER = 0x03,//!< DEV_TYPE_ROUTER
-	THRD_DEV_TYPE_LEADER = 0x04 //!< DEV_TYPE_LEADER
-} thrd_dev_type_t;
-
-/**
- * Thread Device Functionalty (RFD or FFD).
- */
-typedef enum
-{
-	THRD_DEV_FUNC_RFD = 0,//!< THRD_DEV_RFD
-	THRD_DEV_FUNC_FFD = 1 //!< THRD_DEV_FFD
-} thrd_dev_funct_t;
-
-/**
- * Thread Device Types and RFD/FFD.
- */
-typedef struct
-{
-	uint8_t type;	// thrd_dev_type_t.
-	uint8_t isFFD;
-	uint8_t isRX_off_when_idle;
-#if ( (THRD_DEV_TYPE == THRD_DEV_TYPE_ROUTER) || (THRD_DEV_TYPE == THRD_DEV_TYPE_REED) )
-	uint8_t Router_ID;	// Router ID.
-#endif
-} thrd_dev_t;
-
-/**
- * Thread Network Partition.
- */
-typedef struct {
-	uint8_t leader_router_id;
-	uint32_t Partition_ID;
-	uint8_t VN_version;
-	uint8_t VN_stable_version;
-	uint8_t ID_sequence_number;
-	uint8_t Partition_weight;
-} thrd_partition_t;
-
-/*! Thread Device Type Configuration. */
-extern thrd_dev_t thrd_dev;
-/*! Thread Network Partition. */
-extern thrd_partition_t thrd_partition;
 
 // -------------------- THREAD RLOC16 ----------------------------
 #define THRD_CREATE_RLOC16(router_id, child_id)		((uint16_t) (0x0000 | ((router_id << 10) | (child_id) )))
