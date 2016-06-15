@@ -1174,8 +1174,14 @@ static void rf_rx_fini(struct s_rf_ctx *p_ctx) {
 static void rf_rx_term(struct s_rf_ctx *p_ctx) {
   TRACE_LOG_MAIN("+++ RF: RX_TERM");
 
+  /* set sub-state */
   p_ctx->state = RF_STATE_RX_TERM;
 
+  /* handle reception termination events in RF critical section
+  * - put the radio to IDLE state
+  * - flush RX FIFO
+  * - flush TX FIFO if ACK was already written in TX FIFO
+  */
   RF_INT_DISABLED();
   cc112x_spiCmdStrobe(CC112X_SIDLE);
   cc112x_spiCmdStrobe(CC112X_SFRX);
@@ -1184,7 +1190,10 @@ static void rf_rx_term(struct s_rf_ctx *p_ctx) {
   }
   RF_INT_ENABLED();
 
+  /* exit RX state */
   rf_rx_exit(p_ctx);
+
+  /* enter RX state */
   rf_rx_entry(p_ctx);
 }
 
