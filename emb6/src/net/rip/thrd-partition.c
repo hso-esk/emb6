@@ -62,6 +62,7 @@ thrd_partition_start(void)
 		thrd_partition.Partition_weight = 64;
 
 		thrd_print_partition_data();
+		thrd_ldb_print_leader_database();
 	}
 }
 
@@ -77,6 +78,7 @@ thrd_partition_process(uint8_t id_sequence_number, tlv_leader_t *leader_tlv)
 			attach:
 			// TODO Try to attach to other partition.
 			PRINTF("thrd_partition_process: Try to attach to other partition!\n");
+			thrd_set_leader_router_id(leader_tlv->leader_router_id);
 			return 0;
 		} else if ( leader_tlv->weight == thrd_partition.Partition_weight ) {
 			if ( leader_tlv->partition_id > thrd_partition.Partition_ID ) {
