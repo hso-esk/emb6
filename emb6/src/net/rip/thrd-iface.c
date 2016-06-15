@@ -52,10 +52,7 @@ thrd_iface_init()
 	thrd_iface.ml_rloc = addr;
 	// Create LL-IPv6 ADDRESS based on the MAX Extended Address.
 	uip_create_linklocal_prefix(&addr);
-	// uint8_t mac_ext_addr[8];
-	// memcpy(&mac_ext_addr, &mac_phy_config.mac_address, 8);
 	thrd_create_eui_64_bit_iid(&addr, mac_phy_config.mac_address);
-	// memcpy(&addr.u8[8], &addr, 8);
 	thrd_iface.ll_eid = addr;
 	// Create LL-RLOC
 	thrd_create_rloc_iid(&addr, thrd_iface.rloc16);
