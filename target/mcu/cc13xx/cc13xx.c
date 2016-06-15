@@ -34,7 +34,7 @@
 #include "sf_mcu.h"
 #include "sf_mcu_timer.h"
 #include "sf_uart.h"
-#include "bsp/srf06eb_cc26xx/drivers/source/bsp_led.h"
+#include "bsp_led.h"
 #include "driverlib/interrupt.h"
 #include "rt_tmr.h"
 

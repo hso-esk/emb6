@@ -36,7 +36,7 @@ extern "C" {
 
 #include "rflib/rf_cc1350.h"
 #include "sf_rf.h"
-#include "rf_settings/sf_cc13xx_802_15_4_ch26.h"
+#include "sf_cc13xx_802_15_4_ch26.h"
 #include "sf_rf_6lowpan.h"
 #include "bsp/ti_cc13xx/board_conf.h"
 
