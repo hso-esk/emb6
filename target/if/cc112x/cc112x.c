@@ -1005,6 +1005,7 @@ static void rf_pktRxTxEndISR(void *p_arg) {
       }
       else {
         TRACE_LOG_ERR("+++ RF: PKT_END unexpected event state=%02x, cs=%02x, marc=%02x", p_ctx->state, chip_state, marc_status);
+        rf_rx_term(p_ctx);
       }
       break;
 
@@ -1018,6 +1019,7 @@ static void rf_pktRxTxEndISR(void *p_arg) {
 
     default:
       TRACE_LOG_ERR("+++ RF: PKT_END unexpected state=%02x, cs=%02x, marc=%02x", p_ctx->state, chip_state, marc_status);
+      rf_rx_term(p_ctx);
       break;
   }
 
