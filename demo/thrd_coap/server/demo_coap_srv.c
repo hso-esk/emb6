@@ -78,6 +78,8 @@
 #include "thrd-adv.h"
 #include "thrd-send-adv.h"
 
+#include "thrd-iface.h"
+
 #define DEBUG DEBUG_PRINT
 #include "uip-debug.h"	// For debugging terminal output.
 
@@ -164,6 +166,9 @@ execute_routine(void)
 
 int8_t demo_thrdCoapInit(void)
 {
+	PRINTF("Initializing Thread Interface.\n");
+	thrd_iface_init();
+
 	if ( !mle_init() ){ return 0; }
 	//mle_set_parent_mode();
 	//mle_set_child_mode();
@@ -174,7 +179,7 @@ int8_t demo_thrdCoapInit(void)
 	// Initialize leader database.
 	// thrd_ldb_init();
 
-	thrd_dev.Router_ID = 2;
+	thrd_iface.router_id = 2;
 
 	thrd_eid_rloc_db_init();
 

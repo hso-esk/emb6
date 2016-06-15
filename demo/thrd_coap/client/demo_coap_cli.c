@@ -72,6 +72,7 @@
 #include "thrd-route.h"
 #include "thrd-leader-db.h"
 #include "thrd-addr-query.h"
+#include "thrd-iface.h"
 
 /*==============================================================================
                                      MACROS
@@ -124,7 +125,7 @@ int8_t demo_thrdCoapInit(void)
 	// Initialize leader database.
 	thrd_ldb_init();
 
-	thrd_dev.Router_ID = 2;
+	thrd_iface.router_id = 2;
 
 	// Initialize EID-to-RLOC Mapping Database.
 	thrd_eid_rloc_db_init();
