@@ -441,9 +441,7 @@ static void rf_init(void *p_netstk, e_nsErr_t *p_err)
   /* calibrate RC oscillator */
   rf_calibrateRCOsc();
 
-  /* configurations of radio interrupts are done only once for 802154 and
-  * therefore can be done in initialization
-  */
+  /* configurations of radio interrupts */
   RF_INT_CONFIG();
 
   /* is IEEE Std. 802.15.4g supported? */
