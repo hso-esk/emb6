@@ -52,7 +52,7 @@
 ********************************************************************************
 */
 #include "emb6.h"
-
+#include "board_conf.h"
 #include "framer_802154.h"
 #include "packetbuf.h"
 #include "random.h"

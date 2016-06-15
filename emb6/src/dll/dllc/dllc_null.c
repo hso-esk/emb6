@@ -52,6 +52,7 @@
 ********************************************************************************
 */
 #include "emb6.h"
+#include "board_conf.h"
 #include "packetbuf.h"
 #include "logger.h"
 
