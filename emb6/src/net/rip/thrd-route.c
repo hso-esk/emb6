@@ -22,6 +22,7 @@
 #include "thread_conf.h"
 
 #include "thrd-route.h"
+#include "thrd-partition.h"
 
 // #define DEBUG DEBUG_PRINT
 #include "uip-debug.h"
