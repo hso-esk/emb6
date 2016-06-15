@@ -475,4 +475,22 @@ clock_time_t hal_getTRes(void)
   return TARGET_CFG_SYSTICK_RESOLUTION ;
 } /* hal_getSec() */
 
+
+void hal_extiRegister(en_targetExtInt_t e_extInt, en_targetIntEdge_t e_edge, pfn_intCallb_t pf_cbFnct)
+{
+    /* Not used */
+} /* hal_extiRegister() */
+void hal_extiClear(en_targetExtInt_t e_extInt)
+{
+    /* Not used */
+} /* hal_extiClear() */
+void hal_extiEnable(en_targetExtInt_t e_extInt)
+{
+    /* Not used */
+} /* hal_extiEnable() */
+void hal_extiDisable(en_targetExtInt_t e_extInt)
+{
+    /* Not used */
+} /* hal_extiDisable() */
+
 /*! @} 6lowpan_mcu */
