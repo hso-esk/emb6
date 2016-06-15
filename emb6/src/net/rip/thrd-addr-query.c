@@ -948,7 +948,6 @@ thrd_handle_timeout(void *ptr)
 
 		// TODO
 	}
-
 	return;
 }
 
@@ -983,7 +982,7 @@ thrd_addr_qry_request(uip_ipaddr_t *target_eid)
 	}
 	size_t len = create_addr_qry_req_payload(&addr_qry_buf[0], target_eid);
 
-	PRINTF("thrd_addr_qry_request: payload_len = %d\n", len);
+	// PRINTF("thrd_addr_qry_request: payload_len = %d\n", len);
 
 	if ( len > 0 ) {
 		coap_init_message(packet, COAP_TYPE_NON, COAP_POST, 0);
