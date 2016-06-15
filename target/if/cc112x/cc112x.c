@@ -1819,7 +1819,7 @@ static void rf_chanNumSet(uint8_t chan_num, e_nsErr_t *p_err) {
     cc112x_spiRegWrite(CC112X_FREQ0, &write_byte, 1);
   }
 
-  /* TODO add frequency calibration */
+  /* frequency calibration */
   rf_manualCalibration();
 }
 
