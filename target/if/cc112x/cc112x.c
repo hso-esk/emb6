@@ -544,21 +544,15 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
 
   /* write frame to send into TX FIFO */
   cc112x_spiTxFifoWrite(p_data, len);
-  /* issue the radio transmission command */
-  cc112x_spiCmdStrobe(CC112X_STX);
 
+  /* is IEEE Std. 802.15.4g supported? */
 #if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
-#if (NETSTK_CFG_2K_FRAME_EN == TRUE)
-#error "NOT SUPPORTED YET"
-#else
-  /* then configure packet length registers accordingly */
-  uint8_t writeByte;
-  writeByte = (uint8_t) (len % (RF_MAX_FIFO_LEN + 1));
-  RF_SET_PKT_LEN(writeByte);
-  RF_SET_PKT_LEN_MODE(CC112X_PKT_LEN_MODE_FIXED);
-#endif /* NETSTK_CFG_2K_FRAME_EN */
+  /* then store length of packet to send */
+  p_ctx->txDataLen = len;
 #endif /* NETSTK_CFG_IEEE_802154G_EN */
 
+  /* issue the radio transmission command */
+  cc112x_spiCmdStrobe(CC112X_STX);
 
   /* wait for complete transmission of the frame until timeout */
   tickstart = rt_tmr_getCurrenTick();
@@ -756,6 +750,12 @@ static void rf_pktRxTxBeginISR(void *p_arg) {
         if (p_ctx->rxReqAck == TRUE) {
           /* SYNC words of ACK frame were transmitted */
           p_ctx->state = RF_STATE_RX_TXACK_SYNC;
+
+          /* is IEEE Std. 802.15.4g supported? */
+#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
+          /* then switch to fixed packet length mode */
+          rf_setPktLen(CC112X_PKT_LEN_MODE_FIXED, p_ctx->txDataLen);
+#endif
         }
         else {
           /* unexpected event */
@@ -876,6 +876,12 @@ static void rf_rxFifoThresholdISR(void *p_arg) {
         uint8_t ack_len;
         ack_len = llframe_createAck(&p_ctx->rxFrame, ack, sizeof(ack));
         cc112x_spiTxFifoWrite(ack, ack_len);
+
+        /* is IEEE Std. 802.15.4g supported? */
+#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
+        /* then store length of ACK to send for later setting packet length modes */
+        p_ctx->txDataLen = ack_len;
+#endif /* NETSTK_CFG_IEEE_802154G_EN */
       }
 
       /* initialize checksum */
@@ -1107,20 +1113,6 @@ static void rf_rx_chksum(struct s_rf_ctx *p_ctx) {
     if (p_ctx->rxReqAck == TRUE) {
       /* commence ACK transmission */
       cc112x_spiCmdStrobe(CC112X_STX);
-
-#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
-#if (NETSTK_CFG_2K_FRAME_EN == TRUE)
-#error "NOT SUPPORTED YET"
-#else
-      /* then configure packet length registers accordingly */
-      uint8_t ackLen;
-      cc112x_spiRegRead(CC112X_NUM_TXBYTES, &ackLen, 1);
-      RF_SET_PKT_LEN(ackLen);
-      RF_SET_PKT_LEN_MODE(CC112X_PKT_LEN_MODE_FIXED);
-
-      trace_printf("ackLen=%d", ackLen);
-#endif /* NETSTK_CFG_2K_FRAME_EN */
-#endif /* NETSTK_CFG_IEEE_802154G_EN */
     }
 
     /* read status bytes */
