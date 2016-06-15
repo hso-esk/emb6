@@ -1178,14 +1178,12 @@ static void rf_rx_term(struct s_rf_ctx *p_ctx) {
   /* handle reception termination events in RF critical section
   * - put the radio to IDLE state
   * - flush RX FIFO
-  * - flush TX FIFO if ACK was already written in TX FIFO
+  * - flush TX FIFO
   */
   RF_INT_DISABLED();
   cc112x_spiCmdStrobe(CC112X_SIDLE);
   cc112x_spiCmdStrobe(CC112X_SFRX);
-  if (p_ctx->rxReqAck == TRUE) {
-    cc112x_spiCmdStrobe(CC112X_SFTX);
-  }
+  cc112x_spiCmdStrobe(CC112X_SFTX);
   RF_INT_ENABLED();
 
   /* exit RX state */
