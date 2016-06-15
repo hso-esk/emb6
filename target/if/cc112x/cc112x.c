@@ -336,6 +336,9 @@ static void rf_pktRxTxBeginISR(void *p_arg);
 static void rf_rxFifoThresholdISR(void *p_arg);
 static void rf_pktRxTxEndISR(void *p_arg);
 
+static void rf_readRxStatus(struct s_rf_ctx *p_ctx);
+static void rf_readRxFifo(struct s_rf_ctx *p_ctx, uint8_t numBytes);
+
 static void rf_rx_entry(struct s_rf_ctx *p_ctx);
 static void rf_rx_sync(struct s_rf_ctx *p_ctx);
 static void rf_rx_chksum(struct s_rf_ctx *p_ctx);
@@ -839,8 +842,6 @@ static void rf_rxFifoThresholdISR(void *p_arg) {
   cc112x_spiRegRead(CC112X_NUM_RXBYTES, &numRxBytes, 1);
 
   /* do */
-  cc112x_spiRxFifoRead(&p_ctx->rxBuf[p_ctx->rxLastDataPtr], numRxBytes);
-  p_ctx->rxLastDataPtr += numRxBytes;
 
   if (p_ctx->rxLastDataPtr == LLFRAME_MIN_NUM_RX_BYTES) {
     /* parse */
@@ -863,6 +864,8 @@ static void rf_rxFifoThresholdISR(void *p_arg) {
     p_ctx->rxChksum = llframe_crcInit(&p_ctx->rxFrame);
     p_ctx->rxLastChksumPtr = p_ctx->rxFrame.crc_offset;
     numChksumBytes = p_ctx->rxLastDataPtr - p_ctx->rxLastChksumPtr;
+    /* read bytes from RX FIFO */
+    rf_readRxFifo(p_ctx, numRxBytes);
 
     /* is IEEE Std. 802.15.4g supported? */
 #if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
@@ -1067,8 +1070,8 @@ static void rf_rx_chksum(struct s_rf_ctx *p_ctx) {
   uint8_t isChecksumOK;
   uint8_t numChksumBytes;
 
-  cc112x_spiRxFifoRead(&p_ctx->rxBuf[p_ctx->rxLastDataPtr], p_ctx->rxNumRemBytes);
-  p_ctx->rxLastDataPtr += p_ctx->rxNumRemBytes;
+  /* read remaining bytes from RX FIFO */
+  rf_readRxFifo(p_ctx, p_ctx->rxNumRemBytes);
 
   /* update checksum */
   if (p_ctx->rxLastDataPtr > (p_ctx->rxFrame.crc_len + p_ctx->rxLastChksumPtr)) {
@@ -1233,8 +1236,8 @@ static void rf_tx_rxAck(struct s_rf_ctx *p_ctx) {
   uint8_t numChksumBytes;
   packetbuf_attr_t expSeqNo;
 
-  cc112x_spiRxFifoRead(&p_ctx->rxBuf[p_ctx->rxLastDataPtr], p_ctx->rxNumRemBytes);
-  p_ctx->rxLastDataPtr += p_ctx->rxNumRemBytes;
+  /* read remaining bytes from RX FIFO */
+  rf_readRxFifo(p_ctx, p_ctx->rxNumRemBytes);
 
   /* update checksum */
   if (p_ctx->rxLastDataPtr > (p_ctx->rxFrame.crc_len + p_ctx->rxLastChksumPtr)) {
@@ -1251,10 +1254,7 @@ static void rf_tx_rxAck(struct s_rf_ctx *p_ctx) {
   /* is checksum valid? */
   if (isChecksumOK == TRUE) {
     /* read status bytes */
-    uint8_t rxStatus[2];
-    cc112x_spiRxFifoRead(rxStatus, 2);
-    p_ctx->rxRSSI = (int8_t )(rxStatus[0]) - RF_RSSI_OFFSET;
-    p_ctx->rxLQI = rxStatus[1] & 0x7F;
+    rf_readRxStatus(p_ctx);
 
     /* FIXME remove "spaghetti code" */
     expSeqNo = packetbuf_attr(PACKETBUF_ATTR_MAC_SEQNO);
@@ -1350,6 +1350,30 @@ static void rf_configureRegs(const s_regSettings_t *p_regs, uint8_t len) {
     data = p_regs[ix].data;
     cc112x_spiRegWrite(p_regs[ix].addr, &data, 1);
   }
+}
+
+/**
+ * @brief read appended status of the most recently received frame
+ * @param p_ctx point to variable holding radio context structure
+ */
+static void rf_readRxStatus(struct s_rf_ctx *p_ctx) {
+  uint8_t rxStatus[2] = {0};
+
+  cc112x_spiRxFifoRead(rxStatus, 2);
+  p_ctx->rxRSSI = (int8_t)(rxStatus[0]) - RF_RSSI_OFFSET;
+  p_ctx->rxLQI = rxStatus[1] & 0x7F;
+}
+
+/**
+ * @brief read bytes from RX FIFO
+ * @param p_ctx     point to variable holding radio context structure
+ * @param numBytes  number of bytes to read
+ * @return
+ */
+static void rf_readRxFifo(struct s_rf_ctx *p_ctx, uint8_t numBytes) {
+  /* read a given number of bytes from RX FIFO and append to RX buffer */
+  cc112x_spiRxFifoRead(&p_ctx->rxBuf[p_ctx->rxLastDataPtr], numBytes);
+  p_ctx->rxLastDataPtr += numBytes;
 }
 
 
