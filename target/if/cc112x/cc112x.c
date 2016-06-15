@@ -1126,10 +1126,7 @@ static void rf_rx_chksum(struct s_rf_ctx *p_ctx) {
     }
 
     /* read status bytes */
-    uint8_t rxStatus[2];
-    cc112x_spiRxFifoRead(rxStatus, 2);
-    p_ctx->rxRSSI = (int8_t )(rxStatus[0]) - RF_RSSI_OFFSET;
-    p_ctx->rxLQI = rxStatus[1] & 0x7F;
+    rf_readRxStatus(p_ctx);
 
     /* signal upper layer */
     p_ctx->state = RF_STATE_RX_FINI;
