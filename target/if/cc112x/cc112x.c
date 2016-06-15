@@ -339,6 +339,10 @@ static void rf_pktRxTxEndISR(void *p_arg);
 static void rf_readRxStatus(struct s_rf_ctx *p_ctx);
 static void rf_readRxFifo(struct s_rf_ctx *p_ctx, uint8_t numBytes);
 
+#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
+static void rf_setPktLen(uint8_t mode, uint16_t len);
+#endif
+
 static void rf_rx_entry(struct s_rf_ctx *p_ctx);
 static void rf_rx_sync(struct s_rf_ctx *p_ctx);
 static void rf_rx_chksum(struct s_rf_ctx *p_ctx);
@@ -441,6 +445,12 @@ static void rf_init(void *p_netstk, e_nsErr_t *p_err)
   * therefore can be done in initialization
   */
   RF_INT_CONFIG();
+
+  /* is IEEE Std. 802.15.4g supported? */
+#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
+  /* then use infinite packet length mode by default */
+  rf_setPktLen(CC112X_PKT_LEN_MODE_INFINITE, RF_MAX_FIFO_LEN);
+#endif
 
   /* initialize local variables */
   evproc_regCallback(NETSTK_RF_EVENT, rf_dispatcher);
@@ -867,13 +877,10 @@ static void rf_rxFifoThresholdISR(void *p_arg) {
     /* read bytes from RX FIFO */
     rf_readRxFifo(p_ctx, numRxBytes);
 
-    /* is IEEE Std. 802.15.4g supported? */
+      /* is IEEE Std. 802.15.4g supported? */
 #if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
-    /* then configure packet length registers accordingly */
-    uint8_t writeByte;
-    writeByte = (uint8_t)(p_ctx->rxFrame.tot_len % (RF_MAX_FIFO_LEN + 1));
-    RF_SET_PKT_LEN(writeByte);
-    RF_SET_PKT_LEN_MODE(CC112X_PKT_LEN_MODE_FIXED);
+      /* then switch to fixed packet length mode */
+      rf_setPktLen(CC112X_PKT_LEN_MODE_FIXED, p_ctx->rxBytesCounter);
 #endif
   }
   else {
@@ -940,6 +947,12 @@ static void rf_pktRxTxEndISR(void *p_arg) {
       else {
         TRACE_LOG_ERR("+++ RF: PKT_END unexpected event state=%02x, cs=%02x, marc=%02x", p_ctx->state, chip_state, marc_status);
       }
+
+      /* is IEEE Std. 802.15.4g supported? */
+#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
+      /* then switch back to infinite packet length mode */
+      rf_setPktLen(CC112X_PKT_LEN_MODE_INFINITE, RF_MAX_FIFO_LEN);
+#endif
       break;
 
     case RF_MARC_STATUS_RX_OVERFLOW:
@@ -1039,12 +1052,6 @@ static void rf_rx_entry(struct s_rf_ctx *p_ctx) {
   p_ctx->rxLastChksumPtr = 0;
   p_ctx->rxIsAddrFiltered = FALSE;
   memset(&p_ctx->rxFrame, 0, sizeof(p_ctx->rxFrame));
-
-  /* is IEEE Std. 802.15.4g supported? */
-#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
-  /* then use infinite packet length mode by default */
-  RF_SET_PKT_LEN_MODE(CC112X_PKT_LEN_MODE_INFINITE);
-#endif
 
   /* state transition */
   p_ctx->state = RF_STATE_RX_IDLE;
@@ -1203,6 +1210,11 @@ static void rf_tx_entry(struct s_rf_ctx *p_ctx) {
 
 static void rf_tx_sync(struct s_rf_ctx *p_ctx) {
 
+  /* is IEEE Std. 802.15.4g supported? */
+#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
+  /* then switch to fixed packet length mode */
+  rf_setPktLen(CC112X_PKT_LEN_MODE_FIXED, p_ctx->txDataLen);
+#endif
 }
 
 
@@ -1223,6 +1235,13 @@ static void rf_tx_fini(struct s_rf_ctx *p_ctx) {
     * frame */
     p_ctx->txStatus = RF_TX_STATUS_WFA;
   }
+
+  /* is IEEE Std. 802.15.4g supported? */
+#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
+  /* then switch back to infinite packet length mode */
+  rf_setPktLen(CC112X_PKT_LEN_MODE_INFINITE, RF_MAX_FIFO_LEN);
+#endif
+
   TRACE_LOG_MAIN("+++ RF: TX_FINI txStatus=%02x", p_ctx->txStatus);
 }
 
@@ -1284,6 +1303,12 @@ static void rf_tx_rxAck(struct s_rf_ctx *p_ctx) {
 static void rf_tx_term(struct s_rf_ctx *p_ctx) {
   p_ctx->txStatus = RF_TX_STATUS_DONE;
   cc112x_spiCmdStrobe(CC112X_SFTX);
+
+  /* is IEEE Std. 802.15.4g supported? */
+#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
+  /* then switch back to infinite packet length mode */
+  rf_setPktLen(CC112X_PKT_LEN_MODE_INFINITE, RF_MAX_FIFO_LEN);
+#endif
 }
 
 
@@ -1375,6 +1400,26 @@ static void rf_readRxFifo(struct s_rf_ctx *p_ctx, uint8_t numBytes) {
   cc112x_spiRxFifoRead(&p_ctx->rxBuf[p_ctx->rxLastDataPtr], numBytes);
   p_ctx->rxLastDataPtr += numBytes;
 }
+
+
+#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
+/**
+ * @brief set packet length mode and packet size
+ * @param mode
+ * @param len
+ */
+static void rf_setPktLen(uint8_t mode, uint16_t len) {
+
+  uint8_t writeByte;
+
+  /* set packet length */
+  writeByte = len % (RF_MAX_FIFO_LEN + 1);
+  RF_SET_PKT_LEN(writeByte);
+
+  /* set packet length mode */
+  RF_SET_PKT_LEN_MODE(mode);
+}
+#endif /* NETSTK_CFG_IEEE_802154G_EN */
 
 
 #define VCDAC_START_OFFSET 2
