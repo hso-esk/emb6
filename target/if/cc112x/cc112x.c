@@ -361,7 +361,7 @@ static void rf_cca(e_nsErr_t *p_err);
 static void cc112x_retx(e_nsErr_t *p_err);
 #endif
 
-static void rf_gotoIdle(struct s_rf_ctx *p_ctx);
+static void rf_idle_entry(struct s_rf_ctx *p_ctx);
 
 static void rf_reset(void);
 static void rf_chkPartnumber(e_nsErr_t *p_err);
