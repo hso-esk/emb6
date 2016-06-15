@@ -837,81 +837,91 @@ static void rf_pktRxTxBeginISR(void *p_arg) {
  * @param p_arg point to variable holding callback argument
  */
 static void rf_rxFifoThresholdISR(void *p_arg) {
-  //TRACE_LOG_MAIN("T");
-
   (void) &p_arg;
-  //uint8_t marc_status;
-  //uint8_t chip_state;
+
   uint8_t numRxBytes;
   uint8_t numChksumBytes;
   struct s_rf_ctx *p_ctx = &rf_ctx;
 
   /* entry */
-  //cc112x_spiRegRead(CC112X_MARC_STATUS1, &marc_status, 1);
-  //chip_state = RF_READ_CHIP_STATE();
   cc112x_spiRegRead(CC112X_NUM_RXBYTES, &numRxBytes, 1);
 
   /* do */
-
-  if (p_ctx->rxLastDataPtr == LLFRAME_MIN_NUM_RX_BYTES) {
-    /* parse */
-    p_ctx->rxNumRemBytes = llframe_parse(&p_ctx->rxFrame, p_ctx->rxBuf, p_ctx->rxLastDataPtr);
-    p_ctx->rxBytesCounter = p_ctx->rxFrame.tot_len;
-
-    /* does incoming frame require ACK? */
-    if (p_ctx->rxFrame.is_ack_required == TRUE) {
-      /* indicate incoming frame requiring ACK */
-      p_ctx->rxReqAck = TRUE;
-
-      /* write the ACK to send into TX FIFO */
-      uint8_t ack[10];
-      uint8_t ack_len;
-      ack_len = llframe_createAck(&p_ctx->rxFrame, ack, sizeof(ack));
-      cc112x_spiTxFifoWrite(ack, ack_len);
-    }
-
-    /* initialize checksum */
-    p_ctx->rxChksum = llframe_crcInit(&p_ctx->rxFrame);
-    p_ctx->rxLastChksumPtr = p_ctx->rxFrame.crc_offset;
-    numChksumBytes = p_ctx->rxLastDataPtr - p_ctx->rxLastChksumPtr;
+  if (numRxBytes > RF_CFG_FIFO_THR) {
     /* read bytes from RX FIFO */
     rf_readRxFifo(p_ctx, numRxBytes);
+
+    if (p_ctx->rxLastDataPtr == LLFRAME_MIN_NUM_RX_BYTES) {
+      /* parse */
+      p_ctx->rxNumRemBytes = llframe_parse(&p_ctx->rxFrame, p_ctx->rxBuf, p_ctx->rxLastDataPtr);
+      if (p_ctx->rxNumRemBytes == 0) {
+        /* invalid frame */
+        TRACE_LOG_MAIN("dropped frame due to bad format");
+        /* then terminate RX process */
+        rf_rx_term(p_ctx);
+      }
+      p_ctx->rxBytesCounter = p_ctx->rxFrame.tot_len;
 
       /* is IEEE Std. 802.15.4g supported? */
 #if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
       /* then switch to fixed packet length mode */
       rf_setPktLen(CC112X_PKT_LEN_MODE_FIXED, p_ctx->rxBytesCounter);
 #endif
-  }
-  else {
-    p_ctx->rxNumRemBytes -= numRxBytes;
 
-    /* compute length of checksum data */
-    if (p_ctx->rxNumRemBytes < p_ctx->rxFrame.crc_len) {
-      numChksumBytes = numRxBytes - (p_ctx->rxFrame.crc_len - p_ctx->rxNumRemBytes);
-    } else {
-      numChksumBytes = numRxBytes;
+      /* does incoming frame require ACK? */
+      if (p_ctx->rxFrame.is_ack_required == TRUE) {
+        /* indicate incoming frame requiring ACK */
+        p_ctx->rxReqAck = TRUE;
+
+        /* write the ACK to send into TX FIFO */
+        uint8_t ack[10];
+        uint8_t ack_len;
+        ack_len = llframe_createAck(&p_ctx->rxFrame, ack, sizeof(ack));
+        cc112x_spiTxFifoWrite(ack, ack_len);
+      }
+
+      /* initialize checksum */
+      p_ctx->rxChksum = llframe_crcInit(&p_ctx->rxFrame);
+      p_ctx->rxLastChksumPtr = p_ctx->rxFrame.crc_offset;
+      numChksumBytes = p_ctx->rxLastDataPtr - p_ctx->rxLastChksumPtr;
     }
+    else {
+      if (p_ctx->rxNumRemBytes >= numRxBytes) {
+        p_ctx->rxNumRemBytes -= numRxBytes;
 
-    /* is address not yet checked and number of received bytes sufficient for
-    * address filtering? */
-    if ((p_ctx->rxIsAddrFiltered == FALSE) &&
-        (p_ctx->rxLastDataPtr > (LLFRAME_MIN_NUM_RX_BYTES + p_ctx->rxFrame.min_addr_len))) {
-      /* then perform address filtering */
-      p_ctx->rxIsAddrFiltered = llframe_addrFilter(&p_ctx->rxFrame, p_ctx->rxBuf, p_ctx->rxLastDataPtr);
+        /* compute length of checksum data */
+        if (p_ctx->rxNumRemBytes < p_ctx->rxFrame.crc_len) {
+          numChksumBytes = numRxBytes - (p_ctx->rxFrame.crc_len - p_ctx->rxNumRemBytes);
+        } else {
+          numChksumBytes = numRxBytes;
+        }
 
-      /* is address invalid? */
-      if (p_ctx->rxIsAddrFiltered == FALSE) {
-        TRACE_LOG_ERR("invalid address");
-        /* then terminate RX process */
-        rf_rx_term(p_ctx);
+        /* is address not yet checked and number of received bytes sufficient for
+        * address filtering? */
+        if ((p_ctx->rxIsAddrFiltered == FALSE) &&
+            (p_ctx->rxLastDataPtr > (LLFRAME_MIN_NUM_RX_BYTES + p_ctx->rxFrame.min_addr_len))) {
+          /* then perform address filtering */
+          p_ctx->rxIsAddrFiltered = llframe_addrFilter(&p_ctx->rxFrame, p_ctx->rxBuf, p_ctx->rxLastDataPtr);
+
+          /* is address invalid? */
+          if (p_ctx->rxIsAddrFiltered == FALSE) {
+            TRACE_LOG_MAIN("dropped frame due to invalid address");
+
+            /* then terminate RX process */
+            rf_rx_term(p_ctx);
+          }
+        }
+      }
+      else {
+        /* ignore unexpected ISRs */
+        TRACE_LOG_ERR("unexpected ISR rxNumRemBytes=%d", p_ctx->rxNumRemBytes);
       }
     }
-  }
 
-  /* update checksum */
-  p_ctx->rxChksum = crc_16_updateN(p_ctx->rxChksum, &p_ctx->rxBuf[p_ctx->rxLastChksumPtr], numChksumBytes);
-  p_ctx->rxLastChksumPtr += numChksumBytes;
+    /* update checksum */
+    p_ctx->rxChksum = crc_16_updateN(p_ctx->rxChksum, &p_ctx->rxBuf[p_ctx->rxLastChksumPtr], numChksumBytes);
+    p_ctx->rxLastChksumPtr += numChksumBytes;
+  }
 
   /* exit */
   bsp_extIntClear(RF_INT_RXFIFO_THR);
