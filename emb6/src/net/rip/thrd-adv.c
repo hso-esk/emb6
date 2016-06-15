@@ -13,6 +13,7 @@
 #include "thrd-route.h"
 #include "tlv.h"
 #include "thrd-partition.h"
+#include "thrd-iface.h"
 
 /*==============================================================================
                           LOCAL VARIABLE DECLARATIONS
@@ -132,7 +133,7 @@ thrd_generate_route64(size_t *len)
 
 		router_id_mask |= (0x8000000000000000 >> rid->router_id);
 
-		if ( rid->router_id != thrd_dev.Router_ID ) {
+		if ( rid->router_id != thrd_iface.router_id ) {
 
 			// Link Set entry.
 			link = thrd_rdb_link_lookup(rid->router_id);
