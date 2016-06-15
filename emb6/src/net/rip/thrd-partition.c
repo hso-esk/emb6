@@ -15,9 +15,15 @@
 #include "tlv.h"
 
 #include "thrd-router-id.h"
+#include "thrd-iface.h"
 
 #define DEBUG DEBUG_PRINT
 #include "uip-debug.h"	// For debugging terminal output.
+
+/**
+ *  Thread Network Partition.
+ */
+thrd_partition_t thrd_partition;
 
 /*==============================================================================
                           LOCAL VARIABLE DECLARATIONS
@@ -48,6 +54,7 @@ thrd_partition_start(void)
 		PRINTF("thrd_partition_start: Starting new Thread Partition.\n");
 		thrd_leader_init();		// Initialize itself as the leader.
 
+		thrd_partition.leader_router_id = thrd_iface.router_id;
 		thrd_partition.Partition_ID = (bsp_getrand(0) << 16) | (bsp_getrand(0));
 		thrd_partition.VN_version = (uint8_t) bsp_getrand(0);
 		thrd_partition.VN_stable_version = (uint8_t) bsp_getrand(0);
@@ -60,15 +67,6 @@ thrd_partition_start(void)
 
 /* --------------------------------------------------------------------------- */
 
-/**
- * Process a given Leader Data TLV and compare its content with the available
- * leader data.
- * @param id_sequence_number The corresponding ID Sequence Number (Route64 TLV).
- * @param leader_tlv The Leader Data TLV.
- * @return 0, if the partition topology changes (the Leader Data TLV is invalid).
- *         1, if the partition data is valid (this should trigger the procession
- *         of a Route64 TLV).
- */
 uint8_t
 thrd_partition_process(uint8_t id_sequence_number, tlv_leader_t *leader_tlv)
 {
@@ -101,14 +99,26 @@ thrd_partition_process(uint8_t id_sequence_number, tlv_leader_t *leader_tlv)
 
 /* --------------------------------------------------------------------------- */
 
-/**
- * Remove all information related to the previous partition.
- * Thread Spec.: Resetting Network Partition Data.
- */
 void
 thrd_partition_empty(void)
 {
 	// TODO
+}
+
+/* --------------------------------------------------------------------------- */
+
+void
+thrd_set_leader_router_id(uint8_t leader_router_id)
+{
+	thrd_partition.leader_router_id = leader_router_id;
+}
+
+/* --------------------------------------------------------------------------- */
+
+uint8_t
+thrd_get_leader_router_id()
+{
+	return thrd_partition.leader_router_id;
 }
 
 /*
@@ -120,7 +130,7 @@ thrd_partition_empty(void)
 void
 thrd_print_partition_data()
 {
-	PRINTF(ANSI_COLOR_CYAN "|================================== THREAD PARTITION ===================================|" ANSI_COLOR_RESET "\n\r");;
+	PRINTF(ANSI_COLOR_CYAN "|================================== THREAD PARTITION ===================================|" ANSI_COLOR_RESET "\n\r");
 	PRINTF("| Partition_ID | VN_version | VN_stable_version | ID_sequence_number | Partition_weight |\n");
 	PRINTF("-----------------------------------------------------------------------------------------\n\r");
 	PRINTF("| " ANSI_COLOR_YELLOW "%12lu" ANSI_COLOR_RESET
