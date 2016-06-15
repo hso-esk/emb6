@@ -767,7 +767,7 @@ static void rf_pktRxTxBeginISR(void *p_arg) {
       else if (p_ctx->state == RF_STATE_RX_IDLE) {
         if (chip_state == RF_STATE_TX) {
           /* the radio just finished transmitting SYNC words */
-          rf_tx_entry(p_ctx);
+          rf_tx_sync(p_ctx);
         }
         else {
           /* the radio just finished receiving SYNC words */
@@ -1201,14 +1201,20 @@ static void rf_rx_exit(struct s_rf_ctx *p_ctx) {
  */
 static void rf_tx_entry(struct s_rf_ctx *p_ctx) {
   LED_TX_ON();
-  p_ctx->state = RF_STATE_TX_SYNC;
   p_ctx->txErr = NETSTK_ERR_NONE;
   p_ctx->txStatus = RF_TX_STATUS_NONE;
   p_ctx->txReqAck = packetbuf_attr(PACKETBUF_ATTR_MAC_ACK);
   TRACE_LOG_MAIN("+++ RF: TX_ENTRY");
 }
 
+
+/**
+ * @brief handle event of SYNC words transmitted in TX state
+ * @param p_ctx point to variable holding radio context structure
+ */
 static void rf_tx_sync(struct s_rf_ctx *p_ctx) {
+  p_ctx->state = RF_STATE_TX_SYNC;
+  rf_tx_entry(p_ctx);
 
   /* is IEEE Std. 802.15.4g supported? */
 #if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
