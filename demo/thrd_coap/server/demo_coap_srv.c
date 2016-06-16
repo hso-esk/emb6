@@ -160,14 +160,14 @@ int8_t demo_thrdCoapInit(void)
 	//mle_set_child_mode();
 
 	// Initialize routing database.
-	thrd_rdb_init();
+	// thrd_rdb_init();
 
 	// Initialize leader database.
 	// thrd_ldb_init();
 
-	thrd_iface.router_id = 2;
+	// thrd_iface.router_id = 2;
 
-	thrd_eid_rloc_db_init();
+	// thrd_eid_rloc_db_init();
 
 	thrd_trickle_init();
 
