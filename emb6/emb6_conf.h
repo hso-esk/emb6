@@ -123,7 +123,7 @@
 #define UIP_CONF_MAX_ROUTES                  10
 
 /** Unicast address list */
-#define UIP_CONF_DS6_ADDR_NBU                3
+#define UIP_CONF_DS6_ADDR_NBU                4
 
 /** Should we use LinkLayer acks in NUD ? */
 #define UIP_CONF_DS6_LL_NUD                  TRUE
