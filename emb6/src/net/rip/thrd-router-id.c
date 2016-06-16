@@ -92,8 +92,8 @@ thrd_leader_init(void)
 	uint8_t desired_rid = 0;
 	thrd_ldb_ida_t *ida = thrd_leader_assign_rid(&desired_rid, mac_phy_config.mac_address);	// TODO Add my MAC Extended Address here (owner).
 	if ( ida != NULL ) {
+		PRINTF("Leader Init: Set Leader Router ID = %d\n", ida->ID_id);
 		thrd_iface_set_router_id(ida->ID_id);
-		// thrd_iface.router_id = ida->ID_id;
 		thrd_partition_set_leader_router_id(ida->ID_id);
 		thrd_partition.leader_router_id = ida->ID_id;
 	}
