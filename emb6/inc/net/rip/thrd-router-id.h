@@ -12,6 +12,14 @@
 #include "emb6.h"
 #include "thrd-leader-db.h"
 
+/**
+ * Address Solicit Response Status.
+ */
+typedef enum {
+	THRD_ADDR_SOL_STATUS_SUCCESS = 0,//!< THRD_ADDR_SOL_STATUS_SUCCESS
+	THRD_ADDR_SOL_STATUS_FAIL = 1,   //!< THRD_ADDR_SOL_STATUS_FAIL
+} thrd_addr_sol_status_t;
+
 /*=============================================================================
                                Router ID Management
 ===============================================================================*/
