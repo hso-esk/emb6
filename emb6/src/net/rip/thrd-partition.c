@@ -56,10 +56,10 @@ thrd_partition_start(void)
 
 		PRINTF("thrd_partition_start: Starting new Thread Partition.\n");
 		// Resetting Network Partition Data.
-		thrd_leader_init();				// Initialize itself as the Leader.
 		thrd_eid_rloc_db_init();		// Initialize EID-to-RLOC Mapping.
 		thrd_eid_rloc_cache_init();		// Initialize EID-to-RLOC Map Cache.
 		thrd_rdb_init();				// Initialize Routing Database.
+		thrd_leader_init();				// Initialize itself as the Leader.
 
 		thrd_partition.leader_router_id = thrd_iface.router_id;
 		thrd_partition.Partition_ID = (bsp_getrand(0) << 16) | (bsp_getrand(0));
