@@ -15,6 +15,7 @@
 
 #include "thrd-addr-query.h"
 #include "thrd-eid-rloc.h"
+#include "thrd-iface.h"
 
 /*
  ********************************************************************************
@@ -106,7 +107,8 @@ res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t prefer
 				addr_qry->AQ_Retry_Delay = 0;
 				// Update EID-to-RLOC Set (Map Cache).
 				uip_ipaddr_t rloc_addr;
-				THRD_CREATE_RLOC_ADDR(&rloc_addr, rloc16_tlv->rloc16);
+				thrd_create_meshlocal_prefix(&rloc_addr);
+				thrd_create_rloc_iid(&rloc_addr, rloc16_tlv->rloc16);
 				thrd_eid_rloc_cache_update(target_eid_tlv->target_eid, rloc_addr);
 				thrd_eid_rloc_cache_print();
 			}
