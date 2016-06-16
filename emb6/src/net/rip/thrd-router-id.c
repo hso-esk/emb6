@@ -83,16 +83,20 @@ thrd_leader_init(void)
 	// Initialize device's interface addresses.
 	thrd_iface_init();
 
-	thrd_ldb_init(); // TODO Call this function during compile process.
+	thrd_ldb_init();
 	thrd_ldb_ida_empty();	// Empty ID Assignment Set.
 
 	// Get a Router ID.
 	uint8_t desired_rid = 0;
 	thrd_ldb_ida_t *ida = thrd_leader_assign_rid(&desired_rid, mac_phy_config.mac_address);	// TODO Add my MAC Extended Address here (owner).
 	if ( ida != NULL ) {
-		thrd_iface.router_id = ida->ID_id;
+		thrd_iface_set_router_id(ida->ID_id);
+		// thrd_iface.router_id = ida->ID_id;
+		thrd_partition_set_leader_router_id(ida->ID_id);
 		thrd_partition.leader_router_id = ida->ID_id;
 	}
+	// Set RLOC16 address and create corresponding IPv6 addresses.
+	thrd_iface_rloc_set(THRD_CREATE_RLOC16(thrd_iface_get_router_id(), 0));
 
 	coap_init();
 
@@ -279,7 +283,7 @@ thrd_addr_solicit_chunk_handler(void *response)
     			if ( tlv->type == NET_TLV_RLOC16 && tlv->length == 2 ) {
     				rloc16_tlv = (net_tlv_rloc16_t*) tlv->value;
     				// Set the interface's RLOC16 and update ML-RLOC and LL-RLOC addresses.
-    				thrd_iface_rloc_set(&rloc16_tlv->rloc16);
+    				thrd_iface_rloc_set(rloc16_tlv->rloc16);
     				PRINTF("RLOC16 = %04x\n", rloc16_tlv->rloc16);
     			}
     			tlv = (tlv_t*) &chunk[7];
