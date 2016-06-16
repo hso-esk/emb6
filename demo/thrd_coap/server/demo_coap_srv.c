@@ -125,20 +125,6 @@ execute_routine(void)
 	switch(cnt) {
 	case 0:
 
-		uip_ip6addr(&test_eid, 0xfe80, 0x0000, 0x0000, 0x0000, 0x0250, 0xc2ff, 0xfea8, 0xdddd);
-
-		uint16_t rloc16 = 0x1010;
-		uint8_t ml_eid[8] = { 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0F };
-		// clock_time_t time = 0x80000008;
-
-		// thrd_addr_ntf_response(&test_eid, &rloc16, ml_eid, NULL);
-		thrd_addr_qry_request(&test_eid);
-
-		thrd_partition_start();
-
-		tlv_leader_t *ld_tlv = thrd_generate_leader_data_tlv();
-		print_leader_data_tlv(ld_tlv);
-
 		PRINTF("----------------------------------------------------\n");
 		break;
 	case 1:
