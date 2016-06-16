@@ -160,7 +160,6 @@ static void _native_init( void *p_netstk, e_nsErr_t *p_err )
     FILE* fp;
     char pc_node_info[NODE_INFO_MAX];
     char* pch;
-    char defaultChannel[20];
 
     uint16_t addr;    // mac address of node read from configuration file
     uint8_t  addr_6;  // high byte of two last parts of mac address
@@ -193,17 +192,6 @@ static void _native_init( void *p_netstk, e_nsErr_t *p_err )
     {
         _printAndExit( "Can't open this file\n" );
     }
-
-    /* subscribe to default channel if config not found */
-    // TODO: perhaps, excess regex
-    sprintf(defaultChannel, ".*_0x%02X%02X_.*\0",
-        mac_phy_config.mac_address[6],
-        mac_phy_config.mac_address[7]);
-    pc_subscribe_ch = (char *)malloc((strlen(defaultChannel)+1)*sizeof(char));
-    strcpy(pc_subscribe_ch, defaultChannel);
-    subscr = lcm_subscribe( ps_lcm, pc_subscribe_ch, _beautiful_split_messages, NULL );
-    LOG1_INFO("Subscription channel = %s (default)", pc_subscribe_ch);
-    
 
     /* assemble the parser command */
     while( !feof(fp) )
