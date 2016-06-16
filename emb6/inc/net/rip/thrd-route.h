@@ -11,7 +11,7 @@
 #define EMB6_INC_NET_RIP_THRD_ROUTE_H_
 
 #include "emb6.h"
-#include "stimer.h"
+#include "ctimer.h"
 #include "clist.h"
 #include "thread_conf.h"
 
@@ -38,7 +38,7 @@ typedef struct thrd_rdb_link {
 	uint16_t L_link_margin;
 	uint8_t L_incoming_quality;
 	uint8_t L_outgoing_quality;
-	clock_time_t L_age;
+	struct ctimer L_age;
 } thrd_rdb_link_t;
 
 /** \brief A 'Route Set' entry in the routing database (rdb). */

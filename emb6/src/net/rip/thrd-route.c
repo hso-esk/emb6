@@ -16,6 +16,8 @@
 #include "emb6.h"
 #include "stdlib.h"
 #include "string.h"
+#include "bsp.h"
+#include "ctimer.h"
 #include "clist.h"
 #include "memb.h"
 #include "rip.h"
@@ -32,6 +34,8 @@
  *                          LOCAL FUNCTION DECLARATIONS
  ********************************************************************************
  */
+
+static void handle_max_neighbor_age_timeout(void *ptr);
 
 /*
  ********************************************************************************
@@ -812,6 +816,7 @@ thrd_rdb_link_t
 		l->L_link_margin = link_margin_shifted;
 		l->L_incoming_quality = thrd_rdb_link_calc_incoming_quality(link_margin_shifted);
 		l->L_outgoing_quality = outgoing_quality;
+		ctimer_set(&l->L_age, MAX_NEIGHBOR_AGE * bsp_get(E_BSP_GET_TRES), handle_max_neighbor_age_timeout, l);
 
 		/* Add new link first - assuming that there is a reason to add this
 		 * and that there is a packet coming soon. */
@@ -839,7 +844,7 @@ thrd_rdb_link_t
 
 		l->L_link_margin = new_lm;
 		l->L_outgoing_quality = outgoing_quality;
-		l->L_age = age;
+		ctimer_reset(&l->L_age);
 
 		if ( l->L_incoming_quality != new_iq ) {
 			l->L_incoming_quality = new_iq;
@@ -849,6 +854,23 @@ thrd_rdb_link_t
 	}
 	PRINTF("-----------------------------------------------------\n\r");
 	return l;
+}
+
+/*---------------------------------------------------------------------------*/
+/*
+ * Called after max_age_timer of a Link Set Entry has expired.
+ */
+static void
+handle_max_neighbor_age_timeout(void *ptr)
+{
+	thrd_rdb_link_t *l = (thrd_rdb_link_t*) ptr;
+
+	PRINTF("Link Set: Timer expired");
+	if ( l != NULL ) {
+		PRINTF(" for Link Set Entry with Router ID = &d\n\r", l->L_router_id);
+		thrd_rdb_link_rm(l);
+	}
+	return;
 }
 
 /* --------------------------------------------------------------------------- */
