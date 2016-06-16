@@ -477,6 +477,7 @@ static void _beautiful_split_messages( const lcm_recv_buf_t *rps_rbuf,
         //LOG_INFO("%s:\n\t\"%s\"\n", "I've got a CMD", line);
         printf("%s:\n\t\"%s\"\n", "I've got a CMD", line);
         _beautiful_comand_parser(line);
+        free(line);
     }
     else
     {
@@ -507,6 +508,7 @@ static void _beautiful_comand_parser( const char *line)
         lcm_unsubscribe(ps_lcm, subscr);
         subscr = lcm_subscribe( ps_lcm, pc_subscribe_ch, _beautiful_split_messages, NULL );
         lcm_publish( ps_lcm, "EMB6COMMAND", pc_subscribe_ch, strlen(pc_subscribe_ch)+1 );
+        free(new_channel);
     }
     if (strncmp(line, "publish name", 8) == 0)
     {
@@ -518,6 +520,7 @@ static void _beautiful_comand_parser( const char *line)
         memset( pc_publish_ch, '\0', NODE_INFO_MAX );
         strncpy(pc_publish_ch, new_channel, length);
         lcm_publish( ps_lcm, "EMB6COMMAND", pc_publish_ch, strlen(pc_publish_ch)+1 );
+        free(new_channel);
     }
     if (strncmp(line, "exit", 4) == 0)
     {
