@@ -12,6 +12,7 @@
 
 #include "emb6.h"
 #include "clist.h"
+#include "ctimer.h"
 #include "rip.h"
 
 void thrd_ldb_init(void);
@@ -26,14 +27,14 @@ void thrd_ldb_init(void);
 typedef struct thrd_ldb_ida {
 	struct thrd_ldb_ida *next;
 
-	uint8_t ID_id;			// A Router ID.
-	uint8_t ID_owner[8];		// The IEEE 802.15.4 Extended Address of the Router.
-	clock_time_t ID_reuse_time;	// The time at which this Router ID MAY be reassigned (in seconds).
+	uint8_t ID_id;					// A Router ID.
+	uint8_t ID_owner[8];			// The IEEE 802.15.4 Extended Address of the Router.
+	struct ctimer ID_reuse_time;	// The time at which this Router ID MAY be reassigned (in seconds).
 } thrd_ldb_ida_t;
 
 
 
-int thrd_ldb_num_ida(void);
+size_t thrd_ldb_num_ida(void);
 
 thrd_ldb_ida_t *thrd_ldb_ida_head(void);
 

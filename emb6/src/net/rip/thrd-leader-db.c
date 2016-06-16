@@ -37,7 +37,7 @@ LIST(idassign_list);
 MEMB(idassign_memb, thrd_ldb_ida_t, MAX_ROUTERS);
 
 /* Number of currently stored id assignments ids in the ID Assignment Set. */
-static int num_ida = 0;
+static size_t num_ida = 0;
 
 /*
  ********************************************************************************
@@ -62,7 +62,7 @@ thrd_ldb_init(void)
 
 /* --------------------------------------------------------------------------- */
 
-int
+size_t
 thrd_ldb_num_ida(void)
 {
 	return num_ida;
@@ -172,8 +172,6 @@ thrd_ldb_ida_t
 
 		ida->ID_id = router_id;
 		memcpy(&ida->ID_owner, owner, 8);
-		// ida->ID_owner = owner;
-		ida->ID_reuse_time = reuse_time;
 
 		/* Add new router id first - assuming that there is a reason to add this
 		 * and that there is a packet coming soon. */
