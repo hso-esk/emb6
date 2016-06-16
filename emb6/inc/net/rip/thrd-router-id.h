@@ -26,8 +26,6 @@ typedef enum {
 
 extern void thrd_leader_init(void);
 
-clock_time_t thrd_next_period(uint8_t sec);
-
 /**
  * Assign a new Router ID.
  * @param router_id The desired Router ID (optional).
@@ -37,10 +35,10 @@ clock_time_t thrd_next_period(uint8_t sec);
 thrd_ldb_ida_t *thrd_leader_assign_rid(uint8_t *router_id, uint8_t *id_owner);
 
 /**
- * Deallocate a Router ID.
- * @param router_id The Router ID to be deallocated.
+ * Unassign a Router ID.
+ * @param router_id The Router ID to be unassigned.
  */
-void thrd_leader_dealloc_rid(uint8_t router_id);
+void thrd_leader_unassign_rid(uint8_t router_id);
 
 /*=============================================================================
                                Router ID Assignment

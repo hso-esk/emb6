@@ -61,6 +61,8 @@ extern resource_t
  */
 static void coap_init();
 
+static clock_time_t thrd_next_period(uint8_t sec);
+
 static void handle_timer(void *ptr);
 
 static size_t create_addr_solicit_req_payload(uint8_t *buf, uint8_t *ml_eid,
@@ -126,10 +128,10 @@ handle_timer(void *ptr)
 
 /* --------------------------------------------------------------------------- */
 
-clock_time_t
+static clock_time_t
 thrd_next_period(uint8_t sec)
 {
-	return (clock_time_t)(sec * bsp_get(E_BSP_GET_TRES));
+	return (clock_time_t)(bsp_get(E_BSP_GET_SEC) + (sec * bsp_get(E_BSP_GET_TRES)));
 }
 
 /* --------------------------------------------------------------------------- */
@@ -185,7 +187,7 @@ thrd_ldb_ida_t
 /* --------------------------------------------------------------------------- */
 
 void
-thrd_leader_dealloc_rid(uint8_t router_id)
+thrd_leader_unassign_rid(uint8_t router_id)
 {
 	thrd_rdb_id_t *rid;
 	thrd_ldb_ida_t *ida;
