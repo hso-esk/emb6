@@ -26,6 +26,8 @@ thrd_iface_t thrd_iface = {
                                LOCAL FUNCTION PROTOTYPES
  =============================================================================*/
 
+static void remove_rloc_addr();
+
 /*==============================================================================
                                     LOCAL FUNCTIONS
  =============================================================================*/
@@ -78,11 +80,10 @@ thrd_iface_rloc_set(uint16_t rloc16)
 {
 	if ( thrd_iface.rloc16 != rloc16 ) {
 		PRINTF("Creating new RLOC addresses.\n");
+		// Remove old RLOC addresses.
+		remove_rloc_addr();
 
-		// TODO Remove invalid addresses.
-		// uip_ds6_addr_rm(&thrd_iface.ml_rloc);
-		// uip_ds6_addr_rm(&thrd_iface.ll_rloc);
-
+		// Creating and adding new RLOC addresses.
 		thrd_iface.rloc16 = rloc16;
 		uip_ipaddr_t rloc;
 		// ML-RLOC.
@@ -98,6 +99,15 @@ thrd_iface_rloc_set(uint16_t rloc16)
 
 		thrd_iface_print();
 	}
+}
+
+static void
+remove_rloc_addr()
+{
+	uip_ds6_addr_t *rloc_addr = uip_ds6_addr_lookup(&thrd_iface.ml_rloc);
+	uip_ds6_addr_rm(rloc_addr);
+	rloc_addr = uip_ds6_addr_lookup(&thrd_iface.ll_rloc);
+	uip_ds6_addr_rm(rloc_addr);
 }
 
 /*==============================================================================
