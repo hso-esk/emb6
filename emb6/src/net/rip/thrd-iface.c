@@ -96,8 +96,6 @@ thrd_iface_rloc_set(uint16_t rloc16)
 		thrd_create_rloc_iid(&rloc, rloc16);
 		thrd_iface.ll_rloc = rloc;
 		uip_ds6_addr_add(&thrd_iface.ll_rloc, 0, ADDR_MANUAL);
-
-		thrd_iface_print();
 	}
 }
 
