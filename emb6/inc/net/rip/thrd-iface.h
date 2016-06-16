@@ -73,13 +73,30 @@ typedef struct {
 
 extern thrd_iface_t thrd_iface;
 
+/**
+ * Initialize Thread Interface. Create Link-Local IPv6 address with the IID set to the
+ * MAC Extended Address with the universal/local bit inverted. Create Mesh-Local EID
+ * with the IID chosen at random.
+ */
 void thrd_iface_init();
+
+/**
+ * Set the Router ID of the Thread Interface.
+ * @param router_id A Router ID.
+ */
+void thrd_iface_set_router_id(uint8_t router_id);
+
+/**
+ * Get the Router ID of the Interface.
+ * @return
+ */
+uint8_t thrd_iface_get_router_id();
 
 /**
  * Set the interface's RLOC16 and update the ML-RLOC and LL-RLOC addresses.
  * @param rloc16 The RLOC16.
  */
-void thrd_iface_rloc_set(uint16_t *rloc16);
+void thrd_iface_rloc_set(uint16_t rloc16);
 
 void thrd_iface_print();
 
