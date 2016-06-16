@@ -81,7 +81,7 @@ thrd_leader_init(void)
 	thrd_dev.type = THRD_DEV_TYPE_LEADER;
 
 	// Initialize device's interface addresses.
-	thrd_iface_init();
+	// thrd_iface_init();
 
 	thrd_ldb_init();
 	thrd_ldb_ida_empty();	// Empty ID Assignment Set.
