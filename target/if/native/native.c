@@ -220,13 +220,11 @@ static void _native_init( void *p_netstk, e_nsErr_t *p_err )
         {
             int tmpChLen = strlen(pch) + 10;
             char* tmpCh = malloc( tmpChLen );
-            pc_subscribe_ch = malloc( tmpChLen );
             if( tmpCh != NULL )
             {
                 snprintf( tmpCh, tmpChLen, ".*_%s_.*", pch );
                 subscr = lcm_subscribe( ps_lcm, tmpCh, _beautiful_split_messages, NULL );
                 LOG1_INFO("Subscription channel = %s", tmpCh);
-                strcpy(pc_subscribe_ch, tmpCh);
                 free( tmpCh );
             }
             else
