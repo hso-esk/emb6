@@ -133,3 +133,24 @@ thrd_iface_print()
 	PRINTF(ANSI_COLOR_CYAN "=========================================================================================" ANSI_COLOR_RESET "\n\r");
 }
 
+/* --------------------------------------------------------------------------- */
+
+void
+print_all_addr()
+{
+	uint8_t state;
+	PRINTF("Our IPv6 addresses:\n");
+	for(uint8_t i = 0; i < UIP_DS6_ADDR_NB; i++) {
+		state = uip_ds6_if.addr_list[i].state;
+		if(uip_ds6_if.addr_list[i].isused && (state == ADDR_TENTATIVE || state
+				== ADDR_PREFERRED)) {
+			PRINTF("  ");
+			PRINT6ADDR(&uip_ds6_if.addr_list[i].ipaddr);
+			PRINTF("\n");
+			if(state == ADDR_TENTATIVE) {
+				uip_ds6_if.addr_list[i].state = ADDR_PREFERRED;
+			}
+		}
+	}
+}
+

@@ -100,4 +100,6 @@ void thrd_iface_rloc_set(uint16_t rloc16);
 
 void thrd_iface_print();
 
+void print_all_addr();
+
 #endif /* EMB6_INC_NET_RIP_THRD_IFACE_H_ */
