@@ -8,6 +8,8 @@
 
 #include "thread_conf.h"
 #include "thrd-dev.h"
+#include "thrd-iface.h"
+#include "thrd-leader-db.h"
 
 /** Thread default Device Type Configuration. */
 thrd_dev_t thrd_dev = {
