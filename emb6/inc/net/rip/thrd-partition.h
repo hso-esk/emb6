@@ -58,13 +58,13 @@ void thrd_partition_empty(void);
  * Set the Leader Router ID.
  * @param leader_router_id The Leader Router ID.
  */
-void thrd_set_leader_router_id(uint8_t leader_router_id);
+void thrd_partition_set_leader_router_id(uint8_t leader_router_id);
 
 /**
  * Get the Leader Router ID.
  * @return The Leader Router ID.
  */
-uint8_t thrd_get_leader_router_id();
+uint8_t thrd_partition_get_leader_router_id();
 
 /*
  ********************************************************************************
