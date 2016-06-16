@@ -106,10 +106,6 @@ uip_lladdr_t uip_lladdr = {{0x00,0x06,0x98,0x00,0x02,0x32}};
 #endif /*UIP_CONF_LL_802154*/
 /** @} */
 
-// LZ ---
-
-// ---
-
 /** RPL default Configuration */
 s_rpl_conf_t rpl_config = {
             .DIOintmin          = 10,
