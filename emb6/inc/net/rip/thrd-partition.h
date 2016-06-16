@@ -35,6 +35,9 @@ extern thrd_partition_t thrd_partition;
                                      API FUNCTIONS
  =============================================================================*/
 
+/**
+ * Start a new Thread Partition.
+ */
 void thrd_partition_start(void);
 
 /**
