@@ -96,7 +96,6 @@ thrd_partition_process(uint8_t id_sequence_number, tlv_leader_t *leader_tlv)
 						&& (id_sequence_number > thrd_partition.ID_sequence_number)) {
 					// Inconsistency detected -> Start a new Partition.
 					thrd_partition_start();
-					thrd_rdb_init();
 					return 0;
 				}
 			}
