@@ -61,9 +61,9 @@ extern resource_t
  */
 static void coap_init();
 
-static clock_time_t thrd_next_period(uint8_t sec);
+static void handle_increment_id_seq_num_timer(void *ptr);
 
-static void handle_timer(void *ptr);
+static void handle_id_reuse_delay_timeout(void *ptr);
 
 static size_t create_addr_solicit_req_payload(uint8_t *buf, uint8_t *ml_eid,
 		uint16_t *rloc16);
@@ -101,8 +101,8 @@ thrd_leader_init(void)
 	thrd_iface_rloc_set(THRD_CREATE_RLOC16(thrd_iface_get_router_id(), 0));
 
 	coap_init();
-
-	ctimer_set(&leader_ct, (clock_time_t)thrd_next_period(ID_SEQUENCE_PERIOD), handle_timer, NULL);
+	// Start timer for incrementing ID_sequence_number.
+	ctimer_set(&leader_ct, ID_SEQUENCE_PERIOD * bsp_get(E_BSP_GET_TRES), handle_increment_id_seq_num_timer, NULL);
 }
 
 /* --------------------------------------------------------------------------- */
@@ -119,19 +119,11 @@ coap_init()
 /* --------------------------------------------------------------------------- */
 
 static void
-handle_timer(void *ptr)
+handle_increment_id_seq_num_timer(void *ptr)
 {
 	thrd_partition.ID_sequence_number++;
 	thrd_print_partition_data();
-	ctimer_set(&leader_ct, (clock_time_t)thrd_next_period(ID_SEQUENCE_PERIOD), handle_timer, NULL);
-}
-
-/* --------------------------------------------------------------------------- */
-
-static clock_time_t
-thrd_next_period(uint8_t sec)
-{
-	return (clock_time_t)(bsp_get(E_BSP_GET_SEC) + (sec * bsp_get(E_BSP_GET_TRES)));
+	ctimer_restart(&leader_ct);
 }
 
 /* --------------------------------------------------------------------------- */
@@ -139,46 +131,35 @@ thrd_next_period(uint8_t sec)
 thrd_ldb_ida_t
 *thrd_leader_assign_rid(uint8_t *router_id, uint8_t *id_owner)
 {
-	thrd_ldb_ida_t *ida;
+	if ( thrd_ldb_num_ida() < 32 ) {
+		thrd_ldb_ida_t *ida;
 
-	// Check whether desired Router ID is available.
-	ida = thrd_ldb_ida_lookup(*router_id);
-	if ( ida == NULL ) {
-		ida = thrd_ldb_ida_add(*router_id, id_owner, 0);
-		PRINTF("Router ID Assignment: Assigned Router ID = %d\n", ida->ID_id);
-		return ida;
-	} else {
-	// If the desired Router ID currently is in use.
-		clock_time_t now = bsp_get(E_BSP_GET_SEC);
-		// Check reassignment delay.
-		if ( ida->ID_reuse_time == 0 || ida->ID_reuse_time < now ) {
+		// Check whether desired Router ID is available.
+		ida = thrd_ldb_ida_lookup(*router_id);
+		if ( ida == NULL ) {
+			ida = thrd_ldb_ida_add(*router_id, id_owner, 0);
+			PRINTF("Router ID Assignment: Assigned Router ID = %d\n", ida->ID_id);
+			return ida;
+		} else {
+			// If the desired Router ID currently is in use --> Looking for free Router ID.
+
 			// Router ID is not available --> Looking for an unassigned Router ID.
 			uint8_t id_cnt = 0;
 			ida = thrd_ldb_ida_lookup(id_cnt);
-
+			// Looking for an unassigned Router ID.
 			while ( ida != NULL && id_cnt < 63 ) {
-				// Check whether the current Router ID is in use.
-				if ( ida->ID_reuse_time != 0 ) {
-					break;
-				}
 				id_cnt++;
 				ida = thrd_ldb_ida_lookup(id_cnt);
 			}
-			PRINTF("TEST!\n");
 			// Create Router ID if available.
 			if ( id_cnt < 63 ) {
 				ida = thrd_ldb_ida_add(id_cnt, id_owner, 0);
 				PRINTF("Router ID Assignment: Assigned Router ID = %d\n", ida->ID_id);
 				return ida;
 			} else {
+				PRINTF("Router ID Assignment: No more Router IDs available.\n");
 				return NULL;
 			}
-		} else {
-			// Reassignment delay expired --> Router ID available.
-			memcpy(&ida->ID_owner, id_owner, 8);
-			// ida->ID_owner = id_owner;
-			ida->ID_reuse_time = 0;
-			return ida;
 		}
 	}
 	return NULL;
@@ -198,8 +179,21 @@ thrd_leader_unassign_rid(uint8_t router_id)
 		// Removing the router id from the Router ID Set.
 		thrd_rdb_rid_rm(rid);
 		// Set the router id's reuse time.
-		ida->ID_reuse_time = thrd_next_period(ID_REUSE_DELAY);
+		ctimer_set(&ida->ID_reuse_time, ID_REUSE_DELAY * bsp_get(E_BSP_GET_TRES), handle_id_reuse_delay_timeout, ida);
 	}
+}
+
+static void
+handle_id_reuse_delay_timeout(void *ptr)
+{
+	thrd_ldb_ida_t *ida = (thrd_ldb_ida_t*) ptr;
+
+	PRINTF("ID Assignment Set: Timer expired");
+	if ( ida != NULL ) {
+		PRINTF(" for ID Assignment Set Entry with Router ID = &d\n\r", ida->ID_id);
+		thrd_ldb_ida_rm(ida);
+	}
+	return;
 }
 
 /*=============================================================================
