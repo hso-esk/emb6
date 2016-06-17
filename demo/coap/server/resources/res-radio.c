@@ -79,10 +79,10 @@ static void res_postput_handler(void *request, void *response,
  * returns the all information about the radio settings */
 RESOURCE(res_radio_info,
         "title=\"Radio Info\";type=\"Info\"",
-        _res_get_handler,
-         NULL,
-         NULL,
-         NULL);
+        res_get_handler,
+        NULL,
+        NULL,
+        NULL);
 
 /* Resource definition the main RADIO resource. This
  * allows to change the Tx-Power of the transceiver */
