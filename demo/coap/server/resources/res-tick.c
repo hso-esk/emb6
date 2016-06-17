@@ -34,36 +34,58 @@
 *                                   INCLUDES
 ********************************************************************************
 */
-#include "emb6.h"
 #include "bsp.h"
 #include "er-coap.h"
+#include "emb6.h"
+#include "packetbuf.h"
 
+
+/*
+********************************************************************************
+*                                    MACROS
+********************************************************************************
+*/
+/** Update interval */
+#define RES_TICK_UPDATE_INTERVAL    2
 /*
 ********************************************************************************
 *                          LOCAL FUNCTION DECLARATIONS
 ********************************************************************************
 */
+
 /* Handler for GET actions. For further details see the function definition */
 static void res_get_handler(void *request, void *response, uint8_t *buffer,
         uint16_t preferred_size, int32_t *offset);
 
-/* Handler for POST actions. For further details see the function definition */
-static void res_post_handler(void *request, void *response, uint8_t *buffer,
-        uint16_t preferred_size, int32_t *offset);
+/* Periodic handler */
+static void res_periodic_handler(void);
 
 /*
 ********************************************************************************
 *                               GLOBAL VARIABLES
 ********************************************************************************
 */
-/* Resource definition of a simple actuator example. This
- * toggles one or more LEDs */
-RESOURCE(res_led,
-         "title=\"LED toggle\";type=\"Control\"",
-         res_get_handler,
-         res_post_handler,
-         NULL,
-         NULL);
+/* Resource definition of a simple periodic resource. */
+PERIODIC_RESOURCE(res_tick,
+        "title=\"Alarm Message\";type=\"Alarm\";obs",
+        res_get_handler,
+        NULL,
+        NULL,
+        NULL,
+        RES_TICK_UPDATE_INTERVAL,
+        res_periodic_handler);
+
+
+/*
+********************************************************************************
+*                               LOCAL VARIABLES
+********************************************************************************
+*/
+/*
+ * Use local resource state that is accessed by res_get_handler()
+ * and altered by res_periodic_handler().
+ */
+static int32_t event = 0;
 
 
 /*
@@ -74,61 +96,33 @@ RESOURCE(res_led,
 /**
  * \brief   Handler for getting data from the resource.
  *
- *          The LED resource has no data to get However it is possible
- *          to get a description of how to control the resource..
+ *          Returns the current counter value.
  */
 static void res_get_handler(void *request, void *response, uint8_t *buffer,
         uint16_t preferred_size, int32_t *offset)
 {
-  /* Some data that has the length up to REST_MAX_CHUNK_SIZE. For more, see the chunk resource. */
-  char const *const message = "Use POST to toggle the LEDs using parameters (e.g. POST: led=1)";
-  int length = snprintf( (char*)buffer, preferred_size, message );
+    /* Just return the current counter value. */
+    int length = snprintf( (char*)buffer, preferred_size,"Counter: %li", event );
 
-  REST.set_header_content_type(response, REST.type.TEXT_PLAIN);
-  REST.set_header_etag(response, (uint8_t *)&length, 1);
-  REST.set_response_payload(response, buffer, length);
+    REST.set_header_content_type(response, REST.type.TEXT_PLAIN);
+    REST.set_header_max_age(response, res_tick.un_handler.periodic->period );
+    REST.set_response_payload(response, buffer, length);
+
 }
-
 /**
- * \brief   Handler for posting data to the resource.
+ * \brief   Periodic update handler.
  *
- *          The LED resource can be controlled by using a POST. The post
- *          variable "led" defines which LED to toggle as a bitmask. If no or an
- *          invalid LED mask was selected all the LEDs will be toggled.
- *          command: led=<x>.
+ *          Is called in well defined intervals depending on the configuration
+ *          of the resource. It updates all subscribers.
  */
-static void res_post_handler(void *request, void *response, uint8_t *buffer,
-        uint16_t preferred_size, int32_t *offset)
+static void res_periodic_handler()
 {
-    const char *ledVal = NULL;
+    event++;
+    event++;
 
-    /* check the query variable */
-    if(REST.get_post_variable(request, "led", &ledVal) == 0) {
-
-        /* No POST variable. Toggle all LEDs */
-        bsp_led(E_BSP_LED_0,E_BSP_LED_TOGGLE);
-        bsp_led(E_BSP_LED_1,E_BSP_LED_TOGGLE);
-        bsp_led(E_BSP_LED_2,E_BSP_LED_TOGGLE);
-        bsp_led(E_BSP_LED_3,E_BSP_LED_TOGGLE);
-
-    } else {
-
-        int ledMsk = atoi(ledVal);
-
-        /* LED mask is available. Check which LEDs to toggle. */
-        if( ledMsk & (1<<0) )
-            bsp_led(E_BSP_LED_0,E_BSP_LED_TOGGLE);
-        else if( ledMsk & (1<<1) )
-            bsp_led(E_BSP_LED_1,E_BSP_LED_TOGGLE);
-        else if( ledMsk & (1<<2) )
-            bsp_led(E_BSP_LED_2,E_BSP_LED_TOGGLE);
-        else if( ledMsk & (1<<3) )
-            bsp_led(E_BSP_LED_3,E_BSP_LED_TOGGLE);
-        else {
-            bsp_led(E_BSP_LED_0,E_BSP_LED_TOGGLE);
-            bsp_led(E_BSP_LED_1,E_BSP_LED_TOGGLE);
-            bsp_led(E_BSP_LED_2,E_BSP_LED_TOGGLE);
-            bsp_led(E_BSP_LED_3,E_BSP_LED_TOGGLE);
-        }
-    }
+  /* Usually a condition is defined under with subscribers are notified, e.g., large enough delta in sensor reading. */
+  if(1) {
+    /* Notify the registered observers which will trigger the res_get_handler to create the response. */
+    REST.notify_subscribers(&res_tick);
+  }
 }

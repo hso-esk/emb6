@@ -37,126 +37,121 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-/*============================================================================*/
-/**
- *      \addtogroup emb6
- *      @{
- *      \addtogroup demo_coap
- *      @{
- *      \addtogroup demo_coap_server
- *      @{
+
+/*
+********************************************************************************
+*                                   INCLUDES
+********************************************************************************
 */
-/*! \file   res-rf.c
-
- \author Peter Lehmann
- \author Edgar Schmitt
- \author Artem Yushev
-
- \brief  Example resourse
-
- \version 0.0.1
- */
-/*============================================================================*/
-/*==============================================================================
- INCLUDE FILES
- =============================================================================*/
-
 #include "er-coap.h"
 #include "emb6.h"
 
-/*==============================================================================
- MACROS
- =============================================================================*/
+/*
+********************************************************************************
+*                                    MACROS
+********************************************************************************
+*/
 #define     LOGGER_ENABLE        LOGGER_DEMO_COAP
 #include    "logger.h"
 
-/*==============================================================================
- ENUMS
- =============================================================================*/
-
-/*==============================================================================
- LOCAL CONSTANTS
- =============================================================================*/
-
-/*==============================================================================
- LOCAL FUNCTION PROTOTYPES
- =============================================================================*/
-static void     _res_get_handler(void *request, void *response,
-                            uint8_t *buffer, uint16_t preferred_size,
-                            int32_t *offset);
-static void     _res_postput_handler(void *request, void *response,
-                            uint8_t *buffer, uint16_t preferred_size,
-                            int32_t *offset);
-static uint8_t _res_setTxPwr(const char* rpc_data, uint8_t c_len, void* p_resp);
-static uint8_t _res_setRxSens(const char* rpc_data, uint8_t c_len, void* p_resp);
+/*
+********************************************************************************
+*                          LOCAL FUNCTION DECLARATIONS
+********************************************************************************
+*/
+/* Handler for GET actions. For further details see the function definition */
+static void res_get_handler(void *request, void *response,
+        uint8_t *buffer, uint16_t preferred_size,
+        int32_t *offset);
 
 
-/*==============================================================================
- LOCAL VARIABLE DECLARATIONS
- =============================================================================*/
-RESOURCE(res_radio_info, "title=\"RADIO: ?p=rssi|pwr|sens\";rt=\"Radio\"",
-         _res_get_handler, NULL, NULL, NULL);
+/* Handler for POST/PUT actions. For further details see the function definition */
+static void res_postput_handler(void *request, void *response,
+        uint8_t *buffer, uint16_t preferred_size,
+        int32_t *offset);
 
-RESOURCE(res_radio_ctrl, "title=\"RADIO: POST/PUT pwr=<dB> sens=<dB>:\";rt=\"dB\"",
+/*
+********************************************************************************
+*                               GLOBAL VARIABLES
+********************************************************************************
+*/
+/* Resource definition of the main RADIO resource. This
+ * returns the all information about the radio settings */
+RESOURCE(res_radio_info,
+        "title=\"Radio Info\";type=\"Info\"",
+        res_get_handler,
+        NULL,
+        NULL,
+        NULL);
+
+/* Resource definition the main RADIO resource. This
+ * allows to change the Tx-Power of the transceiver */
+RESOURCE(res_radio_ctrl,
+        "title=\"Radio Control\";type=\"Control\"",
          NULL,
-         _res_postput_handler,
-         _res_postput_handler,
+         res_postput_handler,
+         res_postput_handler,
          NULL);
-
-RESOURCE(res_radio_txpwr, "title=\"RADIO: tx power:\";rt=\"Control\"",
-         NULL,
-         _res_postput_handler,
-         _res_postput_handler,
-         NULL);
-
-/*==============================================================================
- LOCAL FUNCTIONS
- =============================================================================*/
-static void _res_get_handler(void *request,   void *response,
-                            uint8_t *buffer, uint16_t preferred_size,
-                            int32_t *offset)
+/*
+********************************************************************************
+*                           LOCAL FUNCTION DEFINITIONS
+********************************************************************************
+*/
+/**
+ * \brief   Handler for getting data from the resource.
+ *
+ *          The RADIO resource can return the current info and settings of the
+ *          transceiver. Using the query ?info=<param> it is possible to
+ *          choose between RSSI(rssi), Tx-Power(pwr) and Rx-Sensivity (rx-sens).
+ */
+static void res_get_handler(void *request,   void *response,
+        uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
 {
-    uint8_t     c_length = 0;
-    const char* p = NULL;
-    char        rpc_param[64];
-    int8_t      c_success = 1;
-    e_nsErr_t  err = NETSTK_ERR_NONE;
-    uint8_t     rssi;
-    uint8_t     txpower;
-    uint8_t     sensitivity;
+    int len = 0;
+    const char* info = NULL;
+    char rpc_param[64];
+    int8_t success = 1;
+    unsigned int i_accept = -1;
 
+    e_nsErr_t err = NETSTK_ERR_NONE;
+    uint8_t rssi;
+    uint8_t txpower;
+    uint8_t sensitivity;
 
-    LOG2_INFO("Enter _res_get_handler() function");
-
+    /* get the current stack */
     s_ns_t* ps_ns = NULL;
     ps_ns = emb6_get();
 
-    unsigned int i_accept = -1;
+
     REST.get_header_accept(request, &i_accept);
 
-    if((c_length = REST.get_query_variable(request, "p", &p))) {
+    if( (ps_ns != NULL) && (ps_ns->rf != NULL) &&
+        (len = REST.get_query_variable(request, "p", &info))) {
+
+        /* info request found. Get all the information from the transceiver */
         ps_ns->rf->ioctrl(NETSTK_CMD_RF_RSSI_GET, &rssi, &err);
         ps_ns->rf->ioctrl(NETSTK_CMD_RF_SENS_GET, &sensitivity, &err);
         ps_ns->rf->ioctrl(NETSTK_CMD_RF_TXPOWER_GET, &txpower, &err);
 
-        if(strncmp(p, "rssi", c_length) == 0) {
+        if(strncmp(info, "rssi", len) == 0) {
             snprintf(rpc_param, 5, "%d", rssi);
             LOG1_INFO("GET request for RSSI: %s", rpc_param);
-        } else if(strncmp(p, "pwr", c_length) == 0) {
+        } else if(strncmp(info, "pwr", len) == 0) {
             snprintf(rpc_param, 5, "%d", txpower);
             LOG1_INFO("GET request for  TX_PWR: %s", rpc_param);
-        } else if(strncmp(p, "sens", sensitivity) == 0) {
-            snprintf(rpc_param, 5, "%d", txpower);
+        } else if(strncmp(info, "sens", len) == 0) {
+            snprintf(rpc_param, 5, "%d", sensitivity);
             LOG1_INFO("GET request for  RX_SENS: %s", rpc_param);
         } else {
             snprintf(rpc_param, 64 ,"RSSI [%d]: TX_PWR [%d]: RX_SENS [%d]",
                      rssi, txpower, sensitivity);
         }
     } else {
-        c_success = 0;
+        /* invalid operation */
+        success = 0;
     }
 
-    if (c_success && (ps_ns != NULL) && (ps_ns->rf != NULL))
+    if(success )
     {
         if(i_accept == -1 || i_accept == REST.type.TEXT_PLAIN)
         {
@@ -169,141 +164,84 @@ static void _res_get_handler(void *request,   void *response,
           REST.set_response_payload(response, msg, strlen(msg));
         }
     } else {
+        /* return invalid request */
         REST.set_response_status(response, REST.status.BAD_REQUEST);
     }
-
-    LOG2_INFO("Leave _res_get_handler() function");
 }
 
-static uint8_t _res_setTxPwr(const char* rpc_data, uint8_t c_len, void* p_resp)
+/**
+ * \brief   Handler for setting the radio transmission power.
+ *
+ *          The RADIO resource allows to set the current transmission
+ *          power and receiver sensivity in dBm. This can be done by using
+ *          the query variables ?pwr=<power> and ?sens=<sensivity>.
+ */
+static void res_postput_handler(void *request, void *response,
+        uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
 {
-    uint8_t     c_ret = 1;
-    int8_t      tx_pwr = 0;
-    s_ns_t*     ps_ns = emb6_get();
-    char        param[6];
-    uint8_t     i = 0;
-    e_nsErr_t  err = NETSTK_ERR_NONE;
-    uint8_t     act_txpower;
+    const char* p = NULL;
+    int len = 0;
+    int8_t val = 0;
+    uint8_t success = 1;
 
+    /* get the current stack */
+    e_nsErr_t err = NETSTK_ERR_NONE;
+    s_ns_t* ps_ns = NULL;
+    ps_ns = emb6_get();
 
-    if ((ps_ns == NULL) || (ps_ns->rf == NULL))
+    if( (ps_ns != NULL) && (ps_ns->rf != NULL) &&
+        (len = REST.get_query_variable(request, "pwr", &p)))
     {
-        LOG_ERR("POST method failed. Stack pointers NULL");
-        REST.set_response_status(p_resp, INTERNAL_SERVER_ERROR_5_00);
-        c_ret = 0;
-    }
+        int8_t tmpVal = 0;
 
-    if (c_ret) {
-        for (i=0;i<6;i++) {
-            param[i] = rpc_data[i];
+        /* Set Power ... get value from request */
+        val = (int8_t)atoi(p);
+
+        /* try to set the Tx Power and retrieve the value to check
+         * if it worked. */
+        ps_ns->rf->ioctrl(NETSTK_CMD_RF_TXPOWER_SET, &val, &err);
+
+        if( err != NETSTK_ERR_NONE ) {
+            /* an error occured when changing the tx power */
+            REST.set_response_status(response, INTERNAL_SERVER_ERROR_5_00);
         }
-        tx_pwr = (int8_t)atoi(param);
 
-        LOG1_INFO("Received POST request to change tx_pwr %s:[%d]",param,tx_pwr);
+        if( success )
+        {
+            /* check if the correct valu ewas set */
+            ps_ns->rf->ioctrl(NETSTK_CMD_RF_TXPOWER_GET, &tmpVal, &err);
 
-        if (tx_pwr > -20) {
-            LOG1_INFO("Guards passed, try to change parameters");
-            ps_ns->rf->off(&err);
-            ps_ns->rf->ioctrl(NETSTK_CMD_RF_TXPOWER_SET, &tx_pwr, &err);
-            ps_ns->rf->on(&err);
-
-            ps_ns->rf->ioctrl(NETSTK_CMD_RF_TXPOWER_GET, &act_txpower, &err);
-            if (tx_pwr != act_txpower) {
-                LOG_ERR("POST method failed. Value wasn't changed");
-                REST.set_response_status(p_resp, INTERNAL_SERVER_ERROR_5_00);
-                c_ret = 0;
-            } else {
-                LOG1_OK("POST method succeed");
-                REST.set_response_status(p_resp, REST.status.CHANGED);
+            if( (val != tmpVal) || (err != NETSTK_ERR_NONE) ) {
+                REST.set_response_status(response, INTERNAL_SERVER_ERROR_5_00);
             }
-        } else {
-            LOG_ERR("POST method failed. TX power too small");
-            REST.set_response_status(p_resp, PRECONDITION_FAILED_4_12);
-            c_ret = 0;
         }
 
-
-    }
-    return (c_ret);
-}
-
-static uint8_t _res_setRxSens(const char* rpc_data, uint8_t c_len, void* p_resp)
-{
-    uint8_t     c_ret = 1;
-    int8_t      rx_sens = 0;
-    char        param[6];
-    uint8_t     i;
-    s_ns_t*     ps_ns = emb6_get();
-    e_nsErr_t  err = NETSTK_ERR_NONE;
-    uint8_t     act_rx_sens;
-
-
-    if ((ps_ns == NULL) || (ps_ns->rf == NULL))
+    } else if( (ps_ns != NULL) && (ps_ns->rf != NULL) &&
+            (len = REST.get_query_variable(request, "sens", &p)))
     {
-        LOG_ERR("POST method failed. Stack pointers NULL");
-        REST.set_response_status(p_resp, INTERNAL_SERVER_ERROR_5_00);
-        c_ret = 0;
-    }
+        int8_t tmpVal = 0;
 
-    if (c_ret)
-    {
-        for (i=0;i<6;i++) {
-            param[i] = rpc_data[i];
+        /* Set Power ... get value from request */
+        val = (int8_t)atoi(p);
+
+        /* try to set the Tx Power and retrieve the value to check
+         * if it worked. */
+        ps_ns->rf->ioctrl(NETSTK_CMD_RF_SENS_GET, &val, &err);
+
+        if( err != NETSTK_ERR_NONE ) {
+            /* an error occured when changing the tx power */
+            REST.set_response_status(response, INTERNAL_SERVER_ERROR_5_00);
         }
-        rx_sens = (int8_t)atoi(param);
 
-        LOG1_INFO("Received POST request to change rx_sens %s:[%d]",param,rx_sens);
+        if( success )
+        {
+            /* check if the correct valu ewas set */
+            ps_ns->rf->ioctrl(NETSTK_CMD_RF_TXPOWER_GET, &tmpVal, &err);
 
-        if (rx_sens < 0) {
-            LOG1_INFO("Guards passed, try to change parameters");
-            ps_ns->rf->off(&err);
-            ps_ns->rf->ioctrl(NETSTK_CMD_RF_SENS_SET, &rx_sens, &err);
-            ps_ns->rf->on(&err);
-
-
-            ps_ns->rf->ioctrl(NETSTK_CMD_RF_SENS_GET, &act_rx_sens, &err);
-            if (rx_sens != act_rx_sens) {
-                LOG_ERR("POST method failed. Value wasn't changed");
-                REST.set_response_status(p_resp, INTERNAL_SERVER_ERROR_5_00);
-                c_ret = 0;
-            } else {
-                LOG1_OK("POST method succeed");
-                REST.set_response_status(p_resp, REST.status.CHANGED);
+            if( (val != tmpVal) || (err != NETSTK_ERR_NONE) ) {
+                REST.set_response_status(response, INTERNAL_SERVER_ERROR_5_00);
             }
-        } else {
-            LOG_ERR("POST method failed. rx_sens should be less than 0");
-            REST.set_response_status(p_resp, PRECONDITION_FAILED_4_12);
-            c_ret = 0;
         }
     }
-
-    return (c_ret);
 }
 
-static void _res_postput_handler(void *request,   void *response,
-                                 uint8_t *buffer, uint16_t preferred_size,
-                                 int32_t *offset)
-{
-    const char*             p = NULL;
-    uint8_t                 c_ret = 0;
-    uint8_t                 c_len = 0;
-
-    LOG2_INFO("Enter _res_postput_handler() function");
-
-    if((c_len = REST.get_query_variable(request, "pwr", &p)) > 0) {
-        LOG2_INFO("POST tx power %s[%d]",p,c_len);
-        c_ret = _res_setTxPwr(p,c_len,response);
-    }
-
-    if((c_len = REST.get_query_variable(request, "sens", &p)) > 0) {
-        LOG2_INFO("POST rx sens %s[%d]",p,c_len);
-        c_ret = _res_setRxSens(p, c_len, response);
-    }
-
-    if (!c_ret) {
-        LOG_ERR("POST method failed. Error in request processing");
-        REST.set_response_status(response, PRECONDITION_FAILED_4_12);
-    }
-
-    LOG2_INFO("Leave _res_postput_handler() function");
-}

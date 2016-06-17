@@ -160,7 +160,6 @@ static void _native_init( void *p_netstk, e_nsErr_t *p_err )
     FILE* fp;
     char pc_node_info[NODE_INFO_MAX];
     char* pch;
-    char defaultChannel[20];
 
     uint16_t addr;    // mac address of node read from configuration file
     uint8_t  addr_6;  // high byte of two last parts of mac address
@@ -194,17 +193,6 @@ static void _native_init( void *p_netstk, e_nsErr_t *p_err )
         _printAndExit( "Can't open this file\n" );
     }
 
-    /* subscribe to default channel if config not found */
-    // TODO: perhaps, excess regex
-    sprintf(defaultChannel, ".*_0x%02X%02X_.*\0",
-        mac_phy_config.mac_address[6],
-        mac_phy_config.mac_address[7]);
-    pc_subscribe_ch = (char *)malloc((strlen(defaultChannel)+1)*sizeof(char));
-    strcpy(pc_subscribe_ch, defaultChannel);
-    subscr = lcm_subscribe( ps_lcm, pc_subscribe_ch, _beautiful_split_messages, NULL );
-    LOG1_INFO("Subscription channel = %s (default)", pc_subscribe_ch);
-    
-
     /* assemble the parser command */
     while( !feof(fp) )
     {
@@ -232,13 +220,11 @@ static void _native_init( void *p_netstk, e_nsErr_t *p_err )
         {
             int tmpChLen = strlen(pch) + 10;
             char* tmpCh = malloc( tmpChLen );
-            pc_subscribe_ch = malloc( tmpChLen );
             if( tmpCh != NULL )
             {
                 snprintf( tmpCh, tmpChLen, ".*_%s_.*", pch );
                 subscr = lcm_subscribe( ps_lcm, tmpCh, _beautiful_split_messages, NULL );
                 LOG1_INFO("Subscription channel = %s", tmpCh);
-                strcpy(pc_subscribe_ch, tmpCh);
                 free( tmpCh );
             }
             else
@@ -491,6 +477,7 @@ static void _beautiful_split_messages( const lcm_recv_buf_t *rps_rbuf,
         //LOG_INFO("%s:\n\t\"%s\"\n", "I've got a CMD", line);
         printf("%s:\n\t\"%s\"\n", "I've got a CMD", line);
         _beautiful_comand_parser(line);
+        free(line);
     }
     else
     {
@@ -521,6 +508,7 @@ static void _beautiful_comand_parser( const char *line)
         lcm_unsubscribe(ps_lcm, subscr);
         subscr = lcm_subscribe( ps_lcm, pc_subscribe_ch, _beautiful_split_messages, NULL );
         lcm_publish( ps_lcm, "EMB6COMMAND", pc_subscribe_ch, strlen(pc_subscribe_ch)+1 );
+        free(new_channel);
     }
     if (strncmp(line, "publish name", 8) == 0)
     {
@@ -532,6 +520,7 @@ static void _beautiful_comand_parser( const char *line)
         memset( pc_publish_ch, '\0', NODE_INFO_MAX );
         strncpy(pc_publish_ch, new_channel, length);
         lcm_publish( ps_lcm, "EMB6COMMAND", pc_publish_ch, strlen(pc_publish_ch)+1 );
+        free(new_channel);
     }
     if (strncmp(line, "exit", 4) == 0)
     {
