@@ -211,19 +211,46 @@ void hal_extiDisable(en_targetExtInt_t e_extInt)
 /*==============================================================================
   hal_delay_us()
  =============================================================================*/
-void    hal_delay_us(uint32_t l_delay)
+void hal_delay_us(uint32_t l_delay)
 {
     tim.tv_nsec = l_delay*1000;
     nanosleep(&tim, NULL);
 } /* hal_delay_us() */
-
-
-void hal_enterCritical(void){}
-void hal_exitCritical(void){};
-void hal_ledOff(uint16_t ui_led){}
-void hal_ledOn(uint16_t ui_led){}
-int8_t hal_init (void){
-
+/*==============================================================================
+ hal_enterCritical()
+ =============================================================================*/
+void hal_enterCritical(void)
+{
+    /* Not implemented */
+}
+/*==============================================================================
+ hal_exitCritical()
+ =============================================================================*/
+void hal_exitCritical(void)
+{
+    /* Not implemented */
+}
+/*==============================================================================
+ hal_ledOff()
+ =============================================================================*/
+void hal_ledOff(uint16_t ui_led)
+{
+    /* LED disable */
+    LOG1_INFO("LED-OFF: %d", ui_led);
+}
+/*==============================================================================
+ hal_ledOn()
+ =============================================================================*/
+void hal_ledOn(uint16_t ui_led)
+{
+    /* LED enable */
+    LOG1_INFO("LED-ON: %d", ui_led);
+}
+/*==============================================================================
+ hal_init()
+ =============================================================================*/
+int8_t hal_init (void)
+{
 #if DEMO_USE_EXTIF
     struct sigaction saio;
     struct sigaction saint;
@@ -267,12 +294,31 @@ int8_t hal_init (void){
 
     return 1;
 }
-void hal_watchdogReset(void){}
-void hal_watchdogStart(void){}
-void hal_watchdogStop(void){}
-
-
-uint8_t    hal_getrand(void)
+/*==============================================================================
+ hal_watchdogReset()
+ =============================================================================*/
+void hal_watchdogReset(void)
+{
+    /* Not implemented */
+}
+/*==============================================================================
+ hal_watchdogStart()
+ =============================================================================*/
+void hal_watchdogStart(void)
+{
+    /* Not implemented */
+}
+/*==============================================================================
+ hal_watchdogStop()
+ =============================================================================*/
+void hal_watchdogStop(void)
+{
+    /* Not implemented */
+}
+/*==============================================================================
+ hal_getrand()
+ =============================================================================*/
+uint8_t hal_getrand(void)
 {
     // We don't need special kind of seed or rand.
     srand(time(NULL));
@@ -287,25 +333,21 @@ clock_time_t hal_getTRes(void)
 /*==============================================================================
   hal_getTick()
  =============================================================================*/
-uint32_t     hal_getTick(void)
+uint32_t hal_getTick(void)
 {
-      struct timeval tv;
-
-      gettimeofday(&tv, NULL);
-
-      return ((tv.tv_sec * 1000 + tv.tv_usec / 1000) & 0xffffffff);
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return ((tv.tv_sec * 1000 + tv.tv_usec / 1000) & 0xffffffff);
 } /* hal_getTick() */
 
 /*==============================================================================
   hal_getSec()
  =============================================================================*/
-uint32_t     hal_getSec(void)
+uint32_t hal_getSec(void)
 {
-      struct timeval tv;
-
-      gettimeofday(&tv, NULL);
-
-      return tv.tv_sec;
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return tv.tv_sec;
 } /* hal_getSec() */
 /** @} */
 /** @} */
