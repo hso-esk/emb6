@@ -29,16 +29,6 @@
  * This file is part of the Contiki operating system.
  */
 
-/**
- * \file
- *      Example resource
- * \author
- *      Matthias Kovatsch <kovatsch@inf.ethz.ch>
- *      modified by Peter Lehmann <peter.lehmann@hs-offenburg.de>
- *
- */
-
-
 /*
 ********************************************************************************
 *                                   INCLUDES
@@ -53,7 +43,6 @@
 *                          LOCAL FUNCTION DECLARATIONS
 ********************************************************************************
 */
-
 /* Handler for GET actions. For further details see the function definition */
 static void res_get_handler(void *request, void *response, uint8_t *buffer,
         uint16_t preferred_size, int32_t *offset);
@@ -82,20 +71,19 @@ RESOURCE(res_led,
 *                           LOCAL FUNCTION DEFINITIONS
 ********************************************************************************
 */
-
 /**
  * \brief   Handler for getting data from the resource.
  *
  *          The LED resource has no data to get However it is possible
  *          to get a description of how to control the resource..
  */
-static void res_get_handler(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
+static void res_get_handler(void *request, void *response, uint8_t *buffer,
+        uint16_t preferred_size, int32_t *offset)
 {
   /* Some data that has the length up to REST_MAX_CHUNK_SIZE. For more, see the chunk resource. */
   char const *const message = "Use POST to toggle the LEDs using parameters (e.g. POST: led=1)";
-  int length = strlen(message);
+  int length = snprintf( (char*)buffer, preferred_size, message );
 
-  memcpy(buffer, message, length);
   REST.set_header_content_type(response, REST.type.TEXT_PLAIN);
   REST.set_header_etag(response, (uint8_t *)&length, 1);
   REST.set_response_payload(response, buffer, length);

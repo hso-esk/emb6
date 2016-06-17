@@ -44,6 +44,7 @@
 *                                   INCLUDES
 ********************************************************************************
 */
+#include "emb6.h"
 #include "er-coap.h"
 
 /*
@@ -54,7 +55,7 @@
 
 /* Handler for GET actions. For further details see the function definition */
 static void res_get_handler(void *request, void *response, uint8_t *buffer,
-                            uint16_t preferred_size, int32_t *offset);
+        uint16_t preferred_size, int32_t *offset);
 
 /*
 ********************************************************************************
@@ -64,7 +65,7 @@ static void res_get_handler(void *request, void *response, uint8_t *buffer,
 /* Resource definition of a simple sensor example. This
  * returns the temperature */
 RESOURCE(res_temp,
-         "title=\"Temperature sensor\";type=\"Text\"",
+         "title=\"Temperature sensor\";type=\"Info\"",
          res_get_handler,
          NULL,
          NULL,
@@ -83,29 +84,35 @@ RESOURCE(res_temp,
  *          using the query ?unit=celcius for Celcius or ?unit=fahrenheit for Fahrenheit.
  */
 static void res_get_handler(void *request, void *response, uint8_t *buffer,
-                uint16_t preferred_size, int32_t *offset)
+        uint16_t preferred_size, int32_t *offset)
 {
     size_t len;
     const char* unit = NULL;
     char* message = NULL;
+    int length;
 
     if((len = REST.get_query_variable(request, "unit", &unit))) {
 
         if(strncmp(unit, "celcius", len) == 0) {
+            /* Ceclius chosen as unit */
             message ="Temperature 22°C";
         }
         else if(strncmp(unit, "fahrenheit", len) == 0) {
+            /* Fahrenheit chosen as unit */
             message ="Temperature 71,6°F";
         }
         else{
+            /* Invalid unit */
             message ="Invalid unit: Please use ?unit=<celcius|fahrenheit>";
         }
     } else {
+        /* No unit */
         message ="No unit specified: Please use ?unit=<celcius|fahrenheit>";
     }
 
-    int length = strlen(message);
-    memcpy(buffer, message, length);
+    message = "Use POST to toggle the LEDs using parameters (e.g. POST: led=1)";
+    length = snprintf( (char*)buffer, preferred_size, message );
+
     REST.set_header_content_type(response, REST.type.TEXT_PLAIN);
     REST.set_header_etag(response, (uint8_t *)&length, 1);
     REST.set_response_payload(response, buffer, length);

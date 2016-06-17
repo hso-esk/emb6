@@ -37,24 +37,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-/*============================================================================*/
-/**
- *      \addtogroup emb6
- *      @{
- *      \addtogroup demo_coap
- *      @{
- *      \addtogroup demo_coap_server
- *      @{
-*/
-/*! \file   demo_coap_srv.c
 
- \author Peter Lehmann
-
- \brief  CoAP Server example application
-
- \version 0.0.1
- */
-/*============================================================================*/
 
 /*==============================================================================
  INCLUDE FILES
@@ -76,7 +59,7 @@
 * The build system automatically compiles the resources in the corresponding sub-directory.
 */
 extern resource_t
-  res_push,
+  res_tick,
   res_radio_info,
   res_radio_ctrl,
   res_temp,
@@ -101,11 +84,12 @@ int8_t demo_coapInit(void)
 * WARNING: Activating twice only means alternatle path, not two instances!
 * All static variables are the same for each URI path.
 */
+
+    rest_activate_resource(&res_tick, "tick");
     rest_activate_resource(&res_temp, "dev/temp");
-    rest_activate_resource(&res_push, "test/push");
     rest_activate_resource(&res_led, "dev/led");
-    rest_activate_resource(&res_radio_info, "dev/txrx/inf");
-    rest_activate_resource(&res_radio_ctrl, "dev/txrx/ctrl");
+    rest_activate_resource(&res_radio_info, "radio/info");
+    rest_activate_resource(&res_radio_ctrl, "radio/control");
 
     return 1;
 }
