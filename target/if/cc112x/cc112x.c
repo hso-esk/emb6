@@ -348,6 +348,12 @@ static void rf_readRxFifo(struct s_rf_ctx *p_ctx, uint8_t numBytes);
 static void rf_setPktLen(uint8_t mode, uint16_t len);
 #endif
 
+static void rf_sleep_entry(struct s_rf_ctx *p_ctx);
+static void rf_sleep_exit(struct s_rf_ctx *p_ctx);
+
+static void rf_on_entry(struct s_rf_ctx *p_ctx);
+static void rf_on_exit(struct s_rf_ctx *p_ctx);
+
 static void rf_rx_entry(struct s_rf_ctx *p_ctx);
 static void rf_rx_sync(struct s_rf_ctx *p_ctx);
 static void rf_rx_chksum(struct s_rf_ctx *p_ctx);
@@ -372,8 +378,6 @@ static void rf_cca(e_nsErr_t *p_err);
 #if (NETSTK_CFG_RF_RETX_EN == TRUE)
 static void cc112x_retx(e_nsErr_t *p_err);
 #endif
-
-static void rf_idle_entry(struct s_rf_ctx *p_ctx);
 
 static void rf_reset(void);
 static void rf_chkPartnumber(e_nsErr_t *p_err);
@@ -467,8 +471,8 @@ static void rf_init(void *p_netstk, e_nsErr_t *p_err)
   rt_tmr_create(&p_ctx->dbgTmr, E_RT_TMR_TYPE_PERIODIC, 10000, rf_dbgTmrCb, NULL);
 #endif
 
-  /* initial transition to IDLE state */
-  rf_idle_entry(p_ctx);
+  /* transition to SLEEP state */
+  rf_sleep_entry(p_ctx);
 }
 
 
@@ -486,22 +490,17 @@ static void rf_on(e_nsErr_t *p_err)
 
   struct s_rf_ctx *p_ctx = &rf_ctx;
 
-  /* go to state IDLE */
-  rf_idle_entry(p_ctx);
+  /* is the driver sleeping? */
+  if ((p_ctx->state & 0xF0) == RF_STATE_SLEEP) {
+    /* then exit SLEEP state */
+    rf_sleep_exit(p_ctx);
 
-  /* enable radio interrupts */
-  RF_INT_ENABLED();
-
-  /* transit to RX state */
-  rf_rx_entry(p_ctx);
+    /* and enters ON state */
+    rf_on_entry(p_ctx);
+  }
 
   /* indicate successful operation */
   *p_err = NETSTK_ERR_NONE;
-
-  /* debugging information */
-#if (NETSTK_CFG_RF_DEBUG_EN == TRUE)
-  rt_tmr_start(&p_ctx->dbgTmr);
-#endif
 }
 
 /**
@@ -515,8 +514,19 @@ static void rf_off(e_nsErr_t *p_err) {
   }
 #endif
 
-  /* TODO missing implementation */
-  *p_err = NETSTK_ERR_FATAL;
+  struct s_rf_ctx *p_ctx = &rf_ctx;
+
+  /* is the driver on? */
+  if ((p_ctx->state & 0xF0) != RF_STATE_SLEEP) {
+    /* then exits ON state */
+    rf_on_exit(p_ctx);
+
+    /* then turn it off */
+    rf_sleep_entry(p_ctx);
+  }
+
+  /* set return error code */
+  *p_err = NETSTK_ERR_NONE;
 }
 
 /**
@@ -1055,18 +1065,54 @@ static void rf_pktRxTxEndISR(void *p_arg) {
 */
 
 /**
- * @brief handle entry function of IDLE state
+ * @brief handle entry function of SLEEP state
  * @param p_ctx point to variable holding radio context structure
  */
-static void rf_idle_entry(struct s_rf_ctx *p_ctx) {
-  LED_RX_OFF();
-  LED_TX_OFF();
+static void rf_sleep_entry(struct s_rf_ctx *p_ctx) {
+  /* finally put the radio to POWERDOWN state */
+  p_ctx->state = RF_STATE_SLEEP;
+  cc112x_spiCmdStrobe(CC112X_SPWD);
+}
 
+
+/**
+ * @brief handle exit function of SLEEP state
+ * @param p_ctx point to variable holding radio context structure
+ */
+static void rf_sleep_exit(struct s_rf_ctx *p_ctx) {
   p_ctx->state = RF_STATE_IDLE;
   cc112x_spiCmdStrobe(CC112X_SIDLE);
-  while (RF_READ_CHIP_STATE() != RF_CHIP_STATE_IDLE) {
+  while (RF_READ_CHIP_STATE() != RF_STATE_IDLE) {
     /* wait until the chip goes to IDLE state */
   }
+}
+
+
+/**
+ * @brief handle entry function of ON state
+ * @param p_ctx point to variable holding radio context structure
+ */
+static void rf_on_entry(struct s_rf_ctx *p_ctx) {
+  /* enable radio interrupts handling */
+  RF_INT_ENABLED();
+
+  /* transition to RX_IDLE state */
+  rf_rx_entry(p_ctx);
+}
+
+
+/**
+ * @brief handle exit function of ON state
+ * @param p_ctx point to variable holding radio context structure
+ */
+static void rf_on_exit(struct s_rf_ctx *p_ctx) {
+  /* disable radio interrupts handling */
+  RF_INT_DISABLED();
+
+  /* put the radio to IDLE state and flush FIFOs */
+  cc112x_spiCmdStrobe(CC112X_SIDLE);
+  cc112x_spiCmdStrobe(CC112X_SFRX);
+  cc112x_spiCmdStrobe(CC112X_SFTX);
 }
 
 
