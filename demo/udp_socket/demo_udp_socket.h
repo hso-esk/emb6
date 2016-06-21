@@ -38,17 +38,25 @@
  *
  */
 /*============================================================================*/
-/**
- * \file    demo_udp_socket.h
- * \author  Phuong Nguyen
- * \version 0.0.2
- *
- * \brief   UDP demo application using emb6 stack
- */
 
-#ifndef __ADDON_DEMO_UDP_ALIVE_H__
-#define __ADDON_DEMO_UDP_ALIVE_H__
 
+#ifndef __DEMO_UDP_SOCKET_H__
+#define __DEMO_UDP_SOCKET_H__
+
+
+/*
+********************************************************************************
+*                                   INCLUDES
+********************************************************************************
+*/
+#include "emb6.h"
+
+
+/*
+********************************************************************************
+*                           API FUNCTION DECLARATIONS
+********************************************************************************
+*/
 /**
  * \brief   Initializes UDP demo application
  *
@@ -66,4 +74,4 @@ int8_t demo_udpSocketInit(void);
  */
 int8_t demo_udpSocketCfg(s_ns_t *p_netStack);
 
-#endif /* __ADDON_DEMO_UDP_ALIVE_H__ */
+#endif /* __DEMO_UDP_SOCKET_H__ */
