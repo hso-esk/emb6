@@ -9,6 +9,8 @@ coap_cli    = ('coap','client')
 udp_alive   = ('udp_alive', '')
 udp_srv     = ('udp_socket','server')
 udp_cli     = ('udp_socket','client')
+udps_srv    = ('udp_socket_simple','server')
+udps_cli    = ('udp_socket_simple','client')
 mqtt        = ('mqtt','')
 extif       = ('extif','')
 aptb_srv    = ('aptb','server')
@@ -423,6 +425,30 @@ trg += [{
 trg += [{
     'id'        : 'ds_lux',
     'apps_conf' : [ dtls_srv ],
+    'bsp'       : get_descr(bsp, 'native')
+}]
+
+trg += [{
+    'id'        : 'us_luxsrv',
+    'apps_conf' : [ udp_srv ],
+    'bsp'       : get_descr(bsp, 'native')
+}]
+
+trg += [{
+    'id'        : 'uc_luxcli',
+    'apps_conf' : [ udp_cli ],
+    'bsp'       : get_descr(bsp, 'native')
+}]
+
+trg += [{
+    'id'        : 'uss_luxsrv',
+    'apps_conf' : [ udps_srv ],
+    'bsp'       : get_descr(bsp, 'native')
+}]
+
+trg += [{
+    'id'        : 'ucs_luxcli',
+    'apps_conf' : [ udps_cli ],
     'bsp'       : get_descr(bsp, 'native')
 }]
 

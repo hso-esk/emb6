@@ -859,7 +859,12 @@ void uip_log(char *msg);
 #define LOGGER_DEMO_UDP_SOCKET              	FALSE
 #endif
 
-/** DEMO UDP example                       	(see demo_exudp.c) */
+ /** DEMO UDP socket simple example        (see demo_udp_socket_simple.c) */
+ #ifndef LOGGER_DEMO_UDP_SOCKET_SIMPLE
+ #define LOGGER_DEMO_UDP_SOCKET_SIMPLE      TRUE
+ #endif
+
+/** DEMO UDP example                        (see demo_exudp.c) */
 #ifndef LOGGER_DEMO_UDPIAA
 #define LOGGER_DEMO_UDPIAA                 	FALSE
 #endif
