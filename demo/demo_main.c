@@ -82,6 +82,10 @@
 #include "demo_udp_socket.h"
 #endif
 
+#if DEMO_USE_UDP_SOCKET_SIMPLE
+#include "demo_udp_socket_simple.h"
+#endif
+
 #if DEMO_USE_COAP
 #if CONF_USE_SERVER
 #include "demo_coap_srv.h"
@@ -231,6 +235,10 @@ static void loc_demoAppsConf(s_ns_t* pst_netStack, e_nsErr_t *p_err)
   demo_udpSocketCfg(pst_netStack);
   #endif
 
+  #if DEMO_USE_UDP_SOCKET_SIMPLE
+  demo_udpSocketSimpleCfg(pst_netStack);
+  #endif
+
   #if DEMO_USE_APTB
   demo_aptbConf(pst_netStack);
   #endif
@@ -290,6 +298,12 @@ static uint8_t loc_demoAppsInit(void)
 
   #if DEMO_USE_UDP_SOCKET
   if (!demo_udpSocketInit()) {
+      return 0;
+  }
+  #endif
+
+  #if DEMO_USE_UDP_SOCKET_SIMPLE
+  if (!demo_udpSocketSimpleInit()) {
       return 0;
   }
   #endif

@@ -37,24 +37,12 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-/**  \addtogroup emb6
- *      @{
- *      \addtogroup bsp Board Support Package
- *   @{
- *   \addtogroup board
- *   @{
- *      \addtogroup x86 x86 emulation with a TCPIP based fake radio interface
- *      				   specific configuration
- *   @{
- */
-/*! \file   x86/board_conf.c
+/*============================================================================*/
 
-    \author Artem Yushev, 
 
-    \brief  Board Configuration for x86 emulation
+#ifndef __DEMO_UDP_SOCKET_SIMPLE_H__
+#define __DEMO_UDP_SOCKET_SIMPLE_H__
 
-    \version 0.0.1
-*/
 
 /*
 ********************************************************************************
@@ -63,34 +51,27 @@
 */
 #include "emb6.h"
 
-#include "board_conf.h"
-#include "hwinit.h"
-#include "etimer.h"
-#include "etimer.h"
-#include "bsp.h"
-#include "logger.h"
 
-/** Enable or disable logging */
-#define        LOGGER_ENABLE          LOGGER_BSP
+/*
+********************************************************************************
+*                           API FUNCTION DECLARATIONS
+********************************************************************************
+*/
+/**
+ * \brief   Initializes simple UDP demo application
+ *
+ * \return  0 when success, otherwise -1
+ */
+int8_t demo_udpSocketSimpleInit(void);
 
-uint8_t board_conf(s_ns_t* p_netstk)
-{
-  uint8_t c_ret = 0;
 
-  if (p_netstk != NULL) {
-    p_netstk->dllc = &dllc_driver_802154;
-    p_netstk->mac  = &mac_driver_null;
-    p_netstk->phy  = &phy_driver_null;
-    p_netstk->rf   = &rf_driver_native;
-    etimer_init();
-    c_ret = 1;
-  } else {
-    LOG_ERR("Network stack pointer is NULL");
-  }
+/**
+ * \brief   Configures simple UDP demo application
+ *
+ * \param   p_netStack  Pointer to NET stack
+ *
+ * \return  0 when success, otherwise -1
+ */
+int8_t demo_udpSocketSimpleCfg(s_ns_t *p_netStack);
 
-  return c_ret;
-}
-/** @} */
-/** @} */
-/** @} */
-/** @} */
+#endif /* __DEMO_UDP_SOCKET_SIMPLE_H__ */

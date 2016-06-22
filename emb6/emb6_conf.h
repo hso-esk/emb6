@@ -816,97 +816,102 @@ void uip_log(char *msg);
 /** Core logging, should be TRUE for almost all cases except for production
 * (see emb6.c) */
 #ifndef LOGGER_CORE
-#define LOGGER_CORE                        	FALSE
+#define LOGGER_CORE                         FALSE
 #endif
 
-/** Hardware abstraction layer functions   	(see target.c) */
+/** Hardware abstraction layer functions    (see target.c) */
 #ifndef LOGGER_HAL
-#define LOGGER_HAL                         	FALSE
+#define LOGGER_HAL                          FALSE
 #endif
 
-/** Board support package                  	(see bsp.c) */
+/** Board support package                   (see bsp.c) */
 #ifndef LOGGER_BSP
-#define LOGGER_BSP                        	FALSE
+#define LOGGER_BSP                          FALSE
 #endif
 
-/** Main functions                         	(see emb6_main.c) */
+/** Main functions                          (see emb6_main.c) */
 #ifndef LOGGER_MAIN
-#define LOGGER_MAIN                        	TRUE
+#define LOGGER_MAIN                         FALSE
 #endif
 
-/** Event process functions                	(see llc_xxx.c) */
+/** Event process functions                 (see llc_xxx.c) */
 #ifndef LOGGER_LLC
-#define LOGGER_LLC                         	FALSE
+#define LOGGER_LLC                          FALSE
 #endif
 
-/** Event process functions                	(see mac_xxx.c) */
+/** Event process functions                 (see mac_xxx.c) */
 #ifndef LOGGER_MAC
-#define LOGGER_MAC                         	FALSE
+#define LOGGER_MAC                          FALSE
 #endif
 
-/** Event process functions                	(see phy_xxx.c) */
+/** Event process functions                 (see phy_xxx.c) */
 #ifndef LOGGER_PHY
-#define LOGGER_PHY                         	FALSE
+#define LOGGER_PHY                          FALSE
 #endif
 
-/** Radio functions                        	(see $(IF).c) */
+/** Radio functions                         (see $(IF).c) */
 #ifndef LOGGER_RADIO
-#define LOGGER_RADIO                       	FALSE
+#define LOGGER_RADIO                        FALSE
 #endif
 
-/** DEMO UDP socket example                 	(see demo_udp_socket.c) */
+/** DEMO UDP socket example                 (see demo_udp_socket.c) */
 #ifndef LOGGER_DEMO_UDP_SOCKET
-#define LOGGER_DEMO_UDP_SOCKET              	FALSE
+#define LOGGER_DEMO_UDP_SOCKET              FALSE
 #endif
 
-/** DEMO UDP example                       	(see demo_exudp.c) */
+ /** DEMO UDP socket simple example        (see demo_udp_socket_simple.c) */
+ #ifndef LOGGER_DEMO_UDP_SOCKET_SIMPLE
+ #define LOGGER_DEMO_UDP_SOCKET_SIMPLE      FALSE
+ #endif
+
+/** DEMO UDP example                        (see demo_exudp.c) */
 #ifndef LOGGER_DEMO_UDPIAA
-#define LOGGER_DEMO_UDPIAA                 	FALSE
+#define LOGGER_DEMO_UDPIAA                  FALSE
 #endif
 
-/** DEMO APTB example                      	(see demo_aptb_xxx.c) */
+/** DEMO APTB example                       (see demo_aptb_xxx.c) */
 #ifndef LOGGER_DEMO_APTB
-#define LOGGER_DEMO_APTB                   	FALSE
+#define LOGGER_DEMO_APTB                    FALSE
 #endif
 
-/** DEMO COAP example                      	(see demo_coap_*.c) */
+/** DEMO COAP example                       (see demo_coap_*.c) */
 #ifndef LOGGER_DEMO_COAP
-#define LOGGER_DEMO_COAP                   	FALSE
+#define LOGGER_DEMO_COAP                    FALSE
 #endif
 
-/** DEMO DTLS example                      	(see demo_dtls_*.c) */
+/** DEMO DTLS example                       (see demo_dtls_*.c) */
 #ifndef LOGGER_DEMO_DTLS
-#define LOGGER_DEMO_DTLS                   	FALSE
+#define LOGGER_DEMO_DTLS                    FALSE
 #endif
 
-/** DEMO MDNS example                      	(see demo_mdns_*.c) */
+/** DEMO MDNS example                       (see demo_mdns_*.c) */
 #ifndef LOGGER_DEMO_MDNS
-#define LOGGER_DEMO_MDNS                   	FALSE
+#define LOGGER_DEMO_MDNS                    FALSE
 #endif
 
-/** DEMO SNIFFER                           	(see demo_sniffer.c) */
+/** DEMO SNIFFER                            (see demo_sniffer.c) */
 #ifndef LOGGER_DEMO_SNIFFER
-#define LOGGER_DEMO_SNIFFER                	FALSE
+#define LOGGER_DEMO_SNIFFER                 FALSE
 #endif
 
-/** DEMO TESTSUITE                         	(see tessuite.c) */
+/** DEMO TESTSUITE                          (see tessuite.c) */
 #ifndef LOGGER_DEMO_TESTSUITE
-#define LOGGER_DEMO_TESTSUITE             	FALSE
+#define LOGGER_DEMO_TESTSUITE               FALSE
 #endif
 
-/** Event timer functions                  	(see etimer.c) */
+/** Event timer functions                   (see etimer.c) */
 #ifndef LOGGER_ETIMER
-#define LOGGER_ETIMER                      	FALSE
+#define LOGGER_ETIMER                       FALSE
 #endif
 
-/** Callback timer functions               	(see ctimer.c) */
+/** Callback timer functions                (see ctimer.c) */
 #ifndef LOGGER_CTIMER
-#define LOGGER_CTIMER                      	FALSE
+#define LOGGER_CTIMER                       FALSE
 #endif
 
-/** Event process functions                	(see evproc.c) */
+/** Event process functions                 (see evproc.c) */
 #ifndef LOGGER_EVPROC
-#define LOGGER_EVPROC                      	FALSE
+#define LOGGER_EVPROC                       FALSE
 #endif
 
 
