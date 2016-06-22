@@ -110,9 +110,7 @@ static void res_get_handler(void *request, void *response, uint8_t *buffer,
         message ="No unit specified: Please use ?unit=<celcius|fahrenheit>";
     }
 
-    message = "Use POST to toggle the LEDs using parameters (e.g. POST: led=1)";
     length = snprintf( (char*)buffer, preferred_size, message );
-
     REST.set_header_content_type(response, REST.type.TEXT_PLAIN);
     REST.set_header_etag(response, (uint8_t *)&length, 1);
     REST.set_response_payload(response, buffer, length);
