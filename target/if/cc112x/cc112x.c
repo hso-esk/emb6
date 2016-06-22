@@ -123,6 +123,8 @@
 #define RF_CFG_NUM_TXBYTES                  (RF_CFG_FIFO_SIZE - RF_CFG_NUM_RXBYTES)
 #define RF_CFG_NUM_FREE_TXBYTES             (RF_CFG_FIFO_THR + 1)
 
+#define RF_CFG_TX_FIFO_THR                  (uint8_t)(  30U )
+
 /*!< Maximum packet length */
 #define RF_MAX_PACKET_LEN                   (uint16_t)(PHY_PSDU_MAX + PHY_HEADER_LEN)
 
@@ -557,7 +559,24 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
   /* otherwise start transmission process */
 
   /* write frame to send into TX FIFO */
-  cc112x_spiTxFifoWrite(p_data, len);
+  uint16_t txNumRxBytes;
+  uint8_t *txDataPtr;
+
+  txNumRxBytes = len;
+  txDataPtr = p_data;
+
+  while (txNumRxBytes > 0) {
+    if (txNumRxBytes > RF_CFG_TX_FIFO_THR) {
+      cc112x_spiTxFifoWrite(txDataPtr, RF_CFG_TX_FIFO_THR);
+      txNumRxBytes -= RF_CFG_TX_FIFO_THR;
+      txDataPtr += RF_CFG_TX_FIFO_THR;
+    }
+    else {
+      cc112x_spiTxFifoWrite(txDataPtr, txNumRxBytes);
+      txNumRxBytes = 0;
+      p_data += txNumRxBytes;
+    }
+  }
 
   /* is IEEE Std. 802.15.4g supported? */
 #if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
