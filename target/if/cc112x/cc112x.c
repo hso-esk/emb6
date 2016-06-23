@@ -282,7 +282,7 @@ struct s_rf_ctx {
 
   e_nsRfOpMode cfgOpMode;
   uint8_t cfgFreqChanNum;
-  uint8_t worEnabled;
+  uint8_t cfgWOREnabled;
   uint8_t isAckRequired;
 
   uint16_t rxBytesCounter;
@@ -719,7 +719,7 @@ static void rf_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err) {
 
     case NETSTK_CMD_RF_WOR_EN:
       if (p_val) {
-        rf_ctx.worEnabled = *((uint8_t *) p_val);
+        rf_ctx.cfgWOREnabled = *((uint8_t *) p_val);
       } else {
         *p_err = NETSTK_ERR_INVALID_ARGUMENT;
       }
