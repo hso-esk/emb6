@@ -136,6 +136,12 @@ s_mac_phy_conf_t mac_phy_config = {
     .fcs_len          = 2,                    /* 16-bit CRC */
     .op_mode          = NETSTK_RF_OP_MODE_1,  /* 2-FSK */
     .chan_num         = 26,                   /* 868.325 MHz */
+
+#if (NETSTK_CFG_WOR_EN == TRUE)
+    .preamble_len     = 24,
+#else
+    .preamble_len     = 4,
+#endif
 };
 
 

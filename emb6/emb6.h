@@ -540,7 +540,8 @@ typedef struct mac_phy_configuration
     uint8_t chan_num;
     /** IEEE Std. 802.15.4g operating mode */
     e_nsRfOpMode op_mode;
-
+    /** Preamble length in octets */
+    uint8_t preamble_len;
 }s_mac_phy_conf_t;
 
 /*! MAC configuration struct, do not change */
