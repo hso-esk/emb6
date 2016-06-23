@@ -87,6 +87,9 @@ static s_ns_t       *pdllc_netstk;
 static nsTxCbFnct_t  dllc_cbTxFnct;
 static nsRxCbFnct_t  dllc_cbRxFnct;
 
+#if (NETSTK_CFG_AUTO_ONOFF_EN == TRUE)
+static uint8_t       dllc_isOn;
+#endif
 
 /*
 ********************************************************************************
@@ -139,6 +142,12 @@ static void dllc_init(void *p_netstk, e_nsErr_t *p_err)
   pdllc_cbTxArg = NULL;
   packetbuf_set_attr(PACKETBUF_ATTR_MAC_PAN_ID, mac_phy_config.pan_id);
   packetbuf_set_attr(PACKETBUF_ATTR_MAC_FCS_LEN, mac_phy_config.fcs_len);
+
+#if (NETSTK_CFG_AUTO_ONOFF_EN == TRUE)
+  /* initial transition to OFF state */
+  dllc_off(p_err);
+#endif
+
   *p_err = NETSTK_ERR_NONE;
 }
 
@@ -146,17 +155,29 @@ static void dllc_init(void *p_netstk, e_nsErr_t *p_err)
 static void dllc_on(e_nsErr_t *p_err)
 {
   pdllc_netstk->mac->on(p_err);
+#if (NETSTK_CFG_AUTO_ONOFF_EN == TRUE)
+  dllc_isOn = TRUE;
+#endif
 }
 
 
 static void dllc_off(e_nsErr_t *p_err)
 {
   pdllc_netstk->mac->off(p_err);
+#if (NETSTK_CFG_AUTO_ONOFF_EN == TRUE)
+  dllc_isOn = FALSE;
+#endif
 }
 
 
 static void dllc_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 {
+#if (NETSTK_CFG_AUTO_ONOFF_EN == TRUE)
+  if (dllc_isOn == FALSE) {
+    pdllc_netstk->mac->on(p_err);
+  }
+#endif
+
   uint8_t is_ack_required = 0;
   if (packetbuf_holds_broadcast() == 0) {
     is_ack_required = packetbuf_attr(PACKETBUF_ATTR_RELIABLE);
@@ -192,6 +213,12 @@ static void dllc_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
   pdllc_netstk->mac->send(p_data, len + fcs_len, p_err);
 #else
   pdllc_netstk->mac->send(p_data, len, p_err);
+#endif
+
+#if (NETSTK_CFG_AUTO_ONOFF_EN == TRUE)
+  if (dllc_isOn == FALSE) {
+    pdllc_netstk->mac->off(p_err);
+  }
 #endif
 }
 
