@@ -350,6 +350,8 @@ static void rf_readRxFifo(struct s_rf_ctx *p_ctx, uint8_t numBytes);
 static void rf_setPktLen(uint8_t mode, uint16_t len);
 #endif
 
+static void rf_listen(struct s_rf_ctx *p_ctx);
+
 static void rf_sleep_entry(struct s_rf_ctx *p_ctx);
 static void rf_sleep_exit(struct s_rf_ctx *p_ctx);
 
@@ -1145,7 +1147,7 @@ static void rf_rx_entry(struct s_rf_ctx *p_ctx) {
 
   /* state transition */
   p_ctx->state = RF_STATE_RX_IDLE;
-  cc112x_spiCmdStrobe(CC112X_SRX);
+  rf_listen(p_ctx);
 }
 
 
@@ -1328,6 +1330,9 @@ static void rf_tx_fini(struct s_rf_ctx *p_ctx) {
     /* indicate the radio is waiting for ACK as response to the transmitted
     * frame */
     p_ctx->txStatus = RF_TX_STATUS_WFA;
+
+    /* put the radio into idle listening */
+    rf_listen(p_ctx);
   }
 #endif /* NETSTK_CFG_RF_CC112X_AUTOACK_EN */
 
@@ -1464,6 +1469,20 @@ static void rf_dispatcher(c_event_t c_event, p_data_t p_data) {
  *                               MISCELLANEOUS
  ********************************************************************************
  */
+
+/**
+ * @brief put the radio into idle listening
+ * @param p_ctx point to variable holding radio context structure
+ */
+static void rf_listen(struct s_rf_ctx *p_ctx) {
+  if (p_ctx->cfgWOREnabled == TRUE) {
+    /* eWOR mode */
+    cc112x_spiCmdStrobe(CC112X_SWOR);
+  } else {
+    /* RX mode */
+    cc112x_spiCmdStrobe(CC112X_SRX);
+  }
+}
 static void rf_configureRegs(const s_regSettings_t *p_regs, uint8_t len) {
   uint8_t ix;
   uint8_t data;
