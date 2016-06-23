@@ -150,17 +150,23 @@ static void phy_init(void *p_netstk, e_nsErr_t *p_err)
 
   /* initialize PHY PIB attributes */
   packetbuf_attr_t symbol_period;
+  packetbuf_attr_t symbol_per_octet;
+  packetbuf_attr_t shr_duration;
 
   if (mac_phy_config.modulation == MODULATION_2FSK50) {
     /* 2FSK, 50kbps => symbol period = 20us */
     symbol_period = 20;
-    packetbuf_set_attr(PACKETBUF_ATTR_PHY_SYMBOL_PERIOD, symbol_period);
+    symbol_per_octet = 8;
 
-    packetbuf_set_attr(PACKETBUF_ATTR_PHY_SYMBOLS_PER_OCTET, 8); /* 2-FSK */
-    packetbuf_set_attr(PACKETBUF_ATTR_PHY_PREAMBLE_SYMBOL_LEN, 32); /* 4-byte preamble */
-    packetbuf_set_attr(PACKETBUF_ATTR_PHY_MAX_PACKET_SIZE, 127); /* 127-byte PSDU */
-    packetbuf_set_attr(PACKETBUF_ATTR_PHY_SHR_DURATION, ((32 + 16) * symbol_period)); /* SHR = 4-byte preamble + 2-byte SYNC */
+    packetbuf_set_attr(PACKETBUF_ATTR_PHY_SYMBOL_PERIOD, symbol_period);
+    packetbuf_set_attr(PACKETBUF_ATTR_PHY_SYMBOLS_PER_OCTET, symbol_per_octet);
+    packetbuf_set_attr(PACKETBUF_ATTR_PHY_PREAMBLE_SYMBOL_LEN, mac_phy_config.preamble_len * symbol_per_octet);
+    packetbuf_set_attr(PACKETBUF_ATTR_PHY_MAX_PACKET_SIZE, PHY_PSDU_MAX);
     packetbuf_set_attr(PACKETBUF_ATTR_PHY_TURNAROUND_TIME, (12 * symbol_period));
+
+    /* SHR = preamble + 2-byte-SYNC */
+    shr_duration = (mac_phy_config.preamble_len + 2) * symbol_per_octet * symbol_period;
+    packetbuf_set_attr(PACKETBUF_ATTR_PHY_SHR_DURATION, shr_duration);
 
     /* set returned error */
     *p_err = NETSTK_ERR_NONE;
