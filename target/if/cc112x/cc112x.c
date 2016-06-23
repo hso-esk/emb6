@@ -1483,6 +1483,12 @@ static void rf_listen(struct s_rf_ctx *p_ctx) {
     cc112x_spiCmdStrobe(CC112X_SRX);
   }
 }
+
+/**
+ * @brief configure multiple radio registers
+ * @param p_regs  point to variable holding register-value
+ * @param len     number of registers to configure
+ */
 static void rf_configureRegs(const s_regSettings_t *p_regs, uint8_t len) {
   uint8_t ix;
   uint8_t data;
