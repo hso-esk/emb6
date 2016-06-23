@@ -69,10 +69,12 @@
 *                               LOCAL MACROS
 ********************************************************************************
 */
-#if (NETSTK_CFG_WOR_EN == TRUE)
-#define MAC_CFG_TMR_WFA_IN_MS               (uint32_t )( 12 )
-#else
-#define MAC_CFG_TMR_WFA_IN_MS               (uint32_t )(  5 )
+#if (NETSTK_CFG_MAC_SW_AUTOACK_EN == TRUE)
+  #if (NETSTK_CFG_WOR_EN == TRUE)
+    #define MAC_CFG_TMR_WFA_IN_MS               (uint32_t )( 12 )
+  #else
+    #define MAC_CFG_TMR_WFA_IN_MS               (uint32_t )(  5 )
+  #endif
 #endif
 
 /*
@@ -105,13 +107,15 @@ static void mac_csma(e_nsErr_t *p_err);
  *   the range.
  */
 static uint8_t          mac_isAckReq;
-static s_rt_tmr_t       mac_tmrWfa;
 static s_ns_t          *pmac_netstk;
 static void            *pmac_cbTxArg;
 static nsTxCbFnct_t     mac_cbTxFnct;
 static e_nsErr_t        mac_txErr;
 static uint8_t          mac_hasData;
 
+#if (NETSTK_CFG_MAC_SW_AUTOACK_EN == TRUE)
+static s_rt_tmr_t       mac_tmrWfa;
+#endif
 
 /*
 ********************************************************************************
@@ -164,7 +168,9 @@ void mac_init(void *p_netstk, e_nsErr_t *p_err)
   mac_isAckReq = 0;
   mac_txErr = NETSTK_ERR_NONE;
 
+#if (NETSTK_CFG_MAC_SW_AUTOACK_EN == TRUE)
   rt_tmr_create(&mac_tmrWfa, E_RT_TMR_TYPE_ONE_SHOT, MAC_CFG_TMR_WFA_IN_MS, 0, NULL);
+#endif
 
   /*
    * Configure stack address
