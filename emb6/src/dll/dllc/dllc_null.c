@@ -56,6 +56,11 @@
 #include "packetbuf.h"
 #include "logger.h"
 
+#if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
+#include "crc.h"
+#endif
+
+
 /*
 ********************************************************************************
 *                          LOCAL FUNCTION DECLARATIONS
@@ -163,7 +168,6 @@ static void dllc_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
   pdllc_netstk->mac->ioctrl(NETSTK_CMD_TX_CBARG_SET, NULL, p_err);
 
 #if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
-#include <crc.h>
   uint8_t *p_mfr;
   uint32_t fcs;
   packetbuf_attr_t fcs_len;
