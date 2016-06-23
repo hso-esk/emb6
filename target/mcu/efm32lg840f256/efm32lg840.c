@@ -833,12 +833,10 @@ uint8_t hal_spiSlaveSel(void *p_spi, bool enable)
   p_spiHal = (s_hal_spiDrv *)p_spi;
   if (enable) {
     /* clear chip select pin */
-    hal_enterCritical();
     GPIO_PinOutClear(p_spiHal->csPin.port, p_spiHal->csPin.pin);
   } else {
     /* set chip select pin */
     GPIO_PinOutSet(p_spiHal->csPin.port, p_spiHal->csPin.pin);
-    hal_exitCritical();
   }
   return 1;
 } /* hal_spiSlaveSel() */
