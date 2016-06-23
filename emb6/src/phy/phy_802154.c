@@ -51,6 +51,7 @@
 ********************************************************************************
 */
 #include "emb6.h"
+#include "board_conf.h"
 #include "phy_framer_802154.h"
 #include "packetbuf.h"
 #include "rt_tmr.h"
@@ -239,7 +240,7 @@ static void phy_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
   uint8_t *p_pkt;
   uint16_t pkt_len;
 
-#if (NETSTK_CFG_RF_CC112X_AUTOACK_EN == TRUE)
+#if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
   pkt_len = len;
 #else
   /* insert MAC checksum */
