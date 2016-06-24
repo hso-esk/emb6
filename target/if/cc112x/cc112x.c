@@ -637,6 +637,10 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
   else {
     *p_err = NETSTK_ERR_TX_TIMEOUT;
 
+    /* FIXME hot fix: put radio to idle and flush TXFIFO */
+    cc112x_spiCmdStrobe(CC112X_SIDLE);
+    cc112x_spiCmdStrobe(CC112X_SFTX);
+
     /* exit TX state */
     rf_tx_exit(p_ctx);
     /* enter RX state */
