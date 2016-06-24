@@ -244,23 +244,56 @@ uint8_t hal_getrand(void)
 /*!
  * @brief This function turns a led off.
  *
- * Not implemented.
- *
  * @param ui_led Descriptor of a led.
  */
 void hal_ledOff(uint16_t ui_led)
 {
+	switch( ui_led )
+	{
+	    case E_BSP_LED_0:
+            bspLedClear( BSP_LED_1 );
+            break;
+
+	    case E_BSP_LED_1:
+            bspLedClear( BSP_LED_2 );
+            break;
+
+	    case E_BSP_LED_2:
+            bspLedClear( BSP_LED_3 );
+            break;
+
+	    case E_BSP_LED_3:
+            bspLedClear( BSP_LED_4 );
+            break;
+	}
 }/* hal_ledOff() */
 
 /*!
  * @brief This function turns a led on.
  *
- * Not implemented.
  *
  * @param ui_led Descriptor of a led.
  */
 void hal_ledOn(uint16_t ui_led)
 {
+	switch( ui_led )
+	{
+        case E_BSP_LED_0:
+            bspLedSet( BSP_LED_1 );
+            break;
+
+	    case E_BSP_LED_1:
+            bspLedSet( BSP_LED_2 );
+            break;
+
+	    case E_BSP_LED_2:
+            bspLedSet( BSP_LED_3 );
+            break;
+
+	    case E_BSP_LED_3:
+            bspLedSet( BSP_LED_4 );
+            break;
+	}
 }/* hal_ledOn() */
 
 /*!
