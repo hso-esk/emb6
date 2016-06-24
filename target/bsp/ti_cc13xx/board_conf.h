@@ -37,6 +37,10 @@
 #define MODULATION                  (uint8_t )(  0 )    /* FIXME use proper configuration */
 #endif
 
+#ifndef CC13XX_LCD_ENABLE
+#define CC13XX_LCD_ENABLE           1
+#endif
+
 /*============================================================================*/
 /*                       API FUNCTION DECLARATION                             */
 /*============================================================================*/
