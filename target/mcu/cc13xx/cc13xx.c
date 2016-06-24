@@ -35,6 +35,9 @@
 #include "sf_mcu_timer.h"
 #include "sf_uart.h"
 #include "bsp_led.h"
+#if CC13XX_LCD_ENABLE
+#include "lcd_dogm128_6.h"
+#endif /* #if CC13XX_LCD_ENABLE */
 #include "driverlib/interrupt.h"
 #include "rt_tmr.h"
 
@@ -206,6 +209,10 @@ int8_t hal_init(void)
 {
   uint8_t c_retStatus = 0U;
 
+#if CC13XX_LCD_ENABLE
+  char lcdBuf[LCD_BYTES];
+#endif /* #if CC13XX_LCD_ENABLE */
+
   /* Initialize the mcu */
   c_retStatus = sf_mcu_init();
   if(MCU_INIT_RET_STATUS_CHECK(c_retStatus))
@@ -225,6 +232,20 @@ int8_t hal_init(void)
 
   /* Initialize hal_ticks */
   hal_ticks = 0x00U;
+
+  /* initialize LEDs */
+  bspLedInit( BSP_LED_ALL );
+
+#if CC13XX_LCD_ENABLE
+  /* initialize LCD */
+  lcdSpiInit();
+  lcdInit();
+  lcdClear();
+
+  /* Send Simple Message */
+  lcdBufferClear( lcdBuf );
+  lcdSendBuffer( lcdBuf );
+#endif /* #if CC13XX_LCD_ENABLE */
 
   return c_retStatus;
 }/* hal_init() */
