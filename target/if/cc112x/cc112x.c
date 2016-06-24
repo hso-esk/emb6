@@ -77,6 +77,8 @@
 #include "crc.h"
 #endif
 
+#define NETSTK_CFG_RF_DEBUG_EN              TRUE
+
 
 /*
  ********************************************************************************
@@ -311,6 +313,11 @@ struct s_rf_ctx {
   uint8_t txReqAck;
   uint8_t txStatus;
   e_nsErr_t txErr;
+
+#if (NETSTK_CFG_RF_DEBUG_EN == TRUE)
+  s_rt_tmr_t dbgTmr;
+  e_rfState_t dbgChipState;
+#endif
 };
 
 #define RF_TX_STATUS_NONE         0x00
@@ -393,6 +400,10 @@ static void rf_chanNumSet(uint8_t chan_num, e_nsErr_t *p_err);
 static void rf_opModeSet(e_nsRfOpMode mode, e_nsErr_t *p_err);
 static void rf_readRSSI(int8_t *p_val, e_nsErr_t *p_err);
 
+#if (NETSTK_CFG_RF_DEBUG_EN == TRUE)
+static void rf_tmrDbgCb(void *p_arg);
+#endif
+
 
 /*
 ********************************************************************************
@@ -466,7 +477,8 @@ static void rf_init(void *p_netstk, e_nsErr_t *p_err)
 
   /* debug watchdog timer */
 #if (NETSTK_CFG_RF_DEBUG_EN == TRUE)
-  rt_tmr_create(&p_ctx->dbgTmr, E_RT_TMR_TYPE_PERIODIC, 10000, rf_dbgTmrCb, NULL);
+  rt_tmr_create(&p_ctx->dbgTmr, E_RT_TMR_TYPE_PERIODIC, 10000, rf_tmrDbgCb, p_ctx);
+  rt_tmr_start(&p_ctx->dbgTmr);
 #endif
 
   /* transition to SLEEP state */
@@ -573,6 +585,11 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
       p_data += txNumRxBytes;
     }
   }
+
+#if (NETSTK_CFG_RF_DEBUG_EN == TRUE)
+  /* store chip state for debugging */
+  p_ctx->dbgChipState = RF_READ_CHIP_STATE();
+#endif
 
   /* is IEEE Std. 802.15.4g supported? */
 #if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
@@ -1473,6 +1490,17 @@ static void rf_dispatcher(c_event_t c_event, p_data_t p_data) {
  *                               MISCELLANEOUS
  ********************************************************************************
  */
+
+#if (NETSTK_CFG_RF_DEBUG_EN == TRUE)
+/**
+ * @brief debugging timer callback
+ */
+static void rf_tmrDbgCb(void *p_arg) {
+  struct s_rf_ctx *p_ctx = (struct s_rf_ctx *)p_arg;
+  p_ctx->dbgChipState = RF_READ_CHIP_STATE();
+}
+#endif
+
 
 /**
  * @brief put the radio into idle listening
