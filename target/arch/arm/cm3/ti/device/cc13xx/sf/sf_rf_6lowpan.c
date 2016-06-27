@@ -119,6 +119,9 @@ void loc_evtRx(uint16_t i_len)
     else if((gi_bytesReceived >= gi_bytesToReceive) &&
             (gi_bytesReceived > PHY_HEADER_LEN))
     {
+#if CC13XX_RX_LED_ENABLED
+      bsp_led( E_BSP_LED_3, E_BSP_LED_TOGGLE );
+#endif /* #if CC13XX_RX_LED_ENABLED */
       /* signal complete reception interrupt */
       RF_SEM_POST(NETSTK_RF_EVENT);
     }/* if...else if */
@@ -227,6 +230,10 @@ bool sf_rf_6lowpan_sendBlocking(uint8_t *pc_data, uint16_t  i_len)
       b_return = true;
     }/* if */
   }/* if */
+
+#if CC13XX_TX_LED_ENABLED
+  bsp_led( E_BSP_LED_2, E_BSP_LED_TOGGLE );
+#endif /* #if CC13XX_TX_LED_ENABLED */
 
   /* Set the tranaceiver in rx mode */
   sf_rf_reset();

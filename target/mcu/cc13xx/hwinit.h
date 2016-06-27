@@ -39,6 +39,10 @@
 #define CC13XX_TX_ENABLED 1U
 /*! Enable rx. */
 #define CC13XX_RX_ENABLED 1U
+/*! Enable tx LED. */
+#define CC13XX_TX_LED_ENABLED 1U
+/*! Enable rx LED. */
+#define CC13XX_RX_LED_ENABLED 1U
 /*! Enable interrupt based rf handling. */
 #define CC13XX_IS_POLLED_RADIO 0U
 /*! Define the max telegram length */
