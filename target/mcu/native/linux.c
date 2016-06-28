@@ -280,7 +280,6 @@ int8_t hal_init (void)
     sigaction(SIGINT ,&saint,NULL);
 
     fcntl(fdm, F_SETFL, O_NDELAY | O_NONBLOCK | O_ASYNC);
-    printf("The slave side is named : %s\n", ptsname(fdm));
 
     symlink_path = "/dev/6lbr/if";
 
