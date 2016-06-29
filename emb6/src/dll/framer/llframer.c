@@ -6,6 +6,7 @@
 
 #include "emb6.h"
 #include "framer_802154.h"
+#include "framer_smartmac.h"
 #include "phy_framer_802154.h"
 #include "packetbuf.h"
 #include "linkaddr.h"
@@ -47,7 +48,8 @@ uint16_t llframe_parse(llframe_attr_t *p_frame, uint8_t *p_buf, uint16_t len) {
   frameType = p_mhr[0] & 0x07;
   if ((frameType != FRAME802154_DATAFRAME) &&
       (frameType != FRAME802154_ACKFRAME) &&
-      (frameType != FRAME802154_CMDFRAME)) {
+      (frameType != FRAME802154_CMDFRAME) &&
+      (frameType != SMARTMAC_FRAME_STROBE)) {
     /* unsupported frame types */
     return 0;
   }
