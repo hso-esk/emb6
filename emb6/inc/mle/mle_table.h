@@ -17,14 +17,14 @@
 #define     MAX_NB_ROUTER               4
 #define     MAX_CHILD                   5
 
-
+typedef enum {PENDING, LINKED} nb_state_t;
 
 
 typedef struct nodemle {
 	struct nodemle 		*next;
 	uint8_t 			       		 id;
 
-	uint8_t 			       		 state; // pending:0 // linked:1 // ....
+	nb_state_t 			       		 state; // pending:0 // linked:1 // ....
 	uint32_t         			     challenge;	// but length is variable for other device !!!
 	uint16_t         			     address16;						      /**< link-local address */
 

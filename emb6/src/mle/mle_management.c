@@ -40,8 +40,6 @@ static 	mle_cmd_t 					cmd; // command buffer
 static mle_param_t					param;
 static mle_neighbor_t*				nb;
 
-#define get_rssi()		             30 //sicslowpan_get_last_rssi()
-#define get_routerID()		         0xff
 typedef enum {
 	JP_SEND_MCAST_PR_TO_ROUTER,
 	JP_SEND_MCAST_PR_TO_ROUTER_REED,
@@ -57,8 +55,22 @@ typedef enum {
 								LOCAL FUNCTION
  =============================================================================*/
 static uint8_t  		mle_send_msg(mle_cmd_t* cmd,  uip_ipaddr_t *dest_addr);
+uint8_t 			isActiveRouter(uint16_t srcAdd)
+{
+	for(uint8_t i=0; i<9;i++)
+	{
+		if(BIT_CHECK(srcAdd,i))
+		return 0;
+	}
+	return 1 ;
+}
+
+
 #define routerMask(scanMask)			(BIT_CHECK(scanMask,7))
 #define ReedMask(scanMask)				(BIT_CHECK(scanMask,6))
+#define get_rssi()		             30 //sicslowpan_get_last_rssi()
+#define get_routerID()		         0xff
+
 
 /************************ join process function ****************************/
 
@@ -237,7 +249,7 @@ void mle_join_process(void *ptr)
 				nb=mle_add_nb_router(0, 0, 0, 0, 0);
 				if(nb==NULL)
 					nb=mle_find_nb_router(0);
-				nb->state=0;
+				nb->state=PENDING;
 				nb->LQ=0;
 				nb->address16=0;
 
@@ -246,7 +258,7 @@ void mle_join_process(void *ptr)
 				send_mle_parent_request(1,0);
 				PRINTFG("[+] "ANSI_COLOR_RESET);
 				PRINTF("JP Waiting for incoming response from active Router\n"ANSI_COLOR_RESET);
-				ctimer_set(&c_mle_Timer, 4 * bsp_get(E_BSP_GET_TRES) , mle_join_process, NULL);
+				ctimer_set(&c_mle_Timer, 2 * bsp_get(E_BSP_GET_TRES) , mle_join_process, NULL);
 
 				finish=1;
 				break;
@@ -306,7 +318,7 @@ void mle_join_process(void *ptr)
 				send_mle_parent_request(1,1);
 				PRINTFG("[+] "ANSI_COLOR_RESET);
 				PRINTF("JP Waiting for incoming response from active Router and REED \n"); PRESET();
-				ctimer_set(&c_mle_Timer, 6 * bsp_get(E_BSP_GET_TRES) , mle_join_process, NULL);
+				ctimer_set(&c_mle_Timer, 4 * bsp_get(E_BSP_GET_TRES) , mle_join_process, NULL);
 				finish=1;
 				break;
 			case JP_WAIT_2:
@@ -436,8 +448,7 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 			tlv_leader_init(&leader_tlv,tlv->value);
 			tlv=mle_find_tlv_in_cmd(cmd,TLV_SOURCE_ADDRESS);
 			thrd_process_adv( tlv->value[1] | (tlv->value[0] << 8), route64_tlv,leader_tlv);
-			PRINTFY("MLE advertisement processed ... \n" ANSI_COLOR_RESET );
-
+			PRINTFY("MLE advertisement processed ...");PRESET();
 		}
 		break;
 
@@ -493,7 +504,7 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 				param.rec_rssi=get_rssi();
 				//param.source_addr=(uip_ipaddr_t *) source_addr;
 				uip_ip6addr_copy(&param.source_addr,source_addr);
-				ctimer_set(&c_mle_Timer, /*bsp_getrand(MaxRand)* */ (bsp_get(E_BSP_GET_TRES) /*/ 1000*/ ) , reply_for_mle_parent_request, (void *) NULL );
+				ctimer_set(&c_mle_Timer, bsp_getrand(MaxRand) *  (bsp_get(E_BSP_GET_TRES) / 1000 ) , reply_for_mle_parent_request, (void *) NULL );
 
 			}
 		}
@@ -632,7 +643,11 @@ uint8_t mle_init(void)
 	MyNode.childs_counter=0;
 
 
-	/************* just for test: to verify when the join process will be triggered  **********/
+
+	/**************  test ******************/
+
+
+	/**********************/
 	ctimer_set(&c_mle_Timer, 1 * bsp_get(E_BSP_GET_TRES) , mle_join_process, (void *) NULL );
 
 
