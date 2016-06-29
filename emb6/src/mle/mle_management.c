@@ -112,7 +112,6 @@ static uint8_t send_mle_parent_request(uint8_t R, uint8_t E)
 static uint8_t send_mle_childID_request(uip_ipaddr_t *dest_addr)
 {
 	mle_init_cmd(&cmd,CHILD_ID_REQUEST);
-	// response tlv
 	add_response32_to_cmd(&cmd, nb->challenge);
 	// link-layer frame counter tlv
 	// MLE Frame Counter tlv
@@ -140,7 +139,6 @@ static void reply_for_mle_parent_request(void *ptr)
 		// i should save the challenge for the current child
 		/*  child.challenge = */	add_rand_challenge_to_cmd(&cmd);
 		add_Link_margin_to_cmd(&cmd,param.rec_rssi);
-		// connectivity tlv
 		add_Cnnectivity_to_cmd(&cmd,MAX_CHILD,MyNode.childs_counter,count_neighbor_LQ(3),count_neighbor_LQ(2),count_neighbor_LQ(1),0,0);
 		add_version_to_cmd(&cmd);
 
@@ -221,7 +219,8 @@ static uint8_t calculate_two_way_LQ(uint8_t my_rssi , uint8_t rec_rssi)
 void mle_join_process(void *ptr)
 {
 	static 	jp_state_t 		jp_state ;  // join process current state
-	static mle_parent_t 	parent; // parent candidate
+
+	static mle_parent_t 	parent_condidate , current_parent; // parent
 
 
 	tlv_connectivity_t* connectivity;
@@ -242,10 +241,11 @@ void mle_join_process(void *ptr)
 				PRINTF("JP Send mcast parent request to active router \n"ANSI_COLOR_RESET);
 
 				/* Init the parent*/
-				//parent.two_way_LQ=0;
-				//parent.jp_challenge=0;
-				//parent.is_Router=0;
-				//parent.LQ3=0;
+				current_parent.is_Router=0;
+				current_parent.LQ3=0;
+				current_parent.LQ=0;
+
+				/* Init the parent on the neighbor table*/
 				nb=mle_add_nb_router(0, 0, 0, 0, 0);
 				if(nb==NULL)
 					nb=mle_find_nb_router(0);
@@ -277,35 +277,48 @@ void mle_join_process(void *ptr)
 				{
 					PRINTFG("[+] "ANSI_COLOR_RESET);
 					PRINTF("JP received response from active Router \n"ANSI_COLOR_RESET);
+
+					/* calculate the two-way linkquality  */
 					tlv=mle_find_tlv_in_cmd(param.rec_cmd,TLV_LINK_MARGIN);
+					PRINTF("my rssi : %i \n", tlv->value[0]);
+					PRINTF("rssi of parent : %i \n", param.rec_rssi);
+					parent_condidate.LQ=calculate_two_way_LQ(tlv->value[0], param.rec_rssi);
+					PRINTF("two-way link quality : %i \n", parent_condidate.LQ);
 
-					PRINTF("rssi of parent : %i \n"ANSI_COLOR_RESET, param.rec_rssi);
-					PRINTF("my rssi : %i \n"ANSI_COLOR_RESET, tlv->value[0]);
+					/* identify the type of the device router/reed */
+					tlv=mle_find_tlv_in_cmd(param.rec_cmd,TLV_SOURCE_ADDRESS);
+					parent_condidate.is_Router=isActiveRouter(tlv->value[1] | (tlv->value[0] << 8));
 
-					parent.LQ=calculate_two_way_LQ(tlv->value[0], param.rec_rssi);
-					PRINTF("two-way quality : %i \n"ANSI_COLOR_RESET, parent.LQ);
+					/* get number of neighbors with lq3 of the parent candidate */
+					tlv=mle_find_tlv_in_cmd(param.rec_cmd,TLV_CONNECTIVITY);
+					tlv_connectivity_init(&connectivity,tlv->value );
+					parent_condidate.LQ3=connectivity->LQ3;
 
-					if( nb->LQ < parent.LQ)
+					if( current_parent.LQ < parent_condidate.LQ ||
+					((current_parent.LQ == parent_condidate.LQ) && (current_parent.is_Router < parent_condidate.is_Router)) ||
+					( (current_parent.LQ == parent_condidate.LQ) && (current_parent.is_Router == parent_condidate.is_Router) && (current_parent.LQ3 < parent_condidate.LQ3)))
 					{
-						nb->LQ=parent.LQ;
 
-						/* get the challenge tlv from the parent condidate */
+						/* update the current parent */
+						current_parent.LQ=parent_condidate.LQ;
+						current_parent.LQ3=parent_condidate.LQ3;
+						current_parent.is_Router=parent_condidate.is_Router;
+
+						/* save the two-way link quality */
+						nb->LQ=current_parent.LQ;
+
+						/* save the two-way link quality */
+						nb->rec_rssi=param.rec_rssi;
+
+						/* save the challenge TLV from the parent candidate */
 						tlv=mle_find_tlv_in_cmd(param.rec_cmd,TLV_CHALLENGE);
 						nb->challenge= (tlv->value[3]) | (tlv->value[2] << 8) | (tlv->value[1] << 16)| (tlv->value[0] << 24);
-						//nb->challenge=0xABCDEF55;
-						/* get number of neighbors with lq3 of the parent condidate */
-						tlv=mle_find_tlv_in_cmd(param.rec_cmd,TLV_CONNECTIVITY);
-						tlv_connectivity_init(&connectivity,tlv->value );
-						parent.LQ3=connectivity->LQ3;
 
-						/* save the address (to remplace with source address  tlv)  */
-						uip_ip6addr_copy(&nb->tmp , &param.source_addr);
-
-						/* identify the type of parent : router or reed from the sourse address */
-						//parent.is_Router=....;
-
+						/* save the address */
+						uip_ip6addr_copy(&nb->tmp , &param.source_addr);// to remove
+						tlv=mle_find_tlv_in_cmd(param.rec_cmd,TLV_SOURCE_ADDRESS);
+						nb->address16=tlv->value[1] | (tlv->value[0] << 8);
 					}
-
 
 					flag=1;
 					finish=1;
@@ -332,36 +345,50 @@ void mle_join_process(void *ptr)
 				else
 				{
 					PRINTFG("[+] "ANSI_COLOR_RESET);
-					PRINTF("JP received response from active Router or REED \n"ANSI_COLOR_RESET);
+					PRINTF("JP received response from active Router \n"ANSI_COLOR_RESET);
 
+					/* calculate the two-way linkquality  */
 					tlv=mle_find_tlv_in_cmd(param.rec_cmd,TLV_LINK_MARGIN);
+					PRINTF("my rssi : %i \n", tlv->value[0]);
+					PRINTF("rssi of parent : %i \n", param.rec_rssi);
+					parent_condidate.LQ=calculate_two_way_LQ(tlv->value[0], param.rec_rssi);
+					PRINTF("two-way link quality : %i \n", parent_condidate.LQ);
 
-					PRINTF("rssi of parent : %i \n"ANSI_COLOR_RESET, param.rec_rssi);
-					PRINTF("my rssi : %i \n"ANSI_COLOR_RESET, tlv->value[0]);
+					/* identify the type of the device router/reed */
+					tlv=mle_find_tlv_in_cmd(param.rec_cmd,TLV_SOURCE_ADDRESS);
+					parent_condidate.is_Router=isActiveRouter(tlv->value[1] | (tlv->value[0] << 8));
 
-					parent.LQ=calculate_two_way_LQ(tlv->value[0], param.rec_rssi);
-					PRINTF("two-way quality : %i \n"ANSI_COLOR_RESET, parent.LQ);
+					/* get number of neighbors with lq3 of the parent candidate */
+					tlv=mle_find_tlv_in_cmd(param.rec_cmd,TLV_CONNECTIVITY);
+					tlv_connectivity_init(&connectivity,tlv->value );
+					parent_condidate.LQ3=connectivity->LQ3;
 
-					if( nb->LQ < parent.LQ)
+					if( current_parent.LQ < parent_condidate.LQ ||
+					((current_parent.LQ == parent_condidate.LQ) && (current_parent.is_Router < parent_condidate.is_Router)) ||
+					( (current_parent.LQ == parent_condidate.LQ) && (current_parent.is_Router == parent_condidate.is_Router) && (current_parent.LQ3 < parent_condidate.LQ3)))
 					{
-						nb->LQ=parent.LQ;
 
-						/* get the challenge tlv from the parent condidate */
+						/* update the current parent */
+						current_parent.LQ=parent_condidate.LQ;
+						current_parent.LQ3=parent_condidate.LQ3;
+						current_parent.is_Router=parent_condidate.is_Router;
+
+						/* save the two-way link quality */
+						nb->LQ=current_parent.LQ;
+
+						/* save the two-way link quality */
+						nb->rec_rssi=param.rec_rssi;
+
+						/* save the challenge TLV from the parent candidate */
 						tlv=mle_find_tlv_in_cmd(param.rec_cmd,TLV_CHALLENGE);
 						nb->challenge= (tlv->value[3]) | (tlv->value[2] << 8) | (tlv->value[1] << 16)| (tlv->value[0] << 24);
-						//nb->challenge=0xABCDEF55;
-						/* get number of neighbors with lq3 of the parent condidate */
-						tlv=mle_find_tlv_in_cmd(param.rec_cmd,TLV_CONNECTIVITY);
-						tlv_connectivity_init(&connectivity,tlv->value );
-						parent.LQ3=connectivity->LQ3;
 
-						/* save the address (to remplace with source address  tlv)  */
-						uip_ip6addr_copy(&nb->tmp , &param.source_addr);
-
-						/* identify the type of parent : router or reed from the sourse address */
-						//parent.is_Router=....;
-
+						/* save the address */
+						uip_ip6addr_copy(&nb->tmp , &param.source_addr);// to remove
+						tlv=mle_find_tlv_in_cmd(param.rec_cmd,TLV_SOURCE_ADDRESS);
+						nb->address16=tlv->value[1] | (tlv->value[0] << 8);
 					}
+
 					flag=1;
 					finish=1;
 				}

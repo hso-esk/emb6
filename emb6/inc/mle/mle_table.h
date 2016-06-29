@@ -24,9 +24,9 @@ typedef struct nodemle {
 	struct nodemle 		*next;
 	uint8_t 			       		 id;
 
-	nb_state_t 			       		 state; // pending:0 // linked:1 // ....
+	nb_state_t 			       		 state; // state of the neighbor PENDING or LINKED
 	uint32_t         			     challenge;	// but length is variable for other device !!!
-	uint16_t         			     address16;						      /**< link-local address */
+	uint16_t         			     address16;	// short address
 
 
    uip_ipaddr_t                tmp; // to remove because it is generated from address 16
