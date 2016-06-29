@@ -558,7 +558,6 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
 #endif
 
   uint32_t tickstart;
-  packetbuf_attr_t waitForAckTimeout;
   struct s_rf_ctx *p_ctx = &rf_ctx;
 
   if (p_ctx->state != RF_STATE_RX_IDLE) {
@@ -630,18 +629,21 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
   }
 #if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
   else if (p_ctx->txStatus == RF_TX_STATUS_WFA) {
-    /* set return error code to default value in case ACK is required */
+    /* wait for ACK for maximum macAckWaitDuration (2.6ms) */
+    packetbuf_attr_t waitForAckTimeoutInTicks;
+    waitForAckTimeoutInTicks = packetbuf_attr(PACKETBUF_ATTR_MAC_ACK_WAIT_DURATION) / RT_TMR_CFG_TICK_FREQ_IN_HZ;
+
+    /* make sure a time period of at least [macAckWaitDuration + 1] ms has passed */
+    waitForAckTimeoutInTicks += 2;
+
     *p_err = NETSTK_ERR_TX_NOACK;
-
-    /* wait for at most macAckWaitDuration for the corresponding acknowledgment
-     * frame to be received */
-    waitForAckTimeout = packetbuf_attr(PACKETBUF_ATTR_MAC_ACK_WAIT_DURATION);
-    bsp_delay_us(waitForAckTimeout);
-
-    /* was a packet arrived while waiting for ACK? */
-    if (p_ctx->txStatus == RF_TX_STATUS_DONE) {
-      /* then set return error code accordingly */
-      *p_err = p_ctx->txErr;
+    tickstart = rt_tmr_getCurrenTick();
+    while ((rt_tmr_getCurrenTick() - tickstart) < waitForAckTimeoutInTicks) {
+      if (p_ctx->txStatus == RF_TX_STATUS_DONE) {
+        /* either the frame was acknowledged or error occurred */
+        *p_err = p_ctx->txErr;
+        break;
+      }
     }
 
     /* exit TX state */
