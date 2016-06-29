@@ -919,15 +919,22 @@ static void rf_rxFifoThresholdISR(void *p_arg) {
 
 #if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
       /* does incoming frame require ACK? */
-      if (p_ctx->rxFrame.is_ack_required == TRUE) {
-        /* indicate incoming frame requiring ACK */
-        p_ctx->rxReqAck = TRUE;
-
+      p_ctx->rxReqAck = p_ctx->rxFrame.is_ack_required;
+      if (p_ctx->rxReqAck == TRUE) {
         /* write the ACK to send into TX FIFO */
         uint8_t ack[10];
         uint8_t ack_len;
         ack_len = llframe_createAck(&p_ctx->rxFrame, ack, sizeof(ack));
         cc112x_spiTxFifoWrite(ack, ack_len);
+
+        /* FIXME cannot write ACK to TXFIFO */
+        uint8_t numTxBytes;
+        cc112x_spiRegRead(CC112X_NUM_TXBYTES, &numTxBytes, 1);
+        if (numTxBytes != ack_len) {
+          /* terminate RX process */
+          TRACE_LOG_ERR("Failed to write ACK to TXFIFO, seq=%02x, cs=%02x", ack[PHY_HEADER_LEN + 2], RF_READ_CHIP_STATE());
+          rf_rx_term(p_ctx);
+        }
 
         /* is IEEE Std. 802.15.4g supported? */
 #if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
