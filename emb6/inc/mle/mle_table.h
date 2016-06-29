@@ -55,6 +55,9 @@ mle_neighbor_t * mle_nb_router_head(void);
 mle_neighbor_t * mle_find_nb_router(uint8_t id);
 mle_neighbor_t * mle_find_child( uint8_t id);
 
+mle_neighbor_t * mle_find_nb_router_byAdd(uip_ipaddr_t* address);
+mle_neighbor_t * mle_find_child_byAdd( uip_ipaddr_t* address);
+
 mle_neighbor_t * mle_add_child(uint8_t id, uint16_t  address, uint32_t  MLEFrameCounter , uint8_t modeTLV, uint8_t  linkQuality);
 mle_neighbor_t * mle_add_nb_router(uint8_t id, uint16_t address, uint32_t  MLEFrameCounter , uint8_t modeTLV, uint8_t  linkQuality);
 

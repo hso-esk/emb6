@@ -76,6 +76,28 @@ mle_neighbor_t * mle_find_child( uint8_t id)
 }
 
 
+static mle_neighbor_t *  mle_find_neigbhor_byAdd(list_t *list, uip_ipaddr_t* address)
+{
+	mle_neighbor_t *nb;
+
+	for (nb = mle_neigbhor_head(list); nb != NULL; nb = list_item_next(nb))
+	{
+		if (uip_ipaddr_cmp(&nb->tmp , address))
+			return nb;
+	}
+	return NULL ;
+}
+
+mle_neighbor_t * mle_find_nb_router_byAdd(uip_ipaddr_t* address)
+{
+	return mle_find_neigbhor_byAdd(&nb_router_list,  address) ;
+}
+mle_neighbor_t * mle_find_child_byAdd( uip_ipaddr_t* address)
+{
+	return mle_find_neigbhor_byAdd(&childs_list,  address) ;
+}
+
+
 
 static mle_neighbor_t * mle_add_neigbhor(struct memb* m , list_t *list , uint8_t id, /*uip_ipaddr_t * */ uint16_t address, uint32_t  MLEFrameCounter ,
 		uint8_t modeTLV, uint8_t  linkQuality)
@@ -96,7 +118,7 @@ static mle_neighbor_t * mle_add_neigbhor(struct memb* m , list_t *list , uint8_t
 		if (nb == NULL) {
 			/* This should not happen, as we explicitly deallocated one
 			 * link set entry above. */
-			PRINTF("Could not allocate child id\n");
+			PRINTF("Could not allocate neighbor id \n" ANSI_COLOR_RESET);
 			return NULL;
 		}
 
@@ -118,7 +140,7 @@ static mle_neighbor_t * mle_add_neigbhor(struct memb* m , list_t *list , uint8_t
 	}
 	else
 	{
-		PRINTFR("Neighbor already exist \n");
+		PRINTFR("Neighbor already exist \n" ANSI_COLOR_RESET );
 		return NULL;
 	}
 	return nb;
