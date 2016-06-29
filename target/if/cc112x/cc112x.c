@@ -1996,10 +1996,41 @@ static void rf_chanNumSet(uint8_t chan_num, e_nsErr_t *p_err) {
  * @param   p_err       Pointer to variable holding returned error code
  */
 static void rf_opModeSet(e_nsRfOpMode mode, e_nsErr_t *p_err) {
+  uint8_t write_byte;
+
   if (rf_ctx.cfgOpMode < NETSTK_RF_OP_MODE_MAX) {
     rf_ctx.cfgOpMode = mode;
+
+    /* change symbol rate and RX filter bandwidth accordingly */
+    if ((mode == NETSTK_RF_OP_MODE_CSM) ||
+        (mode == NETSTK_RF_OP_MODE_1)) {
+      /* symbol rate of 50kbps: 99 99 99 */
+      write_byte = 0x99;
+      cc112x_spiRegWrite(CC112X_SYMBOL_RATE2, &write_byte, 1);
+      cc112x_spiRegWrite(CC112X_SYMBOL_RATE1, &write_byte, 1);
+      cc112x_spiRegWrite(CC112X_SYMBOL_RATE0, &write_byte, 1);
+
+      /* change RX filter bandwidth 100 kHz: 02 */
+      write_byte = 0x02;
+      cc112x_spiRegWrite(CC112X_CHAN_BW, &write_byte, 1);
+    }
+    else {
+      /* MR-FSK mode #2 or #3 */
+      /* symbol rate of 100kbps: A9 99 9A  */
+      write_byte = 0xA9;
+      cc112x_spiRegWrite(CC112X_SYMBOL_RATE2, &write_byte, 1);
+      write_byte = 0x99;
+      cc112x_spiRegWrite(CC112X_SYMBOL_RATE1, &write_byte, 1);
+      write_byte = 0x9A;
+      cc112x_spiRegWrite(CC112X_SYMBOL_RATE0, &write_byte, 1);
+
+      /* change RX filter bandwidth 200 kHz: 01 */
+      write_byte = 0x01;
+      cc112x_spiRegWrite(CC112X_CHAN_BW, &write_byte, 1);
+    }
     *p_err = NETSTK_ERR_NONE;
-  } else {
+  }
+  else {
     *p_err = NETSTK_ERR_INVALID_ARGUMENT;
   }
 }
