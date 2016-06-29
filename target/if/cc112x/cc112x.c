@@ -1496,19 +1496,11 @@ static void rf_eventHandler(c_event_t c_event, p_data_t p_data) {
 
   /* handle nested events */
   if (c_event == NETSTK_RF_EVENT) {
-    switch (p_ctx->state) {
-      case RF_STATE_RX_SYNC:
-        rf_rx_sync(p_ctx);
-        break;
-
-      case RF_STATE_RX_FINI:
-        rf_rx_fini(p_ctx);
-        break;
-
-      default:
-        /* unexpected event */
-        TRACE_LOG_ERR("+++ RF: Dispatcher unexpected, lastState=%02x", p_ctx->dbgLastTriggedState);
-        break;
+    if (p_ctx->state == RF_STATE_RX_FINI) {
+      rf_rx_fini(p_ctx);
+    }
+    else {
+      TRACE_LOG_ERR("+++ RF: Dispatcher unexpected");
     }
   }
 }
