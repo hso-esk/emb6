@@ -317,6 +317,7 @@ struct s_rf_ctx {
 #if (NETSTK_CFG_RF_DEBUG_EN == TRUE)
   s_rt_tmr_t dbgTmr;
   e_rfState_t dbgChipState;
+  uint8_t dbgEvtStatus;
 #endif
 };
 
@@ -1074,6 +1075,10 @@ static void rf_pktRxTxEndISR(void *p_arg) {
         p_ctx->state = RF_STATE_RX_FINI;
         ret = evproc_putEvent(E_EVPROC_HEAD, NETSTK_RF_EVENT, p_ctx);
 
+#if (NETSTK_CFG_RF_DEBUG_EN == TRUE)
+        /* store event-triggering status */
+        p_ctx->dbgEvtStatus = ret;
+#endif
       }
       else {
         TRACE_LOG_ERR("+++ RF: PKT_END unexpected event state=%02x, cs=%02x, marc=%02x", p_ctx->state, chip_state, marc_status);
@@ -1235,6 +1240,11 @@ static void rf_rx_chksum(struct s_rf_ctx *p_ctx) {
       /* signal upper layer */
       en_evprocResCode_t ret = evproc_putEvent(E_EVPROC_HEAD, NETSTK_RF_EVENT, p_ctx);
 
+#if (NETSTK_CFG_RF_DEBUG_EN == TRUE)
+      /* store event-triggering status */
+      p_ctx->dbgEvtStatus = ret;
+#endif
+    }
   }
   else {
     /* discard the received frame */
@@ -1249,6 +1259,11 @@ static void rf_rx_chksum(struct s_rf_ctx *p_ctx) {
  * @param p_ctx point to variable holding radio context structure
  */
 static void rf_rx_fini(struct s_rf_ctx *p_ctx) {
+#if (NETSTK_CFG_RF_DEBUG_EN == TRUE)
+  /* clear event-triggering status once the event is consumed */
+  p_ctx->dbgEvtStatus = 0;
+#endif
+
   /* exit and re-enter RX state */
   rf_rx_exit(p_ctx);
   rf_rx_entry(p_ctx);
@@ -1505,7 +1520,14 @@ static void rf_dispatcher(c_event_t c_event, p_data_t p_data) {
  */
 static void rf_tmrDbgCb(void *p_arg) {
   struct s_rf_ctx *p_ctx = (struct s_rf_ctx *)p_arg;
-  p_ctx->dbgChipState = RF_READ_CHIP_STATE();
+
+  /* is the radio awake? */
+  if ((p_ctx->state & 0xF0) != RF_STATE_SLEEP) {
+    /* then record chip state */
+    p_ctx->dbgChipState = RF_READ_CHIP_STATE();
+  }
+  trace_printf("DBG cs=%02x, ds=%02x, evt=%d",
+      p_ctx->dbgChipState, p_ctx->state, p_ctx->dbgEvtStatus);
 }
 #endif
 
