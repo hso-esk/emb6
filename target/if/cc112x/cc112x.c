@@ -1005,6 +1005,7 @@ static void rf_pktRxTxEndISR(void *p_arg) {
 
   uint8_t marc_status;
   uint8_t chip_state;
+  en_evprocResCode_t ret;
   struct s_rf_ctx *p_ctx = &rf_ctx;
 
   /* entry */
@@ -1069,9 +1070,10 @@ static void rf_pktRxTxEndISR(void *p_arg) {
         rf_tx_fini(p_ctx);
       }
       else if (p_ctx->state == RF_STATE_RX_TXACK_SYNC) {
-        /* a responding ACK was successfully transmitted */
-        rf_rx_exit(p_ctx);
-        rf_rx_entry(p_ctx);
+        /* a responding ACK was successfully transmitted then signal upper layer */
+        p_ctx->state = RF_STATE_RX_FINI;
+        ret = evproc_putEvent(E_EVPROC_HEAD, NETSTK_RF_EVENT, p_ctx);
+
       }
       else {
         TRACE_LOG_ERR("+++ RF: PKT_END unexpected event state=%02x, cs=%02x, marc=%02x", p_ctx->state, chip_state, marc_status);
@@ -1227,9 +1229,12 @@ static void rf_rx_chksum(struct s_rf_ctx *p_ctx) {
     /* read status bytes */
     rf_readRxStatus(p_ctx);
 
-    /* signal upper layer */
     p_ctx->state = RF_STATE_RX_FINI;
-    RF_TRIGGER_EVENT();
+
+    if (p_ctx->rxReqAck == FALSE) {
+      /* signal upper layer */
+      en_evprocResCode_t ret = evproc_putEvent(E_EVPROC_HEAD, NETSTK_RF_EVENT, p_ctx);
+
   }
   else {
     /* discard the received frame */
@@ -1244,11 +1249,9 @@ static void rf_rx_chksum(struct s_rf_ctx *p_ctx) {
  * @param p_ctx point to variable holding radio context structure
  */
 static void rf_rx_fini(struct s_rf_ctx *p_ctx) {
-  /* if ACK is not required by the received frame, then exit and re-enter RX state */
-  if (p_ctx->rxReqAck == FALSE) {
-    rf_rx_exit(p_ctx);
-    rf_rx_entry(p_ctx);
-  }
+  /* exit and re-enter RX state */
+  rf_rx_exit(p_ctx);
+  rf_rx_entry(p_ctx);
 
   /* set the error code to default */
   e_nsErr_t err = NETSTK_ERR_NONE;
