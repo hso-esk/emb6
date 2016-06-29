@@ -380,7 +380,7 @@ static void rf_tx_rxAck(struct s_rf_ctx *p_ctx);
 static void rf_tx_term(struct s_rf_ctx *p_ctx);
 static void rf_tx_exit(struct s_rf_ctx *p_ctx);
 
-static void rf_dispatcher(c_event_t c_event, p_data_t p_data);
+static void rf_eventHandler(c_event_t c_event, p_data_t p_data);
 
 static void rf_configureRegs(const s_regSettings_t *p_regs, uint8_t len);
 static void rf_manualCalibration(void);
@@ -470,7 +470,7 @@ static void rf_init(void *p_netstk, e_nsErr_t *p_err)
 #endif
 
   /* initialize local variables */
-  evproc_regCallback(NETSTK_RF_EVENT, rf_dispatcher);
+  evproc_regCallback(NETSTK_RF_EVENT, rf_eventHandler);
 
   /* configure operating mode and channel number */
   p_ctx->cfgFreqChanNum = 0;
@@ -747,7 +747,7 @@ static void rf_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err) {
        * command is issued.
        * Trigger event-process manually
        */
-      rf_dispatcher(NETSTK_RF_EVENT, NULL);
+      rf_eventHandler(NETSTK_RF_EVENT, NULL);
       break;
 
     case NETSTK_CMD_RF_RSSI_GET:
@@ -1489,7 +1489,7 @@ static void rf_tx_exit(struct s_rf_ctx *p_ctx) {
  * @param c_event
  * @param p_data
  */
-static void rf_dispatcher(c_event_t c_event, p_data_t p_data) {
+static void rf_eventHandler(c_event_t c_event, p_data_t p_data) {
   (void)p_data;
 
   struct s_rf_ctx *p_ctx = &rf_ctx;
