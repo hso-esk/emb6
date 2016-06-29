@@ -362,6 +362,12 @@ trg += [{
 }]
 
 trg += [{
+    'id'        : 'us_mosesstick',
+    'apps_conf' : [ udp_srv ],
+    'bsp'       : get_descr(bsp, 'mosesstick')
+}]
+
+trg += [{
     'id'        : 'mq_stk112x',
     'apps_conf' : [ mqtt, udp_alive ],
     'bsp'       : get_descr(bsp, 'efm32stk3600_cc112x')
