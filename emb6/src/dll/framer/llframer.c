@@ -154,13 +154,21 @@ uint8_t llframe_addrFilter(llframe_attr_t *p_frame, uint8_t *p_buf, uint16_t len
 
       /* is destination address a short address? */
       if (destAddrLen == 2) {
+        packetbuf_attr_t macShortAddr, destShortAddr;
+        macShortAddr = packetbuf_attr(PACKETBUF_ATTR_MAC_SHORT_ADDR);
+        destShortAddr = destAddr[7] | (destAddr[6] << 8);
+
         /* is destination address a broadcast address? */
-        if ((destAddr[7] == 0xFF) && (destAddr[6] == 0xFF)) {
+        if (destShortAddr == FRAME802154_BROADCASTADDR) {
           /* then frame is accepted */
           return TRUE;
-        } else {
+        }
+        else if (macShortAddr == destShortAddr) {
+          return TRUE;
+        }
+        else {
           /* then frame is discarded */
-          TRACE_LOG_MAIN("+++ LLFRAMER: invalid destShortAddr %02x%02x",
+          TRACE_LOG_ERR("+++ LLFRAMER: invalid destShortAddr %02x%02x",
               destAddr[7], destAddr[6]);
           return FALSE;
         }
