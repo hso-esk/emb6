@@ -1717,37 +1717,55 @@ static void rf_cca(e_nsErr_t *p_err) {
 #endif
 
   uint8_t rssi_status;
+  struct s_rf_ctx *p_ctx = &rf_ctx;
 
-  if (rf_ctx.state != RF_STATE_RX_IDLE) {
+  if (p_ctx->state != RF_STATE_RX_IDLE) {
     *p_err = NETSTK_ERR_BUSY;
-  } else {
-    /* poll for carrier sense valid until timeout */
-    do {
-      cc112x_spiRegRead(CC112X_RSSI0, &rssi_status, 1);
+  }
+  else {
+    /* poll for valid carrier sense until timeout */
+    rt_tmr_tick_t tickstart;
+    e_rfState_t chipState;
 
-      /* keep polling until either
-       * - carrier sense is valid
-       * - a packet is arrived
-       */
-    } while (((rssi_status & RF_RSSI0_CARRIER_SENSE_VALID ) == 0)
-        && (rf_ctx.state == RF_STATE_RX_IDLE));
+    /* since atomic time unit is 1ms, ensure CCA timeout is at least 1ms */
+    tickstart = rt_tmr_getCurrenTick();
+    while ((rt_tmr_getCurrenTick() - tickstart) < 2) {
+      chipState = cc112x_spiRegRead(CC112X_RSSI0, &rssi_status, 1);
 
-    /* read CCA value */
+      /* verify if either carrier sense is valid or a packet is arrived */
+      if ((rssi_status & RF_RSSI0_CARRIER_SENSE_VALID) != 0) {
+        break;
+      }
+      else {
+        /* otherwise continue to poll for valid carrier sense */
+        bsp_delay_us(10); // add a small time gap between successive polls
+      }
+    }
+
     /* has a packet arrived? */
-    if (rf_ctx.state != RF_STATE_RX_IDLE) {
+    if (p_ctx->state != RF_STATE_RX_IDLE) {
       /* then set packet reception a higher priority than CCA */
       *p_err = NETSTK_ERR_BUSY;
     }
-    /* is radio still in RX state? */
     else {
-      /* was carrier detected? */
-      if (rssi_status & RF_RSSI0_CARRIER_DETECTED) {
-        /* then declare channel busy */
+      /* was CCA timeout expired? If so carrier sense is invalid */
+      if ((rssi_status & RF_RSSI0_CARRIER_SENSE_VALID) == 0) {
+        /* then a runtime error was detected. The driver is still in RX_IDLE but the radio
+         * did not give a valid carrier sense in time. In this case simply force the radio
+         * to RX_IDLE and declare channel access failure */
+        rf_rx_term(p_ctx);
         *p_err = NETSTK_ERR_CHANNEL_ACESS_FAILURE;
       }
       else {
-        /* declare channel free */
-        *p_err = NETSTK_ERR_NONE;
+        /* was carrier detected? */
+        if (rssi_status & RF_RSSI0_CARRIER_DETECTED) {
+          /* then declare channel busy */
+          *p_err = NETSTK_ERR_CHANNEL_ACESS_FAILURE;
+        }
+        else {
+          /* declare channel free */
+          *p_err = NETSTK_ERR_NONE;
+        }
       }
     }
   }
