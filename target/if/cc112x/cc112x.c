@@ -937,6 +937,9 @@ static void rf_rxFifoThresholdISR(void *p_arg) {
           /* terminate RX process */
           TRACE_LOG_ERR("Failed to write ACK to TXFIFO, seq=%02x, cs=%02x", ack[PHY_HEADER_LEN + 2], RF_READ_CHIP_STATE());
           rf_rx_term(p_ctx);
+
+          bsp_extIntClear(RF_INT_RXFIFO_THR);
+          return;
         }
 
         /* is IEEE Std. 802.15.4g supported? */
