@@ -503,7 +503,7 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 				tlv=mle_find_tlv_in_cmd(cmd,TLV_MODE);
 
 				/* allocate temporarily a child */
-				uint8_t id=0;
+				uint8_t id=1; // don't use the id zero for a child : problem with the short address
 				do
 				{
 					child=mle_add_child( id , 0 /*adress16*/ ,  0 /*frame counter*/, tlv->value[0] /*modeTLV*/,  0 /*link quality */);
@@ -573,10 +573,6 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 		if(!child)
 		{
 			PRINTFY("Child not found ...");PRESET();
-		}
-		else
-		{
-			PRINTFY("Child found ...");PRESET();
 		}
 
 		/* check the response TLV before processing the parent response */
