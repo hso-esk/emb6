@@ -69,6 +69,10 @@
 #define CC112X_PKT_LEN_MODE_VARIABLE      (uint8_t)( 0x20 )
 #define CC112X_PKT_LEN_MODE_FIXED         (uint8_t)( 0x00 )
 
+/*!< Enable/Disable native retransmission support of the radio */
+#ifndef CC112X_CFG_RETX_EN
+#define CC112X_CFG_RETX_EN                  FALSE   /* this feature is currently unstable, then should not be enabled */
+#endif
 
 /**
  * @brief   Default register settings for IEEE-802.15.4g

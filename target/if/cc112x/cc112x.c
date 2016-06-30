@@ -387,7 +387,7 @@ static void rf_manualCalibration(void);
 static void rf_calibrateRCOsc(void);
 static void rf_cca(e_nsErr_t *p_err);
 
-#if (NETSTK_CFG_RF_RETX_EN == TRUE)
+#if (CC112X_CFG_RETX_EN == TRUE)
 static void cc112x_retx(e_nsErr_t *p_err);
 #endif
 
@@ -710,7 +710,7 @@ static void rf_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err) {
       break;
 
     case NETSTK_CMD_RF_RETX:
-#if (NETSTK_CFG_RF_RETX_EN == TRUE)
+#if (CC112X_CFG_RETX_EN == TRUE)
       /* retransmit the last frame
       * - write TxFirst to the previous value
       */
@@ -1754,7 +1754,7 @@ static void rf_cca(e_nsErr_t *p_err) {
 }
 
 
-#if (NETSTK_CFG_RF_RETX_EN == TRUE)
+#if (CC112X_CFG_RETX_EN == TRUE)
 static void cc112x_retx(e_nsErr_t *p_err)
 {
   if ((rf_ctx.state != RF_STATE_RX_IDLE) &&
