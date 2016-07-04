@@ -46,6 +46,19 @@ typedef enum
 	PARENT,
 } mle_mode_t;
 
+typedef enum {
+	JP_SEND_MCAST_PR_TO_ROUTER,
+	JP_SEND_MCAST_PR_TO_ROUTER_REED,
+	JP_PARENT_SELECT,
+	JP_SEND_CHILD_REQ,
+	JP_SAVE_PARENT,
+	JP_FAIL,
+}jp_state_t; // join process state
+
+typedef enum {
+	SYN_SEND_LINK_REQUEST,
+	SYN_PROCESS_LINK,
+}syn_state_t; // synchronisation state
 
 typedef struct {
 	struct udp_socket     udp_socket;

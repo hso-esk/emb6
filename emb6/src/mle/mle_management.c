@@ -35,20 +35,11 @@
 
 static mle_node_t MyNode;
 static  uip_ipaddr_t                s_destAddr;
-struct  ctimer                      c_mle_Timer;
+struct  ctimer                      c_mle_Timer; // used for the join process(child) and synchro process(parent)
 static 	mle_cmd_t 					cmd; // command buffer
 static mle_param_t					param;
 static mle_neighbor_t*				nb; // to handle parent + ...
 static mle_neighbor_t* 				child; // to handle the child devices in both mode (parent/child)
-
-typedef enum {
-	JP_SEND_MCAST_PR_TO_ROUTER,
-	JP_SEND_MCAST_PR_TO_ROUTER_REED,
-	JP_PARENT_SELECT,
-	JP_SEND_CHILD_REQ,
-	JP_SAVE_PARENT,
-	JP_FAIL,
-}jp_state_t; // join process state
 
 /*==============================================================================
 								LOCAL FUNCTION
@@ -131,11 +122,11 @@ static void check_child_state(void *ptr)
 	{
 		child=mle_find_child(*child_id);
 		mle_rm_child(child);
-		PRINTFR("Time out : child removed \n "ANSI_COLOR_RESET);
+		PRINTFR("Time out : child removed \n"ANSI_COLOR_RESET);
 	}
 	else
 	{
-		PRINTFG("Child Linked \n "ANSI_COLOR_RESET);
+		PRINTFG("Child Linked \n"ANSI_COLOR_RESET);
 	}
 
 }
@@ -248,7 +239,7 @@ static uint8_t calculate_two_way_LQ(uint8_t my_rssi , uint8_t rec_rssi)
 }
 
 
-
+/************************ MLE join process  ****************************/
 
 void mle_join_process(void *ptr)
 {
@@ -419,6 +410,50 @@ void mle_join_process(void *ptr)
 	}
 }
 
+
+/************************ MLE synchronisation process ****************************/
+
+void mle_synchro_process(void *ptr)
+{
+	static 	syn_state_t 		syn_state;  // synchronisation process current state
+	tlv_connectivity_t* connectivity;
+	tlv_t * tlv;
+	uint8_t finish=0;
+
+	if(MyNode.OpMode==PARENT)
+	{
+		while(!finish)
+		{
+			switch(syn_state)
+			{
+			case SYN_SEND_LINK_REQUEST:
+				PRINTFG("[+] "ANSI_COLOR_RESET);
+				PRINTF("SNY process: Send Link Request to neighbors router \n"ANSI_COLOR_RESET);
+
+
+				ctimer_set(&c_mle_Timer, 2 * bsp_get(E_BSP_GET_TRES) , mle_synchro_process, NULL);
+				syn_state=SYN_PROCESS_LINK;
+				finish=1;
+				break;
+			case SYN_PROCESS_LINK:
+				if(ctimer_expired(&c_mle_Timer)) // that means that this function was triggered by the ctimer
+				{
+					PRINTFG("[+] "ANSI_COLOR_RESET);
+					PRINTF("SNY process:  Synchronization process finished \n"ANSI_COLOR_RESET);
+
+				}
+				else
+				{
+					PRINTFG("[+] "ANSI_COLOR_RESET);
+					PRINTF("SNY process: processing link \n"ANSI_COLOR_RESET);
+
+				}
+				finish=1;
+				break;
+			}
+		}
+	}
+}
 
 /************************ process incoming MLE messages function ****************************/
 
@@ -694,7 +729,10 @@ uint8_t mle_set_parent_mode(void)
 	MyNode.OpMode=PARENT; // router
 	PRINTFG( "MLE : Node operate as Parent ... "ANSI_COLOR_RESET);
 	PRESET();
-	// may be start synchronisation with other routers
+
+	/* start synchronisation with other routers */
+	mle_synchro_process(NULL);
+
 	return 1 ;
 }
 
@@ -704,5 +742,6 @@ uint8_t mle_set_child_mode(void)
 	PRINTFG( "MLE : Node operate as Child ... "ANSI_COLOR_RESET);
 	PRESET();
 	// may be remove neighbors etc // start join process etc
+	// remove all neighbors
 	return 1 ;
 }
