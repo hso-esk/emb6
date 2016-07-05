@@ -605,8 +605,6 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
     return;
   }
 
-#endif
-
   /* is IEEE Std. 802.15.4g supported? */
 #if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
   /* then store length of packet to send */
