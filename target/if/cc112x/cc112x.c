@@ -629,16 +629,16 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
   if (p_ctx->txStatus == RF_TX_STATUS_DONE) {
     *p_err = p_ctx->txErr;
 
-    if (p_ctx->txErr == NETSTK_ERR_TX_COLLISION) {
-      TRACE_LOG_ERR("+++ RF: send err=-%d", p_ctx->txErr);
-      /* FIXME exception handler */
-      rf_tx_exit(p_ctx);
-    }
+    /* exit TX state */
+    rf_tx_exit(p_ctx);
 
-    if (p_ctx->state != RF_STATE_RX_SYNC) {
-      /* TXONCCA_FAILED */
-      /* exit TX state */
-      rf_tx_exit(p_ctx);
+    if (p_ctx->txErr == NETSTK_ERR_FATAL) {
+      /* exception was thrown and radio was already put to RX_IDLE state */
+    }
+    else if (p_ctx->txErr == NETSTK_ERR_TX_COLLISION) {
+      /* channel was detected busy and radio was already put to RX_SYNC state */
+    }
+    else {
       /* enter RX state */
       rf_rx_entry(p_ctx);
     }
@@ -665,9 +665,15 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
   else {
     *p_err = NETSTK_ERR_TX_TIMEOUT;
 
-    /* FIXME hot fix: put radio to idle and flush TXFIFO */
-    cc112x_spiCmdStrobe(CC112X_SIDLE);
-    cc112x_spiCmdStrobe(CC112X_SFTX);
+    /* check if transceiver was reset? */
+    rf_chkReset(p_ctx);
+
+    /* was TXFIFO error? */
+    if (RF_READ_CHIP_STATE() == RF_STATE_TX_FIFO_ERR) {
+      /* then put radio to idle and flush TXFIFO */
+      cc112x_spiCmdStrobe(CC112X_SIDLE);
+      cc112x_spiCmdStrobe(CC112X_SFTX);
+    }
 
     /* exit TX state */
     rf_tx_exit(p_ctx);
