@@ -284,6 +284,7 @@ struct s_rf_ctx {
   e_nsRfOpMode cfgOpMode;
   uint8_t cfgFreqChanNum;
   uint8_t cfgWOREnabled;
+  uint8_t regVerify;
   uint8_t isAckRequired;
 
   uint16_t rxBytesCounter;
@@ -391,6 +392,7 @@ static void rf_cca(e_nsErr_t *p_err);
 static void cc112x_retx(e_nsErr_t *p_err);
 #endif
 
+static void rf_chkReset(struct s_rf_ctx *p_ctx);
 static void rf_reset(void);
 static void rf_chkPartnumber(e_nsErr_t *p_err);
 static void rf_waitRdy(void);
@@ -1846,6 +1848,44 @@ static void cc112x_retx(e_nsErr_t *p_err)
 #endif
 
 
+static void rf_chkReset(struct s_rf_ctx *p_ctx) {
+  e_nsErr_t err;
+  uint8_t read_byte;
+
+  /* check one of the registers */
+  cc112x_spiRegRead(CC112X_FREQ2, &read_byte, 1);
+
+  if (read_byte != p_ctx->regVerify) {
+    /* re-configure radio transceiver without re-initializing driver configuration attributes */
+    RF_INT_DISABLED();
+
+    /* initialize SPI handle */
+    cc112x_spiInit();
+
+    /* reset the transceiver. Afterwards the chip will be in IDLE state */
+    rf_reset();
+
+    /* configure RF registers */
+    RF_WR_REGS(cc112x_cfg_ieee802154g_default);
+    RF_SET_FIFO_THR(RF_CFG_FIFO_THR);
+
+    /* calibrate radio according to cc112x errata */
+    rf_manualCalibration();
+
+    /* calibrate RC oscillator */
+    rf_calibrateRCOsc();
+
+    /* configurations of radio interrupts */
+    RF_INT_CONFIG();
+
+    /* re-configure operation frequency */
+    rf_opModeSet(p_ctx->cfgOpMode, &err);
+    rf_chanNumSet(p_ctx->cfgFreqChanNum, &err);
+    TRACE_LOG_ERR("radio transceiver was reset, opMode=%d, chanNum=%d", p_ctx->cfgOpMode, p_ctx->cfgFreqChanNum);
+  }
+}
+
+
 static void rf_reset(void) {
   /* by issuing a manual reset, all internal registers are set to their default
   * values and the radio will go to the IDLE state
@@ -1946,6 +1986,7 @@ static void rf_chanNumSet(uint8_t chan_num, e_nsErr_t *p_err) {
   uint32_t freq_center = 0;
   uint32_t freq_delta = 0;
   uint8_t write_byte = 0;
+  struct s_rf_ctx *p_ctx = &rf_ctx;
 
   /* set returned error value to default */
   *p_err = NETSTK_ERR_NONE;
@@ -2012,6 +2053,7 @@ static void rf_chanNumSet(uint8_t chan_num, e_nsErr_t *p_err) {
 
     write_byte = (freq_reg & 0x00FF0000) >> 16;
     cc112x_spiRegWrite(CC112X_FREQ2, &write_byte, 1);
+    p_ctx->regVerify = write_byte;
 
     write_byte = (freq_reg & 0x0000FF00) >> 8;
     cc112x_spiRegWrite(CC112X_FREQ1, &write_byte, 1);
