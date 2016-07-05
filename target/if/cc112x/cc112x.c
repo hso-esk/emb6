@@ -380,6 +380,7 @@ static void rf_tx_term(struct s_rf_ctx *p_ctx);
 static void rf_tx_exit(struct s_rf_ctx *p_ctx);
 
 static void rf_eventHandler(c_event_t c_event, p_data_t p_data);
+static void rf_exceptionHandler(struct s_rf_ctx *p_ctx, uint8_t marcStatus, e_rfState_t chipState);
 
 static void rf_configureRegs(const s_regSettings_t *p_regs, uint8_t len);
 static void rf_manualCalibration(void);
@@ -1509,6 +1510,25 @@ static void rf_eventHandler(c_event_t c_event, p_data_t p_data) {
   }
 }
 
+
+/**
+ * @note  radio driver exception handler
+ * @param p_ctx       point to variable holding radio context structure
+ * @param marcStatus  value of MARC status at which exception was thrown
+ * @param chipState   state of radio chip at which exception was thrown
+ */
+static void rf_exceptionHandler(struct s_rf_ctx *p_ctx, uint8_t marcStatus, e_rfState_t chipState) {
+#if (RF_CFG_DEBUG_EN == TRUE)
+  p_ctx->dbgChipState = chipState;
+#endif
+
+  /* terminate TX process */
+  p_ctx->txErr = NETSTK_ERR_FATAL;
+  rf_tx_term(p_ctx);
+
+  /* terminate RX process */
+  rf_rx_term(p_ctx);
+}
 
 
 /*
