@@ -645,21 +645,15 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
   }
 #if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
   else if (p_ctx->txStatus == RF_TX_STATUS_WFA) {
-    /* wait for ACK for maximum macAckWaitDuration (2.6ms) */
-    packetbuf_attr_t waitForAckTimeoutInTicks;
-    waitForAckTimeoutInTicks = packetbuf_attr(PACKETBUF_ATTR_MAC_ACK_WAIT_DURATION) / RT_TMR_CFG_TICK_FREQ_IN_HZ;
+    packetbuf_attr_t waitForAckTimeout;
+    waitForAckTimeout = packetbuf_attr(PACKETBUF_ATTR_MAC_ACK_WAIT_DURATION);
 
-    /* make sure a time period of at least [macAckWaitDuration + 1] ms has passed */
-    waitForAckTimeoutInTicks += 2;
+    /* wait for at most ackWaitDuration */
+    bsp_delay_us(waitForAckTimeout);
 
     *p_err = NETSTK_ERR_TX_NOACK;
-    tickstart = rt_tmr_getCurrenTick();
-    while ((rt_tmr_getCurrenTick() - tickstart) < waitForAckTimeoutInTicks) {
-      if (p_ctx->txStatus == RF_TX_STATUS_DONE) {
-        /* either the frame was acknowledged or error occurred */
-        *p_err = p_ctx->txErr;
-        break;
-      }
+    if (p_ctx->txStatus == RF_TX_STATUS_DONE) {
+      *p_err = p_ctx->txErr;
     }
 
     /* exit TX state */
