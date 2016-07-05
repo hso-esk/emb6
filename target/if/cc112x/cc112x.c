@@ -559,6 +559,7 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
   }
 #endif
 
+  uint8_t numTxBytes;
   uint32_t tickstart;
   struct s_rf_ctx *p_ctx = &rf_ctx;
 
@@ -589,10 +590,7 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
     }
   }
 
-#if (RF_CFG_DEBUG_EN == TRUE)
-  /* store chip state for debugging */
-  p_ctx->dbgChipState = RF_READ_CHIP_STATE();
-  uint8_t numTxBytes;
+  /* verifying number of written bytes */
   cc112x_spiRegRead(CC112X_NUM_TXBYTES, &numTxBytes, 1);
   if (numTxBytes != len) {
     TRACE_LOG_ERR("<send> failed to write to TXFIFO %d/%d", numTxBytes, len);
@@ -606,6 +604,7 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
     *p_err = NETSTK_ERR_FATAL;
     return;
   }
+
 #endif
 
   /* is IEEE Std. 802.15.4g supported? */
