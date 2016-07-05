@@ -301,7 +301,7 @@ void mac_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
         * the maximum retries and ACK was not arrived
         */
         while ((tx_retries < tx_retriesMax) && (is_tx_done == FALSE)) {
-          TRACE_LOG_ERR("+ MAC_TX: seq=%02x; retry=%d, csmaTime=%d ms", p_data[2], tx_retries, csmaTime);
+          TRACE_LOG_ERR("+ MAC_TX: seq=%02x; retry=%d", p_data[2], tx_retries);
 
           /* perform unslotted CSMA-CA */
           mac_csma(p_err);
