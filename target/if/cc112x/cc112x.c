@@ -1571,7 +1571,9 @@ static void rf_listen(struct s_rf_ctx *p_ctx) {
     cc112x_spiCmdStrobe(CC112X_SWOR);
   } else {
     /* RX mode */
-    cc112x_spiCmdStrobe(CC112X_SRX);
+    while (RF_READ_CHIP_STATE() != RF_STATE_RX_IDLE) {
+      cc112x_spiCmdStrobe(CC112X_SRX);
+    }
   }
 }
 
