@@ -592,6 +592,20 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
 #if (RF_CFG_DEBUG_EN == TRUE)
   /* store chip state for debugging */
   p_ctx->dbgChipState = RF_READ_CHIP_STATE();
+  uint8_t numTxBytes;
+  cc112x_spiRegRead(CC112X_NUM_TXBYTES, &numTxBytes, 1);
+  if (numTxBytes != len) {
+    TRACE_LOG_ERR("<send> failed to write to TXFIFO %d/%d", numTxBytes, len);
+    /* then put radio to idle and flush TXFIFO */
+    cc112x_spiCmdStrobe(CC112X_SIDLE);
+    cc112x_spiCmdStrobe(CC112X_SFTX);
+    /* exit TX state */
+    rf_tx_exit(p_ctx);
+    /* enter RX state */
+    rf_rx_entry(p_ctx);
+    *p_err = NETSTK_ERR_FATAL;
+    return;
+  }
 #endif
 
   /* is IEEE Std. 802.15.4g supported? */
