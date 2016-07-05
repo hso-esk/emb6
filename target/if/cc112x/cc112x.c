@@ -77,8 +77,7 @@
 #include "crc.h"
 #endif
 
-#define NETSTK_CFG_RF_DEBUG_EN              TRUE
-
+#define RF_CFG_DEBUG_EN                     TRUE
 
 /*
  ********************************************************************************
@@ -314,7 +313,7 @@ struct s_rf_ctx {
   uint8_t txStatus;
   e_nsErr_t txErr;
 
-#if (NETSTK_CFG_RF_DEBUG_EN == TRUE)
+#if (RF_CFG_DEBUG_EN == TRUE)
   s_rt_tmr_t dbgTmr;
   e_rfState_t dbgChipState;
   uint8_t dbgEvtStatus;
@@ -401,7 +400,7 @@ static void rf_chanNumSet(uint8_t chan_num, e_nsErr_t *p_err);
 static void rf_opModeSet(e_nsRfOpMode mode, e_nsErr_t *p_err);
 static void rf_readRSSI(int8_t *p_val, e_nsErr_t *p_err);
 
-#if (NETSTK_CFG_RF_DEBUG_EN == TRUE)
+#if (RF_CFG_DEBUG_EN == TRUE)
 static void rf_tmrDbgCb(void *p_arg);
 #endif
 
@@ -477,7 +476,7 @@ static void rf_init(void *p_netstk, e_nsErr_t *p_err)
   p_ctx->cfgOpMode = NETSTK_RF_OP_MODE_CSM;
 
   /* debug watchdog timer */
-#if (NETSTK_CFG_RF_DEBUG_EN == TRUE)
+#if (RF_CFG_DEBUG_EN == TRUE)
   rt_tmr_create(&p_ctx->dbgTmr, E_RT_TMR_TYPE_PERIODIC, 10000, rf_tmrDbgCb, p_ctx);
   rt_tmr_start(&p_ctx->dbgTmr);
 #endif
@@ -587,7 +586,7 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
     }
   }
 
-#if (NETSTK_CFG_RF_DEBUG_EN == TRUE)
+#if (RF_CFG_DEBUG_EN == TRUE)
   /* store chip state for debugging */
   p_ctx->dbgChipState = RF_READ_CHIP_STATE();
 #endif
@@ -1252,7 +1251,7 @@ static void rf_rx_chksum(struct s_rf_ctx *p_ctx) {
       /* signal upper layer */
       en_evprocResCode_t ret = evproc_putEvent(E_EVPROC_HEAD, NETSTK_RF_EVENT, p_ctx);
 
-#if (NETSTK_CFG_RF_DEBUG_EN == TRUE)
+#if (RF_CFG_DEBUG_EN == TRUE)
       /* store event-triggering status */
       p_ctx->dbgEvtStatus = ret;
 #endif
@@ -1271,7 +1270,7 @@ static void rf_rx_chksum(struct s_rf_ctx *p_ctx) {
  * @param p_ctx point to variable holding radio context structure
  */
 static void rf_rx_fini(struct s_rf_ctx *p_ctx) {
-#if (NETSTK_CFG_RF_DEBUG_EN == TRUE)
+#if (RF_CFG_DEBUG_EN == TRUE)
   /* clear event-triggering status once the event is consumed */
   p_ctx->dbgEvtStatus = 0;
 #endif
@@ -1518,7 +1517,7 @@ static void rf_eventHandler(c_event_t c_event, p_data_t p_data) {
  ********************************************************************************
  */
 
-#if (NETSTK_CFG_RF_DEBUG_EN == TRUE)
+#if (RF_CFG_DEBUG_EN == TRUE)
 /**
  * @brief debugging timer callback
  */
