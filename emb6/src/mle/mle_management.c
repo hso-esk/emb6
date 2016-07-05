@@ -62,7 +62,7 @@ uint8_t 			isActiveRouter(uint16_t srcAdd)
 #define get_routerID()		         0xff
 
 
-/************************ join process function ****************************/
+
 
 /*
  * @brief Send multicast MLE parent request
@@ -87,11 +87,39 @@ uint8_t send_mle_advertisement(tlv_route64_t* route, uint8_t len, tlv_leader_t* 
 }
 
 
+
+/************************ link calculation functions ****************************/
+
+static uint8_t mapRSSI(uint8_t rssi )
+{
+	if ( rssi > 20)
+		return 3;
+	else if ( (rssi > 10 )
+			&& (rssi <= 20  ))
+		return 2;
+	else if ( (rssi > 2 )
+			&& (rssi <= 10  ))
+		return 1;
+	else
+		return 0;
+
+}
+
+static uint8_t calculate_two_way_LQ(uint8_t my_rssi , uint8_t rec_rssi)
+{
+	if (my_rssi<rec_rssi)
+		return mapRSSI(my_rssi);
+	else
+		return mapRSSI(rec_rssi);
+}
+
+/************************ join process functions ****************************/
+
 static uint8_t send_mle_parent_request(uint8_t R, uint8_t E)
 {
 	mle_init_cmd(&cmd,PARENT_REQUEST);
 	add_mode_RSDN_to_cmd(&cmd, MyNode.rx_on_when_idle, 0, IS_FFD, 0);
-	MyNode.jp_challenge=add_rand_challenge_to_cmd(&cmd);
+	MyNode.challenge=add_rand_challenge_to_cmd(&cmd);
 	add_scan_mask_to_cmd(&cmd,R,E);
 	add_version_to_cmd(&cmd);
 	uip_create_linklocal_allrouters_mcast(&s_destAddr);
@@ -99,6 +127,11 @@ static uint8_t send_mle_parent_request(uint8_t R, uint8_t E)
 	return 1 ;
 }
 
+/**
+ * @brief  send child id request
+ *
+ * @param  dest_addr	  pointer to the dest address
+ */
 static uint8_t send_mle_childID_request(uip_ipaddr_t *dest_addr)
 {
 	mle_init_cmd(&cmd,CHILD_ID_REQUEST);
@@ -112,7 +145,11 @@ static uint8_t send_mle_childID_request(uip_ipaddr_t *dest_addr)
 	return 1 ;
 }
 
-
+/**
+ * @brief  check after time out if the child still pending then remove it
+ *
+ * @param  ptr	  pointer to the child id
+ */
 static void check_child_state(void *ptr)
 {
 	uint8_t* child_id;
@@ -131,18 +168,14 @@ static void check_child_state(void *ptr)
 
 }
 
-
-
 static void reply_for_mle_parent_request(void *ptr)
 {
 
 	uint8_t* child_id;
-
 	child_id= (uint8_t*) ptr;
 
 	if(MyNode.OpMode!= NOT_LINKED)
 	{
-		/*********** checking the scan mask tlv before sending any response **************/
 
 		mle_init_cmd(&cmd,PARENT_RESPONSE);
 		add_src_address_to_cmd(&cmd);
@@ -189,7 +222,6 @@ static void reply_for_mle_childID_request(void *ptr)
 		thrd_request_router_id(uip_ipaddr_t *leader_addr, uint8_t *ml_eid, uint8_t *router_id)
 		}
 		 */
-		mle_set_parent_mode();
 
 		mle_init_cmd(&cmd,CHILD_ID_RESPONSE);
 		add_src_address_to_cmd(&cmd);
@@ -199,6 +231,8 @@ static void reply_for_mle_childID_request(void *ptr)
 		mle_send_msg( &cmd,&param.source_addr);
 		child= mle_find_child_byAdd(&param.source_addr);
 		child->state=LINKED;
+
+		mle_set_parent_mode();
 	}
 	else if (MyNode.OpMode == PARENT)
 	{
@@ -212,34 +246,6 @@ static void reply_for_mle_childID_request(void *ptr)
 		child->state=LINKED;
 	}
 }
-
-static uint8_t mapRSSI(uint8_t rssi )
-{
-	if ( rssi > 20)
-		return 3;
-	else if ( (rssi > 10 )
-			&& (rssi <= 20  ))
-		return 2;
-	else if ( (rssi > 2 )
-			&& (rssi <= 10  ))
-		return 1;
-	else
-		return 0;
-
-}
-
-
-
-static uint8_t calculate_two_way_LQ(uint8_t my_rssi , uint8_t rec_rssi)
-{
-	if (my_rssi<rec_rssi)
-		return mapRSSI(my_rssi);
-	else
-		return mapRSSI(rec_rssi);
-}
-
-
-/************************ MLE join process  ****************************/
 
 void mle_join_process(void *ptr)
 {
@@ -413,6 +419,57 @@ void mle_join_process(void *ptr)
 
 /************************ MLE synchronisation process ****************************/
 
+static uint8_t send_mle_link_request(void)
+{
+	mle_init_cmd(&cmd,LINK_REQUEST);
+	add_src_address_to_cmd(&cmd);
+	// leader data tlv :: from Network layer
+	MyNode.challenge=add_rand_challenge_to_cmd(&cmd);
+	add_version_to_cmd(&cmd);
+	// TLV request : link Margin
+	uip_create_linklocal_allrouters_mcast(&s_destAddr);
+	mle_send_msg(&cmd, &s_destAddr);
+	return 1 ;
+}
+
+static void reply_for_mle_link_request(void *ptr)
+{
+
+	uint8_t* nb_id;
+	nb_id= (uint8_t*) ptr;
+
+	if(MyNode.OpMode== PARENT)
+	{
+		/* find the  */
+		mle_init_cmd(&cmd,LINK_ACCEPT);
+		add_src_address_to_cmd(&cmd);
+		// leader data tlv :: from Network layer
+		add_response_to_cmd(&cmd, mle_find_tlv_in_cmd(param.rec_cmd,TLV_CHALLENGE));
+		// link-layer frame counter tlv
+		add_version_to_cmd(&cmd);
+
+
+			add_Link_margin_to_cmd(&cmd,param.rec_rssi);
+
+		/* find the nb router */
+		nb= mle_find_nb_router(*nb_id);
+		if(nb->state==PENDING)
+		{
+			cmd.type=LINK_ACCEPT_AND_REQUEST;
+			/* MLE Frame Counter tlv */
+			// add frame counter
+			/* add and store the challenge generated  */
+			nb->challenge= add_rand_challenge_to_cmd(&cmd);
+		}
+
+
+		/* to change by the child address */
+		mle_send_msg( &cmd,&nb->tmp);
+
+	}
+
+}
+
 void mle_synchro_process(void *ptr)
 {
 	static 	syn_state_t 		syn_state;  // synchronisation process current state
@@ -429,8 +486,9 @@ void mle_synchro_process(void *ptr)
 			case SYN_SEND_LINK_REQUEST:
 				PRINTFG("[+] "ANSI_COLOR_RESET);
 				PRINTF("SNY process: Send Link Request to neighbors router \n"ANSI_COLOR_RESET);
-
-
+				/* send MLE Link Request */
+				send_mle_link_request();
+				/* trigger the timer */
 				ctimer_set(&c_mle_Timer, 2 * bsp_get(E_BSP_GET_TRES) , mle_synchro_process, NULL);
 				syn_state=SYN_PROCESS_LINK;
 				finish=1;
@@ -466,9 +524,11 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 	tlv_t* 			tlv;
 	tlv_route64_t* 	route64_tlv;
 	tlv_leader_t* 	leader_tlv;
+	uint16_t MaxRand;
+	uint8_t id=0;
 
 
-	/***********   To avoid the problem of the additional bytes until we fix it  ************/
+	/*   To avoid the problem of the additional bytes until we fix it  ************/
 	//		if( uip_is_addr_linklocal_allrouters_mcast(dest_addr) || uip_is_addr_linklocal_allnodes_mcast(dest_addr))
 	mle_create_cmd_from_buff(&cmd , (uint8_t * )data , datalen - 40 );
 	//		else
@@ -483,10 +543,80 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 	switch (cmd->type)
 	{
 	case LINK_REQUEST:
+		/* check if neighbors table is not full */
+		if(MyNode.NB_router_couter<MAX_NB_ROUTER && MyNode.OpMode== PARENT)
+		{
+
+			/* check the nb already exist */
+			nb=mle_find_nb_router_byAdd((uip_ipaddr_t*)source_addr);
+			if(!nb)// the neighbor is not existing
+			{
+				/* allocate temporarily a neighbor */
+				id=0;
+				do
+				{
+					nb=mle_add_nb_router( id , 0 /*adress16*/ ,  0 /*frame counter*/, 0 /*modeTLV*/,  0 /*link quality */);
+					id++;
+				}
+				while (nb==NULL && id<MAX_NB_ROUTER);
+
+				if (nb)
+				{
+					/* increment the nb router counter */
+					MyNode.NB_router_couter++;
+					/* set the state of the nb to pending*/
+					nb->state=PENDING;
+					/* store the address of the nb router */
+					uip_ip6addr_copy(&nb->tmp ,source_addr);
+					PRINTF("ID allocated for the nb router = %i \n", nb->id);
+				}
+				else
+				{
+					PRINTFR("Failed to allocate nb router id...");PRESET();
+					break;
+				}
+			}
+			/* prepare param */
+			param.rec_cmd=cmd;
+			param.rec_rssi=get_rssi();
+			uip_ip6addr_copy(&param.source_addr,source_addr);
+
+			/* trigger the timer to reply after the random period */
+			ctimer_set(&nb->timeOut, bsp_getrand(500) *  (bsp_get(E_BSP_GET_TRES) / 1000 ) , reply_for_mle_link_request, (void *) &nb->id );
+
+		}
 		break;
 	case LINK_ACCEPT:
+		if (MyNode.OpMode==PARENT)
+		{
+			/* check the response TLV before processing the parent response */
+			tlv=mle_find_tlv_in_cmd(cmd,TLV_RESPONSE);
+			if(comp_resp_chall(MyNode.challenge,tlv->value))
+			{
+				param.rec_cmd=cmd;
+				param.rec_rssi=get_rssi();
+				uip_ip6addr_copy(&param.source_addr,source_addr);
+
+				mle_synchro_process(NULL);
+
+			}
+		}
 		break;
 	case LINK_ACCEPT_AND_REQUEST:
+		if (MyNode.OpMode==PARENT)
+		{
+			/* check the response TLV before processing the parent response */
+			tlv=mle_find_tlv_in_cmd(cmd,TLV_RESPONSE);
+			if(comp_resp_chall(MyNode.challenge,tlv->value))
+			{
+				param.rec_cmd=cmd;
+				param.rec_rssi=get_rssi();
+				uip_ip6addr_copy(&param.source_addr,source_addr);
+
+				mle_synchro_process(NULL);
+
+			}
+		}
 		break;
 	case LINK_REJECT:
 		break;
@@ -528,7 +658,6 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 			if((MyNode.OpMode==PARENT && routerMask(tlv->value[0]) ) || (MyNode.OpMode==CHILD && ReedMask(tlv->value[0]) ) )
 			{
 				/* handle the random time to wait before reply */
-				uint16_t MaxRand;
 				if(ReedMask(tlv->value[0]))
 					MaxRand=1000;// max response after 1000 ms
 				else
@@ -538,7 +667,7 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 				tlv=mle_find_tlv_in_cmd(cmd,TLV_MODE);
 
 				/* allocate temporarily a child */
-				uint8_t id=1; // don't use the id zero for a child : problem with the short address
+				id=1; // don't use the id zero for a child : problem with the short address
 				do
 				{
 					child=mle_add_child( id , 0 /*adress16*/ ,  0 /*frame counter*/, tlv->value[0] /*modeTLV*/,  0 /*link quality */);
@@ -571,7 +700,7 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 				uip_ip6addr_copy(&param.source_addr,source_addr);
 
 				/* trigger the timer to reply after the random period */
-				ctimer_set(&c_mle_Timer, bsp_getrand(MaxRand) *  (bsp_get(E_BSP_GET_TRES) / 1000 ) , reply_for_mle_parent_request, (void *) &child->id );
+				ctimer_set(&child->timeOut, bsp_getrand(MaxRand) *  (bsp_get(E_BSP_GET_TRES) / 1000 ) , reply_for_mle_parent_request, (void *) &child->id );
 
 			}
 		}
@@ -582,11 +711,10 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 		{
 			/* check the response TLV before processing the parent response */
 			tlv=mle_find_tlv_in_cmd(cmd,TLV_RESPONSE);
-			if(comp_resp_chall(MyNode.jp_challenge,tlv->value))
+			if(comp_resp_chall(MyNode.challenge,tlv->value))
 			{
 				param.rec_cmd=cmd;
 				param.rec_rssi=get_rssi();
-				//param.source_addr=(uip_ipaddr_t *) source_addr;
 				uip_ip6addr_copy(&param.source_addr,source_addr);
 
 
@@ -693,18 +821,17 @@ static uint8_t mle_send_msg(mle_cmd_t* cmd,  uip_ipaddr_t *dest_addr )
 
 /**
  * @brief MLE protocol initialization
- *
  */
 uint8_t mle_init(void)
 {
 
-	/***********  Inisialize  mle udp connexion ***************/
+	/*  Inisialize  mle udp connexion */
 	if(!mle_init_udp()) return 0 ;
 
-	/***********  Inisialize  nb table ***************/
+	/* Inisialize  nb table */
 	mle_nb_device_init();
 
-	/***********  Inisialize  mle node structure **************/
+	/* Inisialize  mle node structure */
 	MyNode.OpMode=NOT_LINKED;
 	MyNode.timeOut=TIME_OUT;
 	MyNode.rx_on_when_idle=IS_RX_ON_WHEN_IDLE;
@@ -730,6 +857,8 @@ uint8_t mle_set_parent_mode(void)
 	PRINTFG( "MLE : Node operate as Parent ... "ANSI_COLOR_RESET);
 	PRESET();
 
+	/* clear the neighbors table  */
+	// clear the nb table
 	/* start synchronisation with other routers */
 	mle_synchro_process(NULL);
 
@@ -741,7 +870,8 @@ uint8_t mle_set_child_mode(void)
 	MyNode.OpMode=CHILD; // router
 	PRINTFG( "MLE : Node operate as Child ... "ANSI_COLOR_RESET);
 	PRESET();
-	// may be remove neighbors etc // start join process etc
-	// remove all neighbors
+	/* clear the neighbors table  */
+	// clear the nb table
+
 	return 1 ;
 }

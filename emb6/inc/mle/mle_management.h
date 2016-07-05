@@ -67,7 +67,7 @@ typedef struct {
 	uint32_t              thrMLEFrameCounter;                   /**< Outgoing frame counter */
 	uint8_t 			  NB_router_couter;
 	uint8_t 			  childs_counter;
- 	uint32_t 			  jp_challenge ;  					    /**< current join process challenge      */
+ 	uint32_t 			  challenge ;  					        /**< current join/synchronization process challenge      */
 	uint8_t               rx_on_when_idle; 					    /**< Set to ‘1’ if the sender's receiver on when not transmitting; used for mode TLV  */
 }mle_node_t ;
 

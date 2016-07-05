@@ -14,7 +14,7 @@
 
 
 
-#define     MAX_NB_ROUTER               4
+#define     MAX_NB_ROUTER               9
 #define     MAX_CHILD                   5
 
 typedef enum {PENDING, LINKED} nb_state_t;
