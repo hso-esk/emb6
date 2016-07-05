@@ -788,9 +788,10 @@ static void rf_pktRxTxBeginISR(void *p_arg) {
   struct s_rf_ctx *p_ctx = &rf_ctx;
 
   /* entry */
+  bsp_extIntClear(RF_INT_PKT_BEGIN);
   cc112x_spiRegRead(CC112X_MARC_STATUS1, &marc_status, 1);
   chip_state = RF_READ_CHIP_STATE();
-  TRACE_LOG_MAIN("B m=%02x, cs=%02x, ds=%02x", marc_status, chip_state, p_ctx->state);
+  TRACE_LOG_MAIN("<B>: ds=%02x, ms=%02x, cs=%02x", p_ctx->state, marc_status, chip_state);
 
   /* FIXME unexpected marc */
   if ((marc_status == RF_MARC_STATUS_RX_FINI) ||
@@ -798,92 +799,86 @@ static void rf_pktRxTxBeginISR(void *p_arg) {
     marc_status = RF_MARC_STATUS_NO_FAILURE;
   }
 
-
   /* do */
   switch (marc_status) {
-    case RF_MARC_STATUS_NO_FAILURE:
-      if (p_ctx->state == RF_STATE_RX_FINI) {
-        if (p_ctx->rxReqAck == TRUE) {
-          /* SYNC words of ACK frame were transmitted */
-          p_ctx->state = RF_STATE_RX_TXACK_SYNC;
-
-          /* is IEEE Std. 802.15.4g supported? */
-#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
-          /* then switch to fixed packet length mode */
-          rf_setPktLen(CC112X_PKT_LEN_MODE_FIXED, p_ctx->txDataLen);
-#endif
-        }
-        else {
-          /* unexpected event */
-          TRACE_LOG_ERR("+++ RF: PKT_BEGIN unexpected interrupt state=%02x, cs=%02x", p_ctx->state, chip_state);
-        }
-      }
-      else if (p_ctx->state == RF_STATE_RX_IDLE) {
-        if (chip_state == RF_STATE_TX) {
-          /* the radio just finished transmitting SYNC words */
-          rf_tx_sync(p_ctx);
-        }
-        else {
-          /* the radio just finished receiving SYNC words */
-          rf_rx_sync(p_ctx);
-        }
-      }
-      else if (p_ctx->state == RF_STATE_TX_FINI) {
-        if (p_ctx->txReqAck == TRUE) {
-          /* the incoming frame can be the ACK */
-          p_ctx->state = RF_STATE_TX_RXACK_SYNC;
-        }
-        else {
-          /* unexpected event */
-          TRACE_LOG_ERR("+++ RF: PKT_BEGIN unexpected marc=%02x, state=%02x, cs=%02x", marc_status, p_ctx->state, chip_state);
-        }
-      }
-      else {
-        /* unexpected event */
-        TRACE_LOG_ERR("+++ RF: PKT_BEGIN unexpected marc=%02x, state=%02x, cs=%02x", marc_status, p_ctx->state, chip_state);
-
-        /* FIXME exception handler */
-        if ((p_ctx->state == RF_STATE_RX_TXACK_SYNC) &&
-            (chip_state == RF_STATE_RX_IDLE)) {
-          /* the radio just finished receiving SYNC words */
-          rf_rx_sync(p_ctx);
-        }
-      }
-      break;
-
-    case RF_MARC_STATUS_TX_ON_CCA_FAILED:
-      //TRACE_LOG_ERR("+++ RF: PKT_BEGIN TxOnCCA failed state=%02x, cs=%02x", p_ctx->state, chip_state);
-      p_ctx->txErr = NETSTK_ERR_TX_COLLISION;
-      rf_tx_term(p_ctx);
-
-      /* the radio just finished receiving SYNC words */
-      rf_rx_sync(p_ctx);
-      break;
-
-    case RF_MARC_STATUS_TX_OVERFLOW:
-    case RF_MARC_STATUS_TX_UNDERFLOW:
-      TRACE_LOG_ERR("+++ RF: PKT_BEGIN TXFIFO_ERR state=%02x, cs=%02x", p_ctx->state, chip_state);
+    case RF_MARC_STATUS_TX_OVERFLOW :
+    case RF_MARC_STATUS_TX_UNDERFLOW :
+      TRACE_LOG_ERR("<B> TX_ERR ds=%02x, ms=%02x, cs=%02x", p_ctx->state, marc_status, chip_state);
       rf_tx_term(p_ctx);
       rf_rx_exit(p_ctx);
       rf_rx_entry(p_ctx);
       break;
 
-    case RF_MARC_STATUS_RX_OVERFLOW:
-    case RF_MARC_STATUS_RX_UNDERFLOW:
-    case RF_MARC_STATUS_RX_TIMEOUT:
-    case RF_MARC_STATUS_RX_TERM:
-      TRACE_LOG_ERR("+++ RF: PKT_BEGIN RX_ERR state=%02x, cs=%02x, marc=%02x", p_ctx->state, chip_state, marc_status);
+    case RF_MARC_STATUS_RX_OVERFLOW :
+    case RF_MARC_STATUS_RX_UNDERFLOW :
+    case RF_MARC_STATUS_RX_TIMEOUT :
+    case RF_MARC_STATUS_RX_TERM :
+      TRACE_LOG_ERR("<B> RX_ERR ds=%02x, ms=%02x, cs=%02x", p_ctx->state, marc_status, chip_state);
       rf_rx_term(p_ctx);
       break;
 
-    default:
-      TRACE_LOG_ERR("+++ RF: PKT_BEGIN unexpected marc=%02x, state=%02x, cs=%02x", marc_status, p_ctx->state, chip_state);
+    default: {
+      /* 'good' marc_status */
+      switch (p_ctx->state) {
+        case RF_STATE_RX_IDLE:
+          if (marc_status == RF_MARC_STATUS_NO_FAILURE) {
+            if (chip_state == RF_STATE_TX) {
+              /* the radio just finished transmitting SYNC words */
+              rf_tx_sync(p_ctx);
+            } else {
+              /* the radio just finished receiving SYNC words */
+              rf_rx_sync(p_ctx);
+            }
+          } else if (marc_status == RF_MARC_STATUS_TX_ON_CCA_FAILED) {
+            /* channel was busy while attempting to transmit */
+            p_ctx->txErr = NETSTK_ERR_TX_COLLISION;
+            rf_tx_term(p_ctx);
+
+            /* the radio just finished receiving SYNC words */
+            rf_rx_sync(p_ctx);
+          } else {
+            TRACE_LOG_ERR("<B> exception ds=%02x, ms=%02x, cs=%02x", p_ctx->state, marc_status, chip_state);
+            rf_exceptionHandler(p_ctx, marc_status, chip_state);
+          }
+          break;
+
+        case RF_STATE_RX_FINI:
+          if ((marc_status == RF_MARC_STATUS_NO_FAILURE) && (p_ctx->rxReqAck == TRUE)) {
+            /* SYNC words of ACK frame were transmitted */
+            p_ctx->state = RF_STATE_RX_TXACK_SYNC;
+
+            /* is IEEE Std. 802.15.4g supported? */
+#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
+            /* then switch to fixed packet length mode */
+            rf_setPktLen(CC112X_PKT_LEN_MODE_FIXED, p_ctx->txDataLen);
+#endif /* NETSTK_CFG_IEEE_802154G_EN */
+          } else {
+            TRACE_LOG_ERR("<B> exception ds=%02x, ms=%02x, cs=%02x", p_ctx->state, marc_status, chip_state);
+            rf_exceptionHandler(p_ctx, marc_status, chip_state);
+          }
+          break;
+
+        case RF_STATE_TX_FINI:
+          if ((marc_status == RF_MARC_STATUS_NO_FAILURE) && (p_ctx->txReqAck == TRUE)) {
+            /* the incoming frame can be the ACK */
+            p_ctx->state = RF_STATE_TX_RXACK_SYNC;
+          } else {
+            TRACE_LOG_ERR("<B> exception ds=%02x, ms=%02x, cs=%02x", p_ctx->state, marc_status, chip_state);
+            rf_exceptionHandler(p_ctx, marc_status, chip_state);
+          }
+          break;
+
+        default:
+          TRACE_LOG_ERR("<B> exception ds=%02x, ms=%02x, cs=%02x", p_ctx->state, marc_status, chip_state);
+          rf_exceptionHandler(p_ctx, marc_status, chip_state);
+          break;
+      } /* end switch */
       break;
+    }
   }
 
   /* exit */
-  bsp_extIntClear(RF_INT_PKT_BEGIN);
-  TRACE_LOG_MAIN("+++ RF: PKT_BEGIN_EXIT  state=%02x, cs=%02x, marc=%02x", p_ctx->state, chip_state, marc_status);
+  TRACE_LOG_MAIN("</B>: ds=%02x, ms=%02x, cs=%02x", p_ctx->state, marc_status, chip_state);
 }
 
 /**
@@ -898,10 +893,12 @@ static void rf_rxFifoThresholdISR(void *p_arg) {
   struct s_rf_ctx *p_ctx = &rf_ctx;
 
   /* entry */
+  bsp_extIntClear(RF_INT_RXFIFO_THR);
   cc112x_spiRegRead(CC112X_NUM_RXBYTES, &numRxBytes, 1);
 
   /* do */
-  if (numRxBytes > RF_CFG_FIFO_THR) {
+  if ((numRxBytes > RF_CFG_FIFO_THR) &&
+      ((p_ctx->rxNumRemBytes == 0) || (p_ctx->rxNumRemBytes > (RF_CFG_FIFO_THR + 1))))  {
     /* read bytes from RX FIFO */
     rf_readRxFifo(p_ctx, numRxBytes);
 
@@ -913,6 +910,7 @@ static void rf_rxFifoThresholdISR(void *p_arg) {
         TRACE_LOG_MAIN("dropped frame due to bad format");
         /* then terminate RX process */
         rf_rx_term(p_ctx);
+        return;
       }
       p_ctx->rxBytesCounter = p_ctx->rxFrame.tot_len;
 
@@ -936,11 +934,8 @@ static void rf_rxFifoThresholdISR(void *p_arg) {
         uint8_t numTxBytes;
         cc112x_spiRegRead(CC112X_NUM_TXBYTES, &numTxBytes, 1);
         if (numTxBytes != ack_len) {
-          /* terminate RX process */
           TRACE_LOG_ERR("Failed to write ACK to TXFIFO, seq=%02x, cs=%02x", ack[PHY_HEADER_LEN + 2], RF_READ_CHIP_STATE());
           rf_rx_term(p_ctx);
-
-          bsp_extIntClear(RF_INT_RXFIFO_THR);
           return;
         }
 
@@ -956,6 +951,10 @@ static void rf_rxFifoThresholdISR(void *p_arg) {
       p_ctx->rxChksum = llframe_crcInit(&p_ctx->rxFrame);
       p_ctx->rxLastChksumPtr = p_ctx->rxFrame.crc_offset;
       numChksumBytes = p_ctx->rxLastDataPtr - p_ctx->rxLastChksumPtr;
+
+      /* update checksum */
+      p_ctx->rxChksum = crc_16_updateN(p_ctx->rxChksum, &p_ctx->rxBuf[p_ctx->rxLastChksumPtr], numChksumBytes);
+      p_ctx->rxLastChksumPtr += numChksumBytes;
     }
     else {
       if (p_ctx->rxNumRemBytes >= numRxBytes) {
@@ -982,25 +981,24 @@ static void rf_rxFifoThresholdISR(void *p_arg) {
 
             /* then terminate RX process */
             rf_rx_term(p_ctx);
+            return;
           }
         }
+
+        /* update checksum */
+        p_ctx->rxChksum = crc_16_updateN(p_ctx->rxChksum, &p_ctx->rxBuf[p_ctx->rxLastChksumPtr], numChksumBytes);
+        p_ctx->rxLastChksumPtr += numChksumBytes;
 #endif /* NETSTK_CFG_RF_SW_AUTOACK_EN */
       }
       else {
         /* ignore unexpected ISRs */
-        TRACE_LOG_ERR("unexpected ISR rxNumRemBytes=%d", p_ctx->rxNumRemBytes);
+        TRACE_LOG_MAIN("unexpected ISR rxNumRemBytes=%d, ds=%02x", p_ctx->rxNumRemBytes, p_ctx->state);
       }
     }
-
-#if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
-    /* update checksum */
-    p_ctx->rxChksum = crc_16_updateN(p_ctx->rxChksum, &p_ctx->rxBuf[p_ctx->rxLastChksumPtr], numChksumBytes);
-    p_ctx->rxLastChksumPtr += numChksumBytes;
-#endif /* NETSTK_CFG_RF_CC112X_AUTOACK_EN */
   }
 
   /* exit */
-  bsp_extIntClear(RF_INT_RXFIFO_THR);
+
 }
 
 
@@ -1017,99 +1015,94 @@ static void rf_pktRxTxEndISR(void *p_arg) {
   struct s_rf_ctx *p_ctx = &rf_ctx;
 
   /* entry */
+  bsp_extIntClear(RF_INT_PKT_END);
   cc112x_spiRegRead(CC112X_MARC_STATUS1, &marc_status, 1);
   chip_state = RF_READ_CHIP_STATE();
-  TRACE_LOG_MAIN("E m=%02x, cs=%02x, ds=%02x", marc_status, chip_state, p_ctx->state);
+  TRACE_LOG_MAIN("<E>: ds=%02x, ms=%02x, cs=%02x", p_ctx->state, marc_status, chip_state);
 
   switch (marc_status) {
-    case RF_MARC_STATUS_RX_FINI:
-      if (p_ctx->state == RF_STATE_RX_SYNC) {
-        /* checksum verification */
-        rf_rx_chksum(p_ctx);
-      }
-#if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
-      else if (p_ctx->state == RF_STATE_TX_RXACK_SYNC) {
-        /* ACK verification */
-        rf_tx_rxAck(p_ctx);
-      }
-#endif /* NETSTK_CFG_RF_SW_AUTOACK_EN */
-      else {
-        TRACE_LOG_ERR("+++ RF: PKT_END unexpected event state=%02x, cs=%02x, marc=%02x", p_ctx->state, chip_state, marc_status);
-      }
-
-      /* is IEEE Std. 802.15.4g supported? */
-#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
-      /* then switch back to infinite packet length mode */
-      rf_setPktLen(CC112X_PKT_LEN_MODE_INFINITE, RF_MAX_FIFO_LEN);
-#endif
-      break;
-
-    case RF_MARC_STATUS_RX_OVERFLOW:
-    case RF_MARC_STATUS_RX_UNDERFLOW:
-    case RF_MARC_STATUS_RX_TIMEOUT:
-    case RF_MARC_STATUS_RX_TERM:
-      TRACE_LOG_ERR("+++ RF: PKT_END   RX_ERR state=%02x, cs=%02x, marc=%02x", p_ctx->state, chip_state, marc_status);
-      rf_rx_term(p_ctx);
-      break;
-
-    case RF_MARC_STATUS_NO_FAILURE:
-      if (p_ctx->state == RF_STATE_RX_TERM) {
-        /* RX termination */
-      }
-      else {
-        if (p_ctx->state == RF_STATE_RX_SYNC) {
-          rf_rx_term(p_ctx);
-        }
-        else {
-          TRACE_LOG_ERR("+++ RF: PKT_END   unexpected event state=%02x, cs=%02x, marc=%02x", p_ctx->state, chip_state, marc_status);
-
-          if (p_ctx->state == RF_STATE_RX_TXACK_SYNC) {
-            /* a responding ACK was successfully transmitted */
-            rf_rx_exit(p_ctx);
-            rf_rx_entry(p_ctx);
-          }
-        }
-      }
-      break;
-
-    case RF_MARC_STATUS_TX_FINI:
-      if (p_ctx->state == RF_STATE_TX_SYNC) {
-        /* a frame was successfully transmitted */
-        rf_tx_fini(p_ctx);
-      }
-      else if (p_ctx->state == RF_STATE_RX_TXACK_SYNC) {
-        /* a responding ACK was successfully transmitted then signal upper layer */
-        p_ctx->state = RF_STATE_RX_FINI;
-        ret = evproc_putEvent(E_EVPROC_HEAD, NETSTK_RF_EVENT, p_ctx);
-
-#if (NETSTK_CFG_RF_DEBUG_EN == TRUE)
-        /* store event-triggering status */
-        p_ctx->dbgEvtStatus = ret;
-#endif
-      }
-      else {
-        TRACE_LOG_ERR("+++ RF: PKT_END unexpected event state=%02x, cs=%02x, marc=%02x", p_ctx->state, chip_state, marc_status);
-        rf_rx_term(p_ctx);
-      }
-      break;
-
-    case RF_MARC_STATUS_TX_OVERFLOW:
-    case RF_MARC_STATUS_TX_UNDERFLOW:
-      TRACE_LOG_ERR("+++ RF: PKT_END TXFIFO_ERR state=%02x, cs=%02x", p_ctx->state, chip_state);
+    case RF_MARC_STATUS_TX_OVERFLOW :
+    case RF_MARC_STATUS_TX_UNDERFLOW :
+      TRACE_LOG_ERR("<E> TX_ERR ds=%02x, ms=%02x, cs=%02x", p_ctx->state, marc_status, chip_state);
       rf_tx_term(p_ctx);
       rf_rx_exit(p_ctx);
       rf_rx_entry(p_ctx);
       break;
 
-    default:
-      TRACE_LOG_ERR("+++ RF: PKT_END unexpected state=%02x, cs=%02x, marc=%02x", p_ctx->state, chip_state, marc_status);
+    case RF_MARC_STATUS_RX_OVERFLOW :
+    case RF_MARC_STATUS_RX_UNDERFLOW :
+    case RF_MARC_STATUS_RX_TIMEOUT :
+    case RF_MARC_STATUS_RX_TERM :
+      TRACE_LOG_ERR("<E> RX_ERR ds=%02x, ms=%02x, cs=%02x", p_ctx->state, marc_status, chip_state);
       rf_rx_term(p_ctx);
       break;
+
+    default: {
+      /* 'good' marc_status */
+      switch (p_ctx->state) {
+        case RF_STATE_RX_SYNC:
+          if (marc_status == RF_MARC_STATUS_RX_FINI) {
+            rf_rx_chksum(p_ctx);
+          } else {
+            TRACE_LOG_ERR("<E> exception ds=%02x, ms=%02x, cs=%02x", p_ctx->state, marc_status, chip_state);
+            if ((marc_status == RF_MARC_STATUS_NO_FAILURE) &&
+                ((chip_state == RF_STATE_IDLE) || (chip_state == RF_STATE_RX_IDLE))) {
+              /* then it is likely that a good packet has arrived */
+              rf_rx_chksum(p_ctx);
+            }
+            else {
+              rf_exceptionHandler(p_ctx, marc_status, chip_state);
+            }
+          }
+          break;
+
+        case RF_STATE_RX_TXACK_SYNC:
+          if (marc_status == RF_MARC_STATUS_TX_FINI) {
+            /* a responding ACK was successfully transmitted then signal upper layer */
+            p_ctx->state = RF_STATE_RX_FINI;
+            ret = evproc_putEvent(E_EVPROC_HEAD, NETSTK_RF_EVENT, p_ctx);
+
+            /* store event-triggering status */
+#if (RF_CFG_DEBUG_EN == TRUE)
+            p_ctx->dbgEvtStatus = ret;
+#endif /* RF_CFG_DEBUG_EN */
+          } else {
+            TRACE_LOG_ERR("<E> exception ds=%02x, ms=%02x, cs=%02x", p_ctx->state, marc_status, chip_state);
+            rf_exceptionHandler(p_ctx, marc_status, chip_state);
+          }
+          break;
+
+        case RF_STATE_TX_SYNC:
+          if (marc_status == RF_MARC_STATUS_TX_FINI) {
+            /* a frame was successfully transmitted */
+            rf_tx_fini(p_ctx);
+          } else {
+            TRACE_LOG_ERR("<E> exception ds=%02x, ms=%02x, cs=%02x", p_ctx->state, marc_status, chip_state);
+            rf_exceptionHandler(p_ctx, marc_status, chip_state);
+          }
+          break;
+
+        case RF_STATE_TX_RXACK_SYNC:
+          if (marc_status == RF_MARC_STATUS_RX_FINI) {
+            /* verify acknowledgment */
+            rf_tx_rxAck(p_ctx);
+          } else {
+            TRACE_LOG_ERR("<E> exception ds=%02x, ms=%02x, cs=%02x", p_ctx->state, marc_status, chip_state);
+            rf_exceptionHandler(p_ctx, marc_status, chip_state);
+          }
+          break;
+
+        default:
+          TRACE_LOG_ERR("<E> exception ds=%02x, ms=%02x, cs=%02x", p_ctx->state, marc_status, chip_state);
+          rf_exceptionHandler(p_ctx, marc_status, chip_state);
+          break;
+      } /* end switch */
+      break;
+    }
   }
 
   /* exit */
-  bsp_extIntClear(RF_INT_PKT_END);
-  TRACE_LOG_MAIN("+++ RF: PKT_END_EXIT    state=%02x, cs=%02x, marc=%02x", p_ctx->state, chip_state, marc_status);
+  TRACE_LOG_MAIN("</E>: ds=%02x, ms=%02x, cs=%02x", p_ctx->state, marc_status, chip_state);
 }
 
 
