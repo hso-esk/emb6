@@ -56,7 +56,7 @@
 #include "packetbuf.h"
 #include "logger.h"
 
-#if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
+#if (NETSTK_CFG_RF_CRC_EN == FALSE)
 #include "crc.h"
 #endif
 
@@ -188,7 +188,7 @@ static void dllc_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
   pdllc_netstk->mac->ioctrl(NETSTK_CMD_TX_CBFNCT_SET, (void *)dllc_cbTx, p_err);
   pdllc_netstk->mac->ioctrl(NETSTK_CMD_TX_CBARG_SET, NULL, p_err);
 
-#if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
+#if (NETSTK_CFG_RF_CRC_EN == FALSE)
   uint8_t *p_mfr;
   uint32_t fcs;
   packetbuf_attr_t fcs_len;
@@ -213,7 +213,7 @@ static void dllc_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
   pdllc_netstk->mac->send(p_data, len + fcs_len, p_err);
 #else
   pdllc_netstk->mac->send(p_data, len, p_err);
-#endif
+#endif /* NETSTK_CFG_RF_CRC_EN */
 
 #if (NETSTK_CFG_AUTO_ONOFF_EN == TRUE)
   if (dllc_isOn == FALSE) {

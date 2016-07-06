@@ -60,7 +60,7 @@
 #define     LOGGER_ENABLE        LOGGER_LLC
 #include    "logger.h"
 
-#if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
+#if (NETSTK_CFG_RF_CRC_EN == FALSE)
 #include "crc.h"
 #endif
 
@@ -310,7 +310,7 @@ static void dllc_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
   /* write the header */
   frame802154_create(&params, packetbuf_hdrptr());
 
-#if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
+#if (NETSTK_CFG_RF_CRC_EN == FALSE)
   uint16_t checksum_data_len;
   uint8_t *p_mhr;
   uint8_t *p_mfr;
@@ -344,7 +344,7 @@ static void dllc_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     p_mfr[0] = (fcs & 0xFF00u) >> 8;
     p_mfr[1] = (fcs & 0x00FFu);
   }
-#endif
+#endif /* NETSTK_CFG_RF_CRC_EN */
 
 #if LOGGER_ENABLE
   /*
