@@ -1566,6 +1566,11 @@ static void rf_tmrDbgCb(void *p_arg) {
  * @param p_ctx point to variable holding radio context structure
  */
 static void rf_listen(struct s_rf_ctx *p_ctx) {
+  /* flushing TXFIFO can avoid problem of writing ACK to TXFIFO */
+  cc112x_spiCmdStrobe(CC112X_SIDLE);
+  cc112x_spiCmdStrobe(CC112X_SFTX);
+  cc112x_spiCmdStrobe(CC112X_SFRX);
+
   if (p_ctx->cfgWOREnabled == TRUE) {
     /* eWOR mode */
     cc112x_spiCmdStrobe(CC112X_SWOR);
