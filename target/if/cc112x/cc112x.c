@@ -1754,21 +1754,16 @@ static void rf_cca(e_nsErr_t *p_err) {
   else {
     /* poll for valid carrier sense until timeout */
     rt_tmr_tick_t tickstart;
-    e_rfState_t chipState;
 
     /* since atomic time unit is 1ms, ensure CCA timeout is at least 1ms */
     tickstart = rt_tmr_getCurrenTick();
     while ((rt_tmr_getCurrenTick() - tickstart) < 2) {
-      chipState = cc112x_spiRegRead(CC112X_RSSI0, &rssi_status, 1);
+      cc112x_spiRegRead(CC112X_RSSI0, &rssi_status, 1);
 
       /* verify if either carrier sense is valid or a packet is arrived */
       if (((rssi_status & RF_RSSI0_CARRIER_SENSE_VALID) != 0) ||
           (p_ctx->state != RF_STATE_RX_IDLE)) {
         break;
-      }
-      else {
-        /* otherwise continue to poll for valid carrier sense */
-        bsp_delay_us(10); // add a small time gap between successive polls
       }
     }
 
