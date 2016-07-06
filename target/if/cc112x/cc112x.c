@@ -1055,15 +1055,7 @@ static void rf_pktRxTxEndISR(void *p_arg) {
           if (marc_status == RF_MARC_STATUS_RX_FINI) {
             rf_rx_chksum(p_ctx);
           } else {
-            TRACE_LOG_ERR("<E> exception ds=%02x, ms=%02x, cs=%02x", p_ctx->state, marc_status, chip_state);
-            if ((marc_status == RF_MARC_STATUS_NO_FAILURE) &&
-                ((chip_state == RF_STATE_IDLE) || (chip_state == RF_STATE_RX_IDLE))) {
-              /* then it is likely that a good packet has arrived */
-              rf_rx_chksum(p_ctx);
-            }
-            else {
-              rf_exceptionHandler(p_ctx, marc_status, chip_state);
-            }
+            rf_exceptionHandler(p_ctx, marc_status, chip_state);
           }
           break;
 
