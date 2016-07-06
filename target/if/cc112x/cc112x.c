@@ -1762,7 +1762,8 @@ static void rf_cca(e_nsErr_t *p_err) {
       chipState = cc112x_spiRegRead(CC112X_RSSI0, &rssi_status, 1);
 
       /* verify if either carrier sense is valid or a packet is arrived */
-      if ((rssi_status & RF_RSSI0_CARRIER_SENSE_VALID) != 0) {
+      if (((rssi_status & RF_RSSI0_CARRIER_SENSE_VALID) != 0) ||
+          (p_ctx->state != RF_STATE_RX_IDLE)) {
         break;
       }
       else {
