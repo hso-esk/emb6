@@ -146,6 +146,7 @@
 #define MODULATION                          MODULATION_2FSK50
 #endif
 
+/* enable auto-acknowledgment of radio driver */
 #define NETSTK_CFG_RF_SW_AUTOACK_EN         TRUE
 
 /* radio transceiver does not support standard-specified checksum */
