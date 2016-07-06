@@ -1559,9 +1559,11 @@ static void rf_tmrDbgCb(void *p_arg) {
  */
 static void rf_listen(struct s_rf_ctx *p_ctx) {
   /* flushing TXFIFO can avoid problem of writing ACK to TXFIFO */
+  RF_INT_DISABLED();
   cc112x_spiCmdStrobe(CC112X_SIDLE);
   cc112x_spiCmdStrobe(CC112X_SFTX);
   cc112x_spiCmdStrobe(CC112X_SFRX);
+  RF_INT_ENABLED();
 
   if (p_ctx->cfgWOREnabled == TRUE) {
     /* eWOR mode */
