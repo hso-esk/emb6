@@ -1027,6 +1027,16 @@ static void rf_pktRxTxEndISR(void *p_arg) {
 
   /* entry */
   bsp_extIntClear(RF_INT_PKT_END);
+
+  if ((p_ctx->cfgWOREnabled == TRUE) &&
+      ((p_ctx->state == RF_STATE_RX_FINI) ||
+       (p_ctx->state == RF_STATE_RX_IDLE) ||
+       (p_ctx->state == RF_STATE_TX_FINI))) {
+    /* this interrupt was triggered by periodic WOR timer then ignore */
+    return;
+  }
+
+  /* otherwise read MARC_STATUS to see cause of the interrupt */
   cc112x_spiRegRead(CC112X_MARC_STATUS1, &marc_status, 1);
   chip_state = RF_READ_CHIP_STATE();
   TRACE_LOG_MAIN("<E>: ds=%02x, ms=%02x, cs=%02x", p_ctx->state, marc_status, chip_state);
