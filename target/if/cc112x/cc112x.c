@@ -945,7 +945,7 @@ static void rf_rxFifoThresholdISR(void *p_arg) {
         uint8_t numTxBytes;
         cc112x_spiRegRead(CC112X_NUM_TXBYTES, &numTxBytes, 1);
         if (numTxBytes != ack_len) {
-          TRACE_LOG_ERR("Failed to write ACK to TXFIFO, seq=%02x, cs=%02x", ack[PHY_HEADER_LEN + 2], RF_READ_CHIP_STATE());
+          TRACE_LOG_ERR("<ACK> TXFIFOWR_FAILED, seq=%02x, cs=%02x", ack[PHY_HEADER_LEN + 2], RF_READ_CHIP_STATE());
           rf_rx_term(p_ctx);
           return;
         }
@@ -1266,7 +1266,7 @@ static void rf_rx_chksum(struct s_rf_ctx *p_ctx) {
   }
   else {
     /* discard the received frame */
-    TRACE_LOG_ERR("+++ RF: RX_CHKSUM invalid checksum");
+    TRACE_LOG_ERR("<CRC> invalid %d/%d", p_ctx->rxLastDataPtr, p_ctx->rxBytesCounter);
     rf_rx_term(p_ctx);
   }
 }
