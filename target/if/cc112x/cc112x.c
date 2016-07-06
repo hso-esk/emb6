@@ -1406,7 +1406,7 @@ static void rf_tx_fini(struct s_rf_ctx *p_ctx) {
   rf_setPktLen(CC112X_PKT_LEN_MODE_INFINITE, RF_MAX_FIFO_LEN);
 #endif
 
-  TRACE_LOG_MAIN("+++ RF: TX_FINI txStatus=%02x", p_ctx->txStatus);
+  TRACE_LOG_MAIN("<TXFINI> txStatus=%02x", p_ctx->txStatus);
 }
 
 
