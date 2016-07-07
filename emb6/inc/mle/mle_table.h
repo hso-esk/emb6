@@ -63,6 +63,7 @@ mle_neighbor_t * mle_add_nb_router(uint8_t id, uint16_t address, uint32_t  MLEFr
 
 uint8_t mle_rm_nb_router(mle_neighbor_t *nb);
 uint8_t mle_rm_child( mle_neighbor_t *nb);
+void mle_rm_all_nb_router(void);
 
 uint8_t count_neighbor_LQ(uint8_t N ); // The number of neighboring device with which the sender shares a link of quality N
 

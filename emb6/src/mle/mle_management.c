@@ -223,6 +223,8 @@ static void reply_for_mle_childID_request(void *ptr)
 		}
 		 */
 
+		mle_set_parent_mode();
+
 		mle_init_cmd(&cmd,CHILD_ID_RESPONSE);
 		add_src_address_to_cmd(&cmd);
 		// leader data tlv :: from Network layer
@@ -232,7 +234,7 @@ static void reply_for_mle_childID_request(void *ptr)
 		child= mle_find_child_byAdd(&param.source_addr);
 		child->state=LINKED;
 
-		mle_set_parent_mode();
+
 	}
 	else if (MyNode.OpMode == PARENT)
 	{
@@ -405,7 +407,7 @@ void mle_join_process(void *ptr)
 				PRINTFR("Join process fail ... \n"ANSI_COLOR_RESET);
 				PRINTFG("starting new partition ... \n"ANSI_COLOR_RESET);
 
-				thrd_partition_start();
+				//thrd_partition_start();
 
 				mle_set_parent_mode();
 				PRESET();
@@ -435,6 +437,7 @@ static uint8_t send_mle_link_request(void)
 static void reply_for_mle_link_request(void *ptr)
 {
 
+	uint8_t n;
 	uint8_t* nb_id;
 	nb_id= (uint8_t*) ptr;
 
@@ -448,8 +451,13 @@ static void reply_for_mle_link_request(void *ptr)
 		// link-layer frame counter tlv
 		add_version_to_cmd(&cmd);
 
+		add_Link_margin_to_cmd(&cmd,param.rec_rssi);
 
-			add_Link_margin_to_cmd(&cmd,param.rec_rssi);
+
+		/*  If the recipient of a Link Request message has a valid frame
+		 * counter for the sender, it sends a Link Accept in reply;
+		 *  if not, it sends a Link Accept and Request.*/
+
 
 		/* find the nb router */
 		nb= mle_find_nb_router(*nb_id);
@@ -459,7 +467,12 @@ static void reply_for_mle_link_request(void *ptr)
 			/* MLE Frame Counter tlv */
 			// add frame counter
 			/* add and store the challenge generated  */
-			nb->challenge= add_rand_challenge_to_cmd(&cmd);
+			MyNode.challenge= add_rand_challenge_to_cmd(&cmd);
+
+			/* we have to inform the syn process that we am waiting for link accept
+			 * so we call the syn function with value of 255 */
+			n=255;
+			mle_synchro_process((void *) &n);
 		}
 
 
@@ -473,9 +486,21 @@ static void reply_for_mle_link_request(void *ptr)
 void mle_synchro_process(void *ptr)
 {
 	static 	syn_state_t 		syn_state;  // synchronisation process current state
-	tlv_connectivity_t* connectivity;
 	tlv_t * tlv;
 	uint8_t finish=0;
+	uint8_t * p= (uint8_t*) ptr;
+
+	if (p) // this mean that this function was triggered when we received Link_accept_and_request
+	{
+		if(*p==255)
+		{	/* in this case we have to be ready to receive a response */
+			/* change the state and trigger the timer */
+			syn_state=SYN_PROCESS_LINK;
+			ctimer_set(&c_mle_Timer, 2 * bsp_get(E_BSP_GET_TRES) , mle_synchro_process, NULL);
+			PRINTF("SNY process:  state changed due to link_accept_and_request command \n"ANSI_COLOR_RESET);
+		}
+		finish =1;
+	}
 
 	if(MyNode.OpMode==PARENT)
 	{
@@ -488,14 +513,16 @@ void mle_synchro_process(void *ptr)
 				PRINTF("SNY process: Send Link Request to neighbors router \n"ANSI_COLOR_RESET);
 				/* send MLE Link Request */
 				send_mle_link_request();
-				/* trigger the timer */
-				ctimer_set(&c_mle_Timer, 2 * bsp_get(E_BSP_GET_TRES) , mle_synchro_process, NULL);
+				/* change the state and trigger the timer */
 				syn_state=SYN_PROCESS_LINK;
+				ctimer_set(&c_mle_Timer, 2 * bsp_get(E_BSP_GET_TRES) , mle_synchro_process, NULL);
 				finish=1;
 				break;
 			case SYN_PROCESS_LINK:
 				if(ctimer_expired(&c_mle_Timer)) // that means that this function was triggered by the ctimer
 				{
+					/* initialise the state */
+					syn_state=SYN_SEND_LINK_REQUEST;
 					PRINTFG("[+] "ANSI_COLOR_RESET);
 					PRINTF("SNY process:  Synchronization process finished \n"ANSI_COLOR_RESET);
 
@@ -505,7 +532,44 @@ void mle_synchro_process(void *ptr)
 					PRINTFG("[+] "ANSI_COLOR_RESET);
 					PRINTF("SNY process: processing link \n"ANSI_COLOR_RESET);
 
+					nb=mle_find_nb_router_byAdd((&param.source_addr));
+					if(!nb)// the neighbor is not existing
+					{
+						/* store the neighbor data */
+						uint8_t id=0;
+						do
+						{
+							nb=mle_add_nb_router( id , 0 /*adress16*/ ,  0 /*frame counter*/, 0 /*modeTLV*/,  0 /*link quality */);
+							id++;
+						}
+						while (nb==NULL && id<MAX_NB_ROUTER);
+
+						if (nb)
+						{
+							/* increment the nb router counter */
+							MyNode.NB_router_couter++;
+							/* set the state of the nb to pending*/
+							nb->state=LINKED;
+							/* store the address of the nb router */
+							uip_ip6addr_copy(&nb->tmp ,&param.source_addr);
+							PRINTFG("[+] "ANSI_COLOR_RESET);
+							PRINTF("SNY process: ID allocated for the nb router = %i \n", nb->id);
+						}
+						else
+						{
+							PRINTFR("[+] "ANSI_COLOR_RESET);
+							PRINTFR("SNY process: Failed to allocate nb router id... \n"ANSI_COLOR_RESET);
+							break;
+						}
+					}
+					if(param.rec_cmd->type==LINK_ACCEPT_AND_REQUEST)
+					{
+						nb->state=LINKED;
+						nb=mle_find_nb_router_byAdd(&param.source_addr);
+						reply_for_mle_link_request(&nb->id);
+					}
 				}
+
 				finish=1;
 				break;
 			}
@@ -858,7 +922,7 @@ uint8_t mle_set_parent_mode(void)
 	PRESET();
 
 	/* clear the neighbors table  */
-	// clear the nb table
+	mle_rm_all_nb_router();
 	/* start synchronisation with other routers */
 	mle_synchro_process(NULL);
 

@@ -140,7 +140,7 @@ static mle_neighbor_t * mle_add_neigbhor(struct memb* m , list_t *list , uint8_t
 	}
 	else
 	{
-		PRINTFR("Neighbor already exist \n" ANSI_COLOR_RESET );
+		//PRINTFR("Neighbor already exist \n" ANSI_COLOR_RESET );
 		return NULL;
 	}
 	return nb;
@@ -164,7 +164,7 @@ static uint8_t mle_rm_neigbhor(struct memb* m , list_t *list ,mle_neighbor_t *nb
 {
 	if (nb != NULL) {
 		/* Remove the router id from the Router ID Set. */
-		PRINTFR("removing Neighbor: id = %d \n" ANSI_COLOR_RESET ,nb->id);
+	//	PRINTFR("removing Neighbor: id = %d \n" ANSI_COLOR_RESET ,nb->id);
 		list_remove(*list, nb);
 		memb_free(m, nb);
 	}
@@ -181,6 +181,17 @@ uint8_t mle_rm_child( mle_neighbor_t *nb)
 	return mle_rm_neigbhor(&childs_memb , &childs_list, nb) ;
 }
 
+void mle_rm_all_nb_router(void)
+{
+	mle_neighbor_t *nb;
+	nb = mle_neigbhor_head(&nb_router_list);
+	while(nb)
+	{
+		mle_rm_nb_router(nb);
+		nb = mle_neigbhor_head(&nb_router_list);
+	}
+
+}
 
 uint8_t count_neighbor_LQ(uint8_t N )
 {

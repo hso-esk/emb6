@@ -83,6 +83,7 @@ typedef struct {
  =============================================================================*/
 
 uint8_t mle_init(void);
+void mle_synchro_process(void *ptr);
 uint8_t send_mle_advertisement(tlv_route64_t* route, uint8_t len, tlv_leader_t* lead);
 uint8_t mle_set_parent_mode(void);
 uint8_t mle_set_child_mode(void);

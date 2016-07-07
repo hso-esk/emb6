@@ -169,16 +169,16 @@ int8_t demo_thrdCoapInit(void)
 	//mle_set_child_mode();
 
 	// Initialize routing database.
-	thrd_rdb_init();
+	//thrd_rdb_init();
 
 	// Initialize leader database.
 	// thrd_ldb_init();
 
 	thrd_dev.Router_ID = 2;
 
-	thrd_eid_rloc_db_init();
+	//thrd_eid_rloc_db_init();
 
-	thrd_trickle_init();
+	//thrd_trickle_init();
 
 	// thrd_partition_start();
 
