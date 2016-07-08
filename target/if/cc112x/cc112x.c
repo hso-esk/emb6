@@ -77,7 +77,7 @@
 #include "crc.h"
 #endif
 
-#define RF_CFG_DEBUG_EN                     TRUE
+#define RF_CFG_DEBUG_EN                     FALSE
 
 /*
  ********************************************************************************
@@ -572,7 +572,14 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
     *p_err = NETSTK_ERR_BUSY;
     return;
   }
+
   /* otherwise start transmission process */
+
+  /* TODO put radio back to RX state if eWOR is enabled */
+  if (p_ctx->cfgWOREnabled == TRUE) {
+    rf_gotoIdle(p_ctx);
+    rf_gotoRx(p_ctx);
+  }
 
   /* write frame to send into TX FIFO */
   uint16_t txNumRxBytes;
@@ -824,10 +831,22 @@ static void rf_pktRxTxBeginISR(void *p_arg) {
       rf_rx_entry(p_ctx);
       break;
 
+#if (NETSTK_CFG_WOR_EN == TRUE)
+    case RF_MARC_STATUS_RX_TERM :
+      if (chip_state == RF_STATE_TX) {
+        /* the radio just finished transmitting SYNC words */
+        rf_tx_sync(p_ctx);
+      } else {
+        /* ignore */
+      }
+      break;
+#else
+    case RF_MARC_STATUS_RX_TERM :
+#endif
+
     case RF_MARC_STATUS_RX_OVERFLOW :
     case RF_MARC_STATUS_RX_UNDERFLOW :
     case RF_MARC_STATUS_RX_TIMEOUT :
-    case RF_MARC_STATUS_RX_TERM :
       TRACE_LOG_ERR("<B> RX_ERR ds=%02x, ms=%02x, cs=%02x", p_ctx->state, marc_status, chip_state);
       rf_rx_term(p_ctx);
       break;
@@ -1031,10 +1050,9 @@ static void rf_pktRxTxEndISR(void *p_arg) {
 
   /* entry */
   bsp_extIntClear(RF_INT_PKT_END);
-
   if ((p_ctx->cfgWOREnabled == TRUE) &&
-      ((p_ctx->state == RF_STATE_RX_FINI) ||
-       (p_ctx->state == RF_STATE_RX_IDLE) ||
+      ((p_ctx->state == RF_STATE_RX_IDLE) ||
+       (p_ctx->state == RF_STATE_RX_FINI) ||
        (p_ctx->state == RF_STATE_TX_FINI))) {
     /* this interrupt was triggered by periodic WOR timer then ignore */
     return;
@@ -1361,7 +1379,6 @@ static void rf_tx_entry(struct s_rf_ctx *p_ctx) {
   p_ctx->txErr = NETSTK_ERR_NONE;
   p_ctx->txStatus = RF_TX_STATUS_NONE;
   p_ctx->txReqAck = packetbuf_attr(PACKETBUF_ATTR_MAC_ACK);
-  TRACE_LOG_MAIN("+++ RF: TX_ENTRY");
 }
 
 
@@ -1609,20 +1626,18 @@ static void rf_gotoWor(struct s_rf_ctx *p_ctx) {
 static void rf_listen(struct s_rf_ctx *p_ctx) {
   /* flushing TXFIFO can avoid problem of writing ACK to TXFIFO */
   RF_INT_DISABLED();
-  cc112x_spiCmdStrobe(CC112X_SIDLE);
+  rf_gotoIdle(p_ctx);
   cc112x_spiCmdStrobe(CC112X_SFTX);
   cc112x_spiCmdStrobe(CC112X_SFRX);
-  RF_INT_ENABLED();
 
   if (p_ctx->cfgWOREnabled == TRUE) {
     /* eWOR mode */
-    cc112x_spiCmdStrobe(CC112X_SWOR);
+    rf_gotoWor(p_ctx);
   } else {
     /* RX mode */
-    while (RF_READ_CHIP_STATE() != RF_STATE_RX_IDLE) {
-      cc112x_spiCmdStrobe(CC112X_SRX);
-    }
+    rf_gotoRx(p_ctx);
   }
+  RF_INT_ENABLED();
 }
 
 /**
@@ -1801,6 +1816,12 @@ static void rf_cca(e_nsErr_t *p_err) {
     *p_err = NETSTK_ERR_BUSY;
   }
   else {
+    /* TODO put radio back to RX state if eWOR is enabled */
+    if (p_ctx->cfgWOREnabled == TRUE) {
+      rf_gotoIdle(p_ctx);
+      rf_gotoRx(p_ctx);
+    }
+
     /* poll for valid carrier sense until timeout */
     rt_tmr_tick_t tickstart;
 
@@ -1822,6 +1843,9 @@ static void rf_cca(e_nsErr_t *p_err) {
       *p_err = NETSTK_ERR_BUSY;
     }
     else {
+      /* TODO put radio back to RX state if eWOR is enabled after CCA process is
+       * finished */
+
       /* was CCA timeout expired? If so carrier sense is invalid */
       if ((rssi_status & RF_RSSI0_CARRIER_SENSE_VALID) == 0) {
         /* then a runtime error was detected. The driver is still in RX_IDLE but the radio
@@ -1839,6 +1863,12 @@ static void rf_cca(e_nsErr_t *p_err) {
         else {
           /* declare channel free */
           *p_err = NETSTK_ERR_NONE;
+
+          /* then go back to eWOR when enabled */
+          if (p_ctx->cfgWOREnabled == TRUE) {
+            rf_gotoIdle(p_ctx);
+            rf_gotoWor(p_ctx);
+          }
         }
       }
     }
