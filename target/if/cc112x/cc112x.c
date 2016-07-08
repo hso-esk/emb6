@@ -358,6 +358,10 @@ static void rf_readRxFifo(struct s_rf_ctx *p_ctx, uint8_t numBytes);
 static void rf_setPktLen(uint8_t mode, uint16_t len);
 #endif
 
+static void rf_gotoIdle(struct s_rf_ctx *p_ctx);
+static void rf_gotoRx(struct s_rf_ctx *p_ctx);
+static void rf_gotoWor(struct s_rf_ctx *p_ctx);
+
 static void rf_listen(struct s_rf_ctx *p_ctx);
 
 static void rf_sleep_entry(struct s_rf_ctx *p_ctx);
@@ -1562,6 +1566,41 @@ static void rf_tmrDbgCb(void *p_arg) {
 }
 #endif
 
+/**
+ * @brief put the radio into IDLE state
+ * @param p_ctx point to variable holding radio context structure
+ */
+static void rf_gotoIdle(struct s_rf_ctx *p_ctx) {
+  cc112x_spiCmdStrobe(CC112X_SIDLE);
+  while (RF_READ_CHIP_STATE() != RF_STATE_IDLE) {
+    /* do nothing */
+  };
+}
+
+/**
+ * @brief put the radio into idle listening state
+ * @param p_ctx point to variable holding radio context structure
+ */
+static void rf_gotoRx(struct s_rf_ctx *p_ctx) {
+  /* RX mode */
+  cc112x_spiCmdStrobe(CC112X_SRX);
+  while (RF_READ_CHIP_STATE() != RF_STATE_RX_IDLE) {
+    /* do nothing */
+  }
+}
+
+/**
+ * @brief put the radio into WOR state
+ * @param p_ctx point to variable holding radio context structure
+ */
+static void rf_gotoWor(struct s_rf_ctx *p_ctx) {
+  /* enable RX termination on CS */
+  uint8_t wrByte = 0x09;
+  cc112x_spiRegWrite(CC112X_RFEND_CFG0, &wrByte, 1);
+
+  /* WOR mode */
+  cc112x_spiCmdStrobe(CC112X_SWOR);
+}
 
 /**
  * @brief put the radio into idle listening
