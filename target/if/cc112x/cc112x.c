@@ -833,7 +833,6 @@ static void rf_pktRxTxBeginISR(void *p_arg) {
 
     case RF_MARC_STATUS_RX_TERM :
       if (p_ctx->cfgWOREnabled == TRUE) {
-        trace_printf("<RXTERM> ds=%02x, cs=%02x", p_ctx->state, chip_state);
         if (chip_state == RF_STATE_TX) {
           /* the radio just finished transmitting SYNC words */
           rf_tx_sync(p_ctx);
