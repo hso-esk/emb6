@@ -831,19 +831,15 @@ static void rf_pktRxTxBeginISR(void *p_arg) {
       rf_rx_entry(p_ctx);
       break;
 
-#if (NETSTK_CFG_WOR_EN == TRUE)
     case RF_MARC_STATUS_RX_TERM :
-      if (chip_state == RF_STATE_TX) {
-        /* the radio just finished transmitting SYNC words */
-        rf_tx_sync(p_ctx);
-      } else {
-        /* ignore */
+      if (p_ctx->cfgWOREnabled == TRUE) {
+        trace_printf("<RXTERM> ds=%02x, cs=%02x", p_ctx->state, chip_state);
+        if (chip_state == RF_STATE_TX) {
+          /* the radio just finished transmitting SYNC words */
+          rf_tx_sync(p_ctx);
+          break;
+        }
       }
-      break;
-#else
-    case RF_MARC_STATUS_RX_TERM :
-#endif
-
     case RF_MARC_STATUS_RX_OVERFLOW :
     case RF_MARC_STATUS_RX_UNDERFLOW :
     case RF_MARC_STATUS_RX_TIMEOUT :
