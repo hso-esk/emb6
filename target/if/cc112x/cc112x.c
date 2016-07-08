@@ -656,6 +656,12 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
     packetbuf_attr_t waitForAckTimeout;
     waitForAckTimeout = packetbuf_attr(PACKETBUF_ATTR_MAC_ACK_WAIT_DURATION);
 
+    /* FIXME ackWaitDuration in eWOR mode seems to be ~300us longer than what's
+     * specified by the IEEE Std. 802.15.4-2011 */
+    if (p_ctx->cfgWOREnabled == TRUE) {
+      waitForAckTimeout += 300;
+    }
+
     /* wait for at most ackWaitDuration */
     bsp_delay_us(waitForAckTimeout);
 
