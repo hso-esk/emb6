@@ -137,7 +137,7 @@ static const s_regSettings_t cc112x_cfg_ieee802154g_default[] =
     {CC112X_WOR_CFG1,           0x08},  /* eWOR mode = Normal Mode */
     {CC112X_WOR_CFG0,           0x20},  /* RCOSC is running; RCOSC calibration disabled; Clock division enabled */
     {CC112X_WOR_EVENT0_MSB,     0x00},  /* eWOR timeout = 3.102ms */
-    {CC112X_WOR_EVENT0_LSB,     0x78},  /* eWOR timeout = 3.102ms */
+    {CC112X_WOR_EVENT0_LSB,     0x55},  /* eWOR timeout = 3.102ms FIXME, WOR does not work reliably at recommended WOR_timeout (LSB=0x78) */
 
 #if (NETSTK_CFG_DATA_WHITENING_EN == TRUE)
     {CC112X_PKT_CFG1,           0x41},  /* CRC_CFG = 00; CRC16 is disabled, APPEND_STATUS is disabled */
