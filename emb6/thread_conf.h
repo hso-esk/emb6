@@ -83,6 +83,13 @@
 
 #define THRD_MAX_EID_RLOC_MAP_CACHE_SIZE	10		// Maximum number of EID-to-RLOC Map Cache entries.
 
+// ------------------- THREAD NETWORK DATA ----------------------
+
+#define THRD_MAX_ON_MESH_PREFIX_SET_ENTRIES		5	// Maximum number of On-Mesh Prefix Set entries.
+#define THRD_MAX_EXT_ROUTE_SET_ENTRIES			5	// Maximum number of External Router Set entries.
+#define THRD_MAX_SICSLOWPAN_CTX_ID_SET_ENTRIES	5	// Maximum number of 6LoWPAN Context ID Set entries.
+#define THRD_MAX_SERVER_SET_ENTIES				5	// Maximum number of Server Set entries.
+
 // --------------------------------------------------------------
 
 #endif /* EMB6_THREAD_CONF_H_ */
