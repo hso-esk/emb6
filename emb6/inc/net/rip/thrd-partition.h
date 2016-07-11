@@ -58,6 +58,12 @@ uint8_t thrd_partition_process(uint8_t id_sequence_number, tlv_leader_t *leader_
 void thrd_partition_empty(void);
 
 /**
+ * Get the ID Sequence Number.
+ * @return The ID Sequence Number.
+ */
+uint8_t thrd_partition_get_id_seq_number();
+
+/**
  * Set the Leader Router ID.
  * @param leader_router_id The Leader Router ID.
  */
@@ -68,6 +74,30 @@ void thrd_partition_set_leader_router_id(uint8_t leader_router_id);
  * @return The Leader Router ID.
  */
 uint8_t thrd_partition_get_leader_router_id();
+
+/**
+ * Get the Partition ID.
+ * @return The Partition ID.
+ */
+uint32_t thrd_partition_get_pid();
+
+/**
+ * Get the partition weight.
+ * @return The partition weight.
+ */
+uint8_t thrd_partition_get_weight();
+
+/**
+ * Get the VN Version.
+ * @return The VN Version.
+ */
+uint8_t thrd_partition_get_vn_version();
+
+/**
+ * Get the VN Stable Version.
+ * @return The VN Stable Version.
+ */
+uint8_t thrd_partition_get_vn_stable_version();
 
 /*
  ********************************************************************************

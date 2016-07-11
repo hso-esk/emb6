@@ -116,6 +116,14 @@ thrd_partition_empty(void)
 
 /* --------------------------------------------------------------------------- */
 
+uint8_t
+thrd_partition_get_id_seq_number()
+{
+	return thrd_partition.ID_sequence_number;
+}
+
+/* --------------------------------------------------------------------------- */
+
 void
 thrd_partition_set_leader_router_id(uint8_t leader_router_id)
 {
@@ -128,6 +136,38 @@ uint8_t
 thrd_partition_get_leader_router_id()
 {
 	return thrd_partition.leader_router_id;
+}
+
+/* --------------------------------------------------------------------------- */
+
+uint32_t
+thrd_partition_get_pid()
+{
+	return thrd_partition.Partition_ID;
+}
+
+/* --------------------------------------------------------------------------- */
+
+uint8_t
+thrd_partition_get_weight()
+{
+	return thrd_partition.Partition_weight;
+}
+
+/* --------------------------------------------------------------------------- */
+
+uint8_t
+thrd_partition_get_vn_version()
+{
+	return thrd_partition.VN_version;
+}
+
+/* --------------------------------------------------------------------------- */
+
+uint8_t
+thrd_partition_get_vn_stable_version()
+{
+	return thrd_partition.VN_stable_version;
 }
 
 /*

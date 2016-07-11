@@ -67,6 +67,8 @@ thrd_iface_set_router_id(uint8_t router_id)
 	thrd_iface.router_id = router_id;
 }
 
+/* --------------------------------------------------------------------------- */
+
 uint8_t
 thrd_iface_get_router_id()
 {
