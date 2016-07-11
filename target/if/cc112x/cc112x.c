@@ -1088,6 +1088,7 @@ static void rf_pktRxTxEndISR(void *p_arg) {
           if (marc_status == RF_MARC_STATUS_RX_FINI) {
             rf_rx_chksum(p_ctx);
           } else {
+            TRACE_LOG_ERR("<E> exception ds=%02x, ms=%02x, cs=%02x", p_ctx->state, marc_status, chip_state);
             rf_exceptionHandler(p_ctx, marc_status, chip_state);
           }
           break;
