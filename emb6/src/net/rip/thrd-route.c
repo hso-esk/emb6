@@ -69,11 +69,11 @@ MEMB(route_memb, thrd_rdb_route_t, THRD_CONF_MAX_ROUTES);
 /* --------------------------------------------------------------------------- */
 
 /* Number of currently stored router ids in the Router ID Set. */
-static int num_rids = 0;
+static uint8_t num_rids = 0;
 /* Number of currently stored links in the Link Set. */
-static int num_links = 0;
+static uint8_t num_links = 0;
 /* Number of currently stored routes in the Route Set. */
-static int num_routes = 0;
+static uint8_t num_routes = 0;
 
 /* --------------------------------------------------------------------------- */
 
@@ -108,7 +108,7 @@ thrd_rdb_init(void)
 
 /* --------------------------------------------------------------------------- */
 
-int
+uint8_t
 thrd_rdb_rid_num_rids(void)
 {
 	return num_rids;
@@ -116,7 +116,7 @@ thrd_rdb_rid_num_rids(void)
 
 /* --------------------------------------------------------------------------- */
 
-int
+uint8_t
 thrd_rdb_link_num_links(void)
 {
 	return num_links;
@@ -124,7 +124,7 @@ thrd_rdb_link_num_links(void)
 
 /* --------------------------------------------------------------------------- */
 
-int
+uint8_t
 thrd_rdb_route_num_routes(void)
 {
 	return num_routes;

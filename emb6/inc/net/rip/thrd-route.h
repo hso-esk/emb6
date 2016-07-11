@@ -67,11 +67,11 @@ enum thrd_link_cost_t {
 /** \name Routing Database basic routines */
 /** @{ */
 
-int thrd_rdb_rid_num_rids(void);
+uint8_t thrd_rdb_rid_num_rids(void);
 
-int thrd_rdb_link_num_links(void);
+uint8_t thrd_rdb_link_num_links(void);
 
-int thrd_rdb_route_num_routes(void);
+uint8_t thrd_rdb_route_num_routes(void);
 
 thrd_rdb_id_t *thrd_rdb_rid_head(void);
 
