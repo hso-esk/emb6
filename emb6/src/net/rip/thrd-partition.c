@@ -170,6 +170,15 @@ thrd_partition_get_vn_stable_version()
 	return thrd_partition.VN_stable_version;
 }
 
+/* --------------------------------------------------------------------------- */
+uint8_t
+thrd_partition_get_leader_cost()
+{
+	thrd_rdb_route_t *route;
+	route = thrd_rdb_route_lookup(thrd_partition.leader_router_id);
+	return (route != NULL) ? route->R_route_cost : 63;
+}
+
 /*
  ********************************************************************************
  *                                DEBUG FUNCTIONS

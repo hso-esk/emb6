@@ -99,6 +99,12 @@ uint8_t thrd_partition_get_vn_version();
  */
 uint8_t thrd_partition_get_vn_stable_version();
 
+/**
+ * Get the routing cost to reach the leader.
+ * @return The routing cost for the leader.
+ */
+uint8_t thrd_partition_get_leader_cost();
+
 /*
  ********************************************************************************
  *                                DEBUG FUNCTIONS
