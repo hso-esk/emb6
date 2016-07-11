@@ -301,7 +301,7 @@ void mac_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
         * the maximum retries and ACK was not arrived
         */
         while ((tx_retries < tx_retriesMax) && (is_tx_done == FALSE)) {
-          TRACE_LOG_ERR("+ MAC_TX: seq=%02x; retry=%d", p_data[2], tx_retries);
+          TRACE_LOG_ERR("+ MAC_TX: seq=%02x; retry=%d; err=-%d", p_data[2], tx_retries, *p_err);
 
           /* perform unslotted CSMA-CA */
           mac_csma(p_err);
@@ -310,17 +310,14 @@ void mac_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
           if (*p_err == NETSTK_ERR_NONE) {
             /* then retransmit the frame */
             pmac_netstk->phy->send(p_data, len, p_err);
-            /* has frame been acknowledged or underlying layers were busy? */
-            if ((*p_err == NETSTK_ERR_NONE) ||
-                (*p_err == NETSTK_ERR_BUSY)) {
-              /* then terminate the transmission */
-              is_tx_done = TRUE;
-              TRACE_LOG_ERR("+ MAC_TX: TX done, r=%d, e=-%d", tx_retries, *p_err);
-            }
             /* was ACK not arrived? */
-            else {
+            if (*p_err == NETSTK_ERR_TX_NOACK) {
               /* then increase number of retries */
               tx_retries++;
+            } else {
+              /* otherwise terminate the transmission */
+              is_tx_done = TRUE;
+              TRACE_LOG_ERR("+ MAC_TX: TX done, r=%d, e=-%d", tx_retries, *p_err);
             }
           }
           /* was channel free or was the radio busy */
