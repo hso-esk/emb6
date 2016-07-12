@@ -79,6 +79,7 @@
 #include "thrd-send-adv.h"
 
 #include "thrd-iface.h"
+#include "thrd-network-data.h"
 
 #define DEBUG DEBUG_PRINT
 #include "uip-debug.h"	// For debugging terminal output.
@@ -154,6 +155,8 @@ int8_t demo_thrdCoapInit(void)
 {
 	PRINTF("Initializing Thread Interface.\n");
 	thrd_iface_init();
+
+	thrd_leader_network_data_init();
 
 	if ( !mle_init() ){ return 0; }
 	//mle_set_parent_mode();
