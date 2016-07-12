@@ -1,5 +1,5 @@
 /*
- * thrd_network_data_tlv.h
+ * thrd-network-data-tlv.h
  *
  *  Created on: 12 Jul 2016
  * Author: Lukas Zimmermann <lzimmer1@stud.hs-offenburg.de>
@@ -87,5 +87,46 @@ typedef struct __attribute__((__packed__)) {
 	uint16_t S_server_16;
 	uint8_t S_server_data[6];
 }  net_data_msg_server_tlv_t;
+
+/*
+ ********************************************************************************
+ *                           LOCAL FUNCTION DEFINITIONS
+ ********************************************************************************
+ */
+
+/**
+ * Set the type of a given Network Data Message TLV.
+ * @param tlv A Network Data Message TLV.
+ * @param type A Network Data Message TLV type.
+ */
+void thrd_net_data_msg_tlv_setType(tlv_t *tlv, net_data_msg_tlv_type_t type);
+
+/**
+ * Set the stable flag of the given Network Data Message TLV.
+ * @param tlv A Network Data Message TLV.
+ */
+void thrd_net_data_msg_tlv_setStable(tlv_t *tlv);
+
+/**
+ * Set the length of a given Network Data Message TLV.
+ * @param tlv A Network Data Message TLV.
+ * @param length The length of the value.
+ */
+void thrd_net_data_msg_tlv_setLength(tlv_t *tlv, uint8_t length);
+
+/**
+ * Get the Network Data Message TLV type.
+ * @param tlv	A Network Data Message TLV.
+ * @return		The Network Data Message TLV type.
+ */
+net_data_msg_tlv_type_t thrd_net_data_msg_getType(tlv_t *tlv);
+
+/**
+ * Check whether or not the stable bit is set.
+ * @param 	tlv 	A Network Data Message TLV.
+ * @retval 	TRUE	If the stable bit is set.
+ * @retval 	FALSE	If the stable bit is not set (or TLV is NULL).
+ */
+bool thrd_net_data_msg_isStable(tlv_t *tlv);
 
 #endif /* EMB6_INC_NET_RIP_THRD_NETWORK_DATA_TLV_H_ */
