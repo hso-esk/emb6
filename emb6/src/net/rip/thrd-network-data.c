@@ -21,6 +21,10 @@
 #include "rip.h"
 #include "thread_conf.h"
 
+#include "er-coap.h"
+#include "er-coap-engine.h"
+#include "rest-engine.h"
+
 #include "thrd-network-data.h"
 
 #define DEBUG DEBUG_PRINT
@@ -67,6 +71,8 @@ static void thrd_ext_route_set_rm(thrd_ext_route_set_t *ext_route);
 static void thrd_sicslowpan_ctx_id_set_rm(thrd_sicslowpan_ctx_id_set_t *ctx_id);
 static void thrd_server_set_rm(thrd_server_set_t *server);
 
+static void coap_init();
+
 /*
  ********************************************************************************
  *                               LOCAL VARIABLES
@@ -105,6 +111,12 @@ static uint8_t num_ext_routes = 0;
 static uint8_t num_sicslowpan_ctx_ids = 0;
 /* Number of currently stored Servers in the Server Set. */
 static uint8_t num_servers = 0;
+
+/*
+ * CoAP Resources to be activated need to be imported through the extern keyword.
+ */
+extern resource_t
+	thrd_res_n_sd;
 
 /*
  ********************************************************************************
@@ -595,6 +607,21 @@ thrd_server_set_rm(thrd_server_set_t *server)
 	}
 }
 
+/* --------------------------------------------------------------------------- */
+
+static void
+coap_init()
+{
+	PRINTF("Starting Thread Network Data (CoAP).\n\r");
+	/* Receives all CoAP messages */
+	coap_init_engine();
+	/* Initialize the REST engine. */
+	rest_init_engine();
+
+	// Bind the resources to their Uri-Path.
+	rest_activate_resource(&thrd_res_n_sd, "n/sd");
+}
+
 /*
  ********************************************************************************
  *                           API FUNCTION DEFINITIONS
@@ -616,6 +643,8 @@ thrd_leader_network_data_init(void)
 
 	memb_init(&server_memb);
 	list_init(server_list);
+
+	coap_init();
 }
 
 /*
