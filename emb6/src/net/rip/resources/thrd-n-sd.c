@@ -11,6 +11,8 @@
 #include "bsp.h"
 #include "er-coap.h"
 
+#include "thread_conf.h"
+
 #define DEBUG DEBUG_PRINT
 #include "uip-debug.h"
 
@@ -29,7 +31,7 @@ static void res_post_handler(void *request, void *response, uint8_t *buffer,
  ********************************************************************************
  */
 
-static uint8_t payload_buf[16] = { 0 };
+static uint8_t payload_buf[MAX_NETWORK_DATA_SIZE] = { 0 };
 static size_t len = 0;						// CoAP payload length.
 
 /**
@@ -61,6 +63,7 @@ res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t prefer
 	PRINTF("========================== CoAP ==========================\n");
 	PRINTF("Receiving CoAP packet! (Res: n/sd)\n");
 
+	// TODO
 
 	PRINTF("==========================================================\n");
 }
