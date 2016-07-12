@@ -90,6 +90,15 @@
 #define THRD_MAX_SICSLOWPAN_CTX_ID_SET_ENTRIES	5	// Maximum number of 6LoWPAN Context ID Set entries.
 #define THRD_MAX_SERVER_SET_ENTRIES				5	// Maximum number of Server Set entries.
 
+// ---------- THREAD PROTOCOL PARAMETERS AND CONSTANTS ----------
+
+#define CONTEXT_ID_REUSE_DELAY					172800		// 48 hours in seconds.
+#define DATA_RESUBMIT_DELAY						300			// 300 seconds.
+#define MAX_NETWORK_DATA_SIZE					255			// 255 bytes.
+#define MIN_PREFIX_LIFETIME						3600		// 3600 seconds.
+#define MIN_STABLE_LIFETIME						604800		// 168 hours in seconds.
+#define LEADER_TIMEOUT							120			// 120 seconds.
+
 // --------------------------------------------------------------
 
 #endif /* EMB6_THREAD_CONF_H_ */
