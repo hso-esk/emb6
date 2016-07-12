@@ -90,4 +90,12 @@ typedef struct {
 
 extern thrd_com_data_set_t thrd_com_data_set;
 
+/*
+ ********************************************************************************
+ *                           API FUNCTION DEFINITIONS
+ ********************************************************************************
+ */
+
+void thrd_leader_network_data_init(void);
+
 #endif /* EMB6_INC_NET_RIP_THRD_NETWORK_DATA_H_ */

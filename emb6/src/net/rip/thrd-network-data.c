@@ -118,24 +118,6 @@ static uint8_t num_servers = 0;
  ********************************************************************************
  */
 
-void
-thrd_leader_network_data_init(void)
-{
-	memb_init(&on_mesh_prefix_memb);
-	list_init(on_mesh_prefix_list);
-
-	memb_init(&ext_route_memb);
-	list_init(ext_route_list);
-
-	memb_init(&sicslowpan_ctx_id_memb);
-	list_init(sicslowpan_ctx_id_list);
-
-	memb_init(&server_memb);
-	list_init(server_list);
-}
-
-/* --------------------------------------------------------------------------- */
-
 static uint8_t
 thrd_get_num_on_mesh_prefixes(void)
 {
@@ -611,6 +593,29 @@ thrd_server_set_rm(thrd_server_set_t *server)
 		num_servers--;
 		PRINTF("thrd_server_set_rm: num_servers %d\n\r", num_servers);
 	}
+}
+
+/*
+ ********************************************************************************
+ *                           API FUNCTION DEFINITIONS
+ ********************************************************************************
+ */
+
+void
+thrd_leader_network_data_init(void)
+{
+	PRINTF("Initializing Thread Network Data.\n\r");
+	memb_init(&on_mesh_prefix_memb);
+	list_init(on_mesh_prefix_list);
+
+	memb_init(&ext_route_memb);
+	list_init(ext_route_list);
+
+	memb_init(&sicslowpan_ctx_id_memb);
+	list_init(sicslowpan_ctx_id_list);
+
+	memb_init(&server_memb);
+	list_init(server_list);
 }
 
 /*
