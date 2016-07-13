@@ -87,7 +87,7 @@ void mle_synchro_process(void *ptr);
 uint8_t send_mle_advertisement(tlv_route64_t* route, uint8_t len, tlv_leader_t* lead);
 uint8_t mle_set_parent_mode(void);
 uint8_t mle_set_child_mode(void);
-
+void reply_for_mle_childID_request(void *ptr);
 
 
 /*

@@ -16,6 +16,7 @@
 #include "thrd-adv.h"
 #include "thrd-partition.h"
 #include "thrd-iface.h"
+#include "thrd-router-id.h"
 
 #include "etimer.h"
 #include "evproc.h"
@@ -213,50 +214,42 @@ static uint16_t assign_address16(uint8_t id)
 	return   (( thrd_iface_get_router_id() << 10) |  id | 0x0000  );
 }
 
-static void reply_for_mle_childID_request(void *ptr)
+void reply_for_mle_childID_request(void *ptr)
 {
+	PRINTFY("inside child in response \n"ANSI_COLOR_RESET);
+	uint8_t* routerid;
+	routerid=(uint8_t*) ptr;
 	size_t len =0;
 	tlv_route64_t* route64;
 	route64=thrd_generate_route64(&len);
 
-	if(MyNode.OpMode == CHILD)
+	if(ptr!=NULL)
 	{
-		// send request to become a router and then reply
-		PRINTFY("Sending request to become a Router \n"ANSI_COLOR_RESET);
-
-		//send_req(NULL);
-		/*
-		void send_req(uint8_t *router_id)
-		{
-		thrd_request_router_id(uip_ipaddr_t *leader_addr, uint8_t *ml_eid, uint8_t *router_id)
-		}
-		//
-		 */
-
-
-		mle_set_parent_mode();
-
-		mle_init_cmd(&cmd,CHILD_ID_RESPONSE);
-		add_src_address_to_cmd(&cmd);
-		add_leader_to_cmd(&cmd,thrd_generate_leader_data_tlv());
-		add_address16_to_cmd(&cmd , assign_address16(5));
-		add_route64_to_cmd(&cmd,route64,len);
-		mle_send_msg( &cmd,&param.source_addr);
-		child= mle_find_child_byAdd(&param.source_addr);
-		child->state=LINKED;
-
+		if(*routerid<63)
+			mle_set_parent_mode();
+ // TODO send error to child
 
 	}
-	else if (MyNode.OpMode == PARENT)
+	else
 	{
-		mle_init_cmd(&cmd,CHILD_ID_RESPONSE);
-		add_src_address_to_cmd(&cmd);
-		add_leader_to_cmd(&cmd,thrd_generate_leader_data_tlv());
-		add_address16_to_cmd(&cmd , assign_address16(5));
-		add_route64_to_cmd(&cmd,route64,len);
-		mle_send_msg( &cmd,&param.source_addr);
-		child= mle_find_child_byAdd(&param.source_addr);
-		child->state=LINKED;
+		if(MyNode.OpMode == CHILD)
+		{
+			// send request to become a router and then reply
+			PRINTFY("Sending request to become a Router \n"ANSI_COLOR_RESET);
+			thrd_request_router_id(NULL);
+
+		}
+		else if (MyNode.OpMode == PARENT)
+		{
+			mle_init_cmd(&cmd,CHILD_ID_RESPONSE);
+			add_src_address_to_cmd(&cmd);
+			add_leader_to_cmd(&cmd,thrd_generate_leader_data_tlv());
+			add_address16_to_cmd(&cmd , assign_address16(child->id));
+			add_route64_to_cmd(&cmd,route64,len);
+			mle_send_msg( &cmd,&param.source_addr);
+			child= mle_find_child_byAdd(&param.source_addr);
+			child->state=LINKED;
+		}
 	}
 }
 
