@@ -4,7 +4,7 @@
  * Created on: 11 Jul 2016
  * Author: Lukas Zimmermann <lzimmer1@stud.hs-offenburg.de>
  *
- * Thread Network Data.
+ * Thread Network Data manipulation.
  */
 
 /*
@@ -20,6 +20,10 @@
 #include "memb.h"
 #include "rip.h"
 #include "thread_conf.h"
+
+#include "er-coap.h"
+#include "er-coap-engine.h"
+#include "rest-engine.h"
 
 #include "thrd-network-data.h"
 
@@ -602,7 +606,7 @@ thrd_server_set_rm(thrd_server_set_t *server)
  */
 
 void
-thrd_leader_network_data_init(void)
+thrd_network_data_init(void)
 {
 	PRINTF("Initializing Thread Network Data.\n\r");
 	memb_init(&on_mesh_prefix_memb);
@@ -617,6 +621,80 @@ thrd_leader_network_data_init(void)
 	memb_init(&server_memb);
 	list_init(server_list);
 }
+
+/* --------------------------------------------------------------------------- */
+
+void
+thrd_network_data_getNetworkData(bool stable, uint8_t data, uint8_t len)
+{
+
+}
+
+/* --------------------------------------------------------------------------- */
+
+net_data_msg_border_router_tlv_t*
+thrd_network_data_getBorderRouterTLV(net_data_msg_prefix_tlv_t *prefix_tlv)
+{
+	return NULL;
+}
+
+/* --------------------------------------------------------------------------- */
+
+net_data_msg_has_route_tlv_t*
+thrd_network_data_getHasRouteTLV(net_data_msg_prefix_tlv_t *prefix_tlv)
+{
+	return NULL;
+}
+
+/* --------------------------------------------------------------------------- */
+
+net_data_msg_sicslowpan_id_tlv_t*
+thrd_network_data_getContextIdTLV(net_data_msg_prefix_tlv_t *prefix_tlv)
+{
+	return NULL;
+}
+
+/* --------------------------------------------------------------------------- */
+
+net_data_msg_prefix_tlv_t*
+thrd_network_data_getPrefixTLV(uint8_t *prefix, uint8_t length)
+{
+	return NULL;
+}
+
+/* --------------------------------------------------------------------------- */
+
+thrd_error_t
+thrd_network_data_insert(uint8_t data, uint8_t length)
+{
+	return THRD_ERROR_NONE;
+}
+
+/* --------------------------------------------------------------------------- */
+
+thrd_error_t
+thrd_network_data_remove(uint8_t data, uint8_t length)
+{
+	return THRD_ERROR_NONE;
+}
+
+/* --------------------------------------------------------------------------- */
+
+thrd_error_t
+thrd_network_data_removeTempData(uint8_t data, uint8_t length)
+{
+	return THRD_ERROR_NONE;
+}
+
+/* --------------------------------------------------------------------------- */
+
+/* --------------------------------------------------------------------------- */
+
+/* --------------------------------------------------------------------------- */
+
+/* --------------------------------------------------------------------------- */
+
+/* --------------------------------------------------------------------------- */
 
 /*
  ********************************************************************************

@@ -12,6 +12,30 @@
 #include "thrd-dev.h"
 
 /*=============================================================================
+                                    ERROR CODES
+===============================================================================*/
+
+typedef enum {
+	THRD_ERROR_NONE = 0,
+	THRD_ERROR_FAILED = 1,
+	THRD_ERROR_DROP = 2,
+	THRD_ERROR_NO_BUFS = 3,
+	THRD_ERROR_NO_ROUTE = 4,
+	THRD_ERROR_BUSY = 5,
+	THRD_ERROR_PARSE = 6,
+	THRD_ERROR_INVALID_ARGS = 7,
+	THRD_ERROR_SECURITY = 8,
+	THRD_ERROR_ADDRESS_QUERY = 9,
+	THRD_ERROR_NO_ADDRESS = 10,
+	THRD_ERROR_NOT_RECEIVING = 11,
+	THRD_ERROR_ABORT = 12,
+	THRD_ERROR_NOT_IMPLEMENTED = 13,
+	THRD_ERROR_INVALID_STATE = 14,
+	THRD_ERROR_NO_TASKLETS = 15,
+	THRD_ERROR_ERROR = 255
+} thrd_error_t;
+
+/*=============================================================================
                                     DEVICE TYPE
 ===============================================================================*/
 
@@ -89,6 +113,15 @@
 #define THRD_MAX_EXT_ROUTE_SET_ENTRIES			5	// Maximum number of External Router Set entries.
 #define THRD_MAX_SICSLOWPAN_CTX_ID_SET_ENTRIES	5	// Maximum number of 6LoWPAN Context ID Set entries.
 #define THRD_MAX_SERVER_SET_ENTRIES				5	// Maximum number of Server Set entries.
+
+// ---------- THREAD PROTOCOL PARAMETERS AND CONSTANTS ----------
+
+#define CONTEXT_ID_REUSE_DELAY					172800		// 48 hours in seconds.
+#define DATA_RESUBMIT_DELAY						300			// 300 seconds.
+#define MAX_NETWORK_DATA_SIZE					255			// 255 bytes.
+#define MIN_PREFIX_LIFETIME						3600		// 3600 seconds.
+#define MIN_STABLE_LIFETIME						604800		// 168 hours in seconds.
+#define LEADER_TIMEOUT							120			// 120 seconds.
 
 // --------------------------------------------------------------
 

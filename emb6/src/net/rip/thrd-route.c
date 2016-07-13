@@ -657,23 +657,23 @@ thrd_rdb_route_t
 
 /* --------------------------------------------------------------------------- */
 
-void
+thrd_error_t
 thrd_rdb_rid_rm(thrd_rdb_id_t *rid)
 {
 	if (rid != NULL) {
-		PRINTF(
-				"thrd_rdb_rid_rm: removing router id from 'Router ID Set' with router id: ");
+		PRINTF("thrd_rdb_rid_rm: removing router id from 'Router ID Set' with router id: ");
 		PRINTF("%d\n", rid->router_id);
 		PRINTF("\n\r");
 
 		/* Remove the router id from the Router ID Set. */
 		list_remove(routerid_list, rid);
 		memb_free(&routerid_memb, rid);
-
 		num_rids--;
 
 		PRINTF("thrd_rdb_rid_rm: num_rids %d\n\r", num_rids);
+		return THRD_ERROR_NONE;
 	}
+	return THRD_ERROR_INVALID_ARGS;
 }
 
 /* --------------------------------------------------------------------------- */
@@ -696,8 +696,10 @@ thrd_rdb_rid_empty()
 
 /* --------------------------------------------------------------------------- */
 
-void thrd_rdb_link_rm(thrd_rdb_link_t *link) {
-	if (link != NULL) {
+thrd_error_t
+thrd_rdb_link_rm(thrd_rdb_link_t *link)
+{
+	if ( link != NULL ) {
 		PRINTF("thrd_rdb_link_rm: removing link with router id: ");
 		PRINTF("%d\n", link->L_router_id);
 		PRINTF("\n\r");
@@ -705,16 +707,17 @@ void thrd_rdb_link_rm(thrd_rdb_link_t *link) {
 		/* Remove the link from the Link Set. */
 		list_remove(link_list, link);
 		memb_free(&link_memb, link);
-
 		num_links--;
 
 		PRINTF("thrd_rdb_link_rm: num_links %d\n\r", num_links);
+		return THRD_ERROR_NONE;
 	}
+	return THRD_ERROR_INVALID_ARGS;
 }
 
 /* --------------------------------------------------------------------------- */
 
-void
+thrd_error_t
 thrd_rdb_route_rm(thrd_rdb_route_t *route)
 {
 	if (route != NULL) {
@@ -726,13 +729,12 @@ thrd_rdb_route_rm(thrd_rdb_route_t *route)
 		/* Remove the route from the Route Set. */
 		list_remove(route_list, route);
 		memb_free(&route_memb, route);
-
 		num_routes--;
 
 		PRINTF("thrd_rdb_route_rm: num_routes %d\n\r", num_routes);
+		return THRD_ERROR_NONE;
 	}
-
-	return;
+	return THRD_ERROR_INVALID_ARGS;
 }
 
 /*

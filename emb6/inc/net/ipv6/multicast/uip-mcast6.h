@@ -148,7 +148,7 @@ struct uip_mcast6_driver {
 #if UIP_MCAST6_ENGINE
 
 /* Enable Multicast hooks in the uip6 core */
-#define UIP_CONF_IPV6_MULTICAST 1
+// #define UIP_CONF_IPV6_MULTICAST 1			// Disbaled to avoid redefinition.
 
 #if UIP_MCAST6_ENGINE == UIP_MCAST6_ENGINE_ROLL_TM
 #define RPL_CONF_MULTICAST     0        /* Not used by trickle */
