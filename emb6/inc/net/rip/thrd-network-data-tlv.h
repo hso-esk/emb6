@@ -11,6 +11,7 @@
 #define EMB6_INC_NET_RIP_THRD_NETWORK_DATA_TLV_H_
 
 #include "uip.h"
+#include "tlv.h"
 
 #define MAX_HAS_ROUTE_TLV_SIZE			5		// Maximum number of Has Route TLV entries.
 #define MAX_PREFIX_TLV_DATA_SIZE		5		// Maximum number of data entries in Prefix TLV (Prefix + Sub-TLVs).
