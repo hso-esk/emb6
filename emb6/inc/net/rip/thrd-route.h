@@ -108,13 +108,31 @@ thrd_rdb_id_t *thrd_rdb_rid_add(uint8_t router_id);
 thrd_rdb_route_t *thrd_rdb_route_add(uint8_t destination, uint8_t next_hop,
 		uint8_t route_cost);
 
-void thrd_rdb_rid_rm(thrd_rdb_id_t *rid);
+/**
+ * Remove a given Router ID from the Router ID Set.
+ * @param rid	The Router ID to remove.
+ * @retval THRD_ERROR_NONE			Router ID successfully removed.
+ * @retval THRD_ERROR_INVALID_ARGS	Invalid argument.
+ */
+thrd_error_t thrd_rdb_rid_rm(thrd_rdb_id_t *rid);
 
 void thrd_rdb_rid_empty();
 
-void thrd_rdb_link_rm(thrd_rdb_link_t *link);
+/**
+ * Remove a given Link from the Link Set.
+ * @param link	The link to remove.
+ * @retval THRD_ERROR_NONE			Link successfully removed.
+ * @retval THRD_ERROR_INVALID_ARGS	Invalid argument.
+ */
+thrd_error_t thrd_rdb_link_rm(thrd_rdb_link_t *link);
 
-void thrd_rdb_route_rm(thrd_rdb_route_t *route);
+/**
+ * Remove a given Route from the Route Set.
+ * @param route The Route to remove.
+ * @retval THRD_ERROR_NONE			Route successfully removed.
+ * @retval THRD_ERROR_INVALID_ARGS	Invalid argument.
+ */
+thrd_error_t thrd_rdb_route_rm(thrd_rdb_route_t *route);
 
 /*
  ********************************************************************************
