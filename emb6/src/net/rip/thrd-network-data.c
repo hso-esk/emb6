@@ -4,7 +4,7 @@
  * Created on: 11 Jul 2016
  * Author: Lukas Zimmermann <lzimmer1@stud.hs-offenburg.de>
  *
- * Thread Network Data.
+ * Thread Network Data manipulation.
  */
 
 /*
@@ -71,8 +71,6 @@ static void thrd_ext_route_set_rm(thrd_ext_route_set_t *ext_route);
 static void thrd_sicslowpan_ctx_id_set_rm(thrd_sicslowpan_ctx_id_set_t *ctx_id);
 static void thrd_server_set_rm(thrd_server_set_t *server);
 
-static void coap_init();
-
 /*
  ********************************************************************************
  *                               LOCAL VARIABLES
@@ -111,12 +109,6 @@ static uint8_t num_ext_routes = 0;
 static uint8_t num_sicslowpan_ctx_ids = 0;
 /* Number of currently stored Servers in the Server Set. */
 static uint8_t num_servers = 0;
-
-/*
- * CoAP Resources to be activated need to be imported through the extern keyword.
- */
-extern resource_t
-	thrd_res_n_sd;
 
 /*
  ********************************************************************************
@@ -607,21 +599,6 @@ thrd_server_set_rm(thrd_server_set_t *server)
 	}
 }
 
-/* --------------------------------------------------------------------------- */
-
-static void
-coap_init()
-{
-	PRINTF("Starting Thread Network Data (CoAP).\n\r");
-	/* Receives all CoAP messages */
-	coap_init_engine();
-	/* Initialize the REST engine. */
-	rest_init_engine();
-
-	// Bind the resources to their Uri-Path.
-	rest_activate_resource(&thrd_res_n_sd, "n/sd");
-}
-
 /*
  ********************************************************************************
  *                           API FUNCTION DEFINITIONS
@@ -629,7 +606,7 @@ coap_init()
  */
 
 void
-thrd_leader_network_data_init(void)
+thrd_network_data_init(void)
 {
 	PRINTF("Initializing Thread Network Data.\n\r");
 	memb_init(&on_mesh_prefix_memb);
@@ -643,9 +620,81 @@ thrd_leader_network_data_init(void)
 
 	memb_init(&server_memb);
 	list_init(server_list);
-
-	coap_init();
 }
+
+/* --------------------------------------------------------------------------- */
+
+void
+thrd_network_data_getNetworkData(bool stable, uint8_t data, uint8_t len)
+{
+
+}
+
+/* --------------------------------------------------------------------------- */
+
+net_data_msg_border_router_tlv_t*
+thrd_network_data_getBorderRouterTLV(net_data_msg_prefix_tlv_t *prefix_tlv)
+{
+	return NULL;
+}
+
+/* --------------------------------------------------------------------------- */
+
+net_data_msg_has_route_tlv_t*
+thrd_network_data_getHasRouteTLV(net_data_msg_prefix_tlv_t *prefix_tlv)
+{
+	return NULL;
+}
+
+/* --------------------------------------------------------------------------- */
+
+net_data_msg_sicslowpan_id_tlv_t*
+thrd_network_data_getContextIdTLV(net_data_msg_prefix_tlv_t *prefix_tlv)
+{
+	return NULL;
+}
+
+/* --------------------------------------------------------------------------- */
+
+net_data_msg_prefix_tlv_t*
+thrd_network_data_getPrefixTLV(uint8_t *prefix, uint8_t length)
+{
+	return NULL;
+}
+
+/* --------------------------------------------------------------------------- */
+
+thrd_error_t
+thrd_network_data_insert(uint8_t data, uint8_t length)
+{
+	return THRD_ERROR_NONE;
+}
+
+/* --------------------------------------------------------------------------- */
+
+thrd_error_t
+thrd_network_data_remove(uint8_t data, uint8_t length)
+{
+	return THRD_ERROR_NONE;
+}
+
+/* --------------------------------------------------------------------------- */
+
+thrd_error_t
+thrd_network_data_removeTempData(uint8_t data, uint8_t length)
+{
+	return THRD_ERROR_NONE;
+}
+
+/* --------------------------------------------------------------------------- */
+
+/* --------------------------------------------------------------------------- */
+
+/* --------------------------------------------------------------------------- */
+
+/* --------------------------------------------------------------------------- */
+
+/* --------------------------------------------------------------------------- */
 
 /*
  ********************************************************************************

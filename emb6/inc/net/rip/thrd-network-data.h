@@ -4,13 +4,22 @@
  * Created on: 11 Jul 2016
  * Author: Lukas Zimmermann <lzimmer1@stud.hs-offenburg.de>
  *
- * Thread Network Data.
+ * Thread Network Data manipulation.
  */
 
 #include "bsp.h"
+#include "thrd-network-data-tlv.h"
 
 #ifndef EMB6_INC_NET_RIP_THRD_NETWORK_DATA_H_
 #define EMB6_INC_NET_RIP_THRD_NETWORK_DATA_H_
+
+/*
+ ********************************************************************************
+ *                               GLOBAL VARIABLES
+ ********************************************************************************
+ */
+
+uint8_t networkDataBuffer[MAX_NETWORK_DATA_SIZE];		// Network Data Buffer.
 
 /**
  * Version Number Set.
@@ -96,6 +105,73 @@ extern thrd_com_data_set_t thrd_com_data_set;
  ********************************************************************************
  */
 
-void thrd_leader_network_data_init(void);
+void thrd_network_data_init(void);
+
+/**
+ * Get a full or stable copy of the Thread Network Data.
+ * @param stable	TRUE when copying the stable version, FALSE when copying the full version.
+ * @param data		A pointer ro the data buffer.
+ * @param len		On entry, size of the data buffer pointed to by @p data.
+ * 					On extrit, number of copied bytes.
+ */
+void thrd_network_data_getNetworkData(bool stable, uint8_t data, uint8_t len);
+
+/**
+ * Get a pointer to the Border Router TLV within a given Prefix TLV.
+ * @param prefix_tlv	A reference to the Prefrix TLV.
+ * @return				A pointer to the Border Router TLV if one is found.
+ * 						NULL else.
+ */
+net_data_msg_border_router_tlv_t* thrd_network_data_getBorderRouterTLV(net_data_msg_prefix_tlv_t *prefix_tlv);
+
+/**
+ * Get a pointer to the Has Router TLV within a given Prefix TLV.
+ * @param prefix_tlv	A reference to the Prefix TLV.
+ * @return				A pointer to the Has Route TLV if one found.
+ * 						NULL else.
+ */
+net_data_msg_has_route_tlv_t* thrd_network_data_getHasRouteTLV(net_data_msg_prefix_tlv_t *prefix_tlv);
+
+/**
+ * Get a pointer to the 6LoWPAN Context ID TLV within a given Prefix TLV.
+ * @param prefix_tlv	A reference to the Prefix TLV.
+ * @return				A pointer to the 6LoWPAN Context ID TLV if one is found.
+ * 						NULL else.
+ */
+net_data_msg_sicslowpan_id_tlv_t* thrd_network_data_getContextIdTLV(net_data_msg_prefix_tlv_t *prefix_tlv);
+
+/**
+ * Get a pointer to a Prefix TLV.
+ * @param prefix	A pointer to an IPv6 prefix.
+ * @param length	The prefix length pointed to by @p prefix.
+ * @return
+ */
+net_data_msg_prefix_tlv_t* thrd_network_data_getPrefixTLV(uint8_t *prefix, uint8_t length);
+
+/**
+ * Insert bytes into the Network Data.
+ * @param data		A pointer to the beginning of the insertion.
+ * @param length	The number of bytes to insert.
+ * @retval THRD_ERROR_NONE		Successfully inserted bytes.
+ * @retval THRD_ERROR_NO_BUF	Insufficient space to insert bytes.
+ */
+thrd_error_t thrd_network_data_insert(uint8_t data, uint8_t length);
+
+/**
+ * Remove bytes from the Network Data.
+ * @param data		A pointer to the beginning of the removal.
+ * @param length	The number of bytes to remove.
+ * @retval THRD_ERROR_NONE	Successfully removed bytes.
+ */
+thrd_error_t thrd_network_data_remove(uint8_t data, uint8_t length);
+
+/**
+ * Remove non-stable data from the Thread Network Data.
+ * @param data		A pointer ro the Network Data to modify.
+ * @param length	On entry, the size of the Network Data in bytes.
+ * 					On exit, the size of the resulting Network Data in bytes.
+ * @return
+ */
+thrd_error_t thrd_network_data_removeTempData(uint8_t data, uint8_t length);
 
 #endif /* EMB6_INC_NET_RIP_THRD_NETWORK_DATA_H_ */
