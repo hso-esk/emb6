@@ -15,6 +15,7 @@
 
 #include "thrd-adv.h"
 #include "thrd-partition.h"
+#include "thrd-iface.h"
 
 #include "etimer.h"
 #include "evproc.h"
@@ -45,6 +46,7 @@ static mle_neighbor_t* 				child; // to handle the child devices in both mode (p
 								LOCAL FUNCTION
  =============================================================================*/
 static uint8_t  		mle_send_msg(mle_cmd_t* cmd,  uip_ipaddr_t *dest_addr);
+
 uint8_t 			isActiveRouter(uint16_t srcAdd)
 {
 	for(uint8_t i=0; i<9;i++)
@@ -59,7 +61,6 @@ uint8_t 			isActiveRouter(uint16_t srcAdd)
 #define routerMask(scanMask)			(BIT_CHECK(scanMask,7))
 #define ReedMask(scanMask)				(BIT_CHECK(scanMask,6))
 #define get_rssi()		             30 //sicslowpan_get_last_rssi()
-#define get_routerID()		         0xff
 
 
 
@@ -163,7 +164,7 @@ static void check_child_state(void *ptr)
 	}
 	else
 	{
-		PRINTFG("Child Linked \n"ANSI_COLOR_RESET);
+		PRINTFY("Child Linked \n"ANSI_COLOR_RESET);
 	}
 
 }
@@ -179,7 +180,9 @@ static void reply_for_mle_parent_request(void *ptr)
 
 		mle_init_cmd(&cmd,PARENT_RESPONSE);
 		add_src_address_to_cmd(&cmd);
-		// leader data tlv :: from Network layer
+		/* add the leader data tlv */
+		add_leader_to_cmd(&cmd,thrd_generate_leader_data_tlv());
+
 		// link-layer frame counter tlv
 		// MLE Frame Counter tlv
 		add_response_to_cmd(&cmd, mle_find_tlv_in_cmd(param.rec_cmd,TLV_CHALLENGE));
@@ -191,24 +194,30 @@ static void reply_for_mle_parent_request(void *ptr)
 		child->challenge= add_rand_challenge_to_cmd(&cmd);
 
 		add_Link_margin_to_cmd(&cmd,param.rec_rssi);
-		add_Cnnectivity_to_cmd(&cmd,MAX_CHILD,MyNode.childs_counter,count_neighbor_LQ(3),count_neighbor_LQ(2),count_neighbor_LQ(1),0,0);
+		add_Cnnectivity_to_cmd(&cmd,MAX_CHILD,MyNode.childs_counter,count_neighbor_LQ(3),count_neighbor_LQ(2),count_neighbor_LQ(1),
+				thrd_partition_get_leader_cost(),thrd_partition_get_id_seq_number());
 		add_version_to_cmd(&cmd);
 
 
 		/* to change by the child address */
 		mle_send_msg( &cmd,&child->tmp);
 
+		/* trigger the timer to remove the child after period of pending time (if the state wasn't changed to linked) */
+		ctimer_set(&child->timeOut, 5 * bsp_get(E_BSP_GET_TRES) , check_child_state, (void *) &child->id );
 	}
 
 }
 
 static uint16_t assign_address16(uint8_t id)
 {
-	return   (( get_routerID() << 10) |  id | 0x0000  );
+	return   (( thrd_iface_get_router_id() << 10) |  id | 0x0000  );
 }
 
 static void reply_for_mle_childID_request(void *ptr)
 {
+	size_t len =0;
+	tlv_route64_t* route64;
+	route64=thrd_generate_route64(&len);
 
 	if(MyNode.OpMode == CHILD)
 	{
@@ -227,9 +236,9 @@ static void reply_for_mle_childID_request(void *ptr)
 
 		mle_init_cmd(&cmd,CHILD_ID_RESPONSE);
 		add_src_address_to_cmd(&cmd);
-		// leader data tlv :: from Network layer
+		add_leader_to_cmd(&cmd,thrd_generate_leader_data_tlv());
 		add_address16_to_cmd(&cmd , assign_address16(5));
-		// router64
+		add_route64_to_cmd(&cmd,route64,len);
 		mle_send_msg( &cmd,&param.source_addr);
 		child= mle_find_child_byAdd(&param.source_addr);
 		child->state=LINKED;
@@ -240,9 +249,9 @@ static void reply_for_mle_childID_request(void *ptr)
 	{
 		mle_init_cmd(&cmd,CHILD_ID_RESPONSE);
 		add_src_address_to_cmd(&cmd);
-		// leader data tlv :: from Network layer
+		add_leader_to_cmd(&cmd,thrd_generate_leader_data_tlv());
 		add_address16_to_cmd(&cmd , assign_address16(5));
-		// router64
+		add_route64_to_cmd(&cmd,route64,len);
 		mle_send_msg( &cmd,&param.source_addr);
 		child= mle_find_child_byAdd(&param.source_addr);
 		child->state=LINKED;
@@ -257,8 +266,7 @@ void mle_join_process(void *ptr)
 	tlv_t * tlv;
 
 	uint8_t finish=0;
-	static  uint8_t reponse_recived=0, req_sent_to_reed=0;; // flag to know if parent response received // flag to check whether the request is sent to reed or no
-
+	static  uint8_t reponse_recived=0, req_sent_to_reed=0;; // flag to know if parent response received // flag to check whether the request to reed is sent or no
 
 	if(MyNode.OpMode==NOT_LINKED)
 	{
@@ -407,7 +415,7 @@ void mle_join_process(void *ptr)
 				PRINTFR("Join process fail ... \n"ANSI_COLOR_RESET);
 				PRINTFG("starting new partition ... \n"ANSI_COLOR_RESET);
 
-				//thrd_partition_start();
+				thrd_partition_start();
 
 				mle_set_parent_mode();
 				PRESET();
@@ -425,7 +433,7 @@ static uint8_t send_mle_link_request(void)
 {
 	mle_init_cmd(&cmd,LINK_REQUEST);
 	add_src_address_to_cmd(&cmd);
-	// leader data tlv :: from Network layer
+	add_leader_to_cmd(&cmd,thrd_generate_leader_data_tlv());
 	MyNode.challenge=add_rand_challenge_to_cmd(&cmd);
 	add_version_to_cmd(&cmd);
 	// TLV request : link Margin
@@ -443,10 +451,9 @@ static void reply_for_mle_link_request(void *ptr)
 
 	if(MyNode.OpMode== PARENT)
 	{
-		/* find the  */
 		mle_init_cmd(&cmd,LINK_ACCEPT);
 		add_src_address_to_cmd(&cmd);
-		// leader data tlv :: from Network layer
+		add_leader_to_cmd(&cmd,thrd_generate_leader_data_tlv());
 		add_response_to_cmd(&cmd, mle_find_tlv_in_cmd(param.rec_cmd,TLV_CHALLENGE));
 		// link-layer frame counter tlv
 		add_version_to_cmd(&cmd);
@@ -486,7 +493,6 @@ static void reply_for_mle_link_request(void *ptr)
 void mle_synchro_process(void *ptr)
 {
 	static 	syn_state_t 		syn_state;  // synchronisation process current state
-	tlv_t * tlv;
 	uint8_t finish=0;
 	uint8_t * p= (uint8_t*) ptr;
 
@@ -756,7 +762,7 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 				}
 
 				/* trigger the timer to remove the child after period of pending time (if the state wasn't changed to linked) */
-				ctimer_set(&child->timeOut, 5 * bsp_get(E_BSP_GET_TRES) , check_child_state, (void *) &child->id );
+				//ctimer_set(&child->timeOut, 1 * bsp_get(E_BSP_GET_TRES) , check_child_state, (void *) &child->id );
 
 				/* prepare param */
 				param.rec_cmd=cmd;
@@ -906,6 +912,18 @@ uint8_t mle_init(void)
 	/**************  test ******************/
 
 
+	//mle_add_child( 15 , 0 /*adress16*/ ,  0 /*frame counter*/, 0 /*modeTLV*/,  3 /*link quality */);
+	/*mle_add_child(145, 0, 0, 0, 3);
+	mle_add_child(156, 0, 0, 0, 2);
+	mle_add_child(75, 0, 0, 0, 3);
+	mle_add_nb_router(1, 0x00aa,  50441 ,0,3);
+	mle_add_nb_router(4, 0x00aa,  444 ,2,3);
+	PRINTFY("\n NB WITH LQ 3 is %i:",count_neighbor_LQ(3));
+	PRINTFY("\n NB WITH LQ 2 is %i:",count_neighbor_LQ(2));
+	mle_rm_all_nb_router();
+	PRINTFY("\n NB WITH LQ 3 is %i:",count_neighbor_LQ(3));
+	PRINTFY("\n NB WITH LQ 2 is %i:",count_neighbor_LQ(2));
+	 */
 	/**********************/
 	ctimer_set(&c_mle_Timer, 1 * bsp_get(E_BSP_GET_TRES) , mle_join_process, (void *) NULL );
 
@@ -921,7 +939,7 @@ uint8_t mle_set_parent_mode(void)
 	PRINTFG( "MLE : Node operate as Parent ... "ANSI_COLOR_RESET);
 	PRESET();
 
-	/* clear the neighbors table  */
+	/* clear the neighbors router table  */
 	mle_rm_all_nb_router();
 	/* start synchronisation with other routers */
 	mle_synchro_process(NULL);

@@ -198,12 +198,6 @@ uint8_t count_neighbor_LQ(uint8_t N )
 	mle_neighbor_t *nb;
 	uint8_t count=0;
 
-	for (nb = mle_neigbhor_head(&childs_list); nb != NULL; nb = list_item_next(nb))
-	{
-		//if(nb!= NULL)
-		if(nb->LQ == N)
-			count++;
-	}
 	for (nb = mle_neigbhor_head(&nb_router_list); nb != NULL; nb = list_item_next(nb))
 	{
 		//if(nb!= NULL)

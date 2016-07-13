@@ -94,6 +94,12 @@ void uip_debug_lladdr_print(const uip_lladdr_t *addr);
 #define PRINTLLADDR(lladdr) uip_debug_lladdr_print(lladdr)
 #else
 #define PRINTF(...)
+#define PRINTFR(...)
+#define PRINTFY(...)
+#define PRINTFG(...)
+#define PRINTFC(...)
+#define PRINTFM(...)
+#define PRESET()
 #define PRINT6ADDR(addr)
 #define PRINTLLADDR(lladdr)
 #endif /* (DEBUG) & DEBUG_PRINT */
