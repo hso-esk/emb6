@@ -230,7 +230,9 @@ static void reply_for_mle_childID_request(void *ptr)
 		{
 		thrd_request_router_id(uip_ipaddr_t *leader_addr, uint8_t *ml_eid, uint8_t *router_id)
 		}
+		//
 		 */
+
 
 		mle_set_parent_mode();
 
