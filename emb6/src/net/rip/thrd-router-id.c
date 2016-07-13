@@ -15,6 +15,7 @@
 #include "er-coap-engine.h"
 #include "rest-engine.h"
 
+#include "mle_management.h"
 #include "thrd-router-id.h"
 #include "thrd-leader-db.h"
 #include "thrd-partition.h"
@@ -291,6 +292,7 @@ thrd_addr_solicit_chunk_handler(void *response)
     		}
     	}
     }
+    reply_for_mle_childID_request(&thrd_iface.router_id);
 }
 
 /* --------------------------------------------------------------------------- */

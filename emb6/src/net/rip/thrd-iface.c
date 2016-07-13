@@ -28,6 +28,8 @@ thrd_iface_t thrd_iface = {
 
 static void remove_rloc_addr();
 
+static uint8_t extract_router_id(uint16_t rloc16);
+
 /*==============================================================================
                                     LOCAL FUNCTIONS
  =============================================================================*/
@@ -84,7 +86,6 @@ thrd_iface_rloc_set(uint16_t rloc16)
 		PRINTF("Creating new RLOC addresses.\n");
 		// Remove old RLOC addresses.
 		remove_rloc_addr();
-
 		// Creating and adding new RLOC addresses.
 		thrd_iface.rloc16 = rloc16;
 		uip_ipaddr_t rloc;
@@ -98,6 +99,8 @@ thrd_iface_rloc_set(uint16_t rloc16)
 		thrd_create_rloc_iid(&rloc, rloc16);
 		thrd_iface.ll_rloc = rloc;
 		uip_ds6_addr_add(&thrd_iface.ll_rloc, 0, ADDR_MANUAL);
+		// Set new Router ID.
+		thrd_iface_set_router_id(extract_router_id(rloc16));
 	}
 }
 
@@ -108,6 +111,12 @@ remove_rloc_addr()
 	uip_ds6_addr_rm(rloc_addr);
 	rloc_addr = uip_ds6_addr_lookup(&thrd_iface.ll_rloc);
 	uip_ds6_addr_rm(rloc_addr);
+}
+
+static uint8_t
+extract_router_id(uint16_t rloc16)
+{
+	return ((uint8_t) rloc16 >> 10);
 }
 
 /*==============================================================================
