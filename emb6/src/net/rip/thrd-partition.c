@@ -26,7 +26,14 @@
 /**
  *  Thread Network Partition.
  */
-thrd_partition_t thrd_partition;
+thrd_partition_t thrd_partition = {
+	.leader_router_id = 0,
+	.Partition_ID = 0,
+	.VN_version = 0,
+	.VN_stable_version = 0,
+	.ID_sequence_number = 0,
+	.Partition_weight = 0
+};
 
 /*==============================================================================
                           LOCAL VARIABLE DECLARATIONS
