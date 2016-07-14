@@ -863,6 +863,16 @@ void uip_log(char *msg);
 #define LOGGER_PHY                         	FALSE
 #endif
 
+/** MLE functions                			(see mle/) */
+#ifndef LOGGER_MLE
+#define LOGGER_MLE                         	TRUE
+#endif
+
+/** Thread Network Layer functions          (see net/rip) */
+#ifndef LOGGER_THRD_NET
+#define LOGGER_THRD_NET                    	TRUE
+#endif
+
 /** Radio functions                        	(see $(IF).c) */
 #ifndef LOGGER_RADIO
 #define LOGGER_RADIO                       	FALSE
