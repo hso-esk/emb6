@@ -101,6 +101,7 @@ thrd_iface_rloc_set(uint16_t rloc16)
 		uip_ds6_addr_add(&thrd_iface.ll_rloc, 0, ADDR_MANUAL);
 		// Set new Router ID.
 		thrd_iface_set_router_id(extract_router_id(rloc16));
+		thrd_iface_print();
 	}
 }
 

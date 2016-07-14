@@ -39,7 +39,7 @@ typedef enum {
                                     DEVICE TYPE
 ===============================================================================*/
 
-#define THRD_DEV_TYPE			THRD_DEV_TYPE_ROUTER		// Router.
+#define THRD_DEV_TYPE			THRD_DEV_TYPE_REED			// REED.
 #define THRD_DEV_FUNC			THRD_DEV_FUNC_FFD			// FFD.
 
 // -------------------- THREAD RLOC16 ----------------------------

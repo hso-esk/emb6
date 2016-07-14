@@ -153,6 +153,8 @@ execute_routine(void)
 
 int8_t demo_thrdCoapInit(void)
 {
+	// Initialize Thread device.
+	thrd_dev_init();
 	PRINTF("Initializing Thread Interface.\n");
 	thrd_iface_init();
 

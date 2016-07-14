@@ -39,7 +39,7 @@ static struct ctimer leader_ct;
 /**
  * Address Query Payload Buffer (MUST be at least 38 octets).
  */
-static uint8_t addr_solicit_buf[24] = { 0 };
+static uint8_t addr_solicit_buf[38] = { 0 };	// 24.
 
 static coap_packet_t packet[1]; /* This way the packet can be treated as pointer as usual. */
 
@@ -223,12 +223,10 @@ thrd_request_router_id(uint8_t *router_id)
 	PRINTF("Sending Router ID Request.\n");
 	// uint16_t rloc16 = THRD_CREATE_RLOC16(*router_id, 0); // TODO Create RLOC16 (not here! --> After Router ID).
 	len = create_addr_solicit_req_payload(addr_solicit_buf, &thrd_iface.ml_eid.u8[8], &thrd_iface.rloc16);
-	PRINTF("1\n");
 
 	uip_ipaddr_t leader_addr;
 	thrd_create_meshlocal_prefix(&leader_addr);
 	thrd_create_rloc_iid(&leader_addr, THRD_CREATE_RLOC16(thrd_partition.leader_router_id, 0));
-	PRINTF("2\n");
 	PRINT6ADDR(&leader_addr);
 
 	coap_init_message(packet, COAP_TYPE_CON, COAP_POST, 0);

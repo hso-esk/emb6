@@ -47,4 +47,6 @@ typedef struct
 /*! Thread Device Type Configuration. */
 extern thrd_dev_t thrd_dev;
 
+extern void thrd_dev_init(void);
+
 #endif /* EMB6_INC_NET_RIP_THRD_DEV_H_ */
