@@ -15,8 +15,8 @@
 
 #include "thrd-addr-query.h"
 
-#define DEBUG DEBUG_PRINT
-#include "uip-debug.h"
+#define     LOGGER_ENABLE                 LOGGER_THRD_NET
+#include    "logger.h"
 
 /*
  ********************************************************************************
@@ -62,16 +62,16 @@ static void
 res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
 {
 	const uint8_t *chunk;
-	PRINTF("========================== CoAP ==========================\n");
-	PRINTF("Receiving CoAP packet (Res: a/aq)!\n");
+	LOG_RAW("========================== CoAP ==========================\n");
+	LOG_RAW("Receiving CoAP packet (Res: a/aq)!\n");
 
 	if ( (len = coap_get_payload(request, &chunk)) == 18 ) {
 		tlv = (tlv_t*) chunk;
 		if ( tlv->type == NET_TLV_TARGET_EID && tlv->length == 16 ) {
 			target_eid_tlv = (net_tlv_target_eid_t*) tlv->value;
-			PRINTF("Target EID = ");
+			LOG_RAW("Target EID = ");
 			PRINT6ADDR(&target_eid_tlv->target_eid);
-			PRINTF("\n");
+			LOG_RAW("\n");
 
 			// Receipt of Address Query Messages.
 			thrd_local_addr_t *local_addr;
@@ -86,14 +86,14 @@ res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t prefer
 				clock_time_t time = 0x80000008;	// TODO
 				// uip_ipaddr_t addr;
 				uip_ipaddr_t addr = UIP_IP_BUF->srcipaddr;
-				PRINTF("Responding to Address Query Request received from IP Address: ");
+				LOG_RAW("Responding to Address Query Request received from IP Address: ");
 				PRINT6ADDR(&addr);
-				PRINTF("\n\r");
+				LOG_RAW("\n\r");
 				thrd_addr_ntf_response(&addr, &target_eid_tlv->target_eid, &rloc16, ml_eid, &time);
 			}
 		}
 	}
-	PRINTF("==========================================================\n");
+	LOG_RAW("==========================================================\n");
 }
 
 /* --------------------------------------------------------------------------- */

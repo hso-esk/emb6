@@ -48,8 +48,6 @@ thrd_eid_rloc_cache_t *thrd_eid_rloc_cache_update(uip_ipaddr_t eid, uip_ipaddr_t
 /* --------------------------------- DEBUG ----------------------------------- */
 /* --------------------------------------------------------------------------- */
 
-#if RIP_DEBUG
 void thrd_eid_rloc_cache_print();
-#endif /* RIP_DEBUG */
 
 #endif /* EMB6_INC_NET_RIP_THRD_EID_RLOC_H_ */

@@ -12,6 +12,9 @@
 #define DEBUG DEBUG_PRINT
 #include "uip-debug.h"	// For debugging terminal output.
 
+#define     LOGGER_ENABLE                 LOGGER_THRD_NET
+#include    "logger.h"
+
 /** Thread Network Partition. */
 thrd_iface_t thrd_iface = {
 		.router_id = 63,						// Initialize Router ID to invalid value.
@@ -83,7 +86,7 @@ void
 thrd_iface_rloc_set(uint16_t rloc16)
 {
 	if ( thrd_iface.rloc16 != rloc16 ) {
-		PRINTF("Creating new RLOC addresses.\n");
+		LOG_RAW("Creating new RLOC addresses.\n");
 		// Remove old RLOC addresses.
 		remove_rloc_addr();
 		// Creating and adding new RLOC addresses.
@@ -127,20 +130,20 @@ extract_router_id(uint16_t rloc16)
 void
 thrd_iface_print()
 {
-	PRINTF(ANSI_COLOR_CYAN "|================================== THREAD INTERFACE ===================================|" ANSI_COLOR_RESET "\n\r");
-	PRINTF("ML-EID = ");
-	PRINT6ADDR(&thrd_iface.ml_eid);
-	PRINTF("\n");
-	PRINTF("ML-RLOC = ");
-	PRINT6ADDR(&thrd_iface.ml_rloc);
-	PRINTF("\n");
-	PRINTF("LL-EID = ");
-	PRINT6ADDR(&thrd_iface.ll_eid);
-	PRINTF("\n");
-	PRINTF("LL-RLOC = ");
-	PRINT6ADDR(&thrd_iface.ll_rloc);
-	PRINTF("\n");
-	PRINTF(ANSI_COLOR_CYAN "=========================================================================================" ANSI_COLOR_RESET "\n\r");
+	LOG_RAW("|================================== THREAD INTERFACE ===================================|\n\r");
+	LOG_RAW("ML-EID = ");
+	LOG_IP6ADDR(&thrd_iface.ml_eid);
+	LOG_RAW("\n");
+	LOG_RAW("ML-RLOC = ");
+	LOG_IP6ADDR(&thrd_iface.ml_rloc);
+	LOG_RAW("\n");
+	LOG_RAW("LL-EID = ");
+	LOG_IP6ADDR(&thrd_iface.ll_eid);
+	LOG_RAW("\n");
+	LOG_RAW("LL-RLOC = ");
+	LOG_IP6ADDR(&thrd_iface.ll_rloc);
+	LOG_RAW("\n");
+	LOG_RAW("=========================================================================================\n\r");
 }
 
 /* --------------------------------------------------------------------------- */
@@ -149,14 +152,14 @@ void
 print_all_addr()
 {
 	uint8_t state;
-	PRINTF("Our IPv6 addresses:\n");
+	LOG_RAW("Our IPv6 addresses:\n");
 	for(uint8_t i = 0; i < UIP_DS6_ADDR_NB; i++) {
 		state = uip_ds6_if.addr_list[i].state;
 		if(uip_ds6_if.addr_list[i].isused && (state == ADDR_TENTATIVE || state
 				== ADDR_PREFERRED)) {
-			PRINTF("  ");
-			PRINT6ADDR(&uip_ds6_if.addr_list[i].ipaddr);
-			PRINTF("\n");
+			LOG_RAW("  ");
+			LOG_IP6ADDR(&uip_ds6_if.addr_list[i].ipaddr);
+			LOG_RAW("\n");
 			if(state == ADDR_TENTATIVE) {
 				uip_ds6_if.addr_list[i].state = ADDR_PREFERRED;
 			}

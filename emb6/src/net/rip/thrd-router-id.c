@@ -26,6 +26,9 @@
 #define DEBUG DEBUG_PRINT
 #include "uip-debug.h"	// For debugging terminal output.
 
+#define     LOGGER_ENABLE                 LOGGER_THRD_NET
+#include    "logger.h"
+
 /*=============================================================================
                                Router ID Management
 ===============================================================================*/
@@ -93,7 +96,7 @@ thrd_leader_init(void)
 	uint8_t desired_rid = 0;
 	thrd_ldb_ida_t *ida = thrd_leader_assign_rid(&desired_rid, mac_phy_config.mac_address);	// TODO Add my MAC Extended Address here (owner).
 	if ( ida != NULL ) {
-		PRINTF("Leader Init: Set Leader Router ID = %d\n", ida->ID_id);
+		LOG_RAW("Leader Init: Set Leader Router ID = %d\n", ida->ID_id);
 		thrd_iface_set_router_id(ida->ID_id);
 		thrd_partition_set_leader_router_id(ida->ID_id);
 		thrd_partition.leader_router_id = ida->ID_id;
@@ -111,7 +114,7 @@ thrd_leader_init(void)
 static void
 coap_init()
 {
-	PRINTF("Router ID Assignment: Registering CoAP resources.\n\r");
+	LOG_RAW("Router ID Assignment: Registering CoAP resources.\n\r");
 
 	// Bind the resources to their Uri-Path.
 	rest_activate_resource(&thrd_res_a_as, "a/as");
@@ -139,7 +142,7 @@ thrd_ldb_ida_t
 		ida = thrd_ldb_ida_lookup(*router_id);
 		if ( ida == NULL ) {
 			ida = thrd_ldb_ida_add(*router_id, id_owner, 0);
-			PRINTF("Router ID Assignment: Assigned Router ID = %d\n", ida->ID_id);
+			LOG_RAW("Router ID Assignment: Assigned Router ID = %d\n", ida->ID_id);
 			return ida;
 		} else {
 			// If the desired Router ID currently is in use --> Looking for free Router ID.
@@ -155,10 +158,10 @@ thrd_ldb_ida_t
 			// Create Router ID if available.
 			if ( id_cnt < 63 ) {
 				ida = thrd_ldb_ida_add(id_cnt, id_owner, 0);
-				PRINTF("Router ID Assignment: Assigned Router ID = %d\n", ida->ID_id);
+				LOG_RAW("Router ID Assignment: Assigned Router ID = %d\n", ida->ID_id);
 				return ida;
 			} else {
-				PRINTF("Router ID Assignment: No more Router IDs available.\n");
+				LOG_RAW("Router ID Assignment: No more Router IDs available.\n");
 				return NULL;
 			}
 		}
@@ -189,9 +192,9 @@ handle_id_reuse_delay_timeout(void *ptr)
 {
 	thrd_ldb_ida_t *ida = (thrd_ldb_ida_t*) ptr;
 
-	PRINTF("ID Assignment Set: Timer expired");
+	LOG_RAW("ID Assignment Set: Timer expired");
 	if ( ida != NULL ) {
-		PRINTF(" for ID Assignment Set Entry with Router ID = &d\n\r", ida->ID_id);
+		LOG_RAW(" for ID Assignment Set Entry with Router ID = &d\n\r", ida->ID_id);
 		thrd_ldb_ida_rm(ida);
 	}
 	return;
@@ -220,7 +223,7 @@ thrd_request_router_id(uip_ipaddr_t *leader_addr, uint8_t *ml_eid, uint8_t *rout
 void
 thrd_request_router_id(uint8_t *router_id)
 {
-	PRINTF("Sending Router ID Request.\n");
+	LOG_RAW("Sending Router ID Request.\n");
 	// uint16_t rloc16 = THRD_CREATE_RLOC16(*router_id, 0); // TODO Create RLOC16 (not here! --> After Router ID).
 	len = create_addr_solicit_req_payload(addr_solicit_buf, &thrd_iface.ml_eid.u8[8], &thrd_iface.rloc16);
 
@@ -232,9 +235,9 @@ thrd_request_router_id(uint8_t *router_id)
 	coap_set_header_uri_path(packet, service_urls[0]);
 	coap_set_payload(packet, addr_solicit_buf, len);
 	coap_nonblocking_request(&leader_addr, UIP_HTONS(COAP_DEFAULT_PORT), packet, thrd_addr_solicit_chunk_handler); // TODO Changing CoAP Port.
-	PRINTF("Router ID Request has been sent to Partition Leader [");
-	PRINT6ADDR(&leader_addr);
-	PRINTF("]\n\r");
+	LOG_RAW("Router ID Request has been sent to Partition Leader [");
+	LOG_IP6ADDR(&leader_addr);
+	LOG_RAW("]\n\r");
 }
 
 /* --------------------------------------------------------------------------- */
@@ -265,7 +268,7 @@ create_addr_solicit_req_payload(uint8_t *buf, uint8_t *ml_eid, uint16_t *rloc16)
 void
 thrd_addr_solicit_chunk_handler(void *response)
 {
-	PRINTF("thrd_addr_solicit_chunk_handler: Received response!");
+	LOG_RAW("thrd_addr_solicit_chunk_handler: Received response!");
     const uint8_t *chunk;
     if ( !response ) {
 
@@ -276,7 +279,7 @@ thrd_addr_solicit_chunk_handler(void *response)
     		tlv = (tlv_t*) &chunk[0];
     		if ( tlv->type == NET_TLV_STATUS && tlv->length == 1 ) {
     			status_tlv = (net_tlv_status_t*) tlv->value;
-    			PRINTF("Status = %d\n", status_tlv->status);
+    			LOG_RAW("Status = %d\n", status_tlv->status);
     		}
     		if ( status_tlv->status == 0 && payload_len == 16 ) {
     			// Success.
@@ -285,13 +288,13 @@ thrd_addr_solicit_chunk_handler(void *response)
     				rloc16_tlv = (net_tlv_rloc16_t*) tlv->value;
     				// Set the interface's RLOC16 and update ML-RLOC and LL-RLOC addresses.
     				thrd_iface_rloc_set(rloc16_tlv->rloc16);
-    				PRINTF("RLOC16 = %04x\n", rloc16_tlv->rloc16);
+    				LOG_RAW("RLOC16 = %04x\n", rloc16_tlv->rloc16);
     			}
     			tlv = (tlv_t*) &chunk[7];
     			if ( tlv->type == NET_TLV_ROUTER_MASK && tlv->length == 7 ) {
     				router_mask_tlv = (net_tlv_router_mask_t*) tlv->value;
-    				PRINTF("ID Sequence Number = %d\n", router_mask_tlv->id_sequence_number);
-    				PRINTF("Router ID Mask = %16x\n", router_mask_tlv->router_id_mask);
+    				LOG_RAW("ID Sequence Number = %d\n", router_mask_tlv->id_sequence_number);
+    				LOG_RAW("Router ID Mask = %16x\n", router_mask_tlv->router_id_mask);
     			}
     		}
     	}

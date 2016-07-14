@@ -13,8 +13,8 @@
 
 #include "thread_conf.h"
 
-#define DEBUG DEBUG_PRINT
-#include "uip-debug.h"
+#define     LOGGER_ENABLE                 LOGGER_THRD_NET
+#include    "logger.h"
 
 /*
  ********************************************************************************
@@ -60,12 +60,12 @@ static void
 res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
 {
 	const uint8_t *chunk;
-	PRINTF("========================== CoAP ==========================\n");
-	PRINTF("Receiving CoAP packet! (Res: n/sd)\n");
+	LOG_RAW("========================== CoAP ==========================\n");
+	LOG_RAW("Receiving CoAP packet! (Res: n/sd)\n");
 
 	// TODO
 
-	PRINTF("==========================================================\n");
+	LOG_RAW("==========================================================\n");
 }
 
 /* --------------------------------------------------------------------------- */

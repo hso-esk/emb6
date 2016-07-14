@@ -48,8 +48,6 @@ void thrd_ldb_ida_rm(thrd_ldb_ida_t *ida);
 
 void thrd_ldb_ida_empty();
 
-#if RIP_DEBUG
 void thrd_ldb_print_leader_database(void);
-#endif /* RIP_DEBUG */
 
 #endif /* EMB6_INC_NET_RIP_THRD_LEADER_DB_H_ */
