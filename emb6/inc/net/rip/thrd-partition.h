@@ -45,11 +45,10 @@ void thrd_partition_start(void);
  * leader data.
  * @param id_sequence_number The corresponding ID Sequence Number (Route64 TLV).
  * @param leader_tlv The Leader Data TLV.
- * @return 0, if the partition topology changes (the Leader Data TLV is invalid).
- *         1, if the partition data is valid (this should trigger the procession
- *         of a Route64 TLV).
+ * @retval THRD_ERROR_NONE			If the Leader Data TLV is valid.
+ * @retval THRD_ERROR_INVALID_ARGS	If the Leader Data TLV is invalid.
  */
-uint8_t thrd_partition_process(uint8_t id_sequence_number, tlv_leader_t *leader_tlv);
+thrd_error_t thrd_partition_process(uint8_t id_sequence_number, tlv_leader_t *leader_tlv);
 
 /**
  * Remove all information related to the previous partition.
