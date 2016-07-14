@@ -337,6 +337,12 @@ trg += [{
 }]
 
 trg += [{
+    'id'        : 'cs_mstk',
+    'apps_conf' : [ coap_srv, udp_alive ],
+    'bsp'       : get_descr(bsp, 'mosesstick')
+}]
+
+trg += [{
     'id'        : 'uc_moses',
     'apps_conf' : [ udp_cli ],
     'bsp'       : get_descr(bsp, 'moses')
