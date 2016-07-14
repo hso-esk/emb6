@@ -407,6 +407,7 @@ void mle_join_process(void *ptr)
 				mle_set_child_mode();
 
 				/* process leader data tlv */
+				/* TODO verify if this should be done here */
 				tlv=mle_find_tlv_in_cmd(param.rec_cmd,TLV_CONNECTIVITY);
 				tlv_connectivity_init(&connectivity,tlv->value);
 				tlv=mle_find_tlv_in_cmd(param.rec_cmd,TLV_LEADER_DATA);
@@ -480,7 +481,7 @@ static void reply_for_mle_link_request(void *ptr)
 			/* add and store the challenge generated  */
 			MyNode.challenge= add_rand_challenge_to_cmd(&cmd);
 
-			/* we have to inform the syn process that we am waiting for link accept
+			/* we have to inform the syn process that we are waiting for link accept
 			 * so we call the syn function with value of 255 */
 			n=255;
 			mle_synchro_process((void *) &n);

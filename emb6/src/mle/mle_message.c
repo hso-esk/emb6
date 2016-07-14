@@ -10,6 +10,8 @@
 								LOCAL FUNCTION
  =============================================================================*/
 uint8_t buf[8];
+static uint8_t index=0;
+
 
 static uint8_t  add_tlv32_bit_to_cmd(mle_cmd_t* cmd , tlv_type_t type , uint32_t value)
 {
@@ -214,7 +216,7 @@ uint8_t  add_leader_to_cmd(mle_cmd_t* cmd, tlv_leader_t* lead)
 
 
 uint8_t  add_Cnnectivity_to_cmd(mle_cmd_t* cmd, uint8_t max_child, uint8_t child_count, uint8_t LQ3, uint8_t LQ2,
-									uint8_t LQ1, uint8_t Leader_cost,uint8_t id_sed)
+		uint8_t LQ1, uint8_t Leader_cost,uint8_t id_sed)
 {
 	buf[0]=max_child ;
 	buf[1]=child_count ;
@@ -229,10 +231,32 @@ uint8_t  add_Cnnectivity_to_cmd(mle_cmd_t* cmd, uint8_t max_child, uint8_t child
 		return 0 ;
 }
 
+uint8_t add_tlv_id_to_buf(uint8_t type)
+{
+	if(index==8)
+	{
+		/* error buffer full */
+		index=0;
+		return 0;
+	}
+	buf[index++]=type;
+	return 1;
+}
+
+uint8_t  add_tlv_req_to_cmd(mle_cmd_t* cmd)
+{
+	if (mle_add_tlv_to_cmd( cmd ,TLV_TLV_REQUEST , index , (uint8_t*) buf ))
+	{
+		index=0;
+		return 1 ;
+	}
+	else
+		return 0 ;
+}
 
 uint8_t  comp_resp_chall(uint32_t challenge , uint8_t * buf)
 {
-return (challenge == ( (buf[3]) | (buf[2] << 8) | (buf[1] << 16)| (buf[0] << 24)) );
+	return (challenge == ( (buf[3]) | (buf[2] << 8) | (buf[1] << 16)| (buf[0] << 24)) );
 }
 
 
