@@ -161,11 +161,11 @@ static void check_child_state(void *ptr)
 	{
 		child=mle_find_child(*child_id);
 		mle_rm_child(child);
-		PRINTFR("Time out : child removed \n"ANSI_COLOR_RESET);
+		LOG_RAW(ANSI_COLOR_RED "Time out : child removed \n"ANSI_COLOR_RESET);
 	}
 	else
 	{
-		PRINTFY("Child Linked \n"ANSI_COLOR_RESET);
+		LOG_RAW(ANSI_COLOR_YELLOW "Child Linked \n"ANSI_COLOR_RESET);
 	}
 
 }
@@ -216,7 +216,7 @@ static uint16_t assign_address16(uint8_t id)
 
 void reply_for_mle_childID_request(void *ptr)
 {
-	PRINTFY("inside child in response \n"ANSI_COLOR_RESET);
+	LOG_RAW(ANSI_COLOR_YELLOW "inside child in response \n"ANSI_COLOR_RESET);
 	uint8_t* routerid;
 	routerid=(uint8_t*) ptr;
 	size_t len =0;
@@ -235,7 +235,7 @@ void reply_for_mle_childID_request(void *ptr)
 		if(MyNode.OpMode == CHILD)
 		{
 			// send request to become a router and then reply
-			PRINTFY("Sending request to become a Router \n"ANSI_COLOR_RESET);
+			LOG_RAW(ANSI_COLOR_YELLOW"Sending request to become a Router \n"ANSI_COLOR_RESET);
 			thrd_request_router_id(NULL);
 
 		}
@@ -271,8 +271,8 @@ void mle_join_process(void *ptr)
 			switch(jp_state)
 			{
 			case JP_SEND_MCAST_PR_TO_ROUTER:
-				PRINTFG("[+] "ANSI_COLOR_RESET);
-				PRINTF("JP Send mcast parent request to active router \n"ANSI_COLOR_RESET);
+				LOG_RAW(ANSI_COLOR_GREEN "[+] "ANSI_COLOR_RESET);
+				LOG_RAW("JP Send mcast parent request to active router \n"ANSI_COLOR_RESET);
 
 				/* Init the parent*/
 				current_parent.is_Router=0;
@@ -291,8 +291,8 @@ void mle_join_process(void *ptr)
 				/* send parent request to the active router only and trigger the timer */
 				jp_state=JP_PARENT_SELECT;
 				send_mle_parent_request(1,0);
-				PRINTFG("[+] "ANSI_COLOR_RESET);
-				PRINTF("JP Waiting for incoming response from active Router\n"ANSI_COLOR_RESET);
+				LOG_RAW(ANSI_COLOR_GREEN"[+] "ANSI_COLOR_RESET);
+				LOG_RAW("JP Waiting for incoming response from active Router\n"ANSI_COLOR_RESET);
 				ctimer_set(&c_mle_Timer, 2 * bsp_get(E_BSP_GET_TRES) , mle_join_process, NULL);
 				req_sent_to_reed=0;
 				finish=1;
@@ -314,9 +314,9 @@ void mle_join_process(void *ptr)
 					{
 						if(nb->LQ == 3 || req_sent_to_reed )
 						{
-							PRINTFG("[+] "ANSI_COLOR_RESET);
-							PRINTF("JP Parent selection \n"ANSI_COLOR_RESET);
-							PRINTFG("link quality with parent : %i \n"ANSI_COLOR_RESET, nb->LQ);
+							LOG_RAW(ANSI_COLOR_GREEN"[+] "ANSI_COLOR_RESET);
+							LOG_RAW("JP Parent selection \n"ANSI_COLOR_RESET);
+							LOG_RAW(ANSI_COLOR_GREEN"link quality with parent : %i \n"ANSI_COLOR_RESET, nb->LQ);
 							jp_state=JP_SEND_CHILD_REQ;
 						}
 						else
@@ -328,15 +328,15 @@ void mle_join_process(void *ptr)
 				}
 				else
 				{
-					PRINTFG("[+] "ANSI_COLOR_RESET);
-					PRINTF("JP received response from active Router \n"ANSI_COLOR_RESET);
+					LOG_RAW(ANSI_COLOR_GREEN"[+] "ANSI_COLOR_RESET);
+					LOG_RAW("JP received response from active Router \n"ANSI_COLOR_RESET);
 
 					/* calculate the two-way link quality  */
 					tlv=mle_find_tlv_in_cmd(param.rec_cmd,TLV_LINK_MARGIN);
-					PRINTF("my rssi : %i \n", tlv->value[0]);
-					PRINTF("rssi of parent : %i \n", param.rec_rssi);
+					LOG_RAW("my rssi : %i \n", tlv->value[0]);
+					LOG_RAW("rssi of parent : %i \n", param.rec_rssi);
 					parent_condidate.LQ=calculate_two_way_LQ(tlv->value[0], param.rec_rssi);
-					PRINTF("two-way link quality : %i \n", parent_condidate.LQ);
+					LOG_RAW("two-way link quality : %i \n", parent_condidate.LQ);
 
 					/* identify the type of the device router/reed */
 					tlv=mle_find_tlv_in_cmd(param.rec_cmd,TLV_SOURCE_ADDRESS);
@@ -379,27 +379,27 @@ void mle_join_process(void *ptr)
 				break;
 			case JP_SEND_MCAST_PR_TO_ROUTER_REED:
 				/* send parent request to the active router and reed and trigger the timer */
-				PRINTFG("[+] "ANSI_COLOR_RESET);
-				PRINTF("JP Send mcast parent request to active Router and REED \n"ANSI_COLOR_RESET);
+				LOG_RAW(ANSI_COLOR_GREEN"[+] "ANSI_COLOR_RESET);
+				LOG_RAW("JP Send mcast parent request to active Router and REED \n"ANSI_COLOR_RESET);
 				jp_state=JP_PARENT_SELECT;
 				send_mle_parent_request(1,1);
-				PRINTFG("[+] "ANSI_COLOR_RESET);
-				PRINTF("JP Waiting for incoming response from active Router and REED \n"); PRESET();
+				LOG_RAW(ANSI_COLOR_GREEN"[+] "ANSI_COLOR_RESET);
+				LOG_RAW("JP Waiting for incoming response from active Router and REED \n"); PRESET();
 				ctimer_set(&c_mle_Timer, 3 * bsp_get(E_BSP_GET_TRES) , mle_join_process, NULL);
 				req_sent_to_reed=1;
 				finish=1;
 				break;
 			case JP_SEND_CHILD_REQ:
 				/* send child id request to the selected parent */
-				PRINTFG("[+] "ANSI_COLOR_RESET);
-				PRINTF("JP send Child ID Request \n"ANSI_COLOR_RESET);
+				LOG_RAW(ANSI_COLOR_GREEN"[+] "ANSI_COLOR_RESET);
+				LOG_RAW("JP send Child ID Request \n"ANSI_COLOR_RESET);
 				send_mle_childID_request(&nb->tmp);
 				jp_state=JP_SAVE_PARENT;
 				finish=1;
 				break ;
 			case JP_SAVE_PARENT:
-				PRINTFG("[+] "ANSI_COLOR_RESET);
-				PRINTF("JP Parent Stored \n"ANSI_COLOR_RESET);
+				LOG_RAW(ANSI_COLOR_GREEN"[+] "ANSI_COLOR_RESET);
+				LOG_RAW("JP Parent Stored \n"ANSI_COLOR_RESET);
 				/* change the state of the parent to linked */
 				nb->state=LINKED;
 
@@ -418,8 +418,8 @@ void mle_join_process(void *ptr)
 				finish=1;
 				break ;
 			case JP_FAIL:
-				PRINTFR("Join process fail ... \n"ANSI_COLOR_RESET);
-				PRINTFG("starting new partition ... \n"ANSI_COLOR_RESET);
+				LOG_RAW(ANSI_COLOR_RED "Join process fail ... \n"ANSI_COLOR_RESET);
+				LOG_RAW(ANSI_COLOR_GREEN"starting new partition ... \n"ANSI_COLOR_RESET);
 
 				thrd_partition_start();
 
@@ -509,7 +509,7 @@ void mle_synchro_process(void *ptr)
 			/* change the state and trigger the timer */
 			syn_state=SYN_PROCESS_LINK;
 			ctimer_set(&c_mle_Timer, 2 * bsp_get(E_BSP_GET_TRES) , mle_synchro_process, NULL);
-			PRINTF("SNY process:  state changed due to link_accept_and_request command \n"ANSI_COLOR_RESET);
+			LOG_RAW("SNY process:  state changed due to link_accept_and_request command \n"ANSI_COLOR_RESET);
 		}
 		finish =1;
 	}
@@ -521,8 +521,8 @@ void mle_synchro_process(void *ptr)
 			switch(syn_state)
 			{
 			case SYN_SEND_LINK_REQUEST:
-				PRINTFG("[+] "ANSI_COLOR_RESET);
-				PRINTF("SNY process: Send Link Request to neighbors router \n"ANSI_COLOR_RESET);
+				LOG_RAW(ANSI_COLOR_GREEN"[+] "ANSI_COLOR_RESET);
+				LOG_RAW("SNY process: Send Link Request to neighbors router \n"ANSI_COLOR_RESET);
 				/* send MLE Link Request */
 				send_mle_link_request();
 				/* change the state and trigger the timer */
@@ -535,14 +535,14 @@ void mle_synchro_process(void *ptr)
 				{
 					/* initialise the state */
 					syn_state=SYN_SEND_LINK_REQUEST;
-					PRINTFG("[+] "ANSI_COLOR_RESET);
-					PRINTF("SNY process:  Synchronization process finished \n"ANSI_COLOR_RESET);
+					LOG_RAW(ANSI_COLOR_GREEN"[+] "ANSI_COLOR_RESET);
+					LOG_RAW("SNY process:  Synchronization process finished \n"ANSI_COLOR_RESET);
 
 				}
 				else
 				{
-					PRINTFG("[+] "ANSI_COLOR_RESET);
-					PRINTF("SNY process: processing link \n"ANSI_COLOR_RESET);
+					LOG_RAW(ANSI_COLOR_GREEN"[+] "ANSI_COLOR_RESET);
+					LOG_RAW("SNY process: processing link \n"ANSI_COLOR_RESET);
 
 					nb=mle_find_nb_router_byAdd((&param.source_addr));
 					if(!nb)// the neighbor is not existing
@@ -564,13 +564,13 @@ void mle_synchro_process(void *ptr)
 							nb->state=LINKED;
 							/* store the address of the nb router */
 							uip_ip6addr_copy(&nb->tmp ,&param.source_addr);
-							PRINTFG("[+] "ANSI_COLOR_RESET);
+							PRINTFG(ANSI_COLOR_GREEN"[+] "ANSI_COLOR_RESET);
 							PRINTF("SNY process: ID allocated for the nb router = %i \n", nb->id);
 						}
 						else
 						{
-							PRINTFR("[+] "ANSI_COLOR_RESET);
-							PRINTFR("SNY process: Failed to allocate nb router id... \n"ANSI_COLOR_RESET);
+							LOG_RAW(ANSI_COLOR_RED"[+] "ANSI_COLOR_RESET);
+							LOG_RAW("SNY process: Failed to allocate nb router id... \n"ANSI_COLOR_RESET);
 							break;
 						}
 					}
@@ -610,10 +610,10 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 	//		else
 	//			mle_create_cmd_from_buff(&cmd , (uint8_t * )data , datalen );
 
-	PRINTFC("<== MLE ");
+	LOG_RAW(ANSI_COLOR_CYAN"<== MLE ");
 	mle_print_type_cmd(*cmd);
-	PRINTFC(" received from : ");
-	PRINT6ADDR(source_addr); PRESET();
+	LOG_RAW(ANSI_COLOR_CYAN" received from : ");
+	LOG_IP6ADDR(source_addr); PRESET();
 	mle_print_cmd(*cmd);
 
 	switch (cmd->type)
@@ -644,11 +644,11 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 					nb->state=PENDING;
 					/* store the address of the nb router */
 					uip_ip6addr_copy(&nb->tmp ,source_addr);
-					PRINTF("ID allocated for the nb router = %i \n", nb->id);
+					LOG_RAW("ID allocated for the nb router = %i \n", nb->id);
 				}
 				else
 				{
-					PRINTFR("Failed to allocate nb router id...");PRESET();
+					LOG_RAW("Failed to allocate nb router id...");PRESET();
 					break;
 				}
 			}
@@ -706,7 +706,7 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 			tlv_leader_init(&leader_tlv,tlv->value);
 			tlv=mle_find_tlv_in_cmd(cmd,TLV_SOURCE_ADDRESS);
 			thrd_process_adv( tlv->value[1] | (tlv->value[0] << 8), route64_tlv,leader_tlv);
-			PRINTFY("MLE advertisement processed ...");PRESET();
+			LOG_RAW(ANSI_COLOR_YELLOW"MLE advertisement processed ...");PRESET();
 		}
 		break;
 
@@ -759,11 +759,11 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 					child->state=PENDING;
 					/* store the address of the child */
 					uip_ip6addr_copy(&child->tmp ,source_addr);
-					PRINTF("ID allocated for the child = %i \n", child->id);
+					LOG_RAW("ID allocated for the child = %i \n", child->id);
 				}
 				else
 				{
-					PRINTFR("Failed to allocate child id ...");PRESET();
+					LOG_RAW(ANSI_COLOR_RED"Failed to allocate child id ...");PRESET();
 					break;
 				}
 
@@ -811,7 +811,7 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 		child= mle_find_child_byAdd( (uip_ipaddr_t *) source_addr);
 		if(!child)
 		{
-			PRINTFY("Child not found ...");PRESET();
+			LOG_RAW("Child not found ...");PRESET();
 		}
 
 		/* check the response TLV before processing the parent response */
@@ -834,7 +834,7 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 	case CHILD_UPDATE_RESPONSE:
 		break;
 	default :
-		PRINTFR( "Error MLE received command not recognized \n"ANSI_COLOR_RESET);
+		LOG_RAW(ANSI_COLOR_RED"Error MLE received command not recognized \n"ANSI_COLOR_RESET);
 		break;
 	}
 
@@ -851,11 +851,11 @@ static uint8_t mle_init_udp(void)
 
 	if (&MyNode.udp_socket.udp_conn == NULL)
 	{
-		PRINTF("No UDP connection available, error!\n");
+		LOG_RAW("No UDP connection available, error!\n");
 		return 0;
 	}
 
-	PRINTFY( "\nMLE UDP initialized : \n lport --> %u \n rport --> %u \n"ANSI_COLOR_RESET , UIP_HTONS(MyNode.udp_socket.udp_conn->lport),
+	LOG_RAW( ANSI_COLOR_YELLOW "\nMLE UDP initialized : \n lport --> %u \n rport --> %u \n"ANSI_COLOR_RESET , UIP_HTONS(MyNode.udp_socket.udp_conn->lport),
 			UIP_HTONS(MyNode.udp_socket.udp_conn->rport));
 
 	return 1 ;
@@ -867,7 +867,7 @@ static uint8_t mle_send_msg(mle_cmd_t* cmd,  uip_ipaddr_t *dest_addr )
 {
 	if (&MyNode.udp_socket.udp_conn == NULL)
 	{
-		PRINTF("reinitialize UPD");
+		LOG_RAW("reinitialize UPD");
 		if(!mle_init_udp())
 			return 0;
 	}
@@ -875,15 +875,15 @@ static uint8_t mle_send_msg(mle_cmd_t* cmd,  uip_ipaddr_t *dest_addr )
 	//	PRINTF("data sent length : %i \n", cmd->used_data+1);
 	if(!udp_socket_sendto(&MyNode.udp_socket, (uint8_t*) cmd , cmd->used_data+1 , dest_addr ,MLE_UDP_RPORT))
 	{
-		PRINTF(ANSI_COLOR_RED "Failed to send MLE msg\n"ANSI_COLOR_RESET);
+		LOG_RAW(ANSI_COLOR_RED "Failed to send MLE msg\n"ANSI_COLOR_RESET);
 		return 0;
 	}
 
-	PRINTFC("==> MLE ");
+	LOG_RAW(ANSI_COLOR_CYAN"==> MLE ");
 	mle_print_type_cmd(*cmd);
-	PRINTFC( " sent to : "  );
-	PRINT6ADDR(dest_addr);
-	PRINTF(ANSI_COLOR_RESET "\n"  );
+	LOG_RAW(ANSI_COLOR_CYAN " sent to : "  );
+	LOG_IP6ADDR(dest_addr);
+	LOG_RAW(ANSI_COLOR_RESET "\n"  );
 
 	return 1 ;
 
@@ -934,7 +934,7 @@ uint8_t mle_init(void)
 	ctimer_set(&c_mle_Timer, 1 * bsp_get(E_BSP_GET_TRES) , mle_join_process, (void *) NULL );
 
 
-	PRINTFG( "MLE protocol initialized ... ");PRESET();
+	LOG_RAW( "MLE protocol initialized ... ");PRESET();
 	return 1;
 
 };
@@ -942,7 +942,7 @@ uint8_t mle_init(void)
 uint8_t mle_set_parent_mode(void)
 {
 	MyNode.OpMode=PARENT; // router
-	PRINTFG( "MLE : Node operate as Parent ... "ANSI_COLOR_RESET);
+	LOG_RAW(ANSI_COLOR_GREEN "MLE : Node operate as Parent ... "ANSI_COLOR_RESET);
 	PRESET();
 
 	/* clear the neighbors router table  */
@@ -956,7 +956,7 @@ uint8_t mle_set_parent_mode(void)
 uint8_t mle_set_child_mode(void)
 {
 	MyNode.OpMode=CHILD; // router
-	PRINTFG( "MLE : Node operate as Child ... "ANSI_COLOR_RESET);
+	LOG_RAW(ANSI_COLOR_GREEN "MLE : Node operate as Child ... "ANSI_COLOR_RESET);
 	PRESET();
 	/* clear the neighbors table  */
 	// clear the nb table
