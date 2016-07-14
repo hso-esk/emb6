@@ -257,7 +257,8 @@ void mle_join_process(void *ptr)
 {
 	static 	jp_state_t 		jp_state;  // join process current state
 	static mle_parent_t 	parent_condidate , current_parent; // parent
-	tlv_connectivity_t* connectivity;
+	tlv_connectivity_t*     connectivity;
+	tlv_leader_t*           lead;
 	tlv_t * tlv;
 
 	uint8_t finish=0;
@@ -404,6 +405,14 @@ void mle_join_process(void *ptr)
 
 				/* start operating as child */
 				mle_set_child_mode();
+
+				/* process leader data tlv */
+				tlv=mle_find_tlv_in_cmd(param.rec_cmd,TLV_CONNECTIVITY);
+				tlv_connectivity_init(&connectivity,tlv->value);
+				tlv=mle_find_tlv_in_cmd(param.rec_cmd,TLV_LEADER_DATA);
+				tlv_leader_init(&lead,tlv->value);
+				thrd_partition_process(connectivity->id_seq,lead);
+
 				finish=1;
 				break ;
 			case JP_FAIL:
