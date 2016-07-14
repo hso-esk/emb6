@@ -11,6 +11,10 @@
 #include "thrd-iface.h"
 #include "thrd-leader-db.h"
 
+#include "er-coap.h"
+#include "er-coap-engine.h"
+#include "rest-engine.h"
+
 /** Thread default Device Type Configuration. */
 thrd_dev_t thrd_dev = {
 		.type = THRD_DEV_TYPE,
@@ -34,6 +38,17 @@ thrd_dev_t thrd_dev = {
 /*==============================================================================
                                      API FUNCTIONS
  =============================================================================*/
+
+void
+thrd_dev_init(void)
+{
+#ifdef THRD_DEV_TYPE == THRD_DEV_TYPE_REED || THRD_DEV_TYPE == THRD_DEV_TYPE_ROUTER
+	/* Receives all CoAP messages */
+	coap_init_engine();
+	/* Initialize the REST engine. */
+	rest_init_engine();
+#endif
+}
 
 /* --------------------------------------------------------------------------- */
 
