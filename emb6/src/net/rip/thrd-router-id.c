@@ -227,13 +227,14 @@ thrd_request_router_id(uint8_t *router_id)
 	uip_ipaddr_t leader_addr;
 	thrd_create_meshlocal_prefix(&leader_addr);
 	thrd_create_rloc_iid(&leader_addr, THRD_CREATE_RLOC16(thrd_partition.leader_router_id, 0));
-	PRINT6ADDR(&leader_addr);
 
 	coap_init_message(packet, COAP_TYPE_CON, COAP_POST, 0);
 	coap_set_header_uri_path(packet, service_urls[0]);
 	coap_set_payload(packet, addr_solicit_buf, len);
 	coap_nonblocking_request(&leader_addr, UIP_HTONS(COAP_DEFAULT_PORT), packet, thrd_addr_solicit_chunk_handler); // TODO Changing CoAP Port.
-	PRINTF("Router ID Request is sent.\n");
+	PRINTF("Router ID Request has been sent to Partition Leader [");
+	PRINT6ADDR(&leader_addr);
+	PRINTF("]\n\r");
 }
 
 /* --------------------------------------------------------------------------- */

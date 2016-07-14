@@ -28,7 +28,7 @@
 #define		DEBUG		DEBUG_PRINT
 #include "uip-debug.h"	// For debugging terminal output.
 
-#define     LOGGER_ENABLE                 LOGGER_RADIO
+#define     LOGGER_ENABLE                 LOGGER_MLE
 #include    "logger.h"
 
 /*==============================================================================
@@ -412,7 +412,8 @@ void mle_join_process(void *ptr)
 				tlv_connectivity_init(&connectivity,tlv->value);
 				tlv=mle_find_tlv_in_cmd(param.rec_cmd,TLV_LEADER_DATA);
 				tlv_leader_init(&lead,tlv->value);
-				thrd_partition_process(connectivity->id_seq,lead);
+				// thrd_partition_process(connectivity->id_seq,lead);
+				thrd_partition_process(1,lead);
 
 				finish=1;
 				break ;

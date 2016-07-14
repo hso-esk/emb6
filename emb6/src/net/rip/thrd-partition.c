@@ -82,7 +82,7 @@ thrd_partition_start(void)
 
 /* --------------------------------------------------------------------------- */
 
-uint8_t
+thrd_error_t
 thrd_partition_process(uint8_t id_sequence_number, tlv_leader_t *leader_tlv)
 {
 	if ( leader_tlv != NULL ) {
@@ -93,7 +93,6 @@ thrd_partition_process(uint8_t id_sequence_number, tlv_leader_t *leader_tlv)
 			// TODO Try to attach to other partition.
 			PRINTF("thrd_partition_process: Try to attach to other partition!\n");
 			thrd_partition_set_leader_router_id(leader_tlv->leader_router_id);	// TODO Call this function after successful attachment process.
-			return 0;
 		} else if ( leader_tlv->weight == thrd_partition.Partition_weight ) {
 			if ( leader_tlv->partition_id > thrd_partition.Partition_ID ) {
 				goto attach;
@@ -103,14 +102,13 @@ thrd_partition_process(uint8_t id_sequence_number, tlv_leader_t *leader_tlv)
 						&& (id_sequence_number > thrd_partition.ID_sequence_number)) {
 					// Inconsistency detected -> Start a new Partition.
 					thrd_partition_start();
-					return 0;
 				}
 			}
 		}
-		return 1;
+		return THRD_ERROR_NONE;
 	}
 	PRINTF("thrd_partition_process: Invalid Leader Data TLV.\n");
-	return 0;
+	return THRD_ERROR_INVALID_ARGS;
 }
 
 /* --------------------------------------------------------------------------- */
