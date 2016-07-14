@@ -63,13 +63,19 @@ static struct ctimer ct;		// Timer for time t.
 /*---------------------------------------------------------------------------*/
 /* Local function prototypes */
 /*---------------------------------------------------------------------------*/
-static void thrd_reset_trickle_timer();
-static void thrd_handle_send_timer(void *);
+static clock_time_t random_start_interval(clock_time_t min, uint8_t d);
+static clock_time_t random_interval(void);
+static void handle_send_timer(void *ptr);
+static void double_interval(void *ptr);
+static void trickle_start(void);
+static void trickle_reset(void);
+static void trickle_stop(void);
+static void handle_send_timer(void *);
 
 /*---------------------------------------------------------------------------*/
 /* Return a random number in [min, d * min]. */
 static clock_time_t
-thrd_random_start_interval(clock_time_t min, uint8_t d)
+random_start_interval(clock_time_t min, uint8_t d)
 {
 	return ((bsp_getrand(0) % (TRICKLE_TIME(min, d) - min + 1)) + min);
 }
@@ -77,7 +83,7 @@ thrd_random_start_interval(clock_time_t min, uint8_t d)
 /*---------------------------------------------------------------------------*/
 /* Return a random number in [I/2, I). */
 static clock_time_t
-thrd_random_interval()
+random_interval(void)
 {
 	clock_time_t min = (t.interval >> 1);		// [I/2.
 	clock_time_t max = t.interval - 1;		// I).
@@ -94,7 +100,7 @@ thrd_random_interval()
  * Called after a random time in [I/2, I) has expired.
  */
 static void
-thrd_handle_send_timer(void *ptr)
+handle_send_timer(void *ptr)
 {
 	LOG_RAW("thrd_handle_send_timer: Sending MLE Advertisement!\n");
 
@@ -110,7 +116,7 @@ thrd_handle_send_timer(void *ptr)
 /*---------------------------------------------------------------------------*/
 /* Called at the end of the current interval for timer. */
 static void
-thrd_double_interval(void *ptr)
+double_interval(void *ptr)
 {
 	LOG_RAW("thrd_double_interval: Doubling interval!\n");
 
@@ -123,13 +129,13 @@ thrd_double_interval(void *ptr)
 
 	ctimer_reset(&ct);
 
-	t.t_next = thrd_random_interval();
+	t.t_next = random_interval();
 
 	LOG_RAW("thrd_handle_timer: Timer will expire in %lu secs.\n",
 			(unsigned long)t.t_next / bsp_get(E_BSP_GET_TRES));
 
-	ctimer_set(&ci, t.interval, thrd_double_interval, (void *)&t);
-	ctimer_set(&ct, t.t_next, thrd_handle_send_timer, (void *)&t);
+	ctimer_set(&ci, t.interval, double_interval, (void *)&t);
+	ctimer_set(&ct, t.t_next, handle_send_timer, (void *)&t);
 
 	return;
 }
@@ -137,39 +143,48 @@ thrd_double_interval(void *ptr)
 /*---------------------------------------------------------------------------*/
 
 static void
-thrd_start_trickle_timer()
+trickle_start(void)
 {
-	t.interval = thrd_random_start_interval(t.i_min, t.i_max);	// I.
-	t.t_next = thrd_random_interval();	// t.
+	t.interval = random_start_interval(t.i_min, t.i_max);	// I.
+	t.t_next = random_interval();	// t.
 
-	LOG_RAW("thrd_reset_trickle_timer: Timer (I) will expire in %lu secs.\n",
+	LOG_RAW("trickle_start: Timer (I) will expire in %lu secs.\n",
 			(unsigned long)t.interval / bsp_get(E_BSP_GET_TRES));
-	LOG_RAW("thrd_reset_trickle_timer: Timer (t) will expire in %lu secs.\n",
+	LOG_RAW("trickle_start: Timer (t) will expire in %lu secs.\n",
 			(unsigned long)t.t_next / bsp_get(E_BSP_GET_TRES));
 
-	ctimer_set(&ci, t.interval, thrd_double_interval, (void *)&t);
-	ctimer_set(&ct, t.t_next, thrd_handle_send_timer, (void *)&t);
+	ctimer_set(&ci, t.interval, double_interval, (void *)&t);
+	ctimer_set(&ct, t.t_next, handle_send_timer, (void *)&t);
 }
 
 /*---------------------------------------------------------------------------*/
 
 static void
-thrd_reset_trickle_timer()
+trickle_reset(void)
 {
 	// Reset old timers.
 	ctimer_reset(&ci);
 	ctimer_reset(&ct);
 
 	t.interval = t.i_min;				// I.
-	t.t_next = thrd_random_interval();	// t.
+	t.t_next = random_interval();	// t.
 
-	LOG_RAW("thrd_reset_trickle_timer: Timer (I) will expire in %lu secs.\n",
+	LOG_RAW("trickle_reset: Timer (I) will expire in %lu secs.\n",
 			(unsigned long)t.interval / bsp_get(E_BSP_GET_TRES));
-	LOG_RAW("thrd_reset_trickle_timer: Timer (t) will expire in %lu secs.\n",
+	LOG_RAW("trickle_reset: Timer (t) will expire in %lu secs.\n",
 			(unsigned long)t.t_next / bsp_get(E_BSP_GET_TRES));
 
-	ctimer_set(&ci, t.interval, thrd_double_interval, (void *)&t);
-	ctimer_set(&ct, t.t_next, thrd_handle_send_timer, (void *)&t);
+	ctimer_set(&ci, t.interval, double_interval, (void *)&t);
+	ctimer_set(&ct, t.t_next, handle_send_timer, (void *)&t);
+}
+
+/*---------------------------------------------------------------------------*/
+
+static void
+trickle_stop(void)
+{
+	ctimer_stop(&ci);
+	ctimer_stop(&ct);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -178,7 +193,7 @@ thrd_trickle_init(void)
 {
 	TIMER_CONFIGURE();
 
-	thrd_start_trickle_timer();
+	trickle_start();
 	return;
 }
 /*---------------------------------------------------------------------------*/
@@ -186,7 +201,15 @@ thrd_trickle_init(void)
 void
 thrd_trickle_reset(void)
 {
-	thrd_reset_trickle_timer();
+	trickle_reset();
+}
+
+/*---------------------------------------------------------------------------*/
+
+void
+thrd_trickle_stop(void)
+{
+	trickle_stop();
 }
 
 
