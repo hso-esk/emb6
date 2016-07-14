@@ -174,7 +174,7 @@ int8_t demo_thrdCoapInit(void)
 
 	// thrd_eid_rloc_db_init();
 
-	thrd_trickle_init();
+	// thrd_trickle_init();
 
 	// thrd_partition_start();
 
