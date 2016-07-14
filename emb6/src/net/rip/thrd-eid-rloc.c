@@ -16,9 +16,8 @@
 
 #include "thrd-eid-rloc.h"
 
-
-#define DEBUG DEBUG_PRINT
-#include "uip-debug.h"
+#define     LOGGER_ENABLE                 LOGGER_THRD_NET
+#include    "logger.h"
 
 /*
  ********************************************************************************
@@ -98,9 +97,9 @@ thrd_eid_rloc_cache_t
 	thrd_eid_rloc_cache_t *entry;
 	thrd_eid_rloc_cache_t *found_entry;
 
-	PRINTF("thrd_eid_rloc_cache_lookup: Looking up EID-to-RLOC Map Cache for EID: ");
-	PRINT6ADDR(&eid);
-	PRINTF("\n\r");
+	LOG_RAW("thrd_eid_rloc_cache_lookup: Looking up EID-to-RLOC Map Cache for EID: ");
+	LOG_IP6ADDR(&eid);
+	LOG_RAW("\n\r");
 
 	found_entry = NULL;
 	for ( entry = thrd_eid_rloc_cache_head(); entry != NULL; entry = thrd_eid_rloc_cache_next(entry) ) {
@@ -111,11 +110,11 @@ thrd_eid_rloc_cache_t
 	}
 
 	if ( found_entry != NULL ) {
-		PRINTF("thrd_eid_rloc_cache_lookup: Found EID-to-RLOC entry: ");
-		PRINT6ADDR(&eid);
-		PRINTF("\n\r");
+		LOG_RAW("thrd_eid_rloc_cache_lookup: Found EID-to-RLOC entry: ");
+		LOG_IP6ADDR(&eid);
+		LOG_RAW("\n\r");
 	} else {
-		PRINTF("thrd_eid_rloc_cache_lookup: No EID-to-RLOC entry found.\n\r");
+		LOG_RAW("thrd_eid_rloc_cache_lookup: No EID-to-RLOC entry found.\n\r");
 	}
 	return found_entry;
 }
@@ -126,10 +125,10 @@ void
 thrd_eid_rloc_cache_rm(thrd_eid_rloc_cache_t *entry)
 {
 	if ( entry != NULL ) {
-		PRINTF("thrd_eid_rloc_cache_rm: Removing EID-to-RLOC entry from "
+		LOG_RAW("thrd_eid_rloc_cache_rm: Removing EID-to-RLOC entry from "
 				"'EID-to-RLOC Map Cache' with EID: ");
-		PRINT6ADDR(&entry->EID);
-		PRINTF("\n\r");
+		LOG_IP6ADDR(&entry->EID);
+		LOG_RAW("\n\r");
 
 		/* Remove the router id from the Router ID Set. */
 		list_remove(eidRlocMapCache_list, entry);
@@ -145,9 +144,9 @@ thrd_eid_rloc_cache_empty()
 {
 	thrd_eid_rloc_cache_t *entry;
 	thrd_eid_rloc_cache_t *entry_nxt;
-	PRINTF("thrd_eid_rloc_cache_empty: Removing all (%d) assigned EID-to-RLOC "
+	LOG_RAW("thrd_eid_rloc_cache_empty: Removing all (%d) assigned EID-to-RLOC "
 			"entries from 'EID-to-RLOC Map Cache'.", num_entries);
-	PRINTF("\n\r");
+	LOG_RAW("\n\r");
 	entry = thrd_eid_rloc_cache_head();
 	entry_nxt = entry;
 	while ( entry_nxt != NULL ) {
@@ -177,7 +176,7 @@ thrd_eid_rloc_cache_t
 		if ( entry == NULL ) {
 			/* This should not happen, as we explicitly deallocated one
 			 * link set entry above. */
-			PRINTF("thrd_eid_rloc_cache_add: Could not allocate EID-to-RLOC entry.\n");
+			LOG_RAW("thrd_eid_rloc_cache_add: Could not allocate EID-to-RLOC entry.\n");
 			return NULL;
 		}
 
@@ -187,22 +186,22 @@ thrd_eid_rloc_cache_t
 
 		list_push(eidRlocMapCache_list, entry);
 
-		PRINTF("thrd_eid_rloc_cache_add: Added EID-to-RLOC entry:\n"
+		LOG_RAW("thrd_eid_rloc_cache_add: Added EID-to-RLOC entry:\n"
 				"EID = ");
-		PRINT6ADDR(&entry->EID);
-		PRINTF("\n"
+		LOG_IP6ADDR(&entry->EID);
+		LOG_RAW("\n"
 				"RLOC = ");
-		PRINT6ADDR(&entry->RLOC);
-		PRINTF("\n"
+		LOG_IP6ADDR(&entry->RLOC);
+		LOG_RAW("\n"
 				"AGE = ", entry->Age);
-		PRINTF("\n\r");
+		LOG_RAW("\n\r");
 
 		num_entries++;
 	} else {
 
-		PRINTF(ANSI_COLOR_RED "thrd_eid_rloc_cache_add: EID is already known for ");
-		PRINTF("%d\n", eid);
-		PRINTF(ANSI_COLOR_RESET "\n\r");
+		LOG_RAW(ANSI_COLOR_RED "thrd_eid_rloc_cache_add: EID is already known for ");
+		LOG_RAW("%d\n", eid);
+		LOG_RAW(ANSI_COLOR_RESET "\n\r");
 
 		return NULL;
 	}
@@ -213,32 +212,30 @@ thrd_eid_rloc_cache_t
 /* --------------------------------- DEBUG ----------------------------------- */
 /* --------------------------------------------------------------------------- */
 
-#if RIP_DEBUG
 void
 thrd_eid_rloc_cache_print()
 {
 	thrd_eid_rloc_cache_t *i;
-	printf(ANSI_COLOR_RED
+	LOG_RAW(ANSI_COLOR_RED
 			"|=========================== EID-TO-RLOC MAP CACHE =============================|"
 			"|============================== EID-to-RLOC-Set ================================|"
 			ANSI_COLOR_RESET "\n\r");
-	printf("---------------------------------------------------------------------------------\n");
-	printf("|      EID      |     RLOC     |     Age     |\n");
-	printf("---------------------------------------------------------------------------------\n\r");
+	LOG_RAW("---------------------------------------------------------------------------------\n");
+	LOG_RAW("|      EID      |     RLOC     |     Age     |\n");
+	LOG_RAW("---------------------------------------------------------------------------------\n\r");
 	for (i = thrd_eid_rloc_cache_head(); i != NULL; i = thrd_eid_rloc_cache_next(i)) {
-		printf("| ");
-		PRINT6ADDR(&i->EID);
-		printf(" | ");
-		PRINT6ADDR(&i->RLOC);
-		printf( " | " ANSI_COLOR_YELLOW "%10d" ANSI_COLOR_RESET
+		LOG_RAW("| ");
+		LOG_IP6ADDR(&i->EID);
+		LOG_RAW(" | ");
+		LOG_IP6ADDR(&i->RLOC);
+		LOG_RAW( " | " ANSI_COLOR_YELLOW "%10d" ANSI_COLOR_RESET
 				" |\n", i->Age);
 	}
-	printf("---------------------------------------------------------------------------------\n\r");
-	printf(ANSI_COLOR_RED
+	LOG_RAW("---------------------------------------------------------------------------------\n\r");
+	LOG_RAW(ANSI_COLOR_RED
 			"|===============================================================================|"
 			ANSI_COLOR_RESET "\n\r");
 }
-#endif /* RIP_DEBUG */
 
 /*
  ********************************************************************************

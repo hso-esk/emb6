@@ -15,8 +15,8 @@
 
 #include "thrd-leader-db.h"
 
-// #define DEBUG DEBUG_PRINT
-#include "uip-debug.h"
+#define     LOGGER_ENABLE                 LOGGER_THRD_NET
+#include    "logger.h"
 
 /*
  ********************************************************************************
@@ -96,14 +96,14 @@ thrd_ldb_ida_t
 	thrd_ldb_ida_t *ida;
 	thrd_ldb_ida_t *found_ida;
 
-	PRINTF("thrd_ldb_ida_lookup: Looking up ID Assignment Set for router id ");
-	PRINTF("%d\n", router_id);
-	PRINTF("\n\r");
+	LOG_RAW("thrd_ldb_ida_lookup: Looking up ID Assignment Set for router id ");
+	LOG_RAW("%d\n", router_id);
+	LOG_RAW("\n\r");
 
 	found_ida = NULL;
 	for (ida = thrd_ldb_ida_head(); ida != NULL; ida = thrd_ldb_ida_next(ida)) {
-		PRINTF("%d\n", ida->ID_id);
-		PRINTF("\n\r");
+		LOG_RAW("%d\n", ida->ID_id);
+		LOG_RAW("\n\r");
 		if (ida->ID_id == router_id) {
 			found_ida = ida;
 			break;
@@ -111,11 +111,11 @@ thrd_ldb_ida_t
 	}
 
 	if (found_ida != NULL) {
-		PRINTF("thrd_ldb_ida_lookup: Found router id: ");
-		PRINTF("%d\n", router_id);
-		PRINTF("\n\r");
+		LOG_RAW("thrd_ldb_ida_lookup: Found router id: ");
+		LOG_RAW("%d\n", router_id);
+		LOG_RAW("\n\r");
 	} else {
-		PRINTF("thrd_ldb_ida_lookup: No router id found\n\r");
+		LOG_RAW("thrd_ldb_ida_lookup: No router id found\n\r");
 	}
 
 	if (found_ida != NULL && found_ida != list_head(idassign_list)) {
@@ -143,9 +143,9 @@ thrd_ldb_ida_t
 
 	/* Check whether the given router id already has an entry in the Router ID Set. */
 	if (ida == NULL) {
-		PRINTF("thrd_ldb_ida_add: router id unknown for ");
-		PRINTF("%d\n", router_id);
-		PRINTF("\n\r");
+		LOG_RAW("thrd_ldb_ida_add: router id unknown for ");
+		LOG_RAW("%d\n", router_id);
+		LOG_RAW("\n\r");
 
 		/* If there is no router id entry, create one. We first need to
 		 * check if we have room for this router id. If not, we remove the
@@ -166,7 +166,7 @@ thrd_ldb_ida_t
 		if (ida == NULL) {
 			/* This should not happen, as we explicitly deallocated one
 			 * link set entry above. */
-			PRINTF("thrd_ldb_ida_add: could not allocate router id\n");
+			LOG_RAW("thrd_ldb_ida_add: could not allocate router id\n");
 			return NULL;
 		}
 
@@ -177,26 +177,26 @@ thrd_ldb_ida_t
 		 * and that there is a packet coming soon. */
 		list_push(idassign_list, ida);
 
-		PRINTF("thrd_ldb_ida_add: Added router id %d\n\r", router_id);
+		LOG_RAW("thrd_ldb_ida_add: Added router id %d\n\r", router_id);
 
 		num_ida++;
 
-		PRINTF("thrd_ldb_ida_add: num_ida %d\n\r", num_ida);
+		LOG_RAW("thrd_ldb_ida_add: num_ida %d\n\r", num_ida);
 
 	} else {
 
-		PRINTF(
+		LOG_RAW(
 				ANSI_COLOR_RED "thrd_ldb_ida_add: router id is already known for ");
-		PRINTF("%d\n", router_id);
-		PRINTF(ANSI_COLOR_RESET "\n\r");
+		LOG_RAW("%d\n", router_id);
+		LOG_RAW(ANSI_COLOR_RESET "\n\r");
 
-		PRINTF("thrd_ldb_idassign_add: num_ida %d\n\r", num_ida);
-		PRINTF("-----------------------------------------------------\n\r");
+		LOG_RAW("thrd_ldb_idassign_add: num_ida %d\n\r", num_ida);
+		LOG_RAW("-----------------------------------------------------\n\r");
 
 		return NULL;
 	}
 
-	PRINTF("-----------------------------------------------------\n\r");
+	LOG_RAW("-----------------------------------------------------\n\r");
 
 	return ida;
 }
@@ -207,9 +207,9 @@ void
 thrd_ldb_ida_rm(thrd_ldb_ida_t *ida)
 {
 	if (ida != NULL) {
-		PRINTF("thrd_ldb_idassign_rm: removing router id from 'Router ID Set' with router id: ");
-		PRINTF("%d\n", ida->ID_id);
-		PRINTF("\n\r");
+		LOG_RAW("thrd_ldb_idassign_rm: removing router id from 'Router ID Set' with router id: ");
+		LOG_RAW("%d\n", ida->ID_id);
+		LOG_RAW("\n\r");
 
 		/* Remove the router id from the Router ID Set. */
 		list_remove(idassign_list, ida);
@@ -217,7 +217,7 @@ thrd_ldb_ida_rm(thrd_ldb_ida_t *ida)
 
 		num_ida--;
 
-		PRINTF("thrd_rdb_rid_rm: num_ida %d\n\r", num_ida);
+		LOG_RAW("thrd_rdb_rid_rm: num_ida %d\n\r", num_ida);
 	}
 }
 
@@ -228,8 +228,8 @@ thrd_ldb_ida_empty()
 {
 	thrd_ldb_ida_t *ida;
 	thrd_ldb_ida_t *ida_nxt;
-	PRINTF("thrd_rdb_ida_empty: removing all (%d) assigned router ids from 'ID Assignment Set'.", num_ida);
-	PRINTF("\n\r");
+	LOG_RAW("thrd_rdb_ida_empty: removing all (%d) assigned router ids from 'ID Assignment Set'.", num_ida);
+	LOG_RAW("\n\r");
 	ida = thrd_ldb_ida_head();
 	ida_nxt = ida;
 	while ( ida_nxt != NULL ) {
@@ -241,30 +241,24 @@ thrd_ldb_ida_empty()
 
 /* --------------------------------------------------------------------------- */
 
-#if RIP_DEBUG
 void
 thrd_ldb_print_leader_database(void)
 {
 	thrd_ldb_ida_t *i;
-	printf(ANSI_COLOR_RED
-			"|============================== LEADER DATABASE ================================|"
-			ANSI_COLOR_RESET "\n\r");
-	printf("---------------- ID ASSIGNMENT SET ----------------\n");
-	printf("| ID_id |        ID_owner         | ID_reuse_time |\n");
-	printf("---------------------------------------------------\n\r");
+	LOG_RAW("|============================== LEADER DATABASE ================================|\n\r");
+	LOG_RAW("---------------- ID ASSIGNMENT SET ----------------\n");
+	LOG_RAW("| ID_id |        ID_owner         | ID_reuse_time |\n");
+	LOG_RAW("---------------------------------------------------\n\r");
 	for (i = thrd_ldb_ida_head(); i != NULL; i = thrd_ldb_ida_next(i)) {
-		printf("| " ANSI_COLOR_YELLOW "%5d" ANSI_COLOR_RESET " ", i->ID_id);
-		printf("| " ANSI_COLOR_YELLOW "%02x %02x %02x %02x %02x %02x %02x %02x" ANSI_COLOR_RESET " ",
+		LOG_RAW("| "  "%5d"  " ", i->ID_id);
+		LOG_RAW("| "  "%02x %02x %02x %02x %02x %02x %02x %02x"  " ",
 				i->ID_owner[0], i->ID_owner[1], i->ID_owner[2], i->ID_owner[3],
 				i->ID_owner[4],i->ID_owner[5], i->ID_owner[6], i->ID_owner[7]);
-		printf("| " ANSI_COLOR_YELLOW "%13d" ANSI_COLOR_RESET " |\n", i->ID_reuse_time);
+		LOG_RAW("| "  "%13d"  " |\n", i->ID_reuse_time);
 	}
-	printf("---------------------------------------------------\n\r");
-	printf(ANSI_COLOR_RED
-			"|===============================================================================|"
-			ANSI_COLOR_RESET "\n\r");
+	LOG_RAW("---------------------------------------------------\n\r");
+	LOG_RAW("|===============================================================================|\n\r");
 }
-#endif /* RIP_DEBUG */
 
 /*
  ********************************************************************************

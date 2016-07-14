@@ -25,8 +25,8 @@
 
 #include "thrd-addr-query.h"
 
-#define DEBUG DEBUG_PRINT
-#include "uip-debug.h"
+#define     LOGGER_ENABLE                 LOGGER_THRD_NET
+#include    "logger.h"
 
 /*
  ********************************************************************************
@@ -198,7 +198,7 @@ thrd_eid_rloc_db_init(void)
 static void
 coap_init()
 {
-	PRINTF("thrd_eid_rloc_coap_init: Starting EID-to-RLOC Mapping (CoAP).\n\r");
+	LOG_RAW("thrd_eid_rloc_coap_init: Starting EID-to-RLOC Mapping (CoAP).\n\r");
 	THRD_REALM_LOCAL_ALL_ROUTERS_ADDR(&rlar_ipaddr);
 	/* Receives all CoAP messages */
 	coap_init_engine();
@@ -264,9 +264,9 @@ thrd_local_addr_t
 	thrd_local_addr_t *localAddr;
 	thrd_local_addr_t *found_localAddr;
 
-	PRINTF("thrd_local_addr_lookup: Looking up EID: ");
-	PRINT6ADDR(&eid);
-	PRINTF("\n\r");
+	LOG_RAW("thrd_local_addr_lookup: Looking up EID: ");
+	LOG_IP6ADDR(&eid);
+	LOG_RAW("\n\r");
 
 	found_localAddr = NULL;
 	for ( localAddr = thrd_local_addr_head(); localAddr != NULL; localAddr = thrd_local_addr_next(localAddr) ) {
@@ -277,11 +277,11 @@ thrd_local_addr_t
 	}
 
 	if ( found_localAddr != NULL ) {
-		PRINTF("thrd_local_addr_lookup: Found EID: ");
-		PRINT6ADDR(&eid);
-		PRINTF("\n\r");
+		LOG_RAW("thrd_local_addr_lookup: Found EID: ");
+		LOG_IP6ADDR(&eid);
+		LOG_RAW("\n\r");
 	} else {
-		PRINTF("thrd_local_addr_lookup: No EID found.\n\r");
+		LOG_RAW("thrd_local_addr_lookup: No EID found.\n\r");
 	}
 	return found_localAddr;
 }
@@ -299,9 +299,9 @@ thrd_local_addr_t
 
 	/* Check whether the given router id already has an entry in the Router ID Set. */
 	if ( localAddr == NULL ) {
-		PRINTF("thrd_local_addr_add: Unknown EID: ");
-		PRINT6ADDR(&eid);
-		PRINTF("\n\r");
+		LOG_RAW("thrd_local_addr_add: Unknown EID: ");
+		LOG_IP6ADDR(&eid);
+		LOG_RAW("\n\r");
 
 		/* If there is no router id entry, create one. We first need to
 		 * check if we have room for this router id. If not, we remove the
@@ -322,7 +322,7 @@ thrd_local_addr_t
 		if ( localAddr == NULL ) {
 			/* This should not happen, as we explicitly deallocated one
 			 * link set entry above. */
-			PRINTF("thrd_local_addr_add: Could not allocate EID.\n");
+			LOG_RAW("thrd_local_addr_add: Could not allocate EID.\n");
 			return NULL;
 		}
 
@@ -332,27 +332,27 @@ thrd_local_addr_t
 		 * and that there is a packet coming soon. */
 		list_push(localAddrSet_list, localAddr);
 
-		PRINTF("thrd_local_addr_add: Added EID: ");
-		PRINT6ADDR(&eid);
-		PRINTF("\n\r");
+		LOG_RAW("thrd_local_addr_add: Added EID: ");
+		LOG_IP6ADDR(&eid);
+		LOG_RAW("\n\r");
 
 		num_eids++;
 
-		PRINTF("thrd_local_addr_add: num_eids %d\n\r", num_eids);
+		LOG_RAW("thrd_local_addr_add: num_eids %d\n\r", num_eids);
 
 	} else {
 
-		PRINTF(ANSI_COLOR_RED "thrd_local_addr_add: EID is already known for ");
-		PRINTF("%d\n", eid);
-		PRINTF(ANSI_COLOR_RESET "\n\r");
+		LOG_RAW(ANSI_COLOR_RED "thrd_local_addr_add: EID is already known for ");
+		LOG_RAW("%d\n", eid);
+		LOG_RAW(ANSI_COLOR_RESET "\n\r");
 
-		PRINTF("thrd_local_addr_add: num_eids %d\n\r", num_eids);
-		PRINTF("-----------------------------------------------------\n\r");
+		LOG_RAW("thrd_local_addr_add: num_eids %d\n\r", num_eids);
+		LOG_RAW("-----------------------------------------------------\n\r");
 
 		return NULL;
 	}
 
-	PRINTF("-----------------------------------------------------\n\r");
+	LOG_RAW("-----------------------------------------------------\n\r");
 
 	return localAddr;
 }
@@ -363,9 +363,9 @@ void
 thrd_local_addr_rm(thrd_local_addr_t *localAddr)
 {
 	if ( localAddr != NULL ) {
-		PRINTF("thrd_local_addr_rm: Removing EID from 'Local Address Set' with EID: ");
-		PRINT6ADDR(&localAddr->EID);
-		PRINTF("\n\r");
+		LOG_RAW("thrd_local_addr_rm: Removing EID from 'Local Address Set' with EID: ");
+		LOG_IP6ADDR(&localAddr->EID);
+		LOG_RAW("\n\r");
 
 		/* Remove the router id from the Router ID Set. */
 		list_remove(localAddrSet_list, localAddr);
@@ -373,7 +373,7 @@ thrd_local_addr_rm(thrd_local_addr_t *localAddr)
 
 		num_eids--;
 
-		PRINTF("thrd_local_addr_rm: num_eids %d\n\r", num_eids);
+		LOG_RAW("thrd_local_addr_rm: num_eids %d\n\r", num_eids);
 	}
 }
 
@@ -384,8 +384,8 @@ thrd_local_addr_empty()
 {
 	thrd_local_addr_t *localAddr;
 	thrd_local_addr_t *localAddr_nxt;
-	PRINTF("thrd_local_addr_empty: Removing all (%d) assigned EIDs from 'Local Address Set'.", num_eids);
-	PRINTF("\n\r");
+	LOG_RAW("thrd_local_addr_empty: Removing all (%d) assigned EIDs from 'Local Address Set'.", num_eids);
+	LOG_RAW("\n\r");
 	localAddr = thrd_local_addr_head();
 	localAddr_nxt = localAddr;
 	while ( localAddr_nxt != NULL ) {
@@ -461,9 +461,9 @@ thrd_rfd_child_addr_t
 	thrd_rfd_child_addr_t *childAddr;
 	thrd_rfd_child_addr_t *found_childAddr;
 
-	PRINTF("thrd_rfd_child_addr_lookup: Looking up EID: ");
-	PRINT6ADDR(&child_addr);
-	PRINTF("\n\r");
+	LOG_RAW("thrd_rfd_child_addr_lookup: Looking up EID: ");
+	LOG_IP6ADDR(&child_addr);
+	LOG_RAW("\n\r");
 
 	found_childAddr = NULL;
 	for ( childAddr = thrd_rfd_child_addr_head(get_rfd_child_addr_prefix_type(&child_addr));
@@ -475,11 +475,11 @@ thrd_rfd_child_addr_t
 	}
 
 	if ( found_childAddr != NULL ) {
-		PRINTF("thrd_rfd_child_addr_lookup: Found RFD Child Address: ");
-		PRINT6ADDR(&child_addr);
-		PRINTF("\n\r");
+		LOG_RAW("thrd_rfd_child_addr_lookup: Found RFD Child Address: ");
+		LOG_IP6ADDR(&child_addr);
+		LOG_RAW("\n\r");
 	} else {
-		PRINTF("thrd_rfd_child_addr_lookup: No RFD Child Address found.\n\r");
+		LOG_RAW("thrd_rfd_child_addr_lookup: No RFD Child Address found.\n\r");
 	}
 	return found_childAddr;
 }
@@ -498,9 +498,9 @@ thrd_rfd_child_addr_t
 
 	/* Check whether the given router id already has an entry in the Router ID Set. */
 	if ( childAddr == NULL ) {
-		PRINTF("thrd_rfd_child_addr_add: Unknown RFD Child Address: ");
-		PRINT6ADDR(&child_addr);
-		PRINTF("\n\r");
+		LOG_RAW("thrd_rfd_child_addr_add: Unknown RFD Child Address: ");
+		LOG_IP6ADDR(&child_addr);
+		LOG_RAW("\n\r");
 
 		/* If there is no router id entry, create one. We first need to
 		 * check if we have room for this router id. If not, we remove the
@@ -520,7 +520,7 @@ thrd_rfd_child_addr_t
 			if ( childAddr == NULL ) {
 				/* This should not happen, as we explicitly deallocated one
 				 * link set entry above. */
-				PRINTF("thrd_rfd_child_addr_add: Could not allocate RFD Child Address.\n");
+				LOG_RAW("thrd_rfd_child_addr_add: Could not allocate RFD Child Address.\n");
 				return NULL;
 			}
 
@@ -530,12 +530,12 @@ thrd_rfd_child_addr_t
 			 * and that there is a packet coming soon. */
 			list_push(rfdChildLLAddrSet_list, childAddr);
 
-			PRINTF("thrd_rfd_child_addr_add: Added Link-Local RFD Child Address ");
-			PRINT6ADDR(&child_addr);
-			PRINTF("\n\r");
+			LOG_RAW("thrd_rfd_child_addr_add: Added Link-Local RFD Child Address ");
+			LOG_IP6ADDR(&child_addr);
+			LOG_RAW("\n\r");
 
 			num_rfd_ll_addr++;
-			PRINTF("thrd_rfd_child_addr_add: num_rfd_ll_addr %d\n\r", num_rfd_ll_addr);
+			LOG_RAW("thrd_rfd_child_addr_add: num_rfd_ll_addr %d\n\r", num_rfd_ll_addr);
 			break;
 		case THRD_RFD_CHILD_PREFIX_ML:
 			if ( thrd_rfd_child_ml_addr_num() == THRD_MAX_RFD_CHILD_ADDRESSES_ML ) {
@@ -548,7 +548,7 @@ thrd_rfd_child_addr_t
 			if ( childAddr == NULL ) {
 				/* This should not happen, as we explicitly deallocated one
 				 * link set entry above. */
-				PRINTF("thrd_rfd_child_addr_add: Could not allocate RFD Child Address.\n");
+				LOG_RAW("thrd_rfd_child_addr_add: Could not allocate RFD Child Address.\n");
 				return NULL;
 			}
 
@@ -558,12 +558,12 @@ thrd_rfd_child_addr_t
 			 * and that there is a packet coming soon. */
 			list_push(rfdChildMLAddrSet_list, childAddr);
 
-			PRINTF("thrd_rfd_child_addr_add: Added Mesh-Local RFD Child Address ");
-			PRINT6ADDR(&child_addr);
-			PRINTF("\n\r");
+			LOG_RAW("thrd_rfd_child_addr_add: Added Mesh-Local RFD Child Address ");
+			LOG_IP6ADDR(&child_addr);
+			LOG_RAW("\n\r");
 
 			num_rfd_ml_addr++;
-			PRINTF("thrd_rfd_child_addr_add: num_rfd_ml_addr %d\n\r", num_rfd_ml_addr);
+			LOG_RAW("thrd_rfd_child_addr_add: num_rfd_ml_addr %d\n\r", num_rfd_ml_addr);
 			break;
 		case THRD_RFD_CHILD_PREFIX_OS:
 			if ( thrd_rfd_child_os_addr_num() == THRD_MAX_RFD_CHILD_ADDRESSES_OS ) {
@@ -576,7 +576,7 @@ thrd_rfd_child_addr_t
 			if ( childAddr == NULL ) {
 				/* This should not happen, as we explicitly deallocated one
 				 * link set entry above. */
-				PRINTF("thrd_rfd_child_addr_add: Could not allocate RFD Child Address.\n");
+				LOG_RAW("thrd_rfd_child_addr_add: Could not allocate RFD Child Address.\n");
 				return NULL;
 			}
 
@@ -586,12 +586,12 @@ thrd_rfd_child_addr_t
 			 * and that there is a packet coming soon. */
 			list_push(rfdChildOSAddrSet_list, childAddr);
 
-			PRINTF("thrd_rfd_child_addr_add: Added Other-Scope RFD Child Address ");
-			PRINT6ADDR(&child_addr);
-			PRINTF("\n\r");
+			LOG_RAW("thrd_rfd_child_addr_add: Added Other-Scope RFD Child Address ");
+			LOG_IP6ADDR(&child_addr);
+			LOG_RAW("\n\r");
 
 			num_rfd_os_addr++;
-			PRINTF("thrd_rfd_child_addr_add: num_rfd_os_addr %d\n\r", num_rfd_os_addr);
+			LOG_RAW("thrd_rfd_child_addr_add: num_rfd_os_addr %d\n\r", num_rfd_os_addr);
 			break;
 		default:
 			if ( thrd_rfd_child_os_addr_num() == THRD_MAX_RFD_CHILD_ADDRESSES_OS ) {
@@ -604,7 +604,7 @@ thrd_rfd_child_addr_t
 			if ( childAddr == NULL ) {
 				/* This should not happen, as we explicitly deallocated one
 				 * link set entry above. */
-				PRINTF("thrd_rfd_child_addr_add: Could not allocate RFD Child Address.\n");
+				LOG_RAW("thrd_rfd_child_addr_add: Could not allocate RFD Child Address.\n");
 				return NULL;
 			}
 
@@ -614,26 +614,26 @@ thrd_rfd_child_addr_t
 			 * and that there is a packet coming soon. */
 			list_push(rfdChildOSAddrSet_list, childAddr);
 
-			PRINTF("thrd_rfd_child_addr_add: Added Other-Scope RFD Child Address ");
-			PRINT6ADDR(&child_addr);
-			PRINTF("\n\r");
+			LOG_RAW("thrd_rfd_child_addr_add: Added Other-Scope RFD Child Address ");
+			LOG_IP6ADDR(&child_addr);
+			LOG_RAW("\n\r");
 
 			num_rfd_os_addr++;
-			PRINTF("thrd_rfd_child_addr_add: num_rfd_os_addr %d\n\r", num_rfd_os_addr);
+			LOG_RAW("thrd_rfd_child_addr_add: num_rfd_os_addr %d\n\r", num_rfd_os_addr);
 			break;
 		}
 
 	} else {
 
-		PRINTF(ANSI_COLOR_RED "thrd_rfd_child_addr_add: RFD Child Address is already known for ");
-		PRINT6ADDR(&child_addr);
-		PRINTF(ANSI_COLOR_RESET "\n\r");
-		PRINTF("-----------------------------------------------------\n\r");
+		LOG_RAW(ANSI_COLOR_RED "thrd_rfd_child_addr_add: RFD Child Address is already known for ");
+		LOG_IP6ADDR(&child_addr);
+		LOG_RAW(ANSI_COLOR_RESET "\n\r");
+		LOG_RAW("-----------------------------------------------------\n\r");
 
 		return NULL;
 	}
 
-	PRINTF("-----------------------------------------------------\n\r");
+	LOG_RAW("-----------------------------------------------------\n\r");
 
 	return childAddr;
 }
@@ -645,9 +645,9 @@ thrd_rfd_child_addr_rm(thrd_rfd_child_addr_t *child_addr)
 {
 	if ( child_addr != NULL ) {
 		thrd_rfd_child_prefix_type_t prefix_type = get_rfd_child_addr_prefix_type(&child_addr->childAddr);
-		PRINTF("thrd_rfd_child_addr_rm: Removing RFD Child Address from 'RFD Child Address Set' with EID: ");
-		PRINT6ADDR(&child_addr->childAddr);
-		PRINTF("\n\r");
+		LOG_RAW("thrd_rfd_child_addr_rm: Removing RFD Child Address from 'RFD Child Address Set' with EID: ");
+		LOG_IP6ADDR(&child_addr->childAddr);
+		LOG_RAW("\n\r");
 
 		switch ( prefix_type ) {
 		case THRD_RFD_CHILD_PREFIX_LL:
@@ -657,7 +657,7 @@ thrd_rfd_child_addr_rm(thrd_rfd_child_addr_t *child_addr)
 				memb_free(&rfdChildLLAddrSet_memb, child_addr);
 				num_rfd_ll_addr--;
 			}
-			PRINTF("thrd_rfd_child_addr_rm: num_rfd_ll_addr %d\n\r", num_rfd_ll_addr);
+			LOG_RAW("thrd_rfd_child_addr_rm: num_rfd_ll_addr %d\n\r", num_rfd_ll_addr);
 			break;
 		case THRD_RFD_CHILD_PREFIX_ML:
 			if ( num_rfd_ml_addr > 0 ) {
@@ -666,7 +666,7 @@ thrd_rfd_child_addr_rm(thrd_rfd_child_addr_t *child_addr)
 				memb_free(&rfdChildMLAddrSet_memb, child_addr);
 				num_rfd_ml_addr--;
 			}
-			PRINTF("thrd_rfd_child_addr_rm: num_rfd_ml_addr %d\n\r", num_rfd_ml_addr);
+			LOG_RAW("thrd_rfd_child_addr_rm: num_rfd_ml_addr %d\n\r", num_rfd_ml_addr);
 			break;
 		case THRD_RFD_CHILD_PREFIX_OS:
 			if ( num_rfd_os_addr > 0 ) {
@@ -675,7 +675,7 @@ thrd_rfd_child_addr_rm(thrd_rfd_child_addr_t *child_addr)
 				memb_free(&rfdChildOSAddrSet_memb, child_addr);
 				num_rfd_os_addr--;
 			}
-			PRINTF("thrd_rfd_child_addr_rm: num_rfd_os_addr %d\n\r", num_rfd_os_addr);
+			LOG_RAW("thrd_rfd_child_addr_rm: num_rfd_os_addr %d\n\r", num_rfd_os_addr);
 			break;
 		default:
 			if ( num_rfd_os_addr > 0 ) {
@@ -684,7 +684,7 @@ thrd_rfd_child_addr_rm(thrd_rfd_child_addr_t *child_addr)
 				memb_free(&rfdChildOSAddrSet_memb, child_addr);
 				num_rfd_os_addr--;
 			}
-			PRINTF("thrd_rfd_child_addr_rm: num_rfd_os_addr %d\n\r", num_rfd_os_addr);
+			LOG_RAW("thrd_rfd_child_addr_rm: num_rfd_os_addr %d\n\r", num_rfd_os_addr);
 			break;
 		}
 	}
@@ -697,8 +697,8 @@ thrd_rfd_child_addr_empty()
 {
 	thrd_rfd_child_addr_t *childAddr;
 	thrd_rfd_child_addr_t *childAddr_nxt;
-	PRINTF("thrd_rfd_child_addr_empty: Removing all (%d) assigned EIDs from 'RFD Child Address Set'.", num_rfd_ll_addr + num_rfd_ml_addr + num_rfd_os_addr);
-	PRINTF("\n\r");
+	LOG_RAW("thrd_rfd_child_addr_empty: Removing all (%d) assigned EIDs from 'RFD Child Address Set'.", num_rfd_ll_addr + num_rfd_ml_addr + num_rfd_os_addr);
+	LOG_RAW("\n\r");
 	// Empty Link-Local RFD Child Address Set.
 	childAddr = thrd_rfd_child_addr_head(THRD_RFD_CHILD_PREFIX_LL);
 	childAddr_nxt = childAddr;
@@ -763,9 +763,9 @@ thrd_addr_qry_t
 	thrd_addr_qry_t *addrQr;
 	thrd_addr_qry_t *found_addrQr;
 
-	PRINTF("thrd_addr_qr_lookup: Looking up Address Query for EID: ");
-	PRINT6ADDR(&eid);
-	PRINTF("\n\r");
+	LOG_RAW("thrd_addr_qr_lookup: Looking up Address Query for EID: ");
+	LOG_IP6ADDR(&eid);
+	LOG_RAW("\n\r");
 
 	found_addrQr = NULL;
 	for ( addrQr = thrd_addr_qry_head(); addrQr != NULL; addrQr = thrd_addr_qry_next(addrQr) ) {
@@ -776,11 +776,11 @@ thrd_addr_qry_t
 	}
 
 	if ( found_addrQr != NULL ) {
-		PRINTF("thrd_addr_qr_lookup: Found Address Query for EID: ");
-		PRINT6ADDR(&eid);
-		PRINTF("\n\r");
+		LOG_RAW("thrd_addr_qr_lookup: Found Address Query for EID: ");
+		LOG_IP6ADDR(&eid);
+		LOG_RAW("\n\r");
 	} else {
-		PRINTF("thrd_addr_qr_lookup: No Address Query for EID found.\n\r");
+		LOG_RAW("thrd_addr_qr_lookup: No Address Query for EID found.\n\r");
 	}
 	return found_addrQr;
 }
@@ -798,9 +798,9 @@ thrd_addr_qry_t
 
 	/* Check whether the given router id already has an entry in the Router ID Set. */
 	if ( addrQr == NULL ) {
-		PRINTF("thrd_addr_qr_add: Unknown Address Query for EID: ");
-		PRINT6ADDR(&eid);
-		PRINTF("\n\r");
+		LOG_RAW("thrd_addr_qr_add: Unknown Address Query for EID: ");
+		LOG_IP6ADDR(&eid);
+		LOG_RAW("\n\r");
 
 		/* If there is no router id entry, create one. We first need to
 		 * check if we have room for this router id. If not, we remove the
@@ -821,7 +821,7 @@ thrd_addr_qry_t
 		if ( addrQr == NULL ) {
 			/* This should not happen, as we explicitly deallocated one
 			 * link set entry above. */
-			PRINTF("thrd_addr_qr_add: Could not allocate Address Query.\n");
+			LOG_RAW("thrd_addr_qr_add: Could not allocate Address Query.\n");
 			return NULL;
 		}
 
@@ -834,27 +834,27 @@ thrd_addr_qry_t
 		 * and that there is a packet coming soon. */
 		list_push(addrQuerySet_list, addrQr);
 
-		PRINTF("thrd_addr_qr_add: Added Address Query for EID: ");
-		PRINT6ADDR(&eid);
-		PRINTF("\n\r");
+		LOG_RAW("thrd_addr_qr_add: Added Address Query for EID: ");
+		LOG_IP6ADDR(&eid);
+		LOG_RAW("\n\r");
 
 		num_addr_qry++;
 
-		PRINTF("thrd_addr_qr_add: num_addr_qry %d\n\r", num_addr_qry);
+		LOG_RAW("thrd_addr_qr_add: num_addr_qry %d\n\r", num_addr_qry);
 
 	} else {
 
-		PRINTF(ANSI_COLOR_RED "thrd_addr_qr_add: Address Query is already known for EID ");
-		PRINTF("%d\n", eid);
-		PRINTF(ANSI_COLOR_RESET "\n\r");
+		LOG_RAW(ANSI_COLOR_RED "thrd_addr_qr_add: Address Query is already known for EID ");
+		LOG_RAW("%d\n", eid);
+		LOG_RAW(ANSI_COLOR_RESET "\n\r");
 
-		PRINTF("thrd_addr_qr_add: num_addr_qry %d\n\r", num_addr_qry);
-		PRINTF("-----------------------------------------------------\n\r");
+		LOG_RAW("thrd_addr_qr_add: num_addr_qry %d\n\r", num_addr_qry);
+		LOG_RAW("-----------------------------------------------------\n\r");
 
 		return NULL;
 	}
 
-	PRINTF("-----------------------------------------------------\n\r");
+	LOG_RAW("-----------------------------------------------------\n\r");
 
 	return addrQr;
 }
@@ -865,9 +865,9 @@ void
 thrd_addr_qry_rm(thrd_addr_qry_t *addrQr)
 {
 	if ( addrQr != NULL ) {
-		PRINTF("thrd_local_addr_rm: Removing Address Query from 'Address Query Set' with EID: ");
-		PRINT6ADDR(&addrQr->EID);
-		PRINTF("\n\r");
+		LOG_RAW("thrd_local_addr_rm: Removing Address Query from 'Address Query Set' with EID: ");
+		LOG_IP6ADDR(&addrQr->EID);
+		LOG_RAW("\n\r");
 
 		/* Remove the router id from the Router ID Set. */
 		list_remove(addrQuerySet_list, addrQr);
@@ -875,7 +875,7 @@ thrd_addr_qry_rm(thrd_addr_qry_t *addrQr)
 
 		num_addr_qry--;
 
-		PRINTF("thrd_addr_qr_rm: num_addr_qry %d\n\r", num_addr_qry);
+		LOG_RAW("thrd_addr_qr_rm: num_addr_qry %d\n\r", num_addr_qry);
 	}
 }
 
@@ -886,8 +886,8 @@ thrd_addr_qry_empty()
 {
 	thrd_addr_qry_t *addrQr;
 	thrd_addr_qry_t *addrQr_nxt;
-	PRINTF("thrd_addr_qr_empty: Removing all (%d) assigned Address Queries from 'Address Query Set'.", num_addr_qry);
-	PRINTF("\n\r");
+	LOG_RAW("thrd_addr_qr_empty: Removing all (%d) assigned Address Queries from 'Address Query Set'.", num_addr_qry);
+	LOG_RAW("\n\r");
 	addrQr = thrd_addr_qry_head();
 	addrQr_nxt = addrQr;
 	while ( addrQr_nxt != NULL ) {
@@ -914,7 +914,7 @@ static coap_packet_t packet[1]; /* This way the packet can be treated as pointer
 void
 thrd_addr_ntf_chunk_handler(void *response)
 {
-	PRINTF("thrd_addr_ntf_chunk_handler: Got called!");
+	LOG_RAW("thrd_addr_ntf_chunk_handler: Got called!");
     const uint8_t *chunk;
     if ( !response ) {
 
@@ -937,11 +937,11 @@ thrd_handle_timeout(void *ptr)
 {
 	thrd_addr_qry_t *addr_qry = (thrd_addr_qry_t*) ptr;
 
-	PRINTF("Address Query Timer: Timer expired");
+	LOG_RAW("Address Query Timer: Timer expired");
 	if ( addr_qry != NULL ) {
-		PRINTF(" for Address Query Entry with EID = ");
-		PRINT6ADDR(&addr_qry->EID);
-		PRINTF("\n\r");
+		LOG_RAW(" for Address Query Entry with EID = ");
+		LOG_IP6ADDR(&addr_qry->EID);
+		LOG_RAW("\n\r");
 
 		addr_qry->AQ_Failures++;
 		addr_qry->AQ_Retry_Delay = THRD_AQ_INITIAL_RETRY_DELAY << addr_qry->AQ_Failures;
@@ -982,7 +982,7 @@ thrd_addr_qry_request(uip_ipaddr_t *target_eid)
 	}
 	size_t len = create_addr_qry_req_payload(&addr_qry_buf[0], target_eid);
 
-	// PRINTF("thrd_addr_qry_request: payload_len = %d\n", len);
+	// LOG_RAW("thrd_addr_qry_request: payload_len = %d\n", len);
 
 	if ( len > 0 ) {
 		coap_init_message(packet, COAP_TYPE_NON, COAP_POST, 0);
@@ -1085,83 +1085,69 @@ create_addr_err_ntf_payload(uint8_t *buf, uip_ipaddr_t *target_eid, uint8_t *ml_
 /* --------------------------------- DEBUG ----------------------------------- */
 /* --------------------------------------------------------------------------- */
 
-#if RIP_DEBUG
 void
 thrd_local_addr_set_print(void)
 {
 	thrd_local_addr_t *i;
-	printf(ANSI_COLOR_RED
-			"|============================= LOCAL ADDRESS SET ===============================|"
-			ANSI_COLOR_RESET "\n\r");
-	printf("-------------------------\n");
-	printf("|          EID          |\n");
-	printf("-------------------------\n\r");
+	LOG_RAW("|============================= LOCAL ADDRESS SET ===============================|\n\r");
+	LOG_RAW("-------------------------\n");
+	LOG_RAW("|          EID          |\n");
+	LOG_RAW("-------------------------\n\r");
 	for (i = thrd_local_addr_head(); i != NULL; i = thrd_local_addr_next(i)) {
-		printf("| " ANSI_COLOR_YELLOW);
-		PRINT6ADDR(&i->EID);
-		printf(ANSI_COLOR_RESET " |\n");
+		LOG_RAW("| ");
+		LOG_IP6ADDR(&i->EID);
+		LOG_RAW(" |\n");
 	}
-	printf("-------------------------\n\r");
-	printf(ANSI_COLOR_RED
-			"|===============================================================================|"
-			ANSI_COLOR_RESET "\n\r");
+	LOG_RAW("-------------------------\n\r");
+	LOG_RAW("|===============================================================================|\n\r");
 }
 
 void
 thrd_rfd_child_addr_set_print()
 {
 	thrd_rfd_child_addr_t *i;
-	printf(ANSI_COLOR_RED
-			"|=========================== RFD Child Address Set =============================|"
-			ANSI_COLOR_RESET "\n\r");
-	printf("-------------------------\n");
-	printf("|          EID          |\n");
-	printf("-------------------------\n\r");
+	LOG_RAW("|=========================== RFD Child Address Set =============================|\n\r");
+	LOG_RAW("-------------------------\n");
+	LOG_RAW("|          EID          |\n");
+	LOG_RAW("-------------------------\n\r");
 	for (i = thrd_rfd_child_addr_head(THRD_RFD_CHILD_PREFIX_LL); i != NULL; i = thrd_rfd_child_addr_next(i)) {
-		printf("| " ANSI_COLOR_YELLOW);
-		PRINT6ADDR(&i->childAddr);
-		printf(ANSI_COLOR_RESET " |\n");
+		LOG_RAW("| ");
+		LOG_IP6ADDR(&i->childAddr);
+		LOG_RAW(" |\n");
 	}
 	for (i = thrd_rfd_child_addr_head(THRD_RFD_CHILD_PREFIX_ML); i != NULL; i = thrd_rfd_child_addr_next(i)) {
-		printf("| " ANSI_COLOR_YELLOW);
-		PRINT6ADDR(&i->childAddr);
-		printf(ANSI_COLOR_RESET " |\n");
+		LOG_RAW("| ");
+		LOG_IP6ADDR(&i->childAddr);
+		LOG_RAW(" |\n");
 	}
 	for (i = thrd_rfd_child_addr_head(THRD_RFD_CHILD_PREFIX_OS); i != NULL; i = thrd_rfd_child_addr_next(i)) {
-		printf("| " ANSI_COLOR_YELLOW);
-		PRINT6ADDR(&i->childAddr);
-		printf(ANSI_COLOR_RESET " |\n");
+		LOG_RAW("| ");
+		LOG_IP6ADDR(&i->childAddr);
+		LOG_RAW(" |\n");
 	}
-	printf("-------------------------\n\r");
-	printf(ANSI_COLOR_RED
-			"|===============================================================================|"
-			ANSI_COLOR_RESET "\n\r");
+	LOG_RAW("-------------------------\n\r");
+	LOG_RAW("|===============================================================================|\n\r");
 }
 
 void
 thrd_addr_qr_set_print()
 {
 	thrd_addr_qry_t *i;
-	printf(ANSI_COLOR_RED
-			"|============================= ADDRESS QUERY SET ===============================|"
-			ANSI_COLOR_RESET "\n\r");
-	printf("---------------------------------------------------------------------------------\n");
-	printf("|      EID      | AQ_Timeout | AQ_Failures | AQ_Retry_Delay |\n");
-	printf("---------------------------------------------------------------------------------\n\r");
+	LOG_RAW("|============================= ADDRESS QUERY SET ===============================|\n\r");
+	LOG_RAW("---------------------------------------------------------------------------------\n");
+	LOG_RAW("|      EID      | AQ_Timeout | AQ_Failures | AQ_Retry_Delay |\n");
+	LOG_RAW("---------------------------------------------------------------------------------\n\r");
 	for (i = thrd_addr_qry_head(); i != NULL; i = thrd_addr_qry_next(i)) {
-		printf("| ");
-		PRINT6ADDR(&i->EID);
-		printf( " | " ANSI_COLOR_YELLOW "%10d" ANSI_COLOR_RESET
-				" | " ANSI_COLOR_YELLOW "%11d" ANSI_COLOR_RESET
-				" | " ANSI_COLOR_YELLOW "%14d" ANSI_COLOR_RESET
+		LOG_RAW("| ");
+		LOG_IP6ADDR(&i->EID);
+		LOG_RAW(" | "  "%10d"
+				" | "  "%11d"
+				" | "  "%14d"
 				" |\n", i->AQ_Timeout, i->AQ_Failures, i->AQ_Retry_Delay);
 	}
-	printf("---------------------------------------------------------------------------------\n\r");
-	printf(ANSI_COLOR_RED
-			"|===============================================================================|"
-			ANSI_COLOR_RESET "\n\r");
+	LOG_RAW("---------------------------------------------------------------------------------\n\r");
+	LOG_RAW("|===============================================================================|\n\r");
 }
-#endif /* RIP_DEBUG */
 
 /*
  ********************************************************************************

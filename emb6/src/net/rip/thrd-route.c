@@ -29,6 +29,9 @@
 // #define DEBUG DEBUG_PRINT
 #include "uip-debug.h"
 
+#define     LOGGER_ENABLE                 LOGGER_THRD_NET
+#include    "logger.h"
+
 /*
  ********************************************************************************
  *                          LOCAL FUNCTION DECLARATIONS
@@ -302,24 +305,24 @@ thrd_rdb_link_hysteresis(uint16_t old_link_margin, uint16_t new_link_margin)
 		// Check whether the incoming quality should be increased.
 		if ( old_iq < new_iq ) {
 			if ( (new_iq - old_iq) > 1 ) {
-				PRINTF("\nIncreasing incoming quality from %d to %d\n", old_iq, new_iq);
+				LOG_RAW("\nIncreasing incoming quality from %d to %d\n", old_iq, new_iq);
 				return thrd_rdb_link_calc_incoming_quality(new_link_margin);
 			}
 			// Check hysteresis boundary.
 			uint16_t diff_lm = new_link_margin - thrd_rdb_link_margin_get_lower_bound(new_link_margin);
 			if ( diff_lm >= (2 << THRD_EXP_WEIGHT_MOV_AVG) ) {
-				PRINTF("\nIncreasing incoming quality from %d to %d\n", old_iq, new_iq);
+				LOG_RAW("\nIncreasing incoming quality from %d to %d\n", old_iq, new_iq);
 				return thrd_rdb_link_calc_incoming_quality(new_link_margin);
 			}
 		} else {
 			if ( (old_iq - new_iq) > 1 ) {
-				PRINTF("\nDecreasing incoming quality from %d to %d\n", old_iq, new_iq);
+				LOG_RAW("\nDecreasing incoming quality from %d to %d\n", old_iq, new_iq);
 				return thrd_rdb_link_calc_incoming_quality(new_link_margin);
 			}
 			// The incoming quality should be decreased.
 			uint16_t diff_lm = thrd_rdb_link_margin_get_lower_bound(old_link_margin) - new_link_margin;
 			if ( diff_lm >= (2 << THRD_EXP_WEIGHT_MOV_AVG) ) {
-				PRINTF("\nDecreasing incoming quality from %d to %d\n", old_iq, new_iq);
+				LOG_RAW("\nDecreasing incoming quality from %d to %d\n", old_iq, new_iq);
 				return thrd_rdb_link_calc_incoming_quality(new_link_margin);
 			}
 		}
@@ -366,14 +369,14 @@ thrd_rdb_id_t
 	thrd_rdb_id_t *rid;
 	thrd_rdb_id_t *found_rid;
 
-	PRINTF("thrd_rdb_rid_lookup: Looking up Router ID Set for router id ");
-	PRINTF("%d\n", router_id);
-	PRINTF("\n\r");
+	LOG_RAW("thrd_rdb_rid_lookup: Looking up Router ID Set for router id ");
+	LOG_RAW("%d\n", router_id);
+	LOG_RAW("\n\r");
 
 	found_rid = NULL;
 	for (rid = thrd_rdb_rid_head(); rid != NULL; rid = thrd_rdb_rid_next(rid)) {
-		PRINTF("%d\n", rid->router_id);
-		PRINTF("\n\r");
+		LOG_RAW("%d\n", rid->router_id);
+		LOG_RAW("\n\r");
 		if (rid->router_id == router_id) {
 			found_rid = rid;
 			break;
@@ -381,11 +384,11 @@ thrd_rdb_id_t
 	}
 
 	if (found_rid != NULL) {
-		PRINTF("thrd_rdb_rid_lookup: Found router id: ");
-		PRINTF("%d\n", router_id);
-		PRINTF("\n\r");
+		LOG_RAW("thrd_rdb_rid_lookup: Found router id: ");
+		LOG_RAW("%d\n", router_id);
+		LOG_RAW("\n\r");
 	} else {
-		PRINTF("thrd_rdb_rid_lookup: No router id found\n\r");
+		LOG_RAW("thrd_rdb_rid_lookup: No router id found\n\r");
 	}
 
 	return found_rid;
@@ -399,15 +402,15 @@ thrd_rdb_link_t
 	thrd_rdb_link_t *link;
 	thrd_rdb_link_t *found_link;
 
-	PRINTF("thrd_rdb_link_lookup: Looking up Link Set for router id ");
-	PRINTF("%d\n", router_id);
-	PRINTF("\n\r");
+	LOG_RAW("thrd_rdb_link_lookup: Looking up Link Set for router id ");
+	LOG_RAW("%d\n", router_id);
+	LOG_RAW("\n\r");
 
 	found_link = NULL;
 	for (link = thrd_rdb_link_head(); link != NULL;
 			link = thrd_rdb_link_next(link)) {
-		PRINTF("%d\n", link->L_router_id);
-		PRINTF("\n\r");
+		LOG_RAW("%d\n", link->L_router_id);
+		LOG_RAW("\n\r");
 		if (link->L_router_id == router_id) {
 			found_link = link;
 			break;
@@ -415,11 +418,11 @@ thrd_rdb_link_t
 	}
 
 	if (found_link != NULL) {
-		PRINTF("thrd_rdb_link_lookup: Found link for router id: ");
-		PRINTF("%d\n", router_id);
-		PRINTF("\n\r");
+		LOG_RAW("thrd_rdb_link_lookup: Found link for router id: ");
+		LOG_RAW("%d\n", router_id);
+		LOG_RAW("\n\r");
 	} else {
-		PRINTF("thrd_rdb_link_lookup: No link for router id found\n\r");
+		LOG_RAW("thrd_rdb_link_lookup: No link for router id found\n\r");
 	}
 
 	if (found_link != NULL && found_link != list_head(link_list)) {
@@ -442,14 +445,14 @@ thrd_rdb_route_t
 	thrd_rdb_route_t *r;
 	thrd_rdb_route_t *found_route;
 
-	PRINTF("thrd_rdb_route_lookup: Looking up route for router id ");
-	PRINTF("%d\n", destination);
-	PRINTF("\n\r");
+	LOG_RAW("thrd_rdb_route_lookup: Looking up route for router id ");
+	LOG_RAW("%d\n", destination);
+	LOG_RAW("\n\r");
 
 	found_route = NULL;
 	for (r = thrd_rdb_route_head(); r != NULL; r = thrd_rdb_route_next(r)) {
-		// PRINTF("%d\n", r->R_destination);
-		// PRINTF("\n\r");
+		// LOG_RAW("%d\n", r->R_destination);
+		// LOG_RAW("\n\r");
 		if (r->R_destination == destination) {
 			found_route = r;
 			break;
@@ -457,13 +460,13 @@ thrd_rdb_route_t
 	}
 
 	if (found_route != NULL) {
-		PRINTF("thrd_rdb_route_lookup: Found route: ");
-		PRINTF("%d", destination);
-		PRINTF(" via ");
-		PRINTF("%d\n", thrd_rdb_route_nexthop(found_route));	// TODO
-		PRINTF("\n\r");
+		LOG_RAW("thrd_rdb_route_lookup: Found route: ");
+		LOG_RAW("%d", destination);
+		LOG_RAW(" via ");
+		LOG_RAW("%d\n", thrd_rdb_route_nexthop(found_route));	// TODO
+		LOG_RAW("\n\r");
 	} else {
-		PRINTF("thrd_rdb_route_lookup: No route found\n\r");
+		LOG_RAW("thrd_rdb_route_lookup: No route found\n\r");
 	}
 
 	if (found_route != NULL && found_route != list_head(route_list)) {
@@ -491,9 +494,9 @@ thrd_rdb_id_t
 
 	/* Check whether the given router id already has an entry in the Router ID Set. */
 	if (rid == NULL) {
-		PRINTF("thrd_rdb_rid_add: router id unknown for ");
-		PRINTF("%d\n", router_id);
-		PRINTF("\n\r");
+		LOG_RAW("thrd_rdb_rid_add: router id unknown for ");
+		LOG_RAW("%d\n", router_id);
+		LOG_RAW("\n\r");
 
 		/* If there is no router id entry, create one. We first need to
 		 * check if we have room for this router id. If not, we remove the
@@ -513,7 +516,7 @@ thrd_rdb_id_t
 		if (rid == NULL) {
 			/* This should not happen, as we explicitly deallocated one
 			 * link set entry above. */
-			PRINTF("thrd_rdb_rid_add: could not allocate router id\n");
+			LOG_RAW("thrd_rdb_rid_add: could not allocate router id\n");
 			return NULL;
 		}
 
@@ -535,26 +538,26 @@ thrd_rdb_id_t
 		else
 			list_insert(routerid_list, rid_prev, rid);
 
-		PRINTF("thrd_rdb_rid_add: Added router id %d\n\r", router_id);
+		LOG_RAW("thrd_rdb_rid_add: Added router id %d\n\r", router_id);
 
 		num_rids++;
 
-		PRINTF("thrd_rdb_rid_add: num_rids %d\n\r", num_rids);
+		LOG_RAW("thrd_rdb_rid_add: num_rids %d\n\r", num_rids);
 
 	} else {
 
-		PRINTF(
+		LOG_RAW(
 				ANSI_COLOR_RED "thrd_rdb_rid_add: router id is already known for ");
-		PRINTF("%d\n", router_id);
-		PRINTF(ANSI_COLOR_RESET "\n\r");
+		LOG_RAW("%d\n", router_id);
+		LOG_RAW(ANSI_COLOR_RESET "\n\r");
 
-		PRINTF("thrd_rdb_rid_add: num_rids %d\n\r", num_rids);
-		PRINTF("-----------------------------------------------------\n\r");
+		LOG_RAW("thrd_rdb_rid_add: num_rids %d\n\r", num_rids);
+		LOG_RAW("-----------------------------------------------------\n\r");
 
 		return NULL;
 	}
 
-	PRINTF("-----------------------------------------------------\n\r");
+	LOG_RAW("-----------------------------------------------------\n\r");
 
 	return rid;
 }
@@ -569,9 +572,9 @@ thrd_rdb_route_t
 	// Get the valid router id set.
 	thrd_rdb_id_t *rid;
 
-	PRINTF("thrd_rdb_route_add: search route set entry for destination id ");
-	PRINTF("%d\n", destination);
-	PRINTF("\n\r");
+	LOG_RAW("thrd_rdb_route_add: search route set entry for destination id ");
+	LOG_RAW("%d\n", destination);
+	LOG_RAW("\n\r");
 
 	r = thrd_rdb_route_lookup(destination);
 
@@ -590,12 +593,12 @@ thrd_rdb_route_t
 			/* If the router did not have an entry in our Router ID Set,
 			 * return NULL. */
 
-			PRINTF(
+			LOG_RAW(
 					ANSI_COLOR_RED "thrd_rdb_route_add: Destination router with router id ");
-			PRINTF("%d is invalid.", destination);
-			PRINTF(ANSI_COLOR_RESET "\n\r");
+			LOG_RAW("%d is invalid.", destination);
+			LOG_RAW(ANSI_COLOR_RESET "\n\r");
 
-			PRINTF("-----------------------------------------------------\n\r");
+			LOG_RAW("-----------------------------------------------------\n\r");
 			return NULL;
 		}
 
@@ -614,10 +617,10 @@ thrd_rdb_route_t
 		if (r == NULL) {
 			/* This should not happen, as we explicitly deallocated one
 			 * route set entry above. */
-			PRINTF(
+			LOG_RAW(
 					ANSI_COLOR_RED "thrd_rdb_route_add: could not allocate route with router id ");
-			PRINTF("%d\n", destination);
-			PRINTF(ANSI_COLOR_RESET "\n\r");
+			LOG_RAW("%d\n", destination);
+			LOG_RAW(ANSI_COLOR_RESET "\n\r");
 			return NULL;
 		}
 
@@ -627,26 +630,26 @@ thrd_rdb_route_t
 
 		num_routes++;
 
-		PRINTF("thrd_rdb_route_add: num_routes %d\n\r", num_routes);
+		LOG_RAW("thrd_rdb_route_add: num_routes %d\n\r", num_routes);
 
 		r->R_destination = destination;
 		r->R_next_hop = next_hop;
 		r->R_route_cost = route_cost;
 
-		PRINTF("uip_ds6_route_add: adding route: ");
-		PRINTF("%d", r->R_destination);
-		PRINTF(" via ");
-		PRINTF("%d", r->R_next_hop);
-		PRINTF("\n\r");
+		LOG_RAW("uip_ds6_route_add: adding route: ");
+		LOG_RAW("%d", r->R_destination);
+		LOG_RAW(" via ");
+		LOG_RAW("%d", r->R_next_hop);
+		LOG_RAW("\n\r");
 
-		PRINTF("-----------------------------------------------------\n\r");
+		LOG_RAW("-----------------------------------------------------\n\r");
 
 	} else {
 
-		PRINTF(ANSI_COLOR_RED "thrd_rdb_route_add: Route already known." ANSI_COLOR_RESET "\n\r");
+		LOG_RAW(ANSI_COLOR_RED "thrd_rdb_route_add: Route already known." ANSI_COLOR_RESET "\n\r");
 
-		PRINTF("thrd_rdb_route_add: num_routes %d\n\r", num_routes);
-		PRINTF("-----------------------------------------------------\n\r");
+		LOG_RAW("thrd_rdb_route_add: num_routes %d\n\r", num_routes);
+		LOG_RAW("-----------------------------------------------------\n\r");
 
 		/* Return NULL, because the Route Set already contains a route for the given destination. */
 		return NULL;
@@ -661,16 +664,16 @@ thrd_error_t
 thrd_rdb_rid_rm(thrd_rdb_id_t *rid)
 {
 	if (rid != NULL) {
-		PRINTF("thrd_rdb_rid_rm: removing router id from 'Router ID Set' with router id: ");
-		PRINTF("%d\n", rid->router_id);
-		PRINTF("\n\r");
+		LOG_RAW("thrd_rdb_rid_rm: removing router id from 'Router ID Set' with router id: ");
+		LOG_RAW("%d\n", rid->router_id);
+		LOG_RAW("\n\r");
 
 		/* Remove the router id from the Router ID Set. */
 		list_remove(routerid_list, rid);
 		memb_free(&routerid_memb, rid);
 		num_rids--;
 
-		PRINTF("thrd_rdb_rid_rm: num_rids %d\n\r", num_rids);
+		LOG_RAW("thrd_rdb_rid_rm: num_rids %d\n\r", num_rids);
 		return THRD_ERROR_NONE;
 	}
 	return THRD_ERROR_INVALID_ARGS;
@@ -683,8 +686,8 @@ thrd_rdb_rid_empty()
 {
 	thrd_rdb_id_t *rid;
 	thrd_rdb_id_t *rid_nxt;
-	PRINTF("thrd_rdb_rid_empty: removing all (%d) router ids from 'Router ID Set'.", num_rids);
-	PRINTF("\n\r");
+	LOG_RAW("thrd_rdb_rid_empty: removing all (%d) router ids from 'Router ID Set'.", num_rids);
+	LOG_RAW("\n\r");
 	rid = thrd_rdb_rid_head();
 	rid_nxt = rid;
 	while ( rid_nxt != NULL ) {
@@ -700,16 +703,16 @@ thrd_error_t
 thrd_rdb_link_rm(thrd_rdb_link_t *link)
 {
 	if ( link != NULL ) {
-		PRINTF("thrd_rdb_link_rm: removing link with router id: ");
-		PRINTF("%d\n", link->L_router_id);
-		PRINTF("\n\r");
+		LOG_RAW("thrd_rdb_link_rm: removing link with router id: ");
+		LOG_RAW("%d\n", link->L_router_id);
+		LOG_RAW("\n\r");
 
 		/* Remove the link from the Link Set. */
 		list_remove(link_list, link);
 		memb_free(&link_memb, link);
 		num_links--;
 
-		PRINTF("thrd_rdb_link_rm: num_links %d\n\r", num_links);
+		LOG_RAW("thrd_rdb_link_rm: num_links %d\n\r", num_links);
 		return THRD_ERROR_NONE;
 	}
 	return THRD_ERROR_INVALID_ARGS;
@@ -722,16 +725,16 @@ thrd_rdb_route_rm(thrd_rdb_route_t *route)
 {
 	if (route != NULL) {
 
-		PRINTF("thrd_rdb_route_rm: removing route with router id: ");
-		PRINTF("%d\n", route->R_destination);
-		PRINTF("\n\r");
+		LOG_RAW("thrd_rdb_route_rm: removing route with router id: ");
+		LOG_RAW("%d\n", route->R_destination);
+		LOG_RAW("\n\r");
 
 		/* Remove the route from the Route Set. */
 		list_remove(route_list, route);
 		memb_free(&route_memb, route);
 		num_routes--;
 
-		PRINTF("thrd_rdb_route_rm: num_routes %d\n\r", num_routes);
+		LOG_RAW("thrd_rdb_route_rm: num_routes %d\n\r", num_routes);
 		return THRD_ERROR_NONE;
 	}
 	return THRD_ERROR_INVALID_ARGS;
@@ -767,9 +770,9 @@ thrd_rdb_link_t
 
 	/* Check whether the given router id already has an entry in the Link Set. */
 	if ( l == NULL ) {
-		PRINTF("thrd_rdb_link_update: router id unknown for ");
-		PRINTF("%d\n", router_id);
-		PRINTF("\n\r");
+		LOG_RAW("thrd_rdb_link_update: router id unknown for ");
+		LOG_RAW("%d\n", router_id);
+		LOG_RAW("\n\r");
 
 		/* If there is no link entry, check if the given router id
 		 * is valid (Router ID Set). If valid, create one. We first need to
@@ -784,11 +787,11 @@ thrd_rdb_link_t
 			/* If the router did not have an entry in our Router ID Set,
 			 * return NULL. */
 
-			PRINTF(ANSI_COLOR_RED "thrd_rdb_link_update: Router with router id ");
-			PRINTF("%d is invalid.", router_id);
-			PRINTF(ANSI_COLOR_RESET "\n\r");
+			LOG_RAW(ANSI_COLOR_RED "thrd_rdb_link_update: Router with router id ");
+			LOG_RAW("%d is invalid.", router_id);
+			LOG_RAW(ANSI_COLOR_RESET "\n\r");
 
-			PRINTF("-----------------------------------------------------\n\r");
+			LOG_RAW("-----------------------------------------------------\n\r");
 			return NULL;
 		}
 
@@ -810,7 +813,7 @@ thrd_rdb_link_t
 		if (l == NULL) {
 			/* This should not happen, as we explicitly deallocated one
 			 * link set entry above. */
-			PRINTF("thrd_rdb_link_update: could not allocate link\n");
+			LOG_RAW("thrd_rdb_link_update: could not allocate link\n");
 			return NULL;
 		}
 
@@ -826,16 +829,16 @@ thrd_rdb_link_t
 
 		num_links++;
 
-		PRINTF("thrd_rdb_link_update: num_links %d\n\r", num_links);
+		LOG_RAW("thrd_rdb_link_update: num_links %d\n\r", num_links);
 
 	} else {
 
-		PRINTF(ANSI_COLOR_RED "thrd_rdb_link_update: router id is already known for ");
-		PRINTF("%d\n", router_id);
-		PRINTF(ANSI_COLOR_RESET "\n\r");
+		LOG_RAW(ANSI_COLOR_RED "thrd_rdb_link_update: router id is already known for ");
+		LOG_RAW("%d\n", router_id);
+		LOG_RAW(ANSI_COLOR_RESET "\n\r");
 
-		PRINTF("thrd_rdb_link_update: num_links %d\n\r", num_links);
-		PRINTF("-----------------------------------------------------\n\r");
+		LOG_RAW("thrd_rdb_link_update: num_links %d\n\r", num_links);
+		LOG_RAW("-----------------------------------------------------\n\r");
 
 		/* Calculate the new link margin using exponential weighted moving
 		 * averaging. */
@@ -854,7 +857,7 @@ thrd_rdb_link_t
 		}
 		// return NULL;
 	}
-	PRINTF("-----------------------------------------------------\n\r");
+	LOG_RAW("-----------------------------------------------------\n\r");
 	return l;
 }
 
@@ -867,9 +870,9 @@ handle_max_neighbor_age_timeout(void *ptr)
 {
 	thrd_rdb_link_t *l = (thrd_rdb_link_t*) ptr;
 
-	PRINTF("Link Set: Timer expired");
+	LOG_RAW("Link Set: Timer expired");
 	if ( l != NULL ) {
-		PRINTF(" for Link Set Entry with Router ID = &d\n\r", l->L_router_id);
+		LOG_RAW(" for Link Set Entry with Router ID = &d\n\r", l->L_router_id);
 		thrd_rdb_link_rm(l);
 	}
 	return;
@@ -900,10 +903,10 @@ thrd_rdb_route_t
 
 		if ( r == NULL ) {
 			/* The route doesn't exist so far. */
-			PRINTF("thrd_rdb_route_update: Received new route from advertisement "
+			LOG_RAW("thrd_rdb_route_update: Received new route from advertisement "
 					"(sender rid %d) ", router_id);
-			PRINTF("to destination router id %d", destination);
-			PRINTF("\n\r");
+			LOG_RAW("to destination router id %d", destination);
+			LOG_RAW("\n\r");
 
 			/* Check whether the destination router id is a neighbor (Link Set).
 			 * If it is a neighbor, check whether the new (multihop) route is
@@ -918,32 +921,32 @@ thrd_rdb_route_t
 				 * better, return.
 				 */
 				if ( (link_cost + cost_reported) >= thrd_rdb_calc_link_cost(l->L_incoming_quality) ) {
-					PRINTF("thrd_rdb_route_update: Not a better route to destination router id %d", destination);
-					PRINTF("\n\r");
+					LOG_RAW("thrd_rdb_route_update: Not a better route to destination router id %d", destination);
+					LOG_RAW("\n\r");
 
 					return NULL;
 				}
 			}
 
-			PRINTF("thrd_rdb_route_update: Adding new route from advertisement "
+			LOG_RAW("thrd_rdb_route_update: Adding new route from advertisement "
 					"(sender rid %d) ", router_id);
-			PRINTF("to destination router id %d", destination);
-			PRINTF("\n\r");
+			LOG_RAW("to destination router id %d", destination);
+			LOG_RAW("\n\r");
 			return thrd_rdb_route_add(destination, router_id,
 					((cost_reported < MAX_ROUTE_COST) ? cost_reported : MAX_ROUTE_COST));
 
 		} else {
 			/* The route already exists. */
-			PRINTF("thrd_rdb_route_update: Received existing route from advertisement "
+			LOG_RAW("thrd_rdb_route_update: Received existing route from advertisement "
 					"(sender rid %d) ", router_id);
-			PRINTF("to destination router id %d", destination);
-			PRINTF("\n\r");
+			LOG_RAW("to destination router id %d", destination);
+			LOG_RAW("\n\r");
 
 			l = thrd_rdb_link_lookup(router_id);
 
 			/* This should not happen unless there is an inconsistency. */
 			if ( l == NULL ) {
-				PRINTF(ANSI_COLOR_RED "thrd_rdb_route_update: ERROR! Inconsistency found!" ANSI_COLOR_RESET);
+				LOG_RAW(ANSI_COLOR_RED "thrd_rdb_route_update: ERROR! Inconsistency found!" ANSI_COLOR_RESET);
 				return NULL;
 			}
 			link_cost = thrd_rdb_calc_link_cost(l->L_incoming_quality);
@@ -952,10 +955,10 @@ thrd_rdb_route_t
 			/* Check whether the new route is better. */
 			if ( (link_cost + cost_reported) < (nxt_link_cost + r->R_route_cost) ) {
 
-				PRINTF("thrd_rdb_route_update: Found a better route to destination router id: ");
-				PRINTF("%d ", destination);
-				PRINTF("over router with id %d", router_id);
-				PRINTF("\n\r");
+				LOG_RAW("thrd_rdb_route_update: Found a better route to destination router id: ");
+				LOG_RAW("%d ", destination);
+				LOG_RAW("over router with id %d", router_id);
+				LOG_RAW("\n\r");
 
 				r->R_next_hop = router_id;
 				r->R_route_cost = cost_reported;
@@ -967,9 +970,9 @@ thrd_rdb_route_t
 		/* Remove route. */
 		if ( r != NULL ) {
 			if ( router_id == r->R_next_hop ) {
-				PRINTF("thrd_rdb_route_update: Removing route with destination router id: ");
-				PRINTF("%d", destination);
-				PRINTF("\n\r");
+				LOG_RAW("thrd_rdb_route_update: Removing route with destination router id: ");
+				LOG_RAW("%d", destination);
+				LOG_RAW("\n\r");
 				thrd_rdb_route_rm(r);
 			}
 		}
@@ -990,14 +993,14 @@ thrd_rdb_print_rid_set(void)
 {
 	thrd_rdb_id_t *rid;
 
-	printf("ROUTER ID SET\n");
-	printf("| ROUTER ID |\n");
-	printf("-------------\n\r");
+	LOG_RAW("ROUTER ID SET\n");
+	LOG_RAW("| ROUTER ID |\n");
+	LOG_RAW("-------------\n\r");
 	for (rid = thrd_rdb_rid_head(); rid != NULL; rid = thrd_rdb_rid_next(rid)) {
-		printf("| " ANSI_COLOR_YELLOW "%9d" ANSI_COLOR_RESET " |\n",
+		LOG_RAW("| "  "%9d"  " |\n",
 				rid->router_id);
 	}
-	printf("-------------\n\r");
+	LOG_RAW("-------------\n\r");
 }
 
 /* --------------------------------------------------------------------------- */
@@ -1007,22 +1010,22 @@ thrd_rdb_print_link_set(void)
 {
 	thrd_rdb_link_t *l;
 
-	printf(
+	LOG_RAW(
 			"---------------------------------- LINK SET -------------------------------------\n");
-	printf(
+	LOG_RAW(
 			"| L_router_id | L_link_margin | L_incoming_quality | L_outgoing_quality | L_age |\n");
-	printf(
+	LOG_RAW(
 			"---------------------------------------------------------------------------------\n\r");
 	for (l = thrd_rdb_link_head(); l != NULL; l = thrd_rdb_link_next(l)) {
-		printf("| " ANSI_COLOR_YELLOW "%11d" ANSI_COLOR_RESET
-				" | " ANSI_COLOR_YELLOW "%13d" ANSI_COLOR_RESET
-				" | " ANSI_COLOR_YELLOW "%18d" ANSI_COLOR_RESET
-				" | " ANSI_COLOR_YELLOW "%18d" ANSI_COLOR_RESET
-				" | " ANSI_COLOR_YELLOW "%5d" ANSI_COLOR_RESET
+		LOG_RAW(  "| "  "%11d"
+				" | "  "%13d"
+				" | "  "%18d"
+				" | "  "%18d"
+				" | "  "%5d"
 				" |\n", l->L_router_id, l->L_link_margin, l->L_incoming_quality,
 				l->L_outgoing_quality, l->L_age);
 	}
-	printf(
+	LOG_RAW(
 			"---------------------------------------------------------------------------------\n\r");
 }
 
@@ -1033,16 +1036,16 @@ thrd_rdb_print_route_set(void)
 {
 	thrd_rdb_route_t *r;
 
-	printf("----------------- ROUTE SET -----------------\n");
-	printf("| R_destination | R_next_hop | R_route_cost |\n");
-	printf("---------------------------------------------\n\r");
+	LOG_RAW("----------------- ROUTE SET -----------------\n");
+	LOG_RAW("| R_destination | R_next_hop | R_route_cost |\n");
+	LOG_RAW("---------------------------------------------\n\r");
 	for (r = thrd_rdb_route_head(); r != NULL; r = thrd_rdb_route_next(r)) {
-		printf("| " ANSI_COLOR_YELLOW "%13d" ANSI_COLOR_RESET
-				" | " ANSI_COLOR_YELLOW "%10d" ANSI_COLOR_RESET
-				" | " ANSI_COLOR_YELLOW "%12d" ANSI_COLOR_RESET
+		LOG_RAW(  "| "  "%13d"
+				" | " "%10d"
+				" | " "%12d"
 				" |\n", r->R_destination, r->R_next_hop, r->R_route_cost);
 	}
-	printf("---------------------------------------------\n\r");
+	LOG_RAW("---------------------------------------------\n\r");
 }
 
 /* --------------------------------------------------------------------------- */
@@ -1050,13 +1053,11 @@ thrd_rdb_print_route_set(void)
 void
 thrd_rdb_print_routing_database(void)
 {
-	printf(
-			ANSI_COLOR_RED "|============================== ROUTING DATABASE ===============================|" ANSI_COLOR_RESET "\n\r");
+	LOG_RAW("|============================== ROUTING DATABASE ===============================|\n\r");
 	thrd_rdb_print_rid_set();
 	thrd_rdb_print_link_set();
 	thrd_rdb_print_route_set();
-	printf(
-			ANSI_COLOR_RED "|===============================================================================|" ANSI_COLOR_RESET "\n\r");
+	LOG_RAW("|===============================================================================|\n\r");
 }
 
 #endif /* RIP_DEBUG */

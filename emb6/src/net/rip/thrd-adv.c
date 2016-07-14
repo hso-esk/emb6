@@ -15,6 +15,9 @@
 #include "thrd-partition.h"
 #include "thrd-iface.h"
 
+#define     LOGGER_ENABLE                 LOGGER_THRD_NET
+#include    "logger.h"
+
 /*==============================================================================
                           LOCAL VARIABLE DECLARATIONS
  =============================================================================*/
@@ -53,7 +56,7 @@ thrd_process_route64(uint8_t rid_sender, tlv_route64_t *route64_tlv)
 			uint64_t bit_mask = 0x8000000000000000;
 			uint8_t data_cnt = 0;
 
-			PRINTF("thrd_process_route64: route64_tlv->router_id_msk = %lu\n", route64_tlv->router_id_mask);
+			LOG_RAW("thrd_process_route64: route64_tlv->router_id_msk = %lu\n", route64_tlv->router_id_mask);
 
 			// Replace the ID Set.
 			for ( uint8_t id_cnt = 0; id_cnt < 64; id_cnt++) {
@@ -189,18 +192,14 @@ thrd_generate_leader_data_tlv(void)
 void
 print_leader_data_tlv(tlv_leader_t * leader_tlv)
 {
-	printf(ANSI_COLOR_RED
-			"|============================== LEADER DATA TLV ================================|"
-			ANSI_COLOR_RESET "\n\r");
-	printf("| " ANSI_COLOR_YELLOW);
-	printf("Partition ID = %d\n", leader_tlv->partition_id);
-	printf("Weight = %d\n", leader_tlv->weight);
-	printf("Data Version = %d\n", leader_tlv->data_version);
-	printf("Stable Data Version = %d\n", leader_tlv->stable_data_version);
-	printf("Leader Router ID = %d\n", leader_tlv->leader_router_id);
-	printf(ANSI_COLOR_RESET " |\n");
-	printf(ANSI_COLOR_RED
-			"|===============================================================================|"
-			ANSI_COLOR_RESET "\n\r");
+	LOG_RAW("|============================== LEADER DATA TLV ================================|\n\r");
+	LOG_RAW("| ");
+	LOG_RAW("Partition ID = %d\n", leader_tlv->partition_id);
+	LOG_RAW("Weight = %d\n", leader_tlv->weight);
+	LOG_RAW("Data Version = %d\n", leader_tlv->data_version);
+	LOG_RAW("Stable Data Version = %d\n", leader_tlv->stable_data_version);
+	LOG_RAW("Leader Router ID = %d\n", leader_tlv->leader_router_id);
+	LOG_RAW(" |\n");
+	LOG_RAW("|===============================================================================|\n\r");
 }
 

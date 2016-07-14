@@ -15,8 +15,8 @@
 #include "thrd-partition.h"
 #include "thrd-router-id.h"
 
-#define DEBUG DEBUG_PRINT
-#include "uip-debug.h"
+#define     LOGGER_ENABLE                 LOGGER_THRD_NET
+#include    "logger.h"
 
 /*
  ********************************************************************************
@@ -71,22 +71,22 @@ static void
 res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
 {
 	const uint8_t *chunk;
-	PRINTF("========================== CoAP ==========================\n");
-	PRINTF("Receiving CoAP packet! (Res: a/an)\n");
+	LOG_RAW("========================== CoAP ==========================\n");
+	LOG_RAW("Receiving CoAP packet! (Res: a/an)\n");
 
 	if ( (len = coap_get_payload(request, &chunk)) >= 20 ) {
 		tlv = (tlv_t*) &chunk[0];
 		uint8_t router_id = 63;	// Invalid Router ID.
 		if ( tlv->type == NET_TLV_ML_EID && tlv->length == 8 ) {
 			ml_eid_tlv_ = (net_tlv_ml_eid_t*) tlv->value;
-			PRINTF("ML-EID = ");
+			LOG_RAW("ML-EID = ");
 			print_ml_eid(ml_eid_tlv_);
 		}
 		if ( len == 24 ) {
 			tlv = (tlv_t*) &chunk[10];
 			if ( tlv->type == NET_TLV_RLOC16 && tlv->length == 2 ) {
 				rloc16_tlv = (net_tlv_rloc16_t*) tlv->value;
-				PRINTF("RLOC16 = %04x \n", rloc16_tlv->rloc16);
+				LOG_RAW("RLOC16 = %04x \n", rloc16_tlv->rloc16);
 				router_id = (uint8_t) (rloc16_tlv->rloc16 >> 10);
 			}
 		}
@@ -111,7 +111,7 @@ res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t prefer
 			REST.set_response_payload(response, payload_buf, len);
 		}
 	}
-	PRINTF("==========================================================\n");
+	LOG_RAW("==========================================================\n");
 }
 
 /* --------------------------------------------------------------------------- */
@@ -146,11 +146,11 @@ static void
 print_ml_eid(net_tlv_ml_eid_t *ml_eid_tlv)
 {
 	for (uint8_t i = 0; i < 8; i++) {
-		PRINTF("%02x", ml_eid_tlv->ml_eid[i]);
+		LOG_RAW("%02x", ml_eid_tlv->ml_eid[i]);
 		if ( i < 7 && (i % 2) == 1 )
-			PRINTF(":");
+			LOG_RAW(":");
 		if ( i == 7 )
-			PRINTF("\n");
+			LOG_RAW("\n");
 	}
 }
 

@@ -23,6 +23,9 @@
 #define DEBUG DEBUG_PRINT
 #include "uip-debug.h"	// For debugging terminal output.
 
+#define     LOGGER_ENABLE                 LOGGER_THRD_NET
+#include    "logger.h"
+
 /**
  *  Thread Network Partition.
  */
@@ -61,7 +64,7 @@ thrd_partition_start(void)
 {
 	if ( (thrd_dev.type == THRD_DEV_TYPE_ROUTER) || (thrd_dev.type == THRD_DEV_TYPE_REED) ) {
 
-		PRINTF("thrd_partition_start: Starting new Thread Partition.\n");
+		LOG_RAW("thrd_partition_start: Starting new Thread Partition.\n");
 		// Resetting Network Partition Data.
 		thrd_eid_rloc_db_init();		// Initialize EID-to-RLOC Mapping.
 		thrd_eid_rloc_cache_init();		// Initialize EID-to-RLOC Map Cache.
@@ -91,7 +94,7 @@ thrd_partition_process(uint8_t id_sequence_number, tlv_leader_t *leader_tlv)
 		if ( leader_tlv->weight > thrd_partition.Partition_weight ) {
 			attach:
 			// TODO Try to attach to other partition.
-			PRINTF("thrd_partition_process: Try to attach to other partition!\n");
+			LOG_RAW("thrd_partition_process: Try to attach to other partition!\n");
 			thrd_partition_set_leader_router_id(leader_tlv->leader_router_id);	// TODO Call this function after successful attachment process.
 		} else if ( leader_tlv->weight == thrd_partition.Partition_weight ) {
 			if ( leader_tlv->partition_id > thrd_partition.Partition_ID ) {
@@ -107,7 +110,7 @@ thrd_partition_process(uint8_t id_sequence_number, tlv_leader_t *leader_tlv)
 		}
 		return THRD_ERROR_NONE;
 	}
-	PRINTF("thrd_partition_process: Invalid Leader Data TLV.\n");
+	LOG_RAW("thrd_partition_process: Invalid Leader Data TLV.\n");
 	return THRD_ERROR_INVALID_ARGS;
 }
 
@@ -193,16 +196,16 @@ thrd_partition_get_leader_cost()
 void
 thrd_print_partition_data()
 {
-	PRINTF(ANSI_COLOR_CYAN "|================================== THREAD PARTITION ===================================|" ANSI_COLOR_RESET "\n\r");
-	PRINTF("| Partition_ID | VN_version | VN_stable_version | ID_sequence_number | Partition_weight |\n");
-	PRINTF("-----------------------------------------------------------------------------------------\n\r");
-	PRINTF("| " ANSI_COLOR_YELLOW "%12lu" ANSI_COLOR_RESET
-			" | " ANSI_COLOR_YELLOW "%10d" ANSI_COLOR_RESET
-			" | " ANSI_COLOR_YELLOW "%17d" ANSI_COLOR_RESET
-			" | " ANSI_COLOR_YELLOW "%18d" ANSI_COLOR_RESET
-			" | " ANSI_COLOR_YELLOW "%16d" ANSI_COLOR_RESET
+	LOG_RAW("|================================== THREAD PARTITION ===================================|\n\r");
+	LOG_RAW("| Partition_ID | VN_version | VN_stable_version | ID_sequence_number | Partition_weight |\n");
+	LOG_RAW("-----------------------------------------------------------------------------------------\n\r");
+	LOG_RAW( "| "  "%12lu"
+			" | "  "%10d"
+			" | "  "%17d"
+			" | "  "%18d"
+			" | "  "%16d"
 			" |\n", thrd_partition.Partition_ID, thrd_partition.VN_version, thrd_partition.VN_stable_version, thrd_partition.ID_sequence_number, thrd_partition.Partition_weight);
-	PRINTF(ANSI_COLOR_CYAN "=========================================================================================" ANSI_COLOR_RESET "\n\r");
+	LOG_RAW("=========================================================================================\n\r");
 }
 
 /* --------------------------------------------------------------------------- */
