@@ -1954,7 +1954,7 @@ sicslowpan_get_last_rssi(void)
   return last_rssi;
 }
 /*--------------------------------------------------------------------*/
-const s_nsHeadComp_t sicslowpan_driver = {
+const s_nsHeadComp_t hc_driver_sicslowpan = {
   "sicslowpan",
   sicslowpan_init,
   input

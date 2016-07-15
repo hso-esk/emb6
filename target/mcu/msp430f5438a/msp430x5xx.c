@@ -71,10 +71,8 @@
 #include "uart.h"
 #include "rtc.h"
 #include "infoflash.h"
+#include "rt_tmr.h"
 
-#if 1
-#include "lib_tmr.h"
-#endif
 
 /*
 ********************************************************************************
@@ -130,7 +128,7 @@ static void _hal_isrSysTick( void *p_arg )
 {
     hal_ticks++;
     if ((hal_ticks % TARGET_CFG_SYSTICK_SCALER) == 0) {
-        Tmr_Update();
+        rt_tmr_update();
     }
 }
 
@@ -513,18 +511,17 @@ void *hal_spiInit(void)
 uint8_t hal_spiSlaveSel(void *p_spi, bool action)
 {
 #if TARGET_CFG_ARG_CHK_EN
-    if (p_spi == NULL) {
-        return 0;
-    }
+  if (p_spi == NULL) {
+    return 0;
+  }
 #endif
 
-
-    if (action == TRUE) {
-        spi_rfSelect();
-    } else {
-        spi_rfDeselect();
-    }
-    return 1;
+  if (action == TRUE) {
+    spi_rfSelect();
+  } else {
+    spi_rfDeselect();
+  }
+  return 1;
 }
 
 void hal_spiTxRx(uint8_t *p_tx, uint8_t *p_rx, uint16_t len)

@@ -57,8 +57,6 @@
 #include "packetbuf.h"
 #include "random.h"
 
-#include "lib_port.h"
-
 #define     LOGGER_ENABLE        LOGGER_LLC
 #include    "logger.h"
 
@@ -67,16 +65,14 @@
 *                          LOCAL FUNCTION DECLARATIONS
 ********************************************************************************
 */
-static void DLLC_Init(void *p_netstk, e_nsErr_t *p_err);
-static void DLLC_On(e_nsErr_t *p_err);
-static void DLLC_Off(e_nsErr_t *p_err);
-static void DLLC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
-static void DLLC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
-static void DLLC_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
-
-
-static void DLLC_CbTx(void *p_arg, e_nsErr_t *p_err);
-static void DLLC_VerifyAddr(frame802154_t *p_frame, e_nsErr_t *p_err);
+static void dllc_init(void *p_netstk, e_nsErr_t *p_err);
+static void dllc_on(e_nsErr_t *p_err);
+static void dllc_off(e_nsErr_t *p_err);
+static void dllc_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
+static void dllc_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
+static void dllc_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
+static void dllc_cbtx(void *p_arg, e_nsErr_t *p_err);
+static void dllc_verifyAddr(frame802154_t *p_frame, e_nsErr_t *p_err);
 
 
 /*
@@ -88,11 +84,11 @@ static void DLLC_VerifyAddr(frame802154_t *p_frame, e_nsErr_t *p_err);
  *   data or MAC command frame. The default is a random value within
  *   the range.
  */
-static uint8_t          DLLC_DSN;
-static void            *DLLC_CbTxArg;
-static nsTxCbFnct_t     DLLC_CbTxFnct;
-static nsRxCbFnct_t     DLLC_CbRxFnct;
-static s_ns_t          *DLLC_Netstk;
+static uint8_t          dllc_dsn;
+static void            *pdllc_cbtxarg;
+static nsTxCbFnct_t     dllc_cbTxFnct;
+static nsRxCbFnct_t     dllc_cbRxFnct;
+static s_ns_t          *pdllc_netstk;
 
 
 /*
@@ -100,15 +96,15 @@ static s_ns_t          *DLLC_Netstk;
 *                               GLOBAL VARIABLES
 ********************************************************************************
 */
-const s_nsDLLC_t DLLCDrv802154 =
+const s_nsDLLC_t dllc_driver_802154 =
 {
-   "DLLC 802154",
-    DLLC_Init,
-    DLLC_On,
-    DLLC_Off,
-    DLLC_Send,
-    DLLC_Recv,
-    DLLC_IOCtrl,
+ "DLLC 802154",
+  dllc_init,
+  dllc_on,
+  dllc_off,
+  dllc_send,
+  dllc_recv,
+  dllc_ioctl,
 };
 
 
@@ -124,26 +120,25 @@ const s_nsDLLC_t DLLCDrv802154 =
  * @param   p_netstk    Pointer to netstack structure
  * @param   p_err       Pointer to a variable storing returned error code
  */
-static void DLLC_Init(void *p_netstk, e_nsErr_t *p_err)
+static void dllc_init(void *p_netstk, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
-    if (p_err == NULL) {
-        return;
-    }
+  if (p_err == NULL) {
+    return;
+  }
 
-    if (p_netstk == NULL) {
-        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
-        return;
-    }
+  if (p_netstk == NULL) {
+    *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+    return;
+  }
 #endif
 
-
-    DLLC_Netstk = (s_ns_t *)p_netstk;
-    DLLC_CbRxFnct = 0;
-    DLLC_CbTxFnct = 0;
-    DLLC_CbTxArg = NULL;
-    DLLC_DSN = random_rand() & 0xFF;
-    *p_err = NETSTK_ERR_NONE;
+  pdllc_netstk = (s_ns_t *) p_netstk;
+  dllc_cbRxFnct = 0;
+  dllc_cbTxFnct = 0;
+  pdllc_cbtxarg = NULL;
+  dllc_dsn = random_rand() & 0xFF;
+  *p_err = NETSTK_ERR_NONE;
 }
 
 
@@ -152,16 +147,15 @@ static void DLLC_Init(void *p_netstk, e_nsErr_t *p_err)
  *
  * @param   p_err       Pointer to a variable storing returned error code
  */
-static void DLLC_On(e_nsErr_t *p_err)
+static void dllc_on(e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
-    if (p_err == NULL) {
-        return;
-    }
+  if (p_err == NULL) {
+    return;
+  }
 #endif
 
-
-    DLLC_Netstk->mac->on(p_err);
+  pdllc_netstk->mac->on(p_err);
 }
 
 
@@ -170,16 +164,15 @@ static void DLLC_On(e_nsErr_t *p_err)
  *
  * @param   p_err       Pointer to a variable storing returned error code
  */
-static void DLLC_Off(e_nsErr_t *p_err)
+static void dllc_off(e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
-    if (p_err == NULL) {
-        return;
-    }
+  if (p_err == NULL) {
+    return;
+  }
 #endif
 
-
-    DLLC_Netstk->mac->off(p_err);
+  pdllc_netstk->mac->off(p_err);
 }
 
 
@@ -190,138 +183,124 @@ static void DLLC_Off(e_nsErr_t *p_err)
  * @param   len         Length of frame to send
  * @param   p_err       Pointer to a variable storing returned error code
  */
-static void DLLC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
+static void dllc_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 {
-    int             alloc;
-    int             is_broadcast;
-    uint8_t         hdr_len;
-    frame802154_t   params;
+  int alloc;
+  int is_broadcast;
+  uint8_t hdr_len;
+  frame802154_t params;
 
 #if NETSTK_CFG_ARG_CHK_EN
-    if (p_err == NULL) {
-        return;
-    }
+  if (p_err == NULL) {
+    return;
+  }
 
-    if ((len == 0) ||
-        (p_data == NULL)) {
-        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
-        return;
-    }
+  if ((len == 0) || (p_data == NULL)) {
+    *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+    return;
+  }
 #endif
 
-    /* init to zeros */
-    memset(&params, 0, sizeof(params));
+  /* init to zeros */
+  memset(&params, 0, sizeof(params));
 
-    /* build the FCF. */
-    params.fcf.frame_type = packetbuf_attr(PACKETBUF_ATTR_FRAME_TYPE);
-    params.fcf.frame_pending = packetbuf_attr(PACKETBUF_ATTR_PENDING);
+  /* build the FCF. */
+  params.fcf.frame_type = packetbuf_attr(PACKETBUF_ATTR_FRAME_TYPE);
+  params.fcf.frame_pending = packetbuf_attr(PACKETBUF_ATTR_PENDING);
 
-    /* ACK-required bit */
-    is_broadcast = packetbuf_holds_broadcast();
-    if (is_broadcast == 1) {
-        params.fcf.ack_required = 0;
-    } else {
-        params.fcf.ack_required = packetbuf_attr(PACKETBUF_ATTR_RELIABLE);
-    }
+  /* ACK-required bit */
+  is_broadcast = packetbuf_holds_broadcast();
+  if (is_broadcast == 1) {
+    params.fcf.ack_required = 0;
+  } else {
+    params.fcf.ack_required = packetbuf_attr(PACKETBUF_ATTR_RELIABLE);
+  }
 
-    /* PAN ID compression */
-    params.fcf.panid_compression = 0;
+  /* PAN ID compression */
+  params.fcf.panid_compression = 0;
 
-    /* Insert IEEE 802.15.4 (2006) version bits. */
-    params.fcf.frame_version = FRAME802154_IEEE802154_2006;
+  /* Insert IEEE 802.15.4 (2006) version bits. */
+  params.fcf.frame_version = FRAME802154_IEEE802154_2006;
 
-    /* sequence number */
-    params.seq = (uint8_t )packetbuf_attr(PACKETBUF_ATTR_MAC_SEQNO);
-    if (params.seq == 0) {
-        params.seq = DLLC_DSN++;
-        packetbuf_set_attr(PACKETBUF_ATTR_MAC_SEQNO, params.seq);
-    }
+  /* sequence number */
+  params.seq = (uint8_t) packetbuf_attr(PACKETBUF_ATTR_MAC_SEQNO);
+  if (params.seq == 0) {
+    params.seq = dllc_dsn++;
+    packetbuf_set_attr(PACKETBUF_ATTR_MAC_SEQNO, params.seq);
+  }
 
-    /* addressing fields */
-    params.dest_pid = mac_phy_config.pan_id;
-    if (is_broadcast == 1) {
-        /* Broadcast requires short address mode. */
-        params.fcf.dest_addr_mode = FRAME802154_SHORTADDRMODE;
-        params.dest_addr[0] = 0xFF;
-        params.dest_addr[1] = 0xFF;
-    } else {
-        linkaddr_copy((linkaddr_t *) &params.dest_addr,
-                      packetbuf_addr(PACKETBUF_ADDR_RECEIVER));
-        params.fcf.dest_addr_mode = FRAME802154_LONGADDRMODE;
-    }
+  /* addressing fields */
+  params.dest_pid = mac_phy_config.pan_id;
+  if (is_broadcast == 1) {
+    /* Broadcast requires short address mode. */
+    params.fcf.dest_addr_mode = FRAME802154_SHORTADDRMODE;
+    params.dest_addr[0] = 0xFF;
+    params.dest_addr[1] = 0xFF;
+  } else {
+    linkaddr_copy((linkaddr_t *)&params.dest_addr, packetbuf_addr(PACKETBUF_ADDR_RECEIVER));
+    params.fcf.dest_addr_mode = FRAME802154_LONGADDRMODE;
+  }
 
-    params.src_pid = mac_phy_config.pan_id;
-    if (LINKADDR_SIZE == 2UL) {
-        params.fcf.src_addr_mode = FRAME802154_SHORTADDRMODE;
-    } else {
-        params.fcf.src_addr_mode = FRAME802154_LONGADDRMODE;
-    }
-    linkaddr_copy((linkaddr_t *)&params.src_addr, &linkaddr_node_addr);
+  params.src_pid = mac_phy_config.pan_id;
+  if (LINKADDR_SIZE == 2UL) {
+    params.fcf.src_addr_mode = FRAME802154_SHORTADDRMODE;
+  } else {
+    params.fcf.src_addr_mode = FRAME802154_LONGADDRMODE;
+  }
+  linkaddr_copy((linkaddr_t *)&params.src_addr, &linkaddr_node_addr);
 
-    /* auxiliary security */
+  /* auxiliary security */
 #if LLSEC802154_SECURITY_LEVEL
-    if(packetbuf_attr(PACKETBUF_ATTR_SECURITY_LEVEL)) {
-        params.fcf.security_enabled = 1;
-    }
-    /* Setting security-related attributes */
-    params.aux_hdr.security_control.security_level = packetbuf_attr(PACKETBUF_ATTR_SECURITY_LEVEL);
-    params.aux_hdr.frame_counter.u16[0] = packetbuf_attr(PACKETBUF_ATTR_FRAME_COUNTER_BYTES_0_1);
-    params.aux_hdr.frame_counter.u16[1] = packetbuf_attr(PACKETBUF_ATTR_FRAME_COUNTER_BYTES_2_3);
+  if(packetbuf_attr(PACKETBUF_ATTR_SECURITY_LEVEL)) {
+    params.fcf.security_enabled = 1;
+  }
+  /* Setting security-related attributes */
+  params.aux_hdr.security_control.security_level = packetbuf_attr(PACKETBUF_ATTR_SECURITY_LEVEL);
+  params.aux_hdr.frame_counter.u16[0] = packetbuf_attr(PACKETBUF_ATTR_FRAME_COUNTER_BYTES_0_1);
+  params.aux_hdr.frame_counter.u16[1] = packetbuf_attr(PACKETBUF_ATTR_FRAME_COUNTER_BYTES_2_3);
 #if LLSEC802154_USES_EXPLICIT_KEYS
-    params.aux_hdr.security_control.key_id_mode = packetbuf_attr(PACKETBUF_ATTR_KEY_ID_MODE);
-    params.aux_hdr.key_index = packetbuf_attr(PACKETBUF_ATTR_KEY_INDEX);
-    params.aux_hdr.key_source.u16[0] = packetbuf_attr(PACKETBUF_ATTR_KEY_SOURCE_BYTES_0_1);
+  params.aux_hdr.security_control.key_id_mode = packetbuf_attr(PACKETBUF_ATTR_KEY_ID_MODE);
+  params.aux_hdr.key_index = packetbuf_attr(PACKETBUF_ATTR_KEY_INDEX);
+  params.aux_hdr.key_source.u16[0] = packetbuf_attr(PACKETBUF_ATTR_KEY_SOURCE_BYTES_0_1);
 #endif /* LLSEC802154_USES_EXPLICIT_KEYS */
 #endif /* LLSEC802154_SECURITY_LEVEL */
 
-    /* configure packet payload */
-    params.payload = packetbuf_dataptr();
-    params.payload_len = packetbuf_datalen();
+  /* configure packet payload */
+  params.payload = packetbuf_dataptr();
+  params.payload_len = packetbuf_datalen();
 
-    /* allocate buffer for MAC header */
-    hdr_len = frame802154_hdrlen(&params);
-    alloc = packetbuf_hdralloc(hdr_len);
-    if (alloc == 0) {
-        *p_err = NETSTK_ERR_BUF_OVERFLOW;
-        return;
-    }
+  /* allocate buffer for MAC header */
+  hdr_len = frame802154_hdrlen(&params);
+  alloc = packetbuf_hdralloc(hdr_len);
+  if (alloc == 0) {
+    *p_err = NETSTK_ERR_BUF_OVERFLOW;
+    return;
+  }
 
-    /* write the header */
-    frame802154_create(&params, packetbuf_hdrptr());
-
+  /* write the header */
+  frame802154_create(&params, packetbuf_hdrptr());
 
 #if LOGGER_ENABLE
-    /*
-     * Logging
-     */
-    uint16_t data_len = packetbuf_totlen();
-    uint8_t *p_dataptr = packetbuf_hdrptr();
-    LOG_RAW("\r\n====================\r\n");
-    LOG_RAW("DLLC_TX: ");
-    while (data_len--) {
-        LOG_RAW("%02x", *p_dataptr++);
-    }
-    LOG_RAW("\r\n");
+  /*
+   * Logging
+   */
+  uint16_t data_len = packetbuf_totlen();
+  uint8_t *p_dataptr = packetbuf_hdrptr();
+  LOG_RAW("DLLC_TX: ");
+  while (data_len--) {
+    LOG_RAW("%02x", *p_dataptr++);
+  }
+  LOG_RAW("\r\n");
 #endif
 
+  /*
+   * set TX callback function and argument
+   */
+  pdllc_netstk->mac->ioctrl(NETSTK_CMD_TX_CBFNCT_SET, (void *) dllc_cbtx, p_err);
+  pdllc_netstk->mac->ioctrl(NETSTK_CMD_TX_CBARG_SET, NULL, p_err);
 
-    /*
-     * set TX callback function and argument
-     */
-    DLLC_Netstk->mac->ioctrl(NETSTK_CMD_TX_CBFNCT_SET,
-                             (void *)DLLC_CbTx,
-                             p_err);
-
-    DLLC_Netstk->mac->ioctrl(NETSTK_CMD_TX_CBARG_SET,
-                             NULL,
-                             p_err);
-
-    /*
-     * Issue next lower layer to transmit the prepared frame
-     */
-    DLLC_Netstk->mac->send(packetbuf_hdrptr(),
-                           packetbuf_totlen(),
-                           p_err);
+  /* Issue next lower layer to transmit the prepared frame */
+  pdllc_netstk->mac->send(packetbuf_hdrptr(), packetbuf_totlen(), p_err);
 }
 
 
@@ -332,70 +311,66 @@ static void DLLC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
  * @param   len         Length of frame to receive
  * @param   p_err       Pointer to a variable storing returned error code
  */
-static void DLLC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
+static void dllc_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
-    if (p_err == NULL) {
-        return;
-    }
+  if (p_err == NULL) {
+    return;
+  }
 
-    if ((len == 0) ||
-        (p_data == NULL)) {
-        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
-        return;
-    }
+  if ((len == 0) ||
+      (p_data == NULL)) {
+    *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+    return;
+  }
 #endif
 
+  frame802154_t frame;
+  int hdrlen, ret;
 
-    frame802154_t frame;
-    int hdrlen, ret;
+  /* store the received packet into internal packet buffer */
+  packetbuf_clear();
+  packetbuf_set_datalen(len);
+  memcpy(packetbuf_dataptr(), p_data, len);
 
-    packetbuf_clear();
-    packetbuf_set_datalen(len);
-    memcpy(packetbuf_dataptr(), p_data, len);
+  /* parse the received packet */
+  hdrlen = frame802154_parse(p_data, len, &frame);
+  if (hdrlen == 0) {
+    *p_err = NETSTK_ERR_INVALID_FRAME;
+    return;
+  }
 
-    hdrlen = frame802154_parse(p_data, len, &frame);
-    if (hdrlen == 0) {
-        *p_err = NETSTK_ERR_INVALID_FRAME;
-        return;
-    }
+  /* strip MAC header off */
+  ret = packetbuf_hdrreduce(len - frame.payload_len);
+  if (ret == 0) {
+    *p_err = NETSTK_ERR_FATAL;
+    return;
+  }
 
-    ret = packetbuf_hdrreduce(len - frame.payload_len);
-    if (ret == 0) {
-        *p_err = NETSTK_ERR_FATAL;
-        return;
-    }
+  /* verify frame addresses */
+  dllc_verifyAddr(&frame, p_err);
+  if (*p_err != NETSTK_ERR_NONE) {
+    return;
+  }
 
-    /*
-     * Check frame addresses
-     */
-    DLLC_VerifyAddr(&frame, p_err);
-    if (*p_err != NETSTK_ERR_NONE) {
-        return;
-    }
-
-    /*
-     * Signal next higher layer of the valid received frame
-     */
-    if (DLLC_CbRxFnct) {
+  /* signal next higher layer of the valid received frame */
+  if (dllc_cbRxFnct) {
 #if LOGGER_ENABLE
-        /*
-         * Logging
-         */
-        uint16_t data_len = packetbuf_datalen();
-        uint8_t *p_dataptr = packetbuf_dataptr();
-        LOG_RAW("DLLC_RX: ");
-        while (data_len--) {
-            LOG_RAW("%02x", *p_dataptr++);
-        }
-        LOG_RAW("\r\n====================\r\n");
+    /*
+     * Logging
+     */
+    uint16_t data_len = packetbuf_datalen();
+    uint8_t *p_dataptr = packetbuf_dataptr();
+    LOG_RAW("DLLC_RX: ");
+    while (data_len--) {
+      LOG_RAW("%02x", *p_dataptr++);
+    }
+    LOG_RAW("\r\n====================\r\n");
 #endif
 
-        /*
-         * Inform the next higher layer
-         */
-        DLLC_CbRxFnct(packetbuf_dataptr(), packetbuf_datalen(), p_err);
-    }
+    /* Inform the next higher layer */
+    dllc_cbRxFnct(packetbuf_dataptr(), packetbuf_datalen(), p_err);
+  }
 }
 
 
@@ -406,44 +381,44 @@ static void DLLC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
  * @param   p_val       Pointer to a variable related to the command
  * @param   p_err       Pointer to a variable storing returned error code
  */
-static void DLLC_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
+static void dllc_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
-    if (p_err == NULL) {
-        return;
-    }
+  if (p_err == NULL) {
+    return;
+  }
 #endif
 
-    *p_err = NETSTK_ERR_NONE;
+  *p_err = NETSTK_ERR_NONE;
 
-    switch (cmd) {
-        case NETSTK_CMD_TX_CBFNCT_SET:
-            if (p_val == NULL) {
-                *p_err = NETSTK_ERR_INVALID_ARGUMENT;
-            } else {
-                DLLC_CbTxFnct = (nsTxCbFnct_t)p_val;
-            }
-            break;
+  switch (cmd) {
+    case NETSTK_CMD_TX_CBFNCT_SET:
+      if (p_val == NULL) {
+        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+      } else {
+        dllc_cbTxFnct = (nsTxCbFnct_t) p_val;
+      }
+      break;
 
-        case NETSTK_CMD_TX_CBARG_SET:
-            DLLC_CbTxArg = p_val;
-            break;
+    case NETSTK_CMD_TX_CBARG_SET:
+      pdllc_cbtxarg = p_val;
+      break;
 
-        case NETSTK_CMD_RX_CBFNT_SET:
-            if (p_val == NULL) {
-                *p_err = NETSTK_ERR_INVALID_ARGUMENT;
-            } else {
-                DLLC_CbRxFnct = (nsRxCbFnct_t)p_val;
-            }
-            break;
+    case NETSTK_CMD_RX_CBFNT_SET:
+      if (p_val == NULL) {
+        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+      } else {
+        dllc_cbRxFnct = (nsRxCbFnct_t) p_val;
+      }
+      break;
 
-        case NETSTK_CMD_DLLC_RSVD:
-            break;
+    case NETSTK_CMD_DLLC_RSVD:
+      break;
 
-        default:
-            DLLC_Netstk->mac->ioctrl(cmd, p_val, p_err);
-            break;
-    }
+    default:
+      pdllc_netstk->mac->ioctrl(cmd, p_val, p_err);
+      break;
+  }
 }
 
 
@@ -453,64 +428,57 @@ static void DLLC_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
  * @param status
  * @param transmissions
  */
-static void DLLC_CbTx(void *p_arg, e_nsErr_t *p_err)
+static void dllc_cbtx(void *p_arg, e_nsErr_t *p_err)
 {
-    if (DLLC_CbTxFnct) {
-        DLLC_CbTxFnct(DLLC_CbTxArg, p_err);
-    }
+  if (dllc_cbTxFnct) {
+    dllc_cbTxFnct(pdllc_cbtxarg, p_err);
+  }
 }
 
 
 /**
  * @brief   Verify destination addresses of the received frame
  */
-static void DLLC_VerifyAddr(frame802154_t *p_frame, e_nsErr_t *p_err)
+static void dllc_verifyAddr(frame802154_t *p_frame, e_nsErr_t *p_err)
 {
-    int     is_addr_matched;
-    uint8_t is_broadcast;
+  int is_addr_matched;
+  uint8_t is_broadcast;
 
-
-    /*
-     * Verify destination address
-     */
-    if (p_frame->fcf.dest_addr_mode) {
-        if ((p_frame->dest_pid != mac_phy_config.pan_id) &&
-            (p_frame->dest_pid != FRAME802154_BROADCASTPANDID)) {
-            *p_err = NETSTK_ERR_FATAL;
-            return;
-        }
-
-        /*
-         * Check for broadcast frame
-         */
-        is_broadcast = frame802154_broadcast(p_frame);
-        if (is_broadcast == 0) {
-            /*
-             * If not a broadcast frame, then store destination address
-             */
-            packetbuf_set_addr(PACKETBUF_ADDR_RECEIVER,
-                               (linkaddr_t *)&p_frame->dest_addr);
-#if !NETSTACK_CONF_BRIDGE_MODE
-            is_addr_matched = linkaddr_cmp((linkaddr_t *)&p_frame->dest_addr,
-                                           &linkaddr_node_addr);
-            if (is_addr_matched == 0) {
-                /*
-                 * Not for this node
-                 */
-                *p_err = NETSTK_ERR_FATAL;
-                return;
-            }
-#endif
-
-
-        }
+  /*
+   * Verify destination address
+   */
+  if (p_frame->fcf.dest_addr_mode) {
+    if ((p_frame->dest_pid != mac_phy_config.pan_id) &&
+        (p_frame->dest_pid != FRAME802154_BROADCASTPANDID)) {
+      *p_err = NETSTK_ERR_FATAL;
+      return;
     }
 
     /*
-     * If destination address is valid, then store source address
+     * Check for broadcast frame
      */
-    packetbuf_set_addr(PACKETBUF_ADDR_SENDER,
-                       (linkaddr_t *)&p_frame->src_addr);
+    is_broadcast = frame802154_broadcast(p_frame);
+    if (is_broadcast == 0) {
+      /*
+       * If not a broadcast frame, then store destination address
+       */
+      packetbuf_set_addr(PACKETBUF_ADDR_RECEIVER, (linkaddr_t *) &p_frame->dest_addr);
+
+#if !NETSTACK_CONF_BRIDGE_MODE
+      is_addr_matched = linkaddr_cmp((linkaddr_t *)&p_frame->dest_addr, &linkaddr_node_addr);
+      if (is_addr_matched == 0) {
+        /* the received packet is not destined not for this node, then discarded */
+        *p_err = NETSTK_ERR_FATAL;
+        return;
+      }
+#endif
+    }
+  }
+
+  /*
+   * If destination address is valid, then store source address
+   */
+  packetbuf_set_addr(PACKETBUF_ADDR_SENDER, (linkaddr_t *) &p_frame->src_addr);
 }
 
 

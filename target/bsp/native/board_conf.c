@@ -63,7 +63,7 @@
 */
 #include "emb6.h"
 
-#include "../native/board_conf.h"
+#include "board_conf.h"
 #include "hwinit.h"
 #include "etimer.h"
 #include "etimer.h"
@@ -75,22 +75,20 @@
 
 uint8_t board_conf(s_ns_t* p_netstk)
 {
-    uint8_t 	c_ret = 0;
+  uint8_t c_ret = 0;
 
+  if (p_netstk != NULL) {
+    p_netstk->dllc = &dllc_driver_802154;
+    p_netstk->mac  = &mac_driver_null;
+    p_netstk->phy  = &phy_driver_802154;
+    p_netstk->rf   = &rf_driver_native;
+    etimer_init();
+    c_ret = 1;
+  } else {
+    LOG_ERR("Network stack pointer is NULL");
+  }
 
-    if (p_netstk != NULL) {
-		p_netstk->dllc = &DLLCDrv802154;
-		p_netstk->mac = &MACDrvNull;
-		p_netstk->phy = &PHYDrv802154;
-		p_netstk->rf  = &RFDrvNative;
-		etimer_init();
-		c_ret = 1;
-    }
-    else {
-            LOG_ERR("Network stack pointer is NULL");
-    }
-
-    return c_ret;
+  return c_ret;
 }
 /** @} */
 /** @} */

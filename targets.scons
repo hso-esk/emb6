@@ -206,18 +206,6 @@ trg += [{
     'bsp'       : get_descr(bsp, 'efm32stk3600_rf212b')
 }]
 
-trg += [{
-    'id'        : 'ds_stk3600_cc112x',
-    'apps_conf' : [ dtls_srv ],
-    'bsp'       : get_descr(bsp, 'efm32stk3600_cc112x')
-}]
-
-trg += [{
-    'id'        : 'dc_stk3600_cc112x',
-    'apps_conf' : [ dtls_cli ],
-    'bsp'       : get_descr(bsp, 'efm32stk3600_cc112x')
-}]
-
 #++++++++++ DTLS ++++++++++#
 trg += [{
     'id'        : 'ds12',	#_stk3600_cc120x
@@ -344,7 +332,7 @@ trg += [{
 }]
 
 trg += [{
-    'id'        : 'cs_moses_cc112x',
+    'id'        : 'cs_moses',
     'apps_conf' : [ coap_srv, udp_alive ],
     'bsp'       : get_descr(bsp, 'moses')
 }]
@@ -373,6 +361,26 @@ trg += [{
     'apps_conf' : [ udp_cli ],
     'bsp'       : get_descr(bsp, 'mosesstick')
 }]
+
+trg += [{
+    'id'        : 'mq_stk112x',
+    'apps_conf' : [ mqtt, udp_alive ],
+    'bsp'       : get_descr(bsp, 'efm32stk3600_cc112x')
+}]
+
+trg += [{
+    'id'        : 'mq_stk120x',
+    'apps_conf' : [ mqtt ],
+    'bsp'       : get_descr(bsp, 'efm32stk3600_cc120x')
+}]
+
+
+trg += [{
+    'id'        : 'mq_moses',
+    'apps_conf' : [ mqtt, udp_alive ],
+    'bsp'       : get_descr(bsp, 'moses')
+}]
+
 
 #TI based ++++++++++++++++++++++++++++++++++++++++#
 

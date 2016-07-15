@@ -152,10 +152,12 @@
 #define EMB6_PROC_DELAY                     500
 #endif /* #ifndef EMB6_PROC_DELAY */
 
+#if DEMO_USE_COAP_FREERTOS
 /* Task priorities. */
 #define mainEMB6_TASK_PRIORITY          ( tskIDLE_PRIORITY + 1 )
 #define mainLCD_TASK_PRIORITY           ( tskIDLE_PRIORITY + 2 )
 #define mainLED_TASK_PRIORITY           ( tskIDLE_PRIORITY + 3 )
+#endif /* #if DEMO_USE_COAP_FREERTOS */
 
 /*==============================================================================
                                      ENUMS
@@ -165,8 +167,10 @@
                                     VARIABLES
  =============================================================================*/
 
+#if DEMO_USE_COAP_FREERTOS
 extern s_led_task_param_t ledTaskParams;
 extern s_display_output_t lcdTaskParams;
+#endif /* #if DEMO_USE_COAP_FREERTOS */
 
 /*==============================================================================
                            LOCAL FUNCTION PROTOTYPES
@@ -175,11 +179,13 @@ static void loc_stackConf(void);
 static void loc_demoAppsConf(s_ns_t* pst_netStack, e_nsErr_t *p_err);
 static uint8_t loc_demoAppsInit(void);
 
+
 /**
  * EMB6 task.
  */
 static void vEMB6Task( void *pvParameters );
 
+#if DEMO_USE_COAP_FREERTOS
 /**
  * LCD task.
  */
@@ -199,6 +205,7 @@ static void prvSetupHardware( void );
  * Put the CPU into the least low power low power mode.
  */
 static void prvLowPowerMode1( void );
+#endif /* #if DEMO_USE_COAP_FREERTOS */
 
 /*==============================================================================
                                 LOCAL FUNCTIONS
@@ -417,13 +424,18 @@ static void vEMB6Task( void *pvParameters )
     while(1)
     {
         /* run the emb6 stack */
+#if DEMO_USE_COAP_FREERTOS
         emb6_process(-1);
+#else
+        emb6_process(EMB6_PROC_DELAY);
+#endif /* #if DEMO_USE_COAP_FREERTOS */
     }
 
     /* the program should never come here */
     return;
 }
 
+#if DEMO_USE_COAP_FREERTOS
 /*-----------------------------------------------------------*/
 
 static void vLEDTask( void *pvParameters )
@@ -511,6 +523,7 @@ static void prvLowPowerMode1( void )
     __DSB();
     __WFI();
 }
+#endif /* #if DEMO_USE_COAP_FREERTOS */
 
 /*==============================================================================
  main()
@@ -518,6 +531,7 @@ static void prvLowPowerMode1( void )
 int main(void)
 {
 
+#if DEMO_USE_COAP_FREERTOS
     ledTaskParams.en = 1;
     ledTaskParams.delay = 1000;
     strcpy(lcdTaskParams.output, "DEMO COAP SERVER");
@@ -543,6 +557,10 @@ int main(void)
     for the idle task to be created.  In this case the heap size is set by
     configTOTAL_HEAP_SIZE in FreeRTOSConfig.h. */
     for( ;; );
+#else
+    vEMB6Task(NULL);
+#endif /* #if DEMO_USE_COAP_FREERTOS */
 }
+
 /** @} */
 /** @} */

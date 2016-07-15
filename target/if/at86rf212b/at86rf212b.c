@@ -179,7 +179,7 @@ static    void                     _show_stat(void *);
 /*==============================================================================
                          STRUCTURES AND OTHER TYPEDEFS
 ==============================================================================*/
-const s_nsRF_t rf212b_driver = {
+const s_nsRF_t rf_driver_at212b = {
         .name               = "rf212",
         .init               = &_rf212b_init,
         .send               = &_rf212b_send,

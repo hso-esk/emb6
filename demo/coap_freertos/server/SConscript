@@ -24,9 +24,10 @@ freertos_coap = {
     ],
 # C global defines
 	'CPPDEFINES' : [
-		('DEMO_USE_COAP',1),
-		('CONF_USE_SERVER',1),
-		('NET_USE_RPL',1),
+        ('DEMO_USE_COAP',1),
+        ('DEMO_USE_COAP_FREERTOS',1),
+        ('CONF_USE_SERVER',1),
+        ('NET_USE_RPL',1),
 	],
 # GCC flags
 	'CFLAGS' : [

@@ -104,7 +104,11 @@
 #define PRINTF(...) do { } while(0)
 #endif
 
+#ifdef __linux__
+#include <strings.h>
+#else
 #include <string.h>
+#endif
 
 #define UIP_UDP_BUF ((struct uip_udpip_hdr *)&uip_buf[UIP_LLH_LEN])
 

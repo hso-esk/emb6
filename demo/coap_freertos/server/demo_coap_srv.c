@@ -120,21 +120,20 @@ uint8_t demo_coapConf(s_ns_t* p_netstk)
     uint8_t c_ret = 1;
 
     /*
-     * By default stack
-     */
+    * By default stack
+    */
     if (p_netstk != NULL) {
         if (!p_netstk->c_configured) {
-            p_netstk->hc    = &sicslowpan_driver;
+            p_netstk->hc = &hc_driver_sicslowpan;
             p_netstk->frame = &framer_802154;
-            p_netstk->dllsec = &nullsec_driver;
+            p_netstk->dllsec = &dllsec_driver_null;
             p_netstk->c_configured = 1;
 
         } else {
-            if ((p_netstk->hc    == &sicslowpan_driver) &&
-                (p_netstk->frame == &framer_802154)    	&&
-                (p_netstk->dllsec == &nullsec_driver)) {
-            }
-            else {
+            if ((p_netstk->hc == &hc_driver_sicslowpan) &&
+                (p_netstk->frame == &framer_802154) &&
+                (p_netstk->dllsec == &dllsec_driver_null)) {
+            } else {
                 p_netstk = NULL;
                 c_ret = 0;
             }

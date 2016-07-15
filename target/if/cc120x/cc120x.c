@@ -59,8 +59,7 @@
 #include "cc120x_cfg.h"
 #include "cc120x_spi.h"
 
-#include "lib_tmr.h"
-#include "lib_port.h"
+#include "rt_tmr.h"
 #include "packetbuf.h"
 #include "evproc.h"
 #include "phy_framer_802154.h"
@@ -117,9 +116,6 @@ typedef enum e_rf_state
 #define CC120X_PART_VERSION                 0x11
 #endif /* #ifndef CC120X_PART_VERSION */
 
-#define RF_SEM_POST(_event_)                evproc_putEvent(E_EVPROC_HEAD, _event_, NULL)
-#define RF_SEM_WAIT(_event_)                evproc_regCallback(_event_, cc120x_eventHandler)
-
 #define RF_CFG_MAX_PACKET_LENGTH            (uint16_t)(PHY_PSDU_MAX + PHY_HEADER_LEN)
 
 #define RF_IS_IN_TX(_chip_status)           ((_chip_status) & 0x20)
@@ -132,6 +128,7 @@ typedef enum e_rf_state
 #define RF_CHIP_STATE_RX                    (uint8_t)( 0x10 )
 #define RF_CHIP_STATE_TX                    (uint8_t)( 0x20 )
 
+#define RF_MARC_STATUS_NO_FAILURE           (uint8_t)( 0x00 )
 #define RF_MARC_STATUS_TX_FINI              (uint8_t)( 0x40 )
 #define RF_MARC_STATUS_RX_FINI              (uint8_t)( 0x80 )
 
@@ -222,14 +219,18 @@ typedef enum e_rf_state
 #define RF_INT_CFG_EDGE_RX_FINI             E_TARGET_INT_EDGE_FALLING
 
 #ifndef RF_WD_ENABLE
-#define RF_WD_ENABLE                        TRUE
+#define RF_WD_ENABLE                        FALSE
 #endif /* #endif RF_WD_ENABLE */
 
 #if RF_WD_ENABLE
 #ifndef RF_WD_TIMER_MS
-#define RF_WD_TIMER_MS                      300
+#define RF_WD_TIMER_MS                      50
 #endif /* #ifndef RF_WD_TIMER_MS */
 #endif /* #if RF_WD_ENABLE */
+
+#if (EMB6_CFG_REFACTOR_EN == 1)
+static s_rt_tmr_t rf_wdTmr1;
+#endif
 
 /*
 ********************************************************************************
@@ -253,7 +254,7 @@ static e_nsRfOpMode rf_opMode;
 static uint8_t      rf_regVerify;
 
 #if RF_WD_ENABLE
-static LIB_TMR      rf_tmrWD;
+static s_rt_tmr_t   rf_tmrWD;
 #endif /* #if RF_WD_ENABLE */
 
 /*
@@ -278,6 +279,8 @@ static void cc120x_isrTxPacketSent(void *p_arg);
 #if RF_WD_ENABLE
 static void cc120x_wdCB(void*);
 #endif /* #if RF_WD_ENABLE */
+
+static void cc120x_errorHandler(void);
 static void cc120x_eventHandler(c_event_t c_event, p_data_t p_data);
 static void cc120x_configureRegs(const s_regSettings_t *p_regs, uint8_t len);
 static void cc120x_calibrateRF(void);
@@ -296,7 +299,6 @@ static void cc120x_txPowerSet(int8_t power, e_nsErr_t *p_err);
 static void cc120x_txPowerGet(int8_t *p_power, e_nsErr_t *p_err);
 static void cc120x_chanNumSet(uint8_t chan_num, e_nsErr_t *p_err);
 static void cc120x_opModeSet(e_nsRfOpMode mode, e_nsErr_t *p_err);
-
 
 /*
 ********************************************************************************
@@ -349,7 +351,7 @@ static void cc120x_Init (void *p_netstk, e_nsErr_t *p_err)
     cc120x_calibrateRCOsc();
 
     /* initialize local variables */
-    RF_SEM_WAIT(NETSTK_RF_EVENT);
+    evproc_regCallback(NETSTK_RF_EVENT, cc120x_eventHandler);
     memset(rf_rxBuf, 0, sizeof(rf_rxBuf));
     rf_rxBufLen = 0;
     rf_worEn = FALSE;    /* enable WOR mode by default */
@@ -360,11 +362,7 @@ static void cc120x_Init (void *p_netstk, e_nsErr_t *p_err)
 
 #if RF_WD_ENABLE
     /* create watchdog timer */
-    Tmr_Create(&rf_tmrWD,
-               LIB_TMR_TYPE_ONE_SHOT,
-               RF_WD_TIMER_MS,
-               cc120x_wdCB,
-               NULL);
+    rt_tmr_create(&rf_tmrWD, E_RT_TMR_TYPE_ONE_SHOT, RF_WD_TIMER_MS, cc120x_wdCB, NULL);
 #endif /* #if RF_WD_ENABLE */
 
     /* goto state sleep */
@@ -522,8 +520,8 @@ static void cc120x_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
             cc120x_spiCmdStrobe(CC120X_STX);
         }
 #if RF_WD_ENABLE
-        Tmr_Stop( &rf_tmrWD );
-        Tmr_Start( &rf_tmrWD );
+        rt_tmr_stop( &rf_tmrWD );
+        rt_tmr_start( &rf_tmrWD );
 #endif /* #if RF_WD_ENABLE */
 
         /* wait for packet to be sent */
@@ -781,6 +779,13 @@ static void cc120x_waitRdy(void)
 }
 
 
+static void cc120x_errorHandler(void)
+{
+  rf_state = RF_STATE_ERR;
+  evproc_putEvent(E_EVPROC_HEAD, NETSTK_RF_EVENT, NULL);
+}
+
+
 /*
 ********************************************************************************
 *                       INTERRUPT SUBROUTINE HANDLERS
@@ -828,12 +833,6 @@ static void cc120x_isrRxSyncReceived(void *p_arg)
         rf_state = RF_STATE_RX_SYNC;
         LED_RX_ON();
 
-#if RF_WD_ENABLE
-        /* start the timeout and schedule an event*/
-        Tmr_Stop( &rf_tmrWD );
-        Tmr_Start( &rf_tmrWD );
-#endif /* #if RF_WD_ENABLE */
-
         /*
          * Wait until entire PHY header is received or number of register-
          * reading attempts exceeds the predefined max value
@@ -846,18 +845,17 @@ static void cc120x_isrRxSyncReceived(void *p_arg)
         }
 
         if (num_rx_bytes < PHY_HEADER_LEN) {
-            /* invalid packet, then goto RX state */
-            cc120x_gotoRx();
+          /* goto error handler */
+          cc120x_errorHandler();
         } else {
             /* parse PHY header for packet length */
             cc120x_spiRxFifoRead(rf_rxBuf, PHY_HEADER_LEN);
             pkt_len = phy_framer802154_getPktLen(rf_rxBuf, PHY_HEADER_LEN);
 
             /* make sure that the packet length is acceptable */
-            if ((pkt_len == 0) ||
-                (pkt_len > RF_CFG_MAX_PACKET_LENGTH)) {
-                /* invalid packet length, then goto RX state */
-                cc120x_gotoRx();
+            if ((pkt_len == 0) || (pkt_len > RF_CFG_MAX_PACKET_LENGTH)) {
+                /* goto error handler */
+                cc120x_errorHandler();
             } else {
                 rf_state = RF_STATE_RX_PORTION_MIDDLE;
 
@@ -878,12 +876,14 @@ static void cc120x_isrRxSyncReceived(void *p_arg)
                  * packet arrives */
                 bsp_extIntClear(RF_INT_CFG_RX_FINI);
                 bsp_extIntEnable(RF_INT_CFG_RX_FINI);
+
+                #if RF_WD_ENABLE
+                /* start the timeout and schedule an event*/
+                rt_tmr_stop( &rf_tmrWD );
+                rt_tmr_start( &rf_tmrWD );
+                #endif /* #if RF_WD_ENABLE */
             }
         }
-    }
-    else if( rf_state != RF_STATE_INIT )
-    {
-        emb6_errorHandler(NULL);
     }
 }
 
@@ -931,8 +931,8 @@ static void cc120x_isrRxPacketReceived(void *p_arg)
 
     /* check reception process result */
     is_rx_ok = (rf_state == RF_STATE_RX_PORTION_LAST) &&
-               (marc_status == RF_MARC_STATUS_RX_FINI);
-
+               ((marc_status == RF_MARC_STATUS_RX_FINI) ||
+                (marc_status == RF_MARC_STATUS_NO_FAILURE));
     if (is_rx_ok) {
         /* indicate that reception process has finished */
         rf_state = RF_STATE_RX_FINI;
@@ -941,13 +941,13 @@ static void cc120x_isrRxPacketReceived(void *p_arg)
         cc120x_spiRxFifoRead(rf_bufIx, rf_byteLeft);
         rf_byteLeft = 0;
 
+        /* signal complete reception interrupt */
+        evproc_putEvent(E_EVPROC_HEAD, NETSTK_RF_EVENT, NULL);
+
 #if RF_WD_ENABLE
         /* stop WD timer */
-        Tmr_Stop( &rf_tmrWD );
+        rt_tmr_stop( &rf_tmrWD );
 #endif /* #if RF_WD_ENABLE */
-
-        /* signal complete reception interrupt */
-        RF_SEM_POST(NETSTK_RF_EVENT);
     }
     LED_RX_OFF();
 }
@@ -1024,7 +1024,7 @@ static void cc120x_isrTxPacketSent(void *p_arg)
 
 #if RF_WD_ENABLE
     /* stop WD timer */
-    Tmr_Stop( &rf_tmrWD );
+    rt_tmr_stop( &rf_tmrWD );
 #endif /* #if RF_WD_ENABLE */
 }
 
@@ -1032,8 +1032,7 @@ static void cc120x_isrTxPacketSent(void *p_arg)
 #if RF_WD_ENABLE
 static void cc120x_wdCB(void* param)
 {
-    /* call the event handler */
-    cc120x_eventHandler( 0, NULL );
+    cc120x_errorHandler();
 }
 #endif /* #if RF_WD_ENABLE */
 
@@ -1041,6 +1040,15 @@ static void cc120x_eventHandler(c_event_t c_event, p_data_t p_data)
 {
     /* set the error code to default */
     e_nsErr_t err = NETSTK_ERR_NONE;
+
+    /* error handler */
+    if (rf_state == RF_STATE_ERR) {
+      /* check reset */
+      cc120x_chkReset();
+      /* reset RF */
+      cc120x_gotoRx();
+      return;
+    }
 
     /* finalize reception process */
     if (rf_state == RF_STATE_RX_FINI) {
@@ -1084,23 +1092,6 @@ static void cc120x_eventHandler(c_event_t c_event, p_data_t p_data)
             cc120x_gotoRx();
         }
     }
-
-#if RF_WD_ENABLE
-    if( Tmr_StateGet( &rf_tmrWD ) == LIB_TMR_STATE_FINISHED )
-    {
-        if( (rf_state != RF_STATE_IDLE) &&
-            (rf_state != RF_STATE_RX_LISTENING) &&
-            (rf_state != RF_STATE_SLEEP) )
-        {
-            /* rf state timeout. stop the timer and reset RF */
-            Tmr_Stop( &rf_tmrWD );
-            /* check reset */
-            cc120x_chkReset();
-            /* reset RF */
-            cc120x_gotoRx();
-        }
-    }
-#endif /* #if RF_WD_ENABLE */
 }
 
 
@@ -1391,7 +1382,7 @@ static void cc120x_opModeSet(e_nsRfOpMode mode, e_nsErr_t *p_err)
 *                               DRIVER DEFINITION
 ********************************************************************************
 */
-const s_nsRF_t RFDrvCC120x =
+const s_nsRF_t rf_driver_ticc120x =
 {
    "CC120X",
     cc120x_Init,

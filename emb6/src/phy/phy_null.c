@@ -54,7 +54,6 @@
 */
 #include "emb6.h"
 
-#include "lib_tmr.h"
 
 #define     LOGGER_ENABLE        LOGGER_PHY
 #include    "logger.h"
@@ -64,44 +63,40 @@
 *                          LOCAL FUNCTION DECLARATIONS
 ********************************************************************************
 */
-static void PHY_Init(void *p_netstk, e_nsErr_t *p_err);
-static void PHY_On(e_nsErr_t *p_err);
-static void PHY_Off(e_nsErr_t *p_err);
-static void PHY_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
-static void PHY_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
-static void PHY_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
-
-
-/*
-********************************************************************************
-*                               LOCAL VARIABLES
-********************************************************************************
-*/
-static s_ns_t *PHY_Netstk;
-
+static void phy_init(void *p_netstk, e_nsErr_t *p_err);
+static void phy_on(e_nsErr_t *p_err);
+static void phy_off(e_nsErr_t *p_err);
+static void phy_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
+static void phy_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
+static void phy_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
 
 /*
-********************************************************************************
-*                               GLOBAL VARIABLES
-********************************************************************************
-*/
-const s_nsPHY_t PHYDrvNull =
-{
-   "PHY NULL",
-    PHY_Init,
-    PHY_On,
-    PHY_Off,
-    PHY_Send,
-    PHY_Recv,
-    PHY_IOCtrl
+ ********************************************************************************
+ *                               LOCAL VARIABLES
+ ********************************************************************************
+ */
+static s_ns_t *pphy_netstk;
+
+/*
+ ********************************************************************************
+ *                               GLOBAL VARIABLES
+ ********************************************************************************
+ */
+const s_nsPHY_t phy_driver_null = {
+  "PHY NULL",
+   phy_init,
+   phy_on,
+   phy_off,
+   phy_send,
+   phy_recv,
+   phy_ioctl
 };
 
-
 /*
-********************************************************************************
-*                           LOCAL FUNCTION DEFINITIONS
-********************************************************************************
-*/
+ ********************************************************************************
+ *                           LOCAL FUNCTION DEFINITIONS
+ ********************************************************************************
+ */
 
 /**
  * @brief   Initialize driver
@@ -109,57 +104,54 @@ const s_nsPHY_t PHYDrvNull =
  * @param   p_netstk    Pointer to netstack structure
  * @param   p_err       Pointer to a variable storing returned error code
  */
-static void PHY_Init(void *p_netstk, e_nsErr_t *p_err)
+static void phy_init(void *p_netstk, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
-    if (p_err == NULL) {
-        return;
-    }
+  if (p_err == NULL) {
+    return;
+  }
 
-    if (p_netstk == NULL) {
-        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
-        return;
-    }
+  if (p_netstk == NULL) {
+    *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+    return;
+  }
 #endif
 
-    PHY_Netstk = (s_ns_t *)p_netstk;
-    *p_err = NETSTK_ERR_NONE;
+  pphy_netstk = (s_ns_t *) p_netstk;
+  *p_err = NETSTK_ERR_NONE;
 }
-
 
 /**
  * @brief   Turn driver on
  *
  * @param   p_err       Pointer to a variable storing returned error code
  */
-static void PHY_On(e_nsErr_t *p_err)
+static void phy_on(e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
-    if (p_err == NULL) {
-        return;
-    }
+  if (p_err == NULL) {
+    return;
+  }
 #endif
 
-    PHY_Netstk->rf->on(p_err);
+  pphy_netstk->rf->on(p_err);
 }
-
 
 /**
  * @brief   Turn driver off
  *
  * @param   p_err       Pointer to a variable storing returned error code
  */
-static void PHY_Off(e_nsErr_t *p_err)
+static void phy_off(e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
-    if (p_err == NULL) {
-        return;
-    }
+  if (p_err == NULL) {
+    return;
+  }
 #endif
 
-    PHY_Netstk->rf->off(p_err);
+  pphy_netstk->rf->off(p_err);
 }
-
 
 /**
  * @brief   Frame transmission handler
@@ -168,40 +160,37 @@ static void PHY_Off(e_nsErr_t *p_err)
  * @param   len         Length of frame to send
  * @param   p_err       Pointer to a variable storing returned error code
  */
-static void PHY_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
+static void phy_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
-    if (p_err == NULL) {
-        return;
-    }
+  if (p_err == NULL) {
+    return;
+  }
 
-    if ((len == 0) ||
-        (p_data == NULL)) {
-        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
-        return;
-    }
+  if ((len == 0) || (p_data == NULL)) {
+    *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+    return;
+  }
 #endif
-
 
 #if LOGGER_ENABLE
-    /*
-     * Logging
-     */
-    uint16_t data_len = len;
-    uint8_t *p_dataptr = p_data;
-    LOG_RAW("PHY_TX: ");
-    while (data_len--) {
-        LOG_RAW("%02x", *p_dataptr++);
-    }
-    LOG_RAW("\r\n====================\r\n");
+  /*
+   * Logging
+   */
+  uint16_t data_len = len;
+  uint8_t *p_dataptr = p_data;
+  LOG_RAW("PHY_TX: ");
+  while (data_len--) {
+    LOG_RAW("%02x", *p_dataptr++);
+  }
+  LOG_RAW("\r\n====================\r\n");
 #endif
 
-    /*
-     * Issue next lower layer to transmit the prepared frame
-     */
-    PHY_Netstk->rf->send(p_data, len, p_err);
+  /*
+   * Issue next lower layer to transmit the prepared frame
+   */
+  pphy_netstk->rf->send(p_data, len, p_err);
 }
-
 
 /**
  * @brief   Frame reception handler
@@ -210,42 +199,38 @@ static void PHY_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
  * @param   len         Length of frame to receive
  * @param   p_err       Pointer to a variable storing returned error code
  */
-static void PHY_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
+static void phy_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
-    if (p_err == NULL) {
-        return;
-    }
+  if (p_err == NULL) {
+    return;
+  }
 
-    if ((len == 0) ||
-        (p_data == NULL)) {
-        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
-        return;
-    }
+  if ((len == 0) || (p_data == NULL)) {
+    *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+    return;
+  }
 #endif
-
 
 #if LOGGER_ENABLE
-    /*
-     * Logging
-     */
-    uint16_t data_len = len;
-    uint8_t *p_dataptr = p_data;
-    LOG_RAW("\r\n====================\r\n");
-    LOG_RAW("PHY_RX: ");
-    while (data_len--) {
-        LOG_RAW("%02x", *p_dataptr++);
-    }
-    LOG_RAW("\n\r");
+  /*
+   * Logging
+   */
+  uint16_t data_len = len;
+  uint8_t *p_dataptr = p_data;
+  LOG_RAW("\r\n====================\r\n");
+  LOG_RAW("PHY_RX: ");
+  while (data_len--) {
+    LOG_RAW("%02x", *p_dataptr++);
+  }
+  LOG_RAW("\n\r");
 #endif
 
-
-    /*
-     * Inform the next higher layer
-     */
-    PHY_Netstk->mac->recv(p_data, len, p_err);
+  /*
+   * Inform the next higher layer
+   */
+  pphy_netstk->mac->recv(p_data, len, p_err);
 }
-
 
 /**
  * @brief    Miscellaneous commands handler
@@ -254,18 +239,18 @@ static void PHY_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
  * @param   p_val       Pointer to a variable related to the command
  * @param   p_err       Pointer to a variable storing returned error code
  */
-static void PHY_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
+static void phy_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
 {
-    /* Set returned error code to default */
-    *p_err = NETSTK_ERR_NONE;
-    switch (cmd) {
-        case NETSTK_CMD_PHY_RSVD:
-            break;
+  /* Set returned error code to default */
+  *p_err = NETSTK_ERR_NONE;
+  switch (cmd) {
+    case NETSTK_CMD_PHY_RSVD:
+      break;
 
-        default:
-            PHY_Netstk->rf->ioctrl(cmd, p_val, p_err);
-            break;
-    }
+    default:
+      pphy_netstk->rf->ioctrl(cmd, p_val, p_err);
+      break;
+  }
 }
 
 

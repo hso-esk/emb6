@@ -4495,6 +4495,9 @@
       <group>
         <name>src</name>
         <file>
+          <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\utils\src\crc.c</name>
+        </file>
+        <file>
           <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\utils\src\ctimer.c</name>
         </file>
         <file>
@@ -4502,12 +4505,6 @@
         </file>
         <file>
           <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\utils\src\evproc.c</name>
-        </file>
-        <file>
-          <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\utils\src\lib_crc.c</name>
-        </file>
-        <file>
-          <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\utils\src\lib_tmr.c</name>
         </file>
         <file>
           <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\utils\src\list.c</name>
@@ -4529,6 +4526,9 @@
         </file>
         <file>
           <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\utils\src\ringbuffer.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\utils\src\rt_tmr.c</name>
         </file>
         <file>
           <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\utils\src\stimer.c</name>

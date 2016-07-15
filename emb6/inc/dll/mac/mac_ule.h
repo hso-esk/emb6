@@ -56,20 +56,18 @@ typedef struct mac_ule_framer_api      s_nsMacUleFramerDrv_t;
  */
 struct mac_ule_framer_api
 {
-    char         *Name;
+  char *name;
 
-    void        (*Init  )(e_nsErr_t *p_err);
+  void (*init)(e_nsErr_t *p_err);
 
-    void        (*Deinit)(e_nsErr_t *p_err);
+  uint8_t* (*create)(uint8_t frame_type, uint16_t *p_len, uint32_t *p_delay, e_nsErr_t *p_err);
 
-    uint8_t*    (*Create)(uint8_t frame_type, uint16_t *p_len, uint32_t *p_delay, e_nsErr_t *p_err);
-
-    void        (*Parse )(uint8_t *p_frame_type, uint8_t *p_pkt, uint16_t len, e_nsErr_t *p_err);
+  void (*parse)(uint8_t *p_frame_type, uint8_t *p_pkt, uint16_t len, e_nsErr_t *p_err);
 };
 
 
-#define MAC_ULE_DEV_ID_BROADCAST            (NETSTK_DEV_ID)( 0xFFFF )
-#define MAC_ULE_ID_INVALID                  (NETSTK_DEV_ID)( 0x0000 )
+#define MAC_ULE_DEV_ID_BROADCAST            (netstk_devid_t)( 0xFFFF )
+#define MAC_ULE_ID_INVALID                  (netstk_devid_t)( 0x0000 )
 #define MAC_ULE_IS_PENDING_TX()             (NetstkDstId > MAC_ULE_ID_INVALID)
 
 /**
@@ -104,11 +102,11 @@ struct mac_ule_pwron_tbl_entry
     uint16_t    StrobeSentQty;  /*!< Quantity of sent strobes as waking-up signal   */
 };
 
-extern s_nsMacUlePwrOnTblEntry_t MacUlePwrOnTbl[MAC_ULE_CFG_PWRON_TBL_SIZE];
+extern s_nsMacUlePwrOnTblEntry_t mac_ule_pwrOnTable[MAC_ULE_CFG_PWRON_TBL_SIZE];
 #endif
 
-extern NETSTK_DEV_ID NetstkSrcId;
-extern NETSTK_DEV_ID NetstkDstId;
+extern netstk_devid_t NetstkSrcId;
+extern netstk_devid_t NetstkDstId;
 extern s_nsMacUleFramerDrv_t SmartMACFramer;
 
 #endif /* MAC_ULE_PRESENT */

@@ -38,48 +38,25 @@
  *
  */
 /*============================================================================*/
+
 /**
- *      \addtogroup emb6
- *      @{
- *   \addtogroup demo
- *   @{
- *   \addtogroup demo_sniffer
- *
- *   Sniffer application [should be in promiscuous mode].
- *   @{
-*/
-/*! \file   demo_sniffer.h
+ * @file    crc.h
+ * @date    16.11.2015
+ * @author  PN
+ * @brief   Cyclic Redundancy Checking (CRC) implementation based on example
+ *          codes from TI
+ */
 
-    \author Artem Yushev, 
+#ifndef CRC_PRESENT
+#define CRC_PRESENT
 
-    \brief  This is the header file of the sniffer application
+#define CRC16_POLY      (uint16_t)( 0x1021u )
+#define CRC16_INIT      (uint16_t)( 0x0000u )
 
-    \version 0.0.1
-*/
-#ifndef DEMO_SNIFFER_H_
-#define DEMO_SNIFFER_H_
-/*==============================================================================
-                         FUNCTION PROTOTYPES OF THE API
-==============================================================================*/
+#define CRC32_POLY      (uint32_t)( 0x04c11db7u )
+#define CRC32_INIT      (uint32_t)( 0xffffffffu )
 
-/*============================================================================*/
-/*!
-   \brief Initialization of the sniffer application.
+uint16_t crc_16_update(uint16_t curr_crc, uint8_t byte);
+uint32_t crc_32_update(uint32_t curr_crc, uint8_t byte);
 
-*/
-/*============================================================================*/
-int8_t demo_sniffInit(void);
-
-/*============================================================================*/
-/*!
-    \brief Configuration of the sniffer application.
-
-    \return 0 - error, 1 - success
-*/
-/*============================================================================*/
-uint8_t demo_sniffConf(s_ns_t* pst_netStack);
-
-#endif /* DEMO_COAP_SRV_H_ */
-/** @} */
-/** @} */
-/** @} */
+#endif /* CRC_PRESENT */

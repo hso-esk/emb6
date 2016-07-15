@@ -46,10 +46,10 @@
 /*! \file   bsp.c
 
     \author Artem Yushev, 
-
+            Phuong Nguyen
     \brief  Board support package implementation.
 
-   \version 0.0.1
+   \version 0.0.2
 */
 /*============================================================================*/
 
@@ -77,67 +77,81 @@
                                      ENUMS
  =============================================================================*/
 
+
 /*==============================================================================
                          STRUCTURES AND OTHER TYPEDEFS
  =============================================================================*/
 
+
 /*==============================================================================
                           LOCAL VARIABLE DECLARATIONS
  =============================================================================*/
-static    uint8_t    c_wtgStop = 1;
-static    struct    etimer st_ledsTims[LEDS_SUPPORTED];
+static        uint8_t bsp_wtgStop = 1;
+static        uint8_t bsp_numNestedCriticalSection;
+static        uint8_t bsp_spiLocked;
+static struct etimer  bsp_ledsTims[LEDS_SUPPORTED];
+
+
 /*==============================================================================
                                 LOCAL CONSTANTS
  =============================================================================*/
 
+
 /*==============================================================================
                            LOCAL FUNCTION PROTOTYPES
  =============================================================================*/
-static    void _bsp_ledCallback(c_event_t c_event, p_data_t p_data);
+static void _bsp_ledCallback(c_event_t c_event, p_data_t p_data);
+
+
 /*==============================================================================
                                 LOCAL FUNCTIONS
  =============================================================================*/
 
-static    void _bsp_ledCallback(c_event_t c_event, p_data_t p_data)
+/*============================================================================*/
+/*  _bsp_ledCallback()                                                        */
+/*============================================================================*/
+static void _bsp_ledCallback(c_event_t c_event, p_data_t p_data)
 {
-    uint8_t j;
-    for (j = 0; j < LEDS_SUPPORTED; j++)
-    {
-        if (etimer_expired(&st_ledsTims[j]))
-        {
-            if ((&(st_ledsTims[j])) == (struct etimer *)p_data){
-                // Timer has been found , so we can turn it off.
-                hal_ledOff(j);
-                etimer_stop((struct etimer *)p_data);
-                break;
-            }
-        }
+  uint8_t j;
+  for (j = 0; j < LEDS_SUPPORTED; j++) {
+    if (etimer_expired(&bsp_ledsTims[j])) {
+      if ((&(bsp_ledsTims[j])) == (struct etimer *) p_data) {
+        // Timer has been found , so we can turn it off.
+        hal_ledOff(j);
+        etimer_stop((struct etimer *) p_data);
+        break;
+      }
     }
-        // Find etimer which was fired in the list
-}
+  }
+} /* _bsp_ledCallback() */
+
+
 /*==============================================================================
                                  API FUNCTIONS
  =============================================================================*/
-
 
 /*============================================================================*/
 /*  bsp_init()                                                                */
 /*============================================================================*/
 uint8_t bsp_init (s_ns_t * ps_ns)
 {
-    /* Initialize hardware */
-    if (!hal_init())
-        return 0;
+  /* Initialize hardware */
+  if (!hal_init())
+    return 0;
 
-    /* Configure board */
-    if (!board_conf(ps_ns))
-        return 0;
+  /* Configure board */
+  if (!board_conf(ps_ns))
+    return 0;
 
-    random_init(hal_getrand());
+  random_init(hal_getrand());
 
-    /* Normal exit*/
-    return 1;
+  /* initialize local variables */
+  bsp_numNestedCriticalSection = 0;
+
+  /* Normal exit*/
+  return 1;
 }/* bsp_init() */
+
 
 /*============================================================================*/
 /*  bsp_start()                                                               */
@@ -147,6 +161,7 @@ void bsp_start (void)
 
 }/* bsp_start() */
 
+
 /*============================================================================*/
 /*  bsp_entry()                                                               */
 /*============================================================================*/
@@ -155,125 +170,313 @@ void bsp_entry (void)
     /* Nothing to do */
 }/* bsp_entry() */
 
-/*============================================================================*/
-/*  bsp_entry()                                                               */
-/*============================================================================*/
-int bsp_getChar (void)
-{
-    /* Return the next character received using the console UART */
-    /* Nothing to do */
-    return 0;
-} /* bsp_getChar() */
 
 /*============================================================================*/
-/*  bsp_led()                                                               */
+/*  bsp_getChar()                                                             */
+/*============================================================================*/
+int bsp_getChar(void)
+{
+  /* Return the next character received using the console UART */
+  /* Nothing to do */
+  return 0;
+} /* bsp_getChar() */
+
+
+/*============================================================================*/
+/*  bsp_led()                                                                 */
 /*============================================================================*/
 uint16_t bsp_led(en_bspLedIdx_t ui_led, en_bspLedAction_t en_ledAction)
 {
-    switch (en_ledAction) {
+  switch (en_ledAction) {
     case E_BSP_LED_ON:
-        hal_ledOn(ui_led);
-        break;
+      hal_ledOn(ui_led);
+      break;
     case E_BSP_LED_OFF:
-        hal_ledOff(ui_led);
-        break;
+      hal_ledOff(ui_led);
+      break;
     case E_BSP_LED_TOGGLE:
-        hal_ledOn(ui_led);
-        etimer_set(&st_ledsTims[ui_led],20, _bsp_ledCallback);
+      hal_ledOn(ui_led);
+      etimer_set(&bsp_ledsTims[ui_led], 20, _bsp_ledCallback);
 
-        break;
+      break;
     default:
-        break;
-    }
-    return 0;
+      break;
+  }
+  return 0;
 } /* bsp_led() */
 
+
 /*============================================================================*/
-/*  bsp_extIntInit()                                                          */
+/*  bsp_pinInit()                                                             */
+/*============================================================================*/
+void * bsp_pinInit(en_targetExtPin_t e_pinType)
+{
+  return hal_ctrlPinInit(e_pinType);
+} /* bsp_pinInit() */
+
+
+/*============================================================================*/
+/*  bsp_pin()                                                                 */
 /*============================================================================*/
 uint8_t bsp_pin(en_bspPinAction_t e_pinAct, void * p_pin)
 {
-    switch (e_pinAct) {
+  switch (e_pinAct) {
     case E_BSP_PIN_SET:
-        hal_pinSet(p_pin);
-        break;
+      hal_pinSet(p_pin);
+      break;
     case E_BSP_PIN_CLR:
-        hal_pinClr(p_pin);
-        break;
+      hal_pinClr(p_pin);
+      break;
     case E_BSP_PIN_GET:
-        return hal_pinGet(p_pin);
+      return hal_pinGet(p_pin);
     default:
-        return 1;
-    }
-    return 0;
-}
+      return 1;
+  }
+  return 0;
+} /* bsp_pin() */
 
 
 /*============================================================================*/
-/*  bsp_wdt()                                                           */
+/*  bsp_wdt()                                                                 */
 /*============================================================================*/
 void bsp_wdt(en_bspWdtAction_t en_wdtAct)
 {
-    switch (en_wdtAct) {
-        case E_BSP_WDT_RESET:
-            if (!c_wtgStop)
-                hal_watchdogReset();
-            break;
-        case E_BSP_WDT_START:
-            c_wtgStop--;
-            if (!c_wtgStop)
-                hal_watchdogStart();
-            break;
-        case E_BSP_WDT_STOP:
-            c_wtgStop++;
-            hal_watchdogStop();
-            break;
-        case E_BSP_WDT_PERIODIC:
-            if (!c_wtgStop)
-                hal_watchdogReset();
-            break;
-        default:
-            break;
-    }
+  switch (en_wdtAct) {
+    case E_BSP_WDT_RESET:
+      if (!bsp_wtgStop)
+        hal_watchdogReset();
+      break;
+    case E_BSP_WDT_START:
+      bsp_wtgStop--;
+      if (!bsp_wtgStop)
+        hal_watchdogStart();
+      break;
+    case E_BSP_WDT_STOP:
+      bsp_wtgStop++;
+      hal_watchdogStop();
+      break;
+    case E_BSP_WDT_PERIODIC:
+      if (!bsp_wtgStop)
+        hal_watchdogReset();
+      break;
+    default:
+      break;
+  }
+} /* bsp_wdt() */
 
-}
 
-uint32_t         bsp_get(en_bspParams_t en_param)
+/*============================================================================*/
+/*  bsp_get()                                                                 */
+/*============================================================================*/
+uint32_t bsp_get(en_bspParams_t en_param)
 {
-    uint32_t l_ret;
-    switch (en_param)
-    {
-        case E_BSP_GET_TICK:
-            l_ret = hal_getTick();
-            break;
-        case E_BSP_GET_SEC:
-            l_ret = hal_getSec();
-            break;
-        case E_BSP_GET_TRES:
-            l_ret = hal_getTRes();
-            break;
-        default:
-            l_ret = 0;
-            break;
-    }
-    return l_ret;
-}
+  uint32_t l_ret;
+  switch (en_param) {
+    case E_BSP_GET_TICK:
+      l_ret = hal_getTick();
+      break;
+    case E_BSP_GET_SEC:
+      l_ret = hal_getSec();
+      break;
+    case E_BSP_GET_TRES:
+      l_ret = hal_getTRes();
+      break;
+    default:
+      l_ret = 0;
+      break;
+  }
+  return l_ret;
+} /* bsp_get() */
 
 
-/**
- * @brief   This function returns a upper-bounded random number
- * @param   max     Maximum possible value of the returned random number
- * @return
- */
+/*============================================================================*/
+/*  bsp_getrand()                                                             */
+/*============================================================================*/
 uint32_t bsp_getrand(uint32_t max)
 {
-    uint32_t ret;
+  uint32_t ret;
 
-    /* generate random number in a range of 0 to max */
-    ret = (uint32_t)random_rand();
-    ret = ret % max;
-    return ret;
-}
+  /* generate random number in a range of 0 to max */
+  ret = (uint32_t) random_rand();
+  ret = ret % max;
+  return ret;
+} /* bsp_getrand() */
+
+
+/*============================================================================*/
+/*  bsp_enterCritical()                                                       */
+/*============================================================================*/
+void bsp_enterCritical(void)
+{
+  /*
+   * if bsp_numNestedCriticalSection is non-zero, then MCU is already in critical sections.
+   * therefore there is no need to re-enter critical section.
+   * Otherwise, hal_enterCritical() is called.
+   */
+  if (bsp_numNestedCriticalSection == 0) {
+    hal_enterCritical();
+  }
+
+  /* increase number of nested critical sections */
+  bsp_numNestedCriticalSection++;
+} /* bsp_enterCritical() */
+
+
+/*============================================================================*/
+/*  bsp_exitCritical()                                                        */
+/*============================================================================*/
+void bsp_exitCritical(void)
+{
+  /*
+   * If bsp_numNestedCriticalSection is non-zero, meaning that MCU is in nested critical sections.
+   * Therefore it is NOT allowed to exit critical section.
+   * Leaving critical section MUST be done in the most outer critical section.
+   */
+  if (bsp_numNestedCriticalSection > 0) {
+    bsp_numNestedCriticalSection--;
+    if (bsp_numNestedCriticalSection == 0) {
+      /* the most outer critical section */
+      hal_exitCritical();
+    }
+  }
+} /* bsp_exitCritical() */
+
+
+/*============================================================================*/
+/*  bsp_getTick()                                                             */
+/*============================================================================*/
+clock_time_t bsp_getTick(void)
+{
+  return hal_getTick();
+} /* bsp_getTick() */
+
+
+/*============================================================================*/
+/*  bsp_getSec()                                                              */
+/*============================================================================*/
+clock_time_t bsp_getSec(void)
+{
+  return hal_getSec();
+} /* bsp_getSec() */
+
+
+/*============================================================================*/
+/*  bsp_delay_us()                                                            */
+/*============================================================================*/
+void bsp_delay_us(uint32_t i_delay)
+{
+  hal_delay_us(i_delay);
+} /* bsp_delay_us() */
+
+
+/*============================================================================*/
+/*  bsp_extIntRegister()                                                      */
+/*============================================================================*/
+void bsp_extIntRegister(en_targetExtInt_t e_extInt, en_targetIntEdge_t e_edge,
+    pfn_intCallb_t pfn_intCallback)
+{
+  hal_extiRegister(e_extInt, e_edge, pfn_intCallback);
+} /* bsp_extIntRegister() */
+
+
+/*============================================================================*/
+/*  bsp_extIntClear()                                                         */
+/*============================================================================*/
+void bsp_extIntClear(en_targetExtInt_t e_extInt)
+{
+  hal_extiClear(e_extInt);
+} /* bsp_extIntClear() */
+
+
+/*============================================================================*/
+/*  bsp_extIntEnable()                                                        */
+/*============================================================================*/
+void bsp_extIntEnable(en_targetExtInt_t e_extInt)
+{
+  hal_extiEnable(e_extInt);
+} /* bsp_extIntEnable() */
+
+
+/*============================================================================*/
+/*  bsp_extIntDisable()                                                       */
+/*============================================================================*/
+void bsp_extIntDisable(en_targetExtInt_t e_extInt)
+{
+  hal_extiDisable(e_extInt);
+} /* bsp_extIntDisable() */
+
+
+/*============================================================================*/
+/*  bsp_spiInit()                                                             */
+/*============================================================================*/
+void *bsp_spiInit(void)
+{
+  void *p_spi = NULL;
+
+  p_spi = hal_spiInit();
+  bsp_spiLocked = FALSE;
+  return p_spi;
+} /* bsp_spiInit() */
+
+
+/*============================================================================*/
+/*  bsp_spiSlaveSel()                                                         */
+/*============================================================================*/
+uint8_t bsp_spiSlaveSel(void *p_spi, bool enable)
+{
+  uint8_t ret = 1;
+
+  if (enable == TRUE) {
+    if (bsp_spiLocked == FALSE) {
+      /* lock SPI handle */
+      bsp_spiLocked = TRUE;
+
+      /* enable SPI */
+      ret = hal_spiSlaveSel(p_spi, TRUE);
+    } else {
+      /* SPI is being locked */
+      ret = 0;
+    }
+  } else {
+    if (bsp_spiLocked == TRUE) {
+      /* disable SPI */
+      ret = hal_spiSlaveSel(p_spi, FALSE);
+
+      /* unlock SPI handle */
+      bsp_spiLocked = FALSE;
+    } else {
+      /* SPI is already unlocked and disabled */
+    }
+  }
+  return ret;
+} /* bsp_spiSlaveSel() */
+
+
+/*============================================================================*/
+/*  bsp_spiTxRx()                                                             */
+/*============================================================================*/
+void bsp_spiTxRx(uint8_t *p_tx, uint8_t *p_rx, uint16_t len)
+{
+  hal_spiTxRx(p_tx, p_rx, len);
+} /* bsp_spiTxRx() */
+
+
+/*============================================================================*/
+/*  bsp_spiRead()                                                             */
+/*============================================================================*/
+uint8_t bsp_spiRead(uint8_t * p_reg, uint16_t i_length)
+{
+  return hal_spiRead(p_reg, i_length);
+} /* bsp_spiRead() */
+
+
+/*============================================================================*/
+/*  bsp_spiWrite()                                                            */
+/*============================================================================*/
+void bsp_spiWrite(uint8_t * value, uint16_t i_length)
+{
+  hal_spiWrite(value, i_length);
+} /* bsp_spiWrite() */
 
 
 /** @} */
