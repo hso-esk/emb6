@@ -17,6 +17,7 @@
 #include "thrd-partition.h"
 #include "thrd-iface.h"
 #include "thrd-router-id.h"
+#include "thrd-send-adv.h"
 
 #include "etimer.h"
 #include "evproc.h"
@@ -950,6 +951,9 @@ uint8_t mle_set_parent_mode(void)
 	/* start synchronisation with other routers */
 	mle_synchro_process(NULL);
 
+	/* start the trickle algo*/
+	thrd_trickle_init();
+
 	return 1 ;
 }
 
@@ -960,6 +964,9 @@ uint8_t mle_set_child_mode(void)
 	PRESET();
 	/* clear the neighbors table  */
 	// clear the nb table
+
+	/* stop the trickle algo*/
+	thrd_trickle_stop();
 
 	return 1 ;
 }
