@@ -36,6 +36,7 @@
  *         Header file for the Link address representation
  * \author
  *         Adam Dunkels <adam@sics.se>
+ *         Phuong Nguyen minh.nguyen@hs-offenburg.de
  */
 
 /** \addtogroup mac
@@ -89,8 +90,8 @@ int linkaddr_cmp(const linkaddr_t *addr1, const linkaddr_t *addr2);
 
 
 /**
- * \brief      Set the address of the current node
- * \param addr The address
+ * \brief      Set the extended address of the current node
+ * \param addr The extended address
  *
  *             This function sets the Link address of the node.
  *
@@ -98,15 +99,61 @@ int linkaddr_cmp(const linkaddr_t *addr1, const linkaddr_t *addr2);
 void linkaddr_set_node_addr(linkaddr_t *addr);
 
 /**
- * \brief      The Link address of the node
+ * \brief      Set the short address of the current node
+ * \param addr The short address
  *
- *             This variable contains the Link address of the
+ *             This function sets the Link address of the node.
+ *
+ */
+void linkaddr_set_node_shortAddr(linkaddr_t *addr, uint8_t len);
+
+/**
+ * \brief      Copy a Link short address
+ * \param dest The destination
+ * \param from The source
+ *
+ *             This function copies a Link address from one location
+ *             to another.
+ *
+ */
+void linkaddr_copy_shortAddr(linkaddr_t *dest, const linkaddr_t *src);
+
+/**
+ * \brief      Compare two Link short addresses
+ * \param addr1 The first address
+ * \param addr2 The second address
+ * \return     Non-zero if the addresses are the same, zero if they are different
+ *
+ *             This function compares two Link addresses and returns
+ *             the result of the comparison. The function acts like
+ *             the '==' operator and returns non-zero if the addresses
+ *             are the same, and zero if the addresses are different.
+ *
+ */
+int linkaddr_cmp_shortAddr(const linkaddr_t *addr1, const linkaddr_t *addr2);
+
+
+/**
+ * \brief      The Link extended address of the node
+ *
+ *             This variable contains the Link extended address of the
  *             node. This variable should not be changed directly;
  *             rather, the linkaddr_set_node_addr() function should be
  *             used.
  *
  */
 extern linkaddr_t linkaddr_node_addr;
+
+/**
+ * \brief      The Link short address of the node
+ *
+ *             This variable contains the Link short address of the
+ *             node. This variable should not be changed directly;
+ *             rather, the linkaddr_set_node_short_addr() function should
+ *             be used.
+ *
+ */
+extern const linkaddr_t linkaddr_node_short_addr;
 
 /**
  * \brief      The null Link address
@@ -120,6 +167,8 @@ extern linkaddr_t linkaddr_node_addr;
  *
  */
 extern const linkaddr_t linkaddr_null;
+
+
 
 #endif /* LINKADDR_H_ */
 /** @} */
