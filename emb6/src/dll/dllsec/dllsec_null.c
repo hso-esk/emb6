@@ -47,9 +47,8 @@
 #include "framer_802154.h"
 #include "packetbuf.h"
 
-
-static s_ns_t          *DLLSec_Netstk;
-static mac_callback_t   DLLSec_TxCbFnct;
+static s_ns_t *pdllsec_netstk;
+static mac_callback_t dllsec_txCbFnct;
 
 /**
  * @brief   Transmission callback function handler
@@ -57,115 +56,108 @@ static mac_callback_t   DLLSec_TxCbFnct;
  * @param   p_arg
  * @param   p_err
  */
-static void DLLSec_CbTx(void *p_arg, e_nsErr_t *p_err)
+static void dllsec_cbTx(void *p_arg, e_nsErr_t *p_err)
 {
-    int status;
-    int retx = 0;
+  int status;
+  int retx = 0;
 
-    switch (*p_err) {
-        case NETSTK_ERR_NONE:
-            status = MAC_TX_OK;
-            retx = 1;
-            break;
+  switch (*p_err) {
+    case NETSTK_ERR_NONE:
+      status = MAC_TX_OK;
+      retx = 1;
+      break;
 
-        case NETSTK_ERR_CHANNEL_ACESS_FAILURE:
-            status = MAC_TX_COLLISION;
-            retx = 1;
-            break;
+    case NETSTK_ERR_CHANNEL_ACESS_FAILURE:
+      status = MAC_TX_COLLISION;
+      retx = 1;
+      break;
 
-        case NETSTK_ERR_TX_NOACK:
-            status = MAC_TX_NOACK;
-            retx = 1;
-            break;
+    case NETSTK_ERR_TX_NOACK:
+      status = MAC_TX_NOACK;
+      retx = 1;
+      break;
 
-        case NETSTK_ERR_BUSY:
-            status = MAC_TX_DEFERRED;
-            retx = 1;
-            break;
+    case NETSTK_ERR_BUSY:
+      status = MAC_TX_DEFERRED;
+      retx = 1;
+      break;
 
-        default:
-            status = MAC_TX_ERR_FATAL;
-            retx = 1;
-            break;
-    }
+    default:
+      status = MAC_TX_ERR_FATAL;
+      retx = 1;
+      break;
+  }
 
-    DLLSec_TxCbFnct(p_arg, status, retx);
-}
-
-
-/*---------------------------------------------------------------------------*/
-static void DLLSec_Send(mac_callback_t sent, void *p_arg)
-{
-    e_nsErr_t err = NETSTK_ERR_NONE;
-
-
-    DLLSec_TxCbFnct = sent;
-    packetbuf_set_attr(PACKETBUF_ATTR_FRAME_TYPE, FRAME802154_DATAFRAME);
-
-
-    /*
-     * set TX callback function and argument
-     */
-    DLLSec_Netstk->dllc->ioctrl(NETSTK_CMD_TX_CBFNCT_SET,
-                                (void *)DLLSec_CbTx,
-                                &err);
-
-    DLLSec_Netstk->dllc->ioctrl(NETSTK_CMD_TX_CBARG_SET,
-                                p_arg,
-                                &err);
-
-    /*
-     * Issue next lower layer to transmit the prepared packet
-     */
-    DLLSec_Netstk->dllc->send(packetbuf_hdrptr(),
-                              packetbuf_totlen(),
-                              &err);
+  dllsec_txCbFnct(p_arg, status, retx);
 }
 
 /*---------------------------------------------------------------------------*/
-static int DLLSec_OnFrameCreated(void)
+static void dllsec_send(mac_callback_t sent, void *p_arg)
 {
-    return 1;
+  e_nsErr_t err = NETSTK_ERR_NONE;
+
+  dllsec_txCbFnct = sent;
+  packetbuf_set_attr(PACKETBUF_ATTR_FRAME_TYPE, FRAME802154_DATAFRAME);
+
+  /* just for testing
+   * TODO setting addressing mode should be handled by sicslowpan */
+  packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_LONGADDRMODE);
+  packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_LONGADDRMODE);
+
+  /*
+   * set TX callback function and argument
+   */
+  pdllsec_netstk->dllc->ioctrl(NETSTK_CMD_TX_CBFNCT_SET, (void *) dllsec_cbTx, &err);
+  pdllsec_netstk->dllc->ioctrl(NETSTK_CMD_TX_CBARG_SET, p_arg, &err);
+
+  /*
+   * Issue next lower layer to transmit the prepared packet
+   */
+  pdllsec_netstk->dllc->send(packetbuf_hdrptr(), packetbuf_totlen(), &err);
 }
 
 /*---------------------------------------------------------------------------*/
-static void DLLSec_Input(void)
+static int dllsec_onFrameCreated(void)
 {
-    DLLSec_Netstk->hc->input();
+  return 1;
 }
 
 /*---------------------------------------------------------------------------*/
-static uint8_t DLLSec_GetOverhead(void)
+static void dllsec_input(void)
 {
-    return 0;
+  pdllsec_netstk->hc->input();
 }
 
 /*---------------------------------------------------------------------------*/
-static void DLLSec_Init(s_ns_t *p_netstk)
+static uint8_t dllsec_getOverhead(void)
+{
+  return 0;
+}
+
+/*---------------------------------------------------------------------------*/
+static void dllsec_init(s_ns_t *p_netstk)
 {
 #if NETSTK_CFG_ARG_CHK_EN
-    if (p_netstk == NULL) {
-        return;
-    }
+  if (p_netstk == NULL) {
+    return;
+  }
 #endif
 
-    e_nsErr_t err = NETSTK_ERR_NONE;
+  e_nsErr_t err = NETSTK_ERR_NONE;
 
-    DLLSec_Netstk = p_netstk;
-    DLLSec_Netstk->dllc->ioctrl(NETSTK_CMD_RX_CBFNT_SET,
-                              (void *)DLLSec_Input,
-                              &err);
+  pdllsec_netstk = p_netstk;
+  pdllsec_netstk->dllc->ioctrl(NETSTK_CMD_RX_CBFNT_SET, (void *) dllsec_input, &err);
 }
 
 /*---------------------------------------------------------------------------*/
-const s_nsdllsec_t nullsec_driver =
+const s_nsdllsec_t dllsec_driver_null =
 {
-       "LLSEC NULL",
-        DLLSec_Init,
-        DLLSec_Send,
-        DLLSec_OnFrameCreated,
-        DLLSec_Input,
-        DLLSec_GetOverhead
+ "LLSEC NULL",
+  dllsec_init,
+  dllsec_send,
+  dllsec_onFrameCreated,
+  dllsec_input,
+  dllsec_getOverhead
 };
 /*---------------------------------------------------------------------------*/
 
