@@ -105,7 +105,7 @@ void linkaddr_set_node_addr(linkaddr_t *addr);
  *             This function sets the Link address of the node.
  *
  */
-void linkaddr_set_node_shortAddr(linkaddr_t *addr, uint8_t len);
+void linkaddr_set_node_shortAddr(linkaddr_t *addr);
 
 /**
  * \brief      Copy a Link short address
@@ -153,7 +153,7 @@ extern linkaddr_t linkaddr_node_addr;
  *             be used.
  *
  */
-extern const linkaddr_t linkaddr_node_short_addr;
+extern linkaddr_t linkaddr_node_short_addr;
 
 /**
  * \brief      The null Link address

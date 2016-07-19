@@ -61,7 +61,7 @@
 #include    "logger.h"
 
 #if (NETSTK_CFG_RF_CRC_EN == FALSE)
-#include "crc.h"
+#include "lib_crc.h"
 #endif
 
 /*
@@ -103,7 +103,7 @@ static uint8_t       dllc_isOn;
 *                               GLOBAL VARIABLES
 ********************************************************************************
 */
-const s_nsDLLC_t dllc_driver_802154 =
+const s_nsDLLC_t DLLCDrv802154 =
 {
  "DLLC 802154",
   dllc_init,
@@ -328,7 +328,7 @@ static void dllc_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
   /* write the header */
   frame802154_create(&params, packetbuf_hdrptr());
 
-#if (NETSTK_CFG_RF_CRC_EN == FALSE)
+#if (NETSTK_CFG_RF_CRC_EN == FALSE) && 0
   uint16_t checksum_data_len;
   uint8_t *p_mhr;
   uint8_t *p_mfr;

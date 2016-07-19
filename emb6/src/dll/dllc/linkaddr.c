@@ -50,6 +50,8 @@
 
 #include "linkaddr.h"
 
+#define LINKADDR_SHORT_SIZE		2UL
+
 linkaddr_t linkaddr_node_addr;
 
 linkaddr_t linkaddr_node_short_addr = { { 0xff, 0xff } };
@@ -99,7 +101,7 @@ void linkaddr_set_node_shortAddr(linkaddr_t *addr)
 {
   uint8_t i;
   for(i = 0; i < LINKADDR_SHORT_SIZE; i++) {
-    linkaddr_node_short_addr->u8[i] = addr->u8[i];
+    linkaddr_node_short_addr.u8[i] = addr->u8[i];
   }
 }
 /*---------------------------------------------------------------------------*/

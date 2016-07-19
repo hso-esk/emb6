@@ -150,7 +150,7 @@ static void dllsec_init(s_ns_t *p_netstk)
 }
 
 /*---------------------------------------------------------------------------*/
-const s_nsdllsec_t dllsec_driver_null =
+const s_nsdllsec_t nullsec_driver =
 {
  "LLSEC NULL",
   dllsec_init,
