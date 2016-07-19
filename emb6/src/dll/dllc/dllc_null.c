@@ -209,11 +209,11 @@ static void dllc_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     p_mfr[0] = (fcs & 0xFF00u) >> 8;
     p_mfr[1] = (fcs & 0x00FFu);
   }
-
-  pdllc_netstk->mac->send(p_data, len + fcs_len, p_err);
-#else
-  pdllc_netstk->mac->send(p_data, len, p_err);
+  len += fcs_len;
 #endif /* NETSTK_CFG_RF_CRC_EN */
+
+  /* issue transmission request */
+  pdllc_netstk->mac->send(p_data, len, p_err);
 
 #if (NETSTK_CFG_AUTO_ONOFF_EN == TRUE)
   if (dllc_isOn == FALSE) {
