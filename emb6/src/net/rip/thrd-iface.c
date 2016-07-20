@@ -105,6 +105,8 @@ thrd_iface_rloc_set(uint16_t rloc16)
 		// Set new Router ID.
 		thrd_iface_set_router_id(extract_router_id(rloc16));
 		thrd_iface_print();
+
+		print_all_addr();
 	}
 }
 
