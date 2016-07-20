@@ -42,8 +42,10 @@ static uint8_t payload_buf[16] = { 0 };
 
 static size_t len = 0;						// CoAP payload length.
 static tlv_t *tlv;
-static net_tlv_ml_eid_t *ml_eid_tlv_;
+static net_tlv_ml_eid_t *ml_eid_tlv;
 static net_tlv_rloc16_t *rloc16_tlv;
+
+uint8_t mac_ext_addr_dummy[8] = { 0 };
 
 /**
  * Address Query CoAP Resource (/a/aq).
@@ -78,9 +80,9 @@ res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t prefer
 		tlv = (tlv_t*) &chunk[0];
 		uint8_t router_id = 63;	// Invalid Router ID.
 		if ( tlv->type == NET_TLV_ML_EID && tlv->length == 8 ) {
-			ml_eid_tlv_ = (net_tlv_ml_eid_t*) tlv->value;
+			ml_eid_tlv = (net_tlv_ml_eid_t*) tlv->value;
 			LOG_RAW("ML-EID = ");
-			print_ml_eid(ml_eid_tlv_);
+			print_ml_eid(ml_eid_tlv);
 		}
 		if ( len == 24 ) {
 			tlv = (tlv_t*) &chunk[10];
@@ -93,14 +95,15 @@ res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t prefer
 		// TODO Assign a Router ID to the REED if one is available.
 		thrd_ldb_ida_t *ida;
 		if ( router_id == 63 ) {
-			ida = thrd_leader_assign_rid(NULL, 0);	// TODO Add IEEE 802.15.4 Extended Address.
+			ida = thrd_leader_assign_rid(NULL, mac_ext_addr_dummy);	// TODO Add IEEE 802.15.4 Extended Address.
 		} else {
-			ida = thrd_leader_assign_rid(&router_id, 0);	// TODO Add IEEE 802.15.4 Extended Address.
+			ida = thrd_leader_assign_rid(&router_id, mac_ext_addr_dummy);	// TODO Add IEEE 802.15.4 Extended Address.
 		}
 		if ( ida != NULL ) {
 			// Success.
 			uint64_t router_id_mask = thrd_create_router_id_mask();
 			uint16_t rloc16 = THRD_CREATE_RLOC16(ida->ID_id, 0);
+			LOG_RAW("rloc16 = %04x\n\r", rloc16);
 			len = create_response_payload(payload_buf, THRD_ADDR_SOL_STATUS_SUCCESS, &rloc16, &thrd_partition.ID_sequence_number, &router_id_mask);
 			REST.set_response_status(response, REST.status.CHANGED);
 			REST.set_response_payload(response, payload_buf, len);
