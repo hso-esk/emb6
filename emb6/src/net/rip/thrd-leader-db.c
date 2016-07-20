@@ -70,16 +70,16 @@ thrd_ldb_num_ida(void)
 
 /* --------------------------------------------------------------------------- */
 
-thrd_ldb_ida_t
-*thrd_ldb_ida_head(void)
+thrd_ldb_ida_t*
+thrd_ldb_ida_head(void)
 {
 	return list_head(idassign_list);
 }
 
 /* --------------------------------------------------------------------------- */
 
-thrd_ldb_ida_t
-*thrd_ldb_ida_next(thrd_ldb_ida_t *i)
+thrd_ldb_ida_t*
+thrd_ldb_ida_next(thrd_ldb_ida_t *i)
 {
 	if (i != NULL) {
 		thrd_ldb_ida_t *n = list_item_next(i);
@@ -90,8 +90,8 @@ thrd_ldb_ida_t
 
 /* --------------------------------------------------------------------------- */
 
-thrd_ldb_ida_t
-*thrd_ldb_ida_lookup(uint8_t router_id)
+thrd_ldb_ida_t*
+thrd_ldb_ida_lookup(uint8_t router_id)
 {
 	thrd_ldb_ida_t *ida;
 	thrd_ldb_ida_t *found_ida;
@@ -132,17 +132,16 @@ thrd_ldb_ida_t
 
 /* --------------------------------------------------------------------------- */
 
-thrd_ldb_ida_t
-*thrd_ldb_ida_add(uint8_t router_id, uint8_t *owner, clock_time_t reuse_time)
+thrd_ldb_ida_t*
+thrd_ldb_ida_add(uint8_t router_id, uint8_t *owner, clock_time_t reuse_time)
 {
 	thrd_ldb_ida_t *ida;
 
 	/* Find the corresponding Router ID entry (Router ID Set). */
-
 	ida = thrd_ldb_ida_lookup(router_id);
 
 	/* Check whether the given router id already has an entry in the Router ID Set. */
-	if (ida == NULL) {
+	if ( ida == NULL ) {
 		LOG_RAW("thrd_ldb_ida_add: router id unknown for ");
 		LOG_RAW("%d\n", router_id);
 		LOG_RAW("\n\r");
@@ -151,7 +150,7 @@ thrd_ldb_ida_t
 		 * check if we have room for this router id. If not, we remove the
 		 * least recently used one we have. */
 
-		if (thrd_ldb_num_ida() == MAX_ROUTER_ID) {
+		if ( thrd_ldb_num_ida() == MAX_ROUTER_ID ) {
 			/* Removing the oldest router id entry from the Router ID Set. The
 			 * least recently used link is the first router id on the set. */
 			thrd_ldb_ida_t *oldest;
@@ -163,7 +162,7 @@ thrd_ldb_ida_t
 		/* Allocate a router id entry and populate it. */
 		ida = memb_alloc(&idassign_memb);
 
-		if (ida == NULL) {
+		if ( ida == NULL ) {
 			/* This should not happen, as we explicitly deallocated one
 			 * link set entry above. */
 			LOG_RAW("thrd_ldb_ida_add: could not allocate router id\n");
@@ -185,19 +184,14 @@ thrd_ldb_ida_t
 
 	} else {
 
-		LOG_RAW(
-				ANSI_COLOR_RED "thrd_ldb_ida_add: router id is already known for ");
-		LOG_RAW("%d\n", router_id);
-		LOG_RAW(ANSI_COLOR_RESET "\n\r");
-
+		LOG_RAW("thrd_ldb_ida_add: router id is already known for ");
+		LOG_RAW("%d\n\r", router_id);
 		LOG_RAW("thrd_ldb_idassign_add: num_ida %d\n\r", num_ida);
 		LOG_RAW("-----------------------------------------------------\n\r");
 
 		return NULL;
 	}
-
 	LOG_RAW("-----------------------------------------------------\n\r");
-
 	return ida;
 }
 
