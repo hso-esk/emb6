@@ -42,7 +42,7 @@ thrd_dev_t thrd_dev = {
 void
 thrd_dev_init(void)
 {
-#ifdef THRD_DEV_TYPE == THRD_DEV_TYPE_REED || THRD_DEV_TYPE == THRD_DEV_TYPE_ROUTER
+#if (THRD_DEV_TYPE == THRD_DEV_TYPE_REED) || (THRD_DEV_TYPE == THRD_DEV_TYPE_ROUTER)
 	/* Receives all CoAP messages */
 	coap_init_engine();
 	/* Initialize the REST engine. */
