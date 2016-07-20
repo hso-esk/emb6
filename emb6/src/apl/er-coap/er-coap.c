@@ -430,7 +430,7 @@ void
 coap_send_message(uip_ipaddr_t *addr, uint16_t port, uint8_t *data,
                  uint16_t length)
 {
-    pst_udp_socket->udp_conn->ripaddr = *addr;
+	pst_udp_socket->udp_conn->ripaddr = *addr;
     pst_udp_socket->udp_conn->rport   = port;
 
     udp_socket_send(pst_udp_socket, data, length);
