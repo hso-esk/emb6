@@ -68,9 +68,9 @@ coap_init()
 {
 	PRINTF("Starting Thread Network Data (CoAP).\n\r");
 	/* Receives all CoAP messages */
-	coap_init_engine();
+	// coap_init_engine();
 	/* Initialize the REST engine. */
-	rest_init_engine();
+	// rest_init_engine();
 
 	// Bind the resources to their Uri-Path.
 	rest_activate_resource(&thrd_res_n_sd, "n/sd");
