@@ -38,7 +38,7 @@ static void print_ml_eid(net_tlv_ml_eid_t *ml_eid_tlv);
  ********************************************************************************
  */
 
-static uint8_t payload_buf[16] = { 0 };
+static uint8_t payload_buf[18] = { 0 };
 
 static size_t len = 0;						// CoAP payload length.
 static tlv_t *tlv;
@@ -74,7 +74,7 @@ res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t prefer
 {
 	const uint8_t *chunk;
 	LOG_RAW("========================== CoAP ==========================\n");
-	LOG_RAW("Receiving CoAP packet! (Res: a/an)\n");
+	LOG_RAW("Receiving CoAP packet! (Res: a/as)\n");
 
 	if ( (len = coap_get_payload(request, &chunk)) >= 20 ) {
 		tlv = (tlv_t*) &chunk[0];
@@ -105,11 +105,13 @@ res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t prefer
 			uint16_t rloc16 = THRD_CREATE_RLOC16(ida->ID_id, 0);
 			LOG_RAW("rloc16 = %04x\n\r", rloc16);
 			len = create_response_payload(payload_buf, THRD_ADDR_SOL_STATUS_SUCCESS, &rloc16, &thrd_partition.ID_sequence_number, &router_id_mask);
+			LOG_RAW("len = %d bytes\n\r", len);
 			REST.set_response_status(response, REST.status.CHANGED);
 			REST.set_response_payload(response, payload_buf, len);
 		} else {
 			// Could not assign a Router ID.
 			len = create_response_payload(payload_buf, THRD_ADDR_SOL_STATUS_FAIL, NULL, NULL, NULL);
+			LOG_RAW("len = %d bytes\n\r", len);
 			REST.set_response_status(response, REST.status.CHANGED);
 			REST.set_response_payload(response, payload_buf, len);
 		}
@@ -136,7 +138,7 @@ create_response_payload(uint8_t *buf, uint8_t status, uint16_t *rloc16, uint8_t 
 			buf[8] = 9;
 			memcpy(&buf[9], id_sequence, 1);
 			memcpy(&buf[10], router_mask, 8);
-			return 16;
+			return 18;
 		}
 		return 3;
 	}
