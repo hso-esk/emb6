@@ -368,6 +368,43 @@ static void dllc_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
   /* Issue next lower layer to transmit the prepared frame */
   pdllc_netstk->mac->send(packetbuf_hdrptr(), packetbuf_totlen(), p_err);
 
+#if (NETSTK_REFACTOR_DLLC_TX_EN == TRUE)
+  uint8_t isTimeout = FALSE;
+  uint8_t numTxAttempt = 0;
+
+  p_data = (uint8_t *)packetbuf_hdrptr();
+  len = packetbuf_totlen();
+
+  do {
+    /* was transmission request rejected due to RX busy? */
+    if (*p_err == NETSTK_ERR_BUSY) {
+      *p_err = NETSTK_ERR_NONE;
+
+      /* then wait for radio exiting BUSY state until timeout */
+      pdllc_netstk->mac->ioctrl(NETSTK_CMD_RF_WAIT_UNTIL_IDLE, &isTimeout, p_err);
+      if (isTimeout == TRUE) {
+        /* terminate polling if the timeout is expired */
+        break;
+      }
+      else {
+        /* re-issue transmission request */
+        pdllc_netstk->mac->send(p_data, len, p_err);
+        numTxAttempt++;
+      }
+    }
+    else {
+      /* transmission process has finished */
+      break;
+    }
+  } while (numTxAttempt < MAX_NUM_TX_ATTEMPTS);
+
+  if (numTxAttempt > 0) {
+    /* manually trigger packet reception handling */
+    pdllc_netstk->mac->ioctrl(NETSTK_CMD_RX_BUF_READ, NULL, p_err);
+  }
+#endif /* NETSTK_REFACTOR_DLLC_TX_EN */
+
+
 #if (NETSTK_CFG_AUTO_ONOFF_EN == TRUE)
   if (dllc_isOn == FALSE) {
     pdllc_netstk->mac->off(p_err);

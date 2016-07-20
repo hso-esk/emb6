@@ -260,7 +260,8 @@ typedef enum e_rf_state {
   RF_STATE_RX_SYNC        = 0x11,
   RF_STATE_RX_FINI        = 0x12,
   RF_STATE_RX_TXACK_SYNC  = 0x13,
-  RF_STATE_RX_TERM        = 0x14,
+  RF_STATE_RX_TXACK_FINI  = 0x14,
+  RF_STATE_RX_TERM        = 0x15,
 
   RF_STATE_TX             = 0x20,
   RF_STATE_TX_SYNC,
@@ -406,6 +407,10 @@ static void rf_txPowerGet(int8_t *p_power, e_nsErr_t *p_err);
 static void rf_chanNumSet(uint8_t chan_num, e_nsErr_t *p_err);
 static void rf_opModeSet(e_nsRfOpMode mode, e_nsErr_t *p_err);
 static void rf_readRSSI(int8_t *p_val, e_nsErr_t *p_err);
+
+#if (NETSTK_REFACTOR_DLLC_TX_EN == TRUE)
+static void rf_waitUntilIdle(int8_t *p_isTimeout, e_nsErr_t *p_err);
+#endif
 
 #if (RF_CFG_DEBUG_EN == TRUE)
 static void rf_tmrDbgCb(void *p_arg);
@@ -725,6 +730,8 @@ static void rf_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err) {
   }
 #endif
 
+  struct s_rf_ctx *p_ctx = &rf_ctx;
+
   *p_err = NETSTK_ERR_NONE;
   switch (cmd) {
     case NETSTK_CMD_RF_TXPOWER_SET:
@@ -750,6 +757,11 @@ static void rf_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err) {
 #endif
       break;
 
+#if (NETSTK_REFACTOR_DLLC_TX_EN == TRUE)
+    case NETSTK_CMD_RF_WAIT_UNTIL_IDLE:
+      rf_waitUntilIdle(p_val, p_err);
+      break;
+#endif
 
     case NETSTK_CMD_RF_IS_RX_BUSY:
       if (RF_IS_RX_BUSY() == TRUE) {
@@ -774,12 +786,17 @@ static void rf_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err) {
       break;
 
     case NETSTK_CMD_RX_BUF_READ:
+#if (NETSTK_REFACTOR_DLLC_TX_EN == TRUE)
+      p_ctx->p_netstk->phy->recv(p_ctx->rxBuf, p_ctx->rxBytesCounter, p_err);
+      p_ctx->rxBytesCounter = 0;
+#else
       /*
        * Signal upper layer if a packet has arrived by the time this
        * command is issued.
        * Trigger event-process manually
        */
       rf_eventHandler(NETSTK_RF_EVENT, NULL);
+#endif
       break;
 
     case NETSTK_CMD_RF_RSSI_GET:
@@ -1096,7 +1113,7 @@ static void rf_pktRxTxEndISR(void *p_arg) {
         case RF_STATE_RX_TXACK_SYNC:
           if (marc_status == RF_MARC_STATUS_TX_FINI) {
             /* a responding ACK was successfully transmitted then signal upper layer */
-            p_ctx->state = RF_STATE_RX_FINI;
+            p_ctx->state = RF_STATE_RX_TXACK_FINI;
             ret = evproc_putEvent(E_EVPROC_HEAD, NETSTK_RF_EVENT, p_ctx);
 
             /* store event-triggering status */
@@ -1470,12 +1487,12 @@ static void rf_tx_rxAck(struct s_rf_ctx *p_ctx) {
       p_ctx->txErr = NETSTK_ERR_NONE;
     }
     else {
-      p_ctx->txErr = NETSTK_ERR_TX_COLLISION;
+      p_ctx->txErr = NETSTK_ERR_TX_NOACK;
     }
   }
   else {
     /* discard the received frame */
-    p_ctx->txErr = NETSTK_ERR_TX_COLLISION;
+    p_ctx->txErr = NETSTK_ERR_TX_NOACK;
   }
 
   /* indicate TX process has finished */
@@ -1532,7 +1549,8 @@ static void rf_eventHandler(c_event_t c_event, p_data_t p_data) {
 
   /* handle nested events */
   if (c_event == NETSTK_RF_EVENT) {
-    if (p_ctx->state == RF_STATE_RX_FINI) {
+    if ((p_ctx->state == RF_STATE_RX_FINI) ||
+        (p_ctx->state == RF_STATE_RX_TXACK_FINI)) {
       rf_rx_fini(p_ctx);
     }
     else {
@@ -2203,6 +2221,41 @@ static void rf_readRSSI(int8_t *p_val, e_nsErr_t *p_err) {
   /* get real RSSI from most recently received frame */
   *p_val = rf_ctx.rxRSSI;
 }
+
+
+#if (NETSTK_REFACTOR_DLLC_TX_EN == TRUE)
+static void rf_waitUntilIdle(int8_t *p_isTimeout, e_nsErr_t *p_err) {
+  clock_time_t tickstart;
+  struct s_rf_ctx *p_ctx = &rf_ctx;
+
+  /* set timeout status to default value */
+  *p_isTimeout = TRUE;
+
+  /* only handle polling if radio is in RX state */
+  if ((p_ctx->state & 0xF0) == RF_STATE_RX_IDLE) {
+    /* wait for RX_IDLE until timeout */
+    tickstart = bsp_getTick();
+    while ((bsp_getTick() - tickstart) < 50) {
+      /* is radio already in RX_IDLE state? */
+      if (p_ctx->state == RF_STATE_RX_IDLE) {
+        *p_isTimeout = FALSE;
+        break;
+      }
+
+      /* has a valid packet been received (i.e., checksum is valid) ? */
+      if (((p_ctx->state == RF_STATE_RX_FINI) && (p_ctx->rxReqAck == FALSE)) ||
+          (p_ctx->state == RF_STATE_RX_TXACK_FINI)) {
+        /* exit and re-enter RX state */
+        rf_rx_exit(p_ctx);
+        rf_rx_entry(p_ctx);
+
+        *p_isTimeout = FALSE;
+        break;
+      }
+    }
+  }
+}
+#endif
 
 
 /*
