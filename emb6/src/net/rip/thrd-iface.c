@@ -86,6 +86,7 @@ void
 thrd_iface_rloc_set(uint16_t rloc16)
 {
 	if ( thrd_iface.rloc16 != rloc16 ) {
+
 		LOG_RAW("Creating new RLOC addresses.\n");
 		// Remove old RLOC addresses.
 		remove_rloc_addr();
@@ -97,6 +98,7 @@ thrd_iface_rloc_set(uint16_t rloc16)
 		thrd_create_rloc_iid(&rloc, rloc16);
 		thrd_iface.ml_rloc = rloc;
 		uip_ds6_addr_add(&thrd_iface.ml_rloc, 0, ADDR_MANUAL);
+
 		// LL-RLOC.
 		uip_create_linklocal_prefix(&rloc);
 		thrd_create_rloc_iid(&rloc, rloc16);
@@ -157,14 +159,13 @@ print_all_addr()
 	LOG_RAW("Our IPv6 addresses:\n");
 	for(uint8_t i = 0; i < UIP_DS6_ADDR_NB; i++) {
 		state = uip_ds6_if.addr_list[i].state;
-		if(uip_ds6_if.addr_list[i].isused && (state == ADDR_TENTATIVE || state
-				== ADDR_PREFERRED)) {
+		if( uip_ds6_if.addr_list[i].isused && (state == ADDR_TENTATIVE || state == ADDR_PREFERRED) ) {
 			LOG_RAW("  ");
 			LOG_IP6ADDR(&uip_ds6_if.addr_list[i].ipaddr);
 			LOG_RAW("\n");
-			if(state == ADDR_TENTATIVE) {
-				uip_ds6_if.addr_list[i].state = ADDR_PREFERRED;
-			}
+			// if(state == ADDR_TENTATIVE) {
+			// uip_ds6_if.addr_list[i].state = ADDR_PREFERRED;
+			// }
 		}
 	}
 }
