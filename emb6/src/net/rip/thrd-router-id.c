@@ -72,6 +72,8 @@ static void handle_id_reuse_delay_timeout(void *ptr);
 static size_t create_addr_solicit_req_payload(uint8_t *buf, uint8_t *ml_eid,
 		uint16_t *rloc16);
 
+static uint8_t get_unassigned_router_id(void);
+
 /* --------------------------------------------------------------------------- */
 
 /**
@@ -132,32 +134,51 @@ handle_increment_id_seq_num_timer(void *ptr)
 
 /* --------------------------------------------------------------------------- */
 
-thrd_ldb_ida_t
-*thrd_leader_assign_rid(uint8_t *router_id, uint8_t *id_owner)
+thrd_ldb_ida_t*
+thrd_leader_assign_rid(uint8_t *router_id, uint8_t *id_owner)
 {
+	LOG_RAW("Assigning new Router ID.\n\r");
 	if ( thrd_ldb_num_ida() < 32 ) {
 		thrd_ldb_ida_t *ida;
 
-		// Check whether desired Router ID is available.
-		ida = thrd_ldb_ida_lookup(*router_id);
-		if ( ida == NULL ) {
-			ida = thrd_ldb_ida_add(*router_id, id_owner, 0);
-			LOG_RAW("Router ID Assignment: Assigned Router ID = %d\n", ida->ID_id);
-			return ida;
-		} else {
-			// If the desired Router ID currently is in use --> Looking for free Router ID.
+		if ( router_id != NULL ) {
 
-			// Router ID is not available --> Looking for an unassigned Router ID.
-			uint8_t id_cnt = 0;
-			ida = thrd_ldb_ida_lookup(id_cnt);
-			// Looking for an unassigned Router ID.
-			while ( ida != NULL && id_cnt < 63 ) {
-				id_cnt++;
+			// Check whether desired Router ID is available.
+			ida = thrd_ldb_ida_lookup(*router_id);
+
+			if ( ida == NULL ) {
+				ida = thrd_ldb_ida_add(*router_id, id_owner, 0);
+				LOG_RAW("Router ID Assignment: Assigned Router ID = %d\n", ida->ID_id);
+				return ida;
+			} else {
+				// If the desired Router ID currently is in use --> Looking for free Router ID.
+
+				uint8_t r_id = get_unassigned_router_id();
+				/*
+				// Router ID is not available --> Looking for an unassigned Router ID.
+				uint8_t id_cnt = 0;
 				ida = thrd_ldb_ida_lookup(id_cnt);
+				// Looking for an unassigned Router ID.
+				while ( ida != NULL && id_cnt < 63 ) {
+					id_cnt++;
+					ida = thrd_ldb_ida_lookup(id_cnt);
+				}
+				*/
+				// Create Router ID if available.
+				if ( r_id < 63 ) {
+					ida = thrd_ldb_ida_add(r_id, id_owner, 0);
+					LOG_RAW("Router ID Assignment: Assigned Router ID = %d\n", ida->ID_id);
+					return ida;
+				} else {
+					LOG_RAW("Router ID Assignment: No more Router IDs available.\n");
+					return NULL;
+				}
 			}
+		} else {
+			uint8_t r_id = get_unassigned_router_id();
 			// Create Router ID if available.
-			if ( id_cnt < 63 ) {
-				ida = thrd_ldb_ida_add(id_cnt, id_owner, 0);
+			if ( r_id < 63 ) {
+				ida = thrd_ldb_ida_add(r_id, id_owner, 0);
 				LOG_RAW("Router ID Assignment: Assigned Router ID = %d\n", ida->ID_id);
 				return ida;
 			} else {
@@ -200,6 +221,21 @@ handle_id_reuse_delay_timeout(void *ptr)
 	return;
 }
 
+static uint8_t
+get_unassigned_router_id(void)
+{
+	// Router ID is not available --> Looking for an unassigned Router ID.
+	uint8_t id_cnt = 0;
+	thrd_ldb_ida_t *ida;
+	ida = thrd_ldb_ida_lookup(id_cnt);
+	// Looking for an unassigned Router ID.
+	while ( ida != NULL && id_cnt < 63 ) {
+		id_cnt++;
+		ida = thrd_ldb_ida_lookup(id_cnt);
+	}
+	return id_cnt;
+}
+
 /*=============================================================================
                                Router ID Assignment
 ===============================================================================*/
@@ -231,11 +267,13 @@ thrd_request_router_id(uint8_t *router_id)
 	thrd_create_meshlocal_prefix(&leader_addr);
 	thrd_create_rloc_iid(&leader_addr, THRD_CREATE_RLOC16(thrd_partition.leader_router_id, 0));
 
+	THRD_LINK_LOCAL_ALL_NODES_ADDR(&leader_addr);
+
 	coap_init_message(packet, COAP_TYPE_CON, COAP_POST, 0);
 	coap_set_header_uri_path(packet, service_urls[0]);
 	coap_set_payload(packet, addr_solicit_buf, len);
 	coap_nonblocking_request(&leader_addr, UIP_HTONS(COAP_DEFAULT_PORT), packet, thrd_addr_solicit_chunk_handler); // TODO Changing CoAP Port.
-	LOG_RAW("Router ID Request has been sent to Partition Leader [");
+	LOG_RAW("Sending Router ID Request to Partition Leader [");
 	LOG_IP6ADDR(&leader_addr);
 	LOG_RAW("]\n\r");
 }
