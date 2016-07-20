@@ -267,7 +267,7 @@ thrd_request_router_id(uint8_t *router_id)
 	thrd_create_meshlocal_prefix(&leader_addr);
 	thrd_create_rloc_iid(&leader_addr, THRD_CREATE_RLOC16(thrd_partition.leader_router_id, 0));
 
-	THRD_LINK_LOCAL_ALL_NODES_ADDR(&leader_addr);
+	// THRD_LINK_LOCAL_ALL_NODES_ADDR(&leader_addr);
 
 	coap_init_message(packet, COAP_TYPE_CON, COAP_POST, 0);
 	coap_set_header_uri_path(packet, service_urls[0]);
@@ -306,33 +306,37 @@ create_addr_solicit_req_payload(uint8_t *buf, uint8_t *ml_eid, uint16_t *rloc16)
 void
 thrd_addr_solicit_chunk_handler(void *response)
 {
-	LOG_RAW("thrd_addr_solicit_chunk_handler: Received response!");
+	LOG_RAW("thrd_addr_solicit_chunk_handler: Received response!\n\r");
     const uint8_t *chunk;
     if ( !response ) {
 
     } else {
     	int payload_len = coap_get_payload(response, &chunk);
+    	LOG_RAW("payload_len = %d\n\r", payload_len);
+
     	if ( payload_len >= 3 ) {
     		// TODO Process payload -> Receipt of Address Solicit Response.
     		tlv = (tlv_t*) &chunk[0];
     		if ( tlv->type == NET_TLV_STATUS && tlv->length == 1 ) {
     			status_tlv = (net_tlv_status_t*) tlv->value;
     			LOG_RAW("Status = %d\n", status_tlv->status);
-    		}
-    		if ( status_tlv->status == 0 && payload_len == 16 ) {
-    			// Success.
-    			tlv = (tlv_t*) &chunk[3];
-    			if ( tlv->type == NET_TLV_RLOC16 && tlv->length == 2 ) {
-    				rloc16_tlv = (net_tlv_rloc16_t*) tlv->value;
-    				// Set the interface's RLOC16 and update ML-RLOC and LL-RLOC addresses.
-    				thrd_iface_rloc_set(rloc16_tlv->rloc16);
-    				LOG_RAW("RLOC16 = %04x\n", rloc16_tlv->rloc16);
-    			}
-    			tlv = (tlv_t*) &chunk[7];
-    			if ( tlv->type == NET_TLV_ROUTER_MASK && tlv->length == 7 ) {
-    				router_mask_tlv = (net_tlv_router_mask_t*) tlv->value;
-    				LOG_RAW("ID Sequence Number = %d\n", router_mask_tlv->id_sequence_number);
-    				LOG_RAW("Router ID Mask = %16x\n", router_mask_tlv->router_id_mask);
+
+    			// if ( status_tlv->status == 0 && payload_len == 16 ) {
+    			if ( status_tlv->status == 0 && payload_len >= 16 ) {
+    				// Success.
+    				tlv = (tlv_t*) &chunk[3];
+    				if ( tlv->type == NET_TLV_RLOC16 && tlv->length == 2 ) {
+    					rloc16_tlv = (net_tlv_rloc16_t*) tlv->value;
+    					// Set the interface's RLOC16 and update ML-RLOC and LL-RLOC addresses.
+    					thrd_iface_rloc_set(rloc16_tlv->rloc16);
+    					LOG_RAW("RLOC16 = %04x\n", rloc16_tlv->rloc16);
+    				}
+    				tlv = (tlv_t*) &chunk[7];
+    				if ( tlv->type == NET_TLV_ROUTER_MASK && tlv->length == 9 ) {
+    					router_mask_tlv = (net_tlv_router_mask_t*) tlv->value;
+    					LOG_RAW("ID Sequence Number = %d\n", router_mask_tlv->id_sequence_number);
+    					LOG_RAW("Router ID Mask = %16x\n", router_mask_tlv->router_id_mask);
+    				}
     			}
     		}
     	}
