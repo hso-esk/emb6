@@ -62,17 +62,29 @@
  INCLUDE FILES
  =============================================================================*/
 
-#include "emb6.h"
-#include "bsp.h"
 #include "er-coap.h"
-#include "er-coap-engine.h"
-#include "evproc.h"
+#include "rest-engine.h"
 #include "demo_coap_cli.h"
+#include "emb6.h"
+#include "etimer.h"
+#include "uip.h"
+#include "bsp.h"
+
+#include "mle_management.h"
 
 #include "thrd-route.h"
 #include "thrd-leader-db.h"
 #include "thrd-addr-query.h"
+#include "thrd-router-id.h"
+#include "thrd-partition.h"
+#include "thrd-adv.h"
+#include "thrd-send-adv.h"
+
 #include "thrd-iface.h"
+#include "thrd-network-data.h"
+
+#define DEBUG DEBUG_PRINT
+#include "uip-debug.h"	// For debugging terminal output.
 
 /*==============================================================================
                                      MACROS
@@ -119,25 +131,35 @@ uip_ipaddr_t rfd_eid;
 
 int8_t demo_thrdCoapInit(void)
 {
+	// Initialize Thread device.
+	thrd_dev_init();
+	PRINTF("Initializing Thread Interface.\n");
+	thrd_iface_init();
+
+	thrd_network_data_init();
+
+	if ( !mle_init() ){ return 0; }
+	//mle_set_parent_mode();
+	//mle_set_child_mode();
+
 	// Initialize routing database.
-	thrd_rdb_init();
+	// thrd_rdb_init();
 
 	// Initialize leader database.
-	thrd_ldb_init();
+	// thrd_ldb_init();
 
-	thrd_iface.router_id = 2;
+	// thrd_iface.router_id = 2;
 
-	// Initialize EID-to-RLOC Mapping Database.
-	thrd_eid_rloc_db_init();
+	// thrd_eid_rloc_db_init();
 
-	uip_ip6addr(&rfd_eid, 0xfe80, 0x0000, 0x0000, 0x0000, 0x0250, 0xc2ff, 0xfea8, 0xdddd);
+	// thrd_trickle_init();
 
-	// Adding
-	// thrd_local_addr_add(rfd_eid);
-	thrd_rfd_child_addr_add(rfd_eid);
-	// thrd_rfd_child_addr_add(rfd_eid);
+	// thrd_partition_start();
 
-    return 1;
+	/* set periodic timer */
+	//etimer_set(&timer, SEND_INTERVAL * bsp_get(E_BSP_GET_TRES), timer_callback);
+
+	return 1;
 }
 
 /*==============================================================================
