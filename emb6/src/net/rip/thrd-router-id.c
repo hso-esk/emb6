@@ -52,6 +52,8 @@ static net_tlv_status_t *status_tlv;
 static net_tlv_rloc16_t *rloc16_tlv;
 static net_tlv_router_mask_t *router_mask_tlv;
 
+static uip_ipaddr_t leader_addr;
+
 /*
  * CoAP Resources to be activated need to be imported through the extern keyword.
  */
@@ -263,7 +265,6 @@ thrd_request_router_id(uint8_t *router_id)
 	// uint16_t rloc16 = THRD_CREATE_RLOC16(*router_id, 0); // TODO Create RLOC16 (not here! --> After Router ID).
 	len = create_addr_solicit_req_payload(addr_solicit_buf, &thrd_iface.ml_eid.u8[8], &thrd_iface.rloc16);
 
-	uip_ipaddr_t leader_addr;
 	thrd_create_meshlocal_prefix(&leader_addr);
 	thrd_create_rloc_iid(&leader_addr, THRD_CREATE_RLOC16(thrd_partition.leader_router_id, 0));
 
