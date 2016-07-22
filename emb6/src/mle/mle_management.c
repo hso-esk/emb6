@@ -228,11 +228,12 @@ void reply_for_mle_childID_request(void *ptr)
 	{
 		if(*routerid<63)
 			mle_set_parent_mode();
+		else
+			return;
  // TODO send error to child
 
 	}
-	else
-	{
+
 		if(MyNode.OpMode == CHILD)
 		{
 			// send request to become a router and then reply
@@ -251,7 +252,7 @@ void reply_for_mle_childID_request(void *ptr)
 			child= mle_find_child_byAdd(&param.source_addr);
 			child->state=LINKED;
 		}
-	}
+
 }
 
 void mle_join_process(void *ptr)
