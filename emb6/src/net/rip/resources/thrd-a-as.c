@@ -14,6 +14,7 @@
 
 #include "thrd-partition.h"
 #include "thrd-router-id.h"
+#include "thrd-leader-db.h"
 
 #define     LOGGER_ENABLE                 LOGGER_THRD_NET
 #include    "logger.h"
@@ -115,6 +116,7 @@ res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t prefer
 			REST.set_response_status(response, REST.status.CHANGED);
 			REST.set_response_payload(response, payload_buf, len);
 		}
+		thrd_ldb_print_leader_database();
 	}
 	LOG_RAW("==========================================================\n");
 }
