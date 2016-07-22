@@ -17,6 +17,9 @@
 #include "thrd-partition.h"
 #include "thrd-iface.h"
 #include "thrd-router-id.h"
+#include "linkaddr.h"
+
+
 
 #include "etimer.h"
 #include "evproc.h"
@@ -930,8 +933,23 @@ uint8_t mle_init(void)
 	PRINTFY("\n NB WITH LQ 3 is %i:",count_neighbor_LQ(3));
 	PRINTFY("\n NB WITH LQ 2 is %i:",count_neighbor_LQ(2));
 	 */
+
+	linkaddr_t add;
+	add.u8[0]=1 ;
+	add.u8[1]=1 ;
+	linkaddr_set_node_shortAddr(&add);
+
+	mle_init_cmd(&cmd,LINK_REQUEST);
+	add_src_address_to_cmd(&cmd);
+	add_leader_to_cmd(&cmd,thrd_generate_leader_data_tlv());
+	MyNode.challenge=add_rand_challenge_to_cmd(&cmd);
+	add_version_to_cmd(&cmd);
+	uip_ip6addr(&s_destAddr, 0xfe80, 0, 0, 0, 0, 0x00ff, 0xfe00, 0x0101);
+//	uip_ip6addr(&s_destAddr, 0xfe80, 0, 0, 0, 0x250, 0xc2ff, 0xfea8, 0xb0);
+	mle_send_msg(&cmd, &s_destAddr);
+
 	/**********************/
-	ctimer_set(&c_mle_Timer, 1 * bsp_get(E_BSP_GET_TRES) , mle_join_process, (void *) NULL );
+	//ctimer_set(&c_mle_Timer, 1 * bsp_get(E_BSP_GET_TRES) , mle_join_process, (void *) NULL );
 
 
 	LOG_RAW( "MLE protocol initialized ... ");PRESET();

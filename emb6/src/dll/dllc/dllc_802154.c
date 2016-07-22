@@ -434,12 +434,14 @@ static void dllc_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
   ret = packetbuf_hdrreduce(len - frame.payload_len);
   if (ret == 0) {
     *p_err = NETSTK_ERR_FATAL;
+	LOG_RAW("discarded -%d", *p_err);
     return;
   }
 
   /* verify frame addresses */
   dllc_verifyAddr(&frame, p_err);
   if (*p_err != NETSTK_ERR_NONE) {
+	LOG_RAW("discarded -%d", *p_err);
     return;
   }
 
