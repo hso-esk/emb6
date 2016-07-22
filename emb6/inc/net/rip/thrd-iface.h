@@ -15,8 +15,9 @@
 /**
  * Create Mesh-Local Prefrix.
  */
+// TODO Add Mesh-Local Prefix (e.g. 0xfd00).
 #define thrd_create_meshlocal_prefix(addr) do { 	\
-		(addr)->u16[0] = UIP_HTONS(0xfd00);         \
+		(addr)->u16[0] = UIP_HTONS(0xfe80);         \
 		(addr)->u16[1] = 0x00;                      \
 		(addr)->u16[2] = 0x00;                      \
 		(addr)->u16[3] = 0x00;                      \
