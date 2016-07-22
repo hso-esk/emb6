@@ -38,7 +38,7 @@ extern thrd_partition_t thrd_partition;
 /**
  * Start a new Thread Partition.
  */
-void thrd_partition_start(void);
+extern void thrd_partition_start(void);
 
 /**
  * Process a given Leader Data TLV and compare its content with the available
@@ -47,62 +47,93 @@ void thrd_partition_start(void);
  * @param leader_tlv The Leader Data TLV.
  * @retval THRD_ERROR_NONE			If the Leader Data TLV is valid.
  * @retval THRD_ERROR_INVALID_ARGS	If the Leader Data TLV is invalid.
+ * @retval THRD_ERROR_DROP			If the ID Sequence Number is smaller than the current one.
  */
-thrd_error_t thrd_partition_process(uint8_t id_sequence_number, tlv_leader_t *leader_tlv);
+extern thrd_error_t thrd_partition_process(uint8_t id_sequence_number, tlv_leader_t *leader_tlv);
 
 /**
  * Remove all information related to the previous partition.
  * Thread Spec.: Resetting Network Partition Data.
  */
-void thrd_partition_empty(void);
+extern void thrd_partition_empty(void);
+
+/**
+ * Set the ID Sequence Number.
+ * @param id_seq_number The ID Sequence Number.
+ */
+extern void thrd_partition_set_id_seq_number(uint8_t id_seq_number);
 
 /**
  * Get the ID Sequence Number.
  * @return The ID Sequence Number.
  */
-uint8_t thrd_partition_get_id_seq_number();
+extern uint8_t thrd_partition_get_id_seq_number();
 
 /**
  * Set the Leader Router ID.
  * @param leader_router_id The Leader Router ID.
  */
-void thrd_partition_set_leader_router_id(uint8_t leader_router_id);
+extern void thrd_partition_set_leader_router_id(uint8_t leader_router_id);
 
 /**
  * Get the Leader Router ID.
  * @return The Leader Router ID.
  */
-uint8_t thrd_partition_get_leader_router_id();
+extern uint8_t thrd_partition_get_leader_router_id();
+
+/**
+ * Set the Partition ID.
+ * @param partition_id The Partition ID.
+ */
+extern void thrd_partition_set_pid(uint32_t partition_id);
 
 /**
  * Get the Partition ID.
  * @return The Partition ID.
  */
-uint32_t thrd_partition_get_pid();
+extern uint32_t thrd_partition_get_pid();
+
+/**
+ * Set the partition weight.
+ * @param weight The partition weight.
+ */
+extern void thrd_partition_set_weight(uint8_t weight);
 
 /**
  * Get the partition weight.
  * @return The partition weight.
  */
-uint8_t thrd_partition_get_weight();
+extern uint8_t thrd_partition_get_weight();
+
+/**
+ * Set the VN Version.
+ * @param vn_version The VN Version.
+ */
+extern void thrd_partition_set_vn_version(uint8_t vn_version);
 
 /**
  * Get the VN Version.
  * @return The VN Version.
  */
-uint8_t thrd_partition_get_vn_version();
+extern uint8_t thrd_partition_get_vn_version();
+
+/**
+ * Set the VN Stable Version.
+ * @param vn_stable_version The VN Stable Version.
+ */
+extern void thrd_partition_set_vn_stable_version(uint8_t vn_stable_version);
 
 /**
  * Get the VN Stable Version.
  * @return The VN Stable Version.
  */
-uint8_t thrd_partition_get_vn_stable_version();
+extern uint8_t thrd_partition_get_vn_stable_version();
 
 /**
  * Get the routing cost to reach the leader.
  * @return The routing cost for the leader.
  */
-uint8_t thrd_partition_get_leader_cost();
+extern uint8_t thrd_partition_get_leader_cost();
 
 /*
  ********************************************************************************
