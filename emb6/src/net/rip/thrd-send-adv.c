@@ -112,9 +112,6 @@ handle_send_timer(void *ptr)
 	tlv_route64_t *route64_tlv = thrd_generate_route64(&route64_len);
 	printf("route64_len = %d\n", route64_len);
 	send_mle_advertisement(route64_tlv, route64_len, leader_tlv);
-
-	print_all_addr();		// TODO Remove this!
-
 	return;
 }
 
