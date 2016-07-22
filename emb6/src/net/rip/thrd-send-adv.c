@@ -104,13 +104,11 @@ random_interval(void)
 static void
 handle_send_timer(void *ptr)
 {
-	LOG_RAW("thrd_handle_send_timer: Sending MLE Advertisement!\n");
+	LOG_RAW("thrd_handle_send_timer: Sending MLE Advertisement!\n\r");
 
-	// TODO Send MLE Advertisement.
 	tlv_leader_t *leader_tlv = thrd_generate_leader_data_tlv();
 	size_t route64_len = 0;
 	tlv_route64_t *route64_tlv = thrd_generate_route64(&route64_len);
-	printf("route64_len = %d\n", route64_len);
 	send_mle_advertisement(route64_tlv, route64_len, leader_tlv);
 	return;
 }
