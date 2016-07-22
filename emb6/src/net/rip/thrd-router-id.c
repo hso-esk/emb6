@@ -11,6 +11,8 @@
 #include "thread_conf.h"
 #include "ctimer.h"
 
+#include "thrd-dev.h"
+
 #include "er-coap.h"
 #include "er-coap-engine.h"
 #include "rest-engine.h"
@@ -106,7 +108,7 @@ thrd_leader_init(void)
 		thrd_partition.leader_router_id = ida->ID_id;
 	}
 	// Set RLOC16 address and create corresponding IPv6 addresses.
-	thrd_iface_rloc_set(THRD_CREATE_RLOC16(thrd_iface_get_router_id(), 0));
+	thrd_iface_set_rloc(THRD_CREATE_RLOC16(thrd_iface_get_router_id(), 0));
 
 	coap_init();
 	// Start timer for incrementing ID_sequence_number.
@@ -313,8 +315,6 @@ thrd_addr_solicit_chunk_handler(void *response)
 
     } else {
     	int payload_len = coap_get_payload(response, &chunk);
-    	LOG_RAW("payload_len = %d\n\r", payload_len);
-
     	if ( payload_len >= 3 ) {
     		// TODO Process payload -> Receipt of Address Solicit Response.
     		tlv = (tlv_t*) &chunk[0];
@@ -329,18 +329,20 @@ thrd_addr_solicit_chunk_handler(void *response)
     				if ( tlv->type == NET_TLV_RLOC16 && tlv->length == 2 ) {
     					rloc16_tlv = (net_tlv_rloc16_t*) tlv->value;
     					// Set the interface's RLOC16 and update ML-RLOC and LL-RLOC addresses.
-    					thrd_iface_rloc_set(rloc16_tlv->rloc16);
+    					thrd_iface_set_rloc(rloc16_tlv->rloc16);
     					LOG_RAW("RLOC16 = %04x\n", rloc16_tlv->rloc16);
     				}
     				tlv = (tlv_t*) &chunk[7];
     				if ( tlv->type == NET_TLV_ROUTER_MASK && tlv->length == 9 ) {
     					router_mask_tlv = (net_tlv_router_mask_t*) tlv->value;
-    					LOG_RAW("ID Sequence Number = %d\n", router_mask_tlv->id_sequence_number);
-    					LOG_RAW("Router ID Mask = %16x\n", router_mask_tlv->router_id_mask);
+    					thrd_partition_set_id_seq_number(router_mask_tlv->id_sequence_number);
+    					// LOG_RAW("ID Sequence Number = %d\n", router_mask_tlv->id_sequence_number);
+    					// LOG_RAW("Router ID Mask = %16x\n", router_mask_tlv->router_id_mask);
     				}
     			}
     		}
     	}
+    	thrd_dev_print_dev_info();
     }
     reply_for_mle_childID_request(&thrd_iface.router_id);
 }
