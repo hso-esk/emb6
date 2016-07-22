@@ -60,6 +60,11 @@ typedef enum {
                                 NETWORK LAYER SECTION
 ===============================================================================*/
 
+
+#if THRD_USE_RIP == TRUE
+#define UIP_CONF_IPV6_RIP                   TRUE
+#endif
+
 // --------------- THREAD ROUTING PROTOCOL ----------------------
 
 

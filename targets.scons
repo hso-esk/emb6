@@ -509,13 +509,13 @@ trg += [{
 
 trg += [{
     'id'        : 'cs_thrdcoapsrv',
-    'apps_conf' : [ x86_srv, thrd_coap_srv ],
+    'apps_conf' : [ x86_cli, thrd_coap_srv ],
     'bsp'       : get_descr(bsp, 'native')
 }]
 
 trg += [{
     'id'        : 'cs_thrdcoapsink',
-    'apps_conf' : [ x86_srv, thrd_coap_cli ],
+    'apps_conf' : [ x86_cli, thrd_coap_cli ],
     'bsp'       : get_descr(bsp, 'native')
 }]
 

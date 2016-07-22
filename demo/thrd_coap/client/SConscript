@@ -2,9 +2,9 @@ thrd_coap = {
 	'demo' : [
 	],
 	'emb6' : [
+		'rpl',
 		'coap',
 		'sock',
-		'rpl',
 		'ipv6',
 		'sicslowpan',
 		'dllsec',
@@ -22,7 +22,7 @@ thrd_coap = {
 # C global defines
 	'CPPDEFINES' : [
 		('DEMO_USE_THRD_COAP',1),
-		('NET_USE_RPL',1),
+		('THRD_USE_RIP',1),
 	],
 # GCC flags
 	'CFLAGS' : [
