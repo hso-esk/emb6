@@ -229,13 +229,14 @@ void reply_for_mle_childID_request(void *ptr)
 		if(*routerid<63)
 			mle_set_parent_mode();
 		else
+			 // TODO send error to child
 			return;
- // TODO send error to child
 
 	}
 
 		if(MyNode.OpMode == CHILD)
 		{
+			// TODO verify if i already send a request for router id (may be inside the function)
 			// send request to become a router and then reply
 			LOG_RAW(ANSI_COLOR_YELLOW"Sending request to become a Router \n"ANSI_COLOR_RESET);
 			thrd_request_router_id(NULL);
