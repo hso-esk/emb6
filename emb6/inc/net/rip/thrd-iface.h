@@ -97,10 +97,11 @@ uint8_t thrd_iface_get_router_id();
  * Set the interface's RLOC16 and update the ML-RLOC and LL-RLOC addresses.
  * @param rloc16 The RLOC16.
  */
-void thrd_iface_rloc_set(uint16_t rloc16);
+void thrd_iface_set_rloc(uint16_t rloc16);
 
+/**
+ * Print Thread interface information.
+ */
 void thrd_iface_print();
-
-void print_all_addr();
 
 #endif /* EMB6_INC_NET_RIP_THRD_IFACE_H_ */

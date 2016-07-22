@@ -24,6 +24,8 @@
 
 static uint8_t route64_data[MAX_ROUTE64_TLV_DATA_SIZE];
 
+static uint8_t tlv_buf[8] = { 0 };		// Leader Data TLV buffer.
+
 /*==============================================================================
                                LOCAL FUNCTION PROTOTYPES
  =============================================================================*/
@@ -100,10 +102,10 @@ thrd_get_id_seq_number(tlv_route64_t  *route64_tlv)
  =============================================================================*/
 
 void
-thrd_process_adv(uint16_t source_addr, tlv_route64_t *route64_tlv, tlv_leader_t *leader_tlv)
+thrd_process_adv(uint16_t source_rloc, tlv_route64_t *route64_tlv, tlv_leader_t *leader_tlv)
 {
 	thrd_partition_process(thrd_get_id_seq_number(route64_tlv), leader_tlv);
-	thrd_process_route64((source_addr & 0xFC00) >> 10, route64_tlv);
+	thrd_process_route64(THRD_EXTRACT_ROUTER_ID(source_rloc), route64_tlv);
 
 	/* Correct solution:
 	if ( thrd_partition_process(thrd_get_id_seq_number(route64_tlv), leader_tlv) ) {
@@ -175,9 +177,7 @@ thrd_generate_route64(size_t *len)
 tlv_leader_t*
 thrd_generate_leader_data_tlv(void)
 {
-	uint8_t tlv_buf[8] = { 0 };
 	tlv_leader_t *ld_tlv;
-
 	memcpy(&tlv_buf[0], &thrd_partition.Partition_ID, 4);
 	tlv_buf[4] = thrd_partition.Partition_weight;
 	tlv_buf[5] = thrd_partition.VN_version;

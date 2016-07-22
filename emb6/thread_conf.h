@@ -9,7 +9,7 @@
 #define EMB6_THREAD_CONF_H_
 
 #include "emb6.h"
-#include "thrd-dev.h"
+// #include "thrd-dev.h"
 
 /*=============================================================================
                                     ERROR CODES
@@ -44,6 +44,7 @@ typedef enum {
 
 // -------------------- THREAD RLOC16 ----------------------------
 #define THRD_CREATE_RLOC16(router_id, child_id)		((uint16_t) (0x0000 | ((router_id << 10) | (child_id) )))
+#define THRD_EXTRACT_ROUTER_ID(rloc16)		((uint8_t) (rloc16 >> 10))
 
 // ---------------- THREAD IPv6 ADDRESSES ------------------------
 #define THRD_LINK_LOCAL_ALL_NODES_ADDR(ipaddr)	uip_ip6addr(ipaddr, 0xff02, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0001)
@@ -53,7 +54,6 @@ typedef enum {
 #define THRD_REALM_LOCAL_ALL_MPL_FORWARDERS_ADDR(ipaddr)	uip_ip6addr(ipaddr, 0xff03, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x00fc)
 
 // ----------------- IANA CONSIDERATIONS ------------------------
-
 #define THRD_MGMT_COAP_PORT				19789 // UIP_HTONS(19789)		// Thread Network Management (:MM).
 
 /*=============================================================================

@@ -9,6 +9,7 @@
 #ifndef EMB6_INC_NET_RIP_THRD_DEV_H_
 #define EMB6_INC_NET_RIP_THRD_DEV_H_
 
+#include "thread_conf.h"
 
 /**
  * Thread Device Types.
@@ -48,5 +49,18 @@ typedef struct
 extern thrd_dev_t thrd_dev;
 
 extern void thrd_dev_init(void);
+
+/**
+ * Set the device type of the Thread Device.
+ * @param type The Thread device type thrd_dev_type_t.
+ * @retval THRD_ERROR_NONE Device type successfully set.
+ * @retval THRD_ERROR_INVALID_ARGS Invalid arguments.
+ */
+extern thrd_error_t thrd_dev_set_type(thrd_dev_type_t type);
+
+/**
+ * Print Thread device information.
+ */
+void thrd_dev_print_dev_info();
 
 #endif /* EMB6_INC_NET_RIP_THRD_DEV_H_ */

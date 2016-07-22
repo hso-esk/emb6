@@ -7,6 +7,7 @@
  */
 
 #include "thrd-iface.h"
+#include "thrd-dev.h"
 #include "uip-ds6.h"
 
 #define DEBUG DEBUG_PRINT
@@ -31,7 +32,7 @@ thrd_iface_t thrd_iface = {
 
 static void remove_rloc_addr();
 
-static uint8_t extract_router_id(uint16_t rloc16);
+static void print_all_addr();
 
 /*==============================================================================
                                     LOCAL FUNCTIONS
@@ -83,7 +84,7 @@ thrd_iface_get_router_id()
 /* --------------------------------------------------------------------------- */
 
 void
-thrd_iface_rloc_set(uint16_t rloc16)
+thrd_iface_set_rloc(uint16_t rloc16)
 {
 	if ( thrd_iface.rloc16 != rloc16 ) {
 
@@ -105,10 +106,10 @@ thrd_iface_rloc_set(uint16_t rloc16)
 		thrd_iface.ll_rloc = rloc;
 		uip_ds6_addr_add(&thrd_iface.ll_rloc, 0, ADDR_MANUAL);
 		// Set new Router ID.
-		thrd_iface_set_router_id(extract_router_id(rloc16));
-		thrd_iface_print();
-
-		print_all_addr();
+		thrd_iface_set_router_id(THRD_EXTRACT_ROUTER_ID(rloc16));
+		thrd_dev_set_type(THRD_DEV_TYPE_ROUTER);
+		// thrd_iface_print();
+		// print_all_addr();
 	}
 }
 
@@ -121,12 +122,6 @@ remove_rloc_addr()
 	uip_ds6_addr_rm(rloc_addr);
 }
 
-static uint8_t
-extract_router_id(uint16_t rloc16)
-{
-	return ((uint8_t) rloc16 >> 10);
-}
-
 /*==============================================================================
                                     DEBUG FUNCTIONS
  =============================================================================*/
@@ -135,24 +130,35 @@ void
 thrd_iface_print()
 {
 	LOG_RAW("|================================== THREAD INTERFACE ===================================|\n\r");
-	LOG_RAW("ML-EID = ");
+	if ( thrd_iface.router_id == 63 ) {
+		LOG_RAW("| Router ID = 63 (invalid)                                                              |\n\r");
+	} else {
+		LOG_RAW("| Router ID = %2d                                                                        |\n\r", thrd_iface.router_id);
+	}
+	if ( thrd_iface.rloc16 == 0xfc00 ) {
+		LOG_RAW("| RLOC = fc00 (invalid)                                                                 |\n\r");
+	} else {
+		LOG_RAW("| RLOC = %04x                                                                           |\n\r", thrd_iface.rloc16);
+	}
+	LOG_RAW("|---------------------------------------------------------------------------------------|\n\r");
+	LOG_RAW("| ML-EID = ");
 	LOG_IP6ADDR(&thrd_iface.ml_eid);
 	LOG_RAW("\n");
-	LOG_RAW("ML-RLOC = ");
+	LOG_RAW("| ML-RLOC = ");
 	LOG_IP6ADDR(&thrd_iface.ml_rloc);
 	LOG_RAW("\n");
-	LOG_RAW("LL-EID = ");
+	LOG_RAW("| LL-EID = ");
 	LOG_IP6ADDR(&thrd_iface.ll_eid);
 	LOG_RAW("\n");
-	LOG_RAW("LL-RLOC = ");
+	LOG_RAW("| LL-RLOC = ");
 	LOG_IP6ADDR(&thrd_iface.ll_rloc);
 	LOG_RAW("\n");
-	LOG_RAW("=========================================================================================\n\r");
+	LOG_RAW("|=======================================================================================|\n\r");
 }
 
 /* --------------------------------------------------------------------------- */
 
-void
+static void
 print_all_addr()
 {
 	uint8_t state;

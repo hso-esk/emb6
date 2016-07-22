@@ -70,6 +70,7 @@
 
 #include "mle_management.h"
 
+#include "thrd-dev.h"
 #include "thrd-route.h"
 #include "thrd-leader-db.h"
 #include "thrd-addr-query.h"

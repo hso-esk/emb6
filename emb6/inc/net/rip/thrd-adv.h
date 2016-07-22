@@ -18,7 +18,13 @@
                                      API FUNCTIONS
  =============================================================================*/
 
-void thrd_process_adv(uint16_t source_addr, tlv_route64_t *route64_tlv, tlv_leader_t *leader_tlv);
+/**
+ * Process MLE Advertisement.
+ * @param source_rloc The sender's RLOC (Source Address TLV).
+ * @param route64_tlv The Route64 TLV.
+ * @param leader_tlv The Leader Data TLV.
+ */
+void thrd_process_adv(uint16_t source_rloc, tlv_route64_t *route64_tlv, tlv_leader_t *leader_tlv);
 
 tlv_route64_t* thrd_generate_route64(size_t *len);
 
