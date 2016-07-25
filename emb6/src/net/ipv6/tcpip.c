@@ -57,6 +57,7 @@
 
 #ifdef UIP_CONF_IPV6_THRD_ROUTING
 #include "thrd-route.h"
+#include "thrd-addr.h"
 #endif
 
 #include <string.h>
@@ -533,7 +534,7 @@ tcpip_ipv6_output(void)
     return;
   }
 
-// #define UIP_CONF_IPV6_THRD_ROUTING TRUE		// TODO Remove this!!!
+#define UIP_CONF_IPV6_THRD_ROUTING TRUE		// TODO Remove this!!!
 
 #ifdef UIP_CONF_IPV6_THRD_ROUTING
   UIP_LOG("tcpip_ipv6_output: Using THREAD routing algorithm.");
@@ -546,10 +547,29 @@ tcpip_ipv6_output(void)
 	   * link. If so, we simply use the destination address as our
 	   * nexthop address.
 	   */
-	  if ( thrd_is_addr_ll_rloc(&UIP_IP_BUF->destipaddr) ) {
+	  if ( uip_ds6_is_addr_onlink(&UIP_IP_BUF->destipaddr) ) {
+
 		  nexthop = &UIP_IP_BUF->destipaddr;
+
+		  if ( thrd_is_addr_ll_rloc(&UIP_IP_BUF->destipaddr) ) {
+			  // TODO Nidhal: Set Short Address Mode?
+		  }
+
+		  if ( nexthop == NULL ) {
+			  // Drop the packet since the destination address is invalid.
+			  return;
+		  }
+		  uip_lladdr_t lladdr;
+		  memcpy(&lladdr.addr[0], &UIP_IP_BUF->destipaddr.u8[0], 8);
+		  tcpip_output(&lladdr);
+
 	  } else {
 		  thrd_rdb_route_t *route;
+
+		  // Check whether the destination address is a Mesh-Local IPv6 RLOC address.
+		  if ( thrd_is_addr_ml_rloc(&UIP_IP_BUF->destipaddr) ) {
+
+		  }
 		  // Check whether we have a route to the destination address.
 		  route = thrd_rdb_route_lookup( thrd_extract_router_id_from_rloc_addr(&UIP_IP_BUF->destipaddr) );
 
@@ -567,6 +587,7 @@ tcpip_ipv6_output(void)
 				  // We don't have a nexthop to send the packet to, so we drop it.
 				  return;
 			  }
+
 			  // TODO Call tcpip_output function with RLOC16!
 			  uip_lladdr_t lladdr;
 			  memcpy(&lladdr.addr[0], &UIP_IP_BUF->destipaddr.u8[0], 6);
