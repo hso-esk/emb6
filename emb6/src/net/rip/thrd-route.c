@@ -23,8 +23,10 @@
 #include "rip.h"
 #include "thread_conf.h"
 
-#include "thrd-route.h"
+#include "thrd-iface.h"
 #include "thrd-partition.h"
+
+#include "thrd-route.h"
 
 // #define DEBUG DEBUG_PRINT
 #include "uip-debug.h"
@@ -79,6 +81,8 @@ static uint8_t num_links = 0;
 static uint8_t num_routes = 0;
 
 /* --------------------------------------------------------------------------- */
+
+static uint16_t link_local_fixed[7] = { 0xfe80, 0x0000, 0x0000, 0x0000, 0x0000, 0x00ff, 0xfe00 };
 
 /*
  ********************************************************************************
@@ -985,8 +989,7 @@ thrd_rdb_route_update(uint8_t router_id, uint8_t destination, uint8_t cost_repor
 bool
 thrd_is_addr_ll_rloc(uip_ipaddr_t *addr)
 {
-	uint8_t rloc_fixed_prefix[7] = { THRD_LINK_LOCAL_RLOC_FIXED_PREFIX };
-	if ( memcmp(rloc_fixed_prefix, addr, 14) == 0 ) {
+	if ( memcmp(&link_local_fixed, addr, 14) == 0 ) {
 		return TRUE;
 	}
 	return FALSE;
@@ -1006,7 +1009,7 @@ void
 thrd_create_next_hop_addr(uip_ipaddr_t *addr, uint8_t rloc16)
 {
 	thrd_create_meshlocal_prefix(addr);
-	thrd_create_rloc_iid(rloc16);
+	thrd_create_rloc_iid(addr, rloc16);
 }
 
 /*
