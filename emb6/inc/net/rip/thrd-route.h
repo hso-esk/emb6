@@ -13,6 +13,7 @@
 #include "emb6.h"
 #include "ctimer.h"
 #include "clist.h"
+#include "uip.h"
 #include "thread_conf.h"
 
 void thrd_rdb_init(void);
@@ -73,19 +74,19 @@ uint8_t thrd_rdb_link_num_links(void);
 
 uint8_t thrd_rdb_route_num_routes(void);
 
-thrd_rdb_id_t *thrd_rdb_rid_head(void);
+thrd_rdb_id_t* thrd_rdb_rid_head(void);
 
-thrd_rdb_link_t *thrd_rdb_link_head(void);
+thrd_rdb_link_t* thrd_rdb_link_head(void);
 
-thrd_rdb_route_t *thrd_rdb_route_head(void);
+thrd_rdb_route_t* thrd_rdb_route_head(void);
 
-thrd_rdb_id_t *thrd_rdb_rid_next(thrd_rdb_id_t *r);
+thrd_rdb_id_t* thrd_rdb_rid_next(thrd_rdb_id_t *r);
 
-thrd_rdb_link_t *thrd_rdb_link_next(thrd_rdb_link_t *r);
+thrd_rdb_link_t* thrd_rdb_link_next(thrd_rdb_link_t *r);
 
-thrd_rdb_route_t *thrd_rdb_route_next(thrd_rdb_route_t *r);
+thrd_rdb_route_t* thrd_rdb_route_next(thrd_rdb_route_t *r);
 
-uint8_t *thrd_rdb_route_nexthop(thrd_rdb_route_t *route);
+uint8_t* thrd_rdb_route_nexthop(thrd_rdb_route_t *route);
 
 uint8_t thrd_rdb_link_calc_incoming_quality(uint16_t link_margin);
 
@@ -99,13 +100,13 @@ uint16_t thrd_rdb_link_margin_get_lower_bound(uint16_t link_margin);
 
 thrd_rdb_id_t *thrd_rdb_rid_lookup(uint8_t destination);
 
-thrd_rdb_link_t *thrd_rdb_link_lookup(uint8_t router_id);
+thrd_rdb_link_t* thrd_rdb_link_lookup(uint8_t router_id);
 
-thrd_rdb_route_t *thrd_rdb_route_lookup(uint8_t destination);
+thrd_rdb_route_t* thrd_rdb_route_lookup(uint8_t router_id);
 
-thrd_rdb_id_t *thrd_rdb_rid_add(uint8_t router_id);
+thrd_rdb_id_t* thrd_rdb_rid_add(uint8_t router_id);
 
-thrd_rdb_route_t *thrd_rdb_route_add(uint8_t destination, uint8_t next_hop,
+thrd_rdb_route_t* thrd_rdb_route_add(uint8_t destination, uint8_t next_hop,
 		uint8_t route_cost);
 
 /**
@@ -140,11 +141,33 @@ thrd_error_t thrd_rdb_route_rm(thrd_rdb_route_t *route);
  ********************************************************************************
  */
 
-thrd_rdb_link_t *thrd_rdb_link_update(uint8_t router_id, uint8_t link_margin,
+extern thrd_rdb_link_t* thrd_rdb_link_update(uint8_t router_id, uint8_t link_margin,
 		uint8_t outgoing_quality, clock_time_t age);
 
-thrd_rdb_route_t *thrd_rdb_route_update(uint8_t router_id, uint8_t destination,
+extern thrd_rdb_route_t* thrd_rdb_route_update(uint8_t router_id, uint8_t destination,
 		uint8_t cost_reported);
+
+/**
+ * Check whether the given IPv6 address is a Link-Local RLOC address.
+ * @param addr A IPv6 address,
+ * @retval TRUE  If the given IPv6 address is a Link-Local RLOC address.
+ * @retval FALSE If the given IPv6 address is not a Link-Local RLOC address.
+ */
+extern bool thrd_is_addr_ll_rloc(uip_ipaddr_t *addr);
+
+/**
+ * Extract the Router ID from a Thread IPv6 RLOC address.
+ * @param rloc_addr A RLOC address.
+ * @return The extracted Router ID.
+ */
+uint8_t thrd_extract_router_id_from_rloc_addr(uip_ipaddr_t *rloc_addr);
+
+/**
+ * Create the next hop address for based on the RLOC16.
+ * @param addr A pointer to the IPv6 address.
+ * @param rloc16 The RLOC16.
+ */
+void thrd_create_next_hop_addr(uip_ipaddr_t *addr, uint8_t rloc16);
 
 /*
  ********************************************************************************

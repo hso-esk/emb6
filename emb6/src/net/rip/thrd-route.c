@@ -363,8 +363,8 @@ thrd_rdb_link_margin_get_lower_bound(uint16_t link_margin)
 
 /* --------------------------------------------------------------------------- */
 
-thrd_rdb_id_t
-*thrd_rdb_rid_lookup(uint8_t router_id)
+thrd_rdb_id_t*
+thrd_rdb_rid_lookup(uint8_t router_id)
 {
 	thrd_rdb_id_t *rid;
 	thrd_rdb_id_t *found_rid;
@@ -396,8 +396,8 @@ thrd_rdb_id_t
 
 /* --------------------------------------------------------------------------- */
 
-thrd_rdb_link_t
-*thrd_rdb_link_lookup(uint8_t router_id)
+thrd_rdb_link_t*
+thrd_rdb_link_lookup(uint8_t router_id)
 {
 	thrd_rdb_link_t *link;
 	thrd_rdb_link_t *found_link;
@@ -439,21 +439,21 @@ thrd_rdb_link_t
 
 /* --------------------------------------------------------------------------- */
 
-thrd_rdb_route_t
-*thrd_rdb_route_lookup(uint8_t destination)
+thrd_rdb_route_t*
+thrd_rdb_route_lookup(uint8_t router_id)
 {
 	thrd_rdb_route_t *r;
 	thrd_rdb_route_t *found_route;
 
 	LOG_RAW("thrd_rdb_route_lookup: Looking up route for router id ");
-	LOG_RAW("%d\n", destination);
+	LOG_RAW("%d\n", router_id);
 	LOG_RAW("\n\r");
 
 	found_route = NULL;
 	for (r = thrd_rdb_route_head(); r != NULL; r = thrd_rdb_route_next(r)) {
 		// LOG_RAW("%d\n", r->R_destination);
 		// LOG_RAW("\n\r");
-		if (r->R_destination == destination) {
+		if (r->R_destination == router_id) {
 			found_route = r;
 			break;
 		}
@@ -461,7 +461,7 @@ thrd_rdb_route_t
 
 	if (found_route != NULL) {
 		LOG_RAW("thrd_rdb_route_lookup: Found route: ");
-		LOG_RAW("%d", destination);
+		LOG_RAW("%d", router_id);
 		LOG_RAW(" via ");
 		LOG_RAW("%d\n", thrd_rdb_route_nexthop(found_route));	// TODO
 		LOG_RAW("\n\r");
@@ -483,8 +483,8 @@ thrd_rdb_route_t
 
 /* --------------------------------------------------------------------------- */
 
-thrd_rdb_id_t
-*thrd_rdb_rid_add(uint8_t router_id)
+thrd_rdb_id_t*
+thrd_rdb_rid_add(uint8_t router_id)
 {
 	thrd_rdb_id_t *rid;
 
@@ -564,8 +564,8 @@ thrd_rdb_id_t
 
 /* --------------------------------------------------------------------------- */
 
-thrd_rdb_route_t
-*thrd_rdb_route_add(uint8_t destination, uint8_t next_hop, uint8_t route_cost)
+thrd_rdb_route_t*
+thrd_rdb_route_add(uint8_t destination, uint8_t next_hop, uint8_t route_cost)
 {
 	thrd_rdb_route_t *r;
 
@@ -757,8 +757,8 @@ thrd_rdb_route_rm(thrd_rdb_route_t *route)
  * 							from the neighbor.
  * @return					The new/updated link entry.
  */
-thrd_rdb_link_t
-*thrd_rdb_link_update(uint8_t router_id, uint8_t link_margin,
+thrd_rdb_link_t*
+thrd_rdb_link_update(uint8_t router_id, uint8_t link_margin,
 		uint8_t outgoing_quality, clock_time_t age)
 {
 	thrd_rdb_link_t *l;
@@ -888,8 +888,8 @@ handle_max_neighbor_age_timeout(void *ptr)
  * @return				The new/updated route entry.
  * 						NULL, else (if nothing has changed, or an error occurred).
  */
-thrd_rdb_route_t
-*thrd_rdb_route_update(uint8_t router_id, uint8_t destination, uint8_t cost_reported)
+thrd_rdb_route_t*
+thrd_rdb_route_update(uint8_t router_id, uint8_t destination, uint8_t cost_reported)
 {
 	thrd_rdb_route_t *r;
 	thrd_rdb_link_t *l;
@@ -978,6 +978,35 @@ thrd_rdb_route_t
 		}
 	}
 	return NULL;
+}
+
+/* --------------------------------------------------------------------------- */
+
+bool
+thrd_is_addr_ll_rloc(uip_ipaddr_t *addr)
+{
+	uint8_t rloc_fixed_prefix[7] = { THRD_LINK_LOCAL_RLOC_FIXED_PREFIX };
+	if ( memcmp(rloc_fixed_prefix, addr, 14) == 0 ) {
+		return TRUE;
+	}
+	return FALSE;
+}
+
+/* --------------------------------------------------------------------------- */
+
+uint8_t
+thrd_extract_router_id_from_rloc_addr(uip_ipaddr_t *rloc_addr)
+{
+	return ((uint8_t) (rloc_addr->u16[7] >> 10));
+}
+
+/* --------------------------------------------------------------------------- */
+
+void
+thrd_create_next_hop_addr(uip_ipaddr_t *addr, uint8_t rloc16)
+{
+	thrd_create_meshlocal_prefix(addr);
+	thrd_create_rloc_iid(rloc16);
 }
 
 /*
