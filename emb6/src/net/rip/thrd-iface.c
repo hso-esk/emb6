@@ -9,6 +9,7 @@
 #include "thrd-iface.h"
 #include "thrd-dev.h"
 #include "uip-ds6.h"
+#include "thrd-addr.h"
 
 #define DEBUG DEBUG_PRINT
 #include "uip-debug.h"	// For debugging terminal output.
