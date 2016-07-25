@@ -61,8 +61,8 @@ typedef enum {
 ===============================================================================*/
 
 
-#if THRD_USE_RIP == TRUE
-#define UIP_CONF_IPV6_RIP                   TRUE
+#if THRD_USE_ROUTING == TRUE
+#define UIP_CONF_IPV6_ROUTING                   TRUE
 #endif
 
 // --------------- THREAD ROUTING PROTOCOL ----------------------
