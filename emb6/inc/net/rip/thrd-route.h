@@ -147,28 +147,6 @@ extern thrd_rdb_link_t* thrd_rdb_link_update(uint8_t router_id, uint8_t link_mar
 extern thrd_rdb_route_t* thrd_rdb_route_update(uint8_t router_id, uint8_t destination,
 		uint8_t cost_reported);
 
-/**
- * Check whether the given IPv6 address is a Link-Local RLOC address.
- * @param addr A IPv6 address,
- * @retval TRUE  If the given IPv6 address is a Link-Local RLOC address.
- * @retval FALSE If the given IPv6 address is not a Link-Local RLOC address.
- */
-extern bool thrd_is_addr_ll_rloc(uip_ipaddr_t *addr);
-
-/**
- * Extract the Router ID from a Thread IPv6 RLOC address.
- * @param rloc_addr A RLOC address.
- * @return The extracted Router ID.
- */
-uint8_t thrd_extract_router_id_from_rloc_addr(uip_ipaddr_t *rloc_addr);
-
-/**
- * Create the next hop address for based on the RLOC16.
- * @param addr A pointer to the IPv6 address.
- * @param rloc16 The RLOC16.
- */
-void thrd_create_next_hop_addr(uip_ipaddr_t *addr, uint8_t rloc16);
-
 /*
  ********************************************************************************
  *                                DEBUG FUNCTIONS
