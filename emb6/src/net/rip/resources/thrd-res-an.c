@@ -15,7 +15,7 @@
 
 #include "thrd-addr-query.h"
 #include "thrd-eid-rloc.h"
-#include "thrd-iface.h"
+#include "thrd-addr.h"
 
 #define     LOGGER_ENABLE                 LOGGER_THRD_NET
 #include    "logger.h"
