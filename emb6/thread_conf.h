@@ -53,6 +53,7 @@ typedef enum {
 #define THRD_REALM_LOCAL_ALL_ROUTERS_ADDR(ipaddr)	uip_ip6addr(ipaddr, 0xff03, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0002)
 #define THRD_REALM_LOCAL_ALL_MPL_FORWARDERS_ADDR(ipaddr)	uip_ip6addr(ipaddr, 0xff03, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x00fc)
 
+#define THRD_LINK_LOCAL_RLOC_FIXED_PREFIX	0xfe80, 0x0000, 0x0000, 0x0000, 0x0000, 0x00ff, 0xfe00
 // ----------------- IANA CONSIDERATIONS ------------------------
 #define THRD_MGMT_COAP_PORT				19789 // UIP_HTONS(19789)		// Thread Network Management (:MM).
 
@@ -62,7 +63,7 @@ typedef enum {
 
 
 #if THRD_USE_ROUTING == TRUE
-#define UIP_CONF_IPV6_ROUTING                   TRUE
+#define UIP_CONF_IPV6_THRD_ROUTING		TRUE
 #endif
 
 // --------------- THREAD ROUTING PROTOCOL ----------------------
