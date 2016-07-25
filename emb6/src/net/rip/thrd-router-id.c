@@ -22,6 +22,7 @@
 #include "thrd-leader-db.h"
 #include "thrd-partition.h"
 #include "thrd-iface.h"
+#include "thrd-addr.h"
 
 #include "thrd-route.h"
 
