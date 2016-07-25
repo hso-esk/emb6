@@ -515,7 +515,7 @@ void
 tcpip_ipv6_output(void)
 {
   uip_ds6_nbr_t *nbr = NULL;
-  uip_ipaddr_t *nexthop;
+  uip_ipaddr_t *nexthop = NULL;
 
   if(uip_len == 0) {
     return;
@@ -533,9 +533,7 @@ tcpip_ipv6_output(void)
     return;
   }
 
-  // ---
-
-#define UIP_CONF_IPV6_THRD_ROUTING TRUE		// TODO Remove this!!!
+// #define UIP_CONF_IPV6_THRD_ROUTING TRUE		// TODO Remove this!!!
 
 #ifdef UIP_CONF_IPV6_THRD_ROUTING
   UIP_LOG("tcpip_ipv6_output: Using THREAD routing algorithm.");
@@ -570,18 +568,18 @@ tcpip_ipv6_output(void)
 				  return;
 			  }
 			  // TODO Call tcpip_output function with RLOC16!
-			  // tcpip_output(uip_ds6_nbr_get_ll(nbr));	// TODO
+			  uip_lladdr_t lladdr;
+			  memcpy(&lladdr.addr[0], &UIP_IP_BUF->destipaddr.u8[0], 6);
+			  uint16_t rloc16 = THRD_CREATE_RLOC16(route->R_next_hop, 0);
+			  memcpy(&lladdr.addr[6], &rloc16, 2);
+			  tcpip_output(&lladdr);		// TODO Check this!
 
 		      uip_len = 0;
 		      return;
 		  }
 	  }
   }
-#endif /* UIP_CONF_IPV6_ROUTING */
-
-  // ---
-
-
+#else
   if(!uip_is_addr_mcast(&UIP_IP_BUF->destipaddr)) {
     /* Next hop determination */
     nbr = NULL;
@@ -748,6 +746,8 @@ tcpip_ipv6_output(void)
     }
     return;
   }
+#endif /* UIP_CONF_IPV6_ROUTING */
+
   /* Multicast IP destination address. */
   tcpip_output(NULL);
   uip_len = 0;
