@@ -55,6 +55,10 @@
 #include "uip-ds6.h"
 #endif
 
+#ifdef UIP_CONF_IPV6_THRD_ROUTING
+#include "thrd-route.h"
+#endif
+
 #include <string.h>
 #include "evproc.h"
 #define DEBUG DEBUG_NONE
@@ -528,6 +532,55 @@ tcpip_ipv6_output(void)
     uip_len = 0;
     return;
   }
+
+  // ---
+
+#define UIP_CONF_IPV6_THRD_ROUTING TRUE		// TODO Remove this!!!
+
+#ifdef UIP_CONF_IPV6_THRD_ROUTING
+  UIP_LOG("tcpip_ipv6_output: Using THREAD routing algorithm.");
+  thrd_rdb_link_t *neighbor;
+
+  if ( !uip_is_addr_mcast(&UIP_IP_BUF->destipaddr) ) {
+	  // Next hop determination.
+	  neighbor = NULL;
+	  /* We first check whether the destination is on our immediate
+	   * link. If so, we simply use the destination address as our
+	   * nexthop address.
+	   */
+	  if ( thrd_is_addr_ll_rloc(&UIP_IP_BUF->destipaddr) ) {
+		  nexthop = &UIP_IP_BUF->destipaddr;
+	  } else {
+		  thrd_rdb_route_t *route;
+		  // Check whether we have a route to the destination address.
+		  route = thrd_rdb_route_lookup( thrd_extract_router_id_from_rloc_addr(&UIP_IP_BUF->destipaddr) );
+
+		  // No route was found - the packet will be dropped (?).
+		  if ( route == NULL ) {
+			  return;
+		  } else {
+			  // A route was found, so we look up the nexthop neighbor for the route.
+			  thrd_create_next_hop_addr(nexthop, THRD_CREATE_RLOC16(route->R_next_hop, 0));
+
+		      /* If the nexthop is dead, for example because the neighbor
+		      	  never responded to link-layer acks, we drop its route. */
+			  if ( nexthop == NULL ) {
+				  thrd_rdb_route_rm(route);
+				  // We don't have a nexthop to send the packet to, so we drop it.
+				  return;
+			  }
+			  // TODO Call tcpip_output function with RLOC16!
+			  // tcpip_output(uip_ds6_nbr_get_ll(nbr));	// TODO
+
+		      uip_len = 0;
+		      return;
+		  }
+	  }
+  }
+#endif /* UIP_CONF_IPV6_ROUTING */
+
+  // ---
+
 
   if(!uip_is_addr_mcast(&UIP_IP_BUF->destipaddr)) {
     /* Next hop determination */
