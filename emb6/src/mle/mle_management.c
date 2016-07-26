@@ -17,13 +17,8 @@
 #include "thrd-partition.h"
 #include "thrd-iface.h"
 #include "thrd-router-id.h"
-<<<<<<< HEAD
 #include "thrd-send-adv.h"
-=======
 #include "linkaddr.h"
-
-
->>>>>>> feature/mac-short-address
 
 #include "etimer.h"
 #include "evproc.h"
