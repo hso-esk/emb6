@@ -551,6 +551,8 @@ tcpip_ipv6_output(void)
 
 		  if ( thrd_is_addr_ll_rloc(&UIP_IP_BUF->destipaddr) ) {
 			  // TODO Nidhal: Set Short Address Mode?
+		  } else {
+			  // TODO Nidhal: Set Long Address Mode?
 		  }
 
 		  if ( nexthop == NULL ) {
