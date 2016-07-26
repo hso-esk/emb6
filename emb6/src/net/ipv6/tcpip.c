@@ -546,12 +546,13 @@ tcpip_ipv6_output(void)
 	   * nexthop address.
 	   */
 	  if ( uip_ds6_is_addr_onlink(&UIP_IP_BUF->destipaddr) ) {
-
 		  nexthop = &UIP_IP_BUF->destipaddr;
+		  memcpy(&lladdr.addr[0], &nexthop->u8[8], 8);
 
-		  if ( thrd_is_addr_ll_rloc(&UIP_IP_BUF->destipaddr) ) {
+		  if ( thrd_is_addr_ll_rloc(nexthop) ) {
 			  // TODO Nidhal: Set Short Address Mode?
 		  } else {
+			  thrd_invert_universal_local_bit(&lladdr);
 			  // TODO Nidhal: Set Long Address Mode?
 		  }
 
@@ -559,7 +560,6 @@ tcpip_ipv6_output(void)
 			  // Drop the packet since the destination address is invalid.
 			  return;
 		  }
-		  memcpy(&lladdr.addr[0], &nexthop->u8[8], 8);
 
 	  } else {
 		  // Check whether the destination address is a Mesh-Local IPv6 RLOC address.
