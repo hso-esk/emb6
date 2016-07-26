@@ -52,21 +52,28 @@
 ********************************************************************************
 */
 #include "emb6.h"
+#include "board_conf.h"
 #include "packetbuf.h"
+#include "logger.h"
+
+#if (NETSTK_CFG_RF_CRC_EN == FALSE)
+#include "lib_crc.h"
+#endif
+
 
 /*
 ********************************************************************************
 *                          LOCAL FUNCTION DECLARATIONS
 ********************************************************************************
 */
-static void DLLC_Init(void *p_netstk, e_nsErr_t *p_err);
-static void DLLC_On(e_nsErr_t *p_err);
-static void DLLC_Off(e_nsErr_t *p_err);
-static void DLLC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
-static void DLLC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
-static void DLLC_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
+static void dllc_init(void *p_netstk, e_nsErr_t *p_err);
+static void dllc_on(e_nsErr_t *p_err);
+static void dllc_off(e_nsErr_t *p_err);
+static void dllc_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
+static void dllc_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
+static void dllc_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
 
-static void DLLC_CbTx(void *p_arg, e_nsErr_t *p_err);
+static void dllc_cbTx(void *p_arg, e_nsErr_t *p_err);
 
 
 /*
@@ -75,26 +82,29 @@ static void DLLC_CbTx(void *p_arg, e_nsErr_t *p_err);
 ********************************************************************************
 */
 
-static void             *DLLC_CbTxArg;
-static nsTxCbFnct_t     DLLC_CbTxFnct;
-static nsRxCbFnct_t     DLLC_CbRxFnct;
-static s_ns_t           *DLLC_Netstk;
+static void         *pdllc_cbTxArg;
+static s_ns_t       *pdllc_netstk;
+static nsTxCbFnct_t  dllc_cbTxFnct;
+static nsRxCbFnct_t  dllc_cbRxFnct;
 
+#if (NETSTK_CFG_AUTO_ONOFF_EN == TRUE)
+static uint8_t       dllc_isOn;
+#endif
 
 /*
 ********************************************************************************
 *                               GLOBAL VARIABLES
 ********************************************************************************
 */
-const s_nsDLLC_t DLLCDrvNull =
+const s_nsDLLC_t dllc_driver_null =
 {
-   "DLLC NULL",
-    DLLC_Init,
-    DLLC_On,
-    DLLC_Off,
-    DLLC_Send,
-    DLLC_Recv,
-    DLLC_IOCtrl
+ "DLLC NULL",
+  dllc_init,
+  dllc_on,
+  dllc_off,
+  dllc_send,
+  dllc_recv,
+  dllc_ioctl
 };
 
 
@@ -110,112 +120,162 @@ const s_nsDLLC_t DLLCDrvNull =
  * @param status
  * @param transmissions
  */
-static void DLLC_CbTx(void *p_arg, e_nsErr_t *p_err)
+static void dllc_cbTx(void *p_arg, e_nsErr_t *p_err)
 {
-    if (DLLC_CbTxFnct) {
-        DLLC_CbTxFnct(DLLC_CbTxArg, p_err);
-    }
+  if (dllc_cbTxFnct) {
+    dllc_cbTxFnct(pdllc_cbTxArg, p_err);
+  }
 }
 
-static void DLLC_Init(void *p_netstk, e_nsErr_t *p_err)
+
+static void dllc_init(void *p_netstk, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
-    if (p_netstk == NULL) {
+  if (p_netstk == NULL) {
+    *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+    return;
+  }
+#endif
+
+  pdllc_netstk = p_netstk;
+  dllc_cbTxFnct = 0;
+  pdllc_cbTxArg = NULL;
+  packetbuf_set_attr(PACKETBUF_ATTR_MAC_PAN_ID, mac_phy_config.pan_id);
+  packetbuf_set_attr(PACKETBUF_ATTR_MAC_FCS_LEN, mac_phy_config.fcs_len);
+
+#if (NETSTK_CFG_AUTO_ONOFF_EN == TRUE)
+  /* initial transition to OFF state */
+  dllc_off(p_err);
+#endif
+
+  *p_err = NETSTK_ERR_NONE;
+}
+
+
+static void dllc_on(e_nsErr_t *p_err)
+{
+  pdllc_netstk->mac->on(p_err);
+#if (NETSTK_CFG_AUTO_ONOFF_EN == TRUE)
+  dllc_isOn = TRUE;
+#endif
+}
+
+
+static void dllc_off(e_nsErr_t *p_err)
+{
+  pdllc_netstk->mac->off(p_err);
+#if (NETSTK_CFG_AUTO_ONOFF_EN == TRUE)
+  dllc_isOn = FALSE;
+#endif
+}
+
+
+static void dllc_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
+{
+#if (NETSTK_CFG_AUTO_ONOFF_EN == TRUE)
+  if (dllc_isOn == FALSE) {
+    pdllc_netstk->mac->on(p_err);
+  }
+#endif
+
+  uint8_t is_ack_required = 0;
+  if (packetbuf_holds_broadcast() == 0) {
+    is_ack_required = packetbuf_attr(PACKETBUF_ATTR_RELIABLE);
+  }
+  /* set MAC ACK required attribute accordingly */
+  packetbuf_set_attr(PACKETBUF_ATTR_MAC_ACK, is_ack_required);
+
+  pdllc_netstk->mac->ioctrl(NETSTK_CMD_TX_CBFNCT_SET, (void *)dllc_cbTx, p_err);
+  pdllc_netstk->mac->ioctrl(NETSTK_CMD_TX_CBARG_SET, NULL, p_err);
+
+#if (NETSTK_CFG_RF_CRC_EN == FALSE) && 0
+  uint8_t *p_mfr;
+  uint32_t fcs;
+  packetbuf_attr_t fcs_len;
+
+  /* write footer */
+  p_mfr = p_data + len;
+  fcs_len = packetbuf_attr(PACKETBUF_ATTR_MAC_FCS_LEN);
+  if (fcs_len == 4) {
+    /* 32-bit CRC */
+    fcs = crc_32_calc(p_data, len);
+    p_mfr[0] = (fcs & 0xFF000000u) >> 24;
+    p_mfr[1] = (fcs & 0x00FF0000u) >> 16;
+    p_mfr[2] = (fcs & 0x0000FF00u) >> 8;
+    p_mfr[3] = (fcs & 0x000000FFu);
+  } else {
+    /* 16-bit CRC */
+    fcs = crc_16_calc(p_data, len);
+    p_mfr[0] = (fcs & 0xFF00u) >> 8;
+    p_mfr[1] = (fcs & 0x00FFu);
+  }
+
+  pdllc_netstk->mac->send(p_data, len + fcs_len, p_err);
+#else
+  pdllc_netstk->mac->send(p_data, len, p_err);
+#endif /* NETSTK_CFG_RF_CRC_EN */
+
+#if (NETSTK_CFG_AUTO_ONOFF_EN == TRUE)
+  if (dllc_isOn == FALSE) {
+    pdllc_netstk->mac->off(p_err);
+  }
+#endif
+}
+
+
+static void dllc_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
+{
+  if (dllc_cbRxFnct) {
+    /* set return error code */
+    *p_err = NETSTK_ERR_NONE;
+
+    /* store the received frame into common packet buffer */
+    packetbuf_clear();
+    packetbuf_set_datalen(len);
+    memcpy(packetbuf_dataptr(), p_data, len);
+
+    /* Inform the next higher layer */
+    dllc_cbRxFnct(packetbuf_dataptr(), packetbuf_datalen(), p_err);
+  }
+}
+
+
+static void dllc_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
+{
+#if NETSTK_CFG_ARG_CHK_EN
+  if (p_err == NULL) {
+    return;
+  }
+#endif
+
+  *p_err = NETSTK_ERR_NONE;
+  switch (cmd) {
+    case NETSTK_CMD_TX_CBFNCT_SET:
+      if (p_val == NULL) {
         *p_err = NETSTK_ERR_INVALID_ARGUMENT;
-        return;
-    }
-#endif
+      } else {
+        dllc_cbTxFnct = (nsTxCbFnct_t) p_val;
+      }
+      break;
 
+    case NETSTK_CMD_TX_CBARG_SET:
+      pdllc_cbTxArg = p_val;
+      break;
 
-    DLLC_Netstk = p_netstk;
-    DLLC_CbTxFnct = 0;
-    DLLC_CbTxArg = NULL;
-    *p_err = NETSTK_ERR_NONE;
-}
+    case NETSTK_CMD_RX_CBFNT_SET:
+      if (p_val == NULL) {
+        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+      } else {
+        dllc_cbRxFnct = (nsRxCbFnct_t) p_val;
+      }
+      break;
+    case NETSTK_CMD_DLLC_RSVD:
+      break;
 
-
-static void DLLC_On(e_nsErr_t *p_err)
-{
-    DLLC_Netstk->mac->on(p_err);
-}
-
-
-static void DLLC_Off(e_nsErr_t *p_err)
-{
-    DLLC_Netstk->mac->off(p_err);
-}
-
-
-static void DLLC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
-{
-    /*
-     * set TX callback function and argument
-     */
-    DLLC_Netstk->mac->ioctrl(NETSTK_CMD_TX_CBFNCT_SET,
-                            (void *)DLLC_CbTx,
-                            p_err);
-
-    DLLC_Netstk->mac->ioctrl(NETSTK_CMD_TX_CBARG_SET,
-                            NULL,
-                            p_err);
-
-    DLLC_Netstk->mac->send(p_data, len, p_err);
-}
-
-
-static void DLLC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
-{
-    if (DLLC_CbRxFnct) {
-        /* set return error code */
-        *p_err = NETSTK_ERR_NONE;
-
-        /* store the received frame into common packet buffer */
-        packetbuf_clear();
-        packetbuf_set_datalen(len);
-        memcpy(packetbuf_dataptr(), p_data, len);
-
-        /* Inform the next higher layer */
-        DLLC_CbRxFnct(packetbuf_dataptr(), packetbuf_datalen(), p_err);
-    }
-}
-
-
-static void DLLC_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
-{
-#if NETSTK_CFG_ARG_CHK_EN
-    if (p_err == NULL) {
-        return;
-    }
-#endif
-
-    *p_err = NETSTK_ERR_NONE;
-    switch (cmd) {
-        case NETSTK_CMD_TX_CBFNCT_SET:
-            if (p_val == NULL) {
-                *p_err = NETSTK_ERR_INVALID_ARGUMENT;
-            } else {
-                DLLC_CbTxFnct = (nsTxCbFnct_t)p_val;
-            }
-            break;
-
-        case NETSTK_CMD_TX_CBARG_SET:
-            DLLC_CbTxArg = p_val;
-            break;
-
-        case NETSTK_CMD_RX_CBFNT_SET:
-            if (p_val == NULL) {
-                *p_err = NETSTK_ERR_INVALID_ARGUMENT;
-            } else {
-                DLLC_CbRxFnct = (nsRxCbFnct_t)p_val;
-            }
-            break;
-        case NETSTK_CMD_DLLC_RSVD:
-            break;
-
-        default:
-            DLLC_Netstk->mac->ioctrl(cmd, p_val, p_err);
-            break;
-    }
+    default:
+      pdllc_netstk->mac->ioctrl(cmd, p_val, p_err);
+      break;
+  }
 }
 
 

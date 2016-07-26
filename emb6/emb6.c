@@ -134,6 +134,7 @@ s_mac_phy_conf_t mac_phy_config = {
         .init_power = 11,
         .init_sensitivity = -100,
         .modulation = MODULATION_BPSK20,
+		.fcs_len = 2,
 };
 
 

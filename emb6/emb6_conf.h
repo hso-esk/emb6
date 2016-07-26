@@ -850,7 +850,7 @@ void uip_log(char *msg);
 
 /** Event process functions                	(see llc_xxx.c) */
 #ifndef LOGGER_LLC
-#define LOGGER_LLC                         	FALSE
+#define LOGGER_LLC                         	TRUE
 #endif
 
 /** Event process functions                	(see mac_xxx.c) */
@@ -870,7 +870,7 @@ void uip_log(char *msg);
 
 /** Thread Network Layer functions          (see net/rip) */
 #ifndef LOGGER_THRD_NET
-#define LOGGER_THRD_NET                    	TRUE
+#define LOGGER_THRD_NET                    	FALSE
 #endif
 
 /** Radio functions                        	(see $(IF).c) */

@@ -399,6 +399,8 @@ enum {
   PACKETBUF_ATTR_MAX
 };
 
+#include "packetbuf_ext.h"
+
 /* Define surrogates when 802.15.4 security is off */
 #if !LLSEC802154_SECURITY_LEVEL
 enum {

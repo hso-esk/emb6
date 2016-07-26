@@ -157,6 +157,9 @@ typedef struct mac_phy_configuration
     int8_t init_sensitivity;
     /** rf modulation type, default value BPSK20 */
     uint8_t modulation;
+
+    uint8_t fcs_len;
+
 }s_mac_phy_conf_t;
 
 /*! MAC configuration struct, do not change */
