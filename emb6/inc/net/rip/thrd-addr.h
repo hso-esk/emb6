@@ -10,6 +10,9 @@
 #ifndef EMB6_INC_NET_RIP_THRD_ADDR_H_
 #define EMB6_INC_NET_RIP_THRD_ADDR_H_
 
+#define IPV6_UNIVERSAL_LOCAL_BIT				0x01
+#define IPV6_UNIVERSAL_LOCAL_BIT_INVERT_MASK	0xfd
+
 /**
  * Create Mesh-Local Prefrix.
  */
@@ -45,16 +48,16 @@
 /**
  * Create IID of a EUI-64 Bit IPv6 Address.
  */
-#define thrd_create_eui_64_bit_iid(addr, mac) do {	\
-		(addr)->u8[8] = mac[0];						\
-		(addr)->u8[8] ^= 1 << 1;					\
-		(addr)->u8[9] = mac[1];						\
-		(addr)->u8[10] = mac[2];					\
-		(addr)->u8[11] = mac[3];					\
-		(addr)->u8[12] = mac[4];					\
-		(addr)->u8[13] = mac[5];					\
-		(addr)->u8[14] = mac[6];					\
-		(addr)->u8[15] = mac[7];					\
+#define thrd_create_eui_64_bit_iid(addr, mac) do {		\
+		(addr)->u8[8] = mac[0];							\
+		(addr)->u8[8] |= IPV6_UNIVERSAL_LOCAL_BIT << 1;	\
+		(addr)->u8[9] = mac[1];							\
+		(addr)->u8[10] = mac[2];						\
+		(addr)->u8[11] = mac[3];						\
+		(addr)->u8[12] = mac[4];						\
+		(addr)->u8[13] = mac[5];						\
+		(addr)->u8[14] = mac[6];						\
+		(addr)->u8[15] = mac[7];						\
 } while(0)
 
 
@@ -87,5 +90,11 @@ uint8_t thrd_extract_router_id_from_rloc_addr(uip_ipaddr_t *rloc_addr);
  * @param rloc16 The RLOC16.
  */
 void thrd_create_next_hop_addr(uip_ipaddr_t *addr, uint8_t rloc16);
+
+/**
+ * Invert the universal/local bit of a MAC Extended Address based IID.
+ * @param lladdr The MAC Extended Address based IID.
+ */
+void thrd_invert_universal_local_bit(uip_lladdr_t * lladdr);
 
 #endif /* EMB6_INC_NET_RIP_THRD_ADDR_H_ */

@@ -73,3 +73,12 @@ thrd_create_next_hop_addr(uip_ipaddr_t *addr, uint8_t rloc16)
 	thrd_create_meshlocal_prefix(addr);
 	thrd_create_rloc_iid(addr, rloc16);
 }
+
+/* --------------------------------------------------------------------------- */
+
+void
+thrd_invert_universal_local_bit(uip_lladdr_t *lladdr)
+{
+	lladdr->addr[0] &= IPV6_UNIVERSAL_LOCAL_BIT_INVERT_MASK;
+}
+
