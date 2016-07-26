@@ -54,7 +54,7 @@ typedef enum {
 #define THRD_REALM_LOCAL_ALL_MPL_FORWARDERS_ADDR(ipaddr)	uip_ip6addr(ipaddr, 0xff03, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x00fc)
 
 // ------------- THREAD IPv6 ADDRESS PREFIX ----------------------
-#define	THRD_MESH_LOCAL_PREFIX		0xfe80
+#define	THRD_MESH_LOCAL_PREFIX		0xfd00
 
 // ----------------- IANA CONSIDERATIONS ------------------------
 #define THRD_MGMT_COAP_PORT				19789 // UIP_HTONS(19789)		// Thread Network Management (:MM).
