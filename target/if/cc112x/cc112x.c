@@ -1555,8 +1555,13 @@ static void rf_tx_rxAck(struct s_rf_ctx *p_ctx) {
  * @param p_ctx point to variable holding radio context structure
  */
 static void rf_tx_term(struct s_rf_ctx *p_ctx) {
+  uint8_t txLast;
+
   p_ctx->txStatus = RF_TX_STATUS_DONE;
-  cc112x_spiCmdStrobe(CC112X_SFTX);
+
+  /* force radio to flush TXFIFO by manipulating TXFIFO pointers */
+  cc112x_spiRegRead(CC112X_TXLAST, &txLast, 1);
+  cc112x_spiRegWrite(CC112X_TXFIRST, &txLast, 1);
 
   /* is IEEE Std. 802.15.4g supported? */
 #if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
