@@ -573,8 +573,14 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
   struct s_rf_ctx *p_ctx = &rf_ctx;
 
   if (p_ctx->state != RF_STATE_RX_IDLE) {
-    /* the radio is currently busy then terminate transmission request */
-    *p_err = NETSTK_ERR_BUSY;
+    if ((p_ctx->state & 0xF0) == RF_STATE_RX_IDLE) {
+      /* radio is in middle of packet reception process */
+      *p_err = NETSTK_ERR_CHANNEL_ACESS_FAILURE;
+    } else {
+      /* radio is performing other tasks */
+      TRACE_LOG_ERR("<RFTX> refused ds=%02x", p_ctx->state);
+      *p_err = NETSTK_ERR_BUSY;
+    }
     return;
   }
 
