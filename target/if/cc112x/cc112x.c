@@ -903,6 +903,7 @@ static void rf_pktRxTxBeginISR(void *p_arg) {
           break;
         }
       }
+      /* no break */
     case RF_MARC_STATUS_RX_OVERFLOW :
     case RF_MARC_STATUS_RX_UNDERFLOW :
     case RF_MARC_STATUS_RX_TIMEOUT :
