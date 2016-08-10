@@ -1128,6 +1128,7 @@ static void rf_pktRxTxEndISR(void *p_arg) {
   if ((p_ctx->cfgWOREnabled == TRUE) &&
       ((p_ctx->state == RF_STATE_RX_IDLE) ||
        (p_ctx->state == RF_STATE_RX_FINI) ||
+       (p_ctx->state == RF_STATE_RX_TXACK_FINI) ||
        (p_ctx->state == RF_STATE_TX_FINI))) {
     /* this interrupt was triggered by periodic WOR timer then ignore */
     return;
