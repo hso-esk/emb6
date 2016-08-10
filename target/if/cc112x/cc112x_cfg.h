@@ -107,15 +107,8 @@ static const s_regSettings_t cc112x_cfg_ieee802154g_default[] =
     {CC112X_MODCFG_DEV_E,       0x05},  /* MOD_FORMAT = 2-FSK */
     {CC112X_DCFILT_CFG,         0x15},
 
-#if (NETSTK_CFG_WOR_EN == TRUE)
-    /* WOR enabled */
-    {CC112X_PREAMBLE_CFG1,      0x31},  /* NUM_PREAMBLE = 24 bytes; PREAMBLE_WORD = 0x55 */
-    {CC112X_PREAMBLE_CFG0,      0x2A},  /* Preamble detection enabled; PQT_VALID_TIMEOUT=16 symbols; PQT=0x0A */
-#else
-    /* WOR disabled */
-    {CC112X_PREAMBLE_CFG1,      0x19},  /* NUM_PREAMBLE = 4 bytes; PREAMBLE_WORD = 0x55 */
-    {CC112X_PREAMBLE_CFG0,      0x2A},  /* Preamble detection enabled; PQT_VALID_TIMEOUT=16 symbols; PQT=0x0A */
-#endif
+    {CC112X_PREAMBLE_CFG1,      0x19},  /* NUM_PREAMBLE = 4 bytes;  PREAMBLE_WORD = 0x55 */
+
     {CC112X_FREQ_IF_CFG,        0x3A},
     {CC112X_IQIC,               0x00},
     {CC112X_CHAN_BW,            0x02},
