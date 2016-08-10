@@ -228,11 +228,16 @@ static void dllc_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
   if (dllc_cbRxFnct) {
     /* set return error code */
     *p_err = NETSTK_ERR_NONE;
+    int8_t rssi;
 
     /* store the received frame into common packet buffer */
     packetbuf_clear();
     packetbuf_set_datalen(len);
     memcpy(packetbuf_dataptr(), p_data, len);
+
+    /* set packet buffer miscellaneous attributes */
+    pdllc_netstk->mac->ioctrl(NETSTK_CMD_RF_RSSI_GET, &rssi, p_err);
+    packetbuf_set_attr(PACKETBUF_ATTR_RSSI, rssi);
 
     /* Inform the next higher layer */
     dllc_cbRxFnct(packetbuf_dataptr(), packetbuf_datalen(), p_err);
