@@ -1279,13 +1279,6 @@ static void rf_rx_entry(struct s_rf_ctx *p_ctx) {
   p_ctx->rxIsAddrFiltered = FALSE;
   memset(&p_ctx->rxFrame, 0, sizeof(p_ctx->rxFrame));
 
-  /* has RXFIFO_ERR happened by any chance? */
-  if (RF_READ_CHIP_STATE() == RF_STATE_RX_FIFO_ERR) {
-    /* then issue radio to flush RXFIFO */
-    cc112x_spiCmdStrobe(CC112X_SIDLE);
-    cc112x_spiCmdStrobe(CC112X_SFRX);
-  }
-
   /* state transition */
   p_ctx->state = RF_STATE_RX_IDLE;
   rf_listen(p_ctx);
