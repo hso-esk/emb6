@@ -570,6 +570,8 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
 
   uint8_t numTxBytes;
   uint32_t tickstart;
+  uint32_t txTimeout;
+  uint8_t marcStatus0, txOnCCA;
   struct s_rf_ctx *p_ctx = &rf_ctx;
 
   if (p_ctx->state != RF_STATE_RX_IDLE) {
@@ -633,18 +635,36 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
   p_ctx->txDataLen = len;
 #endif /* NETSTK_CFG_IEEE_802154G_EN */
 
+  p_ctx->txStatus = RF_TX_STATUS_NONE;
+
   /* issue the radio transmission command */
   cc112x_spiCmdStrobe(CC112X_STX);
 
   /* wait for complete transmission of the frame until timeout */
+  txOnCCA = FALSE;
   tickstart = rt_tmr_getCurrenTick();
-  while ((rt_tmr_getCurrenTick() - tickstart) < 50) { //50ms
+  do {
     if ((p_ctx->txStatus == RF_TX_STATUS_DONE) ||
         (p_ctx->txStatus == RF_TX_STATUS_WFA)) {
       /* frame was transmitted successfully */
       break;
     }
-  }
+
+    /* poll for TXONCCA status for first 2ms */
+    if ((txTimeout < 2) && (txOnCCA == FALSE)) {
+      cc112x_spiRegRead(CC112X_MARC_STATUS0, &marcStatus0, 1);
+      txOnCCA = (marcStatus0 & 0x04) >> 2;
+      if (txOnCCA == TRUE) {
+        /* then transmission was denied due to channel access failure */
+        p_ctx->txErr = NETSTK_ERR_TX_COLLISION;
+        rf_tx_term(p_ctx);
+        break;
+      }
+    }
+
+    txTimeout = rt_tmr_getCurrenTick() - tickstart;
+  } while (txTimeout < 30); // 30ms
+
   if (p_ctx->txStatus == RF_TX_STATUS_DONE) {
     *p_err = p_ctx->txErr;
 
