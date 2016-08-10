@@ -7,6 +7,8 @@
 #include "emb6.h"
 #include "rt_tmr.h"
 #include "framer_smartmac.h"
+#include "packetbuf.h"
+#include "crc.h"
 
 
 uint16_t frame_smartmac_create(frame_smartmac_st *p_frame, uint8_t *p_buf)
@@ -41,6 +43,31 @@ uint16_t frame_smartmac_create(frame_smartmac_st *p_frame, uint8_t *p_buf)
 
   /* compute frame length */
   len = p - p_buf;
+
+#if (NETSTK_CFG_RF_CRC_EN == FALSE)
+  uint8_t *p_mfr;
+  uint32_t fcs;
+  packetbuf_attr_t fcs_len;
+
+  /* write footer */
+  p_mfr = p;
+  fcs_len = packetbuf_attr(PACKETBUF_ATTR_MAC_FCS_LEN);
+  if (fcs_len == 4) {
+    /* 32-bit CRC */
+    fcs = crc_32_calc(p_buf, len);
+    p_mfr[0] = (fcs & 0xFF000000u) >> 24;
+    p_mfr[1] = (fcs & 0x00FF0000u) >> 16;
+    p_mfr[2] = (fcs & 0x0000FF00u) >> 8;
+    p_mfr[3] = (fcs & 0x000000FFu);
+  } else {
+    /* 16-bit CRC */
+    fcs = crc_16_calc(p_buf, len);
+    p_mfr[0] = (fcs & 0xFF00u) >> 8;
+    p_mfr[1] = (fcs & 0x00FFu);
+  }
+  len += fcs_len;
+#endif /* NETSTK_CFG_RF_CRC_EN */
+
   return len;
 }
 
