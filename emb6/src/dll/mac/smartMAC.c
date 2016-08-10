@@ -34,6 +34,16 @@
 #define SMARTMAC_CFG_SELF_TEST_EN             FALSE
 
 
+#if (DEMO_UDP_SOCKET_ROLE_SERVER == TRUE)
+#define SMARTMAC_CFG_CONTINUOUS_TX_BROADCAST_EN       FALSE
+#define SMARTMAC_CFG_CONTINUOUS_TX_UNICAST_EN         TRUE
+#define SMARTMAC_CFG_CONTINUOUS_RX_EN                 FALSE
+#else
+#define SMARTMAC_CFG_CONTINUOUS_TX_UNICAST_EN         FALSE
+#define SMARTMAC_CFG_CONTINUOUS_TX_BROADCAST_EN       FALSE
+#define SMARTMAC_CFG_CONTINUOUS_RX_EN                 TRUE
+#endif
+
 
 /*
 ********************************************************************************
@@ -249,6 +259,11 @@ static void smartMAC_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
   struct s_smartMAC *p_ctx = &smartMAC;
   packetbuf_attr_t isBroadcastTx;
 
+#if (SMARTMAC_CFG_CONTINUOUS_RX_EN == TRUE)
+  *p_err = NETSTK_ERR_BUSY;
+  return;
+#endif
+
   /* is MAC not in OFF state? */
   if (p_ctx->state != E_SMARTMAC_STATE_OFF) {
     /* then refuse transmission request */
@@ -259,6 +274,41 @@ static void smartMAC_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
 
   /* handle transmission */
   isBroadcastTx = packetbuf_holds_broadcast();
+
+#if (SMARTMAC_CFG_CONTINUOUS_TX_BROADCAST_EN == TRUE)
+  isBroadcastTx = TRUE;
+#elif (SMARTMAC_CFG_CONTINUOUS_TX_UNICAST_EN == TRUE)
+  linkaddr_t dstAddr;
+
+  /* unicast, ACK required, destination address 0x1120 */
+  isBroadcastTx = FALSE;
+  packetbuf_set_attr(PACKETBUF_ATTR_MAC_ACK, TRUE);
+  memset(&dstAddr, 0, sizeof(dstAddr));
+  dstAddr.u8[7] = 0x21;
+  dstAddr.u8[6] = 0x11;
+  linkaddr_copy((linkaddr_t *)packetbuf_addr(PACKETBUF_ADDR_RECEIVER), &dstAddr);
+#else
+
+#endif
+
+#if ((SMARTMAC_CFG_CONTINUOUS_TX_BROADCAST_EN == TRUE) || (SMARTMAC_CFG_CONTINUOUS_TX_UNICAST_EN == TRUE))
+  uint32_t txDelayMilli = 100;
+
+  for (;;) {
+    txDelayMilli += 100;
+    if (txDelayMilli > 2000) {
+      txDelayMilli = 100;
+    }
+    bsp_delay_us(txDelayMilli * 1000);
+
+    if (isBroadcastTx == TRUE) {
+      mac_txBroadcast(p_ctx, p_data, len, p_err);
+    } else {
+      mac_txUnicast(p_ctx, p_data, len, p_err);
+    }
+  }
+#endif
+
   if (isBroadcastTx == TRUE) {
     mac_txBroadcast(p_ctx, p_data, len, p_err);
   } else {
@@ -276,6 +326,10 @@ static void smartMAC_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
 
   /* parse the received frame */
   frame_smartmac_parse(p_data, len, &frame);
+
+#if (SMARTMAC_CFG_CONTINUOUS_RX_EN == TRUE)
+  trace_printHex("<RX>", p_data, 10);
+#endif
 
   /* is MAC in SCAN state? */
   if ((p_ctx->state == E_SMARTMAC_STATE_SCAN)) {
