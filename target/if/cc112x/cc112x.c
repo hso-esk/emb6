@@ -408,10 +408,6 @@ static void rf_chanNumSet(uint8_t chan_num, e_nsErr_t *p_err);
 static void rf_opModeSet(e_nsRfOpMode mode, e_nsErr_t *p_err);
 static void rf_readRSSI(int8_t *p_val, e_nsErr_t *p_err);
 
-#if (NETSTK_REFACTOR_DLLC_TX_EN == TRUE)
-static void rf_waitUntilIdle(int8_t *p_isTimeout, e_nsErr_t *p_err);
-#endif
-
 #if (RF_CFG_DEBUG_EN == TRUE)
 static void rf_tmrDbgCb(void *p_arg);
 #endif
@@ -757,12 +753,6 @@ static void rf_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err) {
 #endif
       break;
 
-#if (NETSTK_REFACTOR_DLLC_TX_EN == TRUE)
-    case NETSTK_CMD_RF_WAIT_UNTIL_IDLE:
-      rf_waitUntilIdle(p_val, p_err);
-      break;
-#endif
-
     case NETSTK_CMD_RF_IS_RX_BUSY:
       if (RF_IS_RX_BUSY() == TRUE) {
         *p_err = NETSTK_ERR_BUSY;
@@ -786,17 +776,12 @@ static void rf_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err) {
       break;
 
     case NETSTK_CMD_RX_BUF_READ:
-#if (NETSTK_REFACTOR_DLLC_TX_EN == TRUE)
-      p_ctx->p_netstk->phy->recv(p_ctx->rxBuf, p_ctx->rxBytesCounter, p_err);
-      p_ctx->rxBytesCounter = 0;
-#else
       /*
        * Signal upper layer if a packet has arrived by the time this
        * command is issued.
        * Trigger event-process manually
        */
       rf_eventHandler(NETSTK_RF_EVENT, NULL);
-#endif
       break;
 
     case NETSTK_CMD_RF_RSSI_GET:
@@ -2221,41 +2206,6 @@ static void rf_readRSSI(int8_t *p_val, e_nsErr_t *p_err) {
   /* get real RSSI from most recently received frame */
   *p_val = rf_ctx.rxRSSI;
 }
-
-
-#if (NETSTK_REFACTOR_DLLC_TX_EN == TRUE)
-static void rf_waitUntilIdle(int8_t *p_isTimeout, e_nsErr_t *p_err) {
-  clock_time_t tickstart;
-  struct s_rf_ctx *p_ctx = &rf_ctx;
-
-  /* set timeout status to default value */
-  *p_isTimeout = TRUE;
-
-  /* only handle polling if radio is in RX state */
-  if ((p_ctx->state & 0xF0) == RF_STATE_RX_IDLE) {
-    /* wait for RX_IDLE until timeout */
-    tickstart = bsp_getTick();
-    while ((bsp_getTick() - tickstart) < 50) {
-      /* is radio already in RX_IDLE state? */
-      if (p_ctx->state == RF_STATE_RX_IDLE) {
-        *p_isTimeout = FALSE;
-        break;
-      }
-
-      /* has a valid packet been received (i.e., checksum is valid) ? */
-      if (((p_ctx->state == RF_STATE_RX_FINI) && (p_ctx->rxReqAck == FALSE)) ||
-          (p_ctx->state == RF_STATE_RX_TXACK_FINI)) {
-        /* exit and re-enter RX state */
-        rf_rx_exit(p_ctx);
-        rf_rx_entry(p_ctx);
-
-        *p_isTimeout = FALSE;
-        break;
-      }
-    }
-  }
-}
-#endif
 
 
 /*

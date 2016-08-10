@@ -326,9 +326,6 @@ typedef enum netstk_ioc_cmd
     NETSTK_CMD_RF_CHAN_NUM_SET,     /*!< Set operation channel number */
     NETSTK_CMD_RF_OP_MODE_SET,      /*!< Set operation mode */
     NETSTK_CMD_RF_WOR_EN,           /*!< Enable/Disable WOR mode */
-
-    NETSTK_CMD_RF_WAIT_UNTIL_IDLE,  /*!< */
-
 }e_nsIocCmd_t;
 
 
