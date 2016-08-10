@@ -1608,9 +1608,6 @@ static void rf_eventHandler(c_event_t c_event, p_data_t p_data) {
         (p_ctx->state == RF_STATE_RX_TXACK_FINI)) {
       rf_rx_fini(p_ctx);
     }
-    else {
-      TRACE_LOG_ERR("+++ RF: Dispatcher unexpected");
-    }
   }
 }
 
