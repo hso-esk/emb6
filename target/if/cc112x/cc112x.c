@@ -756,6 +756,8 @@ static void rf_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err) {
   }
 #endif
 
+  uint8_t rfendCfg0;
+  uint8_t preambleCfg1;
   struct s_rf_ctx *p_ctx = &rf_ctx;
 
   *p_err = NETSTK_ERR_NONE;
@@ -800,7 +802,31 @@ static void rf_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err) {
     case NETSTK_CMD_RF_WOR_EN:
       if (p_val) {
         rf_ctx.cfgWOREnabled = *((uint8_t *) p_val);
-      } else {
+
+        /* read value of registers to modify */
+        cc112x_spiRegRead(CC112X_RFEND_CFG0, &rfendCfg0, 1);
+        cc112x_spiRegRead(CC112X_PREAMBLE_CFG1, &preambleCfg1, 1);
+
+        if (rf_ctx.cfgWOREnabled == TRUE) {
+          /* enable RX termination based on CS */
+          rfendCfg0 |= 0x09;
+          cc112x_spiRegWrite(CC112X_RFEND_CFG0, &rfendCfg0, 1);
+
+          /* set preamble length to 24 bytes */
+          preambleCfg1 = 0x31;
+          cc112x_spiRegWrite(CC112X_PREAMBLE_CFG1, &preambleCfg1, 1);
+        }
+        else {
+          /* disable RX termination based on CS */
+          rfendCfg0 &= ~0x09;
+          cc112x_spiRegWrite(CC112X_RFEND_CFG0, &rfendCfg0, 1);
+
+          /* set preamble length to 4 bytes */
+          preambleCfg1 = 0x19;
+          cc112x_spiRegWrite(CC112X_PREAMBLE_CFG1, &preambleCfg1, 1);
+        }
+      }
+      else {
         *p_err = NETSTK_ERR_INVALID_ARGUMENT;
       }
       break;
