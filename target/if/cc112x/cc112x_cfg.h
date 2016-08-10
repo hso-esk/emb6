@@ -118,7 +118,7 @@ static const s_regSettings_t cc112x_cfg_ieee802154g_default[] =
     {CC112X_SYMBOL_RATE1,       0x99},
     {CC112X_SYMBOL_RATE0,       0x99},
 
-    {CC112X_AGC_REF,            0x3C},
+    {CC112X_AGC_REF,            0x3E},
     {CC112X_AGC_CS_THR,         0x0C},  /* default 0C -90dBm; 0x2A = -60dBm; 0x16 = -0x80dBm */
     {CC112X_AGC_CFG1,           0xA0},
     {CC112X_AGC_CFG0,           0xC0},  /* RSSI_VALID_CNT = 00b; 0x02 */
