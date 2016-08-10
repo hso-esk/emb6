@@ -590,7 +590,6 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
 
   /* TODO put radio back to RX state if eWOR is enabled */
   if (p_ctx->cfgWOREnabled == TRUE) {
-    rf_gotoIdle(p_ctx);
     rf_gotoRx(p_ctx);
   }
 
@@ -1680,6 +1679,20 @@ static void rf_gotoIdle(struct s_rf_ctx *p_ctx) {
  * @param p_ctx point to variable holding radio context structure
  */
 static void rf_gotoRx(struct s_rf_ctx *p_ctx) {
+  /* force radio to enter IDLE state */
+  rf_gotoIdle(p_ctx);
+
+#if (NETSTK_CFG_WOR_EN == TRUE)
+  uint8_t rfendCfg0;
+
+  /* read value of registers to modify */
+  cc112x_spiRegRead(CC112X_RFEND_CFG0, &rfendCfg0, 1);
+
+  /* disable RX termination based on CS */
+  rfendCfg0 &= ~0x09;
+  cc112x_spiRegWrite(CC112X_RFEND_CFG0, &rfendCfg0, 1);
+#endif
+
   /* RX mode */
   cc112x_spiCmdStrobe(CC112X_SRX);
   while (RF_READ_CHIP_STATE() != RF_STATE_RX_IDLE) {
@@ -1692,9 +1705,19 @@ static void rf_gotoRx(struct s_rf_ctx *p_ctx) {
  * @param p_ctx point to variable holding radio context structure
  */
 static void rf_gotoWor(struct s_rf_ctx *p_ctx) {
-  /* enable RX termination on CS */
-  uint8_t wrByte = 0x09;
-  cc112x_spiRegWrite(CC112X_RFEND_CFG0, &wrByte, 1);
+  /* force radio to enter IDLE state */
+  rf_gotoIdle(p_ctx);
+
+#if (NETSTK_CFG_WOR_EN == TRUE)
+  uint8_t rfendCfg0;
+
+  /* read value of registers to modify */
+  cc112x_spiRegRead(CC112X_RFEND_CFG0, &rfendCfg0, 1);
+
+  /* enable RX termination based on CS */
+  rfendCfg0 |= 0x09;
+  cc112x_spiRegWrite(CC112X_RFEND_CFG0, &rfendCfg0, 1);
+#endif
 
   /* WOR mode */
   cc112x_spiCmdStrobe(CC112X_SWOR);
@@ -1899,7 +1922,6 @@ static void rf_cca(e_nsErr_t *p_err) {
   else {
     /* TODO put radio back to RX state if eWOR is enabled */
     if (p_ctx->cfgWOREnabled == TRUE) {
-      rf_gotoIdle(p_ctx);
       rf_gotoRx(p_ctx);
     }
 
@@ -1947,7 +1969,6 @@ static void rf_cca(e_nsErr_t *p_err) {
 
           /* then go back to eWOR when enabled */
           if (p_ctx->cfgWOREnabled == TRUE) {
-            rf_gotoIdle(p_ctx);
             rf_gotoWor(p_ctx);
           }
         }
