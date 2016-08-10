@@ -397,6 +397,12 @@ trg += [{
     'bsp'       : get_descr(bsp, 'mosesstick')
 }]
 
+trg += [{
+    'id'        : 'mq_mosesstk',
+    'apps_conf' : [ mqtt, udp_alive ],
+    'bsp'       : get_descr(bsp, 'mosesstick')
+}]
+
 
 #TI based ++++++++++++++++++++++++++++++++++++++++#
 
