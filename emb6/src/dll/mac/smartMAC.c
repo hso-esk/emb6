@@ -29,17 +29,11 @@
 ********************************************************************************
 */
 #define SMARTMAC_CFG_POWERUP_TIMEOUT          200 //ms
-#define SMARTMAC_CFG_STROBE_TX_INTERVAL         6 //ms
-#define SMARTMAC_CFG_SCAN_TIMEOUT             (SMARTMAC_CFG_STROBE_TX_INTERVAL * 2) //ms
-#define SMARTMAC_CFG_RX_DELAY_MIN             (SMARTMAC_CFG_STROBE_TX_INTERVAL * 2) //ms
-#define SMARTMAC_CFG_RX_TIMEOUT                20 //ms
 
 #define SMARTMAC_CFG_COUNTER_IX                 2u
-
 #define SMARTMAC_CFG_SELF_TEST_EN             FALSE
 
-#define SMARTMAC_CFG_MAX_BROADCAST_COUNTER    (uint8_t )(SMARTMAC_CFG_POWERUP_TIMEOUT / SMARTMAC_CFG_STROBE_TX_INTERVAL)
-#define SMARTMAC_CFG_MAX_UNICAST_COUNTER      SMARTMAC_CFG_MAX_BROADCAST_COUNTER * 2
+
 
 /*
 ********************************************************************************
@@ -71,6 +65,13 @@ struct s_smartMAC {
   uint32_t          rxDelay;
   e_smartMACState   state;
 
+  // smartMAC timing parameters in milliseconds that are relied on underlying layer
+  uint8_t           strobeTxInterval;
+  uint8_t           scanTimeout;
+  uint8_t           rxDelayMin;
+  uint8_t           rxTimeout;
+  uint8_t           maxUnicastCounter;
+  uint8_t           maxBroadcastCounter;
 
   s_rt_tmr_t        tmrPowerUp;
   s_rt_tmr_t        tmr1Scan;
@@ -206,10 +207,19 @@ static void smartMAC_init (void *p_netstk, e_nsErr_t *p_err) {
       phySHRDuration + 6 * phySymbolsPerOctet * phySymbolPeriod;
   packetbuf_set_attr(PACKETBUF_ATTR_MAC_ACK_WAIT_DURATION, macAckWaitDuration);
 
+  // FIXME compute smartMAC timing parameters based on settings of underlying layers
+  uint8_t strobeLen = 12; /* PHR(1) + FCF(2) + SEQ(1) + PANID(2) + DST.ADDR(2) + SRC.ADDR(2) + CHKSUM(2) */
+
+  p_ctx->strobeTxInterval = (phySHRDuration + (8 * strobeLen) * phySymbolPeriod + macAckWaitDuration) / 1000 + 1; //ms
+  p_ctx->scanTimeout = 2 * p_ctx->strobeTxInterval;
+  p_ctx->rxDelayMin = 2 * p_ctx->strobeTxInterval;
+  p_ctx->maxBroadcastCounter = SMARTMAC_CFG_POWERUP_TIMEOUT / p_ctx->strobeTxInterval;
+  p_ctx->maxUnicastCounter = 2 * p_ctx->maxBroadcastCounter;
+
   /* initialize local attributes */
   rt_tmr_create(&p_ctx->tmrPowerUp, E_RT_TMR_TYPE_PERIODIC, SMARTMAC_CFG_POWERUP_TIMEOUT, mac_tmrSleepCb, p_ctx);
-  rt_tmr_create(&p_ctx->tmr1Scan, E_RT_TMR_TYPE_ONE_SHOT, SMARTMAC_CFG_SCAN_TIMEOUT, mac_tmrScanCb, p_ctx);
-  rt_tmr_create(&p_ctx->tmr1RxPending, E_RT_TMR_TYPE_ONE_SHOT, SMARTMAC_CFG_RX_TIMEOUT, mac_tmrRxPendingCb, p_ctx);
+  rt_tmr_create(&p_ctx->tmr1Scan, E_RT_TMR_TYPE_ONE_SHOT, p_ctx->scanTimeout, mac_tmrScanCb, p_ctx);
+  rt_tmr_create(&p_ctx->tmr1RxPending, E_RT_TMR_TYPE_ONE_SHOT, p_ctx->rxTimeout, mac_tmrRxPendingCb, p_ctx);
 
   /* initial transition */
   mac_off_entry(p_ctx);
@@ -374,7 +384,7 @@ static void mac_txBroadcast(struct s_smartMAC *p_ctx, uint8_t *p_data, uint16_t 
   mac_txBroadcast_entry(p_ctx);
 
   /* transmit broadcast strobes */
-  counter = SMARTMAC_CFG_MAX_BROADCAST_COUNTER;
+  counter = p_ctx->maxBroadcastCounter;
   dstShortAddr = FRAME802154_BROADCASTADDR;
   timeGap = packetbuf_attr(PACKETBUF_ATTR_MAC_ACK_WAIT_DURATION);
 
@@ -437,7 +447,7 @@ static void mac_txUnicast(struct s_smartMAC *p_ctx, uint8_t *p_data, uint16_t le
   mac_txUnicast_entry(p_ctx);
 
   /* transmit broadcast strobes */
-  counter = SMARTMAC_CFG_MAX_UNICAST_COUNTER;
+  counter = p_ctx->maxUnicastCounter;
   isTxDone = FALSE;
 
   /* store sequence number of the actual data packet to send */
@@ -666,9 +676,11 @@ static uint32_t mac_calcRxDelay(uint8_t counter) {
   rt_tmr_tick_t rx_delay = 0;
 
   if (counter) {
-    rx_delay = counter * SMARTMAC_CFG_STROBE_TX_INTERVAL;
-    if (rx_delay > SMARTMAC_CFG_RX_DELAY_MIN) {
-      rx_delay -= SMARTMAC_CFG_RX_DELAY_MIN;
+    struct s_smartMAC *p_ctx = &smartMAC;
+
+    rx_delay = counter * p_ctx->strobeTxInterval;
+    if (rx_delay > p_ctx->rxDelayMin) {
+      rx_delay -= p_ctx->rxDelayMin;
     } else {
       rx_delay = 0;
     }
