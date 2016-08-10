@@ -60,6 +60,7 @@
 #include "cc112x_spi.h"
 
 #include "rt_tmr.h"
+#include "ctimer.h"
 #include "packetbuf.h"
 #include "evproc.h"
 #include "phy_framer_802154.h"
@@ -316,7 +317,7 @@ struct s_rf_ctx {
   e_nsErr_t txErr;
 
 #if (RF_CFG_DEBUG_EN == TRUE)
-  s_rt_tmr_t dbgTmr;
+  struct ctimer dbgTmr;
   e_rfState_t dbgChipState;
   uint8_t dbgEvtStatus;
 #endif
@@ -485,8 +486,7 @@ static void rf_init(void *p_netstk, e_nsErr_t *p_err)
 
   /* debug watchdog timer */
 #if (RF_CFG_DEBUG_EN == TRUE)
-  rt_tmr_create(&p_ctx->dbgTmr, E_RT_TMR_TYPE_PERIODIC, 10000, rf_tmrDbgCb, p_ctx);
-  rt_tmr_start(&p_ctx->dbgTmr);
+  ctimer_set(&p_ctx->dbgTmr, 10000, rf_tmrDbgCb, p_ctx);
 #endif
 
   /* transition to SLEEP state */
