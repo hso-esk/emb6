@@ -931,6 +931,11 @@ static void rf_rxFifoThresholdISR(void *p_arg) {
 
   /* entry */
   bsp_extIntClear(RF_INT_RXFIFO_THR);
+  if ((p_ctx->state != RF_STATE_RX_SYNC) &&
+      (p_ctx->state != RF_STATE_TX_RXACK_SYNC)) {
+    return;
+  }
+
   cc112x_spiRegRead(CC112X_NUM_RXBYTES, &numRxBytes, 1);
 
   /* do */
