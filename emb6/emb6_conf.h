@@ -59,6 +59,8 @@
 #ifndef EMB6_CONF_H_
 #define EMB6_CONF_H_
 
+#define EMB6_TEST_CFG_CONT_TX_EN                      FALSE
+#define EMB6_TEST_CFG_CONT_RX_EN                      FALSE
 
 /*=============================================================================
                                 APPLICATION LAYER SECTION

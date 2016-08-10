@@ -258,6 +258,40 @@ void mac_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
   }
 #endif
 
+#if (EMB6_TEST_CFG_CONT_RX_EN == TRUE)
+  *p_err = NETSTK_ERR_BUSY;
+
+  /* was transmission callback function set? */
+  if (mac_cbTxFnct) {
+    /* then signal the upper layer of the result of transmission process */
+    mac_cbTxFnct(pmac_cbTxArg, p_err);
+  }
+  return;
+#endif
+
+#if (EMB6_TEST_CFG_CONT_TX_EN == TRUE)
+  uint16_t ix;
+  packetbuf_attr_t waitForAckTimeout;
+
+  waitForAckTimeout = packetbuf_attr(PACKETBUF_ATTR_MAC_ACK_WAIT_DURATION);
+  for (ix = 0; ix < 5000; ix++) {
+    pmac_netstk->phy->send(p_data, len, p_err);
+    bsp_delay_us(waitForAckTimeout);
+  }
+
+  while (1);
+
+  *p_err = NETSTK_ERR_BUSY;
+
+  /* was transmission callback function set? */
+  if (mac_cbTxFnct) {
+    /* then signal the upper layer of the result of transmission process */
+    mac_cbTxFnct(pmac_cbTxArg, p_err);
+  }
+  return;
+#endif
+
+
   LOG_INFO("MAC_TX: Transmit %d bytes.", len);
 
   uint8_t is_tx_done;
