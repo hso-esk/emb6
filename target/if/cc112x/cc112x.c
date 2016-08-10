@@ -1013,6 +1013,16 @@ static void rf_rxFifoThresholdISR(void *p_arg) {
       }
       p_ctx->rxBytesCounter = p_ctx->rxFrame.tot_len;
 
+#if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
+      if ((p_ctx->rxBuf[PHY_HEADER_LEN] == 0x02) &&
+          (p_ctx->txReqAck == FALSE)) {
+        /* receive unwanted ACK then terminate reception process */
+        TRACE_LOG_MAIN("<RXACK> dropped unwanted ACK seq=%02x", p_ctx->rxBuf[PHY_HEADER_LEN + 2]);
+        rf_rx_term(p_ctx);
+        return;
+      }
+#endif
+
       /* is IEEE Std. 802.15.4g supported? */
 #if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
       /* then switch to fixed packet length mode */
