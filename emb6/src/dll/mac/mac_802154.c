@@ -617,9 +617,13 @@ static void mac_csma(e_nsErr_t *p_err)
     /* perform CCA */
     pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_CCA_GET, 0, p_err);
     /* was channel free or was the radio busy? */
-    if ((*p_err == NETSTK_ERR_NONE) ||
-        (*p_err == NETSTK_ERR_BUSY)) {
-      /* then terminate CSMA */
+    if (*p_err == NETSTK_ERR_NONE) {
+      /* channel free */
+      break;
+    }
+    else if (*p_err == NETSTK_ERR_BUSY) {
+      /* radio is likely busy receiving a packet and therefore should let it handle the received packet now */
+      *p_err = NETSTK_ERR_CHANNEL_ACESS_FAILURE;
       break;
     }
     /* was channel busy? */
