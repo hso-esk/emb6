@@ -457,6 +457,7 @@ void mac_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 
   /* was MAC waiting for ACK? */
   if (mac_isAckReq) {
+#if (NETSTK_CFG_MAC_SW_AUTOACK_EN == TRUE)
     /* then frames other than ACK shall be discarded silently */
 
     /* check if this is expected ACK */
@@ -471,7 +472,9 @@ void mac_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
       mac_txErr = NETSTK_ERR_TX_COLLISION;
       TRACE_LOG_ERR("MAC_TX: collided");
     }
-  } else {
+#endif
+  }
+  else {
     switch (frame.fcf.frame_type) {
       case FRAME802154_DATAFRAME:
       case FRAME802154_CMDFRAME:
