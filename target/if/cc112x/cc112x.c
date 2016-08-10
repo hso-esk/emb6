@@ -321,6 +321,10 @@ struct s_rf_ctx {
   e_rfState_t dbgChipState;
   uint8_t dbgEvtStatus;
 #endif
+
+#if (EMB6_TEST_CFG_CONT_RX_EN == TRUE)
+  uint16_t numRxPackets;
+#endif
 };
 
 #define RF_TX_STATUS_NONE         0x00
@@ -1318,6 +1322,14 @@ static void rf_rx_fini(struct s_rf_ctx *p_ctx) {
   /* exit and re-enter RX state */
   rf_rx_exit(p_ctx);
   rf_rx_entry(p_ctx);
+
+#if (EMB6_TEST_CFG_CONT_RX_EN == TRUE)
+  ++p_ctx->numRxPackets;
+  if ((p_ctx->numRxPackets % 10) == 0) {
+    trace_printf("%d | %d", p_ctx->numRxPackets, p_ctx->rxRSSI);
+  }
+  return;
+#endif
 
   /* set the error code to default */
   e_nsErr_t err = NETSTK_ERR_NONE;
