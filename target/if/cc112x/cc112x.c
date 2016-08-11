@@ -463,7 +463,12 @@ static void rf_init(void *p_netstk, e_nsErr_t *p_err)
   }
 
   /* configure RF registers */
+#if (EMB6_TEST_CFG_WOR_EN == TRUE)
+  RF_WR_REGS(cc112x_cfg_worSmartRFTesting);
+#else
   RF_WR_REGS(cc112x_cfg_ieee802154g_default);
+#endif
+
   RF_SET_FIFO_THR(RF_CFG_FIFO_THR);
 
   /* calibrate radio according to cc112x errata */

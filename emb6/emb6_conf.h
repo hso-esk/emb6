@@ -61,6 +61,8 @@
 
 #define EMB6_TEST_CFG_CONT_TX_EN                      FALSE
 #define EMB6_TEST_CFG_CONT_RX_EN                      FALSE
+#define EMB6_TEST_CFG_WOR_EN                          FALSE
+
 
 /*=============================================================================
                                 APPLICATION LAYER SECTION

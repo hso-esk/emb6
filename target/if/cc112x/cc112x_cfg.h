@@ -74,6 +74,74 @@
 #define CC112X_CFG_RETX_EN                  FALSE   /* this feature is currently unstable, then should not be enabled */
 #endif
 
+#if (EMB6_TEST_CFG_WOR_EN == TRUE)
+/**
+ * @brief WOR test settings are based on setting named "50kbps, 2-GFSK, IEEE 802.15.4G (868)" from TI SmartRF Studio
+ *        with CRC disabled (i.e., PKT_CFG1.CRC_CFG = 0)
+ *
+ *        Setting summary
+ *        - Carrier: 868.00 MHz
+ *        - Modulation: 2-GFSK
+ *        - Preamble: 24 bytes
+ *        - Data rate: 50kbps
+ *        - WOR: t_sleep = 2.868ms, I = 2.7mA
+ *        - SYNC words: 32 bits, 0x930B51DE
+ */
+static const s_regSettings_t cc112x_cfg_worSmartRFTesting[] = {
+    {CC112X_IOCFG0,            0x06},
+    {CC112X_IOCFG2,            0x00},
+    {CC112X_IOCFG3,            0x06},
+    {CC112X_IOCFG1,            0xB0}, /* don't care */
+
+    {CC112X_SYNC_CFG1,         0x08},
+    {CC112X_DEVIATION_M,       0x99},
+    {CC112X_MODCFG_DEV_E,      0x0D},
+    {CC112X_DCFILT_CFG,        0x15},
+    {CC112X_PREAMBLE_CFG1,     0x30},
+    {CC112X_FREQ_IF_CFG,       0x3A},
+    {CC112X_IQIC,              0x00},
+    {CC112X_CHAN_BW,           0x02},
+    {CC112X_MDMCFG0,           0x05},
+    {CC112X_SYMBOL_RATE2,      0x99},
+    {CC112X_SYMBOL_RATE1,      0x99},
+    {CC112X_SYMBOL_RATE0,      0x99},
+    {CC112X_AGC_REF,           0x40}, /* DO NOT change */
+    {CC112X_AGC_CS_THR,        0x0C},
+    {CC112X_AGC_CFG1,          0xA0},
+    {CC112X_AGC_CFG0,          0xC0},
+    {CC112X_FIFO_CFG,          0x00},
+    {CC112X_SETTLING_CFG,      0x03},
+    {CC112X_FS_CFG,            0x12},
+    {CC112X_WOR_CFG0,          0x20},
+    {CC112X_WOR_EVENT0_LSB,    0x78},
+    {CC112X_PKT_CFG0,          0x20},
+    {CC112X_PKT_CFG1,          0x01},
+    {CC112X_RFEND_CFG0,        0x00},
+    {CC112X_PA_CFG0,           0x79},
+    {CC112X_PKT_LEN,           0xFF},
+    {CC112X_IF_MIX_CFG,        0x00},
+    {CC112X_TOC_CFG,           0x0A},
+    {CC112X_FREQ2,             0x6C},
+    {CC112X_FREQ1,             0x80},
+    {CC112X_FREQ0,             0x00},
+    {CC112X_FS_DIG1,           0x00},
+    {CC112X_FS_DIG0,           0x5F},
+    {CC112X_FS_CAL1,           0x40},
+    {CC112X_FS_CAL0,           0x0E},
+    {CC112X_FS_DIVTWO,         0x03},
+    {CC112X_FS_DSM0,           0x33},
+    {CC112X_FS_DVC0,           0x17},
+    {CC112X_FS_PFD,            0x50},
+    {CC112X_FS_PRE,            0x6E},
+    {CC112X_FS_REG_DIV_CML,    0x14},
+    {CC112X_FS_SPARE,          0xAC},
+    {CC112X_FS_VCO0,           0xB4},
+    {CC112X_XOSC5,             0x0E},
+    {CC112X_XOSC2,             0x00},
+    {CC112X_XOSC1,             0x03},
+};
+#endif /* EMB6_TEST_CFG_WOR_EN */
+
 /**
  * @brief   Default register settings for IEEE-802.15.4g
  *          Carrier Frequency:  863.125MHz
