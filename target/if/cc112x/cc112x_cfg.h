@@ -208,7 +208,7 @@ static const s_regSettings_t cc112x_cfg_ieee802154g_default[] =
     {CC112X_PKT_CFG0,           0x20},
     {CC112X_RFEND_CFG0,         0x00},  /* Terminate on bad packet is disabled; */
     {CC112X_PA_CFG0,            0x79},
-    {CC112X_PKT_LEN,            0x80},  /* Maximum packet length is 128 bytes */
+    {CC112X_PKT_LEN,            0xFF},
 
     {CC112X_IF_MIX_CFG,         0x00},
     {CC112X_FREQOFF_CFG,        0x22},
