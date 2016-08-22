@@ -732,27 +732,44 @@ static void mac_tmrSleepCb(void *p_arg) {
 
 static void mac_tmrScanCb(void *p_arg) {
   struct s_smartMAC *p_ctx = (struct s_smartMAC *)p_arg;
+  e_nsErr_t err = NETSTK_ERR_NONE;
+  uint8_t isPendingRxFrame = FALSE;
 
   /* is smartMAC in SCAN state? */
   if (p_ctx->state == E_SMARTMAC_STATE_SCAN) {
-    mac_scan_exit(p_ctx);
-    mac_off_entry(p_ctx);
-  } else {
+    /* check if any frame is being received. If yes, restart the timer */
+    p_ctx->p_netstk->phy->ioctrl(NETSTK_CMD_RF_IS_RX_BUSY, &isPendingRxFrame, &err);
+    if (isPendingRxFrame == TRUE) {
+      rt_tmr_start(&p_ctx->tmr1Scan);
+    }
+    else {
+      mac_scan_exit(p_ctx);
+      mac_off_entry(p_ctx);
+    }
+  }
+  else {
     /* otherwise ignore the event */
   }
-
-  //trace_printf("scanTimeoutEvt in state=%02x", p_ctx->state);
 }
 
 static void mac_tmrRxPendingCb(void *p_arg) {
   struct s_smartMAC *p_ctx = (struct s_smartMAC *)p_arg;
+  e_nsErr_t err = NETSTK_ERR_NONE;
+  uint8_t isPendingRxFrame = FALSE;
 
   /* is smartMAC in RXPENDING state? */
   if (p_ctx->state == E_SMARTMAC_STATE_RX_PENDING) {
-    /* then accept rxPendingTimeout event */
-    mac_rxPending_exit(p_ctx);
-    mac_off_entry(p_ctx);
-  } else {
+    /* check if any frame is being received. If yes, restart the timer */
+    p_ctx->p_netstk->phy->ioctrl(NETSTK_CMD_RF_IS_RX_BUSY, &isPendingRxFrame, &err);
+    if (isPendingRxFrame == TRUE) {
+      rt_tmr_start(&p_ctx->tmr1RxPending);
+    }
+    else {
+      mac_rxPending_exit(p_ctx);
+      mac_off_entry(p_ctx);
+    }
+  }
+  else {
     /* otherwise ignore the event */
   }
 }
