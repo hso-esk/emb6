@@ -414,7 +414,7 @@ static void smartMAC_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
     if (frame.type != SMARTMAC_FRAME_STROBE) {
       *p_err = NETSTK_ERR_NONE;
       p_ctx->p_netstk->dllc->recv(p_data, len, p_err);
-      mac_scan_exit(p_ctx);
+      mac_rxPending_exit(p_ctx);
       mac_off_entry(p_ctx);
     }
   }
@@ -678,7 +678,7 @@ static void mac_rxPending_entry(struct s_smartMAC *p_ctx) {
 }
 
 static void mac_rxPending_exit(struct s_smartMAC *p_ctx) {
-
+  rt_tmr_stop(&p_ctx->tmr1RxPending);
 }
 
 static void mac_rxDelay_entry(struct s_smartMAC *p_ctx) {
