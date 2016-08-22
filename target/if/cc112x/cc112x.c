@@ -1236,6 +1236,9 @@ static void rf_pktRxTxEndISR(void *p_arg) {
  * @param p_ctx point to variable holding radio context structure
  */
 static void rf_sleep_entry(struct s_rf_ctx *p_ctx) {
+  /* force radio to enter IDLE state */
+  rf_gotoIdle(p_ctx);
+
   /* finally put the radio to POWERDOWN state */
   p_ctx->state = RF_STATE_SLEEP;
   cc112x_spiCmdStrobe(CC112X_SPWD);
