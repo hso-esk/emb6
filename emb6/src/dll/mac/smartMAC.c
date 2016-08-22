@@ -266,11 +266,26 @@ static void smartMAC_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
   return;
 #endif
 
-  /* is MAC not in OFF state? */
-  if (p_ctx->state != E_SMARTMAC_STATE_OFF) {
-    /* then refuse transmission request */
+  /* is MAC performing channel scan? */
+  if (p_ctx->state == E_SMARTMAC_STATE_SCAN) {
+    /* then terminate the channel scan and start TX process */
+    mac_scan_exit(p_ctx);
+  }
+  else if (p_ctx->state == E_SMARTMAC_STATE_OFF) {
+    /* state transition: OFF -> ON */
+    mac_off_exit(p_ctx);
+    mac_on_entry(p_ctx);
+  }
+  else {
+    /* MAC is busy performing other tasks which cannot be overtaken */
     *p_err = NETSTK_ERR_BUSY;
     TRACE_LOG_ERR("smartMAC busy, %02x", p_ctx->state);
+
+    /* was transmission callback function set? */
+    if (p_ctx->cbTxFnct) {
+      /* then signal the upper layer of the result of transmission process */
+      p_ctx->cbTxFnct(p_ctx->p_cbTxArg, p_err);
+    }
     return;
   }
 
