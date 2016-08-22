@@ -331,6 +331,17 @@ static void smartMAC_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
   } else {
     mac_txUnicast(p_ctx, p_data, len, p_err);
   }
+
+  /* was transmission callback function set? */
+  trace_printf("<MACTX> seq=%02x, err=-%d", p_data[2], *p_err);
+  if (p_ctx->cbTxFnct) {
+    /* then signal the upper layer of the result of transmission process */
+    p_ctx->cbTxFnct(p_ctx->p_cbTxArg, p_err);
+  }
+
+  /* state transition: ON -> OFF */
+  mac_on_exit(p_ctx);
+  mac_off_entry(p_ctx);
 }
 
 
@@ -475,8 +486,6 @@ static void mac_txBroadcast(struct s_smartMAC *p_ctx, uint8_t *p_data, uint16_t 
   packetbuf_attr_t dstShortAddr;
 
   /* transition to TXBROADCAST state from OFF state*/
-  mac_off_exit(p_ctx);
-  mac_on_entry(p_ctx);
   mac_txBroadcast_entry(p_ctx);
 
   /* transmit broadcast strobes */
@@ -525,8 +534,6 @@ static void mac_txBroadcast(struct s_smartMAC *p_ctx, uint8_t *p_data, uint16_t 
 
   /* transition to OFF state */
   mac_txBroadcast_exit(p_ctx);
-  mac_on_exit(p_ctx);
-  mac_off_entry(p_ctx);
 }
 
 static void mac_txUnicast(struct s_smartMAC *p_ctx, uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
@@ -537,9 +544,7 @@ static void mac_txUnicast(struct s_smartMAC *p_ctx, uint8_t *p_data, uint16_t le
   linkaddr_t dstAddr;
   packetbuf_attr_t dstShortAddr;
 
-  /* transition to TXBROADCAST state from OFF state*/
-  mac_off_exit(p_ctx);
-  mac_on_entry(p_ctx);
+  /* transition to TXUNICAST state from OFF state*/
   mac_txUnicast_entry(p_ctx);
 
   /* transmit broadcast strobes */
@@ -615,8 +620,6 @@ static void mac_txUnicast(struct s_smartMAC *p_ctx, uint8_t *p_data, uint16_t le
 
   /* transition to OFF state */
   mac_txUnicast_exit(p_ctx);
-  mac_on_exit(p_ctx);
-  mac_off_entry(p_ctx);
 }
 
 
