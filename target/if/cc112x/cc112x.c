@@ -213,7 +213,7 @@
 /*!< check if RF is in one of reception states */
 #define RF_IS_RX_BUSY() \
     ((rf_ctx.state >= RF_STATE_RX_SYNC)   &&  \
-     (rf_ctx.state <= RF_STATE_RX_FINI))
+     (rf_ctx.state <= RF_STATE_RX_TXACK_FINI))
 
 /*!< Radio interrupt configuration macros */
 #define RF_INT_PKT_BEGIN                E_TARGET_EXT_INT_0  //GPIO0
@@ -790,8 +790,11 @@ static void rf_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err) {
       break;
 
     case NETSTK_CMD_RF_IS_RX_BUSY:
-      if (RF_IS_RX_BUSY() == TRUE) {
-        *p_err = NETSTK_ERR_BUSY;
+      if (p_val == NULL) {
+        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+      }
+      else {
+        *((uint8_t *) p_val) = RF_IS_RX_BUSY() || p_ctx->rxBytesCounter;
       }
       break;
 
@@ -1405,6 +1408,9 @@ static void rf_rx_fini(struct s_rf_ctx *p_ctx) {
     TRACE_LOG_ERR("+++ RF: RX_FINI discarded e=-%d", err);
     trace_printHex("", p_ctx->rxBuf, p_ctx->rxBytesCounter);
   }
+
+  // flush local RX buffer
+  p_ctx->rxBytesCounter = 0;
 }
 
 
