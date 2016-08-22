@@ -72,6 +72,8 @@ typedef enum{
 
 struct s_smartMAC {
   s_ns_t           *p_netstk;
+  void             *p_cbTxArg;
+  nsTxCbFnct_t      cbTxFnct;
   uint32_t          rxDelay;
   e_smartMACState   state;
 
@@ -398,7 +400,32 @@ static void smartMAC_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
 
 
 static void smartMAC_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err) {
+#if NETSTK_CFG_ARG_CHK_EN
+  if (p_err == NULL) {
+    return;
+  }
+#endif
 
+  struct s_smartMAC *p_ctx = &smartMAC;
+
+  *p_err = NETSTK_ERR_NONE;
+  switch (cmd) {
+    case NETSTK_CMD_TX_CBFNCT_SET:
+      if (p_val == NULL) {
+        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+      } else {
+        p_ctx->cbTxFnct = (nsTxCbFnct_t) p_val;
+      }
+      break;
+
+    case NETSTK_CMD_TX_CBARG_SET:
+      p_ctx->p_cbTxArg = p_val;
+      break;
+
+    default:
+      p_ctx->p_netstk->phy->ioctrl(cmd, p_val, p_err);
+      break;
+  }
 }
 
 static void mac_txStrobe(struct s_smartMAC *p_ctx, uint8_t counter, uint16_t dstShortAddr, e_nsErr_t *p_err) {
