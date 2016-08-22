@@ -421,6 +421,8 @@ static void smartMAC_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
   else {
     /* unexpected event */
     TRACE_LOG_ERR("unexpected event in state=%02x", p_ctx->state);
+    /* force MAC to OFF state */
+    mac_off_entry(p_ctx);
   }
 }
 
