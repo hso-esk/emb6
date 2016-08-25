@@ -350,7 +350,7 @@ static void smartMAC_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
   frame_smartmac_st frame;
 
   /* set return error code to default value */
-  *p_err = NETSTK_ERR_FATAL;
+  *p_err = NETSTK_ERR_NONE;;
 
   /* parse the received frame */
   frame_smartmac_parse(p_data, len, &frame);
@@ -374,7 +374,6 @@ static void smartMAC_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
           mac_on_exit(p_ctx);
           mac_off_entry(p_ctx);
           mac_rxDelay_entry(p_ctx);
-          *p_err = NETSTK_ERR_NONE;
         }
         else {
           /* is this last strobe? */
@@ -382,13 +381,11 @@ static void smartMAC_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
             /* then simply stay in ON state, waiting for pending frame
              * TODO missing timeout for pending frame reception */
             mac_scan_exit(p_ctx);
-            *p_err = NETSTK_ERR_NONE;
           } else {
             /* the actual data frame is coming soon, then simply transition to
              * SCAN state. As such all incoming frame is treated in same manner */
             mac_scan_exit(p_ctx);
             mac_scan_entry(p_ctx);
-            *p_err = NETSTK_ERR_NONE;
           }
         }
       }
@@ -397,13 +394,11 @@ static void smartMAC_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
          * shall stay on for a certain amount of time to receive the frame */
         mac_scan_exit(p_ctx);
         mac_rxPending_entry(p_ctx);
-        *p_err = NETSTK_ERR_NONE;
       }
     }
     else {
       /* otherwise the received frame is not a strobe, then simply forwards to
        * upper layer before going back to OFF state */
-      *p_err = NETSTK_ERR_NONE;
       p_ctx->p_netstk->dllc->recv(p_data, len, p_err);
       mac_scan_exit(p_ctx);
       mac_off_entry(p_ctx);
@@ -412,7 +407,6 @@ static void smartMAC_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
   else if (p_ctx->state == E_SMARTMAC_STATE_RX_PENDING) {
     /* only non-strobe frames are accepted in RX_PENDING state */
     if (frame.type != SMARTMAC_FRAME_STROBE) {
-      *p_err = NETSTK_ERR_NONE;
       p_ctx->p_netstk->dllc->recv(p_data, len, p_err);
       mac_rxPending_exit(p_ctx);
       mac_off_entry(p_ctx);
