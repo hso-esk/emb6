@@ -295,16 +295,19 @@ void rt_tmr_update(void)
     p_tmr->state = E_RT_TMR_STATE_TRIGGERED;
     rt_tmr_unlink(p_tmr);
 
-    if (p_tmr->cbFnct != (pf_cb_void_t )0) {
-      p_tmr->cbFnct(p_tmr->cbArg);
-    }
-
+    // expired timer shall be linked/unlinked to the timer list before its registered callback
+    // function is invoked. As such, user can easily reconfigure the timer inside the callback
+    // function
     if (p_tmr->type == E_RT_TMR_TYPE_PERIODIC) {
       p_tmr->counter = TmrCurTick + p_tmr->period;
       rt_tmr_link(p_tmr);
       p_tmr->state = E_RT_TMR_STATE_RUNNING;
     } else {
       p_tmr->state = E_RT_TMR_STATE_STOPPED;
+    }
+
+    if (p_tmr->cbFnct != (pf_cb_void_t )0) {
+      p_tmr->cbFnct(p_tmr->cbArg);
     }
   }
 }
