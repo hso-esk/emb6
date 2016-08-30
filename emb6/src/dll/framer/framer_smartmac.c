@@ -24,7 +24,7 @@ uint16_t frame_smartmac_create(frame_smartmac_st *p_frame, uint8_t *p_buf)
   *p++ = ((p_frame->type & 7)) |
          ((p_frame->ack_required & 1) << 5);
 
-  *p++ = 0b00100110; /* frame version 2006, short address modes for both destination and source */
+  *p++ = 0b10011000; /* frame version 2006, short address modes for both destination and source */
 
   /* write sequence number */
   *p++ = p_frame->counter;
