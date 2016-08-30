@@ -168,8 +168,7 @@ uint8_t llframe_addrFilter(llframe_attr_t *p_frame, uint8_t *p_buf, uint16_t len
         }
         else {
           /* then frame is discarded */
-          TRACE_LOG_ERR("+++ LLFRAMER: invalid destShortAddr %02x%02x",
-              destAddr[7], destAddr[6]);
+          TRACE_LOG_MAIN("<LLFRAMER> invalid destShortAddr %02x%02x", destAddr[7], destAddr[6]);
           return FALSE;
         }
       }
