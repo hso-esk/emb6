@@ -1087,7 +1087,7 @@ static void rf_rxFifoThresholdISR(void *p_arg) {
         /* is address not yet checked and number of received bytes sufficient for
         * address filtering? */
         if ((p_ctx->rxIsAddrFiltered == FALSE) &&
-            (p_ctx->rxLastDataPtr > (LLFRAME_MIN_NUM_RX_BYTES + p_ctx->rxFrame.min_addr_len))) {
+            (p_ctx->rxLastDataPtr >= (LLFRAME_MIN_NUM_RX_BYTES + p_ctx->rxFrame.min_addr_len))) {
           /* then perform address filtering */
           p_ctx->rxIsAddrFiltered = llframe_addrFilter(&p_ctx->rxFrame, p_ctx->rxBuf, p_ctx->rxLastDataPtr);
 
