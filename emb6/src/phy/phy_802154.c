@@ -264,9 +264,6 @@ static void phy_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 
   /* Issue next lower layer to transmit the prepared frame */
   pphy_netstk->rf->send(p_pkt, pkt_len, p_err);
-  if (*p_err != NETSTK_ERR_NONE) {
-    TRACE_LOG_ERR("<PHYTX> err=-%d, seq=%02x", *p_err, p_data[2]);
-  }
 }
 
 /**
