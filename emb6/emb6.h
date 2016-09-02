@@ -541,6 +541,11 @@ typedef struct mac_phy_configuration
     e_nsRfOpMode op_mode;
     /** Preamble length in octets */
     uint8_t preamble_len;
+
+#if (NETSTK_CFG_LOW_POWER_MODE_EN == TRUE)
+    /** sleep period in Low-Power mode */
+    uint32_t sleepTimeout;
+#endif
 }s_mac_phy_conf_t;
 
 /*! MAC configuration struct, do not change */

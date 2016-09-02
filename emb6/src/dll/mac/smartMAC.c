@@ -78,6 +78,7 @@ struct s_smartMAC {
   e_smartMACState   state;
 
   // smartMAC timing parameters in milliseconds that are relied on underlying layer
+  uint32_t          sleepTimeout;
   uint8_t           strobeTxInterval;
   uint8_t           scanTimeout;
   uint8_t           rxDelayMin;
@@ -224,12 +225,14 @@ static void smartMAC_init (void *p_netstk, e_nsErr_t *p_err) {
 
   p_ctx->strobeTxInterval = (phySHRDuration + (8 * strobeLen) * phySymbolPeriod + macAckWaitDuration) / 1000 + 1; //ms
   p_ctx->scanTimeout = 2 * p_ctx->strobeTxInterval;
+  /* set SmartMAC attributes */
+  p_ctx->sleepTimeout = mac_phy_config.sleepTimeout;
   p_ctx->rxDelayMin = 2 * p_ctx->strobeTxInterval;
-  p_ctx->maxBroadcastCounter = SMARTMAC_CFG_POWERUP_TIMEOUT / p_ctx->strobeTxInterval;
+  p_ctx->maxBroadcastCounter = p_ctx->sleepTimeout / p_ctx->strobeTxInterval + 1;
   p_ctx->maxUnicastCounter = 2 * p_ctx->maxBroadcastCounter;
 
   /* initialize local attributes */
-  rt_tmr_create(&p_ctx->tmrPowerUp, E_RT_TMR_TYPE_PERIODIC, SMARTMAC_CFG_POWERUP_TIMEOUT, mac_tmrSleepCb, p_ctx);
+  rt_tmr_create(&p_ctx->tmrPowerUp, E_RT_TMR_TYPE_PERIODIC, p_ctx->sleepTimeout, mac_tmrSleepCb, p_ctx);
   rt_tmr_create(&p_ctx->tmr1Scan, E_RT_TMR_TYPE_ONE_SHOT, p_ctx->scanTimeout, mac_tmrScanCb, p_ctx);
   rt_tmr_create(&p_ctx->tmr1RxPending, E_RT_TMR_TYPE_ONE_SHOT, p_ctx->rxTimeout, mac_tmrRxPendingCb, p_ctx);
 

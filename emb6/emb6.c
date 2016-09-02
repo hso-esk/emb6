@@ -142,6 +142,11 @@ s_mac_phy_conf_t mac_phy_config = {
 #else
     .preamble_len     = 4,
 #endif
+
+#if (NETSTK_CFG_LOW_POWER_MODE_EN == TRUE)
+    /** sleep period in ticks in Low-Power mode */
+    .sleepTimeout     = 200,
+#endif
 };
 
 
