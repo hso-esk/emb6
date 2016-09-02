@@ -224,7 +224,9 @@ static void smartMAC_init (void *p_netstk, e_nsErr_t *p_err) {
   uint8_t strobeLen = 12; /* PHR(1) + FCF(2) + SEQ(1) + PANID(2) + DST.ADDR(2) + SRC.ADDR(2) + CHKSUM(2) */
 
   /* set SmartMAC attributes */
+#if (NETSTK_CFG_LOW_POWER_MODE_EN == TRUE)
   p_ctx->sleepTimeout = mac_phy_config.sleepTimeout;
+#endif
   p_ctx->strobeTxInterval = (phySHRDuration + (8 * strobeLen) * phySymbolPeriod + macAckWaitDuration) / 1000 + 1; //1ms offset
   p_ctx->scanTimeout = p_ctx->strobeTxInterval + 5; //>=16ms = 4 sniffs
   p_ctx->rxTimeout = 4 * p_ctx->strobeTxInterval;
