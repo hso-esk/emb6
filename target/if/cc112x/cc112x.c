@@ -386,7 +386,8 @@ static void rf_rx_exit(struct s_rf_ctx *p_ctx);
 static void rf_tx_entry(struct s_rf_ctx *p_ctx);
 static void rf_tx_sync(struct s_rf_ctx *p_ctx);
 static void rf_tx_fini(struct s_rf_ctx *p_ctx);
-static void rf_tx_rxAck(struct s_rf_ctx *p_ctx);
+static void rf_tx_rxAckSync(struct s_rf_ctx *p_ctx);
+static void rf_tx_rxAckFini(struct s_rf_ctx *p_ctx);
 static void rf_tx_term(struct s_rf_ctx *p_ctx);
 static void rf_tx_exit(struct s_rf_ctx *p_ctx);
 
@@ -962,7 +963,7 @@ static void rf_pktRxTxBeginISR(void *p_arg) {
         case RF_STATE_TX_FINI:
           if ((marc_status == RF_MARC_STATUS_NO_FAILURE) && (p_ctx->txReqAck == TRUE)) {
             /* the incoming frame can be the ACK */
-            p_ctx->state = RF_STATE_TX_RXACK_SYNC;
+            rf_tx_rxAckSync(p_ctx);
           } else {
             TRACE_LOG_ERR("<B> exception ds=%02x, ms=%02x, cs=%02x", p_ctx->state, marc_status, chip_state);
             rf_exceptionHandler(p_ctx, marc_status, chip_state);
@@ -1204,7 +1205,7 @@ static void rf_pktRxTxEndISR(void *p_arg) {
         case RF_STATE_TX_RXACK_SYNC:
           if (marc_status == RF_MARC_STATUS_RX_FINI) {
             /* verify acknowledgment */
-            rf_tx_rxAck(p_ctx);
+            rf_tx_rxAckFini(p_ctx);
           } else {
             TRACE_LOG_ERR("<E> exception ds=%02x, ms=%02x, cs=%02x", p_ctx->state, marc_status, chip_state);
             rf_exceptionHandler(p_ctx, marc_status, chip_state);
@@ -1524,10 +1525,19 @@ static void rf_tx_fini(struct s_rf_ctx *p_ctx) {
 
 #if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
 /**
+ * @brief handle event of ACK SYNC reception in TX state
+ * @param p_ctx point to variable holding radio context structure
+ */
+static void rf_tx_rxAckSync(struct s_rf_ctx *p_ctx) {
+  p_ctx->state = RF_STATE_TX_RXACK_SYNC;
+
+}
+
+/**
  * @brief handle event of ACK reception in TX state
  * @param p_ctx point to variable holding radio context structure
  */
-static void rf_tx_rxAck(struct s_rf_ctx *p_ctx) {
+static void rf_tx_rxAckFini(struct s_rf_ctx *p_ctx) {
   uint8_t isChecksumOK;
   uint8_t numChksumBytes;
   packetbuf_attr_t expSeqNo;
