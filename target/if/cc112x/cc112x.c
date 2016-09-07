@@ -2255,6 +2255,10 @@ static void rf_chanNumSet(uint8_t chan_num, e_nsErr_t *p_err) {
    * configure frequency registers only when arguments are valid
    */
   if (*p_err == NETSTK_ERR_NONE) {
+    /* put radio to IDLE state before setting frequency */
+    rf_gotoIdle(p_ctx);
+
+    /* set operation frequency */
     freq_reg = freq_center + rf_ctx.cfgFreqChanNum * freq_delta;
 
     write_byte = (freq_reg & 0x00FF0000) >> 16;
