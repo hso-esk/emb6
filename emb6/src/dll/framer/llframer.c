@@ -79,17 +79,27 @@ uint8_t llframe_createAck(llframe_attr_t *p_frame, uint8_t *p_buf, uint16_t len)
   uint8_t *p = p_buf;
   uint8_t *p_mhr = &p_buf[PHY_HEADER_LEN];
   uint8_t ack_len;
-  uint16_t ack_crc;
+  uint32_t ack_crc;
 
   /* PHR */
 #if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
-  if (packetbuf_attr(PACKETBUF_ATTR_MAC_FCS_LEN) == 2) {
+  if (p_frame->crc_len == 2) {
     /* 16-bit CRC */
     *p++ = 0x10;
   }
+  else {
+    *p++ = 0x00;
+  }
 #endif
+
+
   /* PHR */
-  *p++ = 0x05;
+  if (p_frame->crc_len == 2) {
+    *p++ = 0x05;
+  }
+  else {
+    *p++ = 0x07;
+  }
 
   /* MHR
   * TODO missing implementation Strobe ACK
@@ -99,9 +109,20 @@ uint8_t llframe_createAck(llframe_attr_t *p_frame, uint8_t *p_buf, uint16_t len)
   *p++ = p_frame->seq_no;
 
   /* MFR */
-  ack_crc = crc_16_calc(p_mhr, 3);
-  *p++ = (ack_crc & 0xFF00u) >> 8;
-  *p++ = (ack_crc & 0x00FFu);
+  if (p_frame->crc_len == 2) {
+    /* 16-bit CRC */
+    ack_crc = crc_16_calc(p_mhr, 3);
+    *p++ = (ack_crc & 0xFF00u) >> 8;
+    *p++ = (ack_crc & 0x00FFu);
+  }
+  else {
+    /* 32-bit CRC */
+    ack_crc = crc_32_calc(p_mhr, 3);
+    *p++ = (ack_crc & 0xFF000000u) >> 24;
+    *p++ = (ack_crc & 0x00FF0000u) >> 16;
+    *p++ = (ack_crc & 0x0000FF00u) >> 8;
+    *p++ = (ack_crc & 0x000000FFu);
+  }
 
   /* compute length of ACK */
   ack_len = p - p_buf;
