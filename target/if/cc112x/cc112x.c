@@ -1042,7 +1042,7 @@ static void rf_rxFifoThresholdISR(void *p_arg) {
       p_ctx->rxReqAck = p_ctx->rxFrame.is_ack_required;
       if (p_ctx->rxReqAck == TRUE) {
         /* write the ACK to send into TX FIFO */
-        uint8_t ack[10] = {};
+        uint8_t ack[10] = {0};
         uint8_t ack_len;
         ack_len = llframe_createAck(&p_ctx->rxFrame, ack, sizeof(ack));
         cc112x_spiTxFifoWrite(ack, ack_len);
