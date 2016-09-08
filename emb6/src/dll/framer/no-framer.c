@@ -98,12 +98,15 @@ create(void)
 static int8_t
 parse(void)
 {
-  frame802154_t frame;
   int len;
+  frame802154_t frame;
+  packetbuf_attr_t dev_pan_id;
+
+  dev_pan_id = packetbuf_attr(PACKETBUF_ATTR_MAC_PAN_ID);
   len = packetbuf_datalen();
   if(frame802154_parse(packetbuf_dataptr(), len, &frame)) {
     if(frame.fcf.dest_addr_mode) {
-      if(frame.dest_pid != mac_phy_config.pan_id &&
+      if(frame.dest_pid != dev_pan_id &&
          frame.dest_pid != FRAME802154_BROADCASTPANDID) {
         /* Packet to another PAN */
         PRINTF("15.4: for another pan %u\n", frame.dest_pid);

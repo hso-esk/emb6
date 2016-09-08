@@ -125,6 +125,7 @@ void rt_tmr_stop(s_rt_tmr_t *p_tmr);
 void rt_tmr_start(s_rt_tmr_t *p_tmr);
 void rt_tmr_delay(rt_tmr_tick_t delay);
 void rt_tmr_update(void);
+rt_tmr_tick_t rt_tmr_getCurrenTick(void);
 rt_tmr_tick_t rt_tmr_getRemain(s_rt_tmr_t *p_tmr);
 e_rt_tmr_state_t rt_tmr_getState(s_rt_tmr_t *p_tmr);
 

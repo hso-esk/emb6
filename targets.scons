@@ -339,6 +339,12 @@ trg += [{
 }]
 
 trg += [{
+    'id'        : 'cs_mstk',
+    'apps_conf' : [ coap_srv, udp_alive ],
+    'bsp'       : get_descr(bsp, 'mosesstick')
+}]
+
+trg += [{
     'id'        : 'uc_moses',
     'apps_conf' : [ udp_cli ],
     'bsp'       : get_descr(bsp, 'moses')
@@ -364,6 +370,12 @@ trg += [{
 }]
 
 trg += [{
+    'id'        : 'us_mosesstick',
+    'apps_conf' : [ udp_srv ],
+    'bsp'       : get_descr(bsp, 'mosesstick')
+}]
+
+trg += [{
     'id'        : 'mq_stk112x',
     'apps_conf' : [ mqtt, udp_alive ],
     'bsp'       : get_descr(bsp, 'efm32stk3600_cc112x')
@@ -375,11 +387,22 @@ trg += [{
     'bsp'       : get_descr(bsp, 'efm32stk3600_cc120x')
 }]
 
-
 trg += [{
     'id'        : 'mq_moses',
     'apps_conf' : [ mqtt, udp_alive ],
     'bsp'       : get_descr(bsp, 'moses')
+}]
+
+trg += [{
+    'id'        : 'mq_mosesstick',
+    'apps_conf' : [ mqtt, udp_alive ],
+    'bsp'       : get_descr(bsp, 'mosesstick')
+}]
+
+trg += [{
+    'id'        : 'mq_mosesstk',
+    'apps_conf' : [ mqtt, udp_alive ],
+    'bsp'       : get_descr(bsp, 'mosesstick')
 }]
 
 

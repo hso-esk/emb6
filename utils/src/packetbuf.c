@@ -53,6 +53,7 @@
 
 struct packetbuf_attr packetbuf_attrs[PACKETBUF_NUM_ATTRS];
 struct packetbuf_addr packetbuf_addrs[PACKETBUF_NUM_ADDRS];
+struct packetbuf_attr packetbuf_ext_attrs[PACKETBUF_NUM_EXT_ATTRS];
 
 static uint16_t buflen, bufptr;
 static uint8_t hdrptr, ftrptr;
@@ -325,15 +326,30 @@ packetbuf_attr_copyfrom(struct packetbuf_attr *attrs,
 int
 packetbuf_set_attr(uint8_t type, const packetbuf_attr_t val)
 {
-/*   packetbuf_attrs[type].type = type; */
-  packetbuf_attrs[type].val = val;
+  if (type >= PACKETBUF_EXT_ATTR_MAX) {
+    return 0;
+  }
+  else if (type >= PACKETBUF_ATTR_MAX) {
+    packetbuf_ext_attrs[type - PACKETBUF_ATTR_MAX].val = val;
+  }
+  else {
+    packetbuf_attrs[type].val = val;
+  }
   return 1;
 }
 /*---------------------------------------------------------------------------*/
 packetbuf_attr_t
 packetbuf_attr(uint8_t type)
 {
-  return packetbuf_attrs[type].val;
+  if (type >= PACKETBUF_EXT_ATTR_MAX) {
+    return 0;
+  }
+  else if (type >= PACKETBUF_ATTR_MAX) {
+    return packetbuf_ext_attrs[type - PACKETBUF_ATTR_MAX].val;
+  }
+  else {
+    return packetbuf_attrs[type].val;
+  }
 }
 /*---------------------------------------------------------------------------*/
 int

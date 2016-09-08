@@ -399,6 +399,10 @@ enum {
   PACKETBUF_ATTR_MAX
 };
 
+/* Packetbuf extended attributes. The header must be positioned following the
+ * packetbuf attribute enumeration */
+#include "packetbuf_ext.h"
+
 /* Define surrogates when 802.15.4 security is off */
 #if !LLSEC802154_SECURITY_LEVEL
 enum {

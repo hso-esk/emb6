@@ -49,14 +49,19 @@
 /*! \file   emb6_conf.h
 
     \author Peter Lehmann peter.lehmann@hs-offenburg.de
+            Phuong Nguyen minh.nguyen@hs-offenburg.de
 
     \brief  emb6 compile-time parameter configuration
 
-    \version 0.0.1
+    \version 0.0.2
 */
 
 #ifndef EMB6_CONF_H_
 #define EMB6_CONF_H_
+
+#define EMB6_TEST_CFG_CONT_TX_EN                      FALSE
+#define EMB6_TEST_CFG_CONT_RX_EN                      FALSE
+#define EMB6_TEST_CFG_WOR_EN                          FALSE
 
 
 /*=============================================================================
@@ -132,13 +137,6 @@
 #ifndef LLSEC802154_CONF_SECURITY_LEVEL
 #define LLSEC802154_CONF_SECURITY_LEVEL      0
 #endif /* LLSEC802154_CONF_SECURITY_LEVEL */
-
-
-/*=============================================================================
-                                DLL/PHY SECTIONS
-==============================================================================*/
-#define NETSTK_CFG_IEEE_802154_IGNACK           FALSE
-#define NETSTK_CFG_IEEE_802154G_EN              TRUE
 
 
 /*==============================================================================
@@ -920,17 +918,48 @@ void uip_log(char *msg);
 *                          NETSTACK CONFIGURATIONS
 ********************************************************************************
 */
+#ifndef NETSTK_CFG_IEEE_802154G_EN
+#define NETSTK_CFG_IEEE_802154G_EN                          FALSE
+#endif
+
 #if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
+  #ifndef NETSTK_CFG_2K_FRAME_EN
+    #define NETSTK_CFG_2K_FRAME_EN                          FALSE
+  #endif /* NETSTK_CFG_2K_FRAME_EN */
+#endif /* NETSTK_CFG_IEEE_802154G_EN */
+
+#ifndef NETSTK_CFG_MAC_SW_AUTOACK_EN
+#define NETSTK_CFG_MAC_SW_AUTOACK_EN                        FALSE
+#endif
+
+#ifndef NETSTK_CFG_AUTO_ONOFF_EN
+#define NETSTK_CFG_AUTO_ONOFF_EN                            FALSE
+#endif
+
 #define NETSTK_CFG_PHY_OP_MODE_1_EN                         TRUE
 #define NETSTK_CFG_PHY_OP_MODE_2_EN                         FALSE
 #define NETSTK_CFG_PHY_OP_MODE_3_EN                         FALSE
-#endif
-#define NETSTK_CFG_WOR_EN                                   FALSE
 
 /*!< Enable/Disable low power mode */
 #ifndef NETSTK_CFG_LOW_POWER_MODE_EN
 #define NETSTK_CFG_LOW_POWER_MODE_EN                        FALSE
 #endif
+
+
+ /*!< Enable/Disable Data Whitening */
+#ifndef NETSTK_CFG_DATA_WHITENING_EN
+#define NETSTK_CFG_DATA_WHITENING_EN                        FALSE
+#endif
+
+/*!< Enable/Disable eWOR support */
+#ifndef NETSTK_CFG_WOR_EN
+#define NETSTK_CFG_WOR_EN                                   FALSE
+#endif
+
+#define NETSTK_CFG_CSMA_MIN_BE                    (uint8_t )(   3u )
+#define NETSTK_CFG_CSMA_MAX_BE                    (uint8_t )(   5u )
+#define NETSTK_CFG_CSMA_MAX_BACKOFF               (uint8_t )(   4u )
+#define NETSTK_CFG_CSMA_UNIT_BACKOFF_US           (uint32_t)( 400u )  /* @50kbps 2FSK */
 
 
 /*
@@ -997,21 +1026,19 @@ void uip_log(char *msg);
   *              This time addition is usually caused by transition time of RF
   *              driver implementation.
   */
-#define MAC_ULE_PORT_SCAN_DURATION_IN_MS                (uint32_t)(  30u )          /*!< fixed, hardware-specific       */
-#define MAC_ULE_PORT_MIN_DELAY_IN_MS                    (uint32_t)(  50U )          /*!< fixed, hardware-specific, 50   */
+#define MAC_ULE_PORT_SCAN_DURATION_IN_MS                (uint32_t)(  20u )          /*!< fixed, hardware-specific       */
 #define MAC_ULE_PORT_ON_TO_OFF_TIME_IN_MS               (uint32_t)(   8u )          /*!< fixed, hardware-specific, 06   */
-#define MAC_ULE_PORT_OFF_TO_ON_TIME_IN_MS               (uint32_t)(  20u )          /*!< fixed, hardware-specific, 15   */
+#define MAC_ULE_PORT_OFF_TO_ON_TIME_IN_MS               (uint32_t)(  10u )          /*!< fixed, hardware-specific, 15   */
 #define MAC_ULE_PORT_TX_RX_TURNAROUND_IN_MS             (uint32_t)(   1u )          /*!< fixed, hardware-specific, 01   */
-#define MAC_ULE_PORT_STROBE_TX_TIME_IN_MS               (uint32_t)(  10u )          /*!< fixed, hardware-specific, 08   */
-#define MAC_ULE_PORT_STROBE_TX_GAP_TIME_IN_MS           (uint32_t)(  10u )          /*!< fixed, hardware-specific, 09   */
+#define MAC_ULE_PORT_STROBE_TX_TIME_IN_MS               (uint32_t)(   8u )          /*!< fixed, hardware-specific, 08   */
+#define MAC_ULE_PORT_STROBE_TX_GAP_TIME_IN_MS           (uint32_t)(   8u )          /*!< fixed, hardware-specific, 09   */
 #define MAC_ULE_PORT_RX_PAYLOAD_OFFSET_IN_MS            (uint32_t)(   2u )          /*!< variable, needed for better performance 2   */
-#define MAC_ULE_PORT_WFA_TIMEOUT_IN_MS                  (MAC_ULE_PORT_STROBE_TX_GAP_TIME_IN_MS)
 
-#define MAC_ULE_PORT_WFP_TIMEOUT_IN_MS                  (MAC_ULE_PORT_STROBE_TX_GAP_TIME_IN_MS +   \
-                                                         MAC_ULE_PORT_TX_RX_TURNAROUND_IN_MS   +   \
-                                                         MAC_ULE_PORT_RX_PAYLOAD_OFFSET_IN_MS  + 10)
+#define MAC_ULE_PORT_WFA_TIMEOUT_IN_MS                  15
+#define MAC_ULE_PORT_WFD_TIMEOUT_IN_MS                  15
 
-#define MAC_ULE_PORT_STROBE_TX_INTERVAL_IN_MS           (uint32_t)( 20U )
+
+#define MAC_ULE_PORT_STROBE_TX_INTERVAL_IN_MS           (uint32_t)(  16U )
 
 #define MAC_ULE_CFG_STROBE_TX_MAX                       (uint8_t )(MAC_ULE_CFG_STROBE_TX_INTERVAL_IN_MS     /   \
                                                                    MAC_ULE_PORT_STROBE_TX_INTERVAL_IN_MS)

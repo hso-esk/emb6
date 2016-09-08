@@ -57,6 +57,11 @@
 #define CRC32_INIT      (uint32_t)( 0xffffffffu )
 
 uint16_t crc_16_update(uint16_t curr_crc, uint8_t byte);
+uint16_t crc_16_updateN(uint16_t curr_crc, uint8_t *p_data, uint16_t len);
+uint16_t crc_16_calc(uint8_t *p_data, uint16_t len);
+
 uint32_t crc_32_update(uint32_t curr_crc, uint8_t byte);
+uint32_t crc_32_updateN(uint32_t curr_crc, uint8_t *p_data, uint16_t len);
+uint32_t crc_32_calc(uint8_t *p_data, uint16_t len);
 
 #endif /* CRC_PRESENT */

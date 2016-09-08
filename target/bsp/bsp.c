@@ -429,6 +429,7 @@ uint8_t bsp_spiSlaveSel(void *p_spi, bool enable)
   if (enable == TRUE) {
     if (bsp_spiLocked == FALSE) {
       /* lock SPI handle */
+      bsp_enterCritical();
       bsp_spiLocked = TRUE;
 
       /* enable SPI */
@@ -439,11 +440,12 @@ uint8_t bsp_spiSlaveSel(void *p_spi, bool enable)
     }
   } else {
     if (bsp_spiLocked == TRUE) {
-      /* disable SPI */
-      ret = hal_spiSlaveSel(p_spi, FALSE);
-
       /* unlock SPI handle */
       bsp_spiLocked = FALSE;
+
+      /* disable SPI */
+      ret = hal_spiSlaveSel(p_spi, FALSE);
+      bsp_exitCritical();
     } else {
       /* SPI is already unlocked and disabled */
     }

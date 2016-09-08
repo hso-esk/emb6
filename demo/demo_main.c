@@ -400,9 +400,9 @@ int main(int argc, char **argv)
   }
 
   /* Show that stack has been launched */
-  bsp_led(E_BSP_LED_2, E_BSP_LED_ON);
+  bsp_led(E_BSP_LED_0, E_BSP_LED_ON);
   bsp_delay_us(2000000);
-  bsp_led(E_BSP_LED_2, E_BSP_LED_OFF);
+  bsp_led(E_BSP_LED_0, E_BSP_LED_OFF);
 
   /* Initialize applications */
   ret = loc_demoAppsInit();
