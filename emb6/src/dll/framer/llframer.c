@@ -33,13 +33,27 @@ uint16_t llframe_parse(llframe_attr_t *p_frame, uint8_t *p_buf, uint16_t len) {
   }
 
   p_frame->tot_len = PHY_HEADER_LEN + pktLen;
-  p_frame->crc_len = 2;
   p_frame->crc_offset = PHY_HEADER_LEN;
   if ((p_frame->tot_len < LLFRAME_MIN_NUM_RX_BYTES) ||
       (p_frame->tot_len > LLFRAME_MAX_NUM_RX_BYTES)) {
     /* invalid length */
     return 0;
   }
+
+#if NETSTK_CFG_IEEE_802154G_EN
+  uint16_t phr;
+
+  /* achieve PHY header */
+  phr = (p_buf[0] << 8) | (p_buf[1]);
+  if (PHY_PSDU_CRC16(phr)) {
+    p_frame->crc_len = 2;
+  }
+  else {
+    p_frame->crc_len = 4;
+  }
+#else
+  p_frame->crc_len = 2;
+#endif
 
   /* MHR */
   p_mhr = &p_buf[PHY_HEADER_LEN];
@@ -210,7 +224,6 @@ uint8_t llframe_addrFilter(llframe_attr_t *p_frame, uint8_t *p_buf, uint16_t len
   return TRUE;
 }
 
-
 uint32_t llframe_crcInit(llframe_attr_t *p_frame) {
   if (p_frame->crc_len == 2) {
     return CRC16_INIT;
@@ -219,11 +232,11 @@ uint32_t llframe_crcInit(llframe_attr_t *p_frame) {
   }
 }
 
-
 uint32_t llframe_crcUpdate(llframe_attr_t *p_frame, uint8_t *p_data, uint16_t len, uint32_t curCRC) {
   if (p_frame->crc_len == 2) {
     return crc_16_updateN(curCRC, p_data, len);
-  } else {
+  }
+  else {
     return crc_32_updateN(curCRC, p_data, len);
   }
 }
