@@ -207,6 +207,19 @@ uint32_t llframe_crcUpdate(llframe_attr_t *p_frame, uint8_t *p_data, uint16_t le
   }
 }
 
+uint32_t llframe_crcFinal(llframe_attr_t *p_frame, uint32_t curCRC) {
+  if (p_frame->crc_len == 4) {
+    uint16_t len;
+    len = p_frame->tot_len - p_frame->crc_len - PHY_HEADER_LEN;
+    if (len < 4) {
+      curCRC = crc_32_update(curCRC, 0x00);
+    }
+    curCRC ^= CRC32_INIT;
+  }
+
+  return curCRC;
+}
+
 
 uint8_t llframe_crcFilter(llframe_attr_t *p_frame, uint32_t actCRC, uint8_t *p_expCRC, uint16_t len) {
   uint32_t expCRC = 0;

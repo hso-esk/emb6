@@ -1335,6 +1335,7 @@ static void rf_rx_chksum(struct s_rf_ctx *p_ctx) {
     p_ctx->rxChksum = crc_16_updateN(p_ctx->rxChksum, &p_ctx->rxBuf[p_ctx->rxLastChksumPtr], numChksumBytes);
     p_ctx->rxLastChksumPtr += numChksumBytes;
   }
+  p_ctx->rxChksum = llframe_crcFinal(&p_ctx->rxFrame, p_ctx->rxChksum);
 
   isChecksumOK = llframe_crcFilter(&p_ctx->rxFrame,
                                     p_ctx->rxChksum,
@@ -1551,6 +1552,7 @@ static void rf_tx_rxAckFini(struct s_rf_ctx *p_ctx) {
     p_ctx->rxChksum = crc_16_updateN(p_ctx->rxChksum, &p_ctx->rxBuf[p_ctx->rxLastChksumPtr], numChksumBytes);
     p_ctx->rxLastChksumPtr += numChksumBytes;
   }
+  p_ctx->rxChksum = llframe_crcFinal(&p_ctx->rxFrame, p_ctx->rxChksum);
 
   isChecksumOK = llframe_crcFilter(&p_ctx->rxFrame,
                                     p_ctx->rxChksum,

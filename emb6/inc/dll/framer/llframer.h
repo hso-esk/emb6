@@ -31,6 +31,7 @@ uint8_t llframe_createAck(llframe_attr_t *p_frame, uint8_t *p_buf, uint16_t len)
 uint8_t llframe_addrFilter(llframe_attr_t *p_frame, uint8_t *p_buf, uint16_t len);
 uint32_t llframe_crcInit(llframe_attr_t *p_frame);
 uint32_t llframe_crcUpdate(llframe_attr_t *p_frame, uint8_t *p_data, uint16_t len, uint32_t curCRC);
+uint32_t llframe_crcFinal(llframe_attr_t *p_frame, uint32_t curCRC);
 uint8_t llframe_crcFilter(llframe_attr_t *p_frame, uint32_t actCRC, uint8_t *p_expCRC, uint16_t len);
 
 #endif /* LLFRAMER_H_ */
