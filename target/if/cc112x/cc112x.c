@@ -1042,7 +1042,7 @@ static void rf_rxFifoThresholdISR(void *p_arg) {
       p_ctx->rxReqAck = p_ctx->rxFrame.is_ack_required;
       if (p_ctx->rxReqAck == TRUE) {
         /* write the ACK to send into TX FIFO */
-        uint8_t ack[10];
+        uint8_t ack[10] = {};
         uint8_t ack_len;
         ack_len = llframe_createAck(&p_ctx->rxFrame, ack, sizeof(ack));
         cc112x_spiTxFifoWrite(ack, ack_len);
@@ -1070,7 +1070,7 @@ static void rf_rxFifoThresholdISR(void *p_arg) {
       numChksumBytes = p_ctx->rxLastDataPtr - p_ctx->rxLastChksumPtr;
 
       /* update checksum */
-      p_ctx->rxChksum = crc_16_updateN(p_ctx->rxChksum, &p_ctx->rxBuf[p_ctx->rxLastChksumPtr], numChksumBytes);
+      p_ctx->rxChksum = llframe_crcUpdate(&p_ctx->rxFrame, &p_ctx->rxBuf[p_ctx->rxLastChksumPtr], numChksumBytes, p_ctx->rxChksum);
       p_ctx->rxLastChksumPtr += numChksumBytes;
     }
     else {
@@ -1103,7 +1103,7 @@ static void rf_rxFifoThresholdISR(void *p_arg) {
         }
 
         /* update checksum */
-        p_ctx->rxChksum = crc_16_updateN(p_ctx->rxChksum, &p_ctx->rxBuf[p_ctx->rxLastChksumPtr], numChksumBytes);
+        p_ctx->rxChksum = llframe_crcUpdate(&p_ctx->rxFrame, &p_ctx->rxBuf[p_ctx->rxLastChksumPtr], numChksumBytes, p_ctx->rxChksum);
         p_ctx->rxLastChksumPtr += numChksumBytes;
 #endif /* NETSTK_CFG_RF_SW_AUTOACK_EN */
       }
@@ -1332,7 +1332,7 @@ static void rf_rx_chksum(struct s_rf_ctx *p_ctx) {
   /* update checksum */
   if (p_ctx->rxLastDataPtr > (p_ctx->rxFrame.crc_len + p_ctx->rxLastChksumPtr)) {
     numChksumBytes = p_ctx->rxLastDataPtr - (p_ctx->rxLastChksumPtr + p_ctx->rxFrame.crc_len);
-    p_ctx->rxChksum = crc_16_updateN(p_ctx->rxChksum, &p_ctx->rxBuf[p_ctx->rxLastChksumPtr], numChksumBytes);
+    p_ctx->rxChksum = llframe_crcUpdate(&p_ctx->rxFrame, &p_ctx->rxBuf[p_ctx->rxLastChksumPtr], numChksumBytes, p_ctx->rxChksum);
     p_ctx->rxLastChksumPtr += numChksumBytes;
   }
   p_ctx->rxChksum = llframe_crcFinal(&p_ctx->rxFrame, p_ctx->rxChksum);
@@ -1549,7 +1549,7 @@ static void rf_tx_rxAckFini(struct s_rf_ctx *p_ctx) {
   /* update checksum */
   if (p_ctx->rxLastDataPtr > (p_ctx->rxFrame.crc_len + p_ctx->rxLastChksumPtr)) {
     numChksumBytes = p_ctx->rxLastDataPtr - (p_ctx->rxLastChksumPtr + p_ctx->rxFrame.crc_len);
-    p_ctx->rxChksum = crc_16_updateN(p_ctx->rxChksum, &p_ctx->rxBuf[p_ctx->rxLastChksumPtr], numChksumBytes);
+    p_ctx->rxChksum = llframe_crcUpdate(&p_ctx->rxFrame, &p_ctx->rxBuf[p_ctx->rxLastChksumPtr], numChksumBytes, p_ctx->rxChksum);
     p_ctx->rxLastChksumPtr += numChksumBytes;
   }
   p_ctx->rxChksum = llframe_crcFinal(&p_ctx->rxFrame, p_ctx->rxChksum);
