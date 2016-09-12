@@ -2194,6 +2194,7 @@ static void rf_chanNumSet(uint8_t chan_num, e_nsErr_t *p_err) {
   uint32_t freq_center = 0;
   uint32_t freq_delta = 0;
   uint8_t write_byte = 0;
+  e_rfState_t prevState;
   struct s_rf_ctx *p_ctx = &rf_ctx;
 
   /* set returned error value to default */
@@ -2257,8 +2258,14 @@ static void rf_chanNumSet(uint8_t chan_num, e_nsErr_t *p_err) {
    * configure frequency registers only when arguments are valid
    */
   if (*p_err == NETSTK_ERR_NONE) {
-    /* put radio to IDLE state before setting frequency */
-    rf_gotoIdle(p_ctx);
+    /* backup current state */
+    prevState = p_ctx->state;
+    if (prevState == RF_STATE_SLEEP) {
+      rf_sleep_exit(p_ctx);
+    }
+    else {
+      rf_on_exit(p_ctx);
+    }
 
     /* set operation frequency */
     freq_reg = freq_center + rf_ctx.cfgFreqChanNum * freq_delta;
@@ -2272,10 +2279,18 @@ static void rf_chanNumSet(uint8_t chan_num, e_nsErr_t *p_err) {
 
     write_byte = (freq_reg & 0x000000FF);
     cc112x_spiRegWrite(CC112X_FREQ0, &write_byte, 1);
-  }
 
-  /* frequency calibration */
-  rf_manualCalibration();
+    /* frequency calibration */
+    rf_manualCalibration();
+
+    /* restore previous state */
+    if (prevState == RF_STATE_SLEEP) {
+      rf_sleep_entry(p_ctx);
+    }
+    else {
+      rf_on_entry(p_ctx);
+    }
+  }
 }
 
 /**
