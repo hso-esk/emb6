@@ -74,6 +74,10 @@
 #define     __ADDRLEN__                   2
 #define     NODE_INFO_MAX                 2048
 
+#ifndef LCM_NETWORK_CONF
+#define LCM_NETWORK_CONF                  "lcmnetwork.conf"
+#endif /*#ifndef LCM_NETWORK_CONF */
+
 /*==============================================================================
                                      ENUMS
  ==============================================================================*/
@@ -186,11 +190,11 @@ static void _native_init( void *p_netstk, e_nsErr_t *p_err )
     memset( pc_publish_ch, 0, NODE_INFO_MAX );
 
     /* Read configuration file */
-    fp = fopen( "lcmnetwork.conf", "r" );
+    fp = fopen( LCM_NETWORK_CONF, "r" );
 
     if( fp == NULL )
     {
-        _printAndExit( "Can't open this file\n" );
+        _printAndExit( "Can't open LCM network configuration file");
     }
 
     /* assemble the parser command */
