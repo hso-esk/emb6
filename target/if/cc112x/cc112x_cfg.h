@@ -142,6 +142,22 @@ static const s_regSettings_t cc112x_cfg_worSmartRFTesting[] = {
 };
 #endif /* EMB6_TEST_CFG_WOR_EN */
 
+static const s_regSettings_t cc112x_cfg_iocfgOn[] = {
+    {CC112X_IOCFG0,             0x06},  /* PKT_BEGIN, unchanged at runtime */
+    {CC112X_IOCFG2,             0x00},  /* RXFIFO_THR,  changed at runtime */
+    {CC112X_IOCFG3,             0x06},  /* PKT_END,   unchanged at runtime */
+
+    {CC112X_IOCFG2,             0x02},  /* TXFIFO_THR,  changed at runtime */
+    {CC112X_IOCFG2,             0x0B},  /* PQT_REACHED, changed at runtime */
+};
+
+
+static const s_regSettings_t cc112x_cfg_iocfgOff[] = {
+    {CC112X_IOCFG0,             0xB0},  /* Impedance */
+    {CC112X_IOCFG2,             0xB0},  /* Impedance */
+    {CC112X_IOCFG3,             0xB0},  /* Impedance */
+};
+
 /**
  * @brief   Default register settings for IEEE-802.15.4g
  *          Carrier Frequency:  863.125MHz
@@ -159,10 +175,6 @@ static const s_regSettings_t cc112x_cfg_worSmartRFTesting[] = {
 static const s_regSettings_t cc112x_cfg_ieee802154g_default[] =
 {
     {CC112X_IOCFG1,             0xB0},  /* Impedance */
-
-    {CC112X_IOCFG0,             0x06},  /* PKT_BEGIN */
-    {CC112X_IOCFG2,             0x00},  /* RXFIFO_THR */
-    {CC112X_IOCFG3,             0x06},  /* PKT_END */
 
     {CC112X_SYNC3,              0x90},  /* SFD[15-8] FEC not supported and phyMRFSKSFD = 0 -> SFD = 0x904E */
     {CC112X_SYNC2,              0x4E},  /* SFD[ 7-0] ... */
