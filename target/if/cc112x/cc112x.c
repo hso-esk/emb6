@@ -1463,7 +1463,7 @@ static void rf_tx_sync(struct s_rf_ctx *p_ctx) {
    * numBytesInTxFifo = RF_CFG_NUM_TXBYTES
    */
   if ((p_ctx->pktLenMode == CC112X_PKT_LEN_MODE_INFINITE) &&
-      (p_ctx->txNumRemBytes < (RF_MAX_FIFO_LEN + 1 - RF_CFG_NUM_TXBYTES))) {
+      (p_ctx->txDataLen < (RF_MAX_FIFO_LEN + 1))) {
     rf_setPktLen(CC112X_PKT_LEN_MODE_FIXED, p_ctx->txDataLen);
   }
 #endif /* NETSTK_CFG_IEEE_802154G_EN */
