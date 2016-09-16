@@ -926,6 +926,11 @@ void uip_log(char *msg);
   #ifndef NETSTK_CFG_2K_FRAME_EN
     #define NETSTK_CFG_2K_FRAME_EN                          FALSE
   #endif /* NETSTK_CFG_2K_FRAME_EN */
+
+  /*!< Enable/Disable MR-FSK PHY, see IEEE Std. 802.15.4g-2012 */
+  #ifndef NETSTK_CFG_MR_FSK_PHY_EN
+    #define NETSTK_CFG_MR_FSK_PHY_EN                        TRUE
+  #endif /* NETSTK_CFG_MR_FSK_PHY_EN */
 #endif /* NETSTK_CFG_IEEE_802154G_EN */
 
 #ifndef NETSTK_CFG_MAC_SW_AUTOACK_EN

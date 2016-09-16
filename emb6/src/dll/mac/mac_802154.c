@@ -194,9 +194,14 @@ void mac_init(void *p_netstk, e_nsErr_t *p_err)
   macUnitBackoffPeriod = 20 * phySymbolPeriod;
   packetbuf_set_attr(PACKETBUF_ATTR_MAC_UNIT_BACKOFF_PERIOD, macUnitBackoffPeriod);
 
-  /* compute and set macAckWaitDuration attribute */
-  macAckWaitDuration = macUnitBackoffPeriod + phyTurnaroundTime +
-      phySHRDuration + 6 * phySymbolsPerOctet * phySymbolPeriod;
+  /* compute and set macAckWaitDuration attribute, see IEEE Std. 802.15.4(g) */
+  macAckWaitDuration = macUnitBackoffPeriod + phyTurnaroundTime + phySHRDuration;
+#if (NETSTK_CFG_MR_FSK_PHY_EN == TRUE)
+  macAckWaitDuration += 9 * phySymbolsPerOctet * phySymbolPeriod;
+#else
+  macAckWaitDuration += 6 * phySymbolsPerOctet * phySymbolPeriod;
+#endif /* NETSTK_CFG_MR_FSK_PHY_EN */
+
   packetbuf_set_attr(PACKETBUF_ATTR_MAC_ACK_WAIT_DURATION, macAckWaitDuration);
 
   /* set returned error */
