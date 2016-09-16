@@ -62,6 +62,8 @@
 
 #include "emb6.h"
 
+#define NETSTK_CFG_RF_CRC_EN                TRUE
+
 /*============================================================================*/
 /*!
 \brief    emb6 board configuration fuction
