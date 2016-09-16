@@ -152,6 +152,9 @@ static void phy_init(void *p_netstk, e_nsErr_t *p_err)
   pphy_netstk->rf->ioctrl(NETSTK_CMD_RF_WOR_EN, &wor_en, p_err);
 #endif
 
+  /* set transmission power */
+  pphy_netstk->rf->ioctrl(NETSTK_CMD_RF_TXPOWER_SET, &mac_phy_config.init_power, p_err);
+
   /* initialize PHY PIB attributes */
   packetbuf_attr_t symbol_period;
   packetbuf_attr_t symbol_per_octet;
