@@ -17,7 +17,6 @@
 #include "logger.h"
 #include "crc.h"
 #include "rt_tmr.h"
-#include "mac_ule.h"
 #include "phy_framer_802154.h"
 #include "framer_802154.h"
 #include "framer_smartmac.h"
