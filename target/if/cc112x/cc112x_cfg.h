@@ -180,7 +180,7 @@ static const s_regSettings_t cc112x_cfg_ieee802154g_default[] =
     {CC112X_SYNC2,              0x4E},  /* SFD[ 7-0] ... */
     {CC112X_SYNC1,              0x51},  /* don't care */
     {CC112X_SYNC0,              0xDE},  /* don't care */
-    {CC112X_SYNC_CFG1,          0x08},  /* AUTO_CLEAR = 1, enabled; RX_CONFIG_LIMITATION = 0 */
+    {CC112X_SYNC_CFG1,          0x48},  /* AUTO_CLEAR = 1, enabled; RX_CONFIG_LIMITATION = 0 */
     {CC112X_SYNC_CFG0,          0x1B},  /* 16H bits SYCN3-SYNC2 */
 
     {CC112X_DEVIATION_M,        0x99},  /* Deviation 25kHz */
