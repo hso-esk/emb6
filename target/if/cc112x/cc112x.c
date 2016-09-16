@@ -132,16 +132,6 @@
 /*!< Maximum packet length */
 #define RF_MAX_PACKET_LEN                   (uint16_t)(PHY_PSDU_MAX + PHY_HEADER_LEN)
 
-/*!< Chip states */
-#define RF_CHIP_STATE_IDLE                  (uint8_t)( 0x00 )
-#define RF_CHIP_STATE_RX                    (uint8_t)( 0x10 )
-#define RF_CHIP_STATE_TX                    (uint8_t)( 0x20 )
-#define RF_CHIP_STATE_FSTXON                (uint8_t)( 0x30 )
-#define RF_CHIP_STATE_CALIBRATE             (uint8_t)( 0x40 )
-#define RF_CHIP_STATE_SETTLING              (uint8_t)( 0x50 )
-#define RF_CHIP_STATE_RX_FIFO_ERR           (uint8_t)( 0x60 )
-#define RF_CHIP_STATE_TX_FIFO_ERR           (uint8_t)( 0x70 )
-
 /*!< MARC status */
 #define RF_MARC_STATUS_NO_FAILURE           (uint8_t)( 0x00 )
 #define RF_MARC_STATUS_RX_TIMEOUT           (uint8_t)( 0x01 )
@@ -167,16 +157,6 @@
 #define MIN(a_, b_)           (((a_) > (b_)) ? (b_) : (a_))
 #endif
 
-
-#define RF_TRIGGER_EVENT()  \
-  do {  \
-    evproc_putEvent(E_EVPROC_HEAD, NETSTK_RF_EVENT, NULL);  \
-  } while(0)
-
-/*!< retrieve chip state from chip status value */
-#define RF_GET_CHIP_STATE(_chip_status) \
-  (uint8_t)((_chip_status) & 0x70)
-
 #define RF_READ_CHIP_STATE()  \
   (cc112x_spiCmdStrobe(CC112X_SNOP) & 0x70)
 
@@ -185,18 +165,7 @@
   do {  \
     uint8_t len_; \
     len_ = sizeof((regs_)) / sizeof(s_regSettings_t);   \
-    rf_configureRegs((regs_), len_);                \
-  } while(0)
-
-/*!< configure length of incoming packet
-* the PKT_LEN register is set to mod(length, 256).
-* See also CC112x User's guide 8.1.5
-*/
-#define RF_SET_PKT_LEN(len_)  \
-  do {  \
-    uint8_t wr_byte_; \
-    wr_byte_ = (len_) % 256U; \
-    cc112x_spiRegWrite(CC112X_PKT_LEN, &(wr_byte_), 1); \
+    rf_configureRegs((regs_), len_);                    \
   } while(0)
 
 /*!< configure packet length mode of radio */
