@@ -998,6 +998,14 @@ static void rf_rxFifoThresholdISR(void *p_arg) {
         /* set total number of received bytes */
         p_ctx->rxBytesCounter = p_ctx->rxFrame.tot_len;
 
+#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
+        /* switch to fixed packet length mode if total of remaining bytes is less than RF_MAX_FIFO_LEN */
+        if ((p_ctx->pktLenMode == CC112X_PKT_LEN_MODE_INFINITE) &&
+            (p_ctx->rxBytesCounter < (RF_MAX_FIFO_LEN + 1))) {
+          rf_setPktLen(CC112X_PKT_LEN_MODE_FIXED, p_ctx->rxBytesCounter);
+        }
+#endif /* NETSTK_CFG_IEEE_802154G_EN */
+
         /* initialize checksum */
         p_ctx->rxChksum = llframe_crcInit(&p_ctx->rxFrame);
         p_ctx->rxLastChksumPtr = p_ctx->rxFrame.crc_offset;
