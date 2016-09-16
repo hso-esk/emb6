@@ -918,29 +918,37 @@ void uip_log(char *msg);
 *                          NETSTACK CONFIGURATIONS
 ********************************************************************************
 */
+ /*!< Enable/Disable support for IEEE Std. 802.15.4G */
 #ifndef NETSTK_CFG_IEEE_802154G_EN
 #define NETSTK_CFG_IEEE_802154G_EN                          FALSE
 #endif
 
 #if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
+ /*!< Enable/Disable 2k-length frame support in 802.15.4G mode */
   #ifndef NETSTK_CFG_2K_FRAME_EN
     #define NETSTK_CFG_2K_FRAME_EN                          FALSE
-  #endif /* NETSTK_CFG_2K_FRAME_EN */
+  #endif
 
   /*!< Enable/Disable MR-FSK PHY, see IEEE Std. 802.15.4g-2012 */
   #ifndef NETSTK_CFG_MR_FSK_PHY_EN
     #define NETSTK_CFG_MR_FSK_PHY_EN                        TRUE
-  #endif /* NETSTK_CFG_MR_FSK_PHY_EN */
-#endif /* NETSTK_CFG_IEEE_802154G_EN */
+  #endif
+#endif
 
+/*!< Enable/Disable auto-acknowledgment on MAC */
 #ifndef NETSTK_CFG_MAC_SW_AUTOACK_EN
 #define NETSTK_CFG_MAC_SW_AUTOACK_EN                        FALSE
 #endif
 
+/*!< Enable/Disable automatic on/off to netstack
+ * If the netstack receives transmission request in sleep mode, it shall
+ * go back to the sleep mode upon complete transmission process
+ */
 #ifndef NETSTK_CFG_AUTO_ONOFF_EN
 #define NETSTK_CFG_AUTO_ONOFF_EN                            FALSE
 #endif
 
+/*!< Enable/Disable PHY MR-FSK operation mode, see IEEE Std. 802.15.4g-2012 table 68d */
 #define NETSTK_CFG_PHY_OP_MODE_1_EN                         TRUE
 #define NETSTK_CFG_PHY_OP_MODE_2_EN                         FALSE
 #define NETSTK_CFG_PHY_OP_MODE_3_EN                         FALSE
@@ -950,8 +958,7 @@ void uip_log(char *msg);
 #define NETSTK_CFG_LOW_POWER_MODE_EN                        FALSE
 #endif
 
-
- /*!< Enable/Disable Data Whitening */
+/*!< Enable/Disable Data Whitening */
 #ifndef NETSTK_CFG_DATA_WHITENING_EN
 #define NETSTK_CFG_DATA_WHITENING_EN                        FALSE
 #endif
@@ -961,6 +968,7 @@ void uip_log(char *msg);
 #define NETSTK_CFG_WOR_EN                                   FALSE
 #endif
 
+/*!< CSMA configuration */
 #define NETSTK_CFG_CSMA_MIN_BE                    (uint8_t )(   3u )
 #define NETSTK_CFG_CSMA_MAX_BE                    (uint8_t )(   5u )
 #define NETSTK_CFG_CSMA_MAX_BACKOFF               (uint8_t )(   4u )
