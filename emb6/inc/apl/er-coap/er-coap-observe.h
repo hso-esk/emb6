@@ -43,6 +43,8 @@
 #include "er-coap-transactions.h"
 #include "stimer.h"
 
+#define COAP_OBSERVER_URL_LEN 20
+
 typedef struct coap_observable {
   uint32_t observe_clock;
   struct stimer orphan_timer;
@@ -83,6 +85,8 @@ int coap_remove_observer_by_mid(uip_ipaddr_t *addr, uint16_t port,
                                 uint16_t mid);
 
 void coap_notify_observers(resource_t *resource);
+
+void coap_notify_observers_sub(resource_t *resource, const char *subpath);
 
 void coap_observe_handler(resource_t *resource, void *request,
                           void *response);
