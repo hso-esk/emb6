@@ -59,7 +59,7 @@ static int
 read_lwtime(lwm2m_context_t *ctx, uint8_t *outbuf, size_t outsize)
 {
   return ctx->writer->write_int(ctx, outbuf, outsize,
-                                time_offset + clock_seconds());
+                                time_offset + bsp_getSec());
 }
 /*---------------------------------------------------------------------------*/
 static int
@@ -74,7 +74,7 @@ set_lwtime(lwm2m_context_t *ctx, const uint8_t *inbuf, size_t insize,
   } else {
     PRINTF("Got: time: %*.s => %" PRId32 "\n", (int)insize, inbuf, lw_time);
 
-    time_offset = lw_time - clock_seconds();
+    time_offset = lw_time - bsp_getSec();
     PRINTF("Write time...%" PRId32 " => offset = %" PRId32 "\n",
            lw_time, time_offset);
   }

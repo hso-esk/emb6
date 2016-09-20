@@ -41,7 +41,8 @@
  *         Niclas Finne <nfi@sics.se>
  */
 
-#include "contiki.h"
+#include "emb6.h"
+#include "hwinit.h"
 #include "lwm2m-engine.h"
 #include "lwm2m-object.h"
 #include "lwm2m-device.h"
@@ -53,23 +54,24 @@
 #include "oma-tlv.h"
 #include "oma-tlv-reader.h"
 #include "oma-tlv-writer.h"
-#include "net/ipv6/uip-ds6.h"
+#include "uip-ds6.h"
+#include "uiplib.h"
 #include <stdio.h>
 #include <string.h>
 #include <inttypes.h>
 
 #if UIP_CONF_IPV6_RPL
-#include "net/rpl/rpl.h"
+#include "rpl.h"
 #endif /* UIP_CONF_IPV6_RPL */
 
-#define DEBUG DEBUG_NONE
-#include "net/ip/uip-debug.h"
+#define DEBUG 1
+#include "uip-debug.h"
 
 #ifndef LWM2M_ENGINE_CLIENT_ENDPOINT_PREFIX
 #ifdef LWM2M_DEVICE_MODEL_NUMBER
 #define LWM2M_ENGINE_CLIENT_ENDPOINT_PREFIX LWM2M_DEVICE_MODEL_NUMBER
 #else /* LWM2M_DEVICE_MODEL_NUMBER */
-#define LWM2M_ENGINE_CLIENT_ENDPOINT_PREFIX "Contiki-"
+#define LWM2M_ENGINE_CLIENT_ENDPOINT_PREFIX "emb6-"
 #endif /* LWM2M_DEVICE_MODEL_NUMBER */
 #endif /* LWM2M_ENGINE_CLIENT_ENDPOINT_PREFIX */
 
@@ -86,8 +88,6 @@ static const lwm2m_object_t *objects[MAX_OBJECTS];
 static char endpoint[32];
 static char rd_data[128]; /* allocate some data for the RD */
 
-PROCESS(lwm2m_rd_client, "LWM2M Engine");
-
 static uip_ipaddr_t server_ipaddr;
 static uint16_t server_port = REMOTE_PORT;
 static uip_ipaddr_t bs_server_ipaddr;
@@ -99,6 +99,8 @@ static uint8_t use_registration = 0;
 static uint8_t has_registration_server_info = 0;
 static uint8_t registered = 0;
 static uint8_t bootstrapped = 0; /* bootstrap made... */
+
+static struct etimer et;
 
 void lwm2m_device_init(void);
 void lwm2m_security_init(void);
@@ -149,18 +151,12 @@ void
 lwm2m_engine_use_bootstrap_server(int use)
 {
   use_bootstrap = use != 0;
-  if(use_bootstrap) {
-    process_poll(&lwm2m_rd_client);
-  }
 }
 /*---------------------------------------------------------------------------*/
 void
 lwm2m_engine_use_registration_server(int use)
 {
   use_registration = use != 0;
-  if(use_registration) {
-    process_poll(&lwm2m_rd_client);
-  }
 }
 /*---------------------------------------------------------------------------*/
 void
@@ -174,9 +170,6 @@ lwm2m_engine_register_with_server(const uip_ipaddr_t *server, uint16_t port)
   }
   has_registration_server_info = 1;
   registered = 0;
-  if(use_registration) {
-    process_poll(&lwm2m_rd_client);
-  }
 }
 /*---------------------------------------------------------------------------*/
 static int
@@ -216,9 +209,6 @@ lwm2m_engine_register_with_bootstrap_server(const uip_ipaddr_t *server,
   has_bootstrap_server_info = 1;
   bootstrapped = 0;
   registered = 0;
-  if(use_bootstrap) {
-    process_poll(&lwm2m_rd_client);
-  }
 }
 /*---------------------------------------------------------------------------*/
 static int
@@ -244,22 +234,15 @@ update_bootstrap_server(void)
 
   return 0;
 }
+
 /*---------------------------------------------------------------------------*/
-PROCESS_THREAD(lwm2m_rd_client, ev, data)
+void
+lwm2m_engine_callback(c_event_t c_event, p_data_t p_data)
 {
   static coap_packet_t request[1];      /* This way the packet can be treated as pointer as usual. */
-  static struct etimer et;
+  {
 
-  PROCESS_BEGIN();
-
-  printf("RD Client started with endpoint '%s'\n", endpoint);
-
-  etimer_set(&et, 15 * CLOCK_SECOND);
-
-  while(1) {
-    PROCESS_YIELD();
-
-    if(etimer_expired(&et)) {
+	if((c_event == EVENT_TYPE_TIMER_EXP) && (etimer_expired(&et)) ) {
       if(!has_network_access()) {
         /* Wait until for a network to join */
       } else if(use_bootstrap && bootstrapped == 0) {
@@ -269,12 +252,12 @@ PROCESS_THREAD(lwm2m_rd_client, ev, data)
           coap_set_header_uri_path(request, "/bs");
           coap_set_header_uri_query(request, endpoint);
 
-          printf("Registering ID with bootstrap server [");
+          PRINTF("Registering ID with bootstrap server [");
           uip_debug_ipaddr_print(&bs_server_ipaddr);
-          printf("]:%u as '%s'\n", uip_ntohs(bs_server_port), endpoint);
+          PRINTF("]:%u as '%s'\n", uip_ntohs(bs_server_port), endpoint);
 
-          COAP_BLOCKING_REQUEST(&bs_server_ipaddr, bs_server_port, request,
-                                client_chunk_handler);
+          coap_nonblocking_request(&bs_server_ipaddr, bs_server_port, request,
+              client_chunk_handler);
           bootstrapped++;
         }
       } else if(use_bootstrap && bootstrapped == 1) {
@@ -326,14 +309,14 @@ PROCESS_THREAD(lwm2m_rd_client, ev, data)
               PRINT6ADDR(&addr);
               PRINTF(" port %" PRId32 "%s\n", port, secure ? " (secure)" : "");
               if(secure) {
-                printf("Secure CoAP requested but not supported - can not bootstrap\n");
+                PRINTF("Secure CoAP requested but not supported - can not bootstrap\n");
               } else {
                 lwm2m_engine_register_with_server(&addr,
                                                   UIP_HTONS((uint16_t)port));
                 bootstrapped++;
               }
             } else {
-              printf("** failed to parse URI %.*s\n", len, first);
+              PRINTF("** failed to parse URI %.*s\n", len, first);
             }
           }
         }
@@ -373,19 +356,21 @@ PROCESS_THREAD(lwm2m_rd_client, ev, data)
 
         coap_set_payload(request, (uint8_t *)rd_data, pos);
 
-        printf("Registering with [");
+        PRINTF("Registering with [");
         uip_debug_ipaddr_print(&server_ipaddr);
-        printf("]:%u lwm2m endpoint '%s': '%.*s'\n", uip_ntohs(server_port),
+        PRINTF("]:%u lwm2m endpoint '%s': '%.*s'\n", uip_ntohs(server_port),
                endpoint, pos, rd_data);
-        COAP_BLOCKING_REQUEST(&server_ipaddr, server_port, request,
-                              client_chunk_handler);
+
+        coap_nonblocking_request(&server_ipaddr, server_port, request,
+            client_chunk_handler);
       }
       /* for now only register once...   registered = 0; */
-      etimer_set(&et, 15 * CLOCK_SECOND);
+      etimer_set(&et, 15 * CLOCK_SECOND, lwm2m_engine_callback);
     }
   }
-  PROCESS_END();
 }
+
+
 /*---------------------------------------------------------------------------*/
 void
 lwm2m_engine_init(void)
@@ -437,7 +422,7 @@ lwm2m_engine_init(void)
 #endif /* LWM2M_ENGINE_CLIENT_ENDPOINT_NAME */
 
   rest_init_engine();
-  process_start(&lwm2m_rd_client, NULL);
+  etimer_set(&et, 5 * CLOCK_SECOND, lwm2m_engine_callback);
 }
 /*---------------------------------------------------------------------------*/
 void
@@ -453,7 +438,7 @@ parse_next(const char **path, int *path_len, uint16_t *value)
 {
   char c;
   *value = 0;
-  /* printf("parse_next: %p %d\n", *path, *path_len); */
+  /* PRINTF("parse_next: %p %d\n", *path, *path_len); */
   if(*path_len == 0) {
     return 0;
   }
@@ -794,7 +779,7 @@ lwm2m_engine_select_reader(lwm2m_context_t *context, unsigned int content_format
       context->reader = &lwm2m_plain_text_reader;
       break;
     default:
-      PRINTF("Unknown content type %u, using LWM2M plain text\n", accept);
+      PRINTF("Unknown content type %u, using LWM2M plain text\n", content_format);
       context->reader = &lwm2m_plain_text_reader;
       break;
   }

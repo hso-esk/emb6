@@ -44,7 +44,7 @@
 #ifndef LWM2M_DEVICE_H_
 #define LWM2M_DEVICE_H_
 
-#include "contiki-conf.h"
+#include "er-coap.h"
 
 #ifndef LWM2M_DEVICE_MODEL_NUMBER
 #ifdef BOARD_STRING
@@ -53,8 +53,12 @@
 #endif /* LWM2M_DEVICE_MODEL_NUMBER */
 
 #ifndef LWM2M_DEVICE_FIRMWARE_VERSION
-#define LWM2M_DEVICE_FIRMWARE_VERSION CONTIKI_VERSION_STRING
+#define LWM2M_DEVICE_FIRMWARE_VERSION "v0.1"
 #endif /* LWM2M_DEVICE_FIRMWARE_VERSION */
+
+#ifndef LWM2M_DEVICE_SERIAL_NO
+#define LWM2M_DEVICE_SERIAL_NO		  "0001"
+#endif /* #ifndef LWM2M_DEVICE_SERIAL_NO */
 
 void lwm2m_device_init(void);
 
