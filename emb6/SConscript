@@ -7,7 +7,7 @@ emb6 = {
 		'apl/rest-engine/*',
 	],
 	'lwm2m' : [
-		'apl/lwm2m-core/*',
+		'apl/oma-lwm2m/*',
 	],
 	'mqtt' : [
 		'apl/mqtt/*',

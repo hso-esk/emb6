@@ -877,6 +877,11 @@ void uip_log(char *msg);
 #define LOGGER_DEMO_COAP                    FALSE
 #endif
 
+/** DEMO LWM2M example                      (see demo_lwm2m_*.c) */
+#ifndef LOGGER_DEMO_LWM2M
+#define LOGGER_DEMO_LWM2M                   FALSE
+#endif
+
 /** DEMO DTLS example                       (see demo_dtls_*.c) */
 #ifndef LOGGER_DEMO_DTLS
 #define LOGGER_DEMO_DTLS                    FALSE
