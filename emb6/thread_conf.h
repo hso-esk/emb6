@@ -63,9 +63,13 @@ typedef enum {
                                 NETWORK LAYER SECTION
 ===============================================================================*/
 
+#ifndef THRD_USE_ROUTING
+#define THRD_USE_ROUTING == TRUE                // Remove this!!!
+#endif /* THRD_USE_ROUTING */
 
-#if THRD_USE_ROUTING == TRUE
+#ifdef THRD_USE_ROUTING == TRUE
 #define UIP_CONF_IPV6_THRD_ROUTING		TRUE
+#define SICSLOWPAN_USE_MESH_HEADER		TRUE
 #endif
 
 // --------------- THREAD ROUTING PROTOCOL ----------------------
