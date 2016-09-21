@@ -64,7 +64,7 @@
 #include "rpl.h"
 #endif /* UIP_CONF_IPV6_RPL */
 
-#define DEBUG 1
+#define DEBUG 0
 #include "uip-debug.h"
 
 #ifndef LWM2M_ENGINE_CLIENT_ENDPOINT_PREFIX
