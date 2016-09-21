@@ -100,7 +100,7 @@ static void dllsec_send(mac_callback_t sent, void *p_arg)
   packetbuf_set_attr(PACKETBUF_ATTR_FRAME_TYPE, FRAME802154_DATAFRAME);
 
 #if 1
-  packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_SHORTADDRMODE);
+  packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_LONGADDRMODE);
   packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_LONGADDRMODE);
 #else
   /* just for testing
