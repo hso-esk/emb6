@@ -2280,7 +2280,7 @@ static void rf_txPowerSet(int8_t power, e_nsErr_t *p_err) {
    * PA_POWER_RAMP = PA_CFG1[5:0] ~> PA_POWER_RAMP_MASK = 0x3F
    */
   pa_power_ramp = ((power + 18) * 2 - 1) & 0x3Fu;
-  cc112x_spiRegWrite(CC112X_PA_CFG1, &pa_power_ramp, 1);
+  cc112x_spiRegWrite(CC112X_PA_CFG2, &pa_power_ramp, 1);
   *p_err = NETSTK_ERR_NONE;
 }
 
@@ -2307,7 +2307,7 @@ static void rf_txPowerGet(int8_t *p_power, e_nsErr_t *p_err) {
   /*
    * Output power = (PA_POWER_RAMP+1)/2 - 18 [dBm]
    */
-  cc112x_spiRegRead(CC112X_PA_CFG1, &pa_power_ramp, 1);
+  cc112x_spiRegRead(CC112X_PA_CFG2, &pa_power_ramp, 1);
   pa_power_ramp &= 0x3F;
   *p_power = ((pa_power_ramp + 1) / 2) - 18;
   *p_err = NETSTK_ERR_NONE;
