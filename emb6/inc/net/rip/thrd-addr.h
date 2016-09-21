@@ -78,11 +78,47 @@ extern bool thrd_is_addr_ll_rloc(uip_ipaddr_t *addr);
 bool thrd_is_addr_ml_rloc(uip_ipaddr_t *addr);
 
 /**
+ * Check whether the given Long Address (MAC) is from type RLOC.
+ * @param lladdr A Long Address (MAC).
+ * @retval TRUE If the given Long Address (MAC) is from type RLOC.
+ * @retval FALSE If the given Long Address (MAC) is not from type RLOC.
+ */
+bool thrd_is_linkaddr_rloc(linkaddr_t *link_addr);
+
+/**
  * Extract the Router ID from a Thread IPv6 RLOC address.
  * @param rloc_addr A RLOC address.
  * @return The extracted Router ID.
  */
 uint8_t thrd_extract_router_id_from_rloc_addr(uip_ipaddr_t *rloc_addr);
+
+/**
+ * Extract the Router ID from a Long Address (MAC) of type RLOC.
+ * @param lladdr The Long Address (MAC) of type RLOC.
+ * @return The extracted Router ID.
+ */
+uint8_t thrd_extract_router_id_from_rloc_linkaddr(linkaddr_t *link_addr);
+
+/**
+ * Extract the RLOC16 from a Thread IPv6 RLOC address.
+ * @return The RLOC16.
+ */
+uint16_t thrd_extract_rloc16_from_rloc_address(uip_ipaddr_t *rloc_addr);
+
+/**
+ * Extract the RLOC16 from a Long Address (MAC) of type RLOC.
+ * @param lladdr The Long Address (MAC) of type RLOC.
+ * @return The RLOC16.
+ */
+uint16_t thrd_extract_rloc16_from_rloc_linkaddr(linkaddr_t *link_addr);
+
+/**
+ * Check whether the given RLOC16 is valid (Router ID within [0..62].
+ * @param rloc16 A RLOC16.
+ * @retval TRUE If the given RLOC16 is valid.
+ * @retval FALSE If the given RLOC16 is invalid (==63).
+ */
+bool thrd_is_rloc16_valid(uint16_t rloc16);
 
 /**
  * Create the next hop address for based on the RLOC16.
@@ -93,8 +129,8 @@ void thrd_create_next_hop_addr(uip_ipaddr_t *addr, uint8_t rloc16);
 
 /**
  * Invert the universal/local bit of a MAC Extended Address based IID.
- * @param lladdr The MAC Extended Address based IID.
+ * @param link_addr The MAC Extended Address based IID.
  */
-void thrd_invert_universal_local_bit(uip_lladdr_t * lladdr);
+void thrd_invert_universal_local_bit(uip_lladdr_t *lladdr);
 
 #endif /* EMB6_INC_NET_RIP_THRD_ADDR_H_ */

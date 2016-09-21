@@ -371,7 +371,7 @@ set_packet_attrs()
 
 /** Addresses contexts for IPHC. */
 #if SICSLOWPAN_CONF_MAX_ADDR_CONTEXTS > 0
-static struct sicslowpan_addr_context 
+static struct sicslowpan_addr_context
 addr_contexts[SICSLOWPAN_CONF_MAX_ADDR_CONTEXTS];
 #endif
 
@@ -436,7 +436,7 @@ addr_context_lookup_by_prefix(uip_ipaddr_t *ipaddr)
 static struct sicslowpan_addr_context*
 addr_context_lookup_by_number(uint8_t number)
 {
-/* Remove code to avoid warnings and save flash if no context is used */ 
+/* Remove code to avoid warnings and save flash if no context is used */
 #if SICSLOWPAN_CONF_MAX_ADDR_CONTEXTS > 0
   int i;
   for(i = 0; i < SICSLOWPAN_CONF_MAX_ADDR_CONTEXTS; i++) {

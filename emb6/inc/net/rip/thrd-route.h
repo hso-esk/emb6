@@ -147,6 +147,14 @@ extern thrd_rdb_link_t* thrd_rdb_link_update(uint8_t router_id, uint8_t link_mar
 extern thrd_rdb_route_t* thrd_rdb_route_update(uint8_t router_id, uint8_t destination,
 		uint8_t cost_reported);
 
+/**
+ * Check whether the Router with the given Router ID is a direct neighbor.
+ * @param router_id A Reouter ID.
+ * @retval TRUE If the Router with the given Router ID is a direct neighbor.
+ * @retval FALSE If the Router with the given Router ID is not a direct neighbor.
+ */
+bool thrd_rdb_is_neighbor(uint8_t router_id);
+
 /*
  ********************************************************************************
  *                                DEBUG FUNCTIONS

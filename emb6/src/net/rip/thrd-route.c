@@ -864,6 +864,18 @@ thrd_rdb_link_update(uint8_t router_id, uint8_t link_margin,
 }
 
 /*---------------------------------------------------------------------------*/
+
+bool
+thrd_rdb_is_neighbor(uint8_t router_id)
+{
+	if ( thrd_rdb_link_lookup(router_id) != NULL ) {
+		return TRUE;
+	} else {
+		return FALSE;
+	}
+}
+
+/*---------------------------------------------------------------------------*/
 /*
  * Called after max_age_timer of a Link Set Entry has expired.
  */
