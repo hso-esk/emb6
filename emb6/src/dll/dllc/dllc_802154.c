@@ -565,7 +565,7 @@ static void dllc_verifyAddr(frame802154_t *p_frame, e_nsErr_t *p_err)
         is_addr_matched = linkaddr_cmp((linkaddr_t *)&p_frame->dest_addr, &linkaddr_node_addr);
       }
       else if (p_frame->fcf.dest_addr_mode == FRAME802154_SHORTADDRMODE) {
-        is_addr_matched = linkaddr_cmp_shortAddr((linkaddr_t *)&p_frame->dest_addr, &linkaddr_set_node_shortAddr);
+        is_addr_matched = linkaddr_cmp_shortAddr((linkaddr_t *)&p_frame->dest_addr, &linkaddr_node_short_addr);
       }
       else {
         /* invalid destination addressing mode */

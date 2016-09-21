@@ -850,17 +850,17 @@ void uip_log(char *msg);
 
 /** Event process functions                	(see llc_xxx.c) */
 #ifndef LOGGER_LLC
-#define LOGGER_LLC                         	FALSE
+#define LOGGER_LLC                         	TRUE
 #endif
 
 /** Event process functions                	(see mac_xxx.c) */
 #ifndef LOGGER_MAC
-#define LOGGER_MAC                         	FALSE
+#define LOGGER_MAC                         	TRUE
 #endif
 
 /** Event process functions                	(see phy_xxx.c) */
 #ifndef LOGGER_PHY
-#define LOGGER_PHY                         	FALSE
+#define LOGGER_PHY                         	TRUE
 #endif
 
 /** MLE functions                			(see mle/) */
@@ -870,7 +870,7 @@ void uip_log(char *msg);
 
 /** Thread Network Layer functions          (see net/rip) */
 #ifndef LOGGER_THRD_NET
-#define LOGGER_THRD_NET                    	TRUE
+#define LOGGER_THRD_NET                    	FALSE
 #endif
 
 /** Radio functions                        	(see $(IF).c) */
@@ -900,7 +900,7 @@ void uip_log(char *msg);
 
 /** DEMO DTLS example                      	(see demo_dtls_*.c) */
 #ifndef LOGGER_DEMO_DTLS
-#define LOGGER_DEMO_DTLS                   	FALSE
+#define LOGGER_DEMO_DTLS                   	TRUE
 #endif
 
  /** DEMO MCAST example						(see mcast/*.c) */

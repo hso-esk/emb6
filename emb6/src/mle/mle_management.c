@@ -617,7 +617,7 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 	LOG_RAW(ANSI_COLOR_CYAN"<== MLE ");
 	mle_print_type_cmd(*cmd);
 	LOG_RAW(ANSI_COLOR_CYAN" received from : ");
-	LOG_IP6ADDR(source_addr); PRESET();
+	PRINT6ADDR(source_addr); PRESET();
 	mle_print_cmd(*cmd);
 
 	switch (cmd->type)
@@ -886,7 +886,7 @@ static uint8_t mle_send_msg(mle_cmd_t* cmd,  uip_ipaddr_t *dest_addr )
 	LOG_RAW(ANSI_COLOR_CYAN"==> MLE ");
 	mle_print_type_cmd(*cmd);
 	LOG_RAW(ANSI_COLOR_CYAN " sent to : "  );
-	LOG_IP6ADDR(dest_addr);
+	PRINT6ADDR(dest_addr);
 	LOG_RAW(ANSI_COLOR_RESET "\n"  );
 
 	return 1 ;
@@ -934,11 +934,11 @@ uint8_t mle_init(void)
 	PRINTFY("\n NB WITH LQ 3 is %i:",count_neighbor_LQ(3));
 	PRINTFY("\n NB WITH LQ 2 is %i:",count_neighbor_LQ(2));
 	 */
-	/*
+
 
 	linkaddr_t add;
-	add.u8[0]=1 ;
-	add.u8[1]=1 ;
+	add.u8[0]=0 ;
+	add.u8[1]=0 ;
 	linkaddr_set_node_shortAddr(&add);
 
 	mle_init_cmd(&cmd,LINK_REQUEST);
@@ -946,13 +946,13 @@ uint8_t mle_init(void)
 	add_leader_to_cmd(&cmd,thrd_generate_leader_data_tlv());
 	MyNode.challenge=add_rand_challenge_to_cmd(&cmd);
 	add_version_to_cmd(&cmd);
-	uip_ip6addr(&s_destAddr, 0xfe80, 0, 0, 0, 0, 0x00ff, 0xfe00, 0x0101);
+	uip_ip6addr(&s_destAddr, 0xfe80, 0, 0, 0, 0, 0x00ff, 0xfe00, 0x0000);
 //	uip_ip6addr(&s_destAddr, 0xfe80, 0, 0, 0, 0x250, 0xc2ff, 0xfea8, 0xb0);
 	mle_send_msg(&cmd, &s_destAddr);
-	*/
+
 
 	/**********************/
-	ctimer_set(&c_mle_Timer, 1 * bsp_get(E_BSP_GET_TRES) , mle_join_process, (void *) NULL );
+//	ctimer_set(&c_mle_Timer, 1 * bsp_get(E_BSP_GET_TRES) , mle_join_process, (void *) NULL );
 
 
 	LOG_RAW( "MLE protocol initialized ... ");PRESET();
