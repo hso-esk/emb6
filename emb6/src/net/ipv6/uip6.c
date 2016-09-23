@@ -1202,6 +1202,11 @@ uip_process(uint8_t flag)
 	 * All multicast engines must hook in here. After this function returns, we
 	 * expect UIP_BUF to be unmodified
 	 */
+
+	uip_ip6addr_t tempDes,tempSrc ;
+	uip_ip6addr_copy(&tempDes, &UIP_IP_BUF->destipaddr) ;
+	uip_ip6addr_copy(&tempSrc, &UIP_IP_BUF->srcipaddr) ;
+
 #if UIP_CONF_IPV6_MULTICAST
 	if(uip_is_addr_mcast_routable(&UIP_IP_BUF->destipaddr)) {
 		if(UIP_MCAST6.in() == UIP_MCAST6_ACCEPT) {
