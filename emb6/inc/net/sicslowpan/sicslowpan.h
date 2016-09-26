@@ -50,6 +50,10 @@
 #include "uip.h"
 #include "mac.h"
 
+#ifndef SICSLOWPAN_USE_MESH_HEADER
+#define SICSLOWPAN_USE_MESH_HEADER	FALSE
+#endif /* SICSLOWPAN_USE_MESH_HEADER */
+
 #ifdef SICSLOWPAN_USE_MESH_HEADER
 /**
  * \name 6LoWPAN Mesh Header configuration.
@@ -90,7 +94,7 @@ typedef struct mesh_hdr_conf {
 /** @} */
 
 /**
- * \name 6lowpan Mesh Header Bit Mask.
+ * \name 6lowpan mesh header bit mask.
  * @{
  */
 #define MESH_HEADER_V_EUI_64						0x00 /* Originator: Use EUI-64 address. (bin: 0000 0000) */
@@ -98,6 +102,11 @@ typedef struct mesh_hdr_conf {
 #define MESH_HEADER_F_EUI_64						0x00 /* Final Destination: Use EUI-64 address. (bin: 0000 0000) */
 #define MESH_HEADER_F_SHORT_ADDR					0x10 /* Final Destination: Use  short 16-bit address. (bin: 0001 0000 ) */
 
+// 6LoWPAN mesh header length.
+#define MESH_HEADER_EUI_64_ADDR_LEN						8
+#define MESH_HEADER_SHORT_ADDR_LEN					2
+
+// 6LoWPAN mesh header configuration.
 #define SICSLOWPAN_MESH_HEADER_V                    MESH_HEADER_V_SHORT_ADDR
 #define SICSLOWPAN_MESH_HEADER_F					MESH_HEADER_F_SHORT_ADDR
 #define SICSLOWPAN_MESH_HEADER_MAX_HOPS				14

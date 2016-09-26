@@ -23,6 +23,7 @@
 static uint16_t link_local_addr_fixed[7] = { UIP_HTONS(0xfe80), 0x0000, 0x0000, 0x0000, 0x0000, UIP_HTONS(0x00ff), UIP_HTONS(0xfe00) };
 static uint16_t mesh_local_addr_fixed[7] = { UIP_HTONS(THRD_MESH_LOCAL_PREFIX) , 0x0000, 0x0000, 0x0000, 0x0000, UIP_HTONS(0x00ff), UIP_HTONS(0xfe00)};
 static uint16_t mesh_local_iid_fixed[3] =  { 0x0000, UIP_HTONS(0x00ff), UIP_HTONS(0xfe00) };
+static uint16_t rloc_addr_fixed[3] = { 0x0000, UIP_HTONS(0x00ff), UIP_HTONS(0x00fe00) };
 
 /*==============================================================================
                                LOCAL FUNCTION PROTOTYPES
@@ -53,6 +54,16 @@ bool
 thrd_is_addr_ml_rloc(uip_ipaddr_t *addr)
 {
 	if ( memcmp(&mesh_local_addr_fixed, addr, 14) == 0 ) {
+		return TRUE;
+	}
+	return FALSE;
+}
+
+/* --------------------------------------------------------------------------- */
+
+bool
+thrd_is_rloc_addr(uip_ipaddr_t *addr) {
+	if ( memcmp(&rloc_addr_fixed, addr->u8, 6) == 0 ) {
 		return TRUE;
 	}
 	return FALSE;
