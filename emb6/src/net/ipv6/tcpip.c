@@ -62,7 +62,7 @@
 
 #include <string.h>
 #include "evproc.h"
-#define DEBUG DEBUG_NONE
+#define DEBUG DEBUG_PRINT
 #include "uip-debug.h"
 
 

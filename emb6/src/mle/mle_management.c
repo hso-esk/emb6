@@ -937,7 +937,7 @@ uint8_t mle_init(void)
 
 
 	linkaddr_t add;
-	add.u8[7]=0x05 ;
+	add.u8[7]=0x02 ;
 	add.u8[6]=0x00 ;
 	linkaddr_set_node_shortAddr(&add);
 
@@ -946,7 +946,9 @@ uint8_t mle_init(void)
 	add_leader_to_cmd(&cmd,thrd_generate_leader_data_tlv());
 	MyNode.challenge=add_rand_challenge_to_cmd(&cmd);
 	add_version_to_cmd(&cmd);
-	uip_ip6addr(&s_destAddr, 0xfe80, 0, 0, 0, 0, 0x00ff, 0xfe00, 0x0005);
+	thrd_iface_set_rloc(0x0002);
+	uip_ip6addr(&s_destAddr, 0xfe80, 0, 0, 0, 0, 0x00ff, 0xfe00, 0x0002);
+	//uip_ip6addr(&s_destAddr, 0xfe80, 0, 0, 0, 0x0250, 0xc2ff, 0xfea8, 0x00aa);
 //	uip_ip6addr(&s_destAddr, 0xfe80, 0, 0, 0, 0x250, 0xc2ff, 0xfea8, 0xb0);
 	mle_send_msg(&cmd, &s_destAddr);
 
