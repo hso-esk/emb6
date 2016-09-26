@@ -84,6 +84,13 @@ thrd_is_linkaddr_rloc(linkaddr_t *link_addr)
 
 /* --------------------------------------------------------------------------- */
 
+void
+thrd_eui_64_invert_universal_local_bit(linkaddr_t *link_addr) {
+	link_addr->u8[0] &= 0xfd;
+}
+
+/* --------------------------------------------------------------------------- */
+
 uint8_t
 thrd_extract_router_id_from_rloc_addr(uip_ipaddr_t *rloc_addr)
 {

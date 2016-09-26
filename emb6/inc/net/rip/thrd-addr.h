@@ -86,6 +86,11 @@ extern bool thrd_is_addr_ml_rloc(uip_ipaddr_t *addr);
 extern bool thrd_is_rloc_addr(uip_ipaddr_t *addr);
 
 /**
+ * Invert the universal/local bit of a given EUI-64 based link address.
+ */
+void thrd_eui_64_invert_universal_local_bit(linkaddr_t *link_addr);
+
+/**
  * Check whether the given Long Address (MAC) is from type RLOC.
  * @param lladdr A Long Address (MAC).
  * @retval TRUE If the given Long Address (MAC) is from type RLOC.

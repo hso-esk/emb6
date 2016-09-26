@@ -1763,8 +1763,8 @@ static uint8_t output(const uip_lladdr_t *localdest)
 			if ( thrd_is_rloc_addr(&dest_addr) ) {	// Link-local RLOC address.
 
 			} else {	// Link-local EUI-64 based address.
-
-				memcpy(&dest.u8[0], 0, 1);	// TODO
+				// Reset universal/local bit.
+				thrd_eui_64_invert_universal_local_bit(&dest);
 
 				memcpy(packetbuf_ptr + packetbuf_hdr_len, (uint8_t *)UIP_IP_BUF + uncomp_hdr_len, uip_len - uncomp_hdr_len);
 				packetbuf_set_datalen(uip_len - uncomp_hdr_len + packetbuf_hdr_len);
