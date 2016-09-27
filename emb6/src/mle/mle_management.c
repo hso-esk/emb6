@@ -219,16 +219,16 @@ static uint16_t assign_address16(uint8_t id)
 void reply_for_mle_childID_request(void *ptr)
 {
 	LOG_RAW(ANSI_COLOR_YELLOW "inside child in response \n"ANSI_COLOR_RESET);
-	uint8_t* routerid;
-	routerid=(uint8_t*) ptr;
+	uint8_t* routerId;
+	routerId=(uint8_t*) ptr;
 	size_t len =0;
 	tlv_route64_t* route64;
 	route64=thrd_generate_route64(&len);
 
 	if(ptr!=NULL)
 	{
-		if(*routerid<63)
-			mle_set_parent_mode();
+		if(*routerId<63)
+			mle_set_parent_mode(routerId);
 		else
 			 // TODO send error to child
 			return;
@@ -408,7 +408,8 @@ void mle_join_process(void *ptr)
 				nb->state=LINKED;
 
 				/* start operating as child */
-				mle_set_child_mode();
+				tlv=mle_find_tlv_in_cmd(param.rec_cmd,TLV_ADDRESS16);
+				mle_set_child_mode(tlv->value[1] | (tlv->value[0] << 8));
 
 				/* process leader data tlv */
 				/* TODO verify if this should be done here */
@@ -416,7 +417,6 @@ void mle_join_process(void *ptr)
 				tlv_connectivity_init(&connectivity,tlv->value);
 				tlv=mle_find_tlv_in_cmd(param.rec_cmd,TLV_LEADER_DATA);
 				tlv_leader_init(&lead,tlv->value);
-				// thrd_partition_process(connectivity->id_seq,lead);
 				thrd_partition_process(1,lead);
 
 				finish=1;
@@ -426,8 +426,7 @@ void mle_join_process(void *ptr)
 				LOG_RAW(ANSI_COLOR_GREEN"starting new partition ... \n"ANSI_COLOR_RESET);
 
 				thrd_partition_start();
-
-				mle_set_parent_mode();
+				mle_set_parent_mode(0xff);
 				PRESET();
 				finish=1;
 				break;
@@ -935,7 +934,7 @@ uint8_t mle_init(void)
 	PRINTFY("\n NB WITH LQ 2 is %i:",count_neighbor_LQ(2));
 	 */
 
-
+/*
 	linkaddr_t add;
 	add.u8[7]=0x02 ;
 	add.u8[6]=0x00 ;
@@ -948,13 +947,13 @@ uint8_t mle_init(void)
 	add_version_to_cmd(&cmd);
 	thrd_iface_set_rloc(0x0002);
 	uip_ip6addr(&s_destAddr, 0xfe80, 0, 0, 0, 0, 0x00ff, 0xfe00, 0x0002);
-	//uip_ip6addr(&s_destAddr, 0xfe80, 0, 0, 0, 0x0250, 0xc2ff, 0xfea8, 0x00aa);
-//	uip_ip6addr(&s_destAddr, 0xfe80, 0, 0, 0, 0x250, 0xc2ff, 0xfea8, 0xb0);
+	uip_ip6addr(&s_destAddr, 0xfe80, 0, 0, 0, 0x0250, 0xc2ff, 0xfea8, 0x00aa);
+	uip_ip6addr(&s_destAddr, 0xfe80, 0, 0, 0, 0x250, 0xc2ff, 0xfea8, 0xb0);
 	mle_send_msg(&cmd, &s_destAddr);
 
 
 	/**********************/
-//	ctimer_set(&c_mle_Timer, 1 * bsp_get(E_BSP_GET_TRES) , mle_join_process, (void *) NULL );
+	ctimer_set(&c_mle_Timer, 1 * bsp_get(E_BSP_GET_TRES) , mle_join_process, (void *) NULL );
 
 
 	LOG_RAW( "MLE protocol initialized ... ");PRESET();
@@ -962,7 +961,7 @@ uint8_t mle_init(void)
 
 };
 
-uint8_t mle_set_parent_mode(void)
+uint8_t mle_set_parent_mode(uint8_t router_id)
 {
 	MyNode.OpMode=PARENT; // router
 	LOG_RAW(ANSI_COLOR_GREEN "MLE : Node operate as Parent ... "ANSI_COLOR_RESET);
@@ -979,11 +978,21 @@ uint8_t mle_set_parent_mode(void)
 	return 1 ;
 }
 
-uint8_t mle_set_child_mode(void)
+uint8_t mle_set_child_mode(uint16_t rloc16)
 {
 	MyNode.OpMode=CHILD; // router
 	LOG_RAW(ANSI_COLOR_GREEN "MLE : Node operate as Child ... "ANSI_COLOR_RESET);
 	PRESET();
+
+	/* set the rloc address */
+	thrd_iface_set_rloc(rloc16);
+
+	/* set the Mac short address */
+	linkaddr_t add;
+	add.u8[7]=0x02 ;
+	add.u8[6]=0x00 ;
+	linkaddr_set_node_shortAddr(&add);
+
 	/* clear the neighbors table  */
 	// clear the nb table
 
