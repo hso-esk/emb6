@@ -97,13 +97,13 @@ typedef struct mesh_hdr_conf {
  * \name 6lowpan mesh header bit mask.
  * @{
  */
-#define MESH_HEADER_V_EUI_64						0x00 /* Originator: Use EUI-64 address. (bin: 0000 0000) */
+#define MESH_HEADER_V_EUI_64_LONG_ADDR				0x00 /* Originator: Use EUI-64 address. (bin: 0000 0000) */
 #define MESH_HEADER_V_SHORT_ADDR					0x20 /* Originator: Use  short 16-bit address. (bin: 0010 0000) */
-#define MESH_HEADER_F_EUI_64						0x00 /* Final Destination: Use EUI-64 address. (bin: 0000 0000) */
+#define MESH_HEADER_F_EUI_64_LONG_ADDR				0x00 /* Final Destination: Use EUI-64 address. (bin: 0000 0000) */
 #define MESH_HEADER_F_SHORT_ADDR					0x10 /* Final Destination: Use  short 16-bit address. (bin: 0001 0000 ) */
 
 // 6LoWPAN mesh header length.
-#define MESH_HEADER_EUI_64_ADDR_LEN						8
+#define MESH_HEADER_EUI_64_ADDR_LEN					8
 #define MESH_HEADER_SHORT_ADDR_LEN					2
 
 // 6LoWPAN mesh header configuration.

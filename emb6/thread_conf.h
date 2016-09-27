@@ -45,6 +45,7 @@ typedef enum {
 // -------------------- THREAD RLOC16 ----------------------------
 #define THRD_CREATE_RLOC16(router_id, child_id)		((uint16_t) (0x0000 | ((router_id << 10) | (child_id) )))
 #define THRD_EXTRACT_ROUTER_ID(rloc16)		((uint8_t) (rloc16 >> 10))
+#define THRD_EXTRACT_CHILD_ID(rloc16)		((uint8_t) (rloc16))
 
 // ---------------- THREAD IPv6 ADDRESSES ------------------------
 #define THRD_LINK_LOCAL_ALL_NODES_ADDR(ipaddr)	uip_ip6addr(ipaddr, 0xff02, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0001)
@@ -69,6 +70,7 @@ typedef enum {
 
 // #if THRD_USE_ROUTING == TRUE
 #define UIP_CONF_IPV6_THRD_ROUTING		TRUE
+#define THRD_SICSLOWPAN_ROUTING			TRUE
 #define SICSLOWPAN_USE_MESH_HEADER		TRUE
 // #endif
 
