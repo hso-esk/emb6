@@ -150,7 +150,7 @@ thrd_iface_print()
 	LOG_RAW("| ML-RLOC = ");
 	LOG_IP6ADDR(&thrd_iface.ml_rloc);
 	LOG_RAW("\n");
-	LOG_RAW("| LL-EID = ");
+	LOG_RAW("| LL-EUI-64 = ");
 	LOG_IP6ADDR(&thrd_iface.ll_eid);
 	LOG_RAW("\n");
 	LOG_RAW("| LL-RLOC = ");

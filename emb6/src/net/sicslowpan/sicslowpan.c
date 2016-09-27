@@ -1559,9 +1559,31 @@ static uint8_t output(const uip_lladdr_t *localdest)
 		dest_addr = UIP_IP_BUF->destipaddr;
 
 		if ( uip_is_addr_link_local(&dest_addr) ) {
-			/* move HC1/HC06/IPv6 header */
-			memmove(packetbuf_ptr + sicslowpan_mesh_hdr_len + SICSLOWPAN_FRAG1_HDR_LEN, packetbuf_ptr, packetbuf_hdr_len);
-			goto send_frag;
+
+			if ( thrd_is_rloc_addr(&dest_addr) ) {	// Link-local RLOC address.
+
+			} else {	// Link-local EUI-64 based address.
+				// Reset universal/local bit.
+				thrd_eui_64_invert_universal_local_bit(&dest);
+				/* move HC1/HC06/IPv6 header */
+				memmove(packetbuf_ptr + sicslowpan_mesh_hdr_len + SICSLOWPAN_FRAG1_HDR_LEN, packetbuf_ptr, packetbuf_hdr_len);
+				goto send_frag;
+			}
+		}
+
+		if ( uip_is_addr_link_local(&dest_addr) ) {
+
+			if ( thrd_is_rloc_addr(&dest_addr) ) {	// Link-local RLOC address.
+
+			} else {	// Link-local EUI-64 based address.
+				// Reset universal/local bit.
+				thrd_eui_64_invert_universal_local_bit(&dest);
+
+				memcpy(packetbuf_ptr + packetbuf_hdr_len, (uint8_t *)UIP_IP_BUF + uncomp_hdr_len, uip_len - uncomp_hdr_len);
+				packetbuf_set_datalen(uip_len - uncomp_hdr_len + packetbuf_hdr_len);
+				send_packet(&dest);
+			}
+			return 1;
 		}
 
 		// Check whether the destination address is a multicast address (unicast: dest != NULL, multicast: dest = NULL).
