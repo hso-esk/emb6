@@ -16,7 +16,7 @@ brd_conf = {
 std_conf = {
 # C code global defined symbols
     'CPPDEFINES' : [
-        'dummy'
+        ('LCM_NETWORK_CONF','\\"lcmnetwork.conf\\"'),
     ],
 # Required Libraries
     'LIBS' : [

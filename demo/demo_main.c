@@ -186,14 +186,13 @@ static void loc_stackConf(uint16_t mac_addr_word)
 
 static uint16_t loc_parseMac(const char* mac, uint16_t defaultMac)
 {
-    uint16_t mac_addr_word;
+    int mac_addr_word;
     if (!mac) return defaultMac;
+    if (sscanf(mac, "0x%X", &mac_addr_word))
+        return (uint16_t)mac_addr_word;
 
-    if (sscanf(mac, "0x%X", &mac_addr_word)) 
-        return mac_addr_word;
-
-    if (sscanf(mac, "%X", &mac_addr_word)) 
-        return mac_addr_word;
+    if (sscanf(mac, "%X", &mac_addr_word))
+        return (uint16_t)mac_addr_word;
 
     return defaultMac;
 }
@@ -362,8 +361,8 @@ void emb6_errorHandler(e_nsErr_t *p_err)
 ==============================================================================*/
 int main(int argc, char **argv)
 {
-    char *pc_mac_addr = NULL;
-    uint16_t mac_addr_word;
+  char *pc_mac_addr = NULL;
+  uint16_t mac_addr_word;
   s_ns_t st_netstack;
   uint8_t ret;
   e_nsErr_t err;
@@ -400,9 +399,9 @@ int main(int argc, char **argv)
   }
 
   /* Show that stack has been launched */
-  bsp_led(E_BSP_LED_2, E_BSP_LED_ON);
+  bsp_led(E_BSP_LED_0, E_BSP_LED_ON);
   bsp_delay_us(2000000);
-  bsp_led(E_BSP_LED_2, E_BSP_LED_OFF);
+  bsp_led(E_BSP_LED_0, E_BSP_LED_OFF);
 
   /* Initialize applications */
   ret = loc_demoAppsInit();
