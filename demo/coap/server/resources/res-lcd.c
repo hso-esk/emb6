@@ -34,6 +34,9 @@
 *                                   INCLUDES
 ********************************************************************************
 */
+
+#if DEMO_COAP_SERVER_LCD_RES_EN
+
 #include "emb6.h"
 #include "bsp.h"
 #include "er-coap.h"
@@ -187,3 +190,4 @@ static void res_put_handler(void *request, void *response, uint8_t *buffer,
         }
     }
 }
+#endif /* #if COAP_SERVER_LCD_RES_EN */
