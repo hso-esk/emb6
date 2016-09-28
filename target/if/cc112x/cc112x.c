@@ -1704,24 +1704,23 @@ static uint8_t rf_gotoIdle(struct s_rf_ctx *p_ctx) {
  * @param p_ctx   point to variable holding radio context structure
  */
 static void rf_gotoRx(struct s_rf_ctx *p_ctx) {
-  /* force radio to enter IDLE state */
-  rf_gotoIdle(p_ctx);
 
+  /* did the transceiver enter Idle state successfully? */
+  if (rf_gotoIdle(p_ctx) == TRUE) {
 #if (NETSTK_CFG_WOR_EN == TRUE)
-  uint8_t rfendCfg0;
-
-  /* read value of registers to modify */
-  cc112x_spiRegRead(CC112X_RFEND_CFG0, &rfendCfg0, 1);
-
-  /* disable RX termination based on CS */
-  rfendCfg0 &= ~0x09;
-  cc112x_spiRegWrite(CC112X_RFEND_CFG0, &rfendCfg0, 1);
+    uint8_t rfendCfg0;
+    /* read value of registers to modify */
+    cc112x_spiRegRead(CC112X_RFEND_CFG0, &rfendCfg0, 1);
+    /* disable RX termination based on CS */
+    rfendCfg0 &= ~0x09;
+    cc112x_spiRegWrite(CC112X_RFEND_CFG0, &rfendCfg0, 1);
 #endif
 
-  /* wait until radio enters RX state */
-  cc112x_spiCmdStrobe(CC112X_SRX);
-  while (RF_READ_CHIP_STATE() != RF_STATE_RX_IDLE) {
-    /* do nothing */
+    /* wait until radio enters RX state */
+    cc112x_spiCmdStrobe(CC112X_SRX);
+    while (RF_READ_CHIP_STATE() != RF_STATE_RX_IDLE) {
+      /* do nothing */
+    }
   }
 }
 
