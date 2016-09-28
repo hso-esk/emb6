@@ -754,6 +754,15 @@ static void rf_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err) {
 
     case NETSTK_CMD_RF_WOR_EN:
       if (p_val) {
+        /* backup current state */
+        e_rfState_t prevState = p_ctx->state;
+        if (prevState == RF_STATE_SLEEP) {
+          rf_sleep_exit(p_ctx);
+        }
+        else {
+          rf_on_exit(p_ctx);
+        }
+
         rf_ctx.cfgWOREnabled = *((uint8_t *) p_val);
 
         /* read value of registers to modify */
@@ -777,6 +786,14 @@ static void rf_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err) {
           /* set preamble length to 4 bytes */
           preambleCfg1 = 0x19;
           cc112x_spiRegWrite(CC112X_PREAMBLE_CFG1, &preambleCfg1, 1);
+        }
+
+        /* restore previous state */
+        if (prevState == RF_STATE_SLEEP) {
+          rf_sleep_entry(p_ctx);
+        }
+        else {
+          rf_on_entry(p_ctx);
         }
       }
       else {
