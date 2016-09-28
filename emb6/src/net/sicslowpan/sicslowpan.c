@@ -311,7 +311,7 @@ static mesh_hdr_conf_t mesh_hdr_config = {
 
 static uint8_t mesh_hdr[SICSLOWPAN_MAX_MESH_HEADER_SIZE];
 
-static uint8_t forward(uint16_t orig_rloc16, uint16_t dest_rloc16, uint8_t V_bit, uint8_t F_bit);
+static uint8_t forward(uint8_t dest_rloc16);
 
 #endif /* SICSLOWPAN_USE_MESH_HEADER */
 
@@ -2003,7 +2003,7 @@ input(void)
 				// TODO If not: Check Child table.
 			} else {
 				// TODO Forward message.
-				// forward(orig_rloc16, dest_rloc16);
+				forward(dest_rid);
 			}
 #endif /* THRD_SICSLOWPAN_ROUTING */
 
@@ -2373,21 +2373,38 @@ input(void)
 /** @} */
 
 /*--------------------------------------------------------------------*/
+#ifdef THRD_SICSLOWPAN_ROUTING
 /**
  * Mesh-under forwarding.
  * Forward a received packet using the destination RLOC16 address.
  */
 static uint8_t
-forward(uint16_t orig_rloc16, uint16_t dest_rloc16, uint8_t V_bit, uint8_t F_bit)
+forward(uint8_t dest_rid)
 {
-	if ( thrd_is_rloc16_valid(dest_rloc16) == TRUE ) {
-
+	if ( thrd_is_rid_valid(dest_rid) ) {
+		thrd_rdb_route_t *route;
+		// Look up route.
+		route = thrd_rdb_route_lookup(dest_rid);
+		if ( route != NULL ) {
+			uint8_t next_hop_rid = route->R_next_hop;
+			// Create link-local RLOC address of the next hop device.
+			uip_ipaddr_t next_hop_addr;
+			thrd_create_linklocal_prefix(&next_hop_addr);
+			thrd_create_rloc_iid(&next_hop_addr, THRD_CREATE_RLOC16(next_hop_rid, 0));
+			// TODO Build packet...
+			// Info: Use IEEE 802.15.4 header to forward packets.
+			// Maybe, simply the output(mac address) function can be used --> check this!
+		} else {
+			// No route found --> drop packet.
+			return 0;
+		}
 		return 1;
 	} else {
 		return 0;
 	}
 }
 /** @} */
+#endif /* THRD_SICSLOWPAN_ROUTING */
 
 /*--------------------------------------------------------------------*/
 /* \brief 6lowpan init function (called by the MAC layer)             */
