@@ -137,6 +137,18 @@ thrd_is_rloc16_valid(uint16_t rloc16)
 
 /* --------------------------------------------------------------------------- */
 
+bool
+thrd_is_rid_valid(uint8_t router_id)
+{
+	if ( router_id < 63 ) {
+		return TRUE;
+	} else {
+		return FALSE;
+	}
+}
+
+/* --------------------------------------------------------------------------- */
+
 void
 thrd_create_next_hop_addr(uip_ipaddr_t *addr, uint8_t rloc16)
 {

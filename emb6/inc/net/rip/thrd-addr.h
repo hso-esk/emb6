@@ -14,7 +14,17 @@
 #define IPV6_UNIVERSAL_LOCAL_BIT_INVERT_MASK	0xfd
 
 /**
- * Create Mesh-Local Prefrix.
+ * Create Link-Local Prefix.
+ */
+// TODO Add Mesh-Local Prefix (e.g. 0xfd00).
+#define thrd_create_linklocal_prefix(addr) do { 					\
+		(addr)->u16[0] = UIP_HTONS(0xfe80);         \
+		(addr)->u16[1] = 0x00;                     					\
+		(addr)->u16[2] = 0x00;                      				\
+		(addr)->u16[3] = 0x00;                      				\
+} while(0)
+/**
+ * Create Mesh-Local Prefix.
  */
 // TODO Add Mesh-Local Prefix (e.g. 0xfd00).
 #define thrd_create_meshlocal_prefix(addr) do { 					\
@@ -132,6 +142,14 @@ extern uint16_t thrd_extract_rloc16_from_rloc_linkaddr(linkaddr_t *link_addr);
  * @retval FALSE If the given RLOC16 is invalid (==63).
  */
 extern bool thrd_is_rloc16_valid(uint16_t rloc16);
+
+/**
+ * Check whether the given router ID is valid (Router ID within [0..62].
+ * @param router_id A router ID.
+ * @retval TRUE If the given router ID is valid.
+ * @retval FALSE If the given router ID is invalid (>=63).
+ */
+extern bool thrd_is_rid_valid(uint8_t router_id);
 
 /**
  * Create the next hop address for based on the RLOC16.
