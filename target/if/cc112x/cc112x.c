@@ -575,6 +575,7 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
   uint32_t tickstart;
   uint32_t txTimeout;
   uint8_t enterRx;
+  uint8_t exitTx;
   uint8_t numWrBytes;
   struct s_rf_ctx *p_ctx = &rf_ctx;
 
@@ -599,6 +600,8 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
   p_ctx->txDataLen = len;
   p_ctx->txNumRemBytes = len;
   p_ctx->txStatus = RF_TX_STATUS_NONE;
+  enterRx = TRUE;
+  exitTx = TRUE;
 
   /* write as many bytes as possible to TX FIFO */
   if (p_ctx->txDataLen > RF_CFG_FIFO_SIZE) {
@@ -614,23 +617,24 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
     cc112x_spiCmdStrobe(CC112X_STX);
 
     /* wait for complete transmission of the frame until timeout */
-    enterRx = TRUE;
     tickstart = rt_tmr_getCurrenTick();
     do {
+      /* was the frame transmitted successfully? */
       if ((p_ctx->txStatus == RF_TX_STATUS_DONE) ||
           (p_ctx->txStatus == RF_TX_STATUS_WFA)) {
-        /* frame was transmitted successfully */
         break;
       }
 
+      /* was a frame being received? */
       if (RF_IS_RX_BUSY() == TRUE) {
-        /* then transmission was denied due to channel access failure */
         p_ctx->txErr = NETSTK_ERR_TX_COLLISION;
         rf_tx_term(p_ctx);
         break;
       }
 
+      /* update TX timeout */
       txTimeout = rt_tmr_getCurrenTick() - tickstart;
+
     } while (txTimeout < 400); // 400ms
 
     if (p_ctx->txStatus == RF_TX_STATUS_DONE) {
@@ -640,6 +644,11 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
          * channel was detected busy and radio was already put to RX_SYNC state
          */
         enterRx = FALSE;
+      }
+
+      if (p_ctx->txErr == NETSTK_ERR_TX_COLLISION) {
+        /* TxOnCCA failed */
+        exitTx = FALSE;
       }
     }
 #if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
@@ -666,7 +675,9 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
   *p_err = p_ctx->txErr;
 
   /* exit TX state */
-  rf_tx_exit(p_ctx);
+  if (exitTx == TRUE) {
+    rf_tx_exit(p_ctx);
+  }
 
   /* need to enter RX state? */
   if (enterRx == TRUE) {
@@ -891,10 +902,6 @@ static void rf_pktRxTxBeginISR(void *p_arg) {
               rf_rx_sync(p_ctx);
             }
           } else if (marc_status == RF_MARC_STATUS_TX_ON_CCA_FAILED) {
-            /* channel was busy while attempting to transmit */
-            p_ctx->txErr = NETSTK_ERR_TX_COLLISION;
-            rf_tx_term(p_ctx);
-
             /* the radio just finished receiving SYNC words */
             rf_rx_sync(p_ctx);
           } else {
