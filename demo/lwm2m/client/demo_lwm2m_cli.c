@@ -64,11 +64,11 @@
 #include    "logger.h"
 
 #ifdef LWM2M_USE_BOOTSTRAP
-#define LWM2M_BOOTSTRAP_SERVER_IP(ipaddr)		uip_ip6addr(ipaddr,  0xbbbb, 0x0000, 0x0000, 0x0000, 0x000a, 0x0bff,0xfe0c, 0x0d0e)
-#define LWM2M_BOOTSTRAP_SERVER_PORT				UIP_HTONS(5583)
+#define LWM2M_BOOTSTRAP_SERVER_IP(ipaddr)   uip_ip6addr(ipaddr,  0xbbbb, 0x0000, 0x0000, 0x0000, 0x000a, 0x0bff,0xfe0c, 0x0d0e)
+#define LWM2M_BOOTSTRAP_SERVER_PORT         UIP_HTONS(5583)
 #else
-#define LWM2M_SERVER_IP(ipaddr)					uip_ip6addr(ipaddr,  0xbbbb, 0x0000, 0x0000, 0x0000, 0x000a, 0x0bff,0xfe0c, 0x0d0e)
-#define LWM2M_SERVER_PORT						UIP_HTONS(5683)
+#define LWM2M_SERVER_IP(ipaddr)             uip_ip6addr(ipaddr, 0xbbbb, 0x0000, 0x0000, 0x0000,0x6eec, 0xebff,0xfe67, 0xea04)
+#define LWM2M_SERVER_PORT                   UIP_HTONS(5683)
 #endif /* #ifdef LWM2M_USE_BOOTSTRAP /* #ifdef LWM2M_USE_BOOTSTRAP */
 
 /*==============================================================================
