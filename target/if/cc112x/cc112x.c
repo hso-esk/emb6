@@ -964,7 +964,7 @@ static void rf_rxFifoThresholdISR(void *p_arg) {
   cc112x_spiRegRead(CC112X_NUM_RXBYTES, &numRxBytes, 1);
   if (numRxBytes < RF_CFG_FIFO_THR) {
     /* number of received bytes is not sufficient */
-    TRACE_LOG_ERR("<RXFIFO_THR> insufficient %d %d %02x", numRxBytes, RF_CFG_FIFO_THR, p_ctx->state);
+    TRACE_LOG_MAIN("<RXFIFO_THR> insufficient %d %d %02x", numRxBytes, RF_CFG_FIFO_THR, p_ctx->state);
     return;
   }
 
