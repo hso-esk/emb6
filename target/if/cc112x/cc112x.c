@@ -653,11 +653,6 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
       /* wait for ACK for at most ackWaitDuration */
       packetbuf_attr_t waitForAckTimeout;
       waitForAckTimeout = packetbuf_attr(PACKETBUF_ATTR_MAC_ACK_WAIT_DURATION);
-      if (p_ctx->cfgWOREnabled == TRUE) {
-        /* FIXME ackWaitDuration in eWOR mode seems to be ~300us longer than what's
-         * specified by the IEEE Std. 802.15.4-2011 */
-        waitForAckTimeout += 300;
-      }
       bsp_delay_us(waitForAckTimeout);
     }
 #endif /* NETSTK_CFG_RF_CC112X_AUTOACK_EN */
