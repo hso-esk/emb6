@@ -110,31 +110,75 @@ factory_reset(lwm2m_context_t *ctx, const uint8_t *arg, size_t arg_size,
 }
 #endif /* PLATFORM_FACTORY_DEFAULT */
 /*---------------------------------------------------------------------------*/
+
+
+
+#define LWM2M_DEVICE_POWER_SOURCES              power_sources
+#define LWM2M_DEVICE_POWER_SOURCES_NUM          (sizeof(power_sources)/sizeof(int))
+static int32_t power_sources[] = {0, 5};
+
+#define LWM2M_DEVICE_POWER_SOURCES_VOLT         power_sources_volt
+static int32_t power_sources_volt[] = {3300, 5000};
+
+#define LWM2M_DEVICE_POWER_SOURCES_CURR         power_sources_curr
+static int32_t power_sources_curr[] = {500, 1000};
+
+
 LWM2M_RESOURCES(device_resources,
+
 #ifdef LWM2M_DEVICE_MANUFACTURER
-                LWM2M_RESOURCE_STRING(0, LWM2M_DEVICE_MANUFACTURER),
+LWM2M_RESOURCE_STRING(0, LWM2M_DEVICE_MANUFACTURER),
 #endif /* LWM2M_DEVICE_MANUFACTURER */
+
 #ifdef LWM2M_DEVICE_TYPE
-                LWM2M_RESOURCE_STRING(17, LWM2M_DEVICE_TYPE),
+LWM2M_RESOURCE_STRING(17, LWM2M_DEVICE_TYPE),
 #endif /* LWM2M_DEVICE_TYPE */
+
 #ifdef LWM2M_DEVICE_MODEL_NUMBER
-                LWM2M_RESOURCE_STRING(1, LWM2M_DEVICE_MODEL_NUMBER),
+LWM2M_RESOURCE_STRING(1, LWM2M_DEVICE_MODEL_NUMBER),
 #endif /* LWM2M_DEVICE_MODEL_NUMBER */
+
 #ifdef LWM2M_DEVICE_SERIAL_NO
-                LWM2M_RESOURCE_STRING(2, LWM2M_DEVICE_SERIAL_NO),
+LWM2M_RESOURCE_STRING(2, LWM2M_DEVICE_SERIAL_NO),
 #endif /* LWM2M_DEVICE_SERIAL_NO */
+
+#ifdef LWM2M_DEVICE_HW_VERSION
+LWM2M_RESOURCE_STRING(18, LWM2M_DEVICE_HW_VERSION),
+#endif /* LWM2M_DEVICE_HW_VERSION */
+
 #ifdef LWM2M_DEVICE_FIRMWARE_VERSION
-                LWM2M_RESOURCE_STRING(3, LWM2M_DEVICE_FIRMWARE_VERSION),
+LWM2M_RESOURCE_STRING(3, LWM2M_DEVICE_FIRMWARE_VERSION),
 #endif /* LWM2M_DEVICE_FIRMWARE_VERSION */
+
+#ifdef LWM2M_DEVICE_SW_VERSION
+LWM2M_RESOURCE_STRING(19, LWM2M_DEVICE_SW_VERSION),
+#endif /* LWM2M_DEVICE_SW_VERSION */
+
 #ifdef PLATFORM_REBOOT
-                LWM2M_RESOURCE_CALLBACK(4, { NULL, NULL, reboot }),
+LWM2M_RESOURCE_CALLBACK(4, { NULL, NULL, reboot }),
 #endif /* PLATFORM_REBOOT */
+
 #ifdef PLATFORM_FACTORY_DEFAULT
-                LWM2M_RESOURCE_CALLBACK(5, { NULL, NULL, factory_reset }),
+LWM2M_RESOURCE_CALLBACK(5, { NULL, NULL, factory_reset }),
 #endif /* PLATFORM_FACTORY_DEFAULT */
-                /* Current Time */
-                LWM2M_RESOURCE_CALLBACK(13, { read_lwtime, set_lwtime, NULL }),
-                );
+
+/* Power Sources */
+LWM2M_RESOURCE_INTEGER_VAR_ARR(6, LWM2M_DEVICE_POWER_SOURCES_NUM, LWM2M_DEVICE_POWER_SOURCES ),
+LWM2M_RESOURCE_INTEGER_VAR_ARR(7, LWM2M_DEVICE_POWER_SOURCES_NUM, LWM2M_DEVICE_POWER_SOURCES_VOLT ),
+LWM2M_RESOURCE_INTEGER_VAR_ARR(8, LWM2M_DEVICE_POWER_SOURCES_NUM, LWM2M_DEVICE_POWER_SOURCES_CURR ),
+
+#ifdef LWM2M_DEVICE_ERRCODE
+LWM2M_RESOURCE_INTEGER(11, LWM2M_DEVICE_ERRCODE),
+#endif /* LWM2M_DEVICE_ERRCODE */
+
+#ifdef LWM2M_DEVICE_TIMEZONE
+LWM2M_RESOURCE_INTEGER(15, LWM2M_DEVICE_TIMEZONE),
+#endif /* LWM2M_DEVICE_TIMEZONE */
+
+/* Current Time */
+LWM2M_RESOURCE_CALLBACK(13, { read_lwtime, set_lwtime, NULL }),
+);
+
 LWM2M_INSTANCES(device_instances, LWM2M_INSTANCE(0, device_resources));
 LWM2M_OBJECT(device, 3, device_instances);
 /*---------------------------------------------------------------------------*/
