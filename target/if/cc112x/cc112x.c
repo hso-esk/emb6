@@ -1742,22 +1742,25 @@ static void rf_gotoRx(struct s_rf_ctx *p_ctx) {
  * @param p_ctx   point to variable holding radio context structure
  */
 static void rf_gotoWor(struct s_rf_ctx *p_ctx) {
-  /* force radio to enter IDLE state */
-  rf_gotoIdle(p_ctx);
+
+  /* did the transceiver enter Idle state successfully? */
+  if (rf_gotoIdle(p_ctx) == TRUE) {
 
 #if (NETSTK_CFG_WOR_EN == TRUE)
-  uint8_t rfendCfg0;
-
-  /* read value of registers to modify */
-  cc112x_spiRegRead(CC112X_RFEND_CFG0, &rfendCfg0, 1);
-
-  /* enable RX termination based on CS */
-  rfendCfg0 |= 0x09;
-  cc112x_spiRegWrite(CC112X_RFEND_CFG0, &rfendCfg0, 1);
+    uint8_t rfendCfg0;
+    /* read value of registers to modify */
+    cc112x_spiRegRead(CC112X_RFEND_CFG0, &rfendCfg0, 1);
+    /* enable RX termination based on CS */
+    rfendCfg0 |= 0x09;
+    cc112x_spiRegWrite(CC112X_RFEND_CFG0, &rfendCfg0, 1);
 #endif
 
-  /* WOR mode */
-  cc112x_spiCmdStrobe(CC112X_SWOR);
+    /* WOR mode */
+    cc112x_spiCmdStrobe(CC112X_SWOR);
+  }
+  else {
+    TRACE_LOG_ERR("<WOR> RX while entering WOR");
+  }
 }
 
 
