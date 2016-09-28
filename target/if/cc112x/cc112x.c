@@ -574,8 +574,6 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
 
   uint32_t tickstart;
   uint32_t txTimeout;
-  uint8_t marcStatus0;
-  uint8_t txOnCCA;
   uint8_t enterRx;
   uint8_t numWrBytes;
   struct s_rf_ctx *p_ctx = &rf_ctx;
@@ -611,7 +609,6 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
     cc112x_spiCmdStrobe(CC112X_STX);
 
     /* wait for complete transmission of the frame until timeout */
-    txOnCCA = FALSE;
     enterRx = TRUE;
     tickstart = rt_tmr_getCurrenTick();
     do {
@@ -621,16 +618,11 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
         break;
       }
 
-      /* poll for TXONCCA status for first 2ms */
-      if ((txTimeout < 2) && (txOnCCA == FALSE)) {
-        cc112x_spiRegRead(CC112X_MARC_STATUS0, &marcStatus0, 1);
-        txOnCCA = (marcStatus0 & 0x04) >> 2;
-        if (txOnCCA == TRUE) {
-          /* then transmission was denied due to channel access failure */
-          p_ctx->txErr = NETSTK_ERR_TX_COLLISION;
-          rf_tx_term(p_ctx);
-          break;
-        }
+      if (RF_IS_RX_BUSY() == TRUE) {
+        /* then transmission was denied due to channel access failure */
+        p_ctx->txErr = NETSTK_ERR_TX_COLLISION;
+        rf_tx_term(p_ctx);
+        break;
       }
 
       txTimeout = rt_tmr_getCurrenTick() - tickstart;
