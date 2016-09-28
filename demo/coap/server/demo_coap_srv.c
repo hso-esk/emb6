@@ -63,7 +63,11 @@ extern resource_t
   res_radio_info,
   res_radio_ctrl,
   res_temp,
+#if DEMO_COAP_SERVER_LCD_RES_EN
+  res_lcd,
+#endif /* #if DEMO_COAP_SERVER_LCD_RES_EN */
   res_led;
+
 
 /*==============================================================================
                                          API FUNCTIONS
@@ -88,6 +92,9 @@ int8_t demo_coapInit(void)
     rest_activate_resource(&res_tick, "tick");
     rest_activate_resource(&res_temp, "dev/temp");
     rest_activate_resource(&res_led, "dev/led");
+#if DEMO_COAP_SERVER_LCD_RES_EN
+    rest_activate_resource(&res_lcd, "dev/lcd");
+#endif /* #if DEMO_COAP_SERVER_LCD_RES_EN */
     rest_activate_resource(&res_radio_info, "radio/info");
     rest_activate_resource(&res_radio_ctrl, "radio/control");
 

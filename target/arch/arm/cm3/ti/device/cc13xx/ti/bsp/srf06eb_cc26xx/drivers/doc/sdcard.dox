@@ -1,0 +1,118 @@
+//*****************************************************************************
+//! @file       sdcard.dox
+//! @brief      SD Card reader chapter.
+//!
+//! Revised     $Date: 2012-12-13 10:42:32 +0100 (Thu, 13 Dec 2012) $
+//! Revision    $Revision: 9005 $
+//
+//  Copyright (C) 2011 Texas Instruments Incorporated - http://www.ti.com/
+//
+//
+//  Redistribution and use in source and binary forms, with or without
+//  modification, are permitted provided that the following conditions
+//  are met:
+//
+//    Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//
+//    Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//
+//    Neither the name of Texas Instruments Incorporated nor the names of
+//    its contributors may be used to endorse or promote products derived
+//    from this software without specific prior written permission.
+//
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+//  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+//  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+//  A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+//  OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+//  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+//  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+//  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+//  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+//  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//****************************************************************************/
+
+/*! \page sdcard_chapter
+\latexonly
+\chapter{Micro SD Card Reader}
+\jumptext{sdcard_intro}{Introduction}\\
+\jumptext{group__sdcard__api}{API Functions}\\
+\jumptext{sdcard_code_example}{Programming Example}\\
+\input{sdcard_intro}
+\input{group__sdcard__api}
+\input{sdcard_code_example}
+\endlatexonly
+*/
+
+/*! \page sdcard_intro Introduction
+The CCBOARD is fitted with a micro SD card reader. The CCBOARD BSP SD card 
+driver provides a set of functions for initializing and accessing a connected 
+micro SD/MMC card over SPI.
+
+The driver files are in <tt>bsp/CCFOLDER/drivers/</tt>.
+- <tt>source/sdcard_CCFBOARD.c</tt> contains the function implementations for CCDEVICE 
+  on CCBOARD.
+- <tt>source/sdcard.h</tt> contains the API definitions for use by applications 
+  and Micro SD Card register definitions.
+  
+SD card commands and definitions are prefixed using \b SDCARD_ (for example
+<strong>SDCARD_CMD0</strong>).
+
+\defgroup sdcard_api API Functions
+The CCBOARD micro SD card API provides basic functionality for initializing
+and accessing a mounted SD card. 
+
+Function sdCardInit() initializes the connected card and must be 
+called before calling any other SD card API functions.  Function 
+sdCardStatus() returns the current connection state of the SD card.
+
+Functions sdCardBlockRead() and sdCardBlockWrite() provide functionality for
+reading and writing blocks of data to the micro SD card.
+
+Functions sdCardGetStatusReg(), sdCardGetCid(), sdCardGetCsd(), and 
+sdCardGetSize() are provided to read various registers from the SD card.
+
+Function sdCardGetBlockSize() is a utility function that returns the default
+SD card block size.
+
+The SD card driver may be excluded from the CCBOARD BSP by 
+defining \b SDCARD_EXCLUDE. For more information on how to configure the 
+CCBOARD BSP for CCDEVICE precompiled library, see Section 
+\latexonly \ref{sect:bsp_use_configure}\endlatexonly.
+*/
+
+/*! \page sdcard_code_example Programming Example
+The below code example shows how to initialize a micro SD card and read a 
+data block from the SD card. See <tt>bsp/CCFOLDER/examples/sdcard</tt> for more 
+micro SD card reader code examples.
+
+\code
+    #include <bsp.h>
+    #include <sdcard.h>
+
+    unsigned char readBuffer[SDCARD_BLOCKLENGTH];
+
+    //
+    // Initialize SPI interface, then try to 
+    // initialize micro SD card
+    //
+    bspSpiInit(BSP_SPI_CLK_SPD);
+    if(sdCardInit() != SDCARD_SUCCESS)
+    {
+        bspAssert();    // Initialization failed
+    }
+
+    //
+    // Read block 0 from SD card into readBuffer. 
+    // An SD card block is 512 bytes.
+    //
+    if(sdCardBlockRead(0, readBuffer) != SDCARD_SUCCESS)
+    {
+        bspAssert(); // Failed to read from SD card    
+    }
+\endcode
+*/
