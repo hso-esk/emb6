@@ -589,6 +589,11 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
   /* put radio back to RX state if eWOR is enabled */
   if (p_ctx->cfgWOREnabled == TRUE) {
     rf_gotoRx(p_ctx);
+    if (RF_IS_RX_BUSY() == TRUE) {
+      /* radio is in middle of packet reception process */
+      *p_err = NETSTK_ERR_CHANNEL_ACESS_FAILURE;
+      return;
+    }
   }
   p_ctx->txDataPtr = p_data;
   p_ctx->txDataLen = len;
