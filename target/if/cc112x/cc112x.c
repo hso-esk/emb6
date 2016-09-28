@@ -1296,7 +1296,10 @@ static void rf_rx_chksum(struct s_rf_ctx *p_ctx) {
   uint8_t numChksumBytes;
 
   /* read remaining bytes from RX FIFO */
-  rf_readRxFifo(p_ctx, p_ctx->rxNumRemBytes);
+  if (p_ctx->rxNumRemBytes) {
+    rf_readRxFifo(p_ctx, p_ctx->rxNumRemBytes);
+    p_ctx->rxNumRemBytes = 0;
+  }
 
 #if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
   /* update checksum */
@@ -1535,7 +1538,10 @@ static void rf_tx_rxAckFini(struct s_rf_ctx *p_ctx) {
   packetbuf_attr_t expSeqNo;
 
   /* read remaining bytes from RX FIFO */
-  rf_readRxFifo(p_ctx, p_ctx->rxNumRemBytes);
+  if (p_ctx->rxNumRemBytes) {
+    rf_readRxFifo(p_ctx, p_ctx->rxNumRemBytes);
+    p_ctx->rxNumRemBytes = 0;
+  }
 
   /* update checksum */
   if (p_ctx->rxLastDataPtr > (p_ctx->rxFrame.crc_len + p_ctx->rxLastChksumPtr)) {
