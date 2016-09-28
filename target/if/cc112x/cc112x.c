@@ -355,7 +355,7 @@ static void rf_readRxFifo(struct s_rf_ctx *p_ctx, uint8_t numBytes);
 static void rf_setPktLen(uint8_t mode, uint16_t len);
 #endif
 
-static void rf_gotoIdle(struct s_rf_ctx *p_ctx);
+static uint8_t rf_gotoIdle(struct s_rf_ctx *p_ctx);
 static void rf_gotoRx(struct s_rf_ctx *p_ctx);
 static void rf_gotoWor(struct s_rf_ctx *p_ctx);
 
@@ -1674,17 +1674,28 @@ static void rf_tmrDbgCb(void *p_arg) {
  * @brief put the radio into IDLE state
  * @param p_ctx   point to variable holding radio context structure
  */
-static void rf_gotoIdle(struct s_rf_ctx *p_ctx) {
+static uint8_t rf_gotoIdle(struct s_rf_ctx *p_ctx) {
+
+  uint8_t isIdleOk = TRUE;
 
   /* wait until radio enters IDLE state */
   cc112x_spiCmdStrobe(CC112X_SIDLE);
   while (RF_READ_CHIP_STATE() != RF_STATE_IDLE) {
     /* do nothing */
+    if (RF_IS_RX_BUSY() == TRUE) {
+      trace_printf("<IDLE> RX while IDLE");
+      isIdleOk = FALSE;
+      break;
+    }
   };
 
-  /* flushing TXFIFO and RXFIFO */
-  cc112x_spiCmdStrobe(CC112X_SFTX);
-  cc112x_spiCmdStrobe(CC112X_SFRX);
+  if (isIdleOk == TRUE) {
+    /* flushing TXFIFO and RXFIFO */
+    cc112x_spiCmdStrobe(CC112X_SFTX);
+    cc112x_spiCmdStrobe(CC112X_SFRX);
+  }
+
+  return isIdleOk;
 }
 
 
