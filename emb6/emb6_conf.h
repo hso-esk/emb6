@@ -926,7 +926,7 @@ void uip_log(char *msg);
 #if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
  /*!< Enable/Disable 2k-length frame support in 802.15.4G mode */
   #ifndef NETSTK_CFG_2K_FRAME_EN
-    #define NETSTK_CFG_2K_FRAME_EN                          FALSE
+    #define NETSTK_CFG_2K_FRAME_EN                          TRUE
   #endif
 
   /*!< Enable/Disable MR-FSK PHY, see IEEE Std. 802.15.4g-2012 */
