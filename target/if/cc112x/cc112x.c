@@ -580,15 +580,9 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
   uint8_t numWrBytes;
   struct s_rf_ctx *p_ctx = &rf_ctx;
 
-  if (p_ctx->state != RF_STATE_RX_IDLE) {
-    if ((p_ctx->state & 0xF0) == RF_STATE_RX_IDLE) {
-      /* radio is in middle of packet reception process */
-      *p_err = NETSTK_ERR_CHANNEL_ACESS_FAILURE;
-    } else {
-      /* radio is performing other tasks */
-      TRACE_LOG_ERR("<RFTX> refused ds=%02x", p_ctx->state);
-      *p_err = NETSTK_ERR_BUSY;
-    }
+  if (RF_IS_RX_BUSY() == TRUE) {
+    /* radio is in middle of packet reception process */
+    *p_err = NETSTK_ERR_CHANNEL_ACESS_FAILURE;
     return;
   }
 
@@ -2047,7 +2041,7 @@ static void rf_cca(e_nsErr_t *p_err) {
   uint8_t rssi_status;
   struct s_rf_ctx *p_ctx = &rf_ctx;
 
-  if (p_ctx->state != RF_STATE_RX_IDLE) {
+  if (RF_IS_RX_BUSY() == TRUE) {
     *p_err = NETSTK_ERR_BUSY;
   }
   else {
@@ -2072,7 +2066,7 @@ static void rf_cca(e_nsErr_t *p_err) {
     }
 
     /* has a packet arrived? */
-    if (p_ctx->state != RF_STATE_RX_IDLE) {
+    if (RF_IS_RX_BUSY() == TRUE) {
       /* then set packet reception a higher priority than CCA */
       *p_err = NETSTK_ERR_BUSY;
     }
