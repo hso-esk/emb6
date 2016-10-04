@@ -2393,7 +2393,7 @@ forward(uint8_t dest_rid)
 			thrd_create_rloc_iid(&next_hop_addr, THRD_CREATE_RLOC16(next_hop_rid, 0));
 			// TODO Build packet...
 			// Info: Use IEEE 802.15.4 header to forward packets.
-			// Maybe, simply the output(mac address) function can be used --> check this!
+			// Maybe, simply call the output(mac address) function with the corresponding link layer address (RLOC IID) --> check this!
 		} else {
 			// No route found --> drop packet.
 			return 0;
