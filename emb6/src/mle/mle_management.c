@@ -228,32 +228,35 @@ void reply_for_mle_childID_request(void *ptr)
 	if(ptr!=NULL)
 	{
 		if(*routerId<63)
-			mle_set_parent_mode(routerId);
+		{
+			thrd_iface_set_router_id(*routerId);
+			mle_set_parent_mode();
+		}
 		else
-			 // TODO send error to child
+			// TODO send error to child
 			return;
 
 	}
 
-		if(MyNode.OpMode == CHILD)
-		{
-			// TODO verify if i already send a request for router id (may be inside the function)
-			// send request to become a router and then reply
-			LOG_RAW(ANSI_COLOR_YELLOW"Sending request to become a Router \n"ANSI_COLOR_RESET);
-			thrd_request_router_id(NULL);
+	if(MyNode.OpMode == CHILD)
+	{
+		// TODO verify if i already send a request for router id (may be inside the function)
+		// send request to become a router and then reply
+		LOG_RAW(ANSI_COLOR_YELLOW"Sending request to become a Router \n"ANSI_COLOR_RESET);
+		thrd_request_router_id(NULL);
 
-		}
-		else if (MyNode.OpMode == PARENT)
-		{
-			mle_init_cmd(&cmd,CHILD_ID_RESPONSE);
-			add_src_address_to_cmd(&cmd);
-			add_leader_to_cmd(&cmd,thrd_generate_leader_data_tlv());
-			add_address16_to_cmd(&cmd , assign_address16(child->id));
-			add_route64_to_cmd(&cmd,route64,len);
-			mle_send_msg( &cmd,&param.source_addr);
-			child= mle_find_child_byAdd(&param.source_addr);
-			child->state=LINKED;
-		}
+	}
+	else if (MyNode.OpMode == PARENT)
+	{
+		mle_init_cmd(&cmd,CHILD_ID_RESPONSE);
+		add_src_address_to_cmd(&cmd);
+		add_leader_to_cmd(&cmd,thrd_generate_leader_data_tlv());
+		add_address16_to_cmd(&cmd , assign_address16(child->id));
+		add_route64_to_cmd(&cmd,route64,len);
+		mle_send_msg( &cmd,&param.source_addr);
+		child= mle_find_child_byAdd(&param.source_addr);
+		child->state=LINKED;
+	}
 
 }
 
@@ -426,7 +429,7 @@ void mle_join_process(void *ptr)
 				LOG_RAW(ANSI_COLOR_GREEN"starting new partition ... \n"ANSI_COLOR_RESET);
 
 				thrd_partition_start();
-				mle_set_parent_mode(0xff);
+				mle_set_parent_mode();
 				PRESET();
 				finish=1;
 				break;
@@ -934,7 +937,7 @@ uint8_t mle_init(void)
 	PRINTFY("\n NB WITH LQ 2 is %i:",count_neighbor_LQ(2));
 	 */
 
-/*
+	/*
 	linkaddr_t add;
 	add.u8[7]=0x02 ;
 	add.u8[6]=0x00 ;
@@ -947,10 +950,10 @@ uint8_t mle_init(void)
 	add_version_to_cmd(&cmd);
 	thrd_iface_set_rloc(0x0002);
 	uip_ip6addr(&s_destAddr, 0xfe80, 0, 0, 0, 0, 0x00ff, 0xfe00, 0x0002);
-	uip_ip6addr(&s_destAddr, 0xfe80, 0, 0, 0, 0x0250, 0xc2ff, 0xfea8, 0x00aa);
-	uip_ip6addr(&s_destAddr, 0xfe80, 0, 0, 0, 0x250, 0xc2ff, 0xfea8, 0xb0);
+	//uip_ip6addr(&s_destAddr, 0xfe80, 0, 0, 0, 0x0250, 0xc2ff, 0xfea8, 0x00aa);
+	//uip_ip6addr(&s_destAddr, 0xfe80, 0, 0, 0, 0x250, 0xc2ff, 0xfea8, 0xb0);
 	mle_send_msg(&cmd, &s_destAddr);
-
+	 */
 
 	/**********************/
 	ctimer_set(&c_mle_Timer, 1 * bsp_get(E_BSP_GET_TRES) , mle_join_process, (void *) NULL );
@@ -961,7 +964,7 @@ uint8_t mle_init(void)
 
 };
 
-uint8_t mle_set_parent_mode(uint8_t router_id)
+uint8_t mle_set_parent_mode()
 {
 	MyNode.OpMode=PARENT; // router
 	LOG_RAW(ANSI_COLOR_GREEN "MLE : Node operate as Parent ... "ANSI_COLOR_RESET);
@@ -969,6 +972,18 @@ uint8_t mle_set_parent_mode(uint8_t router_id)
 
 	/* clear the neighbors router table  */
 	mle_rm_all_nb_router();
+
+
+	/* set the rloc address */
+	thrd_iface_set_rloc(thrd_iface_get_router_id()<< 10);
+
+	/* set the Mac short address */
+	linkaddr_t add;
+	uint16_t addrs;
+	addrs=thrd_iface_get_router_id()<<10;
+	add.u8[7]=(uint8_t)addrs ;
+	add.u8[6]=addrs>>8 ;
+	linkaddr_set_node_shortAddr(&add);
 	/* start synchronisation with other routers */
 	mle_synchro_process(NULL);
 
@@ -989,8 +1004,8 @@ uint8_t mle_set_child_mode(uint16_t rloc16)
 
 	/* set the Mac short address */
 	linkaddr_t add;
-	add.u8[7]=0x02 ;
-	add.u8[6]=0x00 ;
+	add.u8[7]=(uint8_t)rloc16 ;
+	add.u8[6]=rloc16>>8 ;
 	linkaddr_set_node_shortAddr(&add);
 
 	/* clear the neighbors table  */
