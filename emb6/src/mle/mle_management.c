@@ -186,12 +186,19 @@ static void reply_for_mle_parent_request(void *ptr)
 		/* add the leader data tlv */
 		add_leader_to_cmd(&cmd,thrd_generate_leader_data_tlv());
 
-		// link-layer frame counter tlv
-		// MLE Frame Counter tlv
-		add_response_to_cmd(&cmd, mle_find_tlv_in_cmd(param.rec_cmd,TLV_CHALLENGE));
+		// TODO add link-layer frame counter tlv
+		// TODO add MLE Frame Counter tlv
 
+
+		/* get the received challenge of the child */
 		/* find the child */
 		child= mle_find_child(*child_id);
+		child->challenge;
+
+		/********************************************************/
+		add_response_to_cmd(&cmd, mle_find_tlv_in_cmd(param.rec_cmd,TLV_CHALLENGE));
+
+
 
 		/* store the challenge generated  */
 		child->challenge= add_rand_challenge_to_cmd(&cmd);
@@ -650,6 +657,10 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 					nb->state=PENDING;
 					/* store the address of the nb router */
 					uip_ip6addr_copy(&nb->tmp ,source_addr);
+					/* store the received challenge*/
+					tlv=mle_find_tlv_in_cmd(cmd,TLV_CHALLENGE);
+					nb->challenge= (tlv->value[3]) | (tlv->value[2] << 8) | (tlv->value[1] << 16)| (tlv->value[0] << 24);
+
 					LOG_RAW("ID allocated for the nb router = %i \n", nb->id);
 				}
 				else
