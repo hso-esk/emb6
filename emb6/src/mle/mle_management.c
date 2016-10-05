@@ -189,21 +189,23 @@ static void reply_for_mle_parent_request(void *ptr)
 		// TODO add link-layer frame counter tlv
 		// TODO add MLE Frame Counter tlv
 
-
-		/* get the received challenge of the child */
 		/* find the child */
 		child= mle_find_child(*child_id);
-		child->challenge;
-
-		/********************************************************/
-		add_response_to_cmd(&cmd, mle_find_tlv_in_cmd(param.rec_cmd,TLV_CHALLENGE));
+		/* get the received challenge of the child */
+		tlv_t resp ;
+		resp.length=4;
+		resp.value[0]= (uint8_t) ( child->challenge>> 24) & 0xFF ;
+		resp.value[1]= (uint8_t) ( child->challenge>> 16) & 0xFF ;
+		resp.value[2]= (uint8_t) ( child->challenge>> 8) & 0xFF ;
+		resp.value[3]= (uint8_t)  child->challenge & 0xFF ;
+		add_response_to_cmd(&cmd, &resp);
 
 
 
 		/* store the challenge generated  */
 		child->challenge= add_rand_challenge_to_cmd(&cmd);
 
-		add_Link_margin_to_cmd(&cmd,param.rec_rssi);
+		add_Link_margin_to_cmd(&cmd,child->rec_rssi);
 		add_Cnnectivity_to_cmd(&cmd,MAX_CHILD,MyNode.childs_counter,count_neighbor_LQ(3),count_neighbor_LQ(2),count_neighbor_LQ(1),
 				thrd_partition_get_leader_cost(),thrd_partition_get_id_seq_number());
 		add_version_to_cmd(&cmd);
@@ -657,10 +659,6 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 					nb->state=PENDING;
 					/* store the address of the nb router */
 					uip_ip6addr_copy(&nb->tmp ,source_addr);
-					/* store the received challenge*/
-					tlv=mle_find_tlv_in_cmd(cmd,TLV_CHALLENGE);
-					nb->challenge= (tlv->value[3]) | (tlv->value[2] << 8) | (tlv->value[1] << 16)| (tlv->value[0] << 24);
-
 					LOG_RAW("ID allocated for the nb router = %i \n", nb->id);
 				}
 				else
@@ -776,6 +774,12 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 					child->state=PENDING;
 					/* store the address of the child */
 					uip_ip6addr_copy(&child->tmp ,source_addr);
+					/* store the received challenge*/
+					tlv=mle_find_tlv_in_cmd(cmd,TLV_CHALLENGE);
+					child->challenge= (tlv->value[3]) | (tlv->value[2] << 8) | (tlv->value[1] << 16)| (tlv->value[0] << 24);
+					/* store the received rssi */
+					child->rec_rssi=get_rssi();
+
 					LOG_RAW("ID allocated for the child = %i \n", child->id);
 				}
 				else
@@ -783,14 +787,6 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 					LOG_RAW(ANSI_COLOR_RED"Failed to allocate child id ...");PRESET();
 					break;
 				}
-
-				/* trigger the timer to remove the child after period of pending time (if the state wasn't changed to linked) */
-				//ctimer_set(&child->timeOut, 1 * bsp_get(E_BSP_GET_TRES) , check_child_state, (void *) &child->id );
-
-				/* prepare param */
-				param.rec_cmd=cmd;
-				param.rec_rssi=get_rssi();
-				uip_ip6addr_copy(&param.source_addr,source_addr);
 
 				/* trigger the timer to reply after the random period */
 				ctimer_set(&child->timeOut, bsp_getrand(MaxRand) *  (bsp_get(E_BSP_GET_TRES) / 1000 ) , reply_for_mle_parent_request, (void *) &child->id );
