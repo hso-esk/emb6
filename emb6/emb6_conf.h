@@ -870,7 +870,7 @@ void uip_log(char *msg);
 
 /** Thread Network Layer functions          (see net/rip) */
 #ifndef LOGGER_THRD_NET
-#define LOGGER_THRD_NET                    	FALSE
+#define LOGGER_THRD_NET                    	TRUE
 #endif
 
 /** Radio functions                        	(see $(IF).c) */

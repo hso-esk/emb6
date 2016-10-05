@@ -580,28 +580,33 @@ tcpip_ipv6_output(void)
 			if ( thrd_is_addr_ml_rloc(&UIP_IP_BUF->destipaddr) ) {
 
 				// TODO Nidhal: Set Short Address Mode?
+				packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
+				packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_SHORTADDRMODE);
+
+				printf("Inside mesh-local address space.\n");
 
 				thrd_rdb_route_t *route;
-				route = thrd_rdb_route_lookup( thrd_extract_router_id_from_rloc_addr(&UIP_IP_BUF->destipaddr) );
+				// route = thrd_rdb_route_lookup( thrd_extract_router_id_from_rloc_addr(&UIP_IP_BUF->destipaddr) );
 				// No route was found - the packet will be dropped (?).
-				if ( route == NULL ) {
-					return;
-				} else {
+				// if ( route == NULL ) {
+				//	return;
+				//} else {
 					// A route was found, so we look up the nexthop neighbor for the route.
-					thrd_create_next_hop_addr(nexthop, THRD_CREATE_RLOC16(route->R_next_hop, 0));
+					// thrd_create_next_hop_addr(nexthop, THRD_CREATE_RLOC16(route->R_next_hop, 0));
 
 					// If the nexthop is dead we drop its route.
-					if ( nexthop == NULL ) {
-						thrd_rdb_route_rm(route);
+					// if ( nexthop == NULL ) {
+					//	thrd_rdb_route_rm(route);
 						// We don't have a nexthop to send the packet to, so we drop it.
-						return;
-					}
+					//	return;
+					//}
 
 					// TODO Call tcpip_output function with RLOC16!
-					memcpy(&lladdr.addr[0], &nexthop->u8[8], 6);
-					uint16_t rloc16 = THRD_CREATE_RLOC16(route->R_next_hop, 0);
+					// memcpy(&lladdr.addr[0], &nexthop->u8[8], 6);
+					// uint16_t rloc16 = THRD_CREATE_RLOC16(route->R_next_hop, 0);
+					uint16_t rloc16 = 0;
 					memcpy(&lladdr.addr[6], &rloc16, 2);
-				}
+			//	}
 			} else {
 				// TODO Perform EID-to-RLOC lookup.
 				return;
