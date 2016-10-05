@@ -202,7 +202,7 @@ trg += [{
 }]
 
 trg += [{
-    'id'        : 'ds_stk',
+    'id'        : 'ds_stk3600',
     'apps_conf' : [ dtls_srv ],
     'bsp'       : get_descr(bsp, 'efm32stk3600_rf212b')
 }]
