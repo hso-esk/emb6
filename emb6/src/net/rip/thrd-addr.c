@@ -159,8 +159,17 @@ thrd_create_next_hop_addr(uip_ipaddr_t *addr, uint8_t rloc16)
 /* --------------------------------------------------------------------------- */
 
 void
+thrd_create_rloc_linkaddr(linkaddr_t *link_addr, uint8_t router_id, uint8_t child_id)
+{
+	memcpy(link_addr->u8, &rloc_addr_fixed, 6);
+	uint16_t rloc16 = THRD_CREATE_RLOC16(router_id, child_id);
+	memcpy(&link_addr->u8[6], &rloc16, 2);
+}
+
+/* --------------------------------------------------------------------------- */
+
+void
 thrd_invert_universal_local_bit(uip_lladdr_t *lladdr)
 {
 	lladdr->addr[0] &= IPV6_UNIVERSAL_LOCAL_BIT_INVERT_MASK;
 }
-

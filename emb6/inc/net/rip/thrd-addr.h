@@ -159,6 +159,14 @@ extern bool thrd_is_rid_valid(uint8_t router_id);
 extern void thrd_create_next_hop_addr(uip_ipaddr_t *addr, uint8_t rloc16);
 
 /**
+ * Create RLOC based link layer address.
+ * @param link_addr A link layer addr.
+ * @param router_id The router id.
+ * @param child_id The child id.
+ */
+extern void thrd_create_rloc_linkaddr(linkaddr_t *link_addr, uint8_t router_id, uint8_t child_id);
+
+/**
  * Invert the universal/local bit of a MAC Extended Address based IID.
  * @param link_addr The MAC Extended Address based IID.
  */
