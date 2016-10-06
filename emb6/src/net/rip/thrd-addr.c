@@ -63,7 +63,7 @@ thrd_is_addr_ml_rloc(uip_ipaddr_t *addr)
 
 bool
 thrd_is_rloc_addr(uip_ipaddr_t *addr) {
-	if ( memcmp(&rloc_addr_fixed, addr->u8, 6) == 0 ) {
+	if ( memcmp(&rloc_addr_fixed, &addr->u8[8], 6) == 0 ) {
 		return TRUE;
 	}
 	return FALSE;
