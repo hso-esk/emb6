@@ -39,8 +39,19 @@ typedef enum {
                                     DEVICE TYPE
 ===============================================================================*/
 
-#define THRD_DEV_NETTYPE			THRD_DEV_NETTYPE_REED		// Network layer type: REED.
-#define THRD_DEV_LLTYPE				THRD_DEV_LLTYPE_FFD			// Link layer type: FFD.
+// ---------- THREAD NETWORK LAYER DEVICE TYPES ------------------
+#define THRD_DEV_NET_REED	 		0x01  	// Router-eligible end device.
+#define THRD_DEV_NET_PED		 	0x02	// Powered end devices, also referred as non-sleepy end devices.
+#define THRD_DEV_NET_SED		 	0x03	// Sleepy end devices.
+
+// ------------ THREAD LINK LAYER DEVICE TYPES -------------------
+#define THRD_DEV_LL_FFD						0x00	// Full function device.
+#define THRD_DEV_LL_RX_ON_WHEN_IDLE_RFD		0x01	// Reduced function device.
+#define THRD_DEV_LL_RX_OFF_WHEN_IDLE_RFD	0x02	// Reduced function device.
+
+// ---------- INITIAL THREAD NETWORK LAYER DEVICE TYPE -----------
+#define THRD_DEV_NETTYPE			THRD_DEV_NET_REED		// Network layer type: REED.
+#define THRD_DEV_LLTYPE				THRD_DEV_LL_FFD			// Link layer type: FFD.
 
 // -------------------- THREAD RLOC16 ----------------------------
 #define THRD_CREATE_RLOC16(router_id, child_id)		((uint16_t) (0x0000 | ((router_id << 10) | (child_id) )))
