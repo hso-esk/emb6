@@ -1786,9 +1786,28 @@ static uint8_t output(const uip_lladdr_t *localdest)
 
 			if ( thrd_is_rloc_addr(&dest_addr) ) {	// Link-local RLOC address.
 
+				// TODO Nidhal: Set Short Address Mode?
+				packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_SHORTADDRMODE);
+				// TODO check if i have a short address
+				if(0) // TODO to change with if i have short address
+					packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
+				else
+					packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_LONGADDRMODE);
+				memcpy(packetbuf_ptr + packetbuf_hdr_len, (uint8_t *)UIP_IP_BUF + uncomp_hdr_len, uip_len - uncomp_hdr_len);
+				packetbuf_set_datalen(uip_len - uncomp_hdr_len + packetbuf_hdr_len);
+				send_packet(&dest);
+
 			} else {	// Link-local EUI-64 based address.
 				// Reset universal/local bit.
 				thrd_eui_64_invert_universal_local_bit(&dest);
+
+				// TODO Nidhal: Set Short Address Mode?
+				packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_LONGADDRMODE);
+				// TODO check if i have a short address
+				if(0) // TODO to change with if i have short address
+					packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
+				else
+					packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_LONGADDRMODE);
 
 				memcpy(packetbuf_ptr + packetbuf_hdr_len, (uint8_t *)UIP_IP_BUF + uncomp_hdr_len, uip_len - uncomp_hdr_len);
 				packetbuf_set_datalen(uip_len - uncomp_hdr_len + packetbuf_hdr_len);
@@ -1801,6 +1820,11 @@ static uint8_t output(const uip_lladdr_t *localdest)
 		if ( !uip_is_addr_mcast(&dest_addr) ) {	// Unicast address.
 
 			if ( thrd_is_linkaddr_rloc(&dest) ) {	// RLOC IID.
+
+				// TODO Nidhal: Set Short Address Mode?
+				packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
+				packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_SHORTADDRMODE);
+
 				// Obtain the destination Router ID from the RLOC IID.
 				uint8_t dest_rid = thrd_extract_router_id_from_rloc_linkaddr(&dest);
 
@@ -1866,6 +1890,7 @@ static uint8_t output(const uip_lladdr_t *localdest)
 			}
 		} else {	// Multicast address.
 			packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_LONGADDRMODE);
+			packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_LONGADDRMODE);
 			memcpy(packetbuf_ptr + packetbuf_hdr_len,
 					(uint8_t *)UIP_IP_BUF + uncomp_hdr_len,
 					uip_len - uncomp_hdr_len);
