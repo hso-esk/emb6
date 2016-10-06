@@ -54,6 +54,8 @@
 #include "emb6.h"
 #include "packetbuf.h"
 #include "linkaddr.h"
+#define     LOGGER_ENABLE        LOGGER_MAC
+#include    "logger.h"
 
 /*
 ********************************************************************************
@@ -136,6 +138,19 @@ static void MAC_Off(e_nsErr_t *p_err)
 
 static void MAC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 {
+#if LOGGER_ENABLE
+    /*
+     * Logging
+     */
+    uint16_t data_len = len;
+    uint8_t *p_dataptr = p_data;
+    LOG_RAW("MAC_TX: ");
+    while (data_len--) {
+        LOG_RAW("%02x", *p_dataptr++);
+    }
+    LOG_RAW("\r\n====================\r\n");
+#endif
+
     MAC_Netstk->phy->send(p_data, len, p_err);
 
     MAC_TxErr = NETSTK_ERR_NONE;
@@ -151,6 +166,19 @@ static void MAC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     memcpy(packetbuf_dataptr(),
            p_data,
            len);
+
+#if LOGGER_ENABLE
+    /*
+     * Logging
+     */
+    uint16_t data_len = len;
+    uint8_t *p_dataptr = p_data;
+    LOG_RAW("MAC_RX: ");
+    while (data_len--) {
+        LOG_RAW("%02x", *p_dataptr++);
+    }
+    LOG_RAW("\r\n====================\r\n");
+#endif
 
     MAC_Netstk->dllc->recv(p_data, len, p_err);
 }

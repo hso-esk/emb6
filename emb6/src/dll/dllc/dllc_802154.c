@@ -328,6 +328,7 @@ static void dllc_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
   /* write the header */
   frame802154_create(&params, packetbuf_hdrptr());
 
+
 #if (NETSTK_CFG_RF_CRC_EN == FALSE) && 0
   uint16_t checksum_data_len;
   uint8_t *p_mhr;
@@ -565,7 +566,7 @@ static void dllc_verifyAddr(frame802154_t *p_frame, e_nsErr_t *p_err)
         is_addr_matched = linkaddr_cmp((linkaddr_t *)&p_frame->dest_addr, &linkaddr_node_addr);
       }
       else if (p_frame->fcf.dest_addr_mode == FRAME802154_SHORTADDRMODE) {
-        is_addr_matched = linkaddr_cmp_shortAddr((linkaddr_t *)&p_frame->dest_addr, &linkaddr_set_node_shortAddr);
+        is_addr_matched = linkaddr_cmp_shortAddr((linkaddr_t *)&p_frame->dest_addr, &linkaddr_node_short_addr);
       }
       else {
         /* invalid destination addressing mode */

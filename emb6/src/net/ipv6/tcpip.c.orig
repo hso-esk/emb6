@@ -49,20 +49,16 @@
 #include "etimer.h"
 #include "uip-split.h"
 #include "uip-packetqueue.h"
+#include "packetbuf.h"
 
 #if NETSTACK_CONF_WITH_IPV6
 #include "uip-nd6.h"
 #include "uip-ds6.h"
 #endif
 
-#ifdef UIP_CONF_IPV6_THRD_ROUTING
-#include "thrd-route.h"
-#include "thrd-addr.h"
-#endif
-
 #include <string.h>
 #include "evproc.h"
-#define DEBUG DEBUG_PRINT
+#define DEBUG DEBUG_NONE
 #include "uip-debug.h"
 
 
@@ -515,98 +511,12 @@ tcpip_input(void)
 void
 tcpip_ipv6_output(void)
 {
-<<<<<<< HEAD
-  uip_ds6_nbr_t *nbr = NULL;
-  uip_ipaddr_t *nexthop = NULL;
-
-  if(uip_len == 0) {
-    return;
-  }
-
-  if(uip_len > UIP_LINK_MTU) {
-    UIP_LOG("tcpip_ipv6_output: Packet to big");
-    uip_len = 0;
-    return;
-  }
-
-  if(uip_is_addr_unspecified(&UIP_IP_BUF->destipaddr)){
-    UIP_LOG("tcpip_ipv6_output: Destination address unspecified");
-    uip_len = 0;
-    return;
-  }
-
-#define UIP_CONF_IPV6_THRD_ROUTING TRUE		// TODO Remove this!!!
-
-#ifdef UIP_CONF_IPV6_THRD_ROUTING
-  UIP_LOG("tcpip_ipv6_output: Using THREAD routing algorithm.");
-  if ( !uip_is_addr_mcast(&UIP_IP_BUF->destipaddr) ) {
-	  // Next hop determination.
-	  uip_lladdr_t lladdr;
-	  /* We first check whether the destination is on our immediate
-	   * link. If so, we simply use the destination address as our
-	   * nexthop address.
-	   */
-	  if ( uip_ds6_is_addr_onlink(&UIP_IP_BUF->destipaddr) ) {
-		  nexthop = &UIP_IP_BUF->destipaddr;
-		  memcpy(&lladdr.addr[0], &nexthop->u8[8], 8);
-
-		  if ( thrd_is_addr_ll_rloc(nexthop) ) {
-			  // TODO Nidhal: Set Short Address Mode?
-		  } else {
-			  thrd_invert_universal_local_bit(&lladdr);
-			  // TODO Nidhal: Set Long Address Mode?
-		  }
-
-		  if ( nexthop == NULL ) {
-			  // Drop the packet since the destination address is invalid.
-			  return;
-		  }
-
-	  } else {
-		  // Check whether the destination address is a Mesh-Local IPv6 RLOC address.
-		  if ( thrd_is_addr_ml_rloc(&UIP_IP_BUF->destipaddr) ) {
-
-			  // TODO Nidhal: Set Short Address Mode?
-
-			  thrd_rdb_route_t *route;
-			  route = thrd_rdb_route_lookup( thrd_extract_router_id_from_rloc_addr(&UIP_IP_BUF->destipaddr) );
-			  // No route was found - the packet will be dropped (?).
-			  if ( route == NULL ) {
-				  return;
-			  } else {
-				  // A route was found, so we look up the nexthop neighbor for the route.
-				  thrd_create_next_hop_addr(nexthop, THRD_CREATE_RLOC16(route->R_next_hop, 0));
-
-				  // If the nexthop is dead we drop its route.
-				  if ( nexthop == NULL ) {
-					  thrd_rdb_route_rm(route);
-					  // We don't have a nexthop to send the packet to, so we drop it.
-					  return;
-				  }
-
-				  // TODO Call tcpip_output function with RLOC16!
-				  memcpy(&lladdr.addr[0], &nexthop->u8[8], 6);
-				  uint16_t rloc16 = THRD_CREATE_RLOC16(route->R_next_hop, 0);
-				  memcpy(&lladdr.addr[6], &rloc16, 2);
-			  }
-		  } else {
-			  // TODO Perform EID-to-RLOC lookup.
-			  return;
-		  }
-	  }
-	  tcpip_output(&lladdr);		// TODO Check this!
-	  uip_len = 0;
-	  return;
-  }
-#else
-  if(!uip_is_addr_mcast(&UIP_IP_BUF->destipaddr)) {
-    /* Next hop determination */
-    nbr = NULL;
-
-    /* We first check if the destination address is on our immediate
-=======
 	uip_ds6_nbr_t *nbr = NULL;
+<<<<<<< HEAD
 	uip_ipaddr_t *nexthop;
+=======
+	uip_ipaddr_t *nexthop = NULL;
+>>>>>>> origin/feature/merge-short-addr-rip
 
 	if(uip_len == 0) {
 		return;
@@ -617,14 +527,6 @@ tcpip_ipv6_output(void)
 		uip_len = 0;
 		return;
 	}
-	/*******************************************************************************************************************/
-	PRINT6ADDR(&UIP_IP_BUF->destipaddr);
-	 uip_ip6addr_t temp;
-	 uip_ip6addr_copy(&temp, &UIP_IP_BUF->destipaddr) ;
-
-		if(uip_is_addr_linklocal(&temp)&& sicslowpan_is_iid_16_bit_compressable(&temp))
-			tcpip_output((uip_lladdr_t *)&UIP_IP_BUF->destipaddr.u8[8]);
-	 /*********************************************************************************************************************/
 
 	if(uip_is_addr_unspecified(&UIP_IP_BUF->destipaddr)){
 		UIP_LOG("tcpip_ipv6_output: Destination address unspecified");
@@ -633,11 +535,111 @@ tcpip_ipv6_output(void)
 	}
 
 	if(!uip_is_addr_mcast(&UIP_IP_BUF->destipaddr)) {
+
+#ifdef UIP_CONF_IPV6_THRD_ROUTING
+<<<<<<< HEAD
+
+		uip_lladdr_t dest_lladdr;
+
+		nexthop = &UIP_IP_BUF->destipaddr;
+		memcpy(&dest_lladdr.addr[0], &nexthop->u8[8], 8);
+
+		tcpip_output(&dest_lladdr);
+
+		uip_len = 0;
+		return;
+
+#else
+
 		/* Next hop determination */
 		nbr = NULL;
 
+=======
+	UIP_LOG("tcpip_ipv6_output: Using THREAD routing algorithm.");
+	if ( !uip_is_addr_mcast(&UIP_IP_BUF->destipaddr) ) {
+		// Next hop determination.
+		uip_lladdr_t lladdr;
+		/* We first check whether the destination is on our immediate
+		 * link. If so, we simply use the destination address as our
+		 * nexthop address.
+		 */
+		if ( uip_is_addr_link_local(&UIP_IP_BUF->destipaddr) ) {	// Link-Local.
+			nexthop = &UIP_IP_BUF->destipaddr;
+			memcpy(&lladdr.addr[0], &nexthop->u8[8], 8);
+
+			if ( thrd_is_addr_ll_rloc(nexthop) ) {
+				// TODO Nidhal: Set Short Address Mode?
+				packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_SHORTADDRMODE);
+				// TODO check if i have a short address
+				if(0) // TODO to change with if i have short address
+					packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
+				else
+					packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_LONGADDRMODE);
+
+			} else {
+				thrd_invert_universal_local_bit(&lladdr);
+				// TODO Nidhal: Set Long Address Mode?
+				packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_LONGADDRMODE);
+				// TODO check if i have a short address
+				if(0) // TODO to change with if i have short address
+					packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
+				else
+					packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_LONGADDRMODE);
+			}
+
+			if ( nexthop == NULL ) {
+				// Drop the packet since the destination address is invalid.
+				return;
+			}
+
+		} else {	// Not Link-Local.
+			// Check whether the destination address is a Mesh-Local IPv6 RLOC address.
+			if ( thrd_is_addr_ml_rloc(&UIP_IP_BUF->destipaddr) ) {
+
+				// TODO Nidhal: Set Short Address Mode?
+				packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
+				packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_SHORTADDRMODE);
+
+				printf("Inside mesh-local address space.\n");
+
+				thrd_rdb_route_t *route;
+				// route = thrd_rdb_route_lookup( thrd_extract_router_id_from_rloc_addr(&UIP_IP_BUF->destipaddr) );
+				// No route was found - the packet will be dropped (?).
+				// if ( route == NULL ) {
+				//	return;
+				//} else {
+					// A route was found, so we look up the nexthop neighbor for the route.
+					// thrd_create_next_hop_addr(nexthop, THRD_CREATE_RLOC16(route->R_next_hop, 0));
+
+					// If the nexthop is dead we drop its route.
+					// if ( nexthop == NULL ) {
+					//	thrd_rdb_route_rm(route);
+						// We don't have a nexthop to send the packet to, so we drop it.
+					//	return;
+					//}
+
+					// TODO Call tcpip_output function with RLOC16!
+					// memcpy(&lladdr.addr[0], &nexthop->u8[8], 6);
+					// uint16_t rloc16 = THRD_CREATE_RLOC16(route->R_next_hop, 0);
+					uint16_t rloc16 = 0;
+					memcpy(&lladdr.addr[6], &rloc16, 2);
+			//	}
+			} else {
+				// TODO Perform EID-to-RLOC lookup.
+				return;
+			}
+		}
+		tcpip_output(&lladdr);		// TODO Check this!
+		uip_len = 0;
+		return;
+	}
+#else
+	if(!uip_is_addr_mcast(&UIP_IP_BUF->destipaddr)) {
+		/* Next hop determination */
+		nbr = NULL;
+
+>>>>>>> origin/feature/merge-short-addr-rip
 		/* We first check if the destination address is on our immediate
->>>>>>> feature/mac-short-address
        link. If so, we simply use the destination address as our
        nexthop address. */
 		if(uip_ds6_is_addr_onlink(&UIP_IP_BUF->destipaddr)){
@@ -736,12 +738,21 @@ tcpip_ipv6_output(void)
 					uip_packetqueue_set_buflen(&nbr->packethandle, uip_len);
 				}
 #endif
+<<<<<<< HEAD
+/* RFC4861, 7.2.2:
+ * "If the source address of the packet prompting the solicitation is the
+ * same as one of the addresses assigned to the outgoing interface, that
+ * address SHOULD be placed in the IP Source Address of the outgoing
+ * solicitation.  Otherwise, any one of the addresses assigned to the
+ * interface should be used."*/
+=======
 				/* RFC4861, 7.2.2:
 				 * "If the source address of the packet prompting the solicitation is the
 				 * same as one of the addresses assigned to the outgoing interface, that
 				 * address SHOULD be placed in the IP Source Address of the outgoing
 				 * solicitation.  Otherwise, any one of the addresses assigned to the
 				 * interface should be used."*/
+>>>>>>> origin/feature/merge-short-addr-rip
 				if(uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr)){
 					uip_nd6_ns_output(&UIP_IP_BUF->srcipaddr, NULL, &nbr->ipaddr);
 				} else {
@@ -794,29 +805,34 @@ tcpip_ipv6_output(void)
 			}
 #endif /*UIP_CONF_IPV6_QUEUE_PKT*/
 
-<<<<<<< HEAD
-      uip_len = 0;
-      return;
-    }
-    return;
-  }
-#endif /* UIP_CONF_IPV6_ROUTING */
-
-  /* Multicast IP destination address. */
-  tcpip_output(NULL);
-  uip_len = 0;
-  uip_ext_len = 0;
-=======
 			uip_len = 0;
 			return;
 		}
+<<<<<<< HEAD
+#endif /* UIP_CONF_IPV6_THRD_ROUTING */
 		return;
 	}
-		tcpip_output(NULL);
+	/* Multicast IP destination address. */
+=======
+		return;
+	}
+#endif /* UIP_CONF_IPV6_ROUTING */
 
+	/* Multicast IP destination address. */
+#ifdef UIP_CONF_IPV6_THRD_ROUTING
+	if(0) // TODO to change with if i have short address
+		packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
+	else
+		packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_LONGADDRMODE);
+#else
+	  packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_LONGADDRMODE);
+#endif
+
+	packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_LONGADDRMODE);
+>>>>>>> origin/feature/merge-short-addr-rip
+	tcpip_output(NULL);
 	uip_len = 0;
 	uip_ext_len = 0;
->>>>>>> feature/mac-short-address
 }
 #endif /* NETSTACK_CONF_WITH_IPV6 */
 /*---------------------------------------------------------------------------*/

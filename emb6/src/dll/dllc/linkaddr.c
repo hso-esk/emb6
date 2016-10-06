@@ -101,7 +101,7 @@ void linkaddr_set_node_shortAddr(linkaddr_t *addr)
 {
   uint8_t i;
   for(i = 0; i < LINKADDR_SHORT_SIZE; i++) {
-    linkaddr_node_short_addr.u8[i] = addr->u8[i];
+    linkaddr_node_short_addr.u8[7 - i] = addr->u8[7 - i];
   }
 }
 /*---------------------------------------------------------------------------*/
@@ -110,7 +110,7 @@ int linkaddr_cmp_shortAddr(const linkaddr_t *addr1, const linkaddr_t *addr2)
   uint8_t i;
 
   for (i = 0; i < LINKADDR_SHORT_SIZE; i++) {
-    if (addr1->u8[i] != addr2->u8[i]) {
+    if (addr1->u8[i] != addr2->u8[7 - i]) {
       return 0;
     }
   }
@@ -122,7 +122,7 @@ void linkaddr_copy_shortAddr(linkaddr_t *dest, const linkaddr_t *src)
   uint8_t i;
 
   for(i = 0; i < LINKADDR_SHORT_SIZE; i++) {
-    dest->u8[i] = src->u8[i];
+    dest->u8[i] = src->u8[7 - i];
   }
 }
 /*---------------------------------------------------------------------------*/
