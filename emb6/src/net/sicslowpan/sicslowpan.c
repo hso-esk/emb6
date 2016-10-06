@@ -1865,6 +1865,7 @@ static uint8_t output(const uip_lladdr_t *localdest)
 				// TODO
 			}
 		} else {	// Multicast address.
+			packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_LONGADDRMODE);
 			memcpy(packetbuf_ptr + packetbuf_hdr_len,
 					(uint8_t *)UIP_IP_BUF + uncomp_hdr_len,
 					uip_len - uncomp_hdr_len);
