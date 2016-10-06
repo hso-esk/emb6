@@ -85,6 +85,7 @@
 #include "thrd-addr.h"
 #include "thrd-route.h"
 #include "thrd-iface.h"
+#include "thrd-dev.h"
 
 
 
@@ -1816,7 +1817,7 @@ static uint8_t output(const uip_lladdr_t *localdest)
 			return 1;
 		}
 
-		// Check whether the destination address is a multicast address (unicast: dest != NULL, multicast: dest = NULL).
+		// Check whether the destination address is not a multicast address (unicast: dest != NULL, multicast: dest = NULL).
 		if ( !uip_is_addr_mcast(&dest_addr) ) {	// Unicast address.
 
 			if ( thrd_is_linkaddr_rloc(&dest) ) {	// RLOC IID.
@@ -1827,6 +1828,14 @@ static uint8_t output(const uip_lladdr_t *localdest)
 
 				// Obtain the destination Router ID from the RLOC IID.
 				uint8_t dest_rid = thrd_extract_router_id_from_rloc_linkaddr(&dest);
+
+#if ( (THRD_DEV_TYPE == THRD_DEV_TYPE_ROUTER) || (THRD_DEV_TYPE == THRD_DEV_TYPE_REED) )
+
+				if ( thrd_get_dev_net_type() == THRD_DEV_NETTYPE_ROUTER ) {
+
+				}
+
+#endif
 
 				// Check whether the destination is a direct neighbor.
 				if ( thrd_rdb_is_neighbor(dest_rid) ) {

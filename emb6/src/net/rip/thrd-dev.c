@@ -23,8 +23,17 @@
 
 /** Thread default Device Type Configuration. */
 thrd_dev_t thrd_dev = {
-		.type = THRD_DEV_TYPE,
-		.isFFD = THRD_DEV_FUNC,
+
+#ifdef THRD_DEV_NETTYPE
+		.net_type = THRD_DEV_NETTYPE,
+#else
+		.net_type = THRD_DEV_NETTYPE_REED,
+#endif
+#ifdef THRD_DEV_LLTYPE
+		.ll_type = THRD_DEV_LLTYPE,
+#else
+		.ll_type = THRD_DEV_LLTYPE_FFD,
+#endif
 };
 
 /*==============================================================================
@@ -58,27 +67,35 @@ thrd_dev_init(void)
 
 /* --------------------------------------------------------------------------- */
 
+thrd_dev_type_t
+thrd_get_dev_net_type(void)
+{
+	return thrd_dev.net_type;
+}
+
+/* --------------------------------------------------------------------------- */
+
 thrd_error_t
-thrd_dev_set_type(thrd_dev_type_t type)
+thrd_set_dev_net_type(thrd_dev_type_t type)
 {
 	switch(type) {
-	case THRD_DEV_TYPE_NONE:
-		thrd_dev.type = THRD_DEV_TYPE_NONE;
+	case THRD_DEV_NETTYPE_ROUTER:
+		thrd_dev.net_type = THRD_DEV_NETTYPE_ROUTER;
 		break;
-	case THRD_DEV_TYPE_END:
-		thrd_dev.type = THRD_DEV_TYPE_END;
+	case THRD_DEV_NETTYPE_REED:
+		thrd_dev.net_type = THRD_DEV_NETTYPE_REED;
 		break;
-	case THRD_DEV_TYPE_REED:
-		thrd_dev.type = THRD_DEV_TYPE_REED;
+	case THRD_DEV_NETTYPE_PED:
+		thrd_dev.net_type = THRD_DEV_NETTYPE_PED;
 		break;
-	case THRD_DEV_TYPE_ROUTER:
-		thrd_dev.type = THRD_DEV_TYPE_ROUTER;
+	case THRD_DEV_NETTYPE_SED:
+		thrd_dev.net_type = THRD_DEV_NETTYPE_SED;
 		break;
-	case THRD_DEV_TYPE_LEADER:
-		thrd_dev.type = THRD_DEV_TYPE_LEADER;
+	case THRD_DEV_NETTYPE_LEADER:
+		thrd_dev.net_type = THRD_DEV_NETTYPE_LEADER;
 		break;
 	default:
-		thrd_dev.type = THRD_DEV_TYPE_NONE;
+		thrd_dev.net_type = THRD_DEV_NETTYPE_REED;
 		return THRD_ERROR_INVALID_ARGS;
 	}
 	return THRD_ERROR_NONE;
@@ -94,25 +111,25 @@ void
 thrd_dev_print_dev_info()
 {
 	LOG_RAW("|==================================== THREAD DEVICE ====================================|\n\r");
-	LOG_RAW("| Device Type = ");
-	switch(thrd_dev.type) {
-	case THRD_DEV_TYPE_NONE:
-		LOG_RAW("THRD_DEV_TYPE_NONE");
+	LOG_RAW("| Device type = ");
+	switch(thrd_dev.net_type) {
+	case THRD_DEV_NETTYPE_ROUTER:
+		LOG_RAW("THRD_DEV_NETTYPE_ROUTER");
 		break;
-	case THRD_DEV_TYPE_END:
-		LOG_RAW("THRD_DEV_TYPE_END");
+	case THRD_DEV_NETTYPE_REED:
+		LOG_RAW("THRD_DEV_NETTYPE_REED");
 		break;
-	case THRD_DEV_TYPE_REED:
-		LOG_RAW("THRD_DEV_TYPE_REED");
+	case THRD_DEV_NETTYPE_PED:
+		LOG_RAW("THRD_DEV_NETTYPE_PED");
 		break;
-	case THRD_DEV_TYPE_ROUTER:
-		LOG_RAW("THRD_DEV_TYPE_ROUTER");
+	case THRD_DEV_NETTYPE_SED:
+		LOG_RAW("THRD_DEV_NETTYPE_SED");
 		break;
-	case THRD_DEV_TYPE_LEADER:
-		LOG_RAW("THRD_DEV_TYPE_LEADER");
+	case THRD_DEV_NETTYPE_LEADER:
+		LOG_RAW("THRD_DEV_NETTYPE_LEADER");
 		break;
 	default:
-		LOG_RAW("THRD_DEV_TYPE_NONE");
+		LOG_RAW("THRD_DEV_NETTYPE_REED");
 		break;
 	}
 	LOG_RAW("\n");

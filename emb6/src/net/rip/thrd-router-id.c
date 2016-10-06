@@ -91,7 +91,7 @@ void
 thrd_leader_init(void)
 {
 	// Starting a new Partition as the Leader.
-	thrd_dev.type = THRD_DEV_TYPE_LEADER;
+	thrd_dev.net_type = THRD_DEV_NETTYPE_LEADER;
 
 	// Initialize device's interface addresses.
 	// thrd_iface_init();

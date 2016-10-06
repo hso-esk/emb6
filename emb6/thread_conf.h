@@ -39,8 +39,8 @@ typedef enum {
                                     DEVICE TYPE
 ===============================================================================*/
 
-#define THRD_DEV_TYPE			THRD_DEV_TYPE_REED			// REED.
-#define THRD_DEV_FUNC			THRD_DEV_FUNC_FFD			// FFD.
+#define THRD_DEV_NETTYPE			THRD_DEV_NETTYPE_REED		// Network layer type: REED.
+#define THRD_DEV_LLTYPE				THRD_DEV_LLTYPE_FFD			// Link layer type: FFD.
 
 // -------------------- THREAD RLOC16 ----------------------------
 #define THRD_CREATE_RLOC16(router_id, child_id)		((uint16_t) (0x0000 | ((router_id << 10) | (child_id) )))

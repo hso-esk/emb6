@@ -63,7 +63,7 @@ thrd_partition_t thrd_partition = {
 void
 thrd_partition_start(void)
 {
-	if ( (thrd_dev.type == THRD_DEV_TYPE_ROUTER) || (thrd_dev.type == THRD_DEV_TYPE_REED) ) {
+	if ( (thrd_dev.net_type == THRD_DEV_NETTYPE_ROUTER) || (thrd_dev.net_type == THRD_DEV_NETTYPE_REED) ) {
 
 		LOG_RAW("thrd_partition_start: Starting new Thread Partition.\n");
 		// Resetting Network Partition Data.
