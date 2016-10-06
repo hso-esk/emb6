@@ -150,6 +150,19 @@ static uint8_t send_mle_childID_request(uip_ipaddr_t *dest_addr)
 }
 
 /**
+ * @brief  remove child  after time out
+ *
+ * @param  ptr	  pointer to the child
+ */
+static void time_out_remove_child(void *ptr)
+{
+	mle_neighbor_t*	 nb_to_rem;
+	nb_to_rem= (mle_neighbor_t*) ptr;
+	mle_rm_child(nb_to_rem);
+	LOG_RAW(ANSI_COLOR_RED "Time out : child removed \n"ANSI_COLOR_RESET);
+}
+
+/**
  * @brief  check after time out if the child still pending then remove it
  *
  * @param  ptr	  pointer to the child id
@@ -158,19 +171,24 @@ static void check_child_state(void *ptr)
 {
 	uint8_t* child_id;
 	child_id= (uint8_t*) ptr;
+	child=mle_find_child(*child_id);
 
 	if (child->state==PENDING)
 	{
-		child=mle_find_child(*child_id);
 		mle_rm_child(child);
 		LOG_RAW(ANSI_COLOR_RED "Time out : child removed \n"ANSI_COLOR_RESET);
 	}
 	else
 	{
 		LOG_RAW(ANSI_COLOR_YELLOW "Child Linked \n"ANSI_COLOR_RESET);
+		/* trigger the timer to count the time out  */
+		ctimer_set(&child->timer, child->time_out * bsp_get(E_BSP_GET_TRES) , time_out_remove_child, (void *) &child );
+		LOG_RAW(ANSI_COLOR_YELLOW"CHild time out is : %i \n"ANSI_COLOR_RESET , child->time_out);
 	}
 
 }
+
+
 
 static void reply_for_mle_parent_request(void *ptr)
 {
@@ -215,7 +233,7 @@ static void reply_for_mle_parent_request(void *ptr)
 		mle_send_msg( &cmd,&child->tmp);
 
 		/* trigger the timer to remove the child after period of pending time (if the state wasn't changed to linked) */
-		ctimer_set(&child->timeOut, 5 * bsp_get(E_BSP_GET_TRES) , check_child_state, (void *) &child->id );
+		ctimer_set(&child->timer, 5 * bsp_get(E_BSP_GET_TRES) , check_child_state, (void *) &child->id );
 	}
 
 }
@@ -231,6 +249,7 @@ void reply_for_mle_childID_request(void *ptr)
 	uint8_t* routerId;
 	routerId=(uint8_t*) ptr;
 	size_t len =0;
+	tlv_t *tlv;
 	tlv_route64_t* route64;
 	route64=thrd_generate_route64(&len);
 
@@ -238,6 +257,7 @@ void reply_for_mle_childID_request(void *ptr)
 	{
 		if(*routerId<63)
 		{
+			LOG_RAW(ANSI_COLOR_YELLOW "inside child in response \n"ANSI_COLOR_RESET);
 			thrd_iface_set_router_id(*routerId);
 			mle_set_parent_mode();
 		}
@@ -249,7 +269,7 @@ void reply_for_mle_childID_request(void *ptr)
 
 	if(MyNode.OpMode == CHILD)
 	{
-		// TODO verify if i already send a request for router id (may be inside the function)
+		// TODO verify if i already send a request for router id (may be inside the function using static variable )
 		// send request to become a router and then reply
 		LOG_RAW(ANSI_COLOR_YELLOW"Sending request to become a Router \n"ANSI_COLOR_RESET);
 		thrd_request_router_id(NULL);
@@ -265,6 +285,8 @@ void reply_for_mle_childID_request(void *ptr)
 		mle_send_msg( &cmd,&param.source_addr);
 		child= mle_find_child_byAdd(&param.source_addr);
 		child->state=LINKED;
+		tlv=mle_find_tlv_in_cmd(param.rec_cmd,TLV_TIME_OUT);
+		child->time_out=(tlv->value[3]) | (tlv->value[2] << 8) | (tlv->value[1] << 16)| (tlv->value[0] << 24);
 	}
 
 }
@@ -673,7 +695,7 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 			uip_ip6addr_copy(&param.source_addr,source_addr);
 
 			/* trigger the timer to reply after the random period */
-			ctimer_set(&nb->timeOut, bsp_getrand(500) *  (bsp_get(E_BSP_GET_TRES) / 1000 ) , reply_for_mle_link_request, (void *) &nb->id );
+			ctimer_set(&nb->timer, bsp_getrand(500) *  (bsp_get(E_BSP_GET_TRES) / 1000 ) , reply_for_mle_link_request, (void *) &nb->id );
 
 		}
 		break;
@@ -789,7 +811,7 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 				}
 
 				/* trigger the timer to reply after the random period */
-				ctimer_set(&child->timeOut, bsp_getrand(MaxRand) *  (bsp_get(E_BSP_GET_TRES) / 1000 ) , reply_for_mle_parent_request, (void *) &child->id );
+				ctimer_set(&child->timer, bsp_getrand(MaxRand) *  (bsp_get(E_BSP_GET_TRES) / 1000 ) , reply_for_mle_parent_request, (void *) &child->id );
 
 			}
 		}
@@ -944,8 +966,8 @@ uint8_t mle_init(void)
 	PRINTFY("\n NB WITH LQ 2 is %i:",count_neighbor_LQ(2));
 	 */
 
-	/*
-	linkaddr_t add;
+
+/*	linkaddr_t add;
 	add.u8[7]=0x02 ;
 	add.u8[6]=0x00 ;
 	linkaddr_set_node_shortAddr(&add);
@@ -956,11 +978,11 @@ uint8_t mle_init(void)
 	MyNode.challenge=add_rand_challenge_to_cmd(&cmd);
 	add_version_to_cmd(&cmd);
 	thrd_iface_set_rloc(0x0002);
-	uip_ip6addr(&s_destAddr, 0xfe80, 0, 0, 0, 0, 0x00ff, 0xfe00, 0x0002);
-	//uip_ip6addr(&s_destAddr, 0xfe80, 0, 0, 0, 0x0250, 0xc2ff, 0xfea8, 0x00aa);
+	//uip_ip6addr(&s_destAddr, 0xfe80, 0, 0, 0, 0, 0x00ff, 0xfe00, 0x0001);
+	uip_ip6addr(&s_destAddr, 0xfd00, 0, 0, 0, 0, 0x00ff, 0xfe00, 0x0001);
 	//uip_ip6addr(&s_destAddr, 0xfe80, 0, 0, 0, 0x250, 0xc2ff, 0xfea8, 0xb0);
 	mle_send_msg(&cmd, &s_destAddr);
-	 */
+
 
 	/**********************/
 	ctimer_set(&c_mle_Timer, 1 * bsp_get(E_BSP_GET_TRES) , mle_join_process, (void *) NULL );
@@ -988,8 +1010,10 @@ uint8_t mle_set_parent_mode()
 	linkaddr_t add;
 	uint16_t addrs;
 	addrs=thrd_iface_get_router_id()<<10;
+
 	add.u8[7]=(uint8_t)addrs ;
 	add.u8[6]=addrs>>8 ;
+
 	linkaddr_set_node_shortAddr(&add);
 	/* start synchronisation with other routers */
 	mle_synchro_process(NULL);
@@ -1016,7 +1040,7 @@ uint8_t mle_set_child_mode(uint16_t rloc16)
 	linkaddr_set_node_shortAddr(&add);
 
 	/* clear the neighbors table  */
-	// clear the nb table
+	 mle_rm_all_child();
 
 	/* stop the trickle algo*/
 	thrd_trickle_stop();

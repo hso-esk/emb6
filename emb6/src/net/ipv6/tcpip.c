@@ -580,8 +580,8 @@ tcpip_ipv6_output(void)
 			if ( thrd_is_addr_ml_rloc(&UIP_IP_BUF->destipaddr) ) {
 
 				// TODO Nidhal: Set Short Address Mode?
-				packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
-				packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_SHORTADDRMODE);
+				packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_LONGADDRMODE);
+				packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_LONGADDRMODE);
 
 				printf("Inside mesh-local address space.\n");
 

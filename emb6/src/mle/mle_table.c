@@ -193,6 +193,18 @@ void mle_rm_all_nb_router(void)
 
 }
 
+void mle_rm_all_child(void)
+{
+	mle_neighbor_t *nb;
+	nb = mle_neigbhor_head(&childs_list);
+	while(nb)
+	{
+		mle_rm_child(nb);
+		nb = mle_neigbhor_head(&childs_list);
+	}
+
+}
+
 uint8_t count_neighbor_LQ(uint8_t N )
 {
 	mle_neighbor_t *nb;

@@ -26,7 +26,7 @@
 
 /******************* TLV parameters *****************************/
 
-#define		TIME_OUT		 		     30     /* time out   */
+#define		TIME_OUT		 		     1000     /* time out   */
 #define		IS_RX_ON_WHEN_IDLE		 	  1     /* Set to ‘1’ if the sender has its receiver on when not transmitting   */
 #define		IS_FFD		 	     		  1
 /*==============================================================================
