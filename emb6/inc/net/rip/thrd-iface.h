@@ -42,9 +42,15 @@ void thrd_iface_set_router_id(uint8_t router_id);
 
 /**
  * Get the Router ID of the Interface.
- * @return
+ * @return The router ID.
  */
 uint8_t thrd_iface_get_router_id();
+
+/**
+ * Get the RLOC16 of the interface.
+ * @return The RLOC16.
+ */
+uint16_t thrd_iface_get_rloc16();
 
 /**
  * Set the interface's RLOC16 and update the ML-RLOC and LL-RLOC addresses.
