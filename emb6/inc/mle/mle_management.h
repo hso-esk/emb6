@@ -26,7 +26,7 @@
 
 /******************* TLV parameters *****************************/
 
-#define		TIME_OUT		 		     1000     /* time out   */
+#define		TIME_OUT		 		     5     /* time out   */
 #define		IS_RX_ON_WHEN_IDLE		 	  1     /* Set to ‘1’ if the sender has its receiver on when not transmitting   */
 #define		IS_FFD		 	     		  1
 /*==============================================================================
@@ -60,7 +60,13 @@ typedef enum {
 	SYN_PROCESS_LINK,
 }syn_state_t; // synchronisation state
 
+typedef enum {
+	KA_SEND_KEEP_ALIVE,
+	KA_WAIT_RESPONSE,
+}ka_state_t; // keep alive state
+
 typedef struct {
+	uint16_t			  address;                        		/**< My node 16 bit address */
 	struct udp_socket     udp_socket;
 	mle_mode_t     		  OpMode;                               /**< device operating mode */
 	uint32_t 			  timeOut;
