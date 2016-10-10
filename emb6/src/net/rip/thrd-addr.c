@@ -40,6 +40,17 @@ static uint16_t rloc_addr_fixed[3] = { 0x0000, UIP_HTONS(0x00ff), UIP_HTONS(0x00
  =============================================================================*/
 
 bool
+thrd_rloc16_belongs_to_router(uint16_t rloc16)
+{
+	if ( uip_htons(THRD_EXTRACT_CHILD_ID(rloc16)) == 0 ) {
+		return TRUE;
+	}
+	return FALSE;
+}
+
+/* --------------------------------------------------------------------------- */
+
+bool
 thrd_is_addr_ll_rloc(uip_ipaddr_t *addr)
 {
 	if ( memcmp(&link_local_addr_fixed[0], addr->u16, 14) == 0 ) {

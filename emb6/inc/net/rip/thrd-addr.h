@@ -70,6 +70,13 @@
 		(addr)->u8[15] = mac[7];						\
 } while(0)
 
+/**
+ * Check whether the given RLOC16 belongs to a router (child id == 0).
+ * @param rloc16 A RLOC16.
+ * @retval TRUE If the given RLOC16 belongs to a router.
+ * @retval FALSE If the given RLOC16 does not belong to a router.
+ */
+bool thrd_rloc16_belongs_to_router(uint16_t rloc16);
 
 /**
  * Check whether the given IPv6 address is a Link-Local RLOC address.
