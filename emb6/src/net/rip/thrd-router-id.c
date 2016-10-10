@@ -107,6 +107,17 @@ thrd_leader_init(void)
 		thrd_iface_set_router_id(ida->ID_id);
 		thrd_partition_set_leader_router_id(ida->ID_id);
 		thrd_partition.leader_router_id = ida->ID_id;
+
+		// Increment ID sequence number.
+		thrd_partition.ID_sequence_number++;
+
+		// Update router ID set.
+		thrd_rdb_id_t *rid;
+		rid = thrd_rdb_rid_add(ida->ID_id);
+		if ( rid == NULL ) {
+			// This should not happen.
+			return;
+		}
 	}
 	// Set RLOC16 address and create corresponding IPv6 addresses.
 	thrd_iface_set_rloc(THRD_CREATE_RLOC16(thrd_iface_get_router_id(), 0));
