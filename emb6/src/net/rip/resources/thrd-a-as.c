@@ -15,6 +15,7 @@
 #include "thrd-partition.h"
 #include "thrd-router-id.h"
 #include "thrd-leader-db.h"
+#include "thrd-route.h"
 
 #define     LOGGER_ENABLE                 LOGGER_THRD_NET
 #include    "logger.h"
@@ -102,6 +103,18 @@ res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t prefer
 		}
 		if ( ida != NULL ) {
 			// Success.
+
+			// Increment ID sequence number.
+			thrd_partition.ID_sequence_number++;
+
+			// Update router ID set.
+			thrd_rdb_id_t *rid;
+			rid = thrd_rdb_rid_add(ida->ID_id);
+			if ( rid == NULL ) {
+				// This should not happen.
+				return;
+			}
+
 			uint64_t router_id_mask = thrd_create_router_id_mask();
 			uint16_t rloc16 = THRD_CREATE_RLOC16(ida->ID_id, 0);
 			LOG_RAW("rloc16 = %04x\n\r", rloc16);
