@@ -1877,18 +1877,47 @@ static uint8_t output(const uip_lladdr_t *localdest)
 					packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_SHORTADDRMODE);
 
 					// Obtain the destination RLOC16 from the RLOC IID.
-					uint16_t rloc16 = thrd_extract_rloc16_from_rloc_address(&dest_addr);
+					uint16_t dest_rloc16 = thrd_extract_rloc16_from_rloc_address(&dest_addr);
 
-					// Check whether the destination address belongs to a child.
-					if ( mle_is_child(rloc16) ) {
-						printf("sicslowpan: Destination RLOC16 [%02x] belongs to a child.\n\r", rloc16);
-					} else {
-						printf("sicslowpan: Destination RLOC16 [%02x] does not belong to a child.\n\r", rloc16);
-						mle_print_child_table();
+					printf("-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-\n\r");
+					printf("RLOC16 = %04x\n\r", dest_rloc16);
+					printf("-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-\n\r");
+					// Print destination address (IPv6).
+					for (uint8_t i = 0; i < 16; i++) {
+						printf("%02x", dest_addr.u8[i]);
 					}
+					printf("\n\r");
+					printf("-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-\n\r");
 
-						// Obtain the destination Router ID from the RLOC IID.
-						uint8_t dest_rid = thrd_extract_router_id_from_rloc_linkaddr(&dest);
+					// Obtain destination router id from RLOC16.
+					uint8_t dest_rid = THRD_EXTRACT_ROUTER_ID(dest_rloc16);
+
+					// Check whether the destination RLOC is destined to my field of responsibility.
+					if ( dest_rid == thrd_iface.router_id ) {
+						uint8_t dest_child_id = THRD_EXTRACT_CHILD_ID(dest_rloc16);
+						// Check whether the destination address belongs to a child.
+						if ( mle_is_child(dest_child_id) ) {
+							printf("sicslowpan: Destination child id [%d] belongs to a child.\n\r", dest_child_id);
+
+							// TODO Forward packet to parent device.
+							// TODO Nidhal: Set Short Address Mode?
+							packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_SHORTADDRMODE);
+							// TODO check if i have a short address
+							if(0) // TODO to change with if i have short address
+								packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
+							else
+								packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_LONGADDRMODE);
+
+							memcpy(packetbuf_ptr + packetbuf_hdr_len, (uint8_t *)UIP_IP_BUF + uncomp_hdr_len, uip_len - uncomp_hdr_len);
+							packetbuf_set_datalen(uip_len - uncomp_hdr_len + packetbuf_hdr_len);
+
+							thrd_create_rloc_linkaddr(&dest, dest_rid, dest_child_id);
+							send_packet(&dest);
+						} else {
+							printf("sicslowpan: Destination child id [%d] does not belong to a child.\n\r", dest_child_id);
+							mle_print_child_table();
+						}
+					}
 
 					// Check whether the destination is a direct neighbor router.
 					if ( thrd_rdb_is_neighbor_router(dest_rid) ) {
