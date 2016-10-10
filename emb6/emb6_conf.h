@@ -850,17 +850,17 @@ void uip_log(char *msg);
 
 /** Event process functions                	(see llc_xxx.c) */
 #ifndef LOGGER_LLC
-#define LOGGER_LLC                         	TRUE
+#define LOGGER_LLC                         	FALSE
 #endif
 
 /** Event process functions                	(see mac_xxx.c) */
 #ifndef LOGGER_MAC
-#define LOGGER_MAC                         	TRUE
+#define LOGGER_MAC                         	FALSE
 #endif
 
 /** Event process functions                	(see phy_xxx.c) */
 #ifndef LOGGER_PHY
-#define LOGGER_PHY                         	TRUE
+#define LOGGER_PHY                         	FALSE
 #endif
 
 /** MLE functions                			(see mle/) */
