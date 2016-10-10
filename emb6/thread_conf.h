@@ -89,7 +89,7 @@ typedef enum {
 
 
 /** Routing table size */
-#define THRD_CONF_MAX_ROUTES            5 // 10
+#define THRD_CONF_MAX_ROUTES            32 // Must be 32!!!
 
 /** Exponentially weighted moving average. */
 #define EXP_WEIGHT_MOV_AVG_1_8			3	// 1/8 (shifting bits).
