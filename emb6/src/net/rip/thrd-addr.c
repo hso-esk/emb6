@@ -112,7 +112,7 @@ thrd_extract_router_id_from_rloc_linkaddr(linkaddr_t *link_addr)
 uint16_t
 thrd_extract_rloc16_from_rloc_address(uip_ipaddr_t *rloc_addr)
 {
-	return ((uint16_t) (rloc_addr->u16[7]));
+	return ((uint16_t) uip_htons(rloc_addr->u16[7]));
 }
 
 /* --------------------------------------------------------------------------- */
@@ -162,7 +162,7 @@ void
 thrd_create_rloc_linkaddr(linkaddr_t *link_addr, uint8_t router_id, uint8_t child_id)
 {
 	memcpy(link_addr->u8, &rloc_addr_fixed, 6);
-	uint16_t rloc16 = THRD_CREATE_RLOC16(router_id, child_id);
+	uint16_t rloc16 = uip_htons(THRD_CREATE_RLOC16(router_id, child_id));
 	memcpy(&link_addr->u8[6], &rloc16, 2);
 }
 
