@@ -207,13 +207,13 @@ uint8_t count_neighbor_LQ(uint8_t N )
 return count ;
 }
 
-bool mle_is_child(uint8_t rloc16)
+bool mle_is_child(uint8_t child_id)
 {
 	mle_neighbor_t *nb;
+	nb = mle_find_child(child_id);
 
-	for (nb = mle_neigbhor_head(&nb_router_list); nb != NULL; nb = list_item_next(nb)) {
-		if (nb->address16 == rloc16)
-			return TRUE;
+	if ( nb != NULL ) {
+		return TRUE;
 	}
 	return FALSE ;
 }
