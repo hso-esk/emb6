@@ -87,6 +87,8 @@
 #include "thrd-iface.h"
 #include "thrd-dev.h"
 
+#include "mle_table.h"
+
 
 
 
@@ -1597,7 +1599,7 @@ static uint8_t output(const uip_lladdr_t *localdest)
 				uint8_t dest_rid = thrd_extract_router_id_from_rloc_linkaddr(&dest);
 
 				// Check whether the destination is a direct neighbor.
-				if ( thrd_rdb_is_neighbor(dest_rid) ) {
+				if ( thrd_rdb_is_neighbor_router(dest_rid) ) {
 					/*
 					 * TODO Encode the 6LoWPAN frame without using a 6LoWPAN Mesh Header and set the IEEE 802.15.4
 					 * Destination using the RLOC16.
@@ -1818,7 +1820,7 @@ static uint8_t output(const uip_lladdr_t *localdest)
 		}
 
 		// Check whether the destination address is not a multicast address (unicast: dest != NULL, multicast: dest = NULL).
-		if ( !uip_is_addr_mcast(&dest_addr) ) {	// Unicast address.
+		if ( !uip_is_addr_mcast(&dest_addr) ) {	// Unicast address (probably mesh-local).
 
 #if ( (THRD_DEV_NETTYPE == THRD_DEV_NET_PED) || (THRD_DEV_NETTYPE == THRD_DEV_NET_SED) )	// RFD -> without routing capability.
 
@@ -1849,76 +1851,127 @@ static uint8_t output(const uip_lladdr_t *localdest)
 			// TODO If device type == REED:   --> forward packet to parent router.
 			// TODO If device type == Router: --> use mesh header to forward the packet.
 
-			if ( thrd_is_linkaddr_rloc(&dest) ) {	// RLOC IID.
+			// --- NEW
 
-				// TODO Nidhal: Set Short Address Mode?
-				packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
-				packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_SHORTADDRMODE);
+			// thrd_dev_print_dev_info();
 
-				// Obtain the destination Router ID from the RLOC IID.
-				uint8_t dest_rid = thrd_extract_router_id_from_rloc_linkaddr(&dest);
+			// Check whether the device operates in REED mode.
+			if ( thrd_dev.net_type == THRD_DEV_NETTYPE_REED ) {
+				// Forward the packet to parent router.
 
+				memcpy(packetbuf_ptr + packetbuf_hdr_len, (uint8_t *)UIP_IP_BUF + uncomp_hdr_len, uip_len - uncomp_hdr_len);
+				packetbuf_set_datalen(uip_len - uncomp_hdr_len + packetbuf_hdr_len);
 
-				// Check whether the destination is a direct neighbor.
-				if ( thrd_rdb_is_neighbor(dest_rid) ) {
-					/*
-					 * TODO Encode the 6LoWPAN frame without using a 6LoWPAN Mesh Header and set the IEEE 802.15.4
-					 * Destination using the RLOC16.
-					 */
-				} else {	// Not a direct neighbor.
-					/*
-					 * Encode the 6LoWPAN frame including 6LoWPAN mesh header, set the V and F bits to '1', the
-					 * originator address field using the local RLOC16, and the final address field using the
-					 * destination RLOC16. Determine the next hop RLOC using the routing table and set the IEEE
-					 * 802.15.4 destination using the next hop's RLOC16.
-					 */
+				uint8_t parent_rid = THRD_EXTRACT_ROUTER_ID(thrd_iface_get_rloc16());
+				thrd_create_rloc_linkaddr(&dest, parent_rid, 0);
+				printf("sicslowpan: (REED) Forwarding packet to parent router.\n\r");
+				send_packet(&dest);
+
+			} else if ( thrd_dev.net_type == THRD_DEV_NETTYPE_ROUTER || thrd_dev.net_type == THRD_DEV_NETTYPE_LEADER ) {
+				// Check whether the destination address is a RLOC address.
+				if ( thrd_is_rloc_addr(&dest_addr) ) {	// RLOC.
+					// Use mesh header to forward packet.
+
+					// TODO Nidhal: Set Short Address Mode?
+					packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
+					packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_SHORTADDRMODE);
+
+					// Obtain the destination RLOC16 from the RLOC IID.
+					uint16_t rloc16 = thrd_extract_rloc16_from_rloc_address(&dest_addr);
+
+					// Check whether the destination address belongs to a child.
+					if ( mle_is_child(rloc16) ) {
+						printf("sicslowpan: Destination RLOC16 [%02x] belongs to a child.\n\r", rloc16);
+					} else {
+						printf("sicslowpan: Destination RLOC16 [%02x] does not belong to a child.\n\r", rloc16);
+						mle_print_child_table();
+					}
+
+						// Obtain the destination Router ID from the RLOC IID.
+						uint8_t dest_rid = thrd_extract_router_id_from_rloc_linkaddr(&dest);
+
+					// Check whether the destination is a direct neighbor router.
+					if ( thrd_rdb_is_neighbor_router(dest_rid) ) {
+						/*
+						 * TODO Encode the 6LoWPAN frame without using a 6LoWPAN Mesh Header and set the IEEE 802.15.4
+						 * Destination using the RLOC16.
+						 */
+					} else {	// Not a direct neighbor.
+						/*
+						 * Encode the 6LoWPAN frame including 6LoWPAN mesh header, set the V and F bits to '1', the
+						 * originator address field using the local RLOC16, and the final address field using the
+						 * destination RLOC16. Determine the next hop RLOC using the routing table and set the IEEE
+						 * 802.15.4 destination using the next hop's RLOC16.
+						 */
 
 #ifdef SICSLOWPAN_USE_MESH_HEADER	// Use mesh header.
 
-					sicslowpan_mesh_hdr_len = 1;
+						sicslowpan_mesh_hdr_len = 1;
 
 #if ( SICSLOWPAN_MESH_HEADER_V == MESH_HEADER_V_EUI_64 )	// V: EUI-64 long address mode.
-					RINTFO("SICSLOWPAN_MESH_HEADER_V == MESH_HEADER_V_EUI_64: Not implemented yet.\n");
-					// sicslowpan_mesh_hdr_len += MESH_HEADER_EUI_64_ADDR_LEN;
+						RINTFO("SICSLOWPAN_MESH_HEADER_V == MESH_HEADER_V_EUI_64: Not implemented yet.\n");
+						// sicslowpan_mesh_hdr_len += MESH_HEADER_EUI_64_ADDR_LEN;
 #elif ( SICSLOWPAN_MESH_HEADER_V == MESH_HEADER_V_SHORT_ADDR )	// V: Short address mode.
-					// Set the originator address field to the local RLOC16.
-					memcpy(&mesh_hdr[sicslowpan_mesh_hdr_len], &thrd_iface.rloc16, MESH_HEADER_SHORT_ADDR_LEN);
-					sicslowpan_mesh_hdr_len += MESH_HEADER_SHORT_ADDR_LEN;
+						// Set the originator address field to the local RLOC16.
+						memcpy(&mesh_hdr[sicslowpan_mesh_hdr_len], &thrd_iface.rloc16, MESH_HEADER_SHORT_ADDR_LEN);
+						sicslowpan_mesh_hdr_len += MESH_HEADER_SHORT_ADDR_LEN;
 #endif /* ( SICSLOWPAN_MESH_HEADER_V == MESH_HEADER_V_EUI_64 ) */
 
 #if ( SICSLOWPAN_MESH_HEADER_F == MESH_HEADER_F_EUI_64 )	// V: EUI-64 long address mode.
-					PRINTFO("SICSLOWPAN_MESH_HEADER_F == MESH_HEADER_F_EUI_64: Not implemented yet.\n");
-					// sicslowpan_mesh_hdr_len += MESH_HEADER_EUI_64_ADDR_LEN;
+						PRINTFO("SICSLOWPAN_MESH_HEADER_F == MESH_HEADER_F_EUI_64: Not implemented yet.\n");
+						// sicslowpan_mesh_hdr_len += MESH_HEADER_EUI_64_ADDR_LEN;
 #elif ( SICSLOWPAN_MESH_HEADER_F == MESH_HEADER_F_SHORT_ADDR )	// V: Short address mode.
-					// Extract the destination RLOC16 out of the RLOC IID (here: LL Address).
-					uint16_t dest_rloc16 = 0xff;
-					dest_rloc16 = thrd_extract_rloc16_from_rloc_linkaddr(&dest);
-					memcpy(&mesh_hdr[sicslowpan_mesh_hdr_len], &dest_rloc16, MESH_HEADER_SHORT_ADDR_LEN);
-					sicslowpan_mesh_hdr_len += MESH_HEADER_SHORT_ADDR_LEN;
+						// Extract the destination RLOC16 out of the RLOC IID (here: LL Address).
+						uint16_t dest_rloc16 = 0xff;
+						dest_rloc16 = thrd_extract_rloc16_from_rloc_linkaddr(&dest);
+						memcpy(&mesh_hdr[sicslowpan_mesh_hdr_len], &dest_rloc16, MESH_HEADER_SHORT_ADDR_LEN);
+						sicslowpan_mesh_hdr_len += MESH_HEADER_SHORT_ADDR_LEN;
 #endif /* ( SICSLOWPAN_MESH_HEADER_F == MESH_HEADER_F_EUI_64 ) */
 
 #endif /* SICSLOWPAN_USE_MESH_HEADER */
 
-					// Determine the next hop RLOC using the Routing Database.
-					thrd_rdb_route_t *route;
-					route = thrd_rdb_route_lookup(dest_rid);
-					if ( route == NULL ) {
-						// The packet is dropped.
-						return 0;	// TODO Check this.
+						// Determine the next hop RLOC using the Routing Database.
+						thrd_rdb_route_t *route;
+						route = thrd_rdb_route_lookup(dest_rid);
+						if ( route == NULL ) {
+							// The packet is dropped.
+							return 0;	// TODO Check this.
+						}
+
+						/* move HC1/HC06/IPv6 header */
+						memmove(packetbuf_ptr + sicslowpan_mesh_hdr_len + SICSLOWPAN_FRAG1_HDR_LEN, packetbuf_ptr, packetbuf_hdr_len);
+
+						// Set Mesh Type and Header.
+						memcpy(PACKETBUF_FRAG_PTR, mesh_hdr, sicslowpan_mesh_hdr_len);
+						packetbuf_hdr_len += sicslowpan_mesh_hdr_len;
+
 					}
 
-					/* move HC1/HC06/IPv6 header */
-					memmove(packetbuf_ptr + sicslowpan_mesh_hdr_len + SICSLOWPAN_FRAG1_HDR_LEN, packetbuf_ptr, packetbuf_hdr_len);
-
-					// Set Mesh Type and Header.
-					memcpy(PACKETBUF_FRAG_PTR, mesh_hdr, sicslowpan_mesh_hdr_len);
-					packetbuf_hdr_len += sicslowpan_mesh_hdr_len;
-
+				} else {	// EID.
+					// Perform EID-to-RLOC lookup.
+					// TODO
 				}
+			}
+
+			if ( thrd_is_rloc_addr(&dest_addr) ) {
+
+			}
+
+			// --- OLD
+
+			/**
+
+			if ( thrd_is_linkaddr_rloc(&dest) ) {	// RLOC IID.
+
+
 
 			} else {	// EID.
 				// TODO
 			}
+			*/
+
+			// ---
+
 #endif /* ( (THRD_DEV_NETTYPE == THRD_DEV_NETTYPE_PED) || (THRD_DEV_NETTYPE == THRD_DEV_NETTYPE_SED) ) */
 		} else {	// Multicast address.
 			packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_LONGADDRMODE);
