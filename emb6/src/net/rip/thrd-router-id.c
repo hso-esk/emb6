@@ -331,7 +331,9 @@ thrd_addr_solicit_chunk_handler(void *response)
     					rloc16_tlv = (net_tlv_rloc16_t*) tlv->value;
     					// Set the interface's RLOC16 and update ML-RLOC and LL-RLOC addresses.
     					thrd_iface_set_rloc(rloc16_tlv->rloc16);
+    					thrd_set_dev_net_type(THRD_DEV_NETTYPE_ROUTER);
     					LOG_RAW("RLOC16 = %04x\n", rloc16_tlv->rloc16);
+
     				}
     				tlv = (tlv_t*) &chunk[7];
     				if ( tlv->type == NET_TLV_ROUTER_MASK && tlv->length == 9 ) {
