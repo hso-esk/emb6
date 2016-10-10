@@ -102,8 +102,8 @@ thrd_ldb_ida_lookup(uint8_t router_id)
 
 	found_ida = NULL;
 	for (ida = thrd_ldb_ida_head(); ida != NULL; ida = thrd_ldb_ida_next(ida)) {
-		LOG_RAW("%d\n", ida->ID_id);
-		LOG_RAW("\n\r");
+		// LOG_RAW("%d\n", ida->ID_id);
+		// LOG_RAW("\n\r");
 		if (ida->ID_id == router_id) {
 			found_ida = ida;
 			break;
@@ -142,9 +142,9 @@ thrd_ldb_ida_add(uint8_t router_id, uint8_t *owner, clock_time_t reuse_time)
 
 	/* Check whether the given router id already has an entry in the Router ID Set. */
 	if ( ida == NULL ) {
-		LOG_RAW("thrd_ldb_ida_add: router id unknown for ");
-		LOG_RAW("%d\n", router_id);
-		LOG_RAW("\n\r");
+		LOG_RAW("thrd_ldb_ida_add: router id %d unknown\n\r", router_id);
+		// LOG_RAW("%d\n", router_id);
+		// LOG_RAW("\n\r");
 
 		/* If there is no router id entry, create one. We first need to
 		 * check if we have room for this router id. If not, we remove the
