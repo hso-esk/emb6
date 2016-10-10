@@ -207,16 +207,28 @@ uint8_t count_neighbor_LQ(uint8_t N )
 return count ;
 }
 
+bool mle_is_child(uint8_t rloc16)
+{
+	mle_neighbor_t *nb;
+
+	for (nb = mle_neigbhor_head(&nb_router_list); nb != NULL; nb = list_item_next(nb)) {
+		if (nb->address16 == rloc16)
+			return TRUE;
+	}
+	return FALSE ;
+}
+
 static void mle_print_table(list_t *list)
 {
 	mle_neighbor_t *i;
-	PRINTF("| id | modeTLV | MLEFrameCounter |  address  \n");
+	PRINTF("| id | modeTLV | MLEFrameCounter | address \n");
 	PRINTF("---------------------------------------------------------\n\r");
 	for (i = mle_neigbhor_head(list); i != NULL; i = list_item_next(i)) {
 		PRINTF("| " ANSI_COLOR_YELLOW "%2d" ANSI_COLOR_RESET
 				" | " ANSI_COLOR_YELLOW "%7d" ANSI_COLOR_RESET
 				" | " ANSI_COLOR_YELLOW "%15d" ANSI_COLOR_RESET
-				" |  ", i->id, i->modeTLV, i->MLEFrameCounter);
+				" | " ANSI_COLOR_YELLOW "%7d" ANSI_COLOR_RESET
+				" |  ", i->id, i->modeTLV, i->MLEFrameCounter, i->address16);
 		//PRINT6ADDR(&i->address);
 		PRINTF("\n");
 	}

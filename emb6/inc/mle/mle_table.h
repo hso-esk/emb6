@@ -67,6 +67,8 @@ void mle_rm_all_nb_router(void);
 
 uint8_t count_neighbor_LQ(uint8_t N ); // The number of neighboring device with which the sender shares a link of quality N
 
+extern bool mle_is_child(uint8_t rloc16);
+
 void  mle_print_child_table(void);
 void  mle_print_nb_router_table(void);
 
