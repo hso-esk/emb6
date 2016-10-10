@@ -14,6 +14,7 @@
 #include "tlv.h"
 #include "thrd-partition.h"
 #include "thrd-iface.h"
+#include "thrd-addr.h"
 
 #define     LOGGER_ENABLE                 LOGGER_THRD_NET
 #include    "logger.h"
@@ -30,8 +31,8 @@ static uint8_t tlv_buf[8] = { 0 };		// Leader Data TLV buffer.
                                LOCAL FUNCTION PROTOTYPES
  =============================================================================*/
 
-static void thrd_process_route64(uint8_t rid_sender, tlv_route64_t *route64_tlv);
-static uint8_t thrd_get_id_seq_number(tlv_route64_t *route64_tlv);
+static thrd_error_t thrd_process_route64(uint8_t rid_sender, tlv_route64_t *route64_tlv);
+static uint8_t thrd_extract_id_seq_number(tlv_route64_t *route64_tlv);
 
 /*==============================================================================
                                     LOCAL FUNCTIONS
@@ -39,12 +40,18 @@ static uint8_t thrd_get_id_seq_number(tlv_route64_t *route64_tlv);
 
 /* -------------------------------------------------------------------------- */
 
-static void
+static thrd_error_t
 thrd_process_route64(uint8_t rid_sender, tlv_route64_t *route64_tlv)
 {
 	thrd_rdb_link_t *link;
 
 	if ( route64_tlv != NULL ) {
+
+		LOG_RAW("-x-x-x-x-x-x-x-x-x-x-x-x-x-\n\r");
+		LOG_RAW("thrd_process_route64: Processing Route64 TLV.\n\r");
+		LOG_RAW("thrd_process_route64: route64_tlv->id_sequence_number = %d \n\r", route64_tlv->id_sequence_number);
+		LOG_RAW("thrd_process_route64: thrd_partition.ID_sequence_number = %d \n\r", thrd_partition.ID_sequence_number);
+		LOG_RAW("-x-x-x-x-x-x-x-x-x-x-x-x-x-\n\r");
 
 		if ( route64_tlv->id_sequence_number > thrd_partition.ID_sequence_number ) {
 
@@ -58,11 +65,15 @@ thrd_process_route64(uint8_t rid_sender, tlv_route64_t *route64_tlv)
 			uint64_t bit_mask = 0x8000000000000000;
 			uint8_t data_cnt = 0;
 
-			LOG_RAW("thrd_process_route64: route64_tlv->router_id_msk = %lu\n", route64_tlv->router_id_mask);
+			LOG_RAW("thrd_process_route64: route64_tlv->router_id_msk = %lu\n", UIP_HTONLL(route64_tlv->router_id_mask));
+
+			uint64_t rec_router_id_mask = UIP_HTONLL(route64_tlv->router_id_mask);
 
 			// Replace the ID Set.
 			for ( uint8_t id_cnt = 0; id_cnt < 64; id_cnt++) {
-				if ( (route64_tlv->router_id_mask & bit_mask) > 0 ) {
+				if ( (rec_router_id_mask & bit_mask) > 0 ) {
+
+					printf("id_cnt = %d\n\r", id_cnt);
 
 					thrd_rdb_rid_add(id_cnt);
 
@@ -86,13 +97,16 @@ thrd_process_route64(uint8_t rid_sender, tlv_route64_t *route64_tlv)
 				bit_mask >>= 1;
 			}
 		}
+		return THRD_ERROR_NONE;
+	} else {
+		return THRD_ERROR_INVALID_ARGS;
 	}
 }
 
 /* -------------------------------------------------------------------------- */
 
 static uint8_t
-thrd_get_id_seq_number(tlv_route64_t  *route64_tlv)
+thrd_extract_id_seq_number(tlv_route64_t  *route64_tlv)
 {
 	return route64_tlv->id_sequence_number;
 }
@@ -104,8 +118,24 @@ thrd_get_id_seq_number(tlv_route64_t  *route64_tlv)
 void
 thrd_process_adv(uint16_t source_rloc, tlv_route64_t *route64_tlv, tlv_leader_t *leader_tlv)
 {
-	thrd_partition_process(thrd_get_id_seq_number(route64_tlv), leader_tlv);
+	printf("source_rloc = %04x\n\r", source_rloc);
+	// Notify neighbor table about neighbor router id.
+	if ( thrd_rloc16_belongs_to_router(source_rloc) ) {
+
+		printf("thrd_process_adv: RLOC16 [%04x] belongs to router.\n\r", source_rloc);
+
+		uint8_t source_rid = THRD_EXTRACT_ROUTER_ID(source_rloc);
+		thrd_rdb_link_update(source_rid, 0, 0, 0);
+		uint8_t link_cost = thrd_rdb_calc_link_cost(thrd_rdb_link_calc_incoming_quality(10));	// TODO 10 dB dummy.
+		thrd_rdb_route_add(source_rid, source_rid, link_cost);
+	}
+
 	thrd_process_route64(THRD_EXTRACT_ROUTER_ID(source_rloc), route64_tlv);
+	thrd_partition_process(thrd_extract_id_seq_number(route64_tlv), leader_tlv);
+
+	thrd_rdb_print_routing_database();
+
+	// thrd_rdb_print_route_set();
 
 	/* Correct solution:
 	if ( thrd_partition_process(thrd_get_id_seq_number(route64_tlv), leader_tlv) ) {
@@ -151,6 +181,10 @@ thrd_generate_route64(size_t *len)
 			if ( route != NULL ) {
 				lq_rd |= (route->R_route_cost);
 			}
+			// No entry available --> not reachable.
+			// if ( link == NULL && route == NULL ) {
+			//	lq_rd = 0;
+			// }
 		} else {
 			lq_rd = 0x01;
 		}
