@@ -496,9 +496,9 @@ thrd_rdb_rid_add(uint8_t router_id)
 
 	/* Check whether the given router id already has an entry in the Router ID Set. */
 	if (rid == NULL) {
-		LOG_RAW("thrd_rdb_rid_add: router id unknown for ");
-		LOG_RAW("%d\n", router_id);
-		LOG_RAW("\n\r");
+		LOG_RAW("thrd_rdb_rid_add: found unassigned router id %d\n\r", router_id);
+		// LOG_RAW("%d\n", router_id);
+		// LOG_RAW("\n\r");
 
 		/* If there is no router id entry, create one. We first need to
 		 * check if we have room for this router id. If not, we remove the
@@ -772,9 +772,9 @@ thrd_rdb_link_update(uint8_t router_id, uint8_t link_margin,
 
 	/* Check whether the given router id already has an entry in the Link Set. */
 	if ( l == NULL ) {
-		LOG_RAW("thrd_rdb_link_update: router id unknown for ");
-		LOG_RAW("%d\n", router_id);
-		LOG_RAW("\n\r");
+		LOG_RAW("thrd_rdb_link_update: router id %d unknown\n\r", router_id);
+		// LOG_RAW("%d\n", router_id);
+		// LOG_RAW("\n\r");
 
 		/* If there is no link entry, check if the given router id
 		 * is valid (Router ID Set). If valid, create one. We first need to
@@ -866,7 +866,7 @@ thrd_rdb_link_update(uint8_t router_id, uint8_t link_margin,
 /*---------------------------------------------------------------------------*/
 
 bool
-thrd_rdb_is_neighbor(uint8_t router_id)
+thrd_rdb_is_neighbor_router(uint8_t router_id)
 {
 	if ( thrd_rdb_link_lookup(router_id) != NULL ) {
 		return TRUE;
