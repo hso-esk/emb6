@@ -458,7 +458,7 @@ void mle_join_process(void *ptr)
 				tlv_connectivity_init(&connectivity,tlv->value);
 				tlv=mle_find_tlv_in_cmd(param.rec_cmd,TLV_LEADER_DATA);
 				tlv_leader_init(&lead,tlv->value);
-				thrd_partition_process(1,lead);
+				thrd_partition_process(thrd_partition_process,lead);
 				/* reset the state in case we reattach to a new parent after losing connectivity */
 				jp_state=JP_SEND_MCAST_PR_TO_ROUTER;
 
