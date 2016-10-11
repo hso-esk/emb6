@@ -29,11 +29,11 @@ typedef struct nodemle {
 	uint16_t         			     address16;	// short address
 
 
-   uip_ipaddr_t                tmp; // to remove because it is generated from address 16
+	uip_ipaddr_t                tmp; // to remove because it is generated from address 16
 
 
-
-	struct ctimer        			 timeOut;
+	uint32_t  						 time_out ;
+	struct ctimer        			 timer;
 	uint32_t            			 MLEFrameCounter;
 	uint8_t 						 modeTLV;
 	uint8_t 						 LQ;
@@ -58,12 +58,16 @@ mle_neighbor_t * mle_find_child( uint8_t id);
 mle_neighbor_t * mle_find_nb_router_byAdd(uip_ipaddr_t* address);
 mle_neighbor_t * mle_find_child_byAdd( uip_ipaddr_t* address);
 
+mle_neighbor_t * mle_find_nb_router_by_16Add(uint16_t address);
+mle_neighbor_t * mle_find_child_by_16Add( uint16_t address);
+
 mle_neighbor_t * mle_add_child(uint8_t id, uint16_t  address, uint32_t  MLEFrameCounter , uint8_t modeTLV, uint8_t  linkQuality);
 mle_neighbor_t * mle_add_nb_router(uint8_t id, uint16_t address, uint32_t  MLEFrameCounter , uint8_t modeTLV, uint8_t  linkQuality);
 
 uint8_t mle_rm_nb_router(mle_neighbor_t *nb);
 uint8_t mle_rm_child( mle_neighbor_t *nb);
 void mle_rm_all_nb_router(void);
+void mle_rm_all_child(void);
 
 uint8_t count_neighbor_LQ(uint8_t N ); // The number of neighboring device with which the sender shares a link of quality N
 

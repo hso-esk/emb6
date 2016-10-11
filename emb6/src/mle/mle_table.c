@@ -97,6 +97,26 @@ mle_neighbor_t * mle_find_child_byAdd( uip_ipaddr_t* address)
 	return mle_find_neigbhor_byAdd(&childs_list,  address) ;
 }
 
+static mle_neighbor_t *  mle_find_neigbhor_by_16Add(list_t *list, uint16_t address)
+{
+	mle_neighbor_t *nb;
+
+	for (nb = mle_neigbhor_head(list); nb != NULL; nb = list_item_next(nb))
+	{
+		if (nb->address16 == address)
+			return nb;
+	}
+	return NULL ;
+}
+
+mle_neighbor_t * mle_find_nb_router_by_16Add(uint16_t address)
+{
+	return mle_find_neigbhor_by_16Add(&nb_router_list,  address) ;
+}
+mle_neighbor_t * mle_find_child_by_16Add( uint16_t address)
+{
+	return mle_find_neigbhor_by_16Add(&childs_list,  address) ;
+}
 
 
 static mle_neighbor_t * mle_add_neigbhor(struct memb* m , list_t *list , uint8_t id, /*uip_ipaddr_t * */ uint16_t address, uint32_t  MLEFrameCounter ,
@@ -189,6 +209,18 @@ void mle_rm_all_nb_router(void)
 	{
 		mle_rm_nb_router(nb);
 		nb = mle_neigbhor_head(&nb_router_list);
+	}
+
+}
+
+void mle_rm_all_child(void)
+{
+	mle_neighbor_t *nb;
+	nb = mle_neigbhor_head(&childs_list);
+	while(nb)
+	{
+		mle_rm_child(nb);
+		nb = mle_neigbhor_head(&childs_list);
 	}
 
 }

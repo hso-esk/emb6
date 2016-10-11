@@ -45,15 +45,24 @@ static uint8_t  add_tlv16_bit_to_cmd(mle_cmd_t* cmd , tlv_type_t type , uint16_t
 
 uint16_t  get_16_MAC(void)
 {
-	//printf("mac addres is : %04x" ,a);
 	return (mac_phy_config.mac_address[7] | (mac_phy_config.mac_address[6] << 8));
 
 }
 
 
-uint8_t  add_src_address_to_cmd(mle_cmd_t* cmd)
+uint8_t  add_mac_src_address_to_cmd(mle_cmd_t* cmd)
 {
+	// TODO change the address by the 16 bit short address that we get during the join process
 	if (mle_add_tlv_to_cmd( cmd ,TLV_SOURCE_ADDRESS , 2 ,(uint8_t*) &mac_phy_config.mac_address[6] ))
+		return 1 ;
+	else
+		return 0 ;
+}
+
+uint8_t  add_src_address_to_cmd(mle_cmd_t* cmd, uint16_t address)
+{
+
+	if ( add_tlv16_bit_to_cmd(cmd ,TLV_SOURCE_ADDRESS , address) )
 		return 1 ;
 	else
 		return 0 ;
