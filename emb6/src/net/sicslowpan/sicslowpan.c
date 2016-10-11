@@ -1925,6 +1925,21 @@ static uint8_t output(const uip_lladdr_t *localdest)
 						 * TODO Encode the 6LoWPAN frame without using a 6LoWPAN Mesh Header and set the IEEE 802.15.4
 						 * Destination using the RLOC16.
 						 */
+						printf("sicslowpan: Destination router is a direct neighbor --> send packet without including mesh header.\n\r");
+						// Forward packet to neighboring device.
+						// TODO Nidhal: Set Short Address Mode?
+						packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_SHORTADDRMODE);
+						// TODO check if i have a short address
+						if(1) // TODO to change with if i have short address
+							packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
+						else
+							packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_LONGADDRMODE);
+
+						memcpy(packetbuf_ptr + packetbuf_hdr_len, (uint8_t *)UIP_IP_BUF + uncomp_hdr_len, uip_len - uncomp_hdr_len);
+						packetbuf_set_datalen(uip_len - uncomp_hdr_len + packetbuf_hdr_len);
+
+						thrd_create_rloc_linkaddr(&dest, dest_rid, 0);
+						send_packet(&dest);
 					} else {	// Not a direct neighbor.
 						/*
 						 * Encode the 6LoWPAN frame including 6LoWPAN mesh header, set the V and F bits to '1', the
@@ -2504,6 +2519,22 @@ input(void)
 			set_packet_attrs();
 			callback->input_callback();
 		}
+
+		printf("sicslowpan: TEST TEST TEST.\n\r");
+
+		// --- LZ ---
+		/*
+		uip_ip6addr_t dest_addr = SICSLOWPAN_IP_BUF->destipaddr;
+		uint16_t dest_rloc = thrd_extract_rloc16_from_rloc_address(&dest_addr);
+
+		if ( dest_rloc == thrd_iface.rloc16 ) {
+			tcpip_input();
+		} else {
+			forward(THRD_EXTRACT_ROUTER_ID(dest_rloc));
+		}
+		*/
+
+		// ---
 
 		tcpip_input();
 #if SICSLOWPAN_CONF_FRAG
