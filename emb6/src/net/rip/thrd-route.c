@@ -377,8 +377,8 @@ thrd_rdb_rid_lookup(uint8_t router_id)
 
 	found_rid = NULL;
 	for (rid = thrd_rdb_rid_head(); rid != NULL; rid = thrd_rdb_rid_next(rid)) {
-		LOG_RAW("%d\n", rid->router_id);
-		LOG_RAW("\n\r");
+		// LOG_RAW("%d\n", rid->router_id);
+		// LOG_RAW("\n\r");
 		if (rid->router_id == router_id) {
 			found_rid = rid;
 			break;
@@ -548,11 +548,7 @@ thrd_rdb_rid_add(uint8_t router_id)
 
 	} else {
 
-		LOG_RAW(
-				ANSI_COLOR_RED "thrd_rdb_rid_add: router id is already known for ");
-		LOG_RAW("%d\n", router_id);
-		LOG_RAW(ANSI_COLOR_RESET "\n\r");
-
+		LOG_RAW("thrd_rdb_rid_add: router id %d is already known\n\r", router_id);
 		LOG_RAW("thrd_rdb_rid_add: num_rids %d\n\r", num_rids);
 		LOG_RAW("-----------------------------------------------------\n\r");
 
