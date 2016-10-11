@@ -411,8 +411,8 @@ thrd_rdb_link_lookup(uint8_t router_id)
 	found_link = NULL;
 	for (link = thrd_rdb_link_head(); link != NULL;
 			link = thrd_rdb_link_next(link)) {
-		LOG_RAW("%d\n", link->L_router_id);
-		LOG_RAW("\n\r");
+		// LOG_RAW("%d\n", link->L_router_id);
+		// LOG_RAW("\n\r");
 		if (link->L_router_id == router_id) {
 			found_link = link;
 			break;
