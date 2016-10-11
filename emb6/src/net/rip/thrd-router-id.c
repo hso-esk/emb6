@@ -289,13 +289,8 @@ thrd_request_router_id(uint8_t *router_id)
 	coap_set_header_uri_path(packet, service_urls[0]);
 	coap_set_payload(packet, addr_solicit_buf, len);
 
-	/*********************  to remove ******************************/
-	static  uip_ipaddr_t                s_destAddr;
-	uip_ip6addr(&s_destAddr, 0xfe80, 0, 0, 0, 0, 0x00ff, 0xfe00, 0x0000);
-	//uip_ip6addr(&s_destAddr, 0xfe80, 0, 0, 0, 0x250, 0xc2ff, 0xfea8, 0xaa);
-	/**********************************************************************/
 
-	coap_nonblocking_request(&s_destAddr, UIP_HTONS(COAP_DEFAULT_PORT), packet, thrd_addr_solicit_chunk_handler); // TODO Changing CoAP Port.
+	coap_nonblocking_request(&leader_addr, UIP_HTONS(COAP_DEFAULT_PORT), packet, thrd_addr_solicit_chunk_handler); // TODO Changing CoAP Port.
 	LOG_RAW("Sending Router ID Request to Partition Leader [");
 
 	LOG_IP6ADDR(&leader_addr);
