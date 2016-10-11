@@ -87,6 +87,45 @@ thrd_partition_start(void)
 /* --------------------------------------------------------------------------- */
 
 thrd_error_t
+thrd_partition_process_leader_tlv(tlv_leader_t *leader_tlv)
+{
+	if ( leader_tlv != NULL ) {
+
+		thrd_partition.ID_sequence_number = 0;	// TODO Check this.
+
+		// Compare partition values.
+		if ( leader_tlv->weight > thrd_partition.Partition_weight ) {
+			attach:
+			// TODO Try to attach to other partition.
+			LOG_RAW("thrd_partition_process: Attaching to existing Thread Partition!\n");
+			// TODO Call this functions after successful attachment process.
+			thrd_partition_set_pid(leader_tlv->partition_id);
+			thrd_partition_set_weight(leader_tlv->weight);
+			thrd_partition_set_vn_version(leader_tlv->data_version);
+			thrd_partition_set_vn_stable_version(leader_tlv->stable_data_version);
+			thrd_partition_set_leader_router_id(leader_tlv->leader_router_id);
+
+		} else if ( leader_tlv->weight == thrd_partition.Partition_weight ) {
+			if ( leader_tlv->partition_id > thrd_partition.Partition_ID ) {
+				goto attach;
+			} else if ( leader_tlv->partition_id == thrd_partition.Partition_ID ) {
+				if ( (leader_tlv->data_version > thrd_partition.VN_version)
+						&& (leader_tlv->stable_data_version > thrd_partition.VN_stable_version)) {
+					// Inconsistency detected -> Start a new Partition.
+					thrd_partition_start();
+				}
+			}
+		}
+		thrd_dev_print_dev_info();
+		return THRD_ERROR_NONE;
+	}
+	LOG_RAW("thrd_partition_process: Invalid Leader Data TLV.\n");
+	return THRD_ERROR_INVALID_ARGS;
+}
+
+/* --------------------------------------------------------------------------- */
+
+thrd_error_t
 thrd_partition_process(uint8_t id_sequence_number, tlv_leader_t *leader_tlv)
 {
 	if ( id_sequence_number > thrd_partition.ID_sequence_number ) {
