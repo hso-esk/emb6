@@ -159,8 +159,8 @@ thrd_process_adv(uint16_t source_rloc, tlv_route64_t *route64_tlv, tlv_leader_t 
 		printf("thrd_process_adv: RLOC16 [%04x] belongs to router.\n\r", source_rloc);
 
 		uint8_t source_rid = THRD_EXTRACT_ROUTER_ID(source_rloc);
-		thrd_rdb_link_update(source_rid, 0, 0, 0);
-		uint8_t link_cost = thrd_rdb_calc_link_cost(thrd_rdb_link_calc_incoming_quality(10));	// TODO 10 dB dummy.
+		thrd_rdb_link_update(source_rid, 15, 2, 0);	// TODO Use real values for link margin and outgoing quality.
+		uint8_t link_cost = thrd_rdb_calc_link_cost(thrd_rdb_link_calc_incoming_quality(10));	// TODO Remove 10 dB dummy.
 		thrd_rdb_route_add(source_rid, source_rid, link_cost);
 	}
 
