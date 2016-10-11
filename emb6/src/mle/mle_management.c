@@ -1143,7 +1143,7 @@ uint8_t mle_set_parent_mode()
 	linkaddr_set_node_shortAddr(&add);
 
 
-	mle_synchro_process(NULL);
+	//mle_synchro_process(NULL);
 
 
 	/* start the trickle algo*/
