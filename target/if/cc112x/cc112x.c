@@ -349,7 +349,7 @@ static void rf_txFifoThresholdISR(void *p_arg);
 static void rf_pktRxTxEndISR(void *p_arg);
 
 static void rf_readRxStatus(struct s_rf_ctx *p_ctx);
-static void rf_readRxFifo(struct s_rf_ctx *p_ctx, uint8_t numBytes);
+static uint8_t rf_readRxFifo(struct s_rf_ctx *p_ctx, uint8_t numBytes);
 
 #if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
 static void rf_setPktLen(uint8_t mode, uint16_t len);
@@ -976,59 +976,63 @@ static void rf_rxFifoThresholdISR(void *p_arg) {
       (p_ctx->rxNumRemBytes > (RF_CFG_FIFO_THR + 1))) {
 
     /* read bytes from RXFIFO */
-    rf_readRxFifo(p_ctx, numRxBytes);
-    isRxOk = TRUE;
-
-    if (p_ctx->rxLastDataPtr > LLFRAME_MIN_NUM_RX_BYTES) {
-      /* compute number of checksum bytes */
-      p_ctx->rxNumRemBytes -= numRxBytes;
-      if (p_ctx->rxNumRemBytes < p_ctx->rxFrame.crc_len) {
-        numChksumBytes = numRxBytes - (p_ctx->rxFrame.crc_len - p_ctx->rxNumRemBytes);
-      }
-      else {
-        numChksumBytes = numRxBytes;
-      }
-
-#if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
-      /* is address not yet checked and number of received bytes sufficient for
-      * address filtering? */
-      if ((p_ctx->rxIsAddrFiltered == FALSE) &&
-          (p_ctx->rxLastDataPtr >= (LLFRAME_MIN_NUM_RX_BYTES + p_ctx->rxFrame.min_addr_len))) {
-        isRxOk = rf_filterAddr(p_ctx);
-      }
-#endif /* NETSTK_CFG_RF_SW_AUTOACK_EN */
+    if (rf_readRxFifo(p_ctx, numRxBytes) == 0) {
+      isRxOk = FALSE;
     }
     else {
-      /* first chunk of bytes is sufficient to obtain incoming frame information */
-      p_ctx->rxNumRemBytes = llframe_parse(&p_ctx->rxFrame, p_ctx->rxBuf, p_ctx->rxLastDataPtr);
-      if (p_ctx->rxNumRemBytes == 0) {
-        isRxOk = FALSE;
+      isRxOk = TRUE;
+
+      if (p_ctx->rxLastDataPtr > LLFRAME_MIN_NUM_RX_BYTES) {
+        /* compute number of checksum bytes */
+        p_ctx->rxNumRemBytes -= numRxBytes;
+        if (p_ctx->rxNumRemBytes < p_ctx->rxFrame.crc_len) {
+          numChksumBytes = numRxBytes - (p_ctx->rxFrame.crc_len - p_ctx->rxNumRemBytes);
+        }
+        else {
+          numChksumBytes = numRxBytes;
+        }
+
+  #if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
+        /* is address not yet checked and number of received bytes sufficient for
+        * address filtering? */
+        if ((p_ctx->rxIsAddrFiltered == FALSE) &&
+            (p_ctx->rxLastDataPtr >= (LLFRAME_MIN_NUM_RX_BYTES + p_ctx->rxFrame.min_addr_len))) {
+          isRxOk = rf_filterAddr(p_ctx);
+        }
+  #endif /* NETSTK_CFG_RF_SW_AUTOACK_EN */
       }
       else {
-        /* set total number of received bytes */
-        p_ctx->rxBytesCounter = p_ctx->rxFrame.tot_len;
-
-#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
-        /* switch to fixed packet length mode if total of remaining bytes is less than RF_MAX_FIFO_LEN */
-        if ((p_ctx->pktLenMode == CC112X_PKT_LEN_MODE_INFINITE) &&
-            (p_ctx->rxBytesCounter < (RF_MAX_FIFO_LEN + 1))) {
-          rf_setPktLen(CC112X_PKT_LEN_MODE_FIXED, p_ctx->rxBytesCounter);
-        }
-#endif /* NETSTK_CFG_IEEE_802154G_EN */
-
-        /* initialize checksum */
-        p_ctx->rxChksum = llframe_crcInit(&p_ctx->rxFrame);
-        p_ctx->rxLastChksumPtr = p_ctx->rxFrame.crc_offset;
-
-        /* compute number of checksum bytes */
-        numChksumBytes = p_ctx->rxLastDataPtr - p_ctx->rxLastChksumPtr;
-
-#if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
-        /* filter unwanted ACKs */
-        if ((p_ctx->rxBuf[PHY_HEADER_LEN ] == 0x02) && (p_ctx->txReqAck == FALSE)) {
+        /* first chunk of bytes is sufficient to obtain incoming frame information */
+        p_ctx->rxNumRemBytes = llframe_parse(&p_ctx->rxFrame, p_ctx->rxBuf, p_ctx->rxLastDataPtr);
+        if (p_ctx->rxNumRemBytes == 0) {
           isRxOk = FALSE;
         }
-#endif /* NETSTK_CFG_RF_SW_AUTOACK_EN */
+        else {
+          /* set total number of received bytes */
+          p_ctx->rxBytesCounter = p_ctx->rxFrame.tot_len;
+
+  #if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
+          /* switch to fixed packet length mode if total of remaining bytes is less than RF_MAX_FIFO_LEN */
+          if ((p_ctx->pktLenMode == CC112X_PKT_LEN_MODE_INFINITE) &&
+              (p_ctx->rxBytesCounter < (RF_MAX_FIFO_LEN + 1))) {
+            rf_setPktLen(CC112X_PKT_LEN_MODE_FIXED, p_ctx->rxBytesCounter);
+          }
+  #endif /* NETSTK_CFG_IEEE_802154G_EN */
+
+          /* initialize checksum */
+          p_ctx->rxChksum = llframe_crcInit(&p_ctx->rxFrame);
+          p_ctx->rxLastChksumPtr = p_ctx->rxFrame.crc_offset;
+
+          /* compute number of checksum bytes */
+          numChksumBytes = p_ctx->rxLastDataPtr - p_ctx->rxLastChksumPtr;
+
+  #if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
+          /* filter unwanted ACKs */
+          if ((p_ctx->rxBuf[PHY_HEADER_LEN ] == 0x02) && (p_ctx->txReqAck == FALSE)) {
+            isRxOk = FALSE;
+          }
+  #endif /* NETSTK_CFG_RF_SW_AUTOACK_EN */
+        }
       }
     }
   }
@@ -1823,10 +1827,17 @@ static void rf_readRxStatus(struct s_rf_ctx *p_ctx) {
  * @param numBytes  number of bytes to read
  * @return
  */
-static void rf_readRxFifo(struct s_rf_ctx *p_ctx, uint8_t numBytes) {
+static uint8_t rf_readRxFifo(struct s_rf_ctx *p_ctx, uint8_t numBytes) {
+
+  /* check buffer overflow */
+  if ((p_ctx->rxLastDataPtr + numBytes) > RF_MAX_PACKET_LEN) {
+    return 0;
+  }
+
   /* read a given number of bytes from RX FIFO and append to RX buffer */
   cc112x_spiRxFifoRead(&p_ctx->rxBuf[p_ctx->rxLastDataPtr], numBytes);
   p_ctx->rxLastDataPtr += numBytes;
+  return numBytes;
 }
 
 
