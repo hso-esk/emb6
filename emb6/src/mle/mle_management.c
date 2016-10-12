@@ -520,10 +520,10 @@ static uint8_t send_mle_link_request(void)
 	return 1 ;
 }
 
+static 	syn_state_t 		syn_state;  // synchronisation process current state
+
 static void reply_for_mle_link_request(void *ptr)
 {
-
-	uint8_t n;
 	uint8_t* nb_id;
 	nb_id= (uint8_t*) ptr;
 	tlv_t resp ;
@@ -557,8 +557,8 @@ static void reply_for_mle_link_request(void *ptr)
 
 			/* we have to inform the syn process that we are waiting for link accept
 			 * so we call the syn function with value of 255 */
-			n=255;
-			mle_synchro_process((void *) &n);
+			syn_state=SYN_PROCESS_LINK;
+			ctimer_set(&c_mle_Timer, 2 * bsp_get(E_BSP_GET_TRES) , mle_synchro_process, NULL);
 		}
 
 		/* get the received challenge of the child */
@@ -580,21 +580,7 @@ static void reply_for_mle_link_request(void *ptr)
 
 void mle_synchro_process(void *ptr)
 {
-	static 	syn_state_t 		syn_state;  // synchronisation process current state
 	uint8_t finish=0;
-	uint8_t * p= (uint8_t*) ptr;
-
-	if (p) // this mean that this function was triggered when we sent Link_accept_and_request
-	{
-		if(*p==255)
-		{	/* in this case we have to be ready to receive a response */
-			/* change the state and trigger the timer */
-			syn_state=SYN_PROCESS_LINK;
-			ctimer_set(&c_mle_Timer, 2 * bsp_get(E_BSP_GET_TRES) , mle_synchro_process, NULL);
-			LOG_RAW("SNY process:  state changed due to link_accept_and_request command \n"ANSI_COLOR_RESET);
-		}
-		finish =1;
-	}
 
 	if(MyNode.OpMode==PARENT)
 	{
@@ -1116,18 +1102,18 @@ uint8_t mle_init(void)
 uint8_t mle_set_parent_mode()
 {
 	/* stop the keep-alive process if we are operating as child */
-	if(MyNode.OpMode==CHILD)
-	{
-		ctimer_stop(&parent->timer);
-		ctimer_stop(&c_mle_Timer);
-	}
+	//if(MyNode.OpMode==CHILD)
+	//{
+	//	ctimer_stop(&parent->timer);
+	//	ctimer_stop(&c_mle_Timer);
+	//}
 	/* set the operating mode as router (parent) */
 	MyNode.OpMode=PARENT;
 	LOG_RAW(ANSI_COLOR_GREEN "MLE : Node operate as Parent ... "ANSI_COLOR_RESET);
 	PRESET();
 
 	/* clear the neighbors router table  */
-	mle_rm_all_nb_router();
+	//mle_rm_all_nb_router();
 
 
 	/* set the rloc address */
@@ -1143,8 +1129,8 @@ uint8_t mle_set_parent_mode()
 	linkaddr_set_node_shortAddr(&add);
 
 
-	mle_synchro_process(NULL);
-
+	//mle_synchro_process(NULL);
+	ctimer_set(&c_mle_Timer, 2 * bsp_get(E_BSP_GET_TRES) , mle_synchro_process , NULL );
 
 	/* start the trickle algo*/
 	thrd_trickle_init();
