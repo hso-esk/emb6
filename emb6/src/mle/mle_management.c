@@ -40,6 +40,7 @@
 static mle_node_t MyNode;
 static  uip_ipaddr_t                s_destAddr;
 struct  ctimer                      c_mle_Timer; // used for the join process(child) and synchro process(parent)
+struct  ctimer                      parent_Timer; // used for the join process(child) and synchro process(parent)
 static 	mle_cmd_t 					cmd; // command buffer
 static mle_param_t					param;
 static mle_neighbor_t*				parent; // to handle parent
@@ -687,16 +688,16 @@ void mle_keep_alive(void *ptr)
 
 			state=KA_WAIT_RESPONSE;
 			/* set the timer to wait for a response within 2s  */
-			ctimer_set(&parent->timer, 2 * bsp_get(E_BSP_GET_TRES) , mle_keep_alive, NULL);
+			ctimer_set(&parent_Timer, 2 * bsp_get(E_BSP_GET_TRES) , mle_keep_alive, NULL);
 
 			break;
 		case KA_WAIT_RESPONSE : // waiting for response
-			if(ctimer_expired(&parent->timer)) // that means that this function was triggered by the timer ==> no response received from the parent
+			if(ctimer_expired(&parent_Timer)) // that means that this function was triggered by the timer ==> no response received from the parent
 			{
 				if(nbr_retry<3)	/* retry */
 				{
 					/* trigger the timer to try again after 1s */
-					ctimer_set(&parent->timer, 1 * bsp_get(E_BSP_GET_TRES) , mle_keep_alive , NULL );
+					ctimer_set(&parent_Timer, 1 * bsp_get(E_BSP_GET_TRES) , mle_keep_alive , NULL );
 				}
 				else /* reattach to a new parent*/
 				{
@@ -704,7 +705,7 @@ void mle_keep_alive(void *ptr)
 
 					/* set my node as not linked and redo the join process */
 					MyNode.OpMode=NOT_LINKED;
-					ctimer_stop(&parent->timer);
+					ctimer_stop(&parent_Timer);
 					ctimer_set(&c_mle_Timer, 1 * bsp_get(E_BSP_GET_TRES) , mle_join_process, (void *) NULL );
 				}
 			}
@@ -712,7 +713,7 @@ void mle_keep_alive(void *ptr)
 			{
 				nbr_retry=0;
 				/* trigger the timer to count again*/
-				ctimer_set(&parent->timer-2 , MyNode.timeOut * bsp_get(E_BSP_GET_TRES) , mle_keep_alive , NULL );
+				ctimer_set(&parent_Timer-2 , MyNode.timeOut * bsp_get(E_BSP_GET_TRES) , mle_keep_alive , NULL );
 			}
 			/* set the state to send keep alive message next time*/
 			state=KA_SEND_KEEP_ALIVE;
@@ -1161,7 +1162,7 @@ uint8_t mle_set_child_mode(uint16_t rloc16)
 	thrd_trickle_stop();
 
 	/* trigger the timer to start sending keep alive messages */
-	ctimer_set(&parent->timer, MyNode.timeOut * bsp_get(E_BSP_GET_TRES) , mle_keep_alive , NULL );
+	ctimer_set(&parent_Timer, MyNode.timeOut * bsp_get(E_BSP_GET_TRES) , mle_keep_alive , NULL );
 
 	return 1 ;
 }
