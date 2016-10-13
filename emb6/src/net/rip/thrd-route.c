@@ -881,7 +881,7 @@ handle_max_neighbor_age_timeout(void *ptr)
 
 	LOG_RAW("Link Set: Timer expired");
 	if ( l != NULL ) {
-		LOG_RAW(" for Link Set Entry with Router ID = &d\n\r", l->L_router_id);
+		LOG_RAW(" for Link Set Entry with Router ID = %d\n\r", l->L_router_id);
 		thrd_rdb_link_rm(l);
 	}
 	return;
