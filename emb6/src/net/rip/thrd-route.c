@@ -568,7 +568,7 @@ thrd_rdb_route_add(uint8_t destination, uint8_t next_hop, uint8_t route_cost)
 	thrd_rdb_route_t *r;
 
 	// Get the valid router id set.
-	thrd_rdb_id_t *rid;
+	// thrd_rdb_id_t *rid;
 
 	LOG_RAW("thrd_rdb_route_add: search route set entry for destination id ");
 	LOG_RAW("%d\n", destination);
@@ -585,20 +585,19 @@ thrd_rdb_route_add(uint8_t destination, uint8_t next_hop, uint8_t route_cost)
 
 		/* We first check to see if the destination router is in our
 		 * Router ID Set (set of valid Router IDs). */
-		rid = thrd_rdb_rid_lookup(destination);
+		// rid = thrd_rdb_rid_lookup(destination);
 
-		if (rid == NULL) {
+		// if (rid == NULL) {
 			/* If the router did not have an entry in our Router ID Set,
 			 * return NULL. */
 
-			LOG_RAW(
-					ANSI_COLOR_RED "thrd_rdb_route_add: Destination router with router id ");
-			LOG_RAW("%d is invalid.", destination);
-			LOG_RAW(ANSI_COLOR_RESET "\n\r");
+		//	LOG_RAW(ANSI_COLOR_RED "thrd_rdb_route_add: Destination router with router id ");
+		//	LOG_RAW("%d is invalid.", destination);
+		//	LOG_RAW(ANSI_COLOR_RESET "\n\r");
 
-			LOG_RAW("-----------------------------------------------------\n\r");
-			return NULL;
-		}
+		//	LOG_RAW("-----------------------------------------------------\n\r");
+		//	return NULL;
+		//}
 
 		if (thrd_rdb_route_num_routes() == THRD_CONF_MAX_ROUTES) {
 			/* Removing the oldest route entry from the route table. The
@@ -760,7 +759,7 @@ thrd_rdb_link_update(uint8_t router_id, uint8_t link_margin,
 		uint8_t outgoing_quality, clock_time_t age)
 {
 	thrd_rdb_link_t *l;
-	thrd_rdb_id_t *rid;
+	// thrd_rdb_id_t *rid;
 	uint16_t link_margin_shifted = (link_margin << THRD_EXP_WEIGHT_MOV_AVG);
 
 	/* Find the corresponding Router ID entry (Router ID Set). */
@@ -779,19 +778,19 @@ thrd_rdb_link_update(uint8_t router_id, uint8_t link_margin,
 
 		/* We first check to see if the destination router is in our
 		 * Router ID Set (set of valid Router IDs). */
-		rid = thrd_rdb_rid_lookup(router_id);
+		// rid = thrd_rdb_rid_lookup(router_id);
 
-		if (rid == NULL) {
+		// if (rid == NULL) {
 			/* If the router did not have an entry in our Router ID Set,
 			 * return NULL. */
 
-			LOG_RAW(ANSI_COLOR_RED "thrd_rdb_link_update: Router with router id ");
-			LOG_RAW("%d is invalid.", router_id);
-			LOG_RAW(ANSI_COLOR_RESET "\n\r");
+		//	LOG_RAW(ANSI_COLOR_RED "thrd_rdb_link_update: Router with router id ");
+		//	LOG_RAW("%d is invalid.", router_id);
+		//	LOG_RAW(ANSI_COLOR_RESET "\n\r");
 
-			LOG_RAW("-----------------------------------------------------\n\r");
-			return NULL;
-		}
+		//	LOG_RAW("-----------------------------------------------------\n\r");
+		//	return NULL;
+		//}
 
 		/* If there is no link entry, create one. We first need to
 		 * check if we have room for this link. If not, we remove the
@@ -1031,9 +1030,9 @@ thrd_rdb_print_link_set(void)
 				" | "  "%13d"
 				" | "  "%18d"
 				" | "  "%18d"
-				" | "  "%5d"
+				" | "  "timer"
 				" |\n", l->L_router_id, l->L_link_margin, l->L_incoming_quality,
-				l->L_outgoing_quality, l->L_age);
+				l->L_outgoing_quality);
 	}
 	LOG_RAW(
 			"---------------------------------------------------------------------------------\n\r");
