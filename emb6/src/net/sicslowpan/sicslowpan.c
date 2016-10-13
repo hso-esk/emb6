@@ -1873,8 +1873,8 @@ static uint8_t output(const uip_lladdr_t *localdest)
 					// Use mesh header to forward packet.
 
 					// TODO Nidhal: Set Short Address Mode?
-					packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
-					packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_SHORTADDRMODE);
+					// packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
+					// packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_SHORTADDRMODE);
 
 					// Obtain the destination RLOC16 from the RLOC IID.
 					uint16_t dest_rloc16 = thrd_extract_rloc16_from_rloc_address(&dest_addr);
@@ -1903,7 +1903,7 @@ static uint8_t output(const uip_lladdr_t *localdest)
 							// TODO Nidhal: Set Short Address Mode?
 							packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_SHORTADDRMODE);
 							// TODO check if i have a short address
-							if(0) // TODO to change with if i have short address
+							if(1) // TODO to change with if i have short address
 								packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
 							else
 								packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_LONGADDRMODE);
@@ -1917,10 +1917,8 @@ static uint8_t output(const uip_lladdr_t *localdest)
 							printf("sicslowpan: Destination child id [%d] does not belong to a child.\n\r", dest_child_id);
 							mle_print_child_table();
 						}
-					}
 
-					// Check whether the destination is a direct neighbor router.
-					if ( thrd_rdb_is_neighbor_router(dest_rid) ) {
+					} else if ( thrd_rdb_is_neighbor_router(dest_rid) ) { // Check whether the destination is a direct neighbor router.
 						/*
 						 * TODO Encode the 6LoWPAN frame without using a 6LoWPAN Mesh Header and set the IEEE 802.15.4
 						 * Destination using the RLOC16.
@@ -1940,7 +1938,7 @@ static uint8_t output(const uip_lladdr_t *localdest)
 
 						thrd_create_rloc_linkaddr(&dest, dest_rid, 0);
 						send_packet(&dest);
-					} else {	// Not a direct neighbor.
+					} else {	// Packet is not destined to me and not a direct neighbor.
 						/*
 						 * Encode the 6LoWPAN frame including 6LoWPAN mesh header, set the V and F bits to '1', the
 						 * originator address field using the local RLOC16, and the final address field using the
