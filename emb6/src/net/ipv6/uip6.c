@@ -92,7 +92,7 @@
 /* For Debug, logging, statistics                                            */
 /*---------------------------------------------------------------------------*/
 
-#define DEBUG DEBUG_NONE
+#define DEBUG DEBUG_PRINT
 #include "uip-debug.h"
 
 #if UIP_CONF_IPV6_RPL
@@ -1124,6 +1124,7 @@ uip_process(uint8_t flag)
 
 	if((UIP_IP_BUF->len[0] << 8) + UIP_IP_BUF->len[1] <= uip_len) {
 		uip_len = (UIP_IP_BUF->len[0] << 8) + UIP_IP_BUF->len[1] + UIP_IPH_LEN;
+		printf("uip_len = %d\n\r", uip_len);
 		/*
 		 * The length reported in the IPv6 header is the
 		 * length of the payload that follows the
@@ -1227,6 +1228,7 @@ uip_process(uint8_t flag)
 				!uip_is_addr_unspecified(&UIP_IP_BUF->srcipaddr) &&
 				!uip_is_addr_loopback(&UIP_IP_BUF->destipaddr)) {
 
+			printf("2: uip_len = %d\n\r", uip_len);	// LZ.
 
 			/* Check MTU */
 			if(uip_len > UIP_LINK_MTU) {
@@ -1234,6 +1236,9 @@ uip_process(uint8_t flag)
 				UIP_STAT(++uip_stat.ip.drop);
 				goto send;
 			}
+
+			printf("3: uip_len = %d\n\r", uip_len);	// LZ.
+
 			/* Check Hop Limit */
 			if(UIP_IP_BUF->ttl <= 1) {
 				uip_icmp6_error_output(ICMP6_E_TIME_EXCEEDED,
@@ -1242,6 +1247,8 @@ uip_process(uint8_t flag)
 				goto send;
 			}
 
+			printf("4: uip_len = %d\n\r", uip_len);	// LZ.
+
 #if UIP_CONF_IPV6_RPL
 			if(rpl_update_header_empty()) {
 				/* Packet can not be forwarded */
@@ -1249,6 +1256,8 @@ uip_process(uint8_t flag)
 				goto drop;
 			}
 #endif /* UIP_CONF_IPV6_RPL */
+
+			printf("5: uip_len = %d\n\r", uip_len);	// LZ.
 
 			UIP_IP_BUF->ttl = UIP_IP_BUF->ttl - 1;
 			PRINTF("Forwarding packet to ");
