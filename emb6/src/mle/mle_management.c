@@ -37,15 +37,15 @@
                           LOCAL VARIABLE DECLARATIONS
  =============================================================================*/
 
-static mle_node_t MyNode;
-static  uip_ipaddr_t                s_destAddr;
-struct  ctimer                      c_mle_Timer; // used for the join process(child) and synchro process(parent)
-struct  ctimer                      parent_Timer; // used for the join process(child) and synchro process(parent)
-static 	mle_cmd_t 					cmd; // command buffer
+static st_mle_node_t MyNode;
+static uip_ipaddr_t                 s_destAddr;
+struct ctimer                       c_mle_Timer;
+struct ctimer                       parent_Timer;
+static mle_cmd_t 					cmd; // command buffer
 static mle_param_t					param;
-static mle_neighbor_t*				parent; // to handle parent
-static mle_neighbor_t*				nb; //
-static mle_neighbor_t* 				child; // to handle the child devices in both mode (parent/child)
+static mle_neighbor_t*				parent;
+static mle_neighbor_t*				nb;
+static mle_neighbor_t* 				child;
 
 /*==============================================================================
 								LOCAL FUNCTION
@@ -70,7 +70,7 @@ uint8_t 			isActiveRouter(uint16_t srcAdd)
 
 
 
-/*
+/**
  * @brief Send multicast MLE parent request
  * @return 1    OK.
  * @return 0   FAIL.
@@ -1103,11 +1103,11 @@ uint8_t mle_init(void)
 uint8_t mle_set_parent_mode()
 {
 	/* stop the keep-alive process if we are operating as child */
-	//if(MyNode.OpMode==CHILD)
-	//{
-	//	ctimer_stop(&parent->timer);
+	if(MyNode.OpMode==CHILD)
+	{
+		ctimer_stop(&parent_Timer);
 	//	ctimer_stop(&c_mle_Timer);
-	//}
+	}
 	/* set the operating mode as router (parent) */
 	MyNode.OpMode=PARENT;
 	LOG_RAW(ANSI_COLOR_GREEN "MLE : Node operate as Parent ... "ANSI_COLOR_RESET);

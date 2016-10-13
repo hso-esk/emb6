@@ -75,7 +75,7 @@ typedef struct {
 	uint8_t 			  childs_counter;
  	uint32_t 			  challenge ;  					        /**< current join/synchronization process challenge      */
 	uint8_t               rx_on_when_idle; 					    /**< Set to ‘1’ if the sender's receiver on when not transmitting; used for mode TLV  */
-}mle_node_t ;
+}st_mle_node_t ;
 
 
 typedef struct {

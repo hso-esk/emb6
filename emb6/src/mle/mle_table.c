@@ -261,7 +261,6 @@ static void mle_print_table(list_t *list)
 				" | " ANSI_COLOR_YELLOW "%15d" ANSI_COLOR_RESET
 				" | " ANSI_COLOR_YELLOW "%7d" ANSI_COLOR_RESET
 				" |  ", i->id, i->modeTLV, i->MLEFrameCounter, i->address16);
-		//PRINT6ADDR(&i->address);
 		PRINTF("\n");
 	}
 	PRINTF("---------------------------------------------------------\n\r");
