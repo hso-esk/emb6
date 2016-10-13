@@ -53,51 +53,60 @@ thrd_process_route64(uint8_t rid_sender, tlv_route64_t *route64_tlv)
 		LOG_RAW("thrd_process_route64: thrd_partition.ID_sequence_number = %d \n\r", thrd_partition.ID_sequence_number);
 		LOG_RAW("-x-x-x-x-x-x-x-x-x-x-x-x-x-\n\r");
 
-		if ( route64_tlv->id_sequence_number > thrd_partition.ID_sequence_number ) {
+		// if ( route64_tlv->id_sequence_number > thrd_partition.ID_sequence_number ) {
 
+		// Set ID sequence number.
+		thrd_partition.ID_sequence_number = route64_tlv->id_sequence_number;
+
+		// Empty the Router ID Set.
+		thrd_rdb_rid_empty();
+
+		// printf("router_id_mask = %02x\n", router_id_mask);
+
+		uint64_t bit_mask = 0x8000000000000000;
+		uint8_t data_cnt = 0;
+
+		LOG_RAW("thrd_process_route64: route64_tlv->router_id_msk = %lu\n", UIP_HTONLL(route64_tlv->router_id_mask));
+
+		uint64_t rec_router_id_mask = UIP_HTONLL(route64_tlv->router_id_mask);
+
+		// Replace the router ID set and update route set.
+		for ( uint8_t id_cnt = 0; id_cnt < 64; id_cnt++) {
+			if ( (rec_router_id_mask & bit_mask) > 0 ) {
+
+				// printf("id_cnt = %d\n\r", id_cnt);
+
+				// Check whether received ID sequence number is higher. If higher, update router ID set.
+				if ( route64_tlv->id_sequence_number > thrd_partition.ID_sequence_number ) {
+					thrd_rdb_rid_add(id_cnt);
+				}
+				// Process Link Quality and Route Data.
+				// Incoming quality.
+				uint8_t lq_rd_data = (route64_tlv->lq_rd[data_cnt] & 0x30) >> 6;
+				if ( lq_rd_data != 0 ) {
+					link = thrd_rdb_link_lookup(id_cnt);
+					link->L_outgoing_quality = lq_rd_data;
+				}
+				// Route data.
+				lq_rd_data = (route64_tlv->lq_rd[data_cnt] & 0x0F);
+				// TODO Check whether the destination differs to the current router id. (Otherwise, we would create a loop).
+				if ( id_cnt == thrd_iface.router_id ) {
+					// Prevent from adding route to myself.
+				} else {
+					thrd_rdb_route_update(rid_sender, id_cnt, lq_rd_data);
+				}
+				// printf("update route: %d | %d | %d\n", id_cnt, rid_sender, lq_rd_data);
+
+				data_cnt++;
+			}
+			bit_mask >>= 1;
+		}
+		// Check whether received ID sequence number is higher. If higher, take it as the new one.
+		if ( route64_tlv->id_sequence_number > thrd_partition.ID_sequence_number ) {
 			// Set ID sequence number.
 			thrd_partition.ID_sequence_number = route64_tlv->id_sequence_number;
-
-			// Empty the Router ID Set.
-			thrd_rdb_rid_empty();
-
-			// printf("router_id_mask = %02x\n", router_id_mask);
-
-			uint64_t bit_mask = 0x8000000000000000;
-			uint8_t data_cnt = 0;
-
-			LOG_RAW("thrd_process_route64: route64_tlv->router_id_msk = %lu\n", UIP_HTONLL(route64_tlv->router_id_mask));
-
-			uint64_t rec_router_id_mask = UIP_HTONLL(route64_tlv->router_id_mask);
-
-			// Replace the ID Set.
-			for ( uint8_t id_cnt = 0; id_cnt < 64; id_cnt++) {
-				if ( (rec_router_id_mask & bit_mask) > 0 ) {
-
-					printf("id_cnt = %d\n\r", id_cnt);
-
-					thrd_rdb_rid_add(id_cnt);
-
-					// Process Link Quality and Route Data.
-
-					// Incoming quality.
-					uint8_t lq_rd_data = (route64_tlv->lq_rd[data_cnt] & 0x30) >> 6;
-					if ( lq_rd_data != 0 ) {
-						link = thrd_rdb_link_lookup(id_cnt);
-						link->L_outgoing_quality = lq_rd_data;
-					}
-					// Route data.
-					lq_rd_data = (route64_tlv->lq_rd[data_cnt] & 0x0F);
-					// TODO Check whether the destination differs to the current router id. (Otherwise, we would create a loop).
-					thrd_rdb_route_update(rid_sender, id_cnt, lq_rd_data);
-
-					// printf("update route: %d | %d | %d\n", id_cnt, rid_sender, lq_rd_data);
-
-					data_cnt++;
-				}
-				bit_mask >>= 1;
-			}
-		} else {
+		}
+		/*		} else {
 			uint64_t bit_mask = 0x8000000000000000;
 			uint8_t data_cnt = 0;
 
@@ -130,7 +139,7 @@ thrd_process_route64(uint8_t rid_sender, tlv_route64_t *route64_tlv)
 				}
 				bit_mask >>= 1;
 			}
-		}
+		}*/
 		return THRD_ERROR_NONE;
 	} else {
 		return THRD_ERROR_INVALID_ARGS;
@@ -154,28 +163,24 @@ thrd_process_adv(uint16_t source_rloc, tlv_route64_t *route64_tlv, tlv_leader_t 
 {
 	printf("source_rloc = %04x\n\r", source_rloc);
 	// Notify neighbor table about neighbor router id.
-	if ( thrd_rloc16_belongs_to_router(source_rloc) ) {
+	// if ( thrd_rloc16_belongs_to_router(source_rloc) ) {
 
-		printf("thrd_process_adv: RLOC16 [%04x] belongs to router.\n\r", source_rloc);
+	printf("thrd_process_adv: RLOC16 [%04x] belongs to a router.\n\r", source_rloc);
 
-		uint8_t source_rid = THRD_EXTRACT_ROUTER_ID(source_rloc);
-		thrd_rdb_link_update(source_rid, 15, 2, 0);	// TODO Use real values for link margin and outgoing quality.
-		uint8_t link_cost = thrd_rdb_calc_link_cost(thrd_rdb_link_calc_incoming_quality(10));	// TODO Remove 10 dB dummy.
-		thrd_rdb_route_add(source_rid, source_rid, link_cost);
-	}
-
-	thrd_process_route64(THRD_EXTRACT_ROUTER_ID(source_rloc), route64_tlv);
+	// Process Leader Data TLV.
 	thrd_partition_process(thrd_extract_id_seq_number(route64_tlv), leader_tlv);
 
+	uint8_t source_rid = THRD_EXTRACT_ROUTER_ID(source_rloc);
+	thrd_rdb_link_update(source_rid, 15, 2, 0);	// TODO Use real values for link margin and outgoing quality.
+	uint8_t link_cost = thrd_rdb_calc_link_cost(thrd_rdb_link_calc_incoming_quality(10));	// TODO Remove 10 dB dummy.
+	thrd_rdb_route_add(source_rid, source_rid, link_cost);
+	// Process Route64 TLV.
+	thrd_process_route64(THRD_EXTRACT_ROUTER_ID(source_rloc), route64_tlv);
+
+	// thrd_process_route64(THRD_EXTRACT_ROUTER_ID(source_rloc), route64_tlv);
+	// thrd_partition_process(thrd_extract_id_seq_number(route64_tlv), leader_tlv);
+
 	thrd_rdb_print_routing_database();
-
-	// thrd_rdb_print_route_set();
-
-	/* Correct solution:
-	if ( thrd_partition_process(thrd_get_id_seq_number(route64_tlv), leader_tlv) ) {
-		thrd_process_route64((source_addr & 0xFC00) >> 10, route64_tlv);
-	}
-	*/
 }
 
 /* -------------------------------------------------------------------------- */
