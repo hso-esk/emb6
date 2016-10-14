@@ -43,7 +43,7 @@
 
     \author Nidhal Mars <nidhal.mars@hs-offenburg.de>
 
-    \brief  Functions to handle MLE command and add some TLV parameters
+    \brief  Functions to handle MLE message and add some TLV parameters
 
   	\version  0.1
 */
@@ -57,16 +57,38 @@
 #include "mle_message.h"
 #include "bsp.h"
 
+/*==============================================================================
+                                     MACROS
+ =============================================================================*/
+
+/**
+* Generate 32-bit Random
+*/
 #define MLE_MSG_RADNOM()		(bsp_getrand(0) | (bsp_getrand(0)<< 16))
+
+
+/*==============================================================================
+								LOCAL VARIABLES
+ =============================================================================*/
+
+uint8_t buf[8];
 
 
 /*==============================================================================
 								LOCAL FUNCTION
  =============================================================================*/
-uint8_t buf[8];
-static uint8_t index=0;
 
-
+/**
+ * @brief  add 32-bit TLV value to command
+ *
+ * @param  cmd	    pointer to the command
+ * @param  type  	type of TLV to add
+ * @param  value	value of TLV (32-bit)
+ *
+ * @return
+ *       -  1 sucess
+ *       -  0 error
+ */
 static uint8_t  add_tlv32_bit_to_cmd(mle_cmd_t* cmd , tlv_type_t type , uint32_t value)
 {
 
@@ -81,6 +103,18 @@ static uint8_t  add_tlv32_bit_to_cmd(mle_cmd_t* cmd , tlv_type_t type , uint32_t
 		return 0 ;
 }
 
+
+/**
+ * @brief  add 16-bit TLV value to command
+ *
+ * @param  cmd	    pointer to the command
+ * @param  type  	type of TLV to add
+ * @param  value	value of TLV (16-bit)
+ *
+ * @return
+ *       -  1 sucess
+ *       -  0 error
+ */
 static uint8_t  add_tlv16_bit_to_cmd(mle_cmd_t* cmd , tlv_type_t type , uint16_t value)
 {
 
@@ -97,17 +131,10 @@ static uint8_t  add_tlv16_bit_to_cmd(mle_cmd_t* cmd , tlv_type_t type , uint16_t
                                  API FUNCTIONS
  =============================================================================*/
 
-uint16_t  get_16_MAC(void)
-{
-	return (mac_phy_config.mac_address[7] | (mac_phy_config.mac_address[6] << 8));
-
-}
-
 
 uint8_t  add_mac_src_address_to_cmd(mle_cmd_t* cmd)
 {
-	// TODO change the address by the 16 bit short address that we get during the join process
-	if (mle_add_tlv_to_cmd( cmd ,TLV_SOURCE_ADDRESS , 2 ,(uint8_t*) &mac_phy_config.mac_address[6] ))
+	if (mle_add_tlv_to_cmd( cmd ,TLV_SOURCE_ADDRESS, 2,(uint8_t*) &mac_phy_config.mac_address[6] ))
 		return 1 ;
 	else
 		return 0 ;
@@ -116,13 +143,13 @@ uint8_t  add_mac_src_address_to_cmd(mle_cmd_t* cmd)
 uint8_t  add_src_address_to_cmd(mle_cmd_t* cmd, uint16_t address)
 {
 
-	if ( add_tlv16_bit_to_cmd(cmd ,TLV_SOURCE_ADDRESS , address) )
+	if ( add_tlv16_bit_to_cmd(cmd, TLV_SOURCE_ADDRESS, address) )
 		return 1 ;
 	else
 		return 0 ;
 }
 
-uint8_t  add_address16_to_cmd(mle_cmd_t* cmd , uint16_t address)
+uint8_t  add_address16_to_cmd(mle_cmd_t* cmd, uint16_t address)
 {
 	if (add_tlv16_bit_to_cmd( cmd ,TLV_ADDRESS16 ,address ))
 		return 1 ;
@@ -130,15 +157,15 @@ uint8_t  add_address16_to_cmd(mle_cmd_t* cmd , uint16_t address)
 		return 0 ;
 }
 
-uint8_t  add_time_out_to_cmd(mle_cmd_t* cmd , uint32_t time)
+uint8_t  add_time_out_to_cmd(mle_cmd_t* cmd, uint32_t time)
 {
-	if(add_tlv32_bit_to_cmd(cmd ,TLV_TIME_OUT , time))
+	if(add_tlv32_bit_to_cmd(cmd, TLV_TIME_OUT, time))
 		return 1 ;
 	else
 		return 0 ;
 }
 
-uint8_t  add_mode_RSDN_to_cmd(mle_cmd_t* cmd , uint8_t R , uint8_t S , uint8_t D, uint8_t N )
+uint8_t  add_mode_RSDN_to_cmd(mle_cmd_t* cmd, uint8_t R, uint8_t S, uint8_t D, uint8_t N )
 {
 	uint8_t mode=0 ;
 
@@ -159,7 +186,7 @@ uint8_t  add_mode_RSDN_to_cmd(mle_cmd_t* cmd , uint8_t R , uint8_t S , uint8_t D
 	if(N)
 		BIT_SET(mode,0);
 
-	if (mle_add_tlv_to_cmd( cmd ,TLV_MODE , 1 , &mode ))
+	if (mle_add_tlv_to_cmd( cmd, TLV_MODE, 1, &mode ))
 		return 1 ;
 	else
 		return 0 ;
@@ -167,7 +194,7 @@ uint8_t  add_mode_RSDN_to_cmd(mle_cmd_t* cmd , uint8_t R , uint8_t S , uint8_t D
 
 
 
-uint8_t  add_scan_mask_to_cmd(mle_cmd_t* cmd , uint8_t R , uint8_t E )
+uint8_t  add_scan_mask_to_cmd(mle_cmd_t* cmd, uint8_t R, uint8_t E )
 {
 	uint8_t mask=0 ;
 
@@ -184,7 +211,7 @@ uint8_t  add_scan_mask_to_cmd(mle_cmd_t* cmd , uint8_t R , uint8_t E )
 	if(E)
 		BIT_SET(mask,6);
 
-	if (mle_add_tlv_to_cmd( cmd ,TLV_SCAN_MASK , 1 , &mask ))
+	if (mle_add_tlv_to_cmd( cmd, TLV_SCAN_MASK, 1, &mask ))
 		return 1 ;
 	else
 		return 0 ;
@@ -192,9 +219,9 @@ uint8_t  add_scan_mask_to_cmd(mle_cmd_t* cmd , uint8_t R , uint8_t E )
 
 
 
-uint8_t  add_MLEframe_counter_to_cmd(mle_cmd_t* cmd , uint32_t frame)
+uint8_t  add_MLEframe_counter_to_cmd(mle_cmd_t* cmd, uint32_t frame)
 {
-	if(add_tlv32_bit_to_cmd(cmd ,TLV_MLE_FRAME_COUNTER , frame))
+	if(add_tlv32_bit_to_cmd(cmd, TLV_MLE_FRAME_COUNTER, frame))
 		return 1 ;
 	else
 		return 0 ;
@@ -206,25 +233,25 @@ uint32_t  add_rand_challenge_to_cmd(mle_cmd_t* cmd )
 	do {randn=MLE_MSG_RADNOM();}
 	while(!randn);
 
-	if(add_tlv32_bit_to_cmd(cmd ,TLV_CHALLENGE ,randn ))
+	if(add_tlv32_bit_to_cmd(cmd, TLV_CHALLENGE, randn ))
 		return randn ;
 	else
 		return 0 ;
 }
 
-uint8_t  add_response_to_cmd(mle_cmd_t* cmd , tlv_t* resp )
+uint8_t  add_response_to_cmd(mle_cmd_t* cmd, tlv_t* resp )
 {
 
-	if(mle_add_tlv_to_cmd(cmd ,TLV_RESPONSE ,resp->length ,resp->value ) )
+	if(mle_add_tlv_to_cmd(cmd, TLV_RESPONSE, resp->length, resp->value ) )
 		return 1 ;
 	else
 		return 0 ;
 }
 
-uint8_t  add_response32_to_cmd(mle_cmd_t* cmd ,  uint32_t value )
+uint8_t  add_response32_to_cmd(mle_cmd_t* cmd, uint32_t value )
 {
 
-	if(add_tlv32_bit_to_cmd(cmd , TLV_RESPONSE ,  value))
+	if(add_tlv32_bit_to_cmd(cmd, TLV_RESPONSE, value))
 		return 1 ;
 	else
 		return 0 ;
@@ -235,7 +262,7 @@ uint8_t  add_status_to_cmd(mle_cmd_t* cmd)
 {
 	uint8_t status=1;
 
-	if (mle_add_tlv_to_cmd( cmd ,TLV_STATUS , 1 , &status ))
+	if (mle_add_tlv_to_cmd( cmd, TLV_STATUS, 1, &status ))
 		return 1 ;
 	else
 		return 0 ;
@@ -245,7 +272,7 @@ uint8_t  add_version_to_cmd(mle_cmd_t* cmd)
 {
 	uint8_t version=1;
 
-	if (mle_add_tlv_to_cmd( cmd ,TLV_VERSION , 1 , &version ))
+	if (mle_add_tlv_to_cmd( cmd, TLV_VERSION, 1, &version ))
 		return 1 ;
 	else
 		return 0 ;
@@ -254,15 +281,15 @@ uint8_t  add_version_to_cmd(mle_cmd_t* cmd)
 
 uint8_t  add_Link_margin_to_cmd(mle_cmd_t* cmd, uint8_t lm)
 {
-	if (mle_add_tlv_to_cmd( cmd ,TLV_LINK_MARGIN , 1 , &lm ))
+	if (mle_add_tlv_to_cmd( cmd, TLV_LINK_MARGIN, 1, &lm ))
 		return 1 ;
 	else
 		return 0 ;
 }
 
-uint8_t  add_route64_to_cmd(mle_cmd_t* cmd, tlv_route64_t* route , uint8_t len)
+uint8_t  add_route64_to_cmd(mle_cmd_t* cmd, tlv_route64_t* route, uint8_t len)
 {
-	if (mle_add_tlv_to_cmd( cmd ,TLV_ROUTE64 , len  ,(uint8_t*) route ))
+	if (mle_add_tlv_to_cmd( cmd, TLV_ROUTE64, len,(uint8_t*) route ))
 		return 1 ;
 	else
 		return 0 ;
@@ -271,7 +298,7 @@ uint8_t  add_route64_to_cmd(mle_cmd_t* cmd, tlv_route64_t* route , uint8_t len)
 
 uint8_t  add_leader_to_cmd(mle_cmd_t* cmd, tlv_leader_t* lead)
 {
-	if (mle_add_tlv_to_cmd( cmd ,TLV_LEADER_DATA , 8  ,(uint8_t*) lead ))
+	if (mle_add_tlv_to_cmd( cmd, TLV_LEADER_DATA, 8,(uint8_t*) lead ))
 		return 1 ;
 	else
 		return 0 ;
@@ -279,7 +306,7 @@ uint8_t  add_leader_to_cmd(mle_cmd_t* cmd, tlv_leader_t* lead)
 
 
 uint8_t  add_Cnnectivity_to_cmd(mle_cmd_t* cmd, uint8_t max_child, uint8_t child_count, uint8_t LQ3, uint8_t LQ2,
-		uint8_t LQ1, uint8_t Leader_cost,uint8_t id_sed)
+		uint8_t LQ1, uint8_t Leader_cost, uint8_t id_sed)
 {
 	buf[0]=max_child ;
 	buf[1]=child_count ;
@@ -288,38 +315,16 @@ uint8_t  add_Cnnectivity_to_cmd(mle_cmd_t* cmd, uint8_t max_child, uint8_t child
 	buf[4]=LQ1 ;
 	buf[5]=Leader_cost ;
 	buf[6]=id_sed ;
-	if (mle_add_tlv_to_cmd( cmd ,TLV_CONNECTIVITY , 7 , (uint8_t*) buf ))
+	if (mle_add_tlv_to_cmd( cmd, TLV_CONNECTIVITY, 7, (uint8_t*) buf ))
 		return 1 ;
 	else
 		return 0 ;
 }
 
-uint8_t add_tlv_id_to_buf(uint8_t type)
-{
-	if(index==8)
-	{
-		/* error buffer full */
-		index=0;
-		return 0;
-	}
-	buf[index++]=type;
-	return 1;
-}
 
-uint8_t  add_tlv_req_to_cmd(mle_cmd_t* cmd)
+uint8_t  comp_resp_chall(uint32_t challenge, uint8_t * buf)
 {
-	if (mle_add_tlv_to_cmd( cmd ,TLV_TLV_REQUEST , index , (uint8_t*) buf ))
-	{
-		index=0;
-		return 1 ;
-	}
-	else
-		return 0 ;
-}
-
-uint8_t  comp_resp_chall(uint32_t challenge , uint8_t * buf)
-{
-	return (challenge == ( (buf[3]) | (buf[2] << 8) | (buf[1] << 16)| (buf[0] << 24)) );
+	return (challenge == ( (buf[3]) | (buf[2] << 8) | (buf[1] << 16) | (buf[0] << 24)) );
 }
 
 

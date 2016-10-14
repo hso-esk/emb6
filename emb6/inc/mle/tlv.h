@@ -178,7 +178,7 @@ typedef struct __attribute__((__packed__))
  * @param  ptr	  			pointer to the buffer
  *
  * @return
-         -  1 sucess
+         -  1 success
          -  0 error
  */
 uint8_t tlv_init(tlv_t **tlv, uint8_t * ptr );
@@ -190,7 +190,7 @@ uint8_t tlv_init(tlv_t **tlv, uint8_t * ptr );
  * @param  ptr	  			pointer to the buffer
  *
  * @return
-         -  1 sucess
+         -  1 success
          -  0 error
  */
 uint8_t tlv_leader_init(tlv_leader_t **tlv, uint8_t * ptr );
@@ -202,7 +202,7 @@ uint8_t tlv_leader_init(tlv_leader_t **tlv, uint8_t * ptr );
  * @param  ptr	  			pointer to the buffer
  *
  * @return
-         -  1 sucess
+         -  1 success
          -  0 error
  */
 uint8_t tlv_route64_init(tlv_route64_t **tlv, uint8_t * ptr );
@@ -215,7 +215,7 @@ uint8_t tlv_route64_init(tlv_route64_t **tlv, uint8_t * ptr );
  * @param  ptr	  			pointer to the buffer
  *
  * @return
-         -  1 sucess
+         -  1 success
          -  0 error
  */
 uint8_t tlv_connectivity_init(tlv_connectivity_t **tlv, uint8_t * ptr );
@@ -230,7 +230,7 @@ uint8_t tlv_connectivity_init(tlv_connectivity_t **tlv, uint8_t * ptr );
  * @param  value	 		pointer to the value
  *
  * @return
-         -  1 sucess
+         -  1 success
          -  0 error
  */
 uint8_t tlv_write(tlv_t *tlv , tlv_type_t type, int8_t length, uint8_t * value );
@@ -241,7 +241,7 @@ uint8_t tlv_write(tlv_t *tlv , tlv_type_t type, int8_t length, uint8_t * value )
  * @param  tlv	  tlv opbject to print
 
  * @return
-         -  1 sucess
+         -  1 success
          -  0 error
  */
 uint8_t tlv_print(tlv_t * tlv);
@@ -268,7 +268,7 @@ tlv_t* tlv_find(uint8_t * buf, uint8_t buf_length, const tlv_type_t type);
  * @param  ptr	  			pointer to the buffer
  *
  * @return
-         -  1 sucess
+         -  1 success
          -  0 error
  */
 uint8_t tlv_target_eid_init(net_tlv_target_eid_t **tlv, uint8_t *ptr);
@@ -280,7 +280,7 @@ uint8_t tlv_target_eid_init(net_tlv_target_eid_t **tlv, uint8_t *ptr);
  * @param  ptr	  			pointer to the buffer
  *
  * @return
-         -  1 sucess
+         -  1 success
          -  0 error
  */
 uint8_t tlv_rloc16_init(net_tlv_rloc16_t **tlv, uint8_t *ptr);
@@ -292,7 +292,7 @@ uint8_t tlv_rloc16_init(net_tlv_rloc16_t **tlv, uint8_t *ptr);
  * @param  ptr	  			pointer to the buffer
  *
  * @return
-         -  1 sucess
+         -  1 success
          -  0 error
  */
 uint8_t tlv_ml_eid_init(net_tlv_ml_eid_t **tlv, uint8_t *ptr);

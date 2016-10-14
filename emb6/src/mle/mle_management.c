@@ -1,18 +1,58 @@
 /*
- * mle_management.c
+ * emb6 is licensed under the 3-clause BSD license. This license gives everyone
+ * the right to use and distribute the code, either in binary or source code
+ * format, as long as the copyright license is retained in the source code.
  *
- *      Author: Nidhal Mars
- *      manage mle protcol
+ * The emb6 is derived from the Contiki OS platform with the explicit approval
+ * from Adam Dunkels. However, emb6 is made independent from the OS through the
+ * removal of protothreads. In addition, APIs are made more flexible to gain
+ * more adaptivity during run-time.
+ *
+ * The license text is:
+ *
+ * Copyright (c) 2015,
+ * Hochschule Offenburg, University of Applied Sciences
+ * Laboratory Embedded Systems and Communications Electronics.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 1. Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO
+ * EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
  */
+/*============================================================================*/
+/*!
+    \file   mle_management.c
 
+    \author Nidhal Mars <nidhal.mars@hs-offenburg.de>
+
+    \brief  Mesh Link Establishment protocol
+
+  	\version  0.1
+*/
 /*==============================================================================
                                  INCLUDE FILES
  =============================================================================*/
 
 #include "emb6.h"
-#include "bsp.h"
 #include "mle_management.h"
-
 #include "thrd-adv.h"
 #include "thrd-partition.h"
 #include "thrd-iface.h"
@@ -20,18 +60,21 @@
 #include "thrd-send-adv.h"
 #include "linkaddr.h"
 
-#include "etimer.h"
-#include "evproc.h"
-#include "tcpip.h"
-#include "rpl.h"
-#include "udp-socket.h"
-#include "packetbuf.h"
-
 #define		DEBUG		DEBUG_PRINT
 #include "uip-debug.h"	// For debugging terminal output.
 
 #define     LOGGER_ENABLE                 LOGGER_MLE
 #include    "logger.h"
+
+
+
+/*==============================================================================
+                                     MACROS
+ =============================================================================*/
+
+#define routerMask(scanMask)			(BIT_CHECK(scanMask,7))
+#define ReedMask(scanMask)				(BIT_CHECK(scanMask,6))
+#define get_rssi()		           		30 //sicslowpan_get_last_rssi()
 
 /*==============================================================================
                           LOCAL VARIABLE DECLARATIONS
@@ -47,12 +90,48 @@ static mle_neighbor_t*				parent;
 static mle_neighbor_t*				nb;
 static mle_neighbor_t* 				child;
 
+
+/*==============================================================================
+                             LOCAL FUNCTIONS DECLARATIONS
+==============================================================================*/
+
+static  uint8_t      isActiveRouter(uint16_t srcAdd);
+static  uint8_t      mapRSSI(uint8_t rssi );
+static  uint8_t      calculate_two_way_LQ(uint8_t my_rssi , uint8_t rec_rssi);
+static  uint8_t      send_mle_parent_request(uint8_t R, uint8_t E);
+static  uint8_t      send_mle_childID_request(uip_ipaddr_t *dest_addr);
+static  void         time_out_remove_child(void *ptr);
+static  void         check_child_state(void *ptr);
+static  void         reply_for_mle_parent_request(void *ptr);
+static  uint16_t     assign_address16(uint8_t id);
+static  void         mle_join_process(void *ptr);
+static  uint8_t      send_mle_child_update(uip_ipaddr_t *dest_addr);
+static  uint8_t      send_mle_child_update_response(uip_ipaddr_t *dest_addr);
+static  uint8_t      send_mle_link_request(void);
+static  void         reply_for_mle_link_request(void *ptr);
+static  void         mle_synchro_process(void *ptr);
+static  void         mle_keep_alive(void *ptr);
+static  void         _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const uip_ipaddr_t *source_addr, uint16_t source_port,
+											 const uip_ipaddr_t *dest_addr, uint16_t dest_port, const uint8_t *data, uint16_t datalen);
+static  uint8_t      mle_init_udp(void);
+static  uint8_t      mle_send_msg(mle_cmd_t* cmd,  uip_ipaddr_t *dest_addr);
+
 /*==============================================================================
 								LOCAL FUNCTION
  =============================================================================*/
-static uint8_t  		mle_send_msg(mle_cmd_t* cmd,  uip_ipaddr_t *dest_addr);
 
-uint8_t 			isActiveRouter(uint16_t srcAdd)
+
+
+/**
+ * @brief check from the address if the device is an active router
+ *
+ * @param  srcAdd       the address of the device to check
+ *
+ * @return 1    OK.
+ * @return 0   FAIL.
+ *
+ */
+static uint8_t 			isActiveRouter(uint16_t srcAdd)
 {
 	for(uint8_t i=0; i<9;i++)
 	{
@@ -63,39 +142,16 @@ uint8_t 			isActiveRouter(uint16_t srcAdd)
 }
 
 
-#define routerMask(scanMask)			(BIT_CHECK(scanMask,7))
-#define ReedMask(scanMask)				(BIT_CHECK(scanMask,6))
-#define get_rssi()		             30 //sicslowpan_get_last_rssi()
-
-
-
-
-/**
- * @brief Send multicast MLE parent request
- * @return 1    OK.
- * @return 0   FAIL.
- *
- */
-
-uint8_t send_mle_advertisement(tlv_route64_t* route, uint8_t len, tlv_leader_t* lead)
-{
-	if(MyNode.OpMode == PARENT)
-	{
-		mle_init_cmd(&cmd,ADVERTISEMENT);
-		add_src_address_to_cmd(&cmd, MyNode.address);
-		add_route64_to_cmd(&cmd,route,len);
-		add_leader_to_cmd(&cmd,lead);
-		uip_create_linklocal_allnodes_mcast(&s_destAddr);
-		mle_send_msg(&cmd, &s_destAddr);
-	}
-	return 1 ;
-
-}
-
-
-
 /************************ link calculation functions ****************************/
 
+/**
+ * @brief mapping RSSI
+ *
+ * @param  rssi     Received Signal Strength Indication value
+ *
+ * @return corresponding value
+ *
+ */
 static uint8_t mapRSSI(uint8_t rssi )
 {
 	if ( rssi > 20)
@@ -108,9 +164,19 @@ static uint8_t mapRSSI(uint8_t rssi )
 		return 1;
 	else
 		return 0;
-
 }
 
+
+
+/**
+ * @brief Calculate the two-way link quality
+ *
+ * @param  my_rssi      my rssi (received on link margin TLV)
+ * @param  rec_rssi     received rssi (calculated by the transceiver)
+ *
+ * @return two-way link quality
+ *
+ */
 static uint8_t calculate_two_way_LQ(uint8_t my_rssi , uint8_t rec_rssi)
 {
 	if (my_rssi<rec_rssi)
@@ -120,6 +186,18 @@ static uint8_t calculate_two_way_LQ(uint8_t my_rssi , uint8_t rec_rssi)
 }
 
 /************************ join process functions ****************************/
+
+
+/**
+ * @brief  send MLE Parent Request message
+ *
+ * @param  R     Router: Active Routers MUST respond
+ * @param  E     End device: REEDs that are currently acting as Children MUST respond
+ *
+ * @return
+ *       -  1 success
+ *       -  0 error
+ */
 
 static uint8_t send_mle_parent_request(uint8_t R, uint8_t E)
 {
@@ -137,6 +215,10 @@ static uint8_t send_mle_parent_request(uint8_t R, uint8_t E)
  * @brief  send child id request
  *
  * @param  dest_addr	  pointer to the dest address
+ *
+ * @return
+ *       -  1 success
+ *       -  0 error
  */
 static uint8_t send_mle_childID_request(uip_ipaddr_t *dest_addr)
 {
@@ -247,58 +329,8 @@ static uint16_t assign_address16(uint8_t id)
 	return   (( thrd_iface_get_router_id() << 10) |  id | 0x0000  );
 }
 
-void reply_for_mle_childID_request(void *ptr)
-{
-	LOG_RAW(ANSI_COLOR_YELLOW "inside child in response \n"ANSI_COLOR_RESET);
-	uint8_t* routerId;
-	routerId=(uint8_t*) ptr;
-	size_t len =0;
-	tlv_route64_t* route64;
-	route64=thrd_generate_route64(&len);
 
-	if(ptr!=NULL)
-	{
-		if(*routerId<63)
-		{
-			LOG_RAW(ANSI_COLOR_YELLOW "inside child in response \n"ANSI_COLOR_RESET);
-			thrd_iface_set_router_id(*routerId);
-			mle_set_parent_mode();
-		}
-		else
-			// TODO send error to child
-			return;
-
-	}
-
-	if(MyNode.OpMode == CHILD)
-	{
-		// TODO verify if i already send a request for router id (may be inside the function using static variable )
-		// send request to become a router and then reply
-		LOG_RAW(ANSI_COLOR_YELLOW"Sending request to become a Router \n"ANSI_COLOR_RESET);
-		thrd_request_router_id(NULL);
-
-	}
-	else if (MyNode.OpMode == PARENT)
-	{
-		/* find the child and assign a 16-bit address for it */
-		child= mle_find_child_byAdd(&param.source_addr);
-		child->address16=assign_address16(child->id);
-
-		mle_init_cmd(&cmd,CHILD_ID_RESPONSE);
-		add_src_address_to_cmd(&cmd, MyNode.address);
-		add_leader_to_cmd(&cmd,thrd_generate_leader_data_tlv());
-		add_address16_to_cmd(&cmd , child->address16 );
-		add_route64_to_cmd(&cmd,route64,len);
-		mle_send_msg( &cmd,&param.source_addr);
-		child->state=LINKED;
-		/*  update the temp address with the one based on the 16-bit address */
-		uip_ip6addr(&child->tmp, 0xfe80, 0, 0, 0, 0, 0x00ff, 0xfe00, child->address16);
-
-	}
-
-}
-
-void mle_join_process(void *ptr)
+static void mle_join_process(void *ptr)
 {
 	static 	jp_state_t 		jp_state;  // join process current state
 	static mle_parent_t 	parent_condidate , current_parent; // parent
@@ -579,7 +611,7 @@ static void reply_for_mle_link_request(void *ptr)
 
 
 
-void mle_synchro_process(void *ptr)
+static void mle_synchro_process(void *ptr)
 {
 	uint8_t finish=0;
 
@@ -658,14 +690,9 @@ void mle_synchro_process(void *ptr)
 	}
 }
 
-/**
- * @brief  check after time out if the child still pending then remove it
- *
- * @param  ptr	  pointer to the child id
- */
 
 
-void mle_keep_alive(void *ptr)
+static void mle_keep_alive(void *ptr)
 {
 	static uint8_t nbr_retry=0; // the max retry is 3
 	static ka_state_t state=KA_SEND_KEEP_ALIVE ;  // state of the  keep alive
@@ -1051,19 +1078,16 @@ static uint8_t mle_send_msg(mle_cmd_t* cmd,  uip_ipaddr_t *dest_addr )
  =============================================================================*/
 
 
-/**
- * @brief MLE protocol initialization
- */
 uint8_t mle_init(void)
 {
 
-	/*  Inisialize  mle udp connexion */
+	/*  Initialise  MLE UDP connexion */
 	if(!mle_init_udp()) return 0 ;
 
-	/* Inisialize  nb table */
+	/* Initialise  nb table */
 	mle_nb_device_init();
 
-	/* Inisialize  mle node structure */
+	/* Initialise  MLE node structure */
 	MyNode.OpMode=NOT_LINKED;
 	MyNode.timeOut=TIME_OUT;
 	MyNode.rx_on_when_idle=IS_RX_ON_WHEN_IDLE;
@@ -1092,6 +1116,8 @@ uint8_t mle_init(void)
 	 */
 
 	/**********************/
+
+	/* Trigger the timer for the join process */
 	ctimer_set(&c_mle_Timer, 1 * bsp_get(E_BSP_GET_TRES) , mle_join_process, (void *) NULL );
 
 
@@ -1100,13 +1126,80 @@ uint8_t mle_init(void)
 
 };
 
-uint8_t mle_set_parent_mode()
+
+uint8_t send_mle_advertisement(tlv_route64_t* route, uint8_t len, tlv_leader_t* lead)
+{
+	if(MyNode.OpMode == PARENT)
+	{
+		mle_init_cmd(&cmd,ADVERTISEMENT);
+		add_src_address_to_cmd(&cmd, MyNode.address);
+		add_route64_to_cmd(&cmd,route,len);
+		add_leader_to_cmd(&cmd,lead);
+		uip_create_linklocal_allnodes_mcast(&s_destAddr);
+		mle_send_msg(&cmd, &s_destAddr);
+	}
+	return 1 ;
+
+}
+
+
+void reply_for_mle_childID_request(void *ptr)
+{
+	LOG_RAW(ANSI_COLOR_YELLOW "inside child in response \n"ANSI_COLOR_RESET);
+	uint8_t* routerId;
+	routerId=(uint8_t*) ptr;
+	size_t len =0;
+	tlv_route64_t* route64;
+	route64=thrd_generate_route64(&len);
+
+	if(ptr!=NULL)
+	{
+		if(*routerId<63)
+		{
+			LOG_RAW(ANSI_COLOR_YELLOW "inside child in response \n"ANSI_COLOR_RESET);
+			thrd_iface_set_router_id(*routerId);
+			mle_set_parent_mode();
+		}
+		else
+			// TODO send error to child
+			return;
+
+	}
+
+	if(MyNode.OpMode == CHILD)
+	{
+		// TODO verify if i already send a request for router id (may be inside the function using static variable )
+		// send request to become a router and then reply
+		LOG_RAW(ANSI_COLOR_YELLOW"Sending request to become a Router \n"ANSI_COLOR_RESET);
+		thrd_request_router_id(NULL);
+
+	}
+	else if (MyNode.OpMode == PARENT)
+	{
+		/* find the child and assign a 16-bit address for it */
+		child= mle_find_child_byAdd(&param.source_addr);
+		child->address16=assign_address16(child->id);
+
+		mle_init_cmd(&cmd,CHILD_ID_RESPONSE);
+		add_src_address_to_cmd(&cmd, MyNode.address);
+		add_leader_to_cmd(&cmd,thrd_generate_leader_data_tlv());
+		add_address16_to_cmd(&cmd , child->address16 );
+		add_route64_to_cmd(&cmd,route64,len);
+		mle_send_msg( &cmd,&param.source_addr);
+		child->state=LINKED;
+		/*  update the temp address with the one based on the 16-bit address */
+		uip_ip6addr(&child->tmp, 0xfe80, 0, 0, 0, 0, 0x00ff, 0xfe00, child->address16);
+
+	}
+
+}
+
+ void mle_set_parent_mode()
 {
 	/* stop the keep-alive process if we are operating as child */
 	if(MyNode.OpMode==CHILD)
 	{
 		ctimer_stop(&parent_Timer);
-	//	ctimer_stop(&c_mle_Timer);
 	}
 	/* set the operating mode as router (parent) */
 	MyNode.OpMode=PARENT;
@@ -1129,20 +1222,21 @@ uint8_t mle_set_parent_mode()
 
 	linkaddr_set_node_shortAddr(&add);
 
-
-	//mle_synchro_process(NULL);
+	/* trigger the timer for the synchronisation process */
 	ctimer_set(&c_mle_Timer, 2 * bsp_get(E_BSP_GET_TRES) , mle_synchro_process , NULL );
 
-	/* start the trickle algo*/
+	/* start the trickle algorithm */
 	thrd_trickle_init();
 
-	return 1 ;
 }
 
-uint8_t mle_set_child_mode(uint16_t rloc16)
+ void mle_set_child_mode(uint16_t rloc16)
 {
+
+	/* update the 16-bit short address  */
 	MyNode.address=rloc16;
-	MyNode.OpMode=CHILD; // router
+	/* set the operating mode as child */
+	MyNode.OpMode=CHILD;
 	LOG_RAW(ANSI_COLOR_GREEN "MLE : Node operate as Child ... "ANSI_COLOR_RESET);
 	PRESET();
 
@@ -1164,5 +1258,4 @@ uint8_t mle_set_child_mode(uint16_t rloc16)
 	/* trigger the timer to start sending keep alive messages */
 	ctimer_set(&parent_Timer, MyNode.timeOut * bsp_get(E_BSP_GET_TRES) , mle_keep_alive , NULL );
 
-	return 1 ;
 }

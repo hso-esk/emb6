@@ -134,10 +134,10 @@ void  mle_create_cmd_from_buff( mle_cmd_t** cmd, uint8_t* data, uint16_t datalen
  * @brief  add tlv to mle command
  *
  * @param  mle_cmd	  pointer to mle_cmd structure
-
+ *
  * @return
-         -  1 sucess
-         -  0 error
+ *       -  1 success
+ *       -  0 error
  */
 uint8_t mle_add_tlv_to_cmd( mle_cmd_t * mle_cmd, const tlv_type_t type, const int8_t length,  uint8_t * value);
 
@@ -170,7 +170,7 @@ void print_buffer( uint8_t* buffer, uint8_t length );
  * @param  mle_cmd	  mle_cmd structure
  *
  * @return
- *       -  1 sucess
+ *       -  1 success
  *       -  0 error
  */
 uint8_t mle_print_cmd( mle_cmd_t mle_cmd );
@@ -182,7 +182,7 @@ uint8_t mle_print_cmd( mle_cmd_t mle_cmd );
  * @param  mle_cmd	  mle_cmd structure
  *
  * @return
- *       -  1 sucess
+ *       -  1 success
  *       -  0 error
  */
 uint8_t mle_print_type_cmd( mle_cmd_t cmd );
