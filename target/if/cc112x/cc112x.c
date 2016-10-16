@@ -1758,14 +1758,15 @@ static void rf_gotoRx(struct s_rf_ctx *p_ctx) {
 
   /* did the transceiver enter Idle state successfully? */
   if (rf_gotoIdle(p_ctx) == TRUE) {
-#if (NETSTK_CFG_WOR_EN == TRUE)
-    uint8_t rfendCfg0;
-    /* read value of registers to modify */
-    cc112x_spiRegRead(CC112X_RFEND_CFG0, &rfendCfg0, 1);
-    /* disable RX termination based on CS */
-    rfendCfg0 &= ~0x09;
-    cc112x_spiRegWrite(CC112X_RFEND_CFG0, &rfendCfg0, 1);
-#endif
+    /* disable RX termination in RX mode */
+    if (p_ctx->cfgWOREnabled == TRUE) {
+      uint8_t rfendCfg0;
+      /* read value of registers to modify */
+      cc112x_spiRegRead(CC112X_RFEND_CFG0, &rfendCfg0, 1);
+      /* disable RX termination based on CS */
+      rfendCfg0 &= ~0x09;
+      cc112x_spiRegWrite(CC112X_RFEND_CFG0, &rfendCfg0, 1);
+    }
 
     /* wait until radio enters RX state */
     cc112x_spiCmdStrobe(CC112X_SRX);
@@ -1784,15 +1785,15 @@ static void rf_gotoWor(struct s_rf_ctx *p_ctx) {
 
   /* did the transceiver enter Idle state successfully? */
   if (rf_gotoIdle(p_ctx) == TRUE) {
-
-#if (NETSTK_CFG_WOR_EN == TRUE)
-    uint8_t rfendCfg0;
-    /* read value of registers to modify */
-    cc112x_spiRegRead(CC112X_RFEND_CFG0, &rfendCfg0, 1);
-    /* enable RX termination based on CS */
-    rfendCfg0 |= 0x09;
-    cc112x_spiRegWrite(CC112X_RFEND_CFG0, &rfendCfg0, 1);
-#endif
+    /* enable RX termination in WOR mode */
+    if (p_ctx->cfgWOREnabled == TRUE) {
+      uint8_t rfendCfg0;
+      /* read value of registers to modify */
+      cc112x_spiRegRead(CC112X_RFEND_CFG0, &rfendCfg0, 1);
+      /* enable RX termination based on CS */
+      rfendCfg0 |= 0x09;
+      cc112x_spiRegWrite(CC112X_RFEND_CFG0, &rfendCfg0, 1);
+    }
 
     /* WOR mode */
     cc112x_spiCmdStrobe(CC112X_SWOR);
