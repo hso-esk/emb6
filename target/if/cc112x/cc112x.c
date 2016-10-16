@@ -698,8 +698,25 @@ static void rf_recv(uint8_t *p_buf, uint16_t len, e_nsErr_t *p_err) {
     return;
   }
 #endif
-}
 
+  struct s_rf_ctx *p_ctx = &rf_ctx;
+
+  /* set default error code */
+  *p_err = NETSTK_ERR_NONE;
+
+  /* signal upper layer */
+  p_ctx->p_netstk->phy->recv(p_ctx->rxBuf, p_ctx->rxBytesCounter, p_err);
+
+  /* is the frame discarded by upper layers? */
+  if (*p_err != NETSTK_ERR_NONE) {
+    TRACE_LOG_ERR("<RXFINI> discarded e=-%d", *p_err);
+    trace_printHex("", p_ctx->rxBuf, p_ctx->rxBytesCounter);
+  }
+
+  /* exit and re-enter RX state */
+  rf_rx_exit(p_ctx);
+  rf_rx_entry(p_ctx);
+}
 
 /**
  * @brief handle miscellaneous commands
@@ -1359,8 +1376,6 @@ static void rf_rx_chksum(struct s_rf_ctx *p_ctx) {
  */
 static void rf_rx_fini(struct s_rf_ctx *p_ctx) {
 
-  e_nsErr_t err;
-
 #if (EMB6_TEST_CFG_CONT_RX_EN == TRUE)
   /* exit and re-enter RX state */
   rf_rx_exit(p_ctx);
@@ -1372,24 +1387,11 @@ static void rf_rx_fini(struct s_rf_ctx *p_ctx) {
     trace_printf("%d | %d", p_ctx->numRxPackets, p_ctx->rxRSSI);
   }
   return;
+#else
+  /* signal upper layer */
+  e_nsErr_t err;
+  rf_recv(p_ctx->rxBuf, p_ctx->rxBytesCounter, &err);
 #endif
-
-  /* set the error code to default */
-  TRACE_LOG_MAIN("<RXFINI> seq=%02x, %d bytes", p_ctx->rxBuf[PHY_HEADER_LEN + 2], p_ctx->rxBytesCounter);
-
-  /* then signal upper layer */
-  err = NETSTK_ERR_NONE;
-  p_ctx->p_netstk->phy->recv(p_ctx->rxBuf, p_ctx->rxBytesCounter, &err);
-  if ((err != NETSTK_ERR_NONE) &&
-      (err != NETSTK_ERR_INVALID_ADDRESS)) {
-    /* the frame is discarded by upper layers */
-    TRACE_LOG_ERR("<RXFINI> discarded e=-%d", err);
-    trace_printHex("", p_ctx->rxBuf, p_ctx->rxBytesCounter);
-  }
-
-  /* exit and re-enter RX state */
-  rf_rx_exit(p_ctx);
-  rf_rx_entry(p_ctx);
 }
 
 
