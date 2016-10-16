@@ -193,6 +193,9 @@
     ((rf_ctx.state >= RF_STATE_RX_SYNC)   &&  \
      (rf_ctx.state <= RF_STATE_RX_TXACK_FINI))
 
+/*!< radio state mask */
+#define RF_STATE_MASK                   ( 0xF0u )
+
 /*!< Radio interrupt configuration macros */
 #define RF_INT_PKT_BEGIN                E_TARGET_EXT_INT_0  //GPIO0
 #define RF_INT_RXFIFO_THR               E_TARGET_EXT_INT_1  //GPIO2
@@ -515,7 +518,7 @@ static void rf_on(e_nsErr_t *p_err)
   struct s_rf_ctx *p_ctx = &rf_ctx;
 
   /* is the driver sleeping? */
-  if ((p_ctx->state & 0xF0) == RF_STATE_SLEEP) {
+  if ((p_ctx->state & RF_STATE_MASK) == RF_STATE_SLEEP) {
     /* then exit SLEEP state */
     rf_sleep_exit(p_ctx);
 
@@ -1712,7 +1715,7 @@ static void rf_tmrDbgCb(void *p_arg) {
   struct s_rf_ctx *p_ctx = (struct s_rf_ctx *)p_arg;
 
   /* is the radio awake? */
-  if ((p_ctx->state & 0xF0) != RF_STATE_SLEEP) {
+  if ((p_ctx->state & RF_STATE_MASK) != RF_STATE_SLEEP) {
     /* then record chip state */
     p_ctx->dbgChipState = RF_READ_CHIP_STATE();
   }
