@@ -394,7 +394,7 @@ static void rf_exceptionHandler(struct s_rf_ctx *p_ctx, uint8_t marcStatus, e_rf
 static void rf_configureRegs(const s_regSettings_t *p_regs, uint8_t len);
 static void rf_manualCalibration(void);
 static void rf_calibrateRCOsc(void);
-static void rf_cca(e_nsErr_t *p_err);
+static void rf_cca(struct s_rf_ctx *p_ctx, e_nsErr_t *p_err);
 
 #if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
 static uint8_t rf_filterAddr(struct s_rf_ctx *p_ctx);
@@ -746,7 +746,7 @@ static void rf_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err) {
       break;
 
     case NETSTK_CMD_RF_CCA_GET:
-      rf_cca(p_err);
+      rf_cca(p_ctx, p_err);
       break;
 
     case NETSTK_CMD_RF_RETX:
@@ -2078,7 +2078,7 @@ static void rf_calibrateRCOsc(void) {
  * @brief   Perform Clear Channel Assessment
  * @param p_err   point to variable storing returned error code
  */
-static void rf_cca(e_nsErr_t *p_err) {
+static void rf_cca(struct s_rf_ctx *p_ctx, e_nsErr_t *p_err) {
 
 #if NETSTK_CFG_ARG_CHK_EN
   if (p_err == NULL) {
@@ -2087,64 +2087,66 @@ static void rf_cca(e_nsErr_t *p_err) {
 #endif
 
   uint8_t rssi_status;
-  struct s_rf_ctx *p_ctx = &rf_ctx;
+  uint32_t tickStart;
+  uint32_t ccaTimeout;
 
   if (RF_IS_RX_BUSY() == TRUE) {
     *p_err = NETSTK_ERR_BUSY;
+    return;
+  }
+
+  /* put radio back to RX state if eWOR is enabled */
+  if (p_ctx->cfgWOREnabled == TRUE) {
+    rf_gotoRx(p_ctx);
+    if (RF_IS_RX_BUSY() == TRUE) {
+      /* radio is in middle of packet reception process */
+      *p_err = NETSTK_ERR_BUSY;
+      return;
+    }
+  }
+
+  /* poll for valid carrier sense until timeout */
+  tickStart = bsp_getTick();
+
+  /* since atomic time unit is 1ms, ensure CCA timeout is at least 1ms */
+  do {
+    /* verify if either carrier sense is valid? */
+    cc112x_spiRegRead( CC112X_RSSI0, &rssi_status, 1);
+    if ((rssi_status & RF_RSSI0_CARRIER_SENSE_VALID ) != 0) {
+      break;
+    }
+
+    /* is a packet being received? */
+    if (RF_IS_RX_BUSY() == TRUE) {
+      *p_err = NETSTK_ERR_BUSY;
+      return;
+    }
+
+    /* update CCA timeout */
+    ccaTimeout = bsp_getTick() - tickStart;
+  } while (ccaTimeout < 2);
+
+  /* was CCA timeout expired? If so carrier sense is invalid */
+  if ((rssi_status & RF_RSSI0_CARRIER_SENSE_VALID ) == 0) {
+    /* then a runtime error was detected. The driver is still in RX_IDLE but the radio
+     * did not give a valid carrier sense in time. In this case simply force the radio
+     * to RX_IDLE and declare channel access failure */
+    rf_rx_term(p_ctx);
+    *p_err = NETSTK_ERR_CHANNEL_ACESS_FAILURE;
   }
   else {
-    /* TODO put radio back to RX state if eWOR is enabled */
-    if (p_ctx->cfgWOREnabled == TRUE) {
-      rf_gotoRx(p_ctx);
-    }
-
-    /* poll for valid carrier sense until timeout */
-    rt_tmr_tick_t tickstart;
-
-    /* since atomic time unit is 1ms, ensure CCA timeout is at least 1ms */
-    tickstart = rt_tmr_getCurrenTick();
-    while ((rt_tmr_getCurrenTick() - tickstart) < 2) {
-      cc112x_spiRegRead(CC112X_RSSI0, &rssi_status, 1);
-
-      /* verify if either carrier sense is valid or a packet is arrived */
-      if (((rssi_status & RF_RSSI0_CARRIER_SENSE_VALID) != 0) ||
-          (p_ctx->state != RF_STATE_RX_IDLE)) {
-        break;
-      }
-    }
-
-    /* has a packet arrived? */
-    if (RF_IS_RX_BUSY() == TRUE) {
-      /* then set packet reception a higher priority than CCA */
-      *p_err = NETSTK_ERR_BUSY;
+    /* was carrier detected? */
+    if (rssi_status & RF_RSSI0_CARRIER_DETECTED) {
+      /* then declare channel busy */
+      *p_err = NETSTK_ERR_CHANNEL_ACESS_FAILURE;
     }
     else {
-      /* TODO put radio back to RX state if eWOR is enabled after CCA process is
-       * finished */
+      /* declare channel free */
+      *p_err = NETSTK_ERR_NONE;
 
-      /* was CCA timeout expired? If so carrier sense is invalid */
-      if ((rssi_status & RF_RSSI0_CARRIER_SENSE_VALID) == 0) {
-        /* then a runtime error was detected. The driver is still in RX_IDLE but the radio
-         * did not give a valid carrier sense in time. In this case simply force the radio
-         * to RX_IDLE and declare channel access failure */
-        rf_rx_term(p_ctx);
-        *p_err = NETSTK_ERR_CHANNEL_ACESS_FAILURE;
-      }
-      else {
-        /* was carrier detected? */
-        if (rssi_status & RF_RSSI0_CARRIER_DETECTED) {
-          /* then declare channel busy */
-          *p_err = NETSTK_ERR_CHANNEL_ACESS_FAILURE;
-        }
-        else {
-          /* declare channel free */
-          *p_err = NETSTK_ERR_NONE;
-
-          /* then go back to eWOR when enabled */
-          if (p_ctx->cfgWOREnabled == TRUE) {
-            rf_gotoWor(p_ctx);
-          }
-        }
+      /* then go back to eWOR when enabled */
+      if (p_ctx->cfgWOREnabled == TRUE) {
+        rf_gotoWor(p_ctx);
       }
     }
   }
