@@ -544,17 +544,23 @@ static void rf_off(e_nsErr_t *p_err) {
 
   struct s_rf_ctx *p_ctx = &rf_ctx;
 
-  /* is the driver on? */
-  if ((p_ctx->state & 0xF0) != RF_STATE_SLEEP) {
-    /* then exits ON state */
-    rf_on_exit(p_ctx);
-
-    /* then turn it off */
-    rf_sleep_entry(p_ctx);
-  }
-
-  /* set return error code */
+  /* set default return error code */
   *p_err = NETSTK_ERR_NONE;
+
+  /* is the driver on? */
+  if ((p_ctx->state & RF_STATE_MASK) != RF_STATE_SLEEP) {
+    if (RF_IS_RX_BUSY() == TRUE) {
+      /* a frame is being received */
+      *p_err = NETSTK_ERR_BUSY;
+    }
+    else {
+      /* then exits ON state */
+      rf_on_exit(p_ctx);
+
+      /* then turn it off */
+      rf_sleep_entry(p_ctx);
+    }
+  }
 }
 
 
