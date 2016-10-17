@@ -43,7 +43,7 @@
 
     \author Nidhal Mars <nidhal.mars@hs-offenburg.de>
 
-    \brief  manipulate child and routers neighbors table
+    \brief  manipulate child and neighbor routers table
 
     \date   27 Apr 2016
 
