@@ -92,7 +92,7 @@
 
 
 
-#define DEBUG DEBUG_PRINT
+#define DEBUG DEBUG_NONE
 #include "uip-debug.h"
 #if DEBUG
 /* PRINTFI and PRINTFO are defined for input and output to debug one without changing the timing of the other */
