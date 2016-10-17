@@ -204,15 +204,15 @@ thrd_rdb_route_t
 /**
  * Get the next hop entry of a route.
  * @param route
- * @return
+ * @retval If found, return a valid router ID within 0..62. 63 (invalid) else.
  */
 uint8_t
-*thrd_rdb_route_nexthop(thrd_rdb_route_t *route)
+thrd_rdb_route_nexthop(thrd_rdb_route_t *route)
 {
 	if (route != NULL) {
-		return &route->R_next_hop;
+		return route->R_next_hop;
 	} else {
-		return NULL;
+		return 63;
 	}
 }
 

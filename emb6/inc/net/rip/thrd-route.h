@@ -86,7 +86,7 @@ thrd_rdb_link_t* thrd_rdb_link_next(thrd_rdb_link_t *r);
 
 thrd_rdb_route_t* thrd_rdb_route_next(thrd_rdb_route_t *r);
 
-uint8_t* thrd_rdb_route_nexthop(thrd_rdb_route_t *route);
+uint8_t thrd_rdb_route_nexthop(thrd_rdb_route_t *route);
 
 uint8_t thrd_rdb_link_calc_incoming_quality(uint16_t link_margin);
 
