@@ -195,7 +195,7 @@
  *     different instances can be made by changing the link layer addresses
  *     For multihop testing, configure intermediate notes as routers.
  */
-#if NET_USE_RPL == TRUE
+#if NET_USE_RPL
 #define UIP_CONF_IPV6_RPL                   TRUE
 #endif
 
