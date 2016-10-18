@@ -59,6 +59,7 @@
 #include "thrd-router-id.h"
 #include "thrd-send-adv.h"
 #include "linkaddr.h"
+#include "thrd-route.h"
 
 #define		DEBUG		DEBUG_PRINT
 #include "uip-debug.h"	// For debugging terminal output.
@@ -89,6 +90,8 @@ static mle_param_t					param;
 static mle_neighbor_t*				parent;
 static mle_neighbor_t*				nb;
 static mle_neighbor_t* 				child;
+static thrd_rdb_link_t*				nb1;
+
 
 
 /*==============================================================================
@@ -607,8 +610,6 @@ static uint8_t send_mle_link_request(void)
 		return 0;
 }
 
-static 	syn_state_t 		syn_state;  // synchronisation process current state
-
 /**
  * @brief  replying for an MLE link request message
  *
@@ -646,7 +647,7 @@ static void reply_for_mle_link_request(void *ptr)
 			/* add and store the challenge generated  */
 			MyNode.challenge= add_rand_challenge_to_cmd(&cmd);
 
-			syn_state=SYN_PROCESS_LINK;
+			MyNode.syn_state=SYN_PROCESS_LINK;
 			ctimer_set(&c_mle_Timer, 2 * bsp_get(E_BSP_GET_TRES) , mle_synchro_process, NULL);
 		}
 
@@ -675,12 +676,13 @@ static void reply_for_mle_link_request(void *ptr)
 static void mle_synchro_process(void *ptr)
 {
 	uint8_t finish=0;
+	uint8_t router_id;
 
 	if(MyNode.OpMode==PARENT)
 	{
 		while(!finish)
 		{
-			switch(syn_state)
+			switch(MyNode.syn_state)
 			{
 			case SYN_SEND_LINK_REQUEST:
 				LOG_RAW(ANSI_COLOR_GREEN"[+] "ANSI_COLOR_RESET);
@@ -688,7 +690,7 @@ static void mle_synchro_process(void *ptr)
 				/* send MLE Link Request */
 				send_mle_link_request();
 				/* change the state and trigger the timer */
-				syn_state=SYN_PROCESS_LINK;
+				MyNode.syn_state=SYN_PROCESS_LINK;
 				ctimer_set(&c_mle_Timer, 2 * bsp_get(E_BSP_GET_TRES) , mle_synchro_process, NULL);
 				finish=1;
 				break;
@@ -696,7 +698,7 @@ static void mle_synchro_process(void *ptr)
 				if(ctimer_expired(&c_mle_Timer)) // that means that this function was triggered by the ctimer
 				{
 					/* initialise the state */
-					syn_state=SYN_SEND_LINK_REQUEST;
+					MyNode.syn_state=SYN_SEND_LINK_REQUEST;
 					LOG_RAW(ANSI_COLOR_GREEN"[+] "ANSI_COLOR_RESET);
 					LOG_RAW("SNY process:  Synchronization process finished \n"ANSI_COLOR_RESET);
 
@@ -705,6 +707,13 @@ static void mle_synchro_process(void *ptr)
 				{
 					LOG_RAW(ANSI_COLOR_GREEN"[+] "ANSI_COLOR_RESET);
 					LOG_RAW("SNY process: processing link \n"ANSI_COLOR_RESET);
+
+					//thrd_rdb_link_update(uint8_t router_id, uint8_t link_margin, uint8_t outgoing_quality, clock_time_t age)
+
+					router_id= (uint8_t) (param.source_addr.u16[7]>>10);
+					printf(ANSI_COLOR_GREEN "\n ************** 16-bit add is : %02x" ANSI_COLOR_RESET,param.source_addr.u16[7] );
+					printf(ANSI_COLOR_GREEN "\n ************** router id is : %02x" ANSI_COLOR_RESET,router_id );
+					//nb1 = thrd_rdb_link_lookup(router_id);
 
 					nb=mle_find_nb_router_byAdd((&param.source_addr));
 					if(!nb)// the neighbor is not existing

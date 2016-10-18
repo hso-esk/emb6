@@ -140,6 +140,7 @@ typedef enum {
 typedef struct {
 	uint16_t			  address;                        		/**< My node 16 bit address */
 	struct udp_socket     udp_socket;							/**< UDP socket used to send and receive MLE message */
+ 	syn_state_t 		  syn_state;  							/**< synchronisation process current state */
 	mle_mode_t     		  OpMode;                               /**< device operating mode */
 	uint32_t 			  timeOut;								/**< my time out  */
 	uint32_t              thrMLEFrameCounter;                   /**< Outgoing frame counter */
