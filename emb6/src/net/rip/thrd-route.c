@@ -29,7 +29,7 @@
 #include "thrd-route.h"
 
 // #define DEBUG DEBUG_PRINT
-#include "uip-debug.h"
+// #include "uip-debug.h"
 
 #define     LOGGER_ENABLE                 LOGGER_THRD_NET
 #include    "logger.h"
