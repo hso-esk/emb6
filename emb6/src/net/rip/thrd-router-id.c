@@ -24,6 +24,7 @@
 #include "thrd-iface.h"
 #include "thrd-addr.h"
 
+#include "thrd-send-adv.h"
 #include "thrd-route.h"
 
 #define DEBUG DEBUG_PRINT
@@ -184,6 +185,7 @@ thrd_leader_assign_rid(uint8_t *router_id, uint8_t *id_owner)
 				if ( r_id < 63 ) {
 					ida = thrd_ldb_ida_add(r_id, id_owner, 0);
 					LOG_RAW("Router ID Assignment: Assigned Router ID = %d\n", ida->ID_id);
+					thrd_trickle_reset();	// Reset trickle algorithm (MLE advertisement sending rate).
 					return ida;
 				} else {
 					LOG_RAW("Router ID Assignment: No more Router IDs available.\n");
@@ -196,6 +198,7 @@ thrd_leader_assign_rid(uint8_t *router_id, uint8_t *id_owner)
 			if ( r_id < 63 ) {
 				ida = thrd_ldb_ida_add(r_id, id_owner, 0);
 				LOG_RAW("Router ID Assignment: Assigned Router ID = %d\n", ida->ID_id);
+				thrd_trickle_reset();	// Reset trickle algorithm (MLE advertisement sending rate).
 				return ida;
 			} else {
 				LOG_RAW("Router ID Assignment: No more Router IDs available.\n");
@@ -221,6 +224,7 @@ thrd_leader_unassign_rid(uint8_t router_id)
 		thrd_rdb_rid_rm(rid);
 		// Set the router id's reuse time.
 		ctimer_set(&ida->ID_reuse_time, ID_REUSE_DELAY * bsp_get(E_BSP_GET_TRES), handle_id_reuse_delay_timeout, ida);
+		thrd_trickle_reset(); // Reset trickle algorithm (MLE advertisement sending rate).
 	}
 }
 
