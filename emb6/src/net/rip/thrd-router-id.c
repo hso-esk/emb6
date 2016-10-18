@@ -343,7 +343,6 @@ thrd_addr_solicit_chunk_handler(void *response)
     			status_tlv = (net_tlv_status_t*) tlv->value;
     			LOG_RAW("Status = %d\n", status_tlv->status);
 
-    			// if ( status_tlv->status == 0 && payload_len == 16 ) {
     			if ( status_tlv->status == 0 && payload_len >= 16 ) {
     				// Success.
     				tlv = (tlv_t*) &chunk[3];
@@ -353,7 +352,6 @@ thrd_addr_solicit_chunk_handler(void *response)
     					thrd_iface_set_rloc(rloc16_tlv->rloc16);
     					thrd_set_dev_net_type(THRD_DEV_NETTYPE_ROUTER);
     					LOG_RAW("RLOC16 = %04x\n", rloc16_tlv->rloc16);
-
     				}
     				tlv = (tlv_t*) &chunk[7];
     				if ( tlv->type == NET_TLV_ROUTER_MASK && tlv->length == 9 ) {
