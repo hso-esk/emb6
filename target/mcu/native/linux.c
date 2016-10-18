@@ -289,11 +289,13 @@ clock_time_t hal_getTRes(void)
  =============================================================================*/
 uint32_t     hal_getTick(void)
 {
-      struct timeval tv;
+	struct timespec ts;
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	return ((ts.tv_sec * 1000) + (ts.tv_nsec/1000000));
+//      struct timeval tv;
+//      gettimeofday(&tv, NULL);
+//      return ((tv.tv_sec * 1000 + tv.tv_usec / 1000) & 0xffffffff);
 
-      gettimeofday(&tv, NULL);
-
-      return ((tv.tv_sec * 1000 + tv.tv_usec / 1000) & 0xffffffff);
 } /* hal_getTick() */
 
 /*==============================================================================
@@ -301,11 +303,12 @@ uint32_t     hal_getTick(void)
  =============================================================================*/
 uint32_t     hal_getSec(void)
 {
-      struct timeval tv;
-
-      gettimeofday(&tv, NULL);
-
-      return tv.tv_sec;
+	struct timespec ts;
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	return (ts.tv_sec);
+//      struct timeval tv;
+//      gettimeofday(&tv, NULL);
+//      return tv.tv_sec;
 } /* hal_getSec() */
 /** @} */
 /** @} */
