@@ -409,8 +409,7 @@ thrd_rdb_link_lookup(uint8_t router_id)
 	LOG_RAW("\n\r");
 
 	found_link = NULL;
-	for (link = thrd_rdb_link_head(); link != NULL;
-			link = thrd_rdb_link_next(link)) {
+	for (link = thrd_rdb_link_head(); link != NULL; link = thrd_rdb_link_next(link)) {
 		// LOG_RAW("%d\n", link->L_router_id);
 		// LOG_RAW("\n\r");
 		if (link->L_router_id == router_id) {
@@ -424,7 +423,7 @@ thrd_rdb_link_lookup(uint8_t router_id)
 		LOG_RAW("%d\n", router_id);
 		LOG_RAW("\n\r");
 	} else {
-		LOG_RAW("thrd_rdb_link_lookup: No link for router id found\n\r");
+		LOG_RAW("thrd_rdb_link_lookup: No link for router id %d found.\n\r", router_id);
 	}
 
 	if (found_link != NULL && found_link != list_head(link_list)) {
@@ -435,7 +434,6 @@ thrd_rdb_link_lookup(uint8_t router_id)
 		list_remove(link_list, found_link);
 		list_push(link_list, found_link);
 	}
-
 	return found_link;
 }
 
@@ -830,9 +828,7 @@ thrd_rdb_link_update(uint8_t router_id, uint8_t link_margin,
 
 	} else {
 
-		LOG_RAW(ANSI_COLOR_RED "thrd_rdb_link_update: router id is already known for ");
-		LOG_RAW("%d\n", router_id);
-		LOG_RAW(ANSI_COLOR_RESET "\n\r");
+		LOG_RAW("thrd_rdb_link_update: router id %d already known.\n\r", router_id);
 
 		LOG_RAW("thrd_rdb_link_update: num_links %d\n\r", num_links);
 		LOG_RAW("-----------------------------------------------------\n\r");
@@ -846,7 +842,7 @@ thrd_rdb_link_update(uint8_t router_id, uint8_t link_margin,
 
 		l->L_link_margin = new_lm;
 		l->L_outgoing_quality = outgoing_quality;
-		ctimer_reset(&l->L_age);
+		ctimer_restart(&l->L_age);
 
 		if ( l->L_incoming_quality != new_iq ) {
 			l->L_incoming_quality = new_iq;
@@ -863,7 +859,9 @@ thrd_rdb_link_update(uint8_t router_id, uint8_t link_margin,
 bool
 thrd_rdb_is_neighbor_router(uint8_t router_id)
 {
-	if ( thrd_rdb_link_lookup(router_id) != NULL ) {
+	thrd_rdb_link_t *link;
+	link = thrd_rdb_link_lookup(router_id);
+	if ( link != NULL ) {
 		return TRUE;
 	} else {
 		return FALSE;
@@ -880,10 +878,11 @@ handle_max_neighbor_age_timeout(void *ptr)
 	thrd_rdb_link_t *l = (thrd_rdb_link_t*) ptr;
 
 	LOG_RAW("Link Set: Timer expired");
-	if ( l != NULL ) {
-		LOG_RAW(" for Link Set Entry with Router ID = %d\n\r", l->L_router_id);
+	if ( (l != NULL) && (ctimer_expired(&l->L_age)) ) {
+		LOG_RAW(" for link set entry with router ID = %d\n\r", l->L_router_id);
 		thrd_rdb_link_rm(l);
 	}
+
 	return;
 }
 
