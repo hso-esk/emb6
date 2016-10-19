@@ -195,7 +195,7 @@
  *     different instances can be made by changing the link layer addresses
  *     For multihop testing, configure intermediate notes as routers.
  */
-#if NET_USE_RPL == TRUE
+#if NET_USE_RPL
 #define UIP_CONF_IPV6_RPL                   TRUE
 #endif
 
@@ -850,17 +850,17 @@ void uip_log(char *msg);
 
 /** Event process functions                	(see llc_xxx.c) */
 #ifndef LOGGER_LLC
-#define LOGGER_LLC                         	FALSE
+#define LOGGER_LLC                         	TRUE
 #endif
 
 /** Event process functions                	(see mac_xxx.c) */
 #ifndef LOGGER_MAC
-#define LOGGER_MAC                         	FALSE
+#define LOGGER_MAC                         	TRUE
 #endif
 
 /** Event process functions                	(see phy_xxx.c) */
 #ifndef LOGGER_PHY
-#define LOGGER_PHY                         	FALSE
+#define LOGGER_PHY                         	TRUE
 #endif
 
 /** MLE functions                			(see mle/) */

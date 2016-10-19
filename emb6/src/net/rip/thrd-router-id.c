@@ -24,6 +24,7 @@
 #include "thrd-iface.h"
 #include "thrd-addr.h"
 
+#include "thrd-send-adv.h"
 #include "thrd-route.h"
 
 #define DEBUG DEBUG_PRINT
@@ -184,6 +185,7 @@ thrd_leader_assign_rid(uint8_t *router_id, uint8_t *id_owner)
 				if ( r_id < 63 ) {
 					ida = thrd_ldb_ida_add(r_id, id_owner, 0);
 					LOG_RAW("Router ID Assignment: Assigned Router ID = %d\n", ida->ID_id);
+					thrd_trickle_reset();	// Reset trickle algorithm (MLE advertisement sending rate).
 					return ida;
 				} else {
 					LOG_RAW("Router ID Assignment: No more Router IDs available.\n");
@@ -196,6 +198,7 @@ thrd_leader_assign_rid(uint8_t *router_id, uint8_t *id_owner)
 			if ( r_id < 63 ) {
 				ida = thrd_ldb_ida_add(r_id, id_owner, 0);
 				LOG_RAW("Router ID Assignment: Assigned Router ID = %d\n", ida->ID_id);
+				thrd_trickle_reset();	// Reset trickle algorithm (MLE advertisement sending rate).
 				return ida;
 			} else {
 				LOG_RAW("Router ID Assignment: No more Router IDs available.\n");
@@ -221,6 +224,7 @@ thrd_leader_unassign_rid(uint8_t router_id)
 		thrd_rdb_rid_rm(rid);
 		// Set the router id's reuse time.
 		ctimer_set(&ida->ID_reuse_time, ID_REUSE_DELAY * bsp_get(E_BSP_GET_TRES), handle_id_reuse_delay_timeout, ida);
+		thrd_trickle_reset(); // Reset trickle algorithm (MLE advertisement sending rate).
 	}
 }
 
@@ -289,11 +293,6 @@ thrd_request_router_id(uint8_t *router_id)
 	coap_set_header_uri_path(packet, service_urls[0]);
 	coap_set_payload(packet, addr_solicit_buf, len);
 
-	/*********************  to remove ******************************/
-	static  uip_ipaddr_t                s_destAddr;
-	uip_ip6addr(&s_destAddr, 0xfe80, 0, 0, 0, 0, 0x00ff, 0xfe00, 0x0000);
-	//uip_ip6addr(&s_destAddr, 0xfe80, 0, 0, 0, 0x250, 0xc2ff, 0xfea8, 0xaa);
-	/**********************************************************************/
 
 	coap_nonblocking_request(&leader_addr, UIP_HTONS(COAP_DEFAULT_PORT), packet, thrd_addr_solicit_chunk_handler); // TODO Changing CoAP Port.
 	LOG_RAW("Sending Router ID Request to Partition Leader [");
@@ -344,7 +343,6 @@ thrd_addr_solicit_chunk_handler(void *response)
     			status_tlv = (net_tlv_status_t*) tlv->value;
     			LOG_RAW("Status = %d\n", status_tlv->status);
 
-    			// if ( status_tlv->status == 0 && payload_len == 16 ) {
     			if ( status_tlv->status == 0 && payload_len >= 16 ) {
     				// Success.
     				tlv = (tlv_t*) &chunk[3];
@@ -354,7 +352,6 @@ thrd_addr_solicit_chunk_handler(void *response)
     					thrd_iface_set_rloc(rloc16_tlv->rloc16);
     					thrd_set_dev_net_type(THRD_DEV_NETTYPE_ROUTER);
     					LOG_RAW("RLOC16 = %04x\n", rloc16_tlv->rloc16);
-
     				}
     				tlv = (tlv_t*) &chunk[7];
     				if ( tlv->type == NET_TLV_ROUTER_MASK && tlv->length == 9 ) {

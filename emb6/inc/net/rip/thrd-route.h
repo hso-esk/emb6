@@ -41,7 +41,6 @@ typedef struct thrd_rdb_link {
 	uint8_t L_outgoing_quality;
 	uint32_t challenge;
 	uint32_t fc;
-	struct ctimer timer;
 	struct ctimer L_age;
 } thrd_rdb_link_t;
 
@@ -89,7 +88,7 @@ thrd_rdb_link_t* thrd_rdb_link_next(thrd_rdb_link_t *r);
 
 thrd_rdb_route_t* thrd_rdb_route_next(thrd_rdb_route_t *r);
 
-uint8_t* thrd_rdb_route_nexthop(thrd_rdb_route_t *route);
+uint8_t thrd_rdb_route_nexthop(thrd_rdb_route_t *route);
 
 uint8_t thrd_rdb_link_calc_incoming_quality(uint16_t link_margin);
 

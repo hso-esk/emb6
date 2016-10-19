@@ -371,6 +371,7 @@ static void mle_join_process(void *ptr)
 			switch(jp_state)
 			{
 			case JP_SEND_MCAST_PR_TO_ROUTER:
+				ctimer_stop(&parent_Timer);
 				LOG_RAW(ANSI_COLOR_GREEN "[+] "ANSI_COLOR_RESET);
 				LOG_RAW("JP Send mcast parent request to active router \n"ANSI_COLOR_RESET);
 
@@ -380,9 +381,9 @@ static void mle_join_process(void *ptr)
 				current_parent.LQ=0;
 
 				/* Init the parent on the neighbor table*/
-				parent=mle_add_nb_router(0, 0, 0, 0, 0);
+				parent=mle_find_nb_router(0);
 				if(parent==NULL)
-					parent=mle_find_nb_router(0);
+					parent=mle_add_nb_router(0, 0, 0, 0, 0);
 				parent->state=PENDING;
 				parent->LQ=0;
 				parent->address16=0;
@@ -514,7 +515,7 @@ static void mle_join_process(void *ptr)
 				tlv_connectivity_init(&connectivity,tlv->value);
 				tlv=mle_find_tlv_in_cmd(param.rec_cmd,TLV_LEADER_DATA);
 				tlv_leader_init(&lead,tlv->value);
-				thrd_partition_process(1,lead);
+				thrd_partition_process_leader_tlv(lead);	// TODO We don't have the ID sequence number.
 				/* reset the state in case we reattach to a new parent after losing connectivity */
 				jp_state=JP_SEND_MCAST_PR_TO_ROUTER;
 
@@ -764,56 +765,55 @@ static void mle_synchro_process(void *ptr)
 static void mle_keep_alive(void *ptr)
 {
 	static uint8_t nbr_retry=0; // the max retry is 3
+	uint8_t finish=0;
 	static ka_state_t state=KA_SEND_KEEP_ALIVE ;  // state of the  keep alive
 	if(MyNode.OpMode==CHILD)
 	{
-		switch (state)
+		while (!finish)
 		{
-		case KA_SEND_KEEP_ALIVE : //  send keep alive message to the parent
-
-			if (MyNode.rx_on_when_idle)
+			switch (state)
 			{
-				send_mle_child_update(&parent->tmp);
-				nbr_retry++;
-			}
-			else
-			{
-				// TODO : The keep-alive message for an rx-off-when-idle Children is an 802.15.4 Data Request command
-
-			}
-
-			state=KA_WAIT_RESPONSE;
-			/* set the timer to wait for a response within 2s  */
-			ctimer_set(&parent_Timer, 2 * bsp_get(E_BSP_GET_TRES) , mle_keep_alive, NULL);
-
-			break;
-		case KA_WAIT_RESPONSE : // waiting for response
-			if(ctimer_expired(&parent_Timer)) // that means that this function was triggered by the timer ==> no response received from the parent
-			{
-				if(nbr_retry<3)	/* retry */
+			case KA_SEND_KEEP_ALIVE : //  send keep alive message to the parent
+				if (MyNode.rx_on_when_idle)
 				{
-					/* trigger the timer to try again after 1s */
-					ctimer_set(&parent_Timer, 1 * bsp_get(E_BSP_GET_TRES) , mle_keep_alive , NULL );
+					send_mle_child_update(&parent->tmp);
+					nbr_retry++;
 				}
-				else /* reattach to a new parent*/
+				else
+				{
+					// TODO : The keep-alive message for an rx-off-when-idle Children is an 802.15.4 Data Request command
+
+				}
+
+				state=KA_WAIT_RESPONSE;
+				/* set the timer to wait for a response within 2s  */
+				ctimer_set(&parent_Timer, 2 * bsp_get(E_BSP_GET_TRES) , mle_keep_alive, NULL);
+				finish++;
+
+				break;
+			case KA_WAIT_RESPONSE : // waiting for response
+				if(ctimer_expired(&parent_Timer)) // that means that this function was triggered by the timer ==> no response received from the parent
+				{
+					if(nbr_retry >= 3 )	/* retry */
+					{
+						nbr_retry=0;
+						/* set my node as not linked and redo the join process */
+						MyNode.OpMode=NOT_LINKED;
+						ctimer_set(&parent_Timer, 2 * bsp_get(E_BSP_GET_TRES) , mle_join_process , NULL );
+						finish++;
+					}
+				}
+				else // a response to keep-alive message was received
 				{
 					nbr_retry=0;
-
-					/* set my node as not linked and redo the join process */
-					MyNode.OpMode=NOT_LINKED;
-					ctimer_stop(&parent_Timer);
-					ctimer_set(&c_mle_Timer, 1 * bsp_get(E_BSP_GET_TRES) , mle_join_process, (void *) NULL );
+					/* trigger the timer to count again*/
+					ctimer_set(&parent_Timer-2 , MyNode.timeOut * bsp_get(E_BSP_GET_TRES) , mle_keep_alive , NULL );
+					finish++;
 				}
+				/* set the state to send keep alive message next time*/
+				state=KA_SEND_KEEP_ALIVE;
+				break;
 			}
-			else // a response to keep-alive message was received
-			{
-				nbr_retry=0;
-				/* trigger the timer to count again*/
-				ctimer_set(&parent_Timer-2 , MyNode.timeOut * bsp_get(E_BSP_GET_TRES) , mle_keep_alive , NULL );
-			}
-			/* set the state to send keep alive message next time*/
-			state=KA_SEND_KEEP_ALIVE;
-			break;
 		}
 	}
 }
@@ -897,7 +897,7 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 			uip_ip6addr_copy(&param.source_addr,source_addr);
 
 			/* trigger the timer to reply after the random period */
-			ctimer_set(&nb1->timer , bsp_getrand(500) *  (bsp_get(E_BSP_GET_TRES) / 1000 ) , reply_for_mle_link_request, (void *) &nb1->L_router_id );
+			ctimer_set(&nb1->L_age, bsp_getrand(500) *  (bsp_get(E_BSP_GET_TRES) / 1000 ), reply_for_mle_link_request, (void *) &nb1->L_router_id );
 			LOG_RAW("/********************************************************/\n"ANSI_COLOR_RESET);
 		}
 		break;
@@ -1037,59 +1037,71 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 		}
 		break;
 	case CHILD_ID_REQUEST:
-		/*
-		 * If the Mode TLV indicates that the sender is an rx-off-when-idle device, it
-		 * MUST begin sending IEEE 802.15.4 data requests after sending the Child ID request
-		 */
-
-		/* find child using source address */
-		child= mle_find_child_byAdd( (uip_ipaddr_t *) source_addr);
-		if(!child)
+		if (MyNode.OpMode!=NOT_LINKED)
 		{
-			LOG_RAW("Child not found ...");PRESET();
-			return;
+			/*
+			 * If the Mode TLV indicates that the sender is an rx-off-when-idle device, it
+			 * MUST begin sending IEEE 802.15.4 data requests after sending the Child ID request
+			 */
+
+			/* find child using source address */
+			child= mle_find_child_byAdd( (uip_ipaddr_t *) source_addr);
+			if(!child)
+			{
+				LOG_RAW("Child not found ...");PRESET();
+				return;
+			}
+
+			/* check the response TLV before processing the parent response */
+			tlv=mle_find_tlv_in_cmd(cmd,TLV_RESPONSE);
+			if(comp_resp_chall(child->challenge ,tlv->value))
+			{
+				/* store child's time out that we get from timeout TLV */
+				tlv=mle_find_tlv_in_cmd(cmd,TLV_TIME_OUT);
+				child->time_out=(tlv->value[3]) | (tlv->value[2] << 8) | (tlv->value[1] << 16)| (tlv->value[0] << 24);
+
+				param.rec_cmd=cmd;
+				param.rec_rssi=get_rssi();
+				uip_ip6addr_copy(&param.source_addr,source_addr);
+				reply_for_mle_childID_request(NULL);
+			}
 		}
-
-		/* check the response TLV before processing the parent response */
-		tlv=mle_find_tlv_in_cmd(cmd,TLV_RESPONSE);
-		if(comp_resp_chall(child->challenge ,tlv->value))
+		break;
+	case CHILD_ID_RESPONSE:
+		if (MyNode.OpMode==NOT_LINKED)
 		{
-			/* store child's time out that we get from timeout TLV */
-			tlv=mle_find_tlv_in_cmd(cmd,TLV_TIME_OUT);
-			child->time_out=(tlv->value[3]) | (tlv->value[2] << 8) | (tlv->value[1] << 16)| (tlv->value[0] << 24);
-
+			/* update the param variable */
 			param.rec_cmd=cmd;
 			param.rec_rssi=get_rssi();
 			uip_ip6addr_copy(&param.source_addr,source_addr);
-			reply_for_mle_childID_request(NULL);
+			/* call the join process fct */
+			mle_join_process(NULL);
 		}
-
-		break;
-	case CHILD_ID_RESPONSE:
-		/* update the param variable */
-		param.rec_cmd=cmd;
-		param.rec_rssi=get_rssi();
-		uip_ip6addr_copy(&param.source_addr,source_addr);
-		/* call the join process fct */
-		mle_join_process(NULL);
 		break;
 	case CHILD_UPDATE:
-		tlv=mle_find_tlv_in_cmd(cmd,TLV_SOURCE_ADDRESS);
-		/* find child using source address */
-		child = mle_find_child_by_16Add( (tlv->value[1]) | (tlv->value[0] << 8) );
-		if(child)
+		if (MyNode.OpMode!=NOT_LINKED)
 		{
-			// TODO Update value if there is changes
-			/* sen child id update response */
-			send_mle_child_update_response(&child->tmp);
-			/* restart the time out timer since we received a child update command */
-			ctimer_set(&child->timer, child->time_out * bsp_get(E_BSP_GET_TRES) , time_out_remove_child, (void *) &child );
+			tlv=mle_find_tlv_in_cmd(cmd,TLV_SOURCE_ADDRESS);
+			/* find child using source address */
+			child = mle_find_child_by_16Add( (tlv->value[1]) | (tlv->value[0] << 8) );
+			if(child)
+			{
+				// TODO Update value if there is changes
+				/* sen child id update response */
+				send_mle_child_update_response(&child->tmp);
+				/* restart the time out timer since we received a child update command */
+				ctimer_set(&child->timer, child->time_out * bsp_get(E_BSP_GET_TRES) , time_out_remove_child, (void *) &child );
+			}
+			else
+				LOG_RAW(ANSI_COLOR_CYAN"child not found \n"ANSI_COLOR_RESET);
+
 		}
-		else
-			LOG_RAW(ANSI_COLOR_CYAN"child not found \n"ANSI_COLOR_RESET);
 		break;
 	case CHILD_UPDATE_RESPONSE:
+		if (MyNode.OpMode!=NOT_LINKED)
+		{
 		mle_keep_alive(NULL);
+		}
 		break;
 	default :
 		LOG_RAW(ANSI_COLOR_RED"Error MLE received command not recognized \n"ANSI_COLOR_RESET);
@@ -1212,7 +1224,6 @@ uint8_t mle_init(void)
 
 	/* Trigger the timer for the join process */
 	ctimer_set(&c_mle_Timer, 1 * bsp_get(E_BSP_GET_TRES) , mle_join_process, (void *) NULL );
-
 
 	LOG_RAW( "MLE protocol initialized ... ");PRESET();
 	return 1;
@@ -1350,5 +1361,6 @@ void mle_set_child_mode(uint16_t rloc16)
 
 	/* trigger the timer to start sending keep alive messages */
 	ctimer_set(&parent_Timer, MyNode.timeOut * bsp_get(E_BSP_GET_TRES) , mle_keep_alive , NULL );
+
 
 }

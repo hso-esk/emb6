@@ -42,6 +42,16 @@ extern void thrd_partition_start(void);
 
 /**
  * Process a given Leader Data TLV and compare its content with the available
+ * leader data. Use this function if no ID sequence number is available.
+ * @param leader_tlv The Leader Data TLV.
+ * @retval THRD_ERROR_NONE			If the Leader Data TLV is valid.
+ * @retval THRD_ERROR_INVALID_ARGS	If the Leader Data TLV is invalid.
+ * @retval THRD_ERROR_DROP			If the ID Sequence Number is smaller than the current one.
+ */
+thrd_error_t thrd_partition_process_leader_tlv(tlv_leader_t *leader_tlv);
+
+/**
+ * Process a given Leader Data TLV and compare its content with the available
  * leader data.
  * @param id_sequence_number The corresponding ID Sequence Number (Route64 TLV).
  * @param leader_tlv The Leader Data TLV.

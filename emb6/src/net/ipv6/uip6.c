@@ -92,7 +92,7 @@
 /* For Debug, logging, statistics                                            */
 /*---------------------------------------------------------------------------*/
 
-#define DEBUG DEBUG_NONE
+#define DEBUG DEBUG_PRINT
 #include "uip-debug.h"
 
 #if UIP_CONF_IPV6_RPL
@@ -1227,13 +1227,13 @@ uip_process(uint8_t flag)
 				!uip_is_addr_unspecified(&UIP_IP_BUF->srcipaddr) &&
 				!uip_is_addr_loopback(&UIP_IP_BUF->destipaddr)) {
 
-
 			/* Check MTU */
 			if(uip_len > UIP_LINK_MTU) {
 				uip_icmp6_error_output(ICMP6_PACKET_TOO_BIG, 0, UIP_LINK_MTU);
 				UIP_STAT(++uip_stat.ip.drop);
 				goto send;
 			}
+
 			/* Check Hop Limit */
 			if(UIP_IP_BUF->ttl <= 1) {
 				uip_icmp6_error_output(ICMP6_E_TIME_EXCEEDED,
@@ -1243,6 +1243,7 @@ uip_process(uint8_t flag)
 			}
 
 #if UIP_CONF_IPV6_RPL
+#error
 			if(rpl_update_header_empty()) {
 				/* Packet can not be forwarded */
 				PRINTF("RPL Forward Option Error\n");

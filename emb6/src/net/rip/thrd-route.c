@@ -25,11 +25,12 @@
 
 #include "thrd-iface.h"
 #include "thrd-partition.h"
+#include "thrd-send-adv.h"
 
 #include "thrd-route.h"
 
 // #define DEBUG DEBUG_PRINT
-#include "uip-debug.h"
+// #include "uip-debug.h"
 
 #define     LOGGER_ENABLE                 LOGGER_THRD_NET
 #include    "logger.h"
@@ -204,15 +205,15 @@ thrd_rdb_route_t
 /**
  * Get the next hop entry of a route.
  * @param route
- * @return
+ * @retval If found, return a valid router ID within 0..62. 63 (invalid) else.
  */
 uint8_t
-*thrd_rdb_route_nexthop(thrd_rdb_route_t *route)
+thrd_rdb_route_nexthop(thrd_rdb_route_t *route)
 {
 	if (route != NULL) {
-		return &route->R_next_hop;
+		return route->R_next_hop;
 	} else {
-		return NULL;
+		return 63;
 	}
 }
 
@@ -409,10 +410,9 @@ thrd_rdb_link_lookup(uint8_t router_id)
 	LOG_RAW("\n\r");
 
 	found_link = NULL;
-	for (link = thrd_rdb_link_head(); link != NULL;
-			link = thrd_rdb_link_next(link)) {
-		LOG_RAW("%d\n", link->L_router_id);
-		LOG_RAW("\n\r");
+	for (link = thrd_rdb_link_head(); link != NULL; link = thrd_rdb_link_next(link)) {
+		// LOG_RAW("%d\n", link->L_router_id);
+		// LOG_RAW("\n\r");
 		if (link->L_router_id == router_id) {
 			found_link = link;
 			break;
@@ -424,7 +424,7 @@ thrd_rdb_link_lookup(uint8_t router_id)
 		LOG_RAW("%d\n", router_id);
 		LOG_RAW("\n\r");
 	} else {
-		LOG_RAW("thrd_rdb_link_lookup: No link for router id found\n\r");
+		LOG_RAW("thrd_rdb_link_lookup: No link for router id %d found.\n\r", router_id);
 	}
 
 	if (found_link != NULL && found_link != list_head(link_list)) {
@@ -435,7 +435,6 @@ thrd_rdb_link_lookup(uint8_t router_id)
 		list_remove(link_list, found_link);
 		list_push(link_list, found_link);
 	}
-
 	return found_link;
 }
 
@@ -568,7 +567,7 @@ thrd_rdb_route_add(uint8_t destination, uint8_t next_hop, uint8_t route_cost)
 	thrd_rdb_route_t *r;
 
 	// Get the valid router id set.
-	thrd_rdb_id_t *rid;
+	// thrd_rdb_id_t *rid;
 
 	LOG_RAW("thrd_rdb_route_add: search route set entry for destination id ");
 	LOG_RAW("%d\n", destination);
@@ -585,20 +584,19 @@ thrd_rdb_route_add(uint8_t destination, uint8_t next_hop, uint8_t route_cost)
 
 		/* We first check to see if the destination router is in our
 		 * Router ID Set (set of valid Router IDs). */
-		rid = thrd_rdb_rid_lookup(destination);
+		// rid = thrd_rdb_rid_lookup(destination);
 
-		if (rid == NULL) {
+		// if (rid == NULL) {
 			/* If the router did not have an entry in our Router ID Set,
 			 * return NULL. */
 
-			LOG_RAW(
-					ANSI_COLOR_RED "thrd_rdb_route_add: Destination router with router id ");
-			LOG_RAW("%d is invalid.", destination);
-			LOG_RAW(ANSI_COLOR_RESET "\n\r");
+		//	LOG_RAW(ANSI_COLOR_RED "thrd_rdb_route_add: Destination router with router id ");
+		//	LOG_RAW("%d is invalid.", destination);
+		//	LOG_RAW(ANSI_COLOR_RESET "\n\r");
 
-			LOG_RAW("-----------------------------------------------------\n\r");
-			return NULL;
-		}
+		//	LOG_RAW("-----------------------------------------------------\n\r");
+		//	return NULL;
+		//}
 
 		if (thrd_rdb_route_num_routes() == THRD_CONF_MAX_ROUTES) {
 			/* Removing the oldest route entry from the route table. The
@@ -760,7 +758,7 @@ thrd_rdb_link_update(uint8_t router_id, uint8_t link_margin,
 		uint8_t outgoing_quality, clock_time_t age)
 {
 	thrd_rdb_link_t *l;
-	thrd_rdb_id_t *rid;
+	// thrd_rdb_id_t *rid;
 	uint16_t link_margin_shifted = (link_margin << THRD_EXP_WEIGHT_MOV_AVG);
 
 	/* Find the corresponding Router ID entry (Router ID Set). */
@@ -769,29 +767,6 @@ thrd_rdb_link_update(uint8_t router_id, uint8_t link_margin,
 	/* Check whether the given router id already has an entry in the Link Set. */
 	if ( l == NULL ) {
 		LOG_RAW("thrd_rdb_link_update: router id %d unknown\n\r", router_id);
-		// LOG_RAW("%d\n", router_id);
-		// LOG_RAW("\n\r");
-
-		/* If there is no link entry, check if the given router id
-		 * is valid (Router ID Set). If valid, create one. We first need to
-		 * check if we have room for this link. If not, we remove the
-		 * least recently used one we have. */
-
-		/* We first check to see if the destination router is in our
-		 * Router ID Set (set of valid Router IDs). */
-		rid = thrd_rdb_rid_lookup(router_id);
-
-		if (rid == NULL) {
-			/* If the router did not have an entry in our Router ID Set,
-			 * return NULL. */
-
-			LOG_RAW(ANSI_COLOR_RED "thrd_rdb_link_update: Router with router id ");
-			LOG_RAW("%d is invalid.", router_id);
-			LOG_RAW(ANSI_COLOR_RESET "\n\r");
-
-			LOG_RAW("-----------------------------------------------------\n\r");
-			return NULL;
-		}
 
 		/* If there is no link entry, create one. We first need to
 		 * check if we have room for this link. If not, we remove the
@@ -831,9 +806,7 @@ thrd_rdb_link_update(uint8_t router_id, uint8_t link_margin,
 
 	} else {
 
-		LOG_RAW(ANSI_COLOR_RED "thrd_rdb_link_update: router id is already known for ");
-		LOG_RAW("%d\n", router_id);
-		LOG_RAW(ANSI_COLOR_RESET "\n\r");
+		LOG_RAW("thrd_rdb_link_update: router id %d already known.\n\r", router_id);
 
 		LOG_RAW("thrd_rdb_link_update: num_links %d\n\r", num_links);
 		LOG_RAW("-----------------------------------------------------\n\r");
@@ -847,7 +820,7 @@ thrd_rdb_link_update(uint8_t router_id, uint8_t link_margin,
 
 		l->L_link_margin = new_lm;
 		l->L_outgoing_quality = outgoing_quality;
-		ctimer_reset(&l->L_age);
+		ctimer_restart(&l->L_age);
 
 		if ( l->L_incoming_quality != new_iq ) {
 			l->L_incoming_quality = new_iq;
@@ -864,7 +837,9 @@ thrd_rdb_link_update(uint8_t router_id, uint8_t link_margin,
 bool
 thrd_rdb_is_neighbor_router(uint8_t router_id)
 {
-	if ( thrd_rdb_link_lookup(router_id) != NULL ) {
+	thrd_rdb_link_t *link;
+	link = thrd_rdb_link_lookup(router_id);
+	if ( link != NULL ) {
 		return TRUE;
 	} else {
 		return FALSE;
@@ -881,10 +856,11 @@ handle_max_neighbor_age_timeout(void *ptr)
 	thrd_rdb_link_t *l = (thrd_rdb_link_t*) ptr;
 
 	LOG_RAW("Link Set: Timer expired");
-	if ( l != NULL ) {
-		LOG_RAW(" for Link Set Entry with Router ID = &d\n\r", l->L_router_id);
+	if ( (l != NULL) && (ctimer_expired(&l->L_age)) ) {
+		LOG_RAW(" for link set entry with router ID = %d\n\r", l->L_router_id);
 		thrd_rdb_link_rm(l);
 	}
+
 	return;
 }
 
@@ -942,6 +918,8 @@ thrd_rdb_route_update(uint8_t router_id, uint8_t destination, uint8_t cost_repor
 					"(sender rid %d) ", router_id);
 			LOG_RAW("to destination router id %d", destination);
 			LOG_RAW("\n\r");
+			// Reset trickle algorithm (MLE advertisement sending rate).
+			thrd_trickle_reset();
 			return thrd_rdb_route_add(destination, router_id,
 					((cost_reported < MAX_ROUTE_COST) ? cost_reported : MAX_ROUTE_COST));
 
@@ -1031,9 +1009,9 @@ thrd_rdb_print_link_set(void)
 				" | "  "%13d"
 				" | "  "%18d"
 				" | "  "%18d"
-				" | "  "%5d"
+				" | "  "timer"
 				" |\n", l->L_router_id, l->L_link_margin, l->L_incoming_quality,
-				l->L_outgoing_quality, l->L_age);
+				l->L_outgoing_quality);
 	}
 	LOG_RAW(
 			"---------------------------------------------------------------------------------\n\r");

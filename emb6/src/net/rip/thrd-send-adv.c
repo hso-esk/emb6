@@ -127,7 +127,7 @@ double_interval(void *ptr)
 	if ( t.interval > TRICKLE_TIME(t.i_min, t.i_max) )
 		t.interval = TRICKLE_TIME(t.i_min, t.i_max);
 
-	ctimer_reset(&ct);
+	ctimer_restart(&ct);
 
 	t.t_next = random_interval();
 
@@ -163,8 +163,8 @@ static void
 trickle_reset(void)
 {
 	// Reset old timers.
-	ctimer_reset(&ci);
-	ctimer_reset(&ct);
+	ctimer_restart(&ci);
+	ctimer_restart(&ct);
 
 	t.interval = t.i_min;				// I.
 	t.t_next = random_interval();	// t.
