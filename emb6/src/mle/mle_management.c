@@ -618,8 +618,8 @@ static uint8_t send_mle_link_request(void)
 
 static void reply_for_mle_link_request(void *ptr)
 {
-	uint8_t* nb_id;
-	nb_id= (uint8_t*) ptr;
+	uint8_t* router_id;
+	router_id= (uint8_t*) ptr;
 	tlv_t resp ;
 
 	if(MyNode.OpMode== PARENT)
@@ -638,8 +638,10 @@ static void reply_for_mle_link_request(void *ptr)
 		 *  if not, it sends a Link Accept and Request.*/
 
 		/* find the nb router */
-		nb= mle_find_nb_router(*nb_id);
-		if(nb->state==PENDING)
+		//nb= mle_find_nb_router(*routerID);
+		nb1 = thrd_rdb_link_lookup(*router_id);
+
+		if(nb1->L_link_margin == 0 && nb1->L_outgoing_quality == 0 ) // that means the device is not linked yet
 		{
 			cmd.type=LINK_ACCEPT_AND_REQUEST;
 			/* MLE Frame Counter tlv */
@@ -653,14 +655,16 @@ static void reply_for_mle_link_request(void *ptr)
 
 		/* get the received challenge of the child */
 		resp.length=4;
-		resp.value[0]= (uint8_t) ( nb->challenge>> 24) & 0xFF ;
-		resp.value[1]= (uint8_t) ( nb->challenge>> 16) & 0xFF ;
-		resp.value[2]= (uint8_t) ( nb->challenge>> 8) & 0xFF ;
-		resp.value[3]= (uint8_t)  nb->challenge & 0xFF ;
+		resp.value[0]= (uint8_t) ( nb1->challenge>> 24) & 0xFF ;
+		resp.value[1]= (uint8_t) ( nb1->challenge>> 16) & 0xFF ;
+		resp.value[2]= (uint8_t) ( nb1->challenge>> 8) & 0xFF ;
+		resp.value[3]= (uint8_t)  nb1->challenge & 0xFF ;
 		add_response_to_cmd(&cmd, &resp);
 
 		/* to change by the child address */
-		mle_send_msg( &cmd,&nb->tmp);
+		//mle_send_msg( &cmd,&nb->tmp);
+		uip_ip6addr(&s_destAddr, 0xfe80, 0, 0, 0, 0, 0x00ff, 0xfe00, (*router_id) << 10 );
+		mle_send_msg( &cmd,&s_destAddr);
 
 	}
 }
@@ -710,47 +714,37 @@ static void mle_synchro_process(void *ptr)
 
 					//thrd_rdb_link_update(uint8_t router_id, uint8_t link_margin, uint8_t outgoing_quality, clock_time_t age)
 
-					router_id= (uint8_t) (param.source_addr.u16[7]>>10);
-					printf(ANSI_COLOR_GREEN "\n ************** 16-bit add is : %02x" ANSI_COLOR_RESET,param.source_addr.u16[7] );
+					router_id= (uint8_t) (param.source_addr.u8[14]>>2);
+					printf(ANSI_COLOR_GREEN "\n ************** 16-bit add is : %02x" ANSI_COLOR_RESET,param.source_addr.u8[14] );
 					printf(ANSI_COLOR_GREEN "\n ************** router id is : %02x" ANSI_COLOR_RESET,router_id );
+
 					//nb1 = thrd_rdb_link_lookup(router_id);
 
-					nb=mle_find_nb_router_byAdd((&param.source_addr));
-					if(!nb)// the neighbor is not existing
-					{
-						/* store the neighbor data */
-						uint8_t id=0;
-						do
-						{
-							nb=mle_add_nb_router( id, 0 /*adress16*/,  0 /*frame counter*/, 0 /*modeTLV*/,  0 /*link quality */);
-							id++;
-						}
-						while (nb==NULL && id<MAX_NB_ROUTER);
+					nb1=thrd_rdb_link_update(router_id,  0 /* TODO EXTRACT LINK MARGIN  */ ,  param.rec_rssi ,  0);
 
-						if (nb)
-						{
-							/* increment the nb router counter */
-							MyNode.NB_router_couter++;
-							/* set the state of the nb to pending*/
-							nb->state=LINKED;
-							/* store the address of the nb router */
-							uip_ip6addr_copy(&nb->tmp ,&param.source_addr);
-							PRINTFG(ANSI_COLOR_GREEN"[+] "ANSI_COLOR_RESET);
-							PRINTF("SNY process: ID allocated for the nb router = %i \n", nb->id);
-						}
-						else
-						{
-							LOG_RAW(ANSI_COLOR_RED"[+] "ANSI_COLOR_RESET);
-							LOG_RAW("SNY process: Failed to allocate nb router id... \n"ANSI_COLOR_RESET);
-							break;
-						}
-					}
-					if(param.rec_cmd->type==LINK_ACCEPT_AND_REQUEST)
+					if(nb1)
 					{
-						nb->state=LINKED;
-						nb=mle_find_nb_router_byAdd(&param.source_addr);
-						reply_for_mle_link_request(&nb->id);
+						PRINTFG(ANSI_COLOR_GREEN"[+] "ANSI_COLOR_RESET);
+						PRINTF("SNY process: nb added  \n");
+
+
+						if(param.rec_cmd->type==LINK_ACCEPT_AND_REQUEST)
+						{
+
+							reply_for_mle_link_request(&nb1->L_router_id);
+						}
+
+
 					}
+					else
+					{
+						LOG_RAW(ANSI_COLOR_RED"[+] "ANSI_COLOR_RESET);
+						LOG_RAW("SNY process: Failed to allocate a new nb router ... \n"ANSI_COLOR_RESET);
+					}
+
+
+
+
 				}
 
 				finish=1;
@@ -867,49 +861,44 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 	{
 	case LINK_REQUEST:
 		/* check if neighbors table is not full */
-		if(MyNode.NB_router_couter<MAX_NB_ROUTER && MyNode.OpMode== PARENT)
+		if(MyNode.OpMode== PARENT)
 		{
 
 			/* check the nb already exist */
-			nb=mle_find_nb_router_byAdd((uip_ipaddr_t*)source_addr);
-			if(!nb)// the neighbor is not existing
-			{
-				/* allocate temporarily a neighbor */
-				id=0;
-				do
-				{
-					nb=mle_add_nb_router( id , 0 /*adress16*/ ,  0 /*frame counter*/, 0 /*modeTLV*/,  0 /*link quality */);
-					id++;
-				}
-				while (nb==NULL && id<MAX_NB_ROUTER);
+			//nb=mle_find_nb_router_byAdd((uip_ipaddr_t*)source_addr);
+			nb1 = thrd_rdb_link_lookup((source_addr->u8[14] >> 2 ));
 
-				if (nb)
+			if(!nb1)// the neighbor is not existing
+			{
+
+				nb1=thrd_rdb_link_update( (source_addr->u8[14] >> 2 ) ,  0  ,  0 ,  0);
+
+
+				/* store the received challenge*/
+				tlv=mle_find_tlv_in_cmd(cmd,TLV_CHALLENGE);
+
+				if(nb1)
 				{
-					/* increment the nb router counter */
-					MyNode.NB_router_couter++;
-					/* set the state of the nb to pending*/
-					nb->state=PENDING;
-					/* store the received challenge*/
-					tlv=mle_find_tlv_in_cmd(cmd,TLV_CHALLENGE);
-					nb->challenge= (tlv->value[3]) | (tlv->value[2] << 8) | (tlv->value[1] << 16)| (tlv->value[0] << 24);
+					nb1->challenge= (tlv->value[3]) | (tlv->value[2] << 8) | (tlv->value[1] << 16)| (tlv->value[0] << 24);
 					/* store the address of the nb router */
-					uip_ip6addr_copy(&nb->tmp ,source_addr);
-					LOG_RAW("ID allocated for the nb router = %i \n", nb->id);
+					LOG_RAW(" neighbor added \n");
 				}
 				else
 				{
-					LOG_RAW("Failed to allocate nb router id...");PRESET();
-					break;
+					LOG_RAW(" failed to add neighbor \n");
+
 				}
 			}
+
+
 			/* prepare param */
 			param.rec_cmd=cmd;
 			param.rec_rssi=get_rssi();
 			uip_ip6addr_copy(&param.source_addr,source_addr);
 
 			/* trigger the timer to reply after the random period */
-			ctimer_set(&nb->timer, bsp_getrand(500) *  (bsp_get(E_BSP_GET_TRES) / 1000 ) , reply_for_mle_link_request, (void *) &nb->id );
-
+			ctimer_set(&nb1->timer , bsp_getrand(500) *  (bsp_get(E_BSP_GET_TRES) / 1000 ) , reply_for_mle_link_request, (void *) &nb1->L_router_id );
+			LOG_RAW("/********************************************************/\n"ANSI_COLOR_RESET);
 		}
 		break;
 	case LINK_ACCEPT:
