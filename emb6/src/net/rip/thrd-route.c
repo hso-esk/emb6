@@ -25,6 +25,7 @@
 
 #include "thrd-iface.h"
 #include "thrd-partition.h"
+#include "thrd-send-adv.h"
 
 #include "thrd-route.h"
 
@@ -766,29 +767,6 @@ thrd_rdb_link_update(uint8_t router_id, uint8_t link_margin,
 	/* Check whether the given router id already has an entry in the Link Set. */
 	if ( l == NULL ) {
 		LOG_RAW("thrd_rdb_link_update: router id %d unknown\n\r", router_id);
-		// LOG_RAW("%d\n", router_id);
-		// LOG_RAW("\n\r");
-
-		/* If there is no link entry, check if the given router id
-		 * is valid (Router ID Set). If valid, create one. We first need to
-		 * check if we have room for this link. If not, we remove the
-		 * least recently used one we have. */
-
-		/* We first check to see if the destination router is in our
-		 * Router ID Set (set of valid Router IDs). */
-		// rid = thrd_rdb_rid_lookup(router_id);
-
-		// if (rid == NULL) {
-			/* If the router did not have an entry in our Router ID Set,
-			 * return NULL. */
-
-		//	LOG_RAW(ANSI_COLOR_RED "thrd_rdb_link_update: Router with router id ");
-		//	LOG_RAW("%d is invalid.", router_id);
-		//	LOG_RAW(ANSI_COLOR_RESET "\n\r");
-
-		//	LOG_RAW("-----------------------------------------------------\n\r");
-		//	return NULL;
-		//}
 
 		/* If there is no link entry, create one. We first need to
 		 * check if we have room for this link. If not, we remove the
@@ -940,6 +918,8 @@ thrd_rdb_route_update(uint8_t router_id, uint8_t destination, uint8_t cost_repor
 					"(sender rid %d) ", router_id);
 			LOG_RAW("to destination router id %d", destination);
 			LOG_RAW("\n\r");
+			// Reset trickle algorithm (MLE advertisement sending rate).
+			thrd_trickle_reset();
 			return thrd_rdb_route_add(destination, router_id,
 					((cost_reported < MAX_ROUTE_COST) ? cost_reported : MAX_ROUTE_COST));
 
