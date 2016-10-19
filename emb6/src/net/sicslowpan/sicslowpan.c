@@ -1782,6 +1782,9 @@ static uint8_t output(const uip_lladdr_t *localdest)
 		 * The packet does not need to be fragmented.
 		 */
 
+		uip_ipaddr_t src_addr;
+		src_addr = UIP_IP_BUF->srcipaddr;
+
 		uip_ipaddr_t dest_addr;
 		dest_addr = UIP_IP_BUF->destipaddr;
 
@@ -1968,9 +1971,18 @@ static uint8_t output(const uip_lladdr_t *localdest)
 #elif ( SICSLOWPAN_MESH_HEADER_V == MESH_HEADER_V_SHORT_ADDR )	// V: Short address mode.
 						// Set V bit to 1.
 						mesh_type |= MESH_HEADER_V_SHORT_ADDR;
-						// Set the originator address field to the local RLOC16.
-						memcpy(&mesh_hdr[sicslowpan_mesh_hdr_len], &thrd_iface.rloc16, MESH_HEADER_SHORT_ADDR_LEN);
-						printf("thrd_iface.rloc16 = %04x\n\r", thrd_iface.rloc16);
+						// Check whether the originstor IPv6 address belongs to a child (child -> parent forwarding).
+						uint16_t src_rloc16 = thrd_extract_rloc16_from_rloc_address(&src_addr);
+						uint8_t src_child_id = THRD_EXTRACT_CHILD_ID(src_rloc16);
+						if ( thrd_rloc16_belongs_to_router(src_child_id) ) {	// Router.
+							// Set the originator address field to the local RLOC16.
+							memcpy(&mesh_hdr[sicslowpan_mesh_hdr_len], &thrd_iface.rloc16, MESH_HEADER_SHORT_ADDR_LEN);
+							printf("thrd_iface.rloc16 = %04x\n\r", thrd_iface.rloc16);
+						} else {	// Child.
+							// Set the originator address field to the local RLOC16.
+							memcpy(&mesh_hdr[sicslowpan_mesh_hdr_len], &src_rloc16, MESH_HEADER_SHORT_ADDR_LEN);
+							printf("src_rloc16 = %04x\n\r", thrd_iface.rloc16);
+						}
 						sicslowpan_mesh_hdr_len += MESH_HEADER_SHORT_ADDR_LEN;
 #endif /* ( SICSLOWPAN_MESH_HEADER_V == MESH_HEADER_V_EUI_64 ) */
 
@@ -2109,6 +2121,8 @@ input(void)
 		uint8_t mesh_hdr_config = packetbuf_ptr[PACKETBUF_MESH_HEADER_POS];
 		uint8_t hops_left = mesh_hdr_config & 0x0f;
 
+		printf("6LoWPAN: hops_left = %d\n\r", hops_left);
+
 		// Mask V bit.
 #if ( SICSLOWPAN_MESH_HEADER_V == MESH_HEADER_V_EUI_64_LONG_ADDR )	// Originator address: Long address mode (EUI-64).
 		uint8_t orig_long_addr[8] = 0;
@@ -2123,29 +2137,16 @@ input(void)
 		uint16_t orig_short_addr = 0xff;
 		if ( (mesh_hdr_config & 0x20) >> 5 == 1 ) {		// Short Address used.
 			memcpy(&orig_short_addr, packetbuf_ptr + packetbuf_hdr_len, 2);
-			uint8_t orig_short_addr = THRD_EXTRACT_ROUTER_ID(orig_short_addr);
+			uint8_t orig_rid = THRD_EXTRACT_ROUTER_ID(orig_short_addr);
 			packetbuf_hdr_len += 2;
 			printf("6LoWPAN: Incoming packet containing mesh header (V = 1).\n");
+			printf("6LoWPAN: Originator short address = %04x\n\r", orig_short_addr);
+			printf("6LoWPAN: Originator router ID = %d\n\r", orig_rid);
+			printf("6LoWPAN: Originator child ID = %d\n\r", THRD_EXTRACT_CHILD_ID(orig_short_addr));
 		} else {	// EUI-64 used.
 			printf("6LoWPAN: Incoming packet containing mesh header (V = 0) -> long address mode (EUI-64) not supported.\n");
 		}
 #endif /* SICSLOWPAN_MESH_HEADER_V */
-
-
-		/*
-		uint16_t orig_rloc16 = 0xff;
-		if ( (mesh_hdr_config & 0x20) >> 5 == 1 ) {		// Short Address used.
-			memcpy(&orig_rloc16, packetbuf_ptr + packetbuf_hdr_len, 2);
-			uint8_t orig_rloc16 = THRD_EXTRACT_ROUTER_ID(orig_rloc16);
-			packetbuf_hdr_len += 2;
-			printf("6LoWPAN: Incoming packet containing mesh header.\n");
-		} else {	// EUI-64 used.
-			packetbuf_hdr_len += 8;
-			printf("6LoWPAN: Incoming packet containing mesh header.\n");
-			// TODO
-		}
-		*/
-
 		// Mask F bit.
 #if ( SICSLOWPAN_MESH_HEADER_F == MESH_HEADER_F_EUI_64_LONG_ADDR )	// Destination address: Long address mode (EUI-64).
 		uint8_t dest_long_addr[8] = 0;
@@ -2181,6 +2182,9 @@ input(void)
 
 			packetbuf_hdr_len += 2;
 			printf("6LoWPAN: Incoming packet containing mesh header (F = 1).\n");
+			printf("6LoWPAN: Destination short address = %04x\n\r", dest_short_addr);
+			printf("6LoWPAN: Destination router ID = %d\n\r", dest_rid);
+			printf("6LoWPAN: Destination child ID = %d\n\r", THRD_EXTRACT_CHILD_ID(dest_short_addr));
 		} else {	// EUI-64 used.
 			packetbuf_hdr_len += 8;
 			printf("6LoWPAN: Incoming packet containing mesh header (F = 0) -> long address mode (EUI-64) not supported.\n");
