@@ -110,6 +110,14 @@ thrd_extract_router_id_from_rloc_addr(uip_ipaddr_t *rloc_addr)
 
 /* --------------------------------------------------------------------------- */
 
+uint16_t
+thrd_extract_child_id_from_rloc_addr(uip_ipaddr_t *rloc_addr)
+{
+	return ((uint8_t) (rloc_addr->u16[7] & 0x01ff));
+}
+
+/* --------------------------------------------------------------------------- */
+
 uint8_t
 thrd_extract_router_id_from_rloc_linkaddr(linkaddr_t *link_addr)
 {

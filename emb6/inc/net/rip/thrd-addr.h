@@ -123,6 +123,13 @@ extern bool thrd_is_linkaddr_rloc(linkaddr_t *link_addr);
 extern uint8_t thrd_extract_router_id_from_rloc_addr(uip_ipaddr_t *rloc_addr);
 
 /**
+ * Extract the child ID from a Thread IPv6 RLOC address.
+ * @param rloc_addr A RLOC address.
+ * @return The extracted child ID.
+ */
+extern uint16_t thrd_extract_child_id_from_rloc_addr(uip_ipaddr_t *rloc_addr);
+
+/**
  * Extract the Router ID from a Long Address (MAC) of type RLOC.
  * @param lladdr The Long Address (MAC) of type RLOC.
  * @return The extracted Router ID.
