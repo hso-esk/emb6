@@ -88,9 +88,8 @@ struct ctimer                       parent_Timer;
 static mle_cmd_t 					cmd; // command buffer
 static mle_param_t					param;
 static mle_neighbor_t*				parent;
-static mle_neighbor_t*				nb;
 static mle_neighbor_t* 				child;
-static thrd_rdb_link_t*				nb1;
+static thrd_rdb_link_t*				nb;
 
 
 
@@ -126,12 +125,12 @@ static  uint8_t      mle_send_msg(mle_cmd_t* cmd,  uip_ipaddr_t *dest_addr);
 
 
 /**
- * @brief check from the address if the device is an active router
+ * \brief check from the address if the device is an active router
  *
- * @param  srcAdd       the address of the device to check
+ * \param  srcAdd       the address of the device to check
  *
- * @return 1    OK.
- * @return 0   FAIL.
+ * \return 1    OK.
+ * \return 0   FAIL.
  *
  */
 static uint8_t 			isActiveRouter(uint16_t srcAdd)
@@ -148,11 +147,11 @@ static uint8_t 			isActiveRouter(uint16_t srcAdd)
 /************************ link calculation functions ****************************/
 
 /**
- * @brief mapping RSSI
+ * \brief mapping RSSI
  *
- * @param  rssi     Received Signal Strength Indication value
+ * \param  rssi     Received Signal Strength Indication value
  *
- * @return corresponding value
+ * \return corresponding value
  *
  */
 static uint8_t mapRSSI(uint8_t rssi )
@@ -172,12 +171,12 @@ static uint8_t mapRSSI(uint8_t rssi )
 
 
 /**
- * @brief Calculate the two-way link quality
+ * \brief Calculate the two-way link quality
  *
- * @param  my_rssi      my rssi (received on link margin TLV)
- * @param  rec_rssi     received rssi (calculated by the transceiver)
+ * \param  my_rssi      my rssi (received on link margin TLV)
+ * \param  rec_rssi     received rssi (calculated by the transceiver)
  *
- * @return two-way link quality
+ * \return two-way link quality
  *
  */
 static uint8_t calculate_two_way_LQ(uint8_t my_rssi , uint8_t rec_rssi)
@@ -192,12 +191,12 @@ static uint8_t calculate_two_way_LQ(uint8_t my_rssi , uint8_t rec_rssi)
 
 
 /**
- * @brief  send MLE Parent Request message
+ * \brief  send MLE Parent Request message
  *
- * @param  R     Router: Active Routers MUST respond
- * @param  E     End device: REEDs that are currently acting as Children MUST respond
+ * \param  R     Router: Active Routers MUST respond
+ * \param  E     End device: REEDs that are currently acting as Children MUST respond
  *
- * @return
+ * \return
  *       -  1 success
  *       -  0 error
  */
@@ -217,11 +216,11 @@ static uint8_t send_mle_parent_request(uint8_t R, uint8_t E)
 }
 
 /**
- * @brief  send child id request
+ * \brief  send child id request
  *
- * @param  dest_addr	  pointer to the dest address
+ * \param  dest_addr	  pointer to the dest address
  *
- * @return
+ * \return
  *       -  1 success
  *       -  0 error
  */
@@ -242,9 +241,9 @@ static uint8_t send_mle_childID_request(uip_ipaddr_t *dest_addr)
 
 
 /**
- * @brief  remove a child after time out (this function is triggered by child's timer)
+ * \brief  remove a child after time out (this function is triggered by child's timer)
  *
- * @param  ptr	  pointer to the child to remove
+ * \param  ptr	  pointer to the child to remove
  */
 static void time_out_remove_child(void *ptr)
 {
@@ -257,9 +256,9 @@ static void time_out_remove_child(void *ptr)
 
 
 /**
- * @brief  remove a child after time out (this function is triggered by child's timer)
+ * \brief  remove a child after time out (this function is triggered by child's timer)
  *
- * @param  ptr	  pointer to the child to remove
+ * \param  ptr	  pointer to the child to remove
  */
 static void check_child_state(void *ptr)
 {
@@ -286,9 +285,9 @@ static void check_child_state(void *ptr)
 
 
 /**
- * @brief  replying for MLE parent request by unicast parent response
+ * \brief  replying for MLE parent request by unicast parent response
  *
- * @param  ptr	  pointer to the child id
+ * \param  ptr	  pointer to the child id
  */
 static void reply_for_mle_parent_request(void *ptr)
 {
@@ -335,11 +334,11 @@ static void reply_for_mle_parent_request(void *ptr)
 }
 
 /**
- * @brief  assigning 16-bit short address to a child (based on router id and child id)
+ * \brief  assigning 16-bit short address to a child (based on router id and child id)
  *
- * @param  id	 child id
+ * \param  id	 child id
  *
- * @return 16-bit short address assigned to the child
+ * \return 16-bit short address assigned to the child
  */
 
 static uint16_t assign_address16(uint8_t id)
@@ -348,9 +347,9 @@ static uint16_t assign_address16(uint8_t id)
 }
 
 /**
- * @brief  State machine to handle the join process (attaching to a parent)
+ * \brief  State machine to handle the join process (attaching to a parent)
  *
- * @param  ptr	  always NULL
+ * \param  ptr	  always NULL
  */
 
 static void mle_join_process(void *ptr)
@@ -545,10 +544,10 @@ static void mle_join_process(void *ptr)
 /************************ MLE synchronisation process ****************************/
 
 /**
- * @brief  Send MLE child update message
+ * \brief  Send MLE child update message
  *
- * @param  dest_addr	destination address (usually the parent address)
- * @return
+ * \param  dest_addr	destination address (usually the parent address)
+ * \return
  *       -  1 success
  *       -  0 error
  */
@@ -567,10 +566,10 @@ static uint8_t send_mle_child_update(uip_ipaddr_t *dest_addr)
 
 
 /**
- * @brief  Send MLE child update response message
+ * \brief  Send MLE child update response message
  *
- * @param  dest_addr	destination address
- * @return
+ * \param  dest_addr	destination address
+ * \return
  *       -  1 success
  *       -  0 error
  */
@@ -589,9 +588,9 @@ static uint8_t send_mle_child_update_response(uip_ipaddr_t *dest_addr)
 
 
 /**
- * @brief  Send multicast MLE link request message
+ * \brief  Send multicast MLE link request message
  *
- * @return
+ * \return
  *       -  1 success
  *       -  0 error
  */
@@ -612,9 +611,9 @@ static uint8_t send_mle_link_request(void)
 }
 
 /**
- * @brief  replying for an MLE link request message
+ * \brief  replying for an MLE link request message
  *
- * @param  ptr	neighbor id
+ * \param  ptr	neighbor id
  */
 
 static void reply_for_mle_link_request(void *ptr)
@@ -639,10 +638,9 @@ static void reply_for_mle_link_request(void *ptr)
 		 *  if not, it sends a Link Accept and Request.*/
 
 		/* find the nb router */
-		//nb= mle_find_nb_router(*routerID);
-		nb1 = thrd_rdb_link_lookup(*router_id);
+		nb = thrd_rdb_link_lookup(*router_id);
 
-		if(nb1->L_link_margin == 0 && nb1->L_outgoing_quality == 0 ) // that means the device is not linked yet
+		if(nb->L_link_margin == 0 && nb->L_outgoing_quality == 0 ) // that means the device is not linked yet
 		{
 			cmd.type=LINK_ACCEPT_AND_REQUEST;
 			/* MLE Frame Counter tlv */
@@ -656,14 +654,13 @@ static void reply_for_mle_link_request(void *ptr)
 
 		/* get the received challenge of the child */
 		resp.length=4;
-		resp.value[0]= (uint8_t) ( nb1->challenge>> 24) & 0xFF ;
-		resp.value[1]= (uint8_t) ( nb1->challenge>> 16) & 0xFF ;
-		resp.value[2]= (uint8_t) ( nb1->challenge>> 8) & 0xFF ;
-		resp.value[3]= (uint8_t)  nb1->challenge & 0xFF ;
+		resp.value[0]= (uint8_t) ( nb->challenge>> 24) & 0xFF ;
+		resp.value[1]= (uint8_t) ( nb->challenge>> 16) & 0xFF ;
+		resp.value[2]= (uint8_t) ( nb->challenge>> 8) & 0xFF ;
+		resp.value[3]= (uint8_t)  nb->challenge & 0xFF ;
 		add_response_to_cmd(&cmd, &resp);
 
-		/* to change by the child address */
-		//mle_send_msg( &cmd,&nb->tmp);
+		/* send the reply */
 		uip_ip6addr(&s_destAddr, 0xfe80, 0, 0, 0, 0, 0x00ff, 0xfe00, (*router_id) << 10 );
 		mle_send_msg( &cmd,&s_destAddr);
 
@@ -672,16 +669,17 @@ static void reply_for_mle_link_request(void *ptr)
 
 
 /**
- * @brief  MLE synchronisation process: usually triggered after start operating as parent
+ * \brief  MLE synchronisation process: usually triggered after start operating as parent
  * to synchronise with other neighbor routers
  *
- * @param  ptr	always NUll
+ * \param  ptr	always NUll
  */
 
 static void mle_synchro_process(void *ptr)
 {
 	uint8_t finish=0;
 	uint8_t router_id;
+	tlv_t*  tlv;
 
 	if(MyNode.OpMode==PARENT)
 	{
@@ -713,41 +711,30 @@ static void mle_synchro_process(void *ptr)
 					LOG_RAW(ANSI_COLOR_GREEN"[+] "ANSI_COLOR_RESET);
 					LOG_RAW("SNY process: processing link \n"ANSI_COLOR_RESET);
 
-					//thrd_rdb_link_update(uint8_t router_id, uint8_t link_margin, uint8_t outgoing_quality, clock_time_t age)
-
+					/* get the router id from the LL ipv6 address */
 					router_id= (uint8_t) (param.source_addr.u8[14]>>2);
-					printf(ANSI_COLOR_GREEN "\n ************** 16-bit add is : %02x" ANSI_COLOR_RESET,param.source_addr.u8[14] );
-					printf(ANSI_COLOR_GREEN "\n ************** router id is : %02x" ANSI_COLOR_RESET,router_id );
+					/* get the link margin tlv */
+					tlv=mle_find_tlv_in_cmd(param.rec_cmd,TLV_LINK_MARGIN);
+					/* update neighbor values */
+					nb=thrd_rdb_link_update(router_id,  tlv->value[0] ,  param.rec_rssi ,  0);
 
-					//nb1 = thrd_rdb_link_lookup(router_id);
-
-					nb1=thrd_rdb_link_update(router_id,  0 /* TODO EXTRACT LINK MARGIN  */ ,  param.rec_rssi ,  0);
-
-					if(nb1)
+					if(nb)
 					{
 						PRINTFG(ANSI_COLOR_GREEN"[+] "ANSI_COLOR_RESET);
 						PRINTF("SNY process: nb added  \n");
 
-
+						/* if the reply was link accept and request then we have to reply for it */
 						if(param.rec_cmd->type==LINK_ACCEPT_AND_REQUEST)
 						{
-
-							reply_for_mle_link_request(&nb1->L_router_id);
+							reply_for_mle_link_request(&nb->L_router_id);
 						}
-
-
 					}
 					else
 					{
 						LOG_RAW(ANSI_COLOR_RED"[+] "ANSI_COLOR_RESET);
 						LOG_RAW("SNY process: Failed to allocate a new nb router ... \n"ANSI_COLOR_RESET);
 					}
-
-
-
-
 				}
-
 				finish=1;
 				break;
 			}
@@ -755,13 +742,13 @@ static void mle_synchro_process(void *ptr)
 	}
 }
 
+
 /**
- * @brief  Handling keep-alive messages: used by the child to keep
+ * \brief  Handling keep-alive messages: used by the child to keep
  * linked with its  parent node
  *
- * @param  ptr	always NULL
+ * \param  ptr	always NULL
  */
-
 static void mle_keep_alive(void *ptr)
 {
 	static uint8_t nbr_retry=0; // the max retry is 3
@@ -805,6 +792,7 @@ static void mle_keep_alive(void *ptr)
 				}
 				else // a response to keep-alive message was received
 				{
+					/* reset the counter of retry */
 					nbr_retry=0;
 					/* trigger the timer to count again*/
 					ctimer_set(&parent_Timer-2 , MyNode.timeOut * bsp_get(E_BSP_GET_TRES) , mle_keep_alive , NULL );
@@ -822,7 +810,7 @@ static void mle_keep_alive(void *ptr)
 /************************ process incoming MLE messages function ****************************/
 
 /**
- * @brief  processing all incoming MLE messages
+ * \brief  processing all incoming MLE messages
  *
  * \param c    A pointer to the struct udp_socket that received the data
  * \param ptr  An opaque pointer that was specified when the UDP socket was registered with udp_socket_register()
@@ -865,21 +853,18 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 		{
 
 			/* check the nb already exist */
-			//nb=mle_find_nb_router_byAdd((uip_ipaddr_t*)source_addr);
-			nb1 = thrd_rdb_link_lookup((source_addr->u8[14] >> 2 ));
+			nb = thrd_rdb_link_lookup((source_addr->u8[14] >> 2 ));
 
-			if(!nb1)// the neighbor is not existing
+			if(!nb)// the neighbor is not existing
 			{
-
-				nb1=thrd_rdb_link_update( (source_addr->u8[14] >> 2 ) ,  0  ,  0 ,  0);
-
-
+				/* add the neighbor with infinite value */
+				nb=thrd_rdb_link_update( (source_addr->u8[14] >> 2 ), 0, 0, 0);
 				/* store the received challenge*/
 				tlv=mle_find_tlv_in_cmd(cmd,TLV_CHALLENGE);
 
-				if(nb1)
+				if(nb)
 				{
-					nb1->challenge= (tlv->value[3]) | (tlv->value[2] << 8) | (tlv->value[1] << 16)| (tlv->value[0] << 24);
+					nb->challenge= (tlv->value[3]) | (tlv->value[2] << 8) | (tlv->value[1] << 16)| (tlv->value[0] << 24);
 					/* store the address of the nb router */
 					LOG_RAW(" neighbor added \n");
 				}
@@ -897,8 +882,8 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 			uip_ip6addr_copy(&param.source_addr,source_addr);
 
 			/* trigger the timer to reply after the random period */
-			ctimer_set(&nb1->L_age, bsp_getrand(500) *  (bsp_get(E_BSP_GET_TRES) / 1000 ), reply_for_mle_link_request, (void *) &nb1->L_router_id );
-			LOG_RAW("/********************************************************/\n"ANSI_COLOR_RESET);
+			ctimer_set(&nb->L_age, bsp_getrand(500) *  (bsp_get(E_BSP_GET_TRES) / 1000 ),
+								 reply_for_mle_link_request, (void *) &nb->L_router_id );
 		}
 		break;
 	case LINK_ACCEPT:
@@ -1113,9 +1098,9 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 /************************ init MLE protocol  ****************************/
 
 /**
- * @brief  Initialise  UDP connection
+ * \brief  Initialise  UDP connection
  *
- * @return
+ * \return
  *       -  1 success
  *       -  0 error
  */
@@ -1141,12 +1126,12 @@ static uint8_t mle_init_udp(void)
 
 /************************  MLE send message function  ****************************/
 /**
- * @brief  Initialise  UDP connection
+ * \brief  Initialise  UDP connection
  *
- * @param  cmd            pointer to the MLE command to send
- * @param  dest_addr      destination address
+ * \param  cmd            pointer to the MLE command to send
+ * \param  dest_addr      destination address
  *
- * @return
+ * \return
  *       -  1 success
  *       -  0 error
  */
@@ -1273,7 +1258,7 @@ void reply_for_mle_childID_request(void *ptr)
 	if(MyNode.OpMode == CHILD)
 	{
 		// TODO verify if i already send a request for router id (may be inside the function using static variable )
-		// send request to become a router and then reply
+		/* send request to become a router and then reply  */
 		LOG_RAW(ANSI_COLOR_YELLOW"Sending request to become a Router \n"ANSI_COLOR_RESET);
 		thrd_request_router_id(NULL);
 

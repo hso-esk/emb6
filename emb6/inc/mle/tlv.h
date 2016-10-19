@@ -172,36 +172,36 @@ typedef struct __attribute__((__packed__))
  =============================================================================*/
 
 /**
- * @brief  init the tlv with a buffer
+ * \brief  init the tlv with a buffer
  *
- * @param  tlv	  			pointer to tlv object
- * @param  ptr	  			pointer to the buffer
+ * \param  tlv	  			pointer to tlv object
+ * \param  ptr	  			pointer to the buffer
  *
- * @return
+ * \return
          -  1 success
          -  0 error
  */
 uint8_t tlv_init(tlv_t **tlv, uint8_t * ptr );
 
 /**
- * @brief  init tlv leader structure
+ * \brief  init tlv leader structure
  *
- * @param  tlv	  			pointer to leader tlv structure
- * @param  ptr	  			pointer to the buffer
+ * \param  tlv	  			pointer to leader tlv structure
+ * \param  ptr	  			pointer to the buffer
  *
- * @return
+ * \return
          -  1 success
          -  0 error
  */
 uint8_t tlv_leader_init(tlv_leader_t **tlv, uint8_t * ptr );
 
 /**
- * @brief  init tlv router64 structure
+ * \brief  init tlv router64 structure
  *
- * @param  tlv	  			pointer to router64 tlv structure
- * @param  ptr	  			pointer to the buffer
+ * \param  tlv	  			pointer to router64 tlv structure
+ * \param  ptr	  			pointer to the buffer
  *
- * @return
+ * \return
          -  1 success
          -  0 error
  */
@@ -209,12 +209,12 @@ uint8_t tlv_route64_init(tlv_route64_t **tlv, uint8_t * ptr );
 
 
 /**
- * @brief  init tlv connectivity structure
+ * \brief  init tlv connectivity structure
  *
- * @param  tlv	  			pointer to connectivity tlv structure
- * @param  ptr	  			pointer to the buffer
+ * \param  tlv	  			pointer to connectivity tlv structure
+ * \param  ptr	  			pointer to the buffer
  *
- * @return
+ * \return
          -  1 success
          -  0 error
  */
@@ -222,38 +222,38 @@ uint8_t tlv_connectivity_init(tlv_connectivity_t **tlv, uint8_t * ptr );
 
 
 /**
- * @brief  write on tlv object
+ * \brief  write on tlv object
  *
- * @param  tlv	  			pointer to tlv object to write on
- * @param  type	  			type of tlv object
- * @param  length	 		length of the value
- * @param  value	 		pointer to the value
+ * \param  tlv	  			pointer to tlv object to write on
+ * \param  type	  			type of tlv object
+ * \param  length	 		length of the value
+ * \param  value	 		pointer to the value
  *
- * @return
+ * \return
          -  1 success
          -  0 error
  */
 uint8_t tlv_write(tlv_t *tlv , tlv_type_t type, int8_t length, uint8_t * value );
 
 /**
- * @brief  print a tlv object
+ * \brief  print a tlv object
  *
- * @param  tlv	  tlv opbject to print
+ * \param  tlv	  tlv opbject to print
 
- * @return
+ * \return
          -  1 success
          -  0 error
  */
 uint8_t tlv_print(tlv_t * tlv);
 
 /**
- * @brief  find tlv type in buffer
+ * \brief  find tlv type in buffer
  *
- * @param  buf	          buffer
- * @param  buf_length	  buffer length
- * @param  type	  		  type of tlv to looking for
+ * \param  buf	          buffer
+ * \param  buf_length	  buffer length
+ * \param  type	  		  type of tlv to looking for
 *
- * @return pointer to the tlv if exist
+ * \return pointer to the tlv if exist
  *         otherwise NULL
  */
 tlv_t* tlv_find(uint8_t * buf, uint8_t buf_length, const tlv_type_t type);
@@ -262,36 +262,36 @@ tlv_t* tlv_find(uint8_t * buf, uint8_t buf_length, const tlv_type_t type);
 /* Lukas.Z: tlv  functions used on the network layer */
 
 /**
- * @brief  init tlv target eid structure
+ * \brief  init tlv target eid structure
  *
- * @param  tlv	  			pointer to target eid tlv structure
- * @param  ptr	  			pointer to the buffer
+ * \param  tlv	  			pointer to target eid tlv structure
+ * \param  ptr	  			pointer to the buffer
  *
- * @return
+ * \return
          -  1 success
          -  0 error
  */
 uint8_t tlv_target_eid_init(net_tlv_target_eid_t **tlv, uint8_t *ptr);
 
 /**
- * @brief  init tlv rloc16 structure
+ * \brief  init tlv rloc16 structure
  *
- * @param  tlv	  			pointer to rloc16 tlv structure
- * @param  ptr	  			pointer to the buffer
+ * \param  tlv	  			pointer to rloc16 tlv structure
+ * \param  ptr	  			pointer to the buffer
  *
- * @return
+ * \return
          -  1 success
          -  0 error
  */
 uint8_t tlv_rloc16_init(net_tlv_rloc16_t **tlv, uint8_t *ptr);
 
 /**
- * @brief  init tlv ml eid structure
+ * \brief  init tlv ml eid structure
  *
- * @param  tlv	  			pointer to  ml eid tlv structure
- * @param  ptr	  			pointer to the buffer
+ * \param  tlv	  			pointer to  ml eid tlv structure
+ * \param  ptr	  			pointer to the buffer
  *
- * @return
+ * \return
          -  1 success
          -  0 error
  */

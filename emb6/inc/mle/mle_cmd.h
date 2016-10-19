@@ -111,31 +111,31 @@ typedef struct __attribute__((__packed__)) {
  =============================================================================*/
 
 /**
- * @brief  initialize mle command
+ * \brief  initialize mle command
  *
- * @param  mle_cmd	  pointer to mle_cmd structure
- * @param  type	      type of  mle command
+ * \param  mle_cmd	  pointer to mle_cmd structure
+ * \param  type	      type of  mle command
  */
 
 void  mle_init_cmd( mle_cmd_t* mle_cmd, const mle_cmd_type_t type );
 
 
 /**
- * @brief  create  mle command from buffer
+ * \brief  create  mle command from buffer
  *
- * @param  mle_cmd	  pointer to mle_cmd structure
- * @param  data	      pointer to the data
- * @param  datalen	  data length
+ * \param  mle_cmd	  pointer to mle_cmd structure
+ * \param  data	      pointer to the data
+ * \param  datalen	  data length
  */
 void  mle_create_cmd_from_buff( mle_cmd_t** cmd, uint8_t* data, uint16_t datalen );
 
 
 /**
- * @brief  add tlv to mle command
+ * \brief  add tlv to mle command
  *
- * @param  mle_cmd	  pointer to mle_cmd structure
+ * \param  mle_cmd	  pointer to mle_cmd structure
  *
- * @return
+ * \return
  *       -  1 success
  *       -  0 error
  */
@@ -143,12 +143,12 @@ uint8_t mle_add_tlv_to_cmd( mle_cmd_t * mle_cmd, const tlv_type_t type, const in
 
 
 /**
- * @brief  find tlv type in cmd
+ * \brief  find tlv type in cmd
  *
- * @param  cmd	          MLE command
- * @param  type	  		  type of tlv to looking for
+ * \param  cmd	          MLE command
+ * \param  type	  		  type of tlv to looking for
  *
- * @return pointer to the tlv if exist
+ * \return pointer to the tlv if exist
  *         otherwise NULL
  */
 tlv_t* mle_find_tlv_in_cmd( mle_cmd_t * cmd, const tlv_type_t type);
@@ -156,20 +156,20 @@ tlv_t* mle_find_tlv_in_cmd( mle_cmd_t * cmd, const tlv_type_t type);
 
 
 /**
- * @brief  print buffer
+ * \brief  print buffer
  *
- * @param  buffer	  pointer to buffer
+ * \param  buffer	  pointer to buffer
  */
 void print_buffer( uint8_t* buffer, uint8_t length );
 
 
 
 /**
- * @brief  print mle command
+ * \brief  print mle command
  *
- * @param  mle_cmd	  mle_cmd structure
+ * \param  mle_cmd	  mle_cmd structure
  *
- * @return
+ * \return
  *       -  1 success
  *       -  0 error
  */
@@ -177,11 +177,11 @@ uint8_t mle_print_cmd( mle_cmd_t mle_cmd );
 
 
 /**
- * @brief  print mle command type
+ * \brief  print mle command type
  *
- * @param  mle_cmd	  mle_cmd structure
+ * \param  mle_cmd	  mle_cmd structure
  *
- * @return
+ * \return
  *       -  1 success
  *       -  0 error
  */

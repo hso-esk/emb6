@@ -93,11 +93,11 @@ static void mle_print_table(list_t *list);
 ==============================================================================*/
 
 /**
- * @brief  get pointer to the head of list
+ * \brief  get pointer to the head of list
  *
- * @param list  pointer to the list
+ * \param list  pointer to the list
  *
- * @return pointer to the head of the given list if it is found otherwise NULL
+ * \return pointer to the head of the given list if it is found otherwise NULL
  */
 static mle_neighbor_t * mle_neigbhor_head(list_t* list)
 {
@@ -106,11 +106,11 @@ static mle_neighbor_t * mle_neigbhor_head(list_t* list)
 
 
 /**
- * @brief  find a neighbor on a given list
+ * \brief  find a neighbor on a given list
  *
- * @param list  pointer to the list
+ * \param list  pointer to the list
  *
- * @return pointer to the neighbor if it is found otherwise NULL
+ * \return pointer to the neighbor if it is found otherwise NULL
  */
 static mle_neighbor_t * mle_find_neigbhor(list_t *list, uint8_t id)
 {
@@ -126,12 +126,12 @@ static mle_neighbor_t * mle_find_neigbhor(list_t *list, uint8_t id)
 
 
 /**
- * @brief find a neighbor router on a given list by ipv6 address
+ * \brief find a neighbor router on a given list by ipv6 address
  *
- * @param list        pointer to the list
- * @param address     ipv6 of the neighbor to find
+ * \param list        pointer to the list
+ * \param address     ipv6 of the neighbor to find
  *
- * @return pointer to the neighbor if it is found otherwise NULL
+ * \return pointer to the neighbor if it is found otherwise NULL
  */
 static mle_neighbor_t *  mle_find_neigbhor_byAdd(list_t *list, uip_ipaddr_t* address)
 {
@@ -148,12 +148,12 @@ static mle_neighbor_t *  mle_find_neigbhor_byAdd(list_t *list, uip_ipaddr_t* add
 
 
 /**
- * @brief find a neighbor router on a given list by 16-bit short address
+ * \brief find a neighbor router on a given list by 16-bit short address
  *
- * @param list        pointer to the list
- * @param address     16-bit short address of the neighbor to find
+ * \param list        pointer to the list
+ * \param address     16-bit short address of the neighbor to find
  *
- * @return pointer to the neighbor if it is found otherwise NULL
+ * \return pointer to the neighbor if it is found otherwise NULL
  */
 static mle_neighbor_t *  mle_find_neigbhor_by_16Add(list_t *list, uint16_t address)
 {
@@ -169,17 +169,17 @@ static mle_neighbor_t *  mle_find_neigbhor_by_16Add(list_t *list, uint16_t addre
 
 
 /**
- * @brief  add a neighbor into a given list
+ * \brief  add a neighbor into a given list
  *
- * @param  m                    A memory block previously declared with MEMB()
- * @param  list                 The name of the list
- * @param  id		  			neighbor id
- * @param  address	  			16-bit of the neighbor
- * @param  MLEFrameCounter	    MLE frame counter
- * @param  modeTLV	   	     	Mode TLV
- * @param  linkQuality	  		Two-way link quality
+ * \param  m                    A memory block previously declared with MEMB()
+ * \param  list                 The name of the list
+ * \param  id		  			neighbor id
+ * \param  address	  			16-bit of the neighbor
+ * \param  MLEFrameCounter	    MLE frame counter
+ * \param  modeTLV	   	     	Mode TLV
+ * \param  linkQuality	  		Two-way link quality
  *
- * @return
+ * \return
  *       -  pointer to the neighbor if success
  *       - NULL if error
  */
@@ -221,12 +221,12 @@ static mle_neighbor_t * mle_add_neigbhor(struct memb* m, list_t *list, uint8_t i
 
 
 /**
- * @brief  remove a neighbor  from a given list
+ * \brief  remove a neighbor  from a given list
  *
- * @param  m       A memory block previously declared with MEMB()
- * @param  list    The name of the list
+ * \param  m       A memory block previously declared with MEMB()
+ * \param  list    The name of the list
  *
- * @return
+ * \return
  *       -  1 sucess
  *       -  0 error
  */
@@ -242,9 +242,9 @@ static uint8_t mle_rm_neigbhor(struct memb* m, list_t *list, mle_neighbor_t *nb)
 
 
 /**
- * @brief  print all neighbors on a given list
+ * \brief  print all neighbors on a given list
  *
- * @param  list    The name of the list
+ * \param  list    The name of the list
  *
  */
 static void mle_print_table(list_t *list)

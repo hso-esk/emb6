@@ -86,11 +86,11 @@ typedef struct {
  =============================================================================*/
 
 /**
- * @brief  add MAC source address to command
+ * \brief  add MAC source address to command
  *
- * @param  cmd	    pointer to the command
+ * \param  cmd	    pointer to the command
  *
- * @return
+ * \return
  *       -  1 success
  *       -  0 error
  */
@@ -98,12 +98,12 @@ uint8_t  add_mac_src_address_to_cmd(mle_cmd_t* cmd);
 
 
 /**
- * @brief  add 16-bit source address to command
+ * \brief  add 16-bit source address to command
  *
- * @param  cmd	    	pointer to the command
- * @param  address	    16-bit short address
+ * \param  cmd	    	pointer to the command
+ * \param  address	    16-bit short address
  *
- * @return
+ * \return
  *       -  1 success
  *       -  0 error
  */
@@ -111,12 +111,12 @@ uint8_t  add_src_address_to_cmd(mle_cmd_t* cmd, uint16_t address);
 
 
 /**
- * @brief  add 16-bit assigned short address to command
+ * \brief  add 16-bit assigned short address to command
  *
- * @param  cmd	    	pointer to the command
- * @param  address	    16-bit short address
+ * \param  cmd	    	pointer to the command
+ * \param  address	    16-bit short address
  *
- * @return
+ * \return
  *       -  1 success
  *       -  0 error
  */
@@ -124,12 +124,12 @@ uint8_t  add_address16_to_cmd(mle_cmd_t* cmd , uint16_t address);
 
 
 /**
- * @brief  add time out to command
+ * \brief  add time out to command
  *
- * @param  cmd	    	pointer to the command
- * @param  time		    32-bit timeout
+ * \param  cmd	    	pointer to the command
+ * \param  time		    32-bit timeout
  *
- * @return
+ * \return
  *       -  1 success
  *       -  0 error
  */
@@ -137,15 +137,15 @@ uint8_t  add_time_out_to_cmd(mle_cmd_t* cmd , uint32_t time);
 
 
 /**
- * @brief  add MODE TLV to command
+ * \brief  add MODE TLV to command
  *
- * @param  cmd	 pointer to the command
- * @param  R     Receiver on when idle: set to '1' if the sender has its receiver on when not transmitting; otherwise, set to ‘0’
- * @param  S	 Secure data requests: Set to ‘1’ if the sender will use 802.15.4 [IEEE802154] to secure all data requests; otherwise, set to ‘0’
- * @param  D	 Device type: Set to ‘1’ if the sender is an FFD (Full Function Device); set to ‘0’ if an RFD (Reduced Function Device)
- * @param  N     Network data: Set to ‘1’ if the sender requires the full Network Data; set to ‘0’ if the sender only needs the stable Network Data
+ * \param  cmd	 pointer to the command
+ * \param  R     Receiver on when idle: set to '1' if the sender has its receiver on when not transmitting; otherwise, set to ‘0’
+ * \param  S	 Secure data requests: Set to ‘1’ if the sender will use 802.15.4 [IEEE802154] to secure all data requests; otherwise, set to ‘0’
+ * \param  D	 Device type: Set to ‘1’ if the sender is an FFD (Full Function Device); set to ‘0’ if an RFD (Reduced Function Device)
+ * \param  N     Network data: Set to ‘1’ if the sender requires the full Network Data; set to ‘0’ if the sender only needs the stable Network Data
  *
- * @return
+ * \return
  *       -  1 success
  *       -  0 error
  */
@@ -153,13 +153,13 @@ uint8_t  add_mode_RSDN_to_cmd(mle_cmd_t* cmd , uint8_t R , uint8_t S , uint8_t D
 
 
 /**
- * @brief  add SCAN MASK TLV to command
+ * \brief  add SCAN MASK TLV to command
  *
- * @param  cmd	 pointer to the command
- * @param  R     Router: Active Routers MUST respond
- * @param  E     End device: REEDs that are currently acting as Children MUST respond
+ * \param  cmd	 pointer to the command
+ * \param  R     Router: Active Routers MUST respond
+ * \param  E     End device: REEDs that are currently acting as Children MUST respond
  *
- * @return
+ * \return
  *       -  1 success
  *       -  0 error
  */
@@ -167,12 +167,12 @@ uint8_t  add_scan_mask_to_cmd(mle_cmd_t* cmd , uint8_t R , uint8_t E );
 
 
 /**
- * @brief  add MLE FRAME COUNTER TLV to command
+ * \brief  add MLE FRAME COUNTER TLV to command
  *
- * @param  cmd	 pointer to the command
- * @param  R     Frame counter
+ * \param  cmd	 pointer to the command
+ * \param  R     Frame counter
  *
- * @return
+ * \return
  *       -  1 success
  *       -  0 error
  */
@@ -180,11 +180,11 @@ uint8_t  add_MLEframe_counter_to_cmd(mle_cmd_t* cmd, uint32_t frame) ;
 
 
 /**
- * @brief  add STATUS TLV to command
+ * \brief  add STATUS TLV to command
  *
- * @param  cmd	 pointer to the command
+ * \param  cmd	 pointer to the command
  *
- * @return
+ * \return
  *       -  1 success
  *       -  0 error
  */
@@ -192,11 +192,11 @@ uint8_t  add_status_to_cmd(mle_cmd_t* cmd);
 
 
 /**
- * @brief  add VERSION TLV to command
+ * \brief  add VERSION TLV to command
  *
- * @param  cmd	 pointer to the command
+ * \param  cmd	 pointer to the command
  *
- * @return
+ * \return
  *       -  1 success
  *       -  0 error
  */
@@ -204,22 +204,22 @@ uint8_t  add_version_to_cmd(mle_cmd_t* cmd);
 
 
 /**
- * @brief  generate and add CHALLENGE TLV to command
+ * \brief  generate and add CHALLENGE TLV to command
  *
- * @param  cmd	 pointer to the command
+ * \param  cmd	 pointer to the command
  *
- * @return 32-bit generated challenge (0 in case of failure)
+ * \return 32-bit generated challenge (0 in case of failure)
  */
 uint32_t add_rand_challenge_to_cmd(mle_cmd_t* cmd );
 
 
 /**
- * @brief  add RESPONSE TLV to command
+ * \brief  add RESPONSE TLV to command
  *
- * @param  cmd	 pointer to the command
- * @param  resp	 response
+ * \param  cmd	 pointer to the command
+ * \param  resp	 response
  *
- * @return
+ * \return
  *       -  1 success
  *       -  0 error
  */
@@ -228,12 +228,12 @@ uint8_t  add_response_to_cmd(mle_cmd_t* cmd , tlv_t* resp );
 
 
 /**
- * @brief  add 32-bit RESPONSE TLV to command
+ * \brief  add 32-bit RESPONSE TLV to command
  *
- * @param  cmd	 pointer to the command
- * @param  resp	 32-bit response
+ * \param  cmd	 pointer to the command
+ * \param  resp	 32-bit response
  *
- * @return
+ * \return
  *       -  1 success
  *       -  0 error
  */
@@ -241,12 +241,12 @@ uint8_t  add_response32_to_cmd(mle_cmd_t* cmd ,  uint32_t value );
 
 
 /**
- * @brief  add LINK MARGIN TLV to command
+ * \brief  add LINK MARGIN TLV to command
  *
- * @param  cmd	 pointer to the command
- * @param  lm	 8-bit link margin
+ * \param  cmd	 pointer to the command
+ * \param  lm	 8-bit link margin
  *
- * @return
+ * \return
  *       -  1 success
  *       -  0 error
  */
@@ -254,13 +254,13 @@ uint8_t  add_Link_margin_to_cmd(mle_cmd_t* cmd, uint8_t lm);
 
 
 /**
- * @brief  add ROUTE64 TLV to command
+ * \brief  add ROUTE64 TLV to command
  *
- * @param  cmd	    pointer to the command
- * @param  route    route64
- * @param  len      length of route64
+ * \param  cmd	    pointer to the command
+ * \param  route    route64
+ * \param  len      length of route64
  *
- * @return
+ * \return
  *       -  1 success
  *       -  0 error
  */
@@ -268,12 +268,12 @@ uint8_t  add_route64_to_cmd(mle_cmd_t* cmd, tlv_route64_t* route , uint8_t len);
 
 
 /**
- * @brief  add LEADER TLV to command
+ * \brief  add LEADER TLV to command
  *
- * @param  cmd	 pointer to the command
- * @param  lead	 leader tlv
+ * \param  cmd	 pointer to the command
+ * \param  lead	 leader tlv
  *
- * @return
+ * \return
  *       -  1 success
  *       -  0 error
  */
@@ -281,18 +281,18 @@ uint8_t  add_leader_to_cmd(mle_cmd_t* cmd, tlv_leader_t* lead);
 
 
 /**
- * @brief  add CONNECTIVITY TLV to command
+ * \brief  add CONNECTIVITY TLV to command
  *
- * @param  cmd	 		 pointer to the command
- * @param  max_child	 The maximum number of Children the sender can support
- * @param  child_count	 The number of Children the sender currently supports
- * @param  LQ3	 		 number of linked neighbors with link quality 3
- * @param  LQ2	 		 number of linked neighbors with link quality 2
- * @param  LQ1	 		 number of linked neighbors with link quality 1
- * @param  Leader_cost	 leader cost
- * @param  id_sed	 	 id set
+ * \param  cmd	 		 pointer to the command
+ * \param  max_child	 The maximum number of Children the sender can support
+ * \param  child_count	 The number of Children the sender currently supports
+ * \param  LQ3	 		 number of linked neighbors with link quality 3
+ * \param  LQ2	 		 number of linked neighbors with link quality 2
+ * \param  LQ1	 		 number of linked neighbors with link quality 1
+ * \param  Leader_cost	 leader cost
+ * \param  id_sed	 	 id set
  *
- * @return
+ * \return
  *       -  1 success
  *       -  0 error
  */
@@ -301,11 +301,11 @@ uint8_t  add_Cnnectivity_to_cmd(mle_cmd_t* cmd, uint8_t max_child, uint8_t child
 
 
 /**
- * @brief  compare challenge and response TLVs
+ * \brief  compare challenge and response TLVs
  *
- * @param  challenge	 32-bit challenge
- * @param  buf			 32-bit response
- * @return
+ * \param  challenge	 32-bit challenge
+ * \param  buf			 32-bit response
+ * \return
  *       -  1 equal
  *       -  0 different
  */
@@ -314,11 +314,11 @@ uint8_t  comp_resp_chall(uint32_t challenge , uint8_t * buf);
 
 
 /**
- * @brief  set the security flag in MLE message
+ * \brief  set the security flag in MLE message
  *
- * @param  msg	  MLE message
- * @param  flag   1 or 0
- * @return
+ * \param  msg	  MLE message
+ * \param  flag   1 or 0
+ * \return
  *       -  1 success
  *       -  0 error
  */

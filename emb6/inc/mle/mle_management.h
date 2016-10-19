@@ -165,9 +165,9 @@ typedef struct {
 
 
 /**
- * @brief  initialise MLE protocol
+ * \brief  initialise MLE protocol
  *
- * @return
+ * \return
  *       -  1 sucess
  *       -  0 error
  */
@@ -175,13 +175,13 @@ uint8_t mle_init(void);
 
 
 /**
- * @brief  send MLE advertisement message
+ * \brief  send MLE advertisement message
  *
- * @param  route	  		pointer to the route64 tlv
- * @param  len	  			length of router 64
- * @param  lead	  			pointer to the leader tlv
+ * \param  route	  		pointer to the route64 tlv
+ * \param  len	  			length of router 64
+ * \param  lead	  			pointer to the leader tlv
  *
- * @return
+ * \return
  *       -  1 success
  *       -  0 error
  */
@@ -189,9 +189,9 @@ uint8_t send_mle_advertisement(tlv_route64_t* route, uint8_t len, tlv_leader_t* 
 
 
 /**
- * @brief  Reply for child id request
+ * \brief  Reply for child id request
  *
- * @param  ptr	  	Normaly it NULL, in case we are operating
+ * \param  ptr	  	Normaly it NULL, in case we are operating
  * as child the network layer have to request a new routerID and give it as parameter
  *
  */
@@ -199,15 +199,15 @@ void  reply_for_mle_childID_request(void *ptr);
 
 
 /**
- * @brief  Set the node operate as parent
+ * \brief  Set the node operate as parent
  */
 void  mle_set_parent_mode(void);
 
 
 /**
- * @brief  Set the node to operate as child
+ * \brief  Set the node to operate as child
  *
- * @param  rloc16	  	16-bit address assigned by the parent
+ * \param  rloc16	  	16-bit address assigned by the parent
  *
  */
 void  mle_set_child_mode(uint16_t rloc16);

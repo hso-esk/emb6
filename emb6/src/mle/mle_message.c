@@ -79,13 +79,13 @@ uint8_t buf[8];
  =============================================================================*/
 
 /**
- * @brief  add 32-bit TLV value to command
+ * \brief  add 32-bit TLV value to command
  *
- * @param  cmd	    pointer to the command
- * @param  type  	type of TLV to add
- * @param  value	value of TLV (32-bit)
+ * \param  cmd	    pointer to the command
+ * \param  type  	type of TLV to add
+ * \param  value	value of TLV (32-bit)
  *
- * @return
+ * \return
  *       -  1 sucess
  *       -  0 error
  */
@@ -105,13 +105,13 @@ static uint8_t  add_tlv32_bit_to_cmd(mle_cmd_t* cmd , tlv_type_t type , uint32_t
 
 
 /**
- * @brief  add 16-bit TLV value to command
+ * \brief  add 16-bit TLV value to command
  *
- * @param  cmd	    pointer to the command
- * @param  type  	type of TLV to add
- * @param  value	value of TLV (16-bit)
+ * \param  cmd	    pointer to the command
+ * \param  type  	type of TLV to add
+ * \param  value	value of TLV (16-bit)
  *
- * @return
+ * \return
  *       -  1 sucess
  *       -  0 error
  */

@@ -116,33 +116,33 @@ typedef struct nodemle {
  =============================================================================*/
 
 /**
- * @brief  initialise neighbors tables
+ * \brief  initialise neighbors tables
  */
 void mle_nb_device_init(void);
 
 
 /**
- * @brief  get pointer to the head of child's table
+ * \brief  get pointer to the head of child's table
  *
- * @return pointer to the head of child's table
+ * \return pointer to the head of child's table
  */
 mle_neighbor_t * mle_childs_head(void);
 
 
 /**
- * @brief  get pointer to the head of neighbor's table
+ * \brief  get pointer to the head of neighbor's table
  *
- * @return pointer to the head of neighbor's table
+ * \return pointer to the head of neighbor's table
  */
 mle_neighbor_t * mle_nb_router_head(void);
 
 
 /**
- * @brief  find a neighbor router in the neighbor table by id
+ * \brief  find a neighbor router in the neighbor table by id
  *
- * @param  id	  router's id to find
+ * \param  id	  router's id to find
  *
- * @return
+ * \return
  *       -  pointer to the router if success
  *       - NULL if it is not existing
  */
@@ -150,11 +150,11 @@ mle_neighbor_t * mle_find_nb_router(uint8_t id);
 
 
 /**
- * @brief  find a child in the child table by id
+ * \brief  find a child in the child table by id
  *
- * @param  id	  child's id to find
+ * \param  id	  child's id to find
  *
- * @return
+ * \return
  *       -  pointer to the child if success
  *       - NULL if it is not existing
  */
@@ -162,11 +162,11 @@ mle_neighbor_t * mle_find_child( uint8_t id);
 
 
 /**
- * @brief  find a neighbor router in the neighbor table by ipv6 address
+ * \brief  find a neighbor router in the neighbor table by ipv6 address
  *
- * @param  address	  ipv6 of the router to find
+ * \param  address	  ipv6 of the router to find
  *
- * @return
+ * \return
  *       -  pointer to the router if success
  *       - NULL if it is not existing
  */
@@ -174,11 +174,11 @@ mle_neighbor_t * mle_find_nb_router_byAdd(uip_ipaddr_t* address);
 
 
 /**
- * @brief  find a child in the child table by ipv6 address
+ * \brief  find a child in the child table by ipv6 address
  *
- * @param  address	  ipv6 of the child to find
+ * \param  address	  ipv6 of the child to find
  *
- * @return
+ * \return
  *       -  pointer to the child if success
  *       - NULL if it is not existing
  */
@@ -186,11 +186,11 @@ mle_neighbor_t * mle_find_child_byAdd( uip_ipaddr_t* address);
 
 
 /**
- * @brief  find a neighbor router in the neighbor table by 16-bit address
+ * \brief  find a neighbor router in the neighbor table by 16-bit address
  *
- * @param  address	  16-bit of the router to find
+ * \param  address	  16-bit of the router to find
  *
- * @return
+ * \return
  *       -  pointer to the router if success
  *       - NULL if it is not existing
  */
@@ -198,11 +198,11 @@ mle_neighbor_t * mle_find_nb_router_by_16Add(uint16_t address);
 
 
 /**
- * @brief  find a child in the child table by 16-bit address
+ * \brief  find a child in the child table by 16-bit address
  *
- * @param  address	  16-bit of the child to find
+ * \param  address	  16-bit of the child to find
  *
- * @return
+ * \return
  *       -  pointer to the child if success
  *       - NULL if it is not existing
  */
@@ -210,15 +210,15 @@ mle_neighbor_t * mle_find_child_by_16Add( uint16_t address);
 
 
 /**
- * @brief  add a child into the child table
+ * \brief  add a child into the child table
  *
- * @param  id		  			child id
- * @param  address	  			16-bit of the child
- * @param  MLEFrameCounter	    MLE frame counter
- * @param  modeTLV	   	     	Mode TLV
- * @param  linkQuality	  		Two-way link quality
+ * \param  id		  			child id
+ * \param  address	  			16-bit of the child
+ * \param  MLEFrameCounter	    MLE frame counter
+ * \param  modeTLV	   	     	Mode TLV
+ * \param  linkQuality	  		Two-way link quality
  *
- * @return
+ * \return
  *       -  pointer to the child if success
  *       - NULL if error
  */
@@ -226,15 +226,15 @@ mle_neighbor_t * mle_add_child(uint8_t id, uint16_t  address, uint32_t  MLEFrame
 
 
 /**
- * @brief  add a neighbor router into the neighbor table
+ * \brief  add a neighbor router into the neighbor table
  *
- * @param  id		  			router id
- * @param  address	  			16-bit of the router
- * @param  MLEFrameCounter	    MLE frame counter
- * @param  modeTLV	   	     	Mode TLV
- * @param  linkQuality	  		Two-way link quality
+ * \param  id		  			router id
+ * \param  address	  			16-bit of the router
+ * \param  MLEFrameCounter	    MLE frame counter
+ * \param  modeTLV	   	     	Mode TLV
+ * \param  linkQuality	  		Two-way link quality
  *
- * @return
+ * \return
  *       -  pointer to the child if success
  *       - NULL if error
  */
@@ -242,11 +242,11 @@ mle_neighbor_t * mle_add_nb_router(uint8_t id, uint16_t address, uint32_t  MLEFr
 
 
 /**
- * @brief  remove a neighbor router from the neighbor table
+ * \brief  remove a neighbor router from the neighbor table
  *
- * @param  nb	pointer to the neighbor to remove
+ * \param  nb	pointer to the neighbor to remove
  *
- * @return
+ * \return
  *       -  1 sucess
  *       -  0 error
  */
@@ -254,49 +254,49 @@ uint8_t mle_rm_nb_router(mle_neighbor_t *nb);
 
 
 /**
- * @brief  remove a child router from the child table
+ * \brief  remove a child router from the child table
  *
- * @param  nb	pointer to the child to remove
+ * \param  nb	pointer to the child to remove
  *
- * @return
+ * \return
  *       -  1 sucess
  *       -  0 error
  */
 uint8_t mle_rm_child( mle_neighbor_t *nb);
 
 /**
- * @brief  remove all neighbor routers from neighbor table
+ * \brief  remove all neighbor routers from neighbor table
  *
  */
 void mle_rm_all_nb_router(void);
 
 
 /**
- * @brief  remove all child from child table
+ * \brief  remove all child from child table
  *
  */
 void mle_rm_all_child(void);
 
 
 /**
- * @brief  count the number of neighbors that have a given link quality
+ * \brief  count the number of neighbors that have a given link quality
  *
- * @param  N	link quality: could be 1, 2, 3
+ * \param  N	link quality: could be 1, 2, 3
  *
- * @return  number of neighbors that have the given link quality
+ * \return  number of neighbors that have the given link quality
  */
 uint8_t count_neighbor_LQ(uint8_t N ); // The number of neighboring device with which the sender shares a link of quality N
 
 
 /**
- * @brief  print child table
+ * \brief  print child table
  *
  */
 void  mle_print_child_table(void);
 
 
 /**
- * @brief  print neighbor table
+ * \brief  print neighbor table
  *
  */
 void  mle_print_nb_router_table(void);
