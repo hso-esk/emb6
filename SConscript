@@ -79,7 +79,6 @@ def prep_freertos(__dconf):
                 for lib_file in freertos_modules[req_libmodule]:
                     add_include(freertos_path + lib_file)
                     add_sources(freertos_path + lib_file + '.c')
-                    print 'HALLO: ' + freertos_path + lib_file + '.c'
 
 # Add utils headers from HEAD/utils/ folder
 def prep_utils(__dconf):
