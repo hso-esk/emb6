@@ -70,9 +70,6 @@
 #include "bsp.h"
 #include "etimer.h"
 
-#include "em_device.h"
-#include "segmentlcd.h"
-
 #define  LOGGER_ENABLE        LOGGER_MAIN
 #include "logger.h"
 
@@ -137,12 +134,14 @@
 #include "rpl.h"
 #endif
 
+#if DEMO_USE_COAP_FREERTOS
  /* Scheduler includes. */
 #include "FreeRTOS.h"
 #include "croutine.h"
 #include "task.h"
 #include "queue.h"
 #include "semphr.h"
+#endif /* #ifndef EMB6_PROC_DELAY */
 
 /*==============================================================================
                                      MACROS
@@ -155,8 +154,7 @@
 #if DEMO_USE_COAP_FREERTOS
 /* Task priorities. */
 #define mainEMB6_TASK_PRIORITY          ( tskIDLE_PRIORITY + 1 )
-#define mainLCD_TASK_PRIORITY           ( tskIDLE_PRIORITY + 2 )
-#define mainLED_TASK_PRIORITY           ( tskIDLE_PRIORITY + 3 )
+#define mainLED_TASK_PRIORITY           ( tskIDLE_PRIORITY + 2 )
 #endif /* #if DEMO_USE_COAP_FREERTOS */
 
 /*==============================================================================
@@ -169,7 +167,6 @@
 
 #if DEMO_USE_COAP_FREERTOS
 extern s_led_task_param_t ledTaskParams;
-extern s_display_output_t lcdTaskParams;
 #endif /* #if DEMO_USE_COAP_FREERTOS */
 
 /*==============================================================================
@@ -186,11 +183,6 @@ static uint8_t loc_demoAppsInit(void);
 static void vEMB6Task( void *pvParameters );
 
 #if DEMO_USE_COAP_FREERTOS
-/**
- * LCD task.
- */
-static void vLCDTask( void *pvParameters );
-
 /**
  * LED task.
  */
@@ -452,38 +444,7 @@ static void vLEDTask( void *pvParameters )
         vTaskDelay( p_params->delay / portTICK_PERIOD_MS );
     }
 }
-/*-----------------------------------------------------------*/
 
-static void vLCDTask( void *pvParameters )
-{
-    int i;
-    s_display_output_t* p_params = (s_display_output_t*)pvParameters;
-    while(1)
-    {
-        /* Enable all segments */
-        i = 1;
-        SegmentLCD_AllOn();
-        vTaskDelay( 1000 / portTICK_PERIOD_MS );
-
-        /* Disable all segments */
-        SegmentLCD_AllOff();
-        vTaskDelay( 500 / portTICK_PERIOD_MS );
-        SegmentLCD_Write((p_params->output));
-        vTaskDelay( 1000 / portTICK_PERIOD_MS );
-        if (p_params->len > 7)
-        {
-            while(i < p_params->len)
-            {
-                SegmentLCD_Write((p_params->output)+i);
-                vTaskDelay( 400 / portTICK_PERIOD_MS );
-                i++;
-            }
-        }
-        SegmentLCD_AllOff();
-        vTaskDelay( 500 / portTICK_PERIOD_MS );
-
-    }
-}
 /*-----------------------------------------------------------*/
 
 void vApplicationIdleHook( void )
@@ -509,19 +470,13 @@ void vApplicationStackOverflowHook( TaskHandle_t pxTask, char *pcTaskName )
 
 static void prvSetupHardware( void )
 {
-    /* Enable LCD without voltage boost */
-    SegmentLCD_Init(false);
+    /* Nothing to do */
 }
 /*-----------------------------------------------------------*/
 
 static void prvLowPowerMode1( void )
 {
-    /* Clear SLEEPDEEP for EM1 */
-    SCB->SCR &= ~( 1 << SCB_SCR_SLEEPDEEP_Pos );
-
-    /* Power down. */
-    __DSB();
-    __WFI();
+    /* not implemented */
 }
 #endif /* #if DEMO_USE_COAP_FREERTOS */
 
@@ -534,8 +489,6 @@ int main(void)
 #if DEMO_USE_COAP_FREERTOS
     ledTaskParams.en = 1;
     ledTaskParams.delay = 1000;
-    strcpy(lcdTaskParams.output, "DEMO COAP SERVER");
-    lcdTaskParams.len = 16;
 
     /* Perform the necessary hardware configuration. */
     prvSetupHardware();
@@ -545,9 +498,6 @@ int main(void)
 
     /* Create LED task. */
     xTaskCreate( vLEDTask, "LEDTask", configMINIMAL_STACK_SIZE, &ledTaskParams, mainLED_TASK_PRIORITY, NULL );
-
-    /* Create LCD task  */
-    xTaskCreate( vLCDTask, "LCDTask", configMINIMAL_STACK_SIZE, &lcdTaskParams, mainLCD_TASK_PRIORITY, NULL );
 
     /* Start the scheduler. */
     vTaskStartScheduler();
