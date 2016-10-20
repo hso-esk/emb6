@@ -26,19 +26,29 @@
 /*============================================================================*/
 
 #ifndef TX_POWER
-#define TX_POWER                    (int8_t  )( 14 )
+#define TX_POWER                    		(int8_t  )( 14 )
 #endif
 
 #ifndef RX_SENSITIVITY
-#define RX_SENSITIVITY              (int8_t  )(  0 )    /* FIXME use proper configuration */
+#define RX_SENSITIVITY              		(int8_t  )(  0 )    /* FIXME use proper configuration */
 #endif
 
 #ifndef MODULATION
-#define MODULATION                  (uint8_t )(  0 )    /* FIXME use proper configuration */
+#define MODULATION                  		MODULATION_2FSK50   /* FIXME use proper configuration */
+#endif
+
+/* enable auto-acknowledgment of radio driver */
+#ifndef NETSTK_CFG_RF_SW_AUTOACK_EN
+#define NETSTK_CFG_RF_SW_AUTOACK_EN         TRUE
+#endif
+
+/* radio transceiver does not support standard-specified checksum */
+#ifndef NETSTK_CFG_RF_CRC_EN
+#define NETSTK_CFG_RF_CRC_EN                FALSE
 #endif
 
 #ifndef CC13XX_LCD_ENABLE
-#define CC13XX_LCD_ENABLE           1
+#define CC13XX_LCD_ENABLE           		1
 #endif
 
 /*============================================================================*/
