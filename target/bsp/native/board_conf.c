@@ -80,7 +80,7 @@ uint8_t board_conf(s_ns_t* p_netstk)
   if (p_netstk != NULL) {
     p_netstk->dllc = &dllc_driver_802154;
     p_netstk->mac  = &mac_driver_null;
-    p_netstk->phy  = &phy_driver_802154;
+    p_netstk->phy  = &phy_driver_null;
     p_netstk->rf   = &rf_driver_native;
     etimer_init();
     c_ret = 1;

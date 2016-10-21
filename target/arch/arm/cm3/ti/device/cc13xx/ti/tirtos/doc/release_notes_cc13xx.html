@@ -1,0 +1,341 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <style type="text/css">
+            body {
+                font-family: Arial;
+                font-size: 14px;
+            }
+            h2 {
+                background: #cc0000;
+                padding: 1px;
+                margin-top:0px;
+                color: white;
+                font-size: 16px;
+            }
+            footer {
+                width:100%;
+                height:15px;
+                bottom:0;
+                left:0;
+                background:#ddd;
+                font-size:12px;
+            }
+            div.release-container {
+                border: 1px solid #ccc;
+                margin-bottom: 20px;
+            }
+            div.content-container {
+                padding: 0px 5px 5px 5px;
+            }
+        </style>
+        <title>CC13xxware release notes</title>
+    </head>
+    <body>
+        <h1>CC13xxWare Release Notes</h1>
+        <p>
+            This page lists all relevant changes for all public versions of CC13xxWare, containing:
+            <ul>
+                <li>CC13xxWare driverlib source code <strong>[DRV_SRC]</strong></li>
+                <li>CC13xxWare driverlib documentation <strong>[DRV_DOC]</strong></li>
+                <li>CC13xxWare driverlib prebuilt libraries <strong>[DRV_LIB]</strong></li>
+                <li>CC13xxWare hardware interface description <strong>[HW_INC]</strong></li>
+                <li>CC13xxWare RF source code <strong>[RF_SRC]</strong></li>
+                <li>CC13xxWare RF documentation <strong>[RF_DOC]</strong></li>
+            </ul>
+        </p>
+
+        <!-- Start of cc13xxWare entry -->
+        <div class="release-container">
+            <h2>cc13xxware_2_03_00_16456</h2>
+            <div class="content-container">
+                Release date: December 3, 2015 <br>
+
+                <h3>New features</h3>
+                <ul>
+                    <li><strong>[DRV_SRC] GPIO:</strong> The entire GPIO module is rewritten (The new GPIO module is not backwards compatible).</li>
+                    <li><strong>[DRV_SRC] HW_INTS:</strong> All interrupt defines are renamed (Just some of the old defines are kept temporarily for backwards compatibility with Sensor Controller Studio 1.1.0).</li>
+                    <li><strong>[DRV_SRC] HPOSC:</strong> Added support for HPOSC chips in boot sequence and HPOSC offset adjustment functions.</li>
+                    <li><strong>[RF_SRC] New common command:</strong> CMD_READ_RFREG</li>
+                    <li><strong>[RF_SRC] Generic OOK support:</strong> Added CPE, MCE and RFE patches</li>
+                    <li><strong>[RF_SRC] New proprietary commands:</strong> CMD_PROP_CS, CMD_PROP_RX_SNIFF and CMD_PROP_RX_ADV_SNIFF</li>
+                </ul>
+
+                <h3>Improvements</h3>
+                <ul>
+                    <li><strong>[DRV_SRC] CCFG:</strong> Added option to configure defines in ccfg.c outside ccfg.c itself.</li>
+                    <li><strong>[DRV_SRC] General:</strong> Removed unused/unsupported functions and defines:
+                        <ul>
+                            <li>[flashsafe] Removed the entire flashsafe module (all  Flashsafe...() functions).</li>
+                            <li>[IOC] Removed function IOCPinTypeSpis() and defines: IOC_PORT_AON_SCS, IOC_PORT_AON_SCK, IOC_PORT_AON_SDI and IOC_PORT_AON_SDO</li>
+                            <li>[Timer] Removed functions: TimerRtcEnable(), TimerRtcDisable() and defines: TIMER_RTC_MATCH, TIMER_CFG_RTC</li>
+                            <li>[ADI] Removed functions: ADIStatusGet(), ADIConfigSet(), ADISync() and ADIProtect()</li>
+                        </ul>
+                    </li>
+                    <li><strong>[RF_SRC] Long range mode support:</strong> Added MCE patch.</li>
+                    <li><strong>[DRV_LIB] GNU/GCC:</strong> Corrected problems with the linker files.</li>
+                    <li><strong>[DRV_DOC] Doxygen:</strong> Added introduction chapters for most of the modules.</li>
+                </ul>
+
+                <h3>Bug fixes</h3>
+                <ul>
+                    <li>None</li>
+                </ul>
+
+                <h3>Known Issues</h3>
+                <ul>
+                    <li>None</li>
+                    <li>For an updated list of known issues (including issues found after the release), see <a href="http://processors.wiki.ti.com/index.php/CC26xxWare">CC26xxWare</a> on the Texas Instruments wiki.</li>
+                </ul>
+                
+            </div>
+        </div>
+        <div class="release-container">
+            <h2>cc13xxware_2_01_01_16290</h2>
+            <div class="content-container">
+                Release date: October 30, 2015 <br>
+
+                <h3>New features</h3>
+                <ul>
+                    <li><strong>[DRV_SRC] CPU:</strong> Added new functions: CPU_WriteBufferDisable() and CPU_WriteBufferEnable to improve debugging.</li>
+                </ul>
+
+                <h3>Improvements</h3>
+                <ul>
+                    <li><strong>[RF_SRC] Radio:</strong> Updated rf_mailbox.h to include RF_MODE defines.</li>
+                    <li><strong>[DRV_SRC] IOC:</strong> Code size optimization.</li>
+                    <li><strong>[DRV_LIB] CCS:</strong> Changed compile options to optimize for size (opt_level=3 opt_for_speed=0).</li>
+                </ul>
+
+                <h3>Bug fixes</h3>
+                <ul>
+                    <li><strong>[DRV_SRC] AUX_ADC:</strong> Corrected function AUXADCFlushFifo() to not disable the ADC module.</li>
+                    <li><strong>[DRV_SRC] PWR_CTRL:</strong> Corrected function PowerCtrlResetSourceGet() to return correct value (now shifting field to LSB).</li>
+                </ul>
+
+                <h3>Known Issues</h3>
+                <ul>
+                    <li>None</li>
+                    <li>For an updated list of known issues (including issues found after the release), see <a href="http://processors.wiki.ti.com/index.php/CC13xxWare">CC13xxWare</a> on the Texas Instruments wiki.</li>
+                </ul>
+                
+            </div>
+        </div>
+        <div class="release-container">
+            <h2>cc13xxware_2_01_00_16101</h2>
+            <div class="content-container">
+                Release date: September 28, 2015 <br>
+
+                <h3>New features</h3>
+                <ul>
+                    <li><strong>[DRV_LIB] GCC:</strong> Added GCC prebuilt library (Now supporting: IAR, CCS, Keil/ARM and GCC).</li>
+                    <li><strong>[DRV_SRC] OSC:</strong> Added functions to enable and disable clock loss reset functionality (New functions: OSCClockLossEventEnable() and OSCClockLossEventDisable()). Note that for TI-RTOS users, clock loss reset is now enabled automatically when all clocks are stable after power up/reset.</li>
+                    <li><strong>[DRV_SRC] VIMS:</strong> Renamed function VIMSModeSetBlocking() to VIMSModeSafeSet() and changed the function's API. Added a new parameter ('blocking') to be set if the function shall wait until the change has completed.</li>
+                    <li><strong>[DRV_SRC] AON:</strong> Changed API and renamed input parameters for functions AONIOCDriveStrengthGet() and AONIOCDriveStrengthSet(). See documentation for usage.</li>
+                    <li><strong>[DRV_SRC] General:</strong> Cleaned up defines. Applies to the following defines:
+                        <ul>
+                            <li>Removed XoscInHighPowerMode (replaced by XOSC_IN_HIGH_POWER_MODE)</li>
+                            <li>Removed XoscInLowPowerMode (replaced by XOSC_IN_LOW_POWER_MODE)</li>
+                            <li>Removed AUX_TDC_SATCFG_LIMIT_ROVF (replaced by AUX_TDC_SATCFG_LIMIT_R24)</li>
+                            <li>Removed IOC_CURRENT_16MA (not valid)</li>
+                        </ul>
+                    </li>
+                </ul>
+
+                <h3>Improvements</h3>
+                <ul>
+                    <li><strong>[DRV_DOC] General:</strong> Documentation for all <module>IntClear() functions updated to clarify how to safely clear an event in an Interrupt Service Routine (ISR).</li>
+                </ul>
+
+                <h3>Bug fixes</h3>
+                <ul>
+                    <li><strong>[DRV_SRC] SysCtrl:</strong> Corrected typo in the initial recharge period calculation when entering standby, lowering power consumption in some scenarios.</li>
+                    <li><strong>[DRV_SRC] AON:</strong> Define AON_EVENT_DIO0 as unconnected if package type is 7x7 mm (since DIO0 does not exist on the CC13xx 7x7 package).</li>
+                </ul>
+
+                <h3>Known Issues</h3>
+                <ul>
+                    <li>None</li>
+                    <li>For an updated list of known issues (including issues found after the release), see <a href="http://processors.wiki.ti.com/index.php/CC13xxWare">CC13xxWare</a> on the Texas Instruments wiki.</li>
+                </ul>
+                
+            </div>
+        </div>
+        <div class="release-container">
+            <h2>cc13xxware_2_00_04_16084</h2>
+            <div class="content-container">
+                Release date: September 22, 2015 <br>
+
+                <h3>New features</h3>
+                <ul>
+                    <li><strong>[DRV_SRC] CCFG:</strong> Added support for forcing "high VDDR" voltage trim through CCFG configuration (by setting define CCFG_FORCE_VDDR_HH=1). This is done in order to enable boost mode.</li>
+                    <li><strong>[RF_SRC] Radio:</strong> Removed support for the previously added Command and Packet Engine (CPE) command, CMD_TX_POWER_BOOST, as modification of VDDR voltage trim is no longer supported as a radio controlled function. This is instead controlled by the system processor as part of system configuration from CCFG at boot.</li>
+                    <li><strong>[DRV_SRC] SysCtrl:</strong> Updated initial recharge period calculation when entering standby to support the "high VDDR" trim option.</li>
+                </ul>
+
+                <h3>Improvements</h3>
+                <ul>
+                    <li><strong>[RF_SRC] Radio:</strong> Updated RF Core patch files for Command and Packet Engine (CPE) to include updated PLL loop filter settings for the RF synthesizer.</li>
+                    <li><strong>[RF_SRC] Radio:</strong> Updated RF Core patch files for Command and Packet Engine (CPE) to include support for dynamic adjustment of DC/DC voltage regulator configuration so that the recommended settings will be used when in Rx or Tx mode.</li>
+                    <li><strong>[RF_SRC] Long range mode:</strong> Added a separate RF Core patch file for Command and Packet Engine (CPE) to be used for the proprietary Long range mode (LRM) PHY modes.</li>
+                </ul>
+
+                <h3>Bug fixes</h3>
+                <ul>
+                    <li><strong>[DRV_SRC] SysCtrl:</strong> Corrected typo in the initial recharge period calculation when entering standby (corrected minor bug in the temperature compensation calculation).</li>
+                </ul>
+
+                <h3>Known Issues</h3>
+                <ul>
+                    <li>None</li>
+                    <li>For an updated list of known issues (including issues found after the release), see <a href="http://processors.wiki.ti.com/index.php/CC13xxWare">CC13xxWare</a> on the Texas Instruments wiki.</li>
+                </ul>
+                
+            </div>
+        </div>
+        <div class="release-container">
+            <h2>cc13xxware_2_00_03_15980</h2>
+            <div class="content-container">
+                Release date: August 4, 2015 <br>
+
+                <br><strong>IMPORTANT NOTICE</strong>
+                <br>This is a pre-release version of software for the CC1310, and it should not be used in production of CC1310 devices.
+                <br>The CC1310 production release software is in its final stages of development and verification, and it should be expected that radio-specific timings and parameters will change in that release.
+
+                <h3>New features</h3>
+                <ul>
+                    <li><strong>[RF_SRC] GenFSK:</strong> Added new GenFSK command - CMD_TX_POWER_BOOST.</li>
+                    <li><strong>[DRV_SRC] Event:</strong> Added functions to set and clear software events (EventSwEventSet, EventSwEventClear and EventSwEventGet).</li>
+                    <li><strong>[DRV_SRC] AON_RTC:</strong> Added function AONRTCCurrent64BitValueGet(), returning the SEC and SUB_SEC registers as one 64 bits result.</li>
+                    <li><strong>[DRV_SRC] CCFGRead:</strong> Added new module with a set of functions returning most of the CCFG bit fields.</li>
+                    <li><strong>[DRV_SRC] CCFG:</strong> Add CCFG configuration option to use CACHE RAM as general purpose RAM (GPRAM) - (Choosing between having cache or having 8 K-bytes of extra RAM).</li>
+                    <li><strong>[DRV_SRC] CCFG:</strong> Added ability to change the CCFG struct location. This is a special functionality needed only if executing entirely from RAM. Note that the prebuilt library is built with default CCFG location and will not work properly if CCFG location is changed.</li>
+                </ul>
+
+                <h3>Improvements</h3>
+                <ul>
+                    <li><strong>[RF_SRC] General:</strong> TX performance enhancements.</li>
+                    <li><strong>[DRV_SRC] AON_RTC:</strong> Changed function AONRTCCurrentCompareValueGet() to avoid disabling interrupts.</li>
+                    <li><strong>[DRV_SRC] General:</strong> Code size optimization of several modules.</li>
+                    <li><strong>[RF_DOC] General:</strong> Integrated "RF" documentation into the existing documentation structure.</li>
+                </ul>
+
+                <h3>Bug fixes</h3>
+                <ul>
+                    <li><strong>[DRV_SRC] OSC:</strong> XOSC startup time calculation done by function OSCHF_GetStartupTime() returned maximum startup time too early.</li>
+                    <li><strong>[DRV_SRC] CPU:</strong> Corrected compiler error when compiled with GCC.</li>
+                </ul>
+
+                <h3>Known Issues</h3>
+                <ul>
+                    <li>None</li>
+                    <li>For an updated list of known issues (including issues found after the release), see <a href="http://processors.wiki.ti.com/index.php/CC13xxWare">CC13xxWare</a> on the Texas Instruments wiki.</li>
+                </ul>
+                
+            </div>
+        </div>
+        <div class="release-container">
+            <h2>cc13xxware_2_00_02_15830</h2>
+            <div class="content-container">
+                Release date: June 11, 2015 <br>
+
+                <h3>New features</h3>
+                <ul>
+                    <li><strong>[DRV_SRC] ROM:</strong> SW-based crypto functions in ROM are now available through DriverLib (see rom_crypto.h).</li>
+                    <li><strong>[RF_SRC] Radio:</strong> Restructuring radio library: Moving rflib files to driverlib (prefixed with "rf_"), added rf_patches catalog (for RF patche files).</li>
+                </ul>
+
+                <h3>Improvements</h3>
+                <ul>
+                    <li><strong>[DRV_SRC] General:</strong> Minor code size reduction in several module APIs by using bit banding when possible and replacing base address argument with a constant in single-instance modules.</li>
+                    <li><strong>[DRV_SRC] General:</strong> Compiler specific defines are renamed to use compiler's own defines. gcc --> __GNUC__ , rvmdk --> __CC_ARM . Compiler defines 'codered' and 'sourcerygxx' are deleted.</li>
+                    <li><strong>[DRV_SRC] setup:</strong> Some TI-RTOS power startup configuration is moved to trimDevice() to run pre-RTOS.</li>
+                    <li><strong>[DRV_SRC] setup:</strong> Setup API now has a setup.h file which can be included instead of declaring trimDevice() as an extern explicitly. The setup API is added to the DriverLib HTML documentation.</li>
+                    <li><strong>[DRV_SRC] AON_RTC:</strong> AONRTCStatus is split into AONRTCActive and AONRTCChannelActive for faster and more compact code.</li>
+                    <li><strong>[DRV_SRC] AUX_TDC:</strong> Defines in aux_tdc.h now refer to defines from hw_aux_tdc.h to avoid magic numbers and make a stronger connection to register descriptions. All defines for start and stop conditions are renamed to match enumerations in register description.</li>
+                    <li><strong>[DRV_SRC] AUX_TIMER:</strong> Defines in aux_timer.h now refer to defines from hw_aux_timer.h to avoid magic numbers and make a stronger connection to register descriptions.</li>
+                    <li><strong>[DRV_SRC] AUX_WUC:</strong> Defines in aux_wuc.h now refer to defines from hw_aux_wuc.h to avoid magic numbers and make a stronger connection to register descriptions.</li>
+                    <li><strong>[DRV_SRC] AON_EVENT:</strong> AON Event defines for event selection are renamed to better match register description enumerations.</li>
+                    <li><strong>[DRV_SRC] CCFG:</strong> Cleanup in the customer configuration description (CCFG/ccfg.c)</li>
+                    <li><strong>[DRV_SRC] hw_cpu:</strong> Removed obsolete file: hw_cpu_cc26xx.h</li>
+                </ul>
+
+                <h3>Bug fixes</h3>
+                <ul>
+                    <li><strong>[DRV_SRC] General:</strong> Crypto and Flash APIs are updated to fix GCC compiler issue.</li>
+                    <li><strong>[DRV_SRC] Event:</strong> Defines in event.h used for EventRegister() are deleted and instead the documentation describes how to select defines from hw_event.h and how to find valid pairs of event sources and event subscribers.</li>
+                    <li><strong>[DRV_SRC] SysCtrl:</strong> SysCtrlSetRechargeBeforePowerDown() now uses C basic type arguments instead of enumerated types. Defines for valid arguments are added and documented.</li>
+                    <li><strong>[DRV_SRC] SysCtrl:</strong> SysCtrlSetRechargeBeforePowerDown() is updated to configure recharge configuration slightly different, reducing maximum recharge period.</li>
+                    <li><strong>[DRV_SRC] AUX_ADC:</strong> External ADC reference is not supported thus removed from AUX_ADC API.</li>
+                    <li><strong>[DRV_SRC] AUX_ADC:</strong> AUXADCReenableInputScaling() is removed from AUX_ADC API and safe usage of AUXADCDisableInputScaling() documented.</li>
+                    <li><strong>[DRV_SRC] AUX_ADC:</strong> Configuration of AUX ADC is changed into two steps so it won't be enabled until after configuration is done.</li>
+                    <li><strong>[DRV_SRC] PRCM:</strong> PRCMWdtResetStatus() is removed since a WDT reset is no longer detectable after setting WR_TO_PINRESET bit.</li>
+                    <li><strong>[DRV_SRC] Timer:</strong> TimerTriggerControl() is removed because it access functionality which is not supported.</li>
+                </ul>
+
+                <h3>Known Issues</h3>
+                <ul>
+                    <li>None</li>
+                    <li>For an updated list of known issues (including issues found after the release), see <a href="http://processors.wiki.ti.com/index.php/CC13xxWare">CC13xxWare</a> on the Texas Instruments wiki.</li>
+                </ul>
+                
+            </div>
+        </div>
+        <div class="release-container">
+            <h2>cc13xxware_2_00_01_15600</h2>
+            <div class="content-container">
+                Release date: April 16, 2015 <br>
+
+                <h3>New features</h3>
+                <ul>
+                    <li><strong>[DRV_SRC] PRCM:</strong> Converting warm reset to pin reset (configured in the boot sequence), giving full system reset upon e.g. watchdog resets.</li>
+                    <li><strong>[DRV_SRC] Timer</strong> Added new driverlib timer configuration functions: TimerCcpCombineEnable, TimerCcpCombineDisable, TimerMatchUpdateMode TimerIntervalLoadMode.</li>
+                </ul>
+
+                <h3>Improvements</h3>
+                <ul>
+                    <li><strong>[DRV_SRC] SysCtrl:</strong> Changed adaptive recharge calculation algorithm to adapt faster.</li>
+                    <li><strong>[DRV_SRC] ChipInfo:</strong> Made hardware revision check future proof. Changes relate to functions: ChipInfo_GetChipFamily and ChipInfo_GetHwRevision</li>
+                </ul>
+
+                <h3>Bug fixes</h3>
+                <ul>
+                    <li><strong>[DRV_SRC] AUX_ADC:</strong> Corrected raw ADC sample to millivolt calculation and parameter handling in function AUXADCEnableSync.</li>
+                    <li><strong>[RF_SRC] RFC:</strong> Function enableRadio() is made reentrant.</li>
+                </ul>
+
+                <h3>Known Issues</h3>
+                <ul>
+                    <li>None</li>
+                    <li>For an updated list of known issues (including issues found after the release), see <a href="http://processors.wiki.ti.com/index.php/CC13xxWare">CC13xxWare</a> on the Texas Instruments wiki.</li>
+                </ul>
+                
+            </div>
+        </div>
+        <div class="release-container">
+            <h2>cc13xxware_2_00_00_15402</h2>
+            <div class="content-container">
+                Release date: March 24, 2015 <br>
+
+                <h3>Bug fixes & New features</h3>
+                <ul>
+                    <li><strong>cc13xxware_2_00_00_15402</strong> is the initial revision and contains as such no bug fixes or new features.</li>
+                </ul>
+                
+                <h3>Known Issues</h3>
+                <ul>
+                    <li>None</li>
+                    <li>For an updated list of known issues (including issues found after the release), see <a href="http://processors.wiki.ti.com/index.php/CC13xxWare">CC13xxWare</a> on the Texas Instruments wiki.</li>
+                </ul>
+
+            </div>
+        </div>
+        <!-- End of cc13xxware entry -->
+        
+        <div style="text-align:right">
+            &copy 2015. Texas Instruments | All Rights Reserved
+        </div>
+
+    </body>
+</html>

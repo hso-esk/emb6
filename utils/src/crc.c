@@ -141,6 +141,30 @@ uint16_t crc_16_update(uint16_t curr_crc, uint8_t byte)
     return curr_crc;
 }
 
+uint16_t crc_16_updateN(uint16_t curr_crc, uint8_t *p_data, uint16_t len) {
+  uint16_t ix;
+
+  /* calculate CRC */
+  for (ix = 0; ix < len; ix++) {
+    curr_crc = crc_16_update(curr_crc, p_data[ix]);
+  }
+
+  return curr_crc;
+}
+
+uint16_t crc_16_calc(uint8_t *p_data, uint16_t len) {
+  uint16_t ix;
+  uint32_t crc_res;
+
+  /* calculate CRC */
+  crc_res = CRC16_INIT;
+  for (ix = 0; ix < len; ix++) {
+    crc_res = crc_16_update(crc_res, p_data[ix]);
+  }
+
+  return crc_res;
+}
+
 
 /**
  * @brief   Update 32-bit ITU-T CRC
@@ -152,6 +176,39 @@ uint16_t crc_16_update(uint16_t curr_crc, uint8_t byte)
  */
 uint32_t crc_32_update(uint32_t curr_crc, uint8_t byte)
 {
-    curr_crc = crc32_table[byte ^ ((curr_crc >> 24) & 0xff)] ^ (curr_crc << 8);
-    return curr_crc;
+  curr_crc = crc32_table[byte ^ ((curr_crc >> 24) & 0xff)] ^ (curr_crc << 8);
+  return curr_crc;
+}
+
+
+uint32_t crc_32_updateN(uint32_t curr_crc, uint8_t *p_data, uint16_t len)
+{
+  uint32_t ix;
+
+  /* calculate CRC */
+  for (ix = 0; ix < len; ix++) {
+    curr_crc = crc_32_update(curr_crc, p_data[ix]);
+  }
+
+  return curr_crc;
+}
+
+uint32_t crc_32_calc(uint8_t *p_data, uint16_t len) {
+  uint16_t ix;
+  uint32_t crc_res;
+
+  /* calculate CRC */
+  crc_res = CRC32_INIT;
+  for (ix = 0; ix < len; ix++) {
+    crc_res = crc_32_update(crc_res, p_data[ix]);
+  }
+
+  /* add padding when length is less than 4 octets.
+   * See IEEE-802.15.4g-2012, 5.2.1.9 */
+  if (len < 4) {
+    crc_res = crc_32_update(crc_res, 0x00);
+  }
+  crc_res ^= CRC32_INIT;
+
+  return crc_res;
 }

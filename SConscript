@@ -174,11 +174,15 @@ def prep_board_arch(__trg_path,__conf):
     # Add all include folder and sources which are common for a selected arch
     if 'extra' in arch_conf:
           for extra_dir in arch_conf['extra']:
+              add_include(mcu_path + '/' +extra_dir + '/')
               add_include(mcu_path + '/' +extra_dir+'/inc/')
+              add_sources(mcu_path +'/'+ extra_dir +'/*.c')
               add_sources(mcu_path +'/'+ extra_dir +'/src/*.c')
 
     # Add all include folder and sources for a selected device
+    add_include(mcu_path+'/device/'+__conf['cpu']+ '/')
     add_include(mcu_path+'/device/'+__conf['cpu']+'/inc/')
+    add_sources(mcu_path+'/device/'+__conf['cpu']+'/*.c')
     add_sources(mcu_path+'/device/'+__conf['cpu']+'/src/*.c')
 
     # Append toolchain configuration

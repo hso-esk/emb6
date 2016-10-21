@@ -107,32 +107,46 @@ uip_lladdr_t uip_lladdr = {{0x00,0x06,0x98,0x00,0x02,0x32}};
 
 /** RPL default Configuration */
 s_rpl_conf_t rpl_config = {
-            .DIOintmin          = 10,
-            .DIOintdoub         = 12,
-            /* This value decides which DAG instance we should
-             * participate in by default. */
-            .defInst            = 0x1e,
-            /* Initial metric attributed to a link when the ETX is unknown */
-            .linkMetric         = 2,
-            .defRouteTimeUnit   = 0xffff,
-            .defRouteTime       = 0xff,
+    .DIOintmin          = 10,
+    .DIOintdoub         = 12,
+    /* This value decides which DAG instance we should
+     * participate in by default. */
+    .defInst            = 0x1e,
+    /* Initial metric attributed to a link when the ETX is unknown */
+    .linkMetric         = 2,
+    .defRouteTimeUnit   = 0xffff,
+    .defRouteTime       = 0xff,
 
 };
 
 /** MAC address default Configuration */
 s_mac_phy_conf_t mac_phy_config = {
 #if DEMO_USE_EXTIF
-        /* set extif mac address */
-        .mac_address =  { 0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff },
+    /* set extif mac address */
+    .mac_address      = {0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
 #else
-        /* set default mac address */
-        .mac_address =  { 0x00,0x50,0xc2,0xff,0xfe,0xa8,0xdd,0xdd },
+    /* set default mac address */
+    .mac_address      = {0x00, 0x50, 0xc2, 0xff, 0xfe, 0xa8, 0xdd, 0xdd},
 #endif
-        /* set default pan id */
-        .pan_id = 0xABCD,
-        .init_power = 11,
-        .init_sensitivity = -100,
-        .modulation = MODULATION_BPSK20,
+    /* set default pan id */
+    .pan_id           = 0xABCD,
+    .init_power       = 11,
+    .init_sensitivity = -100,
+    .modulation       = MODULATION_BPSK20,    /* this attribute can be appropriately overwritten by BSP */
+    .fcs_len          = 2,                    /* 16-bit CRC */
+    .op_mode          = NETSTK_RF_OP_MODE_1,  /* 2-FSK */
+    .chan_num         = 26,                   /* 868.325 MHz */
+
+#if (NETSTK_CFG_WOR_EN == TRUE)
+    .preamble_len     = 24,
+#else
+    .preamble_len     = 4,
+#endif
+
+#if (NETSTK_CFG_LOW_POWER_MODE_EN == TRUE)
+    /** sleep period in ticks in Low-Power mode */
+    .sleepTimeout     = 200,
+#endif
 };
 
 
@@ -179,6 +193,13 @@ uint8_t loc_emb6NetstackInit(s_ns_t * ps_ns)
   queuebuf_init();
   ctimer_init();
   rt_tmr_init();
+
+  /* initialize trace */
+#if (TRACE_CFG_EN == TRUE)
+  trace_init();
+  trace_start();
+  trace_printf("Trace started\n");
+#endif
 
   /*
    * Verify stack submodule drivers

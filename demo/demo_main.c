@@ -81,6 +81,10 @@
 #include "demo_udp_socket.h"
 #endif
 
+#if DEMO_USE_UDP_SOCKET_SIMPLE
+#include "demo_udp_socket_simple.h"
+#endif
+
 #if DEMO_USE_COAP
 #if CONF_USE_SERVER
 #include "demo_coap_srv.h"
@@ -158,6 +162,20 @@
 #endif /* #if DEMO_USE_COAP_FREERTOS */
 
 /*==============================================================================
+                                     STRUCTS
+ =============================================================================*/
+
+/**
+ * emb6 task parameters
+ */
+typedef struct
+{
+  /** MAC address */
+  uint16_t ui_macAddr;
+
+}s_emb6_startup_params_t;
+
+/*==============================================================================
                                      ENUMS
  =============================================================================*/
 
@@ -165,24 +183,29 @@
                                     VARIABLES
  =============================================================================*/
 
+/** parameters for emb6 startup */
+s_emb6_startup_params_t emb6_startupParams;
+
 #if DEMO_USE_COAP_FREERTOS
+/** parameters for the LED Taks */
 extern s_led_task_param_t ledTaskParams;
 #endif /* #if DEMO_USE_COAP_FREERTOS */
 
 /*==============================================================================
                            LOCAL FUNCTION PROTOTYPES
  =============================================================================*/
-static void loc_stackConf(void);
+static void loc_stackConf(uint16_t mac_addr_word);
 static void loc_demoAppsConf(s_ns_t* pst_netStack, e_nsErr_t *p_err);
 static uint8_t loc_demoAppsInit(void);
 
 
 /**
- * EMB6 task.
+ * emb6 task.
  */
-static void vEMB6Task( void *pvParameters );
+static void emb6_task( void* p_params );
 
-#if DEMO_USE_COAP_FREERTOS
+#if USE_FREERTOS
+
 /**
  * LED task.
  */
@@ -202,11 +225,11 @@ static void prvLowPowerMode1( void );
 /*==============================================================================
                                 LOCAL FUNCTIONS
  =============================================================================*/
-static void loc_stackConf(void)
+static void loc_stackConf(uint16_t mac_addr_word)
 {
     /* set last byte of mac address */
-    mac_phy_config.mac_address[7] = (uint8_t)(MAC_ADDR_WORD);           // low byte
-    mac_phy_config.mac_address[6] = (uint8_t)(MAC_ADDR_WORD >> 8);      // high byte
+    mac_phy_config.mac_address[7] = (uint8_t)mac_addr_word;            // low byte
+    mac_phy_config.mac_address[6] = (uint8_t)(mac_addr_word >> 8);     // high byte
 
     /* initial TX Power Output in dBm */
     mac_phy_config.init_power = TX_POWER;
@@ -218,6 +241,18 @@ static void loc_stackConf(void)
     mac_phy_config.modulation = MODULATION;
 }
 
+static uint16_t loc_parseMac(const char* mac, uint16_t defaultMac)
+{
+    int mac_addr_word;
+    if (!mac) return defaultMac;
+    if (sscanf(mac, "0x%X", &mac_addr_word))
+        return (uint16_t)mac_addr_word;
+
+    if (sscanf(mac, "%X", &mac_addr_word))
+        return (uint16_t)mac_addr_word;
+
+    return defaultMac;
+}
 
 static void loc_demoAppsConf(s_ns_t* pst_netStack, e_nsErr_t *p_err)
 {
@@ -256,6 +291,10 @@ static void loc_demoAppsConf(s_ns_t* pst_netStack, e_nsErr_t *p_err)
     demo_udpSocketCfg(pst_netStack);
     #endif
 
+  #if DEMO_USE_UDP_SOCKET_SIMPLE
+  demo_udpSocketSimpleCfg(pst_netStack);
+  #endif
+
     #if DEMO_USE_APTB
     demo_aptbConf(pst_netStack);
     #endif
@@ -282,7 +321,6 @@ static void loc_demoAppsConf(s_ns_t* pst_netStack, e_nsErr_t *p_err)
 
 static uint8_t loc_demoAppsInit(void)
 {
-
     #if DEMO_USE_EXTIF
     if (!demo_extifInit()) {
         return 0;
@@ -318,6 +356,12 @@ static uint8_t loc_demoAppsInit(void)
         return 0;
     }
     #endif
+
+  #if DEMO_USE_UDP_SOCKET_SIMPLE
+  if (!demo_udpSocketSimpleInit()) {
+      return 0;
+  }
+  #endif
 
     #if DEMO_USE_APTB
     if (!demo_aptbInit()) {
@@ -366,15 +410,15 @@ void emb6_errorHandler(e_nsErr_t *p_err)
     }
 }
 
-/**
- * EMB6 task.
- */
-static void vEMB6Task( void *pvParameters )
+/*==============================================================================
+ emb6_task()
+==============================================================================*/
+static void emb6_task( void* p_params )
 {
     s_ns_t st_netstack;
+    s_emb6_startup_params_t* ps_params = p_params;
     uint8_t ret;
     e_nsErr_t err;
-
 
     /* Initialize variables */
     err = NETSTK_ERR_NONE;
@@ -394,16 +438,16 @@ static void vEMB6Task( void *pvParameters )
     }
 
     /* Initialize stack */
-    loc_stackConf();
+    loc_stackConf(ps_params->ui_macAddr);
     emb6_init(&st_netstack, &err);
     if (err != NETSTK_ERR_NONE) {
         emb6_errorHandler(&err);
     }
 
     /* Show that stack has been launched */
-    bsp_led(E_BSP_LED_2, E_BSP_LED_ON);
+    bsp_led(E_BSP_LED_0, E_BSP_LED_ON);
     bsp_delay_us(2000000);
-    bsp_led(E_BSP_LED_2, E_BSP_LED_OFF);
+    bsp_led(E_BSP_LED_0, E_BSP_LED_OFF);
 
     /* Initialize applications */
     ret = loc_demoAppsInit();
@@ -416,20 +460,19 @@ static void vEMB6Task( void *pvParameters )
     while(1)
     {
         /* run the emb6 stack */
-#if DEMO_USE_COAP_FREERTOS
+#if USE_FREERTOS
         emb6_process(-1);
 #else
         emb6_process(EMB6_PROC_DELAY);
-#endif /* #if DEMO_USE_COAP_FREERTOS */
+#endif /* #if USE_FREERTOS */
     }
 
     /* the program should never come here */
     return;
 }
 
-#if DEMO_USE_COAP_FREERTOS
+#if USE_FREERTOS
 /*-----------------------------------------------------------*/
-
 static void vLEDTask( void *pvParameters )
 {
     s_led_task_param_t* p_params = (s_led_task_param_t*)pvParameters;
@@ -446,15 +489,14 @@ static void vLEDTask( void *pvParameters )
 }
 
 /*-----------------------------------------------------------*/
-
 void vApplicationIdleHook( void )
 {
     /* Use the idle task to place the CPU into a low power mode.  Greater power
     saving could be achieved by not including any demo tasks that never block. */
     prvLowPowerMode1();
 }
-/*-----------------------------------------------------------*/
 
+/*-----------------------------------------------------------*/
 void vApplicationStackOverflowHook( TaskHandle_t pxTask, char *pcTaskName )
 {
     /* This function will be called if a task overflows its stack, if
@@ -464,16 +506,14 @@ void vApplicationStackOverflowHook( TaskHandle_t pxTask, char *pcTaskName )
     debugger to find the offending task. */
     for( ;; );
 }
+
 /*-----------------------------------------------------------*/
-
-
-
 static void prvSetupHardware( void )
 {
     /* Nothing to do */
 }
-/*-----------------------------------------------------------*/
 
+/*-----------------------------------------------------------*/
 static void prvLowPowerMode1( void )
 {
     /* not implemented */
@@ -483,10 +523,19 @@ static void prvLowPowerMode1( void )
 /*==============================================================================
  main()
 ==============================================================================*/
-int main(void)
+int main(int argc, char* argv[])
 {
+    char *pc_mac_addr = NULL;
+    memset(&emb6_startupParams, 0, sizeof(emb6_startupParams));
 
-#if DEMO_USE_COAP_FREERTOS
+    if (argc > 1) {
+      pc_mac_addr = malloc(strlen(argv[1])+1);
+      strcpy(pc_mac_addr, argv[1]);
+    }
+    emb6_startupParams.ui_macAddr = loc_parseMac(pc_mac_addr, MAC_ADDR_WORD);
+    free(pc_mac_addr);
+
+#if USE_FREERTOS
     ledTaskParams.en = 1;
     ledTaskParams.delay = 1000;
 
@@ -494,7 +543,7 @@ int main(void)
     prvSetupHardware();
 
     /* Create EMB6 task. */
-    xTaskCreate( vEMB6Task, "EMB6Task", 2048, NULL, mainEMB6_TASK_PRIORITY, NULL );
+    xTaskCreate( emb6_task, "EMB6Task", 2048, &emb6_startupParams, mainEMB6_TASK_PRIORITY, NULL );
 
     /* Create LED task. */
     xTaskCreate( vLEDTask, "LEDTask", configMINIMAL_STACK_SIZE, &ledTaskParams, mainLED_TASK_PRIORITY, NULL );
@@ -508,8 +557,8 @@ int main(void)
     configTOTAL_HEAP_SIZE in FreeRTOSConfig.h. */
     for( ;; );
 #else
-    vEMB6Task(NULL);
-#endif /* #if DEMO_USE_COAP_FREERTOS */
+    emb6_task( &emb6_startupParams );
+#endif /* #if USE_FREERTOS */
 }
 
 /** @} */

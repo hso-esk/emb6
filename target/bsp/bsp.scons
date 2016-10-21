@@ -1,5 +1,6 @@
 qpsk100  = 'MODULATION_QPSK100'
 bpsk20   = 'MODULATION_BPSK20'
+fsk50   = 'MODULATION_2FSK50'
 
 bsp      = []
 
@@ -40,12 +41,12 @@ bsp += [{
 
 bsp += [{
     'id'        : 'moses',  			  'mac_addr' : '0x20C0',
-    'txrx'      : ['11','-100'],          'mode'     : qpsk100
+    'txrx'      : ['11','-100'],          'mode'     : fsk50
 }]
 
 bsp += [{
     'id'        : 'mosesstick',  		  'mac_addr' : '0x0001',
-    'txrx'      : ['11','-100'],          'mode'     : qpsk100
+    'txrx'      : ['11','-100'],          'mode'     : fsk50
 }]
 
 bsp += [{
@@ -77,5 +78,11 @@ bsp += [{
     'id'        : 'native',               'mac_addr' : '0x2121',
     'txrx'      : ['0','0'],              'mode'     : qpsk100
 }]
+
+bsp += [{
+    'id'        : 'ti_cc13xx',            'mac_addr' : '0x2121',
+    'txrx'      : ['0','0'],              'mode'     : qpsk100
+}]
+
 
 Return('bsp')

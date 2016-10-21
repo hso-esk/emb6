@@ -9,6 +9,8 @@ coap_cli    = ('coap','client')
 udp_alive   = ('udp_alive', '')
 udp_srv     = ('udp_socket','server')
 udp_cli     = ('udp_socket','client')
+udps_srv    = ('udp_socket_simple','server')
+udps_cli    = ('udp_socket_simple','client')
 mqtt        = ('mqtt','')
 extif       = ('extif','')
 aptb_srv    = ('aptb','server')
@@ -201,7 +203,7 @@ trg += [{
 }]
 
 trg += [{
-    'id'        : 'ds_stk',
+    'id'        : 'ds_stk3600',
     'apps_conf' : [ dtls_srv ],
     'bsp'       : get_descr(bsp, 'efm32stk3600_rf212b')
 }]
@@ -338,6 +340,12 @@ trg += [{
 }]
 
 trg += [{
+    'id'        : 'cs_mstk',
+    'apps_conf' : [ coap_srv, udp_alive ],
+    'bsp'       : get_descr(bsp, 'mosesstick')
+}]
+
+trg += [{
     'id'        : 'uc_moses',
     'apps_conf' : [ udp_cli ],
     'bsp'       : get_descr(bsp, 'moses')
@@ -363,6 +371,12 @@ trg += [{
 }]
 
 trg += [{
+    'id'        : 'us_mosesstick',
+    'apps_conf' : [ udp_srv ],
+    'bsp'       : get_descr(bsp, 'mosesstick')
+}]
+
+trg += [{
     'id'        : 'mq_stk112x',
     'apps_conf' : [ mqtt, udp_alive ],
     'bsp'       : get_descr(bsp, 'efm32stk3600_cc112x')
@@ -374,11 +388,22 @@ trg += [{
     'bsp'       : get_descr(bsp, 'efm32stk3600_cc120x')
 }]
 
-
 trg += [{
     'id'        : 'mq_moses',
     'apps_conf' : [ mqtt, udp_alive ],
     'bsp'       : get_descr(bsp, 'moses')
+}]
+
+trg += [{
+    'id'        : 'mq_mosesstick',
+    'apps_conf' : [ mqtt, udp_alive ],
+    'bsp'       : get_descr(bsp, 'mosesstick')
+}]
+
+trg += [{
+    'id'        : 'mq_mosesstk',
+    'apps_conf' : [ mqtt, udp_alive ],
+    'bsp'       : get_descr(bsp, 'mosesstick')
 }]
 
 
@@ -428,6 +453,30 @@ trg += [{
 }]
 
 trg += [{
+    'id'        : 'us_luxsrv',
+    'apps_conf' : [ udp_srv ],
+    'bsp'       : get_descr(bsp, 'native')
+}]
+
+trg += [{
+    'id'        : 'uc_luxcli',
+    'apps_conf' : [ udp_cli ],
+    'bsp'       : get_descr(bsp, 'native')
+}]
+
+trg += [{
+    'id'        : 'uss_luxsrv',
+    'apps_conf' : [ udps_srv ],
+    'bsp'       : get_descr(bsp, 'native')
+}]
+
+trg += [{
+    'id'        : 'ucs_luxcli',
+    'apps_conf' : [ udps_cli ],
+    'bsp'       : get_descr(bsp, 'native')
+}]
+
+trg += [{
     'id'        : 'md_x86cli',
     'apps_conf' : [ mdns_cli, udp_alive ],
     'bsp'       : get_descr(bsp, 'native')
@@ -457,5 +506,12 @@ trg += [{
 }]
 
 
+
+
+trg += [{
+    'id'        : 'cs_cc13xx',
+    'apps_conf' : [ coap_srv, udp_alive, udp_cli ],
+    'bsp'       : get_descr(bsp, 'ti_cc13xx')
+}]
 
 Return('trg')

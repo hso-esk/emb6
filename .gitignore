@@ -4,8 +4,12 @@ bin/
 demo/testframework_emb6demoapp/
 freertos/
 .sconf_temp/
-.project
-.cproject
+/.project
+/.cproject
+/.ccsproject
+/.launches/
+/targetConfigs/
+/*.cmd
 _*/
 *.svn-base
 *.o
@@ -55,3 +59,4 @@ target/arch/msp430/msp430f5/ti/toolchain/IAR/demo-coap/CC112x_SRV/*/*
 
 doc/html/
 doc/latex/
+/coap-server/

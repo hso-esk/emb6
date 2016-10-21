@@ -103,6 +103,7 @@ typedef uint32_t                            clock_time_t;
 /** defines for the modulation type for RF transceiver */
 #define MODULATION_QPSK100          0
 #define MODULATION_BPSK20           1
+#define MODULATION_2FSK50           2
 
 
 /*==============================================================================
@@ -135,31 +136,6 @@ typedef struct rpl_configuration
 
 /*! RPL configuration struct, do not change */
 extern s_rpl_conf_t     rpl_config;
-
-/*==============================================================================
-                         MAC & PHY Parameter Configuration
- =============================================================================*/
-
-/*! \struct mac_phy_configuration
-*   \brief for initial mac_phy parameter configuration,
-*   if changed during runtime RF-interface must be re-initialized
-*/
-typedef struct mac_phy_configuration
-{
-    /** MAC address, default value: { 0x00,0x50,0xc2,0xff,0xfe,0xa8,0xdd,0xdd}*/
-    uint8_t mac_address[8];
-    /** PAN ID, default value: 0xABCD */
-    uint16_t pan_id;
-    /** initial tx power, default value: 11 dBm */
-    int8_t init_power;
-    /** initial rx sensitivity, default value: -100 dBm */
-    int8_t init_sensitivity;
-    /** rf modulation type, default value BPSK20 */
-    uint8_t modulation;
-}s_mac_phy_conf_t;
-
-/*! MAC configuration struct, do not change */
-extern s_mac_phy_conf_t     mac_phy_config;
 
 /*==============================================================================
                                      ENUMS
@@ -251,10 +227,12 @@ typedef enum netstk_err
     NETSTK_ERR_INVALID_FRAME,
     NETSTK_ERR_TX_TIMEOUT,
     NETSTK_ERR_TX_NOACK,
+    NETSTK_ERR_TX_COLLISION,
     NETSTK_ERR_CMD_UNSUPPORTED,
     NETSTK_ERR_CHANNEL_ACESS_FAILURE,
     NETSTK_ERR_CRC,
     NETSTK_ERR_BAD_FORMAT,
+    NETSTK_ERR_INVALID_ADDRESS,
     NETSTK_ERR_FATAL,
 
     /*
@@ -266,10 +244,6 @@ typedef enum netstk_err
      * MAC error codes
      */
     NETSTK_ERR_MAC_XXX                      = 200U,
-#if NETSTK_CFG_IEEE_802154_IGNACK
-    NETSTK_ERR_MAC_ACKOFF,
-#endif /* NETSTK_CFG_IEEE_802154_IGNACK */
-
     NETSTK_ERR_MAC_ULE_XXX                  = 250U,
     NETSTK_ERR_MAC_ULE_UNSUPPORTED_FRAME,
     NETSTK_ERR_MAC_ULE_LAST_STROBE,
@@ -279,6 +253,8 @@ typedef enum netstk_err
     NETSTK_ERR_MAC_ULE_TX_COLLISION_DIFF_DEST,
     NETSTK_ERR_MAC_ULE_INVALID_ACK,
     NETSTK_ERR_MAC_ULE_NO_STROBE,
+    NETSTK_ERR_MAC_ULE_NO_STROBE_ACK,
+    NETSTK_ERR_MAC_ULE_NO_DATA,
 
     /*
      * PHY error codes
@@ -322,8 +298,7 @@ typedef enum netstk_ioc_cmd
      * PHY command codes
      */
     NETSTK_CMD_PHY_RSVD = 300U,
-    NETSTK_CMD_PHY_LAST_PKT_TX,
-    NETSTK_CMD_PHY_CRC_LEN_SET,
+
 
     /*
      * LPR command codes
@@ -347,13 +322,10 @@ typedef enum netstk_ioc_cmd
     NETSTK_CMD_RF_SYNC_SET,         /*!< Set SYNC words                 */
     NETSTK_CMD_RF_SYNC_GET,         /*!< Get SYNC words                 */
     NETSTK_CMD_RF_PROMISC_SET,      /*!< Set promisc mode                */
-
-    NETSTK_CMD_RF_802154G_EU_CHAN,  /*!< Channel center for IEEE802.15.4 in Europe  */
+    NETSTK_CMD_RF_RETX,             /*!< Request the radio to retransmit last frame */
     NETSTK_CMD_RF_CHAN_NUM_SET,     /*!< Set operation channel number */
     NETSTK_CMD_RF_OP_MODE_SET,      /*!< Set operation mode */
-
     NETSTK_CMD_RF_WOR_EN,           /*!< Enable/Disable WOR mode */
-
 }e_nsIocCmd_t;
 
 
@@ -386,12 +358,10 @@ typedef enum netstk_rf_operating_mode
 } e_nsRfOpMode;
 
 
-#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
 #define NETSTK_RF_IEEE802154G_CHAN_QTY_CSM                  34u
 #define NETSTK_RF_IEEE802154G_CHAN_QTY_OPMODE1              34u
 #define NETSTK_RF_IEEE802154G_CHAN_QTY_OPMODE2              17u
 #define NETSTK_RF_IEEE802154G_CHAN_QTY_OPMODE3              17u
-#endif
 
 
 /*
@@ -542,6 +512,46 @@ struct netstack_framer
 };
 
 
+/*==============================================================================
+                         MAC & PHY Parameter Configuration
+ =============================================================================*/
+
+/*! \struct mac_phy_configuration
+*   \brief for initial mac_phy parameter configuration,
+*   if changed during runtime RF-interface must be re-initialized
+*/
+typedef struct mac_phy_configuration
+{
+    /** MAC address, default value: { 0x00,0x50,0xc2,0xff,0xfe,0xa8,0xdd,0xdd}*/
+    uint8_t mac_address[8];
+    /** PAN ID, default value: 0xABCD */
+    uint16_t pan_id;
+    /** initial tx power, default value: 11 dBm */
+    int8_t init_power;
+    /** initial rx sensitivity, default value: -100 dBm */
+    int8_t init_sensitivity;
+    /** rf modulation type, default value BPSK20 */
+    uint8_t modulation;
+
+    /** frame check sequence length (CRC size) */
+    uint8_t fcs_len;
+    /** IEEE Std. 802.15.4g operation channel number */
+    uint8_t chan_num;
+    /** IEEE Std. 802.15.4g operating mode */
+    e_nsRfOpMode op_mode;
+    /** Preamble length in octets */
+    uint8_t preamble_len;
+
+#if (NETSTK_CFG_LOW_POWER_MODE_EN == TRUE)
+    /** sleep period in Low-Power mode */
+    uint32_t sleepTimeout;
+#endif
+}s_mac_phy_conf_t;
+
+/*! MAC configuration struct, do not change */
+extern s_mac_phy_conf_t     mac_phy_config;
+
+
 /*
 ********************************************************************************
 *                           SOCKET DRIVERS DECLARATIONS
@@ -602,6 +612,7 @@ extern  const s_nsDLLC_t        dllc_driver_802154;
 extern  const s_nsMAC_t         mac_driver_null;
 extern  const s_nsMAC_t         mac_driver_802154;
 extern  const s_nsMAC_t         mac_driver_ule;
+extern  const s_nsMAC_t         mac_driver_smartMAC;
 
 /*
 ********************************************************************************
@@ -624,6 +635,7 @@ extern  const s_nsRF_t          rf_driver_at212;
 extern  const s_nsRF_t          rf_driver_at212b;
 extern  const s_nsRF_t          rf_driver_ticc112x;
 extern  const s_nsRF_t          rf_driver_ticc120x;
+extern  const s_nsRF_t          rf_driver_ticc13xx;
 
 /*==============================================================================
                                  API FUNCTIONS
@@ -704,6 +716,8 @@ void emb6_errorHandler(e_nsErr_t *p_err);
 #ifndef QUEUEBUF_CONF_REF_NUM
 #define QUEUEBUF_CONF_REF_NUM               4
 #endif
+
+
 
 #endif /* EMB6_H_ */
 

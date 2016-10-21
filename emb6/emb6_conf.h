@@ -49,14 +49,19 @@
 /*! \file   emb6_conf.h
 
     \author Peter Lehmann peter.lehmann@hs-offenburg.de
+            Phuong Nguyen minh.nguyen@hs-offenburg.de
 
     \brief  emb6 compile-time parameter configuration
 
-    \version 0.0.1
+    \version 0.0.2
 */
 
 #ifndef EMB6_CONF_H_
 #define EMB6_CONF_H_
+
+#define EMB6_TEST_CFG_CONT_TX_EN                      FALSE
+#define EMB6_TEST_CFG_CONT_RX_EN                      FALSE
+#define EMB6_TEST_CFG_WOR_EN                          FALSE
 
 
 /*=============================================================================
@@ -132,13 +137,6 @@
 #ifndef LLSEC802154_CONF_SECURITY_LEVEL
 #define LLSEC802154_CONF_SECURITY_LEVEL      0
 #endif /* LLSEC802154_CONF_SECURITY_LEVEL */
-
-
-/*=============================================================================
-                                DLL/PHY SECTIONS
-==============================================================================*/
-#define NETSTK_CFG_IEEE_802154_IGNACK           FALSE
-#define NETSTK_CFG_IEEE_802154G_EN              TRUE
 
 
 /*==============================================================================
@@ -816,42 +814,42 @@ void uip_log(char *msg);
 /** Core logging, should be TRUE for almost all cases except for production
 * (see emb6.c) */
 #ifndef LOGGER_CORE
-#define LOGGER_CORE                        	FALSE
+#define LOGGER_CORE                         FALSE
 #endif
 
-/** Hardware abstraction layer functions   	(see target.c) */
+/** Hardware abstraction layer functions    (see target.c) */
 #ifndef LOGGER_HAL
-#define LOGGER_HAL                         	FALSE
+#define LOGGER_HAL                          FALSE
 #endif
 
-/** Board support package                  	(see bsp.c) */
+/** Board support package                   (see bsp.c) */
 #ifndef LOGGER_BSP
-#define LOGGER_BSP                        	FALSE
+#define LOGGER_BSP                          FALSE
 #endif
 
-/** Main functions                         	(see emb6_main.c) */
+/** Main functions                          (see emb6_main.c) */
 #ifndef LOGGER_MAIN
-#define LOGGER_MAIN                        	TRUE
+#define LOGGER_MAIN                         FALSE
 #endif
 
-/** Event process functions                	(see llc_xxx.c) */
+/** Event process functions                 (see llc_xxx.c) */
 #ifndef LOGGER_LLC
-#define LOGGER_LLC                         	FALSE
+#define LOGGER_LLC                          FALSE
 #endif
 
-/** Event process functions                	(see mac_xxx.c) */
+/** Event process functions                 (see mac_xxx.c) */
 #ifndef LOGGER_MAC
-#define LOGGER_MAC                         	FALSE
+#define LOGGER_MAC                          FALSE
 #endif
 
-/** Event process functions                	(see phy_xxx.c) */
+/** Event process functions                 (see phy_xxx.c) */
 #ifndef LOGGER_PHY
-#define LOGGER_PHY                         	FALSE
+#define LOGGER_PHY                          FALSE
 #endif
 
-/** Radio functions                        	(see $(IF).c) */
+/** Radio functions                         (see $(IF).c) */
 #ifndef LOGGER_RADIO
-#define LOGGER_RADIO                       	FALSE
+#define LOGGER_RADIO                        FALSE
 #endif
 
 /** DEMO UDP socket example                 (see demo_udp_socket.c) */
@@ -859,54 +857,59 @@ void uip_log(char *msg);
 #define LOGGER_DEMO_UDP_SOCKET              FALSE
 #endif
 
-/** DEMO UDP example                       	(see demo_exudp.c) */
+ /** DEMO UDP socket simple example        (see demo_udp_socket_simple.c) */
+ #ifndef LOGGER_DEMO_UDP_SOCKET_SIMPLE
+ #define LOGGER_DEMO_UDP_SOCKET_SIMPLE      FALSE
+ #endif
+
+/** DEMO UDP example                        (see demo_exudp.c) */
 #ifndef LOGGER_DEMO_UDPIAA
-#define LOGGER_DEMO_UDPIAA                 	FALSE
+#define LOGGER_DEMO_UDPIAA                  FALSE
 #endif
 
-/** DEMO APTB example                      	(see demo_aptb_xxx.c) */
+/** DEMO APTB example                       (see demo_aptb_xxx.c) */
 #ifndef LOGGER_DEMO_APTB
-#define LOGGER_DEMO_APTB                   	FALSE
+#define LOGGER_DEMO_APTB                    FALSE
 #endif
 
-/** DEMO COAP example                      	(see demo_coap_*.c) */
+/** DEMO COAP example                       (see demo_coap_*.c) */
 #ifndef LOGGER_DEMO_COAP
-#define LOGGER_DEMO_COAP                   	FALSE
+#define LOGGER_DEMO_COAP                    FALSE
 #endif
 
-/** DEMO DTLS example                      	(see demo_dtls_*.c) */
+/** DEMO DTLS example                       (see demo_dtls_*.c) */
 #ifndef LOGGER_DEMO_DTLS
-#define LOGGER_DEMO_DTLS                   	FALSE
+#define LOGGER_DEMO_DTLS                    FALSE
 #endif
 
-/** DEMO MDNS example                      	(see demo_mdns_*.c) */
+/** DEMO MDNS example                       (see demo_mdns_*.c) */
 #ifndef LOGGER_DEMO_MDNS
-#define LOGGER_DEMO_MDNS                   	FALSE
+#define LOGGER_DEMO_MDNS                    FALSE
 #endif
 
-/** DEMO SNIFFER                           	(see demo_sniffer.c) */
+/** DEMO SNIFFER                            (see demo_sniffer.c) */
 #ifndef LOGGER_DEMO_SNIFFER
-#define LOGGER_DEMO_SNIFFER                	FALSE
+#define LOGGER_DEMO_SNIFFER                 FALSE
 #endif
 
-/** DEMO TESTSUITE                         	(see tessuite.c) */
+/** DEMO TESTSUITE                          (see tessuite.c) */
 #ifndef LOGGER_DEMO_TESTSUITE
-#define LOGGER_DEMO_TESTSUITE             	FALSE
+#define LOGGER_DEMO_TESTSUITE               FALSE
 #endif
 
-/** Event timer functions                  	(see etimer.c) */
+/** Event timer functions                   (see etimer.c) */
 #ifndef LOGGER_ETIMER
-#define LOGGER_ETIMER                      	FALSE
+#define LOGGER_ETIMER                       FALSE
 #endif
 
-/** Callback timer functions               	(see ctimer.c) */
+/** Callback timer functions                (see ctimer.c) */
 #ifndef LOGGER_CTIMER
-#define LOGGER_CTIMER                      	FALSE
+#define LOGGER_CTIMER                       FALSE
 #endif
 
-/** Event process functions                	(see evproc.c) */
+/** Event process functions                 (see evproc.c) */
 #ifndef LOGGER_EVPROC
-#define LOGGER_EVPROC                      	FALSE
+#define LOGGER_EVPROC                       FALSE
 #endif
 
 
@@ -915,17 +918,48 @@ void uip_log(char *msg);
 *                          NETSTACK CONFIGURATIONS
 ********************************************************************************
 */
+#ifndef NETSTK_CFG_IEEE_802154G_EN
+#define NETSTK_CFG_IEEE_802154G_EN                          FALSE
+#endif
+
 #if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
+  #ifndef NETSTK_CFG_2K_FRAME_EN
+    #define NETSTK_CFG_2K_FRAME_EN                          FALSE
+  #endif /* NETSTK_CFG_2K_FRAME_EN */
+#endif /* NETSTK_CFG_IEEE_802154G_EN */
+
+#ifndef NETSTK_CFG_MAC_SW_AUTOACK_EN
+#define NETSTK_CFG_MAC_SW_AUTOACK_EN                        FALSE
+#endif
+
+#ifndef NETSTK_CFG_AUTO_ONOFF_EN
+#define NETSTK_CFG_AUTO_ONOFF_EN                            FALSE
+#endif
+
 #define NETSTK_CFG_PHY_OP_MODE_1_EN                         TRUE
 #define NETSTK_CFG_PHY_OP_MODE_2_EN                         FALSE
 #define NETSTK_CFG_PHY_OP_MODE_3_EN                         FALSE
-#endif
-#define NETSTK_CFG_WOR_EN                                   FALSE
 
 /*!< Enable/Disable low power mode */
 #ifndef NETSTK_CFG_LOW_POWER_MODE_EN
 #define NETSTK_CFG_LOW_POWER_MODE_EN                        FALSE
 #endif
+
+
+ /*!< Enable/Disable Data Whitening */
+#ifndef NETSTK_CFG_DATA_WHITENING_EN
+#define NETSTK_CFG_DATA_WHITENING_EN                        FALSE
+#endif
+
+/*!< Enable/Disable eWOR support */
+#ifndef NETSTK_CFG_WOR_EN
+#define NETSTK_CFG_WOR_EN                                   FALSE
+#endif
+
+#define NETSTK_CFG_CSMA_MIN_BE                    (uint8_t )(   3u )
+#define NETSTK_CFG_CSMA_MAX_BE                    (uint8_t )(   5u )
+#define NETSTK_CFG_CSMA_MAX_BACKOFF               (uint8_t )(   4u )
+#define NETSTK_CFG_CSMA_UNIT_BACKOFF_US           (uint32_t)( 400u )  /* @50kbps 2FSK */
 
 
 /*
@@ -992,21 +1026,19 @@ void uip_log(char *msg);
   *              This time addition is usually caused by transition time of RF
   *              driver implementation.
   */
-#define MAC_ULE_PORT_SCAN_DURATION_IN_MS                (uint32_t)(  30u )          /*!< fixed, hardware-specific       */
-#define MAC_ULE_PORT_MIN_DELAY_IN_MS                    (uint32_t)(  50U )          /*!< fixed, hardware-specific, 50   */
+#define MAC_ULE_PORT_SCAN_DURATION_IN_MS                (uint32_t)(  20u )          /*!< fixed, hardware-specific       */
 #define MAC_ULE_PORT_ON_TO_OFF_TIME_IN_MS               (uint32_t)(   8u )          /*!< fixed, hardware-specific, 06   */
-#define MAC_ULE_PORT_OFF_TO_ON_TIME_IN_MS               (uint32_t)(  20u )          /*!< fixed, hardware-specific, 15   */
+#define MAC_ULE_PORT_OFF_TO_ON_TIME_IN_MS               (uint32_t)(  10u )          /*!< fixed, hardware-specific, 15   */
 #define MAC_ULE_PORT_TX_RX_TURNAROUND_IN_MS             (uint32_t)(   1u )          /*!< fixed, hardware-specific, 01   */
-#define MAC_ULE_PORT_STROBE_TX_TIME_IN_MS               (uint32_t)(  10u )          /*!< fixed, hardware-specific, 08   */
-#define MAC_ULE_PORT_STROBE_TX_GAP_TIME_IN_MS           (uint32_t)(  10u )          /*!< fixed, hardware-specific, 09   */
+#define MAC_ULE_PORT_STROBE_TX_TIME_IN_MS               (uint32_t)(   8u )          /*!< fixed, hardware-specific, 08   */
+#define MAC_ULE_PORT_STROBE_TX_GAP_TIME_IN_MS           (uint32_t)(   8u )          /*!< fixed, hardware-specific, 09   */
 #define MAC_ULE_PORT_RX_PAYLOAD_OFFSET_IN_MS            (uint32_t)(   2u )          /*!< variable, needed for better performance 2   */
-#define MAC_ULE_PORT_WFA_TIMEOUT_IN_MS                  (MAC_ULE_PORT_STROBE_TX_GAP_TIME_IN_MS)
 
-#define MAC_ULE_PORT_WFP_TIMEOUT_IN_MS                  (MAC_ULE_PORT_STROBE_TX_GAP_TIME_IN_MS +   \
-                                                         MAC_ULE_PORT_TX_RX_TURNAROUND_IN_MS   +   \
-                                                         MAC_ULE_PORT_RX_PAYLOAD_OFFSET_IN_MS  + 10)
+#define MAC_ULE_PORT_WFA_TIMEOUT_IN_MS                  15
+#define MAC_ULE_PORT_WFD_TIMEOUT_IN_MS                  15
 
-#define MAC_ULE_PORT_STROBE_TX_INTERVAL_IN_MS           (uint32_t)( 20U )
+
+#define MAC_ULE_PORT_STROBE_TX_INTERVAL_IN_MS           (uint32_t)(  16U )
 
 #define MAC_ULE_CFG_STROBE_TX_MAX                       (uint8_t )(MAC_ULE_CFG_STROBE_TX_INTERVAL_IN_MS     /   \
                                                                    MAC_ULE_PORT_STROBE_TX_INTERVAL_IN_MS)

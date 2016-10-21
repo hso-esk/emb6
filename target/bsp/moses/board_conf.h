@@ -142,6 +142,16 @@
 #define CC112X_PART_NUMBER                  0x48
 #define CC112X_PART_VERSION                 0x23
 
+#ifndef MODULATION
+#define MODULATION                          MODULATION_2FSK50
+#endif
+
+/* enable auto-acknowledgment of radio driver */
+#define NETSTK_CFG_RF_SW_AUTOACK_EN         TRUE
+
+/* radio transceiver does not support standard-specified checksum */
+#define NETSTK_CFG_RF_CRC_EN                FALSE
+
 /*============================================================================*/
 /*!
 \brief    emb6 board configuration fuction
