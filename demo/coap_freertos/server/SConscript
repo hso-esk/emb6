@@ -28,6 +28,7 @@ freertos_coap = {
         ('DEMO_USE_COAP_FREERTOS',1),
         ('CONF_USE_SERVER',1),
         ('NET_USE_RPL',1),
+        ('USE_FREERTOS'),
 	],
 # GCC flags
 	'CFLAGS' : [
