@@ -79,11 +79,11 @@ __isr_vector:
     .long    Default_Handler       /* Reserved */
     .long    Default_Handler       /* Reserved */
     .long    Default_Handler       /* Reserved */
-    .long    vPortSVCHandler       /* FreeRTOS SVCall Handler */
+    .long    SVC_Handler           /* SVCall Handler */
     .long    DebugMon_Handler      /* Debug Monitor Handler */
     .long    Default_Handler       /* Reserved */
-    .long    xPortPendSVHandler    /* FreeRTOS PendSV Handler */
-    .long    xPortSysTickHandler   /* FreeRTOS SysTick Handler */
+    .long    PendSV_Handler        /* PendSV Handler */
+    .long    SysTick_Handler       /* SysTick Handler */
 
     /* External interrupts */
     .long    DMA_IRQHandler    /* 0 - DMA */
