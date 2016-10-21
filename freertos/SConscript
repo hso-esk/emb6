@@ -1,11 +1,11 @@
 freertos = {
 	'base' : [
-		'*',
-		'include/*',
+		'FreeRTOSV8.2.3/FreeRTOS/Source/*',
+		'FreeRTOSV8.2.3/FreeRTOS/Source/include/*',
 	],
 	'portableCM3' : [
-        'portable/GCC/ARM_CM3/*',
-        'portable/MemMang/*',
+        'FreeRTOSV8.2.3/FreeRTOS/Source/portable/GCC/ARM_CM3/*',
+        'FreeRTOSV8.2.3/FreeRTOS/Source/portable/MemMang/heap_1',
     ],	
 
 # C global defines
