@@ -1870,6 +1870,13 @@ static uint8_t output(const uip_lladdr_t *localdest)
 				printf("sicslowpan: (REED) Forwarding packet to parent router.\n\r");
 				send_packet(&dest);
 
+				printf("XxXxXxXxXxXxXxXxX\n\r");
+				printf("packetbuf_ptr[...] = \n\r");
+				for ( uint8_t i = 0; i < uip_len; i++ ) {
+					printf("%02x", packetbuf_ptr[i]);
+				}
+				printf("\n\rXxXxXxXxXxXxXxXxX\n\r");
+
 			} else if ( thrd_dev.net_type == THRD_DEV_NETTYPE_ROUTER || thrd_dev.net_type == THRD_DEV_NETTYPE_LEADER ) {
 				// Check whether the destination address is a RLOC address.
 				if ( thrd_is_rloc_addr(&dest_addr) ) {	// RLOC.
@@ -1880,7 +1887,7 @@ static uint8_t output(const uip_lladdr_t *localdest)
 					// packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_SHORTADDRMODE);
 
 					// Obtain the destination RLOC16 from the RLOC IID.
-					uint16_t dest_rloc16 = thrd_extract_rloc16_from_rloc_address(&dest_addr);
+					uint16_t dest_rloc16 = thrd_extract_rloc16_from_rloc_address_htons(&dest_addr);
 
 					printf("-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-\n\r");
 					printf("RLOC16 = %04x\n\r", dest_rloc16);
@@ -1948,6 +1955,13 @@ static uint8_t output(const uip_lladdr_t *localdest)
 						 * destination RLOC16. Determine the next hop RLOC using the routing table and set the IEEE
 						 * 802.15.4 destination using the next hop's RLOC16.
 						 */
+
+						printf("XxXxXxXxXxXxXxXxX\n\r");
+						printf("packetbuf_ptr[...] = \n\r");
+						for ( uint8_t i = 0; i < uip_len; i++ ) {
+							printf("%02x", packetbuf_ptr[i]);
+						}
+						printf("\n\rXxXxXxXxXxXxXxXxX\n\r");
 
 						printf("sicslowpan: Send packet including the 6LoWPAN mesh header.\n\r");
 
@@ -2152,6 +2166,8 @@ input(void)
 	uncomp_hdr_len = 0;
 	packetbuf_hdr_len = 0;
 
+	uint8_t mesh_hdr_len = 0;
+
 	/* The MAC puts the 15.4 payload inside the packetbuf data buffer */
 	packetbuf_ptr = packetbuf_dataptr();
 
@@ -2172,7 +2188,8 @@ input(void)
 	 * we look for is the mesh header.
 	 */
 	if ( ((GET16(PACKETBUF_FRAG_PTR, PACKETBUF_MESH_HEADER_POS) & 0xC000) >> 14) == SICSLOWPAN_TYPE_MESH_HEADER ) {
-		packetbuf_hdr_len += 1;	// The position of the Short Address or EUI-64.
+		// packetbuf_hdr_len += 1;	// The position of the Short Address or EUI-64.
+		mesh_hdr_len += 1;
 		// Mesh header used.
 		uint8_t mesh_hdr_config = packetbuf_ptr[PACKETBUF_MESH_HEADER_POS];
 		uint8_t hops_left = mesh_hdr_config & 0x0f;
@@ -2183,8 +2200,9 @@ input(void)
 #if ( SICSLOWPAN_MESH_HEADER_V == MESH_HEADER_V_EUI_64_LONG_ADDR )	// Originator address: Long address mode (EUI-64).
 		uint8_t orig_long_addr[8] = 0;
 		if ( (mesh_hdr_config & 0x20) >> 5 == 0 ) {		// Long address used (V = 0).
-			memcpy(&orig_long_addr, packetbuf_ptr + packetbuf_hdr_len, 8);
-			packetbuf_hdr_len += 8;
+			memcpy(&orig_long_addr, packetbuf_ptr + mesh_hdr_len, 8);
+			// packetbuf_hdr_len += 8; LZ.
+			mesh_hdr_len += 2;
 			printf("6LoWPAN: Incoming packet containing mesh header (V = 0).\n");
 		} else {	// Short address used but not supported (V = 1).
 			printf("6LoWPAN: Incoming packet containing mesh header (V = 1) -> short address mode not supported.\n");
@@ -2192,9 +2210,10 @@ input(void)
 #elif ( SICSLOWPAN_MESH_HEADER_V == MESH_HEADER_V_SHORT_ADDR )	// Originator address: Short address mode.
 		uint16_t orig_short_addr = 0xff;
 		if ( (mesh_hdr_config & 0x20) >> 5 == 1 ) {		// Short Address used.
-			memcpy(&orig_short_addr, packetbuf_ptr + packetbuf_hdr_len, 2);
+			memcpy(&orig_short_addr, packetbuf_ptr + mesh_hdr_len, 2);
 			uint8_t orig_rid = THRD_EXTRACT_ROUTER_ID(orig_short_addr);
-			packetbuf_hdr_len += 2;
+			// packetbuf_hdr_len += 2; LZ.
+			mesh_hdr_len += 2;
 			printf("6LoWPAN: Incoming packet containing mesh header (V = 1).\n");
 			printf("6LoWPAN: Originator short address = %04x\n\r", orig_short_addr);
 			printf("6LoWPAN: Originator router ID = %d\n\r", orig_rid);
@@ -2207,9 +2226,10 @@ input(void)
 #if ( SICSLOWPAN_MESH_HEADER_F == MESH_HEADER_F_EUI_64_LONG_ADDR )	// Destination address: Long address mode (EUI-64).
 		uint8_t dest_long_addr[8] = 0;
 		if ( (mesh_hdr_config & 0x20) >> 5 == 0 ) {		// Long address used (V = 0).
-			memcpy(&dest_long_addr, packetbuf_ptr + packetbuf_hdr_len, 8);
+			memcpy(&dest_long_addr, packetbuf_ptr + mesh_hdr_len, 8);
 			// TODO Check whether the packet is destined to me.
-			packetbuf_hdr_len += 8;
+			// packetbuf_hdr_len += 8; LZ.
+			mesh_hdr_len += 2;
 			printf("6LoWPAN: Incoming packet containing mesh header (F = 0).\n");
 		} else {	// Short address used but not supported (V = 1).
 			printf("6LoWPAN: Incoming packet containing mesh header (F = 1) -> short address mode not supported.\n");
@@ -2217,10 +2237,16 @@ input(void)
 #elif ( SICSLOWPAN_MESH_HEADER_F == MESH_HEADER_F_SHORT_ADDR )	// Destination address: Short address mode.
 		uint16_t dest_short_addr = 0xff;
 		if ( (mesh_hdr_config & 0x20) >> 5 == 1 ) {		// Short Address used.
-			memcpy(&dest_short_addr, packetbuf_ptr + packetbuf_hdr_len, 2);
+			memcpy(&dest_short_addr, packetbuf_ptr + mesh_hdr_len, 2);
 
 #ifdef THRD_SICSLOWPAN_ROUTING
+			dest_short_addr = uip_htons(dest_short_addr);	// Arrange byte order.
+
 			uint8_t dest_rid = THRD_EXTRACT_ROUTER_ID(dest_short_addr);
+
+			printf("6LoWPAN: Destination short address = %04x\n\r", dest_short_addr);
+			printf("6LoWPAN: Destination router ID = %04x\n\r", dest_rid);
+
 			// Check whether the packet is destined to me.
 			if ( dest_rid == thrd_iface.router_id ) {
 				printf("6LoWPAN: Packet destined to my field of responsibility.\n\r");
@@ -2246,7 +2272,7 @@ input(void)
 
 					thrd_rdb_route_t *route;
 					// route = thrd_rdb_route_lookup(dest_rid);
-					route = thrd_rdb_route_lookup(0);
+					route = thrd_rdb_route_lookup(dest_rid);
 
 					if ( route != NULL ) {
 
@@ -2280,13 +2306,13 @@ input(void)
 			}
 #endif /* THRD_SICSLOWPAN_ROUTING */
 
-			packetbuf_hdr_len += 2;
+			mesh_hdr_len += 2;
 			printf("6LoWPAN: Incoming packet containing mesh header (F = 1).\n");
 			printf("6LoWPAN: Destination short address = %04x\n\r", dest_short_addr);
 			printf("6LoWPAN: Destination router ID = %d\n\r", dest_rid);
 			printf("6LoWPAN: Destination child ID = %d\n\r", THRD_EXTRACT_CHILD_ID(dest_short_addr));
 		} else {	// EUI-64 used.
-			packetbuf_hdr_len += 8;
+			mesh_hdr_len += 8;
 			printf("6LoWPAN: Incoming packet containing mesh header (F = 0) -> long address mode (EUI-64) not supported.\n");
 		}
 #endif /* SICSLOWPAN_MESH_HEADER_F */
@@ -2295,7 +2321,7 @@ input(void)
 		 * Since we support the mesh header, the second header
 		 * we look for is the fragmentation header.
 		 */
-		switch((GET16(PACKETBUF_FRAG_PTR, packetbuf_hdr_len) & 0xf800) >> 8) {
+		switch((GET16(PACKETBUF_FRAG_PTR, packetbuf_hdr_len + mesh_hdr_len) & 0xf800) >> 8) {
 		case SICSLOWPAN_DISPATCH_FRAG1:
 			PRINTFI("sicslowpan input: FRAG1 ");
 			frag_offset = 0;
@@ -2496,6 +2522,9 @@ input(void)
 		/* this is a FRAGN, skip the header compression dispatch section */
 		goto copypayload;
 	}
+
+	packetbuf_hdr_len += mesh_hdr_len;
+
 #endif /* SICSLOWPAN_CONF_FRAG */
 
 	/* Process next dispatch and headers */
