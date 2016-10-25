@@ -129,9 +129,17 @@ thrd_extract_router_id_from_rloc_linkaddr(linkaddr_t *link_addr)
 /* --------------------------------------------------------------------------- */
 
 uint16_t
-thrd_extract_rloc16_from_rloc_address(uip_ipaddr_t *rloc_addr)
+thrd_extract_rloc16_from_rloc_address_htons(uip_ipaddr_t *rloc_addr)
 {
 	return ((uint16_t) uip_htons(rloc_addr->u16[7]));
+}
+
+/* --------------------------------------------------------------------------- */
+
+uint16_t
+thrd_extract_rloc16_from_rloc_address(uip_ipaddr_t *rloc_addr)
+{
+	return ((uint16_t) rloc_addr->u16[7]);
 }
 
 /* --------------------------------------------------------------------------- */

@@ -137,6 +137,12 @@ extern uint16_t thrd_extract_child_id_from_rloc_addr(uip_ipaddr_t *rloc_addr);
 extern uint8_t thrd_extract_router_id_from_rloc_linkaddr(linkaddr_t *link_addr);
 
 /**
+ * Extract the RLOC16 from a Thread IPv6 address (htons).
+ * @return The RLOC16 (htons).
+ */
+uint16_t thrd_extract_rloc16_from_rloc_address_htons(uip_ipaddr_t *rloc_addr);
+
+/**
  * Extract the RLOC16 from a Thread IPv6 RLOC address.
  * @return The RLOC16.
  */
