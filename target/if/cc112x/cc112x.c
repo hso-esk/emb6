@@ -851,7 +851,6 @@ static void rf_pktRxTxBeginISR(void *p_arg) {
   struct s_rf_ctx *p_ctx = &rf_ctx;
 
   /* entry */
-  bsp_extIntClear(RF_INT_PKT_BEGIN);
   cc112x_spiRegRead(CC112X_MARC_STATUS1, &marc_status, 1);
   chip_state = RF_READ_CHIP_STATE();
   TRACE_LOG_MAIN("<B>: ds=%02x, ms=%02x, cs=%02x", p_ctx->state, marc_status, chip_state);
@@ -957,7 +956,6 @@ static void rf_rxFifoThresholdISR(void *p_arg) {
   struct s_rf_ctx *p_ctx = &rf_ctx;
 
   /* entry */
-  bsp_extIntClear(RF_INT_RXFIFO_THR);
   if ((p_ctx->state != RF_STATE_RX_SYNC) &&
       (p_ctx->state != RF_STATE_TX_RXACK_SYNC)) {
     return;
@@ -1106,7 +1104,6 @@ static void rf_pktRxTxEndISR(void *p_arg) {
   struct s_rf_ctx *p_ctx = &rf_ctx;
 
   /* entry */
-  bsp_extIntClear(RF_INT_PKT_END);
   if ((p_ctx->cfgWOREnabled == TRUE) &&
       ((p_ctx->state == RF_STATE_RX_IDLE) ||
        (p_ctx->state == RF_STATE_RX_FINI) ||
