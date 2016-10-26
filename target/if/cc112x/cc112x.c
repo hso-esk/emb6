@@ -453,6 +453,7 @@ static void rf_init(void *p_netstk, e_nsErr_t *p_err)
   RF_WR_REGS(cc112x_cfg_ieee802154g_default);
 #endif
 
+  /* set FIFO threshold */
   RF_SET_FIFO_THR(RF_CFG_FIFO_THR);
 
   /* calibrate radio according to cc112x errata */
