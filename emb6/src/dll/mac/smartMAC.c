@@ -586,7 +586,7 @@ static void mac_txUnicast(struct s_smartMAC *p_ctx, uint8_t *p_data, uint16_t le
             mac_updateWakeupTable(p_ctx, dstShortAddr);
           }
         }
-        trace_printf("<TXDELAY> estimated=%d, actual=%d, numStrobeSent=%d", estimatedDelay, actualDelay, p_ctx->maxUnicastCounter - counter);
+        TRACE_LOG_MAIN("<TXDELAY> estimated=%d, actual=%d, numStrobeSent=%d", estimatedDelay, actualDelay, p_ctx->maxUnicastCounter - counter);
 #endif
 
         /* the strobe was acknowledged. The MAC then commence transmission of
