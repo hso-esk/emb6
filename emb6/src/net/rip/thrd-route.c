@@ -901,7 +901,7 @@ thrd_rdb_route_update(uint8_t router_id, uint8_t destination, uint8_t cost_repor
 			l = thrd_rdb_link_lookup(destination);
 
 			if ( l != NULL ) {
-				link_cost = thrd_rdb_calc_link_cost(thrd_rdb_link_lookup(router_id)->L_incoming_quality);
+				link_cost = thrd_rdb_calc_link_cost(thrd_rdb_link_lookup(router_id)->L_incoming_quality);	// TODO Dangerous!
 
 				/* If the destination router id is a neighbor and the new route is not
 				 * better, return.
