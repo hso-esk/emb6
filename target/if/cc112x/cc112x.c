@@ -273,7 +273,6 @@ struct s_rf_ctx {
   uint8_t cfgFreqChanNum;
   uint8_t cfgWOREnabled;
   uint8_t regVerify;
-  uint8_t isAckRequired;
   uint8_t pktLenMode;
 
   uint16_t rxBytesCounter;
