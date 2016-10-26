@@ -46,6 +46,7 @@
 #include "dllsec_null.h"
 #include "framer_802154.h"
 #include "packetbuf.h"
+#include "logger.h"
 
 static s_ns_t *pdllsec_netstk;
 static mac_callback_t dllsec_txCbFnct;
@@ -88,7 +89,10 @@ static void dllsec_cbTx(void *p_arg, e_nsErr_t *p_err)
       break;
   }
 
-  dllsec_txCbFnct(p_arg, status, retx);
+  if (dllsec_txCbFnct != NULL) {
+    dllsec_txCbFnct(p_arg, status, retx);
+    dllsec_txCbFnct = NULL;
+  }
 }
 
 /*---------------------------------------------------------------------------*/
@@ -100,15 +104,15 @@ static void dllsec_send(mac_callback_t sent, void *p_arg)
   packetbuf_set_attr(PACKETBUF_ATTR_FRAME_TYPE, FRAME802154_DATAFRAME);
 
   /*
-   * set TX callback function and argument
-   */
-  pdllsec_netstk->dllc->ioctrl(NETSTK_CMD_TX_CBFNCT_SET, (void *) dllsec_cbTx, &err);
-  pdllsec_netstk->dllc->ioctrl(NETSTK_CMD_TX_CBARG_SET, p_arg, &err);
-
-  /*
    * Issue next lower layer to transmit the prepared packet
    */
-  pdllsec_netstk->dllc->send(packetbuf_hdrptr(), packetbuf_totlen(), &err);
+  pdllsec_netstk->dllc->send( packetbuf_hdrptr(), packetbuf_totlen(), &err );
+  if (err != NETSTK_ERR_NONE) {
+    TRACE_LOG_ERR("<DLLS> e=-%d", err);
+  }
+
+  /* inform upper layer of the TX status */
+  dllsec_cbTx(p_arg, &err);
 }
 
 /*---------------------------------------------------------------------------*/
