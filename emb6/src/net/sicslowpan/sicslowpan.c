@@ -2559,22 +2559,6 @@ input(void)
 			callback->input_callback();
 		}
 
-		printf("SICSLOWPAN_IP_BUF->len[1] = %d\n\r", SICSLOWPAN_IP_BUF->len[1]);
-
-		printf("SICSLOWPAN_IP_BUF->srcipaddr: ");
-		for( uint8_t i = 0; i < 16; i++ ) {
-			printf("%02x", SICSLOWPAN_IP_BUF->srcipaddr.u8[i]);
-		}
-		printf("\n\r");
-
-		printf("SICSLOWPAN_IP_BUF->destipaddr: ");
-		for( uint8_t i = 0; i < 16; i++ ) {
-			printf("%02x", SICSLOWPAN_IP_BUF->destipaddr.u8[i]);
-		}
-		printf("\n\r");
-
-		printf("sicslowpan: TEST TEST TEST.\n\r");
-
 		tcpip_input();
 #if SICSLOWPAN_CONF_FRAG
 	}
