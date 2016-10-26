@@ -54,12 +54,9 @@
  */
 #include "emb6.h"
 #include "board_conf.h"
-
 #include "cc112x.h"
 #include "cc112x_cfg.h"
 #include "cc112x_spi.h"
-
-#include "rt_tmr.h"
 #include "ctimer.h"
 #include "packetbuf.h"
 #include "evproc.h"
@@ -77,9 +74,6 @@
 #if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
 #include "crc.h"
 #endif
-
-#define RF_CFG_DEBUG_EN                     FALSE
-#define RF_CFG_TXFIFO_WRITE_CHK_EN          FALSE
 
 
 /*
@@ -310,15 +304,6 @@ struct s_rf_ctx {
   uint8_t txStatus;
   e_nsErr_t txErr;
 
-#if (RF_CFG_DEBUG_EN == TRUE)
-  struct ctimer dbgTmr;
-  e_rfState_t dbgChipState;
-  uint8_t dbgEvtStatus;
-#endif
-
-#if (EMB6_TEST_CFG_CONT_RX_EN == TRUE)
-  uint16_t numRxPackets;
-#endif
 };
 
 #define RF_TX_STATUS_NONE         0x00
@@ -403,10 +388,6 @@ static void rf_cca(struct s_rf_ctx *p_ctx, e_nsErr_t *p_err);
 static uint8_t rf_filterAddr(struct s_rf_ctx *p_ctx);
 #endif
 
-#if (CC112X_CFG_RETX_EN == TRUE)
-static void cc112x_retx(e_nsErr_t *p_err);
-#endif
-
 static void rf_chkReset(struct s_rf_ctx *p_ctx);
 static void rf_reset(void);
 static void rf_chkPartnumber(e_nsErr_t *p_err);
@@ -417,14 +398,6 @@ static void rf_txPowerGet(int8_t *p_power, e_nsErr_t *p_err);
 static void rf_chanNumSet(uint8_t chan_num, e_nsErr_t *p_err);
 static void rf_opModeSet(e_nsRfOpMode mode, e_nsErr_t *p_err);
 static void rf_readRSSI(int8_t *p_val, e_nsErr_t *p_err);
-
-#if (RF_CFG_DEBUG_EN == TRUE)
-static void rf_tmrDbgCb(void *p_arg);
-#endif
-
-static void rf_writeTxFifo(struct s_rf_ctx *p_ctx, uint8_t totNumBytes, e_nsErr_t *p_err);
-static void rf_intConfig(uint8_t iocfg, en_targetExtInt_t e_extInt, en_targetIntEdge_t e_edge, pfn_intCallb_t cbfnct);
-
 
 
 /*
@@ -492,11 +465,6 @@ static void rf_init(void *p_netstk, e_nsErr_t *p_err)
   /* configure operating mode and channel number */
   p_ctx->cfgFreqChanNum = 0;
   p_ctx->cfgOpMode = NETSTK_RF_OP_MODE_CSM;
-
-  /* debug watchdog timer */
-#if (RF_CFG_DEBUG_EN == TRUE)
-  ctimer_set(&p_ctx->dbgTmr, 10000, rf_tmrDbgCb, p_ctx);
-#endif
 
   /* transition to SLEEP state */
   rf_sleep_entry(p_ctx);
@@ -777,17 +745,6 @@ static void rf_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err) {
 
     case NETSTK_CMD_RF_CCA_GET:
       rf_cca(p_ctx, p_err);
-      break;
-
-    case NETSTK_CMD_RF_RETX:
-#if (CC112X_CFG_RETX_EN == TRUE)
-      /* retransmit the last frame
-      * - write TxFirst to the previous value
-      */
-      cc112x_retx(p_err);
-#else
-      *p_err = NETSTK_ERR_CMD_UNSUPPORTED;
-#endif
       break;
 
     case NETSTK_CMD_RF_IS_RX_BUSY:
@@ -1406,22 +1363,9 @@ static void rf_rx_chksum(struct s_rf_ctx *p_ctx) {
  */
 static void rf_rx_fini(struct s_rf_ctx *p_ctx) {
 
-#if (EMB6_TEST_CFG_CONT_RX_EN == TRUE)
-  /* exit and re-enter RX state */
-  rf_rx_exit(p_ctx);
-  rf_rx_entry(p_ctx);
-
-  ++p_ctx->numRxPackets;
-  trace_printf("%d | %08x | %d", p_ctx->rxBytesCounter, p_ctx->rxChksum, p_ctx->numRxPackets);
-  if ((p_ctx->numRxPackets % 10) == 0) {
-    trace_printf("%d | %d", p_ctx->numRxPackets, p_ctx->rxRSSI);
-  }
-  return;
-#else
   /* signal upper layer */
   e_nsErr_t err;
   rf_recv(p_ctx->rxBuf, p_ctx->rxBytesCounter, &err);
-#endif
 }
 
 
@@ -1712,24 +1656,6 @@ static void rf_exceptionHandler(struct s_rf_ctx *p_ctx, uint8_t marcStatus, e_rf
  ********************************************************************************
  */
 
-#if (RF_CFG_DEBUG_EN == TRUE)
-/**
- * @brief debugging timer callback
- * @param p_arg   point to callback data
- */
-static void rf_tmrDbgCb(void *p_arg) {
-  struct s_rf_ctx *p_ctx = (struct s_rf_ctx *)p_arg;
-
-  /* is the radio awake? */
-  if ((p_ctx->state & RF_STATE_MASK) != RF_STATE_SLEEP) {
-    /* then record chip state */
-    p_ctx->dbgChipState = RF_READ_CHIP_STATE();
-  }
-  trace_printf("DBG cs=%02x, ds=%02x, evt=%d",
-      p_ctx->dbgChipState, p_ctx->state, p_ctx->dbgEvtStatus);
-}
-#endif
-
 /**
  * @brief put the radio into IDLE state
  * @param p_ctx   point to variable holding radio context structure
@@ -1913,17 +1839,6 @@ static void rf_writeTxFifo(struct s_rf_ctx *p_ctx, uint8_t totNumBytes, e_nsErr_
     p_ctx->txDataPtr += numWrBytes;
     totNumBytes -= numWrBytes;
   }
-
-#if (RF_CFG_TXFIFO_WRITE_CHK_EN == TRUE)
-  uint8_t numTxBytes;
-
-  /* verifying number of written bytes */
-  cc112x_spiRegRead(CC112X_NUM_TXBYTES, &numTxBytes, 1);
-  if (numTxBytes != totNumBytes) {
-    TRACE_LOG_ERR("<send> failed to write to TXFIFO %d/%d", numTxBytes, totNumBytes);
-    *p_err = NETSTK_ERR_FATAL;
-  }
-#endif
 }
 
 
@@ -1995,15 +1910,6 @@ static uint8_t rf_filterAddr(struct s_rf_ctx *p_ctx) {
       /* store length of ACK to send for later setting packet length modes */
       p_ctx->txDataLen = ack_len;
 #endif /* NETSTK_CFG_IEEE_802154G_EN */
-
-#if (RF_CFG_TXFIFO_WRITE_CHK_EN == TRUE)
-      uint8_t numTxBytes = 0;
-      cc112x_spiRegRead(CC112X_NUM_TXBYTES, &numTxBytes, 1);
-      if (numTxBytes != ack_len) {
-        TRACE_LOG_ERR("<ACK> TXFIFOWR_FAILED, seq=%02x, cs=%02x", ack[PHY_HEADER_LEN + 2], RF_READ_CHIP_STATE());
-        ret = FALSE;
-      }
-#endif /* RF_CFG_TXFIFO_WRITE_CHK_EN */
     }
   }
   return ret;
@@ -2194,63 +2100,6 @@ static void rf_cca(struct s_rf_ctx *p_ctx, e_nsErr_t *p_err) {
     }
   }
 }
-
-
-/**
- * @brief   Check if radio was reset by simply comparing default frequency setting to the
- *          operation frequency
- * @param p_ctx   point to radio driver structure
- */
-#if (CC112X_CFG_RETX_EN == TRUE)
-static void cc112x_retx(e_nsErr_t *p_err)
-{
-  if ((rf_ctx.state != RF_STATE_RX_IDLE) &&
-      (rf_ctx.state != RF_STATE_IDLE)) {
-    *p_err = NETSTK_ERR_BUSY;
-  } else {
-    /* entry:
-    * - go to the IDLE state
-    * - disable RX interrupt
-    */
-    cc112x_gotoIdle();
-    rf_waitRdy();
-    RF_INT_DISABLE();
-
-    /* do:
-    * - go to the TX_BUSY state
-    * - rewrite TX first pointer
-    * - enable TX interrupts
-    * - issue STX strobe
-    */
-    rf_ctx.state = RF_STATE_TX_BUSY;
-    cc112x_spiRegWrite(CC112X_TXFIRST, &rf_txFirstPtr, 1);
-
-
-    LED_TX_ON();
-    RF_INT_TX_ENABLED();
-    cc112x_spiCmdStrobe(CC112X_STX);
-
-    /* wait for packet to be sent */
-    uint16_t iteration = 0xffff;
-    while ((rf_ctx.state == RF_STATE_TX_BUSY) && (iteration > 0)) {
-      iteration--;
-    }
-    if (rf_ctx.state == RF_STATE_TX_FINI) {
-      /* TX finished successfully */
-      *p_err = NETSTK_ERR_NONE;
-    } else {
-      /* TX error handling */
-      *p_err = NETSTK_ERR_TX_TIMEOUT;
-    }
-
-    /* exit:
-    * - go to state RX
-    */
-    LED_TX_OFF();
-    cc112x_gotoRX();
-  }
-}
-#endif
 
 
 static void rf_chkReset(struct s_rf_ctx *p_ctx) {
