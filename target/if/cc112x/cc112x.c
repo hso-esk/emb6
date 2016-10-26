@@ -1205,15 +1205,22 @@ static void rf_pktRxTxEndISR(void *p_arg) {
  * @param p_ctx point to variable holding radio context structure
  */
 static void rf_sleep_entry(struct s_rf_ctx *p_ctx) {
+
+  uint8_t isIdleOk;
+
   /* force radio to enter IDLE state */
-  rf_gotoIdle(p_ctx);
+  isIdleOk = rf_gotoIdle(p_ctx);
+  if (isIdleOk == TRUE) {
+    /* configure RX GPIOx */
+    RF_WR_REGS(cc112x_cfg_iocfgOff);
 
-  /* configure RX GPIOx */
-  RF_WR_REGS(cc112x_cfg_iocfgOff);
-
-  /* finally put the radio to POWERDOWN state */
-  p_ctx->state = RF_STATE_SLEEP;
-  cc112x_spiCmdStrobe(CC112X_SPWD);
+    /* finally put the radio to POWERDOWN state */
+    p_ctx->state = RF_STATE_SLEEP;
+    cc112x_spiCmdStrobe(CC112X_SPWD);
+  }
+  else {
+    TRACE_LOG_ERR("<SLEEP> failed to enter");
+  }
 }
 
 
