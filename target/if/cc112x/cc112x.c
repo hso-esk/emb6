@@ -158,7 +158,7 @@
 #endif
 
 #define RF_READ_CHIP_STATE()  \
-  (cc112x_spiCmdStrobe(CC112X_SNOP) & 0x70)
+  (cc112x_spiCmdStrobe(CC112X_SNOP) & CC112X_STATE_MASK)
 
 /*!< write multiple registers */
 #define RF_WR_REGS(regs_) \
