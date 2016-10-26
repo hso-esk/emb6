@@ -362,10 +362,12 @@ static void _hal_uartInit( void )
 static void _hal_tcCb( void )
 {
   /* Indicate timer update to the emb6 timer */
+  hal_enterCritical();
   if (l_hal_tick % CONF_TICK_SEC == 0) {
     l_hal_sec++;
   }
   l_hal_tick++;
+  hal_exitCritical();
 
   /* update real-time timers*/
   rt_tmr_update();
@@ -403,11 +405,9 @@ void TIMER1_IRQHandler()
 {
   uint32_t flags;
 
-  INT_Disable();
   flags = TIMER_IntGet(TIMER1);
   _hal_tcCb();
   TIMER_IntClear(TIMER1, flags);
-  INT_Enable();
 }
 
 void USART0_RX_IRQHandler(void)
