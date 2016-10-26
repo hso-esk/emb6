@@ -1406,6 +1406,7 @@ static void rf_rx_term(struct s_rf_ctx *p_ctx) {
 
   /* set sub-state */
   p_ctx->state = RF_STATE_RX_TERM;
+  memset(p_ctx->rxBuf, 0, sizeof(p_ctx->rxBuf));
 
   /* exit RX state */
   rf_rx_exit(p_ctx);
