@@ -344,8 +344,8 @@ static void rf_setPktLen(uint8_t mode, uint16_t len);
 #endif
 
 static uint8_t rf_gotoIdle(struct s_rf_ctx *p_ctx);
-static void rf_gotoRx(struct s_rf_ctx *p_ctx);
-static void rf_gotoWor(struct s_rf_ctx *p_ctx);
+static uint8_t rf_gotoRx(struct s_rf_ctx *p_ctx);
+static uint8_t rf_gotoWor(struct s_rf_ctx *p_ctx);
 
 static void rf_listen(struct s_rf_ctx *p_ctx);
 
@@ -1689,10 +1689,13 @@ static uint8_t rf_gotoIdle(struct s_rf_ctx *p_ctx) {
  * @brief put the radio into idle listening state
  * @param p_ctx   point to variable holding radio context structure
  */
-static void rf_gotoRx(struct s_rf_ctx *p_ctx) {
+static uint8_t rf_gotoRx(struct s_rf_ctx *p_ctx) {
+
+  uint8_t isIdleOk;
 
   /* did the transceiver enter Idle state successfully? */
-  if (rf_gotoIdle(p_ctx) == TRUE) {
+  isIdleOk = rf_gotoIdle(p_ctx);
+  if (isIdleOk == TRUE) {
     /* disable RX termination in RX mode */
     if (p_ctx->cfgWOREnabled == TRUE) {
       uint8_t rfendCfg0;
@@ -1703,12 +1706,22 @@ static void rf_gotoRx(struct s_rf_ctx *p_ctx) {
       cc112x_spiRegWrite(CC112X_RFEND_CFG0, &rfendCfg0, 1);
     }
 
+    /* is IEEE Std. 802.15.4g supported? */
+#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
+    /* then switch back to infinite packet length mode */
+    rf_setPktLen(CC112X_PKT_LEN_MODE_INFINITE, RF_MAX_FIFO_LEN);
+#endif
+
+    /* configure RF interrupt */
+    rf_intConfig(RF_IOCFG_RXFIFO_THR, RF_INT_RXFIFO_THR, RF_INT_EDGE_RXFIFO_THR, rf_rxFifoThresholdISR);
+
     /* wait until radio enters RX state */
     cc112x_spiCmdStrobe(CC112X_SRX);
     while (RF_READ_CHIP_STATE() != RF_STATE_RX_IDLE) {
       /* do nothing */
     }
   }
+  return isIdleOk;
 }
 
 
@@ -1716,10 +1729,18 @@ static void rf_gotoRx(struct s_rf_ctx *p_ctx) {
  * @brief put the radio into WOR state
  * @param p_ctx   point to variable holding radio context structure
  */
-static void rf_gotoWor(struct s_rf_ctx *p_ctx) {
+static uint8_t rf_gotoWor(struct s_rf_ctx *p_ctx) {
+
+  uint8_t isIdleOk;
+
+  p_ctx->numSniffs = 0;
+  p_ctx->numPqtReached = 0;
 
   /* did the transceiver enter Idle state successfully? */
-  if (rf_gotoIdle(p_ctx) == TRUE) {
+  isIdleOk = rf_gotoIdle(p_ctx);
+  if (isIdleOk == TRUE) {
+    /* Setting radio registers must be done in IDLE state when WOR is enabled */
+
     /* enable RX termination in WOR mode */
     if (p_ctx->cfgWOREnabled == TRUE) {
       uint8_t rfendCfg0;
@@ -1730,12 +1751,19 @@ static void rf_gotoWor(struct s_rf_ctx *p_ctx) {
       cc112x_spiRegWrite(CC112X_RFEND_CFG0, &rfendCfg0, 1);
     }
 
+    /* is IEEE Std. 802.15.4g supported? */
+#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
+    /* then switch back to infinite packet length mode */
+    rf_setPktLen(CC112X_PKT_LEN_MODE_INFINITE, RF_MAX_FIFO_LEN);
+#endif
+
+    /* configure RF interrupt */
+    rf_intConfig(RF_IOCFG_RXFIFO_THR, RF_INT_RXFIFO_THR, RF_INT_EDGE_RXFIFO_THR, rf_rxFifoThresholdISR);
+
     /* WOR mode */
     cc112x_spiCmdStrobe(CC112X_SWOR);
   }
-  else {
-    TRACE_LOG_ERR("<WOR> RX while entering WOR");
-  }
+  return isIdleOk;
 }
 
 
@@ -1745,13 +1773,6 @@ static void rf_gotoWor(struct s_rf_ctx *p_ctx) {
  */
 static void rf_listen(struct s_rf_ctx *p_ctx) {
 
-  /* is IEEE Std. 802.15.4g supported? */
-#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
-  /* then switch back to infinite packet length mode */
-  rf_setPktLen(CC112X_PKT_LEN_MODE_INFINITE, RF_MAX_FIFO_LEN);
-#endif
-
-  RF_INT_DISABLED();
   if (p_ctx->cfgWOREnabled == TRUE) {
     /* eWOR mode */
     rf_gotoWor(p_ctx);
@@ -1759,7 +1780,6 @@ static void rf_listen(struct s_rf_ctx *p_ctx) {
     /* RX mode */
     rf_gotoRx(p_ctx);
   }
-  RF_INT_ENABLED();
 }
 
 
