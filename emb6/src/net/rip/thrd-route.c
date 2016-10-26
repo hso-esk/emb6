@@ -588,9 +588,6 @@ thrd_rdb_route_add(uint8_t destination, uint8_t next_hop, uint8_t route_cost)
 {
 	thrd_rdb_route_t *r;
 
-	// Get the valid router id set.
-	// thrd_rdb_id_t *rid;
-
 	LOG_RAW("thrd_rdb_route_add: search route set entry for destination id ");
 	LOG_RAW("%d\n", destination);
 	LOG_RAW("\n\r");
@@ -603,22 +600,6 @@ thrd_rdb_route_add(uint8_t destination, uint8_t next_hop, uint8_t route_cost)
 		 * is valid (Router ID Set). If valid, create one. We first need to
 		 * check if we have room for this route. If not, we remove the
 		 * least recently used one we have. */
-
-		/* We first check to see if the destination router is in our
-		 * Router ID Set (set of valid Router IDs). */
-		// rid = thrd_rdb_rid_lookup(destination);
-
-		// if (rid == NULL) {
-			/* If the router did not have an entry in our Router ID Set,
-			 * return NULL. */
-
-		//	LOG_RAW(ANSI_COLOR_RED "thrd_rdb_route_add: Destination router with router id ");
-		//	LOG_RAW("%d is invalid.", destination);
-		//	LOG_RAW(ANSI_COLOR_RESET "\n\r");
-
-		//	LOG_RAW("-----------------------------------------------------\n\r");
-		//	return NULL;
-		//}
 
 		if (thrd_rdb_route_num_routes() == THRD_CONF_MAX_ROUTES) {
 			/* Removing the oldest route entry from the route table. The
@@ -654,13 +635,15 @@ thrd_rdb_route_add(uint8_t destination, uint8_t next_hop, uint8_t route_cost)
 		r->R_next_hop = next_hop;
 		r->R_route_cost = route_cost;
 
-		LOG_RAW("uip_ds6_route_add: adding route: ");
+		LOG_RAW("thrd_rdb_route_add: adding route: ");
 		LOG_RAW("%d", r->R_destination);
 		LOG_RAW(" via ");
 		LOG_RAW("%d", r->R_next_hop);
 		LOG_RAW("\n\r");
-
 		LOG_RAW("-----------------------------------------------------\n\r");
+
+		// Reset trickle algorithm (MLE advertisement sending rate).
+		thrd_trickle_reset();
 
 	} else {
 
