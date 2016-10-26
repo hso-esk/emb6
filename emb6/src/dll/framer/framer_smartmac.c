@@ -5,11 +5,18 @@
  */
 
 #include "emb6.h"
-#include "rt_tmr.h"
+#include "phy_framer_802154.h"
 #include "framer_smartmac.h"
 #include "packetbuf.h"
 #include "crc.h"
 
+/* MAC header length of SmartMAC's strobe is calculated as follow
+ * FCF(2) + SEQ(1) + PANID(2) + DST.ADDR(2) + SRC.ADDR(2) = 11 */
+#define SMARTMAC_STROBE_MAC_HDR_LEN         ( 11u )
+
+uint8_t frame_smartmac_getStrobeLen(void) {
+  return (PHY_HEADER_LEN + SMARTMAC_STROBE_MAC_HDR_LEN + packetbuf_attr(PACKETBUF_ATTR_MAC_FCS_LEN));
+}
 
 uint16_t frame_smartmac_create(frame_smartmac_st *p_frame, uint8_t *p_buf)
 {

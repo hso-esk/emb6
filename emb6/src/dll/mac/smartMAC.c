@@ -10,51 +10,36 @@
 ********************************************************************************
 */
 #include "emb6.h"
-
 #include "evproc.h"
 #include "packetbuf.h"
 #include "bsp.h"
 #include "logger.h"
 #include "crc.h"
-#include "rt_tmr.h"
 #include "phy_framer_802154.h"
 #include "framer_802154.h"
 #include "framer_smartmac.h"
 
+#include "ctimer.h"
+#include "rt_tmr.h"
 
 /*
 ********************************************************************************
 *                               LOCAL DEFINES
 ********************************************************************************
 */
-#define SMARTMAC_CFG_RXPENDING_TIMEOUT_MAX      1u
-#define SMARTMAC_CFG_CHANSCAN_TIMEOUT_MAX       2u
-#define SMARTMAC_CFG_SELF_TEST_EN             FALSE
-
-
-#if 0
-#define SMARTMAC_CFG_COUNTER_IX                 2u
-#if (DEMO_UDP_SOCKET_ROLE_SERVER == TRUE)
-#define SMARTMAC_CFG_CONTINUOUS_TX_BROADCAST_EN       FALSE
-#define SMARTMAC_CFG_CONTINUOUS_TX_UNICAST_EN         TRUE
-#define SMARTMAC_CFG_CONTINUOUS_RX_EN                 FALSE
-#else
-#define SMARTMAC_CFG_CONTINUOUS_TX_UNICAST_EN         FALSE
-#define SMARTMAC_CFG_CONTINUOUS_TX_BROADCAST_EN       FALSE
-#define SMARTMAC_CFG_CONTINUOUS_RX_EN                 TRUE
-#endif
-#endif
+#define SMARTMAC_CFG_WAKEUP_INTERVAL_OFFSET_MAX     10u
+#define SMARTMAC_CFG_WAKEUP_TBL_SIZE                5u
+#define SMARTMAC_CFG_MIN_NUM_STROBE_TO_BE_SENT      1u
 
 /*
 ********************************************************************************
 *                               LOCAL TYPEDEF
 ********************************************************************************
 */
-typedef enum{
+typedef enum
+{
   E_SMARTMAC_STATE_NON_INIT     = 0x00,
-
   E_SMARTMAC_STATE_OFF          = 0x10,
-
   E_SMARTMAC_STATE_ON           = 0x20,
   E_SMARTMAC_STATE_SCAN         = 0x30,
   E_SMARTMAC_STATE_RX           = 0x40,
@@ -65,9 +50,20 @@ typedef enum{
   E_SMARTMAC_STATE_TX_BROADCAST = 0x52,
   E_SMARTMAC_STATE_TX_UNICAST   = 0x53,
   E_SMARTMAC_STATE_ERR          = 0x60,
-
 }e_smartMACState;
 
+typedef enum
+{
+  E_SMARTMAC_EVENT_RX_EXTEND,
+  E_SMARTMAC_EVENT_RX_DELAY,
+  E_SMARTMAC_EVENT_ASYNC_SCAN_EXIT,
+} e_smartMacEvent;
+
+struct s_wakeupTableEntry {
+  uint32_t lastWakeupInterval;
+  uint16_t destId;
+  uint16_t numStrobeSent;
+};
 
 struct s_smartMAC {
   s_ns_t           *p_netstk;
@@ -75,22 +71,29 @@ struct s_smartMAC {
   nsTxCbFnct_t      cbTxFnct;
   uint32_t          rxDelay;
   e_smartMACState   state;
+  uint8_t           event;
 
-  // smartMAC timing parameters in milliseconds that are relied on underlying layer
+  /* smartMAC timing parameters in milliseconds that are relied on underlying layer */
   uint32_t          sleepTimeout;
   uint8_t           strobeTxInterval;
   uint8_t           scanTimeout;
+  uint8_t           lbtTimeout;
   uint8_t           rxDelayMin;
   uint8_t           rxTimeout;
   uint8_t           rxPendingTimeoutCount;
   uint8_t           maxUnicastCounter;
   uint8_t           maxBroadcastCounter;
 
-  s_rt_tmr_t        tmrPowerUp;
-  s_rt_tmr_t        tmr1Scan;
-  s_rt_tmr_t        tmr1RxPending;
-  s_rt_tmr_t        tmr1RxDelay;
-  s_rt_tmr_t        tmr1TxDelay;
+  /* use more precise timer for wake-up timer */
+  s_rt_tmr_t        tmrWakeup;
+  struct ctimer     tmr1Scan;
+  struct ctimer     tmr1RxPending;
+  struct ctimer     tmr1RxDelay;
+  struct ctimer     tmr1TxDelay;
+
+#if (NETSTK_CFG_LOOSELY_SYNC_EN == TRUE)
+  struct s_wakeupTableEntry wakeupTable[SMARTMAC_CFG_WAKEUP_TBL_SIZE];
+#endif
 };
 
 
@@ -113,18 +116,18 @@ static void mac_lbt(struct s_smartMAC *p_ctx, e_nsErr_t *p_err);
 
 static void mac_eventHandler(c_event_t c_event, p_data_t p_data);
 
-/* unit-test */
-#if (SMARTMAC_CFG_SELF_TEST_EN == TRUE)
-static void mac_selfTest(struct s_smartMAC *p_ctx);
-#endif
-
 /* timeout callback functions */
-static void mac_tmrSleepCb(void *p_arg);
+static void mac_tmrWakeupCb(void *p_arg);
 static void mac_tmrScanCb(void *p_arg);
 static void mac_tmrRxPendingCb(void *p_arg);
 static void mac_tmrRxDelayCb(void *p_arg);
 
 static uint32_t mac_calcRxDelay(struct s_smartMAC *p_ctx, uint8_t counter);
+
+#if (NETSTK_CFG_LOOSELY_SYNC_EN == TRUE)
+static void mac_updateWakeupTable(struct s_smartMAC *p_ctx, uint16_t destId);
+static uint32_t mac_calcTxDelay(struct s_smartMAC *p_ctx, uint16_t destId);
+#endif
 
 /* state-event handling functions */
 static void mac_off_entry(struct s_smartMAC *p_ctx);
@@ -143,8 +146,10 @@ static void mac_rxPending_exit(struct s_smartMAC *p_ctx);
 static void mac_rxDelay_entry(struct s_smartMAC *p_ctx);
 static void mac_rxDelay_exit(struct s_smartMAC *p_ctx);
 
+#if (NETSTK_CFG_LOOSELY_SYNC_EN == TRUE)
 static void mac_txDelay_entry(struct s_smartMAC *p_ctx);
 static void mac_txDelay_exit(struct s_smartMAC *p_ctx);
+#endif
 
 static void mac_txBroadcast_entry(struct s_smartMAC *p_ctx);
 static void mac_txBroadcast_exit(struct s_smartMAC *p_ctx);
@@ -158,7 +163,7 @@ static void mac_txUnicast_exit(struct s_smartMAC *p_ctx);
 ********************************************************************************
 */
 static struct s_smartMAC smartMAC;
-
+static uint8_t smartMacStrobe[15];
 
 /*
 ********************************************************************************
@@ -187,7 +192,9 @@ extern uip_lladdr_t uip_lladdr;
 static void smartMAC_init (void *p_netstk, e_nsErr_t *p_err) {
   struct s_smartMAC *p_ctx = &smartMAC;
   packetbuf_attr_t macShortAddr;
+  uint8_t strobeLen;
 
+  /* store pointer to the network stack */
   p_ctx->p_netstk = (s_ns_t *)p_netstk;
 
   /* set MAC address */
@@ -215,47 +222,47 @@ static void smartMAC_init (void *p_netstk, e_nsErr_t *p_err) {
   packetbuf_set_attr(PACKETBUF_ATTR_MAC_UNIT_BACKOFF_PERIOD, macUnitBackoffPeriod);
 
   /* compute and set macAckWaitDuration attribute */
-  macAckWaitDuration = macUnitBackoffPeriod + phyTurnaroundTime +
-      phySHRDuration + 6 * phySymbolsPerOctet * phySymbolPeriod;
+  macAckWaitDuration = macUnitBackoffPeriod + phyTurnaroundTime + phySHRDuration;
+#if (NETSTK_CFG_MR_FSK_PHY_EN == TRUE)
+  macAckWaitDuration += 9 * phySymbolsPerOctet * phySymbolPeriod;
+#else
+  macAckWaitDuration += 6 * phySymbolsPerOctet * phySymbolPeriod;
+#endif
   packetbuf_set_attr(PACKETBUF_ATTR_MAC_ACK_WAIT_DURATION, macAckWaitDuration);
 
-  // FIXME compute smartMAC timing parameters based on settings of underlying layers
-  uint8_t strobeLen = 12; /* PHR(1) + FCF(2) + SEQ(1) + PANID(2) + DST.ADDR(2) + SRC.ADDR(2) + CHKSUM(2) */
-
   /* set SmartMAC attributes */
-#if (NETSTK_CFG_LOW_POWER_MODE_EN == TRUE)
+  strobeLen = frame_smartmac_getStrobeLen();
+  p_ctx->strobeTxInterval = (phySHRDuration + (8 * strobeLen) * phySymbolPeriod + macAckWaitDuration) / 1000 + 1; /* actual TX time is about 1ms longer than expected */
+  p_ctx->scanTimeout = p_ctx->strobeTxInterval + 5; /* >=16ms = 4 sniffs */
+  p_ctx->lbtTimeout = p_ctx->scanTimeout;
   p_ctx->sleepTimeout = mac_phy_config.sleepTimeout;
-#endif
-  p_ctx->strobeTxInterval = (phySHRDuration + (8 * strobeLen) * phySymbolPeriod + macAckWaitDuration) / 1000 + 1; //1ms offset
-  p_ctx->scanTimeout = p_ctx->strobeTxInterval + 5; //>=16ms = 4 sniffs
-  p_ctx->rxTimeout = 4 * p_ctx->strobeTxInterval;
-  p_ctx->rxDelayMin = 2 * p_ctx->strobeTxInterval;
-  p_ctx->maxBroadcastCounter = p_ctx->sleepTimeout / p_ctx->strobeTxInterval + 1;
+  p_ctx->rxTimeout = 3 * p_ctx->strobeTxInterval;
+  p_ctx->rxDelayMin = 3 * p_ctx->strobeTxInterval;
+  p_ctx->maxBroadcastCounter = (p_ctx->sleepTimeout + 2 * p_ctx->scanTimeout ) / p_ctx->strobeTxInterval + 1;
   p_ctx->maxUnicastCounter = 2 * p_ctx->maxBroadcastCounter;
+  memset(smartMacStrobe, 0, sizeof(smartMacStrobe));
 
   /* initialize local attributes */
-  rt_tmr_create(&p_ctx->tmrPowerUp, E_RT_TMR_TYPE_PERIODIC, p_ctx->sleepTimeout, mac_tmrSleepCb, p_ctx);
-  rt_tmr_create(&p_ctx->tmr1Scan, E_RT_TMR_TYPE_ONE_SHOT, p_ctx->scanTimeout, mac_tmrScanCb, p_ctx);
-  rt_tmr_create(&p_ctx->tmr1RxPending, E_RT_TMR_TYPE_ONE_SHOT, p_ctx->rxTimeout, mac_tmrRxPendingCb, p_ctx);
+  rt_tmr_create(&p_ctx->tmrWakeup, E_RT_TMR_TYPE_PERIODIC, p_ctx->sleepTimeout, mac_tmrWakeupCb, p_ctx);
+  ctimer_set(&p_ctx->tmr1Scan, p_ctx->scanTimeout, mac_tmrScanCb, p_ctx);
+  ctimer_set(&p_ctx->tmr1RxPending, p_ctx->rxTimeout, mac_tmrRxPendingCb, p_ctx);
+
+  ctimer_stop(&p_ctx->tmr1Scan);
+  ctimer_stop(&p_ctx->tmr1RxPending);
 
   /* register MAC event */
   evproc_regCallback(NETSTK_MAC_ULE_EVENT, mac_eventHandler);
 
   /* initial transition */
   mac_off_entry(p_ctx);
-
-  /* run self-testing */
-#if (SMARTMAC_CFG_SELF_TEST_EN == TRUE)
-  mac_selfTest(p_ctx);
-#endif
 }
 
 
 static void smartMAC_start(e_nsErr_t *p_err) {
   struct s_smartMAC *p_ctx = &smartMAC;
 
-  /* start sleeping timer */
-  rt_tmr_start(&p_ctx->tmrPowerUp);
+  /* start wake-up timer */
+  rt_tmr_start(&p_ctx->tmrWakeup);
   *p_err = NETSTK_ERR_NONE;
 }
 
@@ -268,11 +275,6 @@ static void smartMAC_stop(e_nsErr_t *p_err) {
 static void smartMAC_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
   struct s_smartMAC *p_ctx = &smartMAC;
   int isBroadcastTx;
-
-#if (SMARTMAC_CFG_CONTINUOUS_RX_EN == TRUE)
-  *p_err = NETSTK_ERR_BUSY;
-  return;
-#endif
 
   /* is MAC performing channel scan? */
   if (p_ctx->state == E_SMARTMAC_STATE_SCAN) {
@@ -299,45 +301,9 @@ static void smartMAC_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
 
   /* handle transmission */
   isBroadcastTx = packetbuf_holds_broadcast();
-
-#if (SMARTMAC_CFG_CONTINUOUS_TX_BROADCAST_EN == TRUE)
-  isBroadcastTx = TRUE;
-#elif (SMARTMAC_CFG_CONTINUOUS_TX_UNICAST_EN == TRUE)
-  linkaddr_t dstAddr;
-
-  /* unicast, ACK required, destination address 0x1120 */
-  isBroadcastTx = FALSE;
-  packetbuf_set_attr(PACKETBUF_ATTR_MAC_ACK, TRUE);
-  memset(&dstAddr, 0, sizeof(dstAddr));
-  dstAddr.u8[7] = 0x21;
-  dstAddr.u8[6] = 0x11;
-  linkaddr_copy((linkaddr_t *)packetbuf_addr(PACKETBUF_ADDR_RECEIVER), &dstAddr);
-#else
-
-#endif
-
-#if ((SMARTMAC_CFG_CONTINUOUS_TX_BROADCAST_EN == TRUE) || (SMARTMAC_CFG_CONTINUOUS_TX_UNICAST_EN == TRUE))
-  uint32_t txDelayMilli = 100;
-
-  for (;;) {
-    txDelayMilli += 100;
-    if (txDelayMilli > 2000) {
-      txDelayMilli = 100;
-    }
-    bsp_delay_us(txDelayMilli * 1000);
-
-    if (isBroadcastTx == TRUE) {
-      mac_txBroadcast(p_ctx, p_data, len, p_err);
-    } else {
-      mac_txUnicast(p_ctx, p_data, len, p_err);
-    }
-  }
-#endif
-
-  /* Listen Before Talk */
-  mac_lbt(p_ctx, p_err);
   if (*p_err == NETSTK_ERR_NONE) {
     if (isBroadcastTx) {
+      mac_lbt(p_ctx, p_err);
       mac_txBroadcast(p_ctx, p_data, len, p_err);
     }
     else {
@@ -370,10 +336,6 @@ static void smartMAC_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
   /* parse the received frame */
   frame_smartmac_parse(p_data, len, &frame);
 
-#if (SMARTMAC_CFG_CONTINUOUS_RX_EN == TRUE)
-  trace_printHex("<RX>", p_data, 10);
-#endif
-
   /* is MAC in SCAN state? */
   if ((p_ctx->state == E_SMARTMAC_STATE_SCAN)) {
     /* is the received frame a strobe? */
@@ -383,14 +345,10 @@ static void smartMAC_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
         /* then calculate waiting time before the actual data arrives */
         p_ctx->rxDelay = mac_calcRxDelay(p_ctx, frame.counter);
         if (p_ctx->rxDelay > 0) {
-          /* the actual data frame is coming after a significant amount of time,
-           * then transition to RXDELAY until the actual data arrives */
-          mac_scan_exit(p_ctx);
-          mac_on_exit(p_ctx);
-
           /* state transition to RX_DELAY is handled in mac_eventHandler()
            * As such radio has a chance to perform state transition after RX_FINI */
-          evproc_putEvent(E_EVPROC_HEAD, NETSTK_MAC_ULE_EVENT, mac_eventHandler);
+          p_ctx->event = E_SMARTMAC_EVENT_RX_DELAY;
+          evproc_putEvent(E_EVPROC_HEAD, NETSTK_MAC_ULE_EVENT, &p_ctx->event);
         }
         else {
           /* is this last strobe? */
@@ -417,17 +375,26 @@ static void smartMAC_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
     else {
       /* otherwise the received frame is not a strobe, then simply forwards to
        * upper layer before going back to OFF state */
-      mac_scan_exit(p_ctx);
-      mac_off_entry(p_ctx);
       p_ctx->p_netstk->dllc->recv(p_data, len, p_err);
+
+      /* after-reception process is handled in asynchronous manner */
+      p_ctx->event = E_SMARTMAC_EVENT_RX_EXTEND;
+      evproc_putEvent(E_EVPROC_HEAD, NETSTK_MAC_ULE_EVENT, &p_ctx->event);
     }
   }
   else if (p_ctx->state == E_SMARTMAC_STATE_RX_PENDING) {
-    /* a frame has arrived, then go to Off state */
-    mac_rxPending_exit(p_ctx);
-    mac_off_entry(p_ctx);
     if (frame.type != SMARTMAC_FRAME_STROBE) {
+      /* forwards to upper layer before going back to OFF state */
       p_ctx->p_netstk->dllc->recv(p_data, len, p_err);
+
+      /* after-reception process is handled in asynchronous manner */
+      p_ctx->event = E_SMARTMAC_EVENT_RX_EXTEND;
+      evproc_putEvent(E_EVPROC_HEAD, NETSTK_MAC_ULE_EVENT, &p_ctx->event);
+    }
+    else {
+      TRACE_LOG_ERR("<SM> RXed multiple strobes");
+      mac_rxPending_exit(p_ctx);
+      mac_rxPending_entry(p_ctx);
     }
   }
   else {
@@ -471,13 +438,14 @@ static void smartMAC_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err) {
 }
 
 static void mac_txStrobe(struct s_smartMAC *p_ctx, uint8_t counter, uint16_t dstShortAddr, e_nsErr_t *p_err) {
+
   uint16_t len;
-  uint8_t p_buf[15];
-  uint8_t *p_hdr = &p_buf[PHY_HEADER_LEN];
+  uint8_t *p_hdr = &smartMacStrobe[PHY_HEADER_LEN];
   frame_smartmac_st frame;
 
   /* set frame attributes to zero */
   memset(&frame, 0, sizeof(frame));
+  memset(&smartMacStrobe, 0, sizeof(smartMacStrobe));
 
   /* set frame fields */
   frame.type = SMARTMAC_FRAME_STROBE;
@@ -553,6 +521,9 @@ static void mac_txBroadcast(struct s_smartMAC *p_ctx, uint8_t *p_data, uint16_t 
 }
 
 static void mac_txUnicast(struct s_smartMAC *p_ctx, uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
+
+  uint8_t retx;
+  uint8_t maxRetx;
   uint8_t isTxDone;
   uint8_t counter;
   uint8_t dataSeqNo;
@@ -563,23 +534,32 @@ static void mac_txUnicast(struct s_smartMAC *p_ctx, uint8_t *p_data, uint16_t le
   /* transition to TXUNICAST state from OFF state*/
   mac_txUnicast_entry(p_ctx);
 
-  /* transmit broadcast strobes */
+  /* transmit unicast strobes */
   counter = p_ctx->maxUnicastCounter;
   isTxDone = FALSE;
 
   /* store sequence number of the actual data packet to send */
   dataSeqNo = packetbuf_attr(PACKETBUF_ATTR_MAC_SEQNO);
   dataAckReq = packetbuf_attr(PACKETBUF_ATTR_MAC_ACK);
-
   /* obtain destination short address */
   linkaddr_copy(&dstAddr, packetbuf_addr(PACKETBUF_ADDR_RECEIVER));
   dstShortAddr = (dstAddr.u8[7]     ) |
                  (dstAddr.u8[6] << 8);
 
+#if (NETSTK_CFG_LOOSELY_SYNC_EN == TRUE)
+  /* estimate TX delay */
+  uint32_t estimatedDelay = 0;
+  uint32_t actualDelay;
+  uint32_t delayOffset;
+  uint32_t txReqInterval = bsp_getTick();
+  estimatedDelay = mac_calcTxDelay(p_ctx, dstShortAddr);
+#endif
+
+  mac_lbt(p_ctx, p_err);
+
   /* set value of packet buffer ACK required attribute according to transmission
    * of the unicast strobes */
   packetbuf_set_attr(PACKETBUF_ATTR_MAC_ACK, TRUE);
-
   while ((isTxDone == FALSE) && (counter--)) {
     /* issue transmission request for unicast strobe */
     packetbuf_set_attr(PACKETBUF_ATTR_MAC_SEQNO, counter);
@@ -587,6 +567,28 @@ static void mac_txUnicast(struct s_smartMAC *p_ctx, uint8_t *p_data, uint16_t le
 
     switch (*p_err) {
       case NETSTK_ERR_NONE:
+#if (NETSTK_CFG_LOOSELY_SYNC_EN == TRUE)
+        actualDelay = (bsp_getTick() - txReqInterval) - p_ctx->strobeTxInterval;
+        delayOffset = (actualDelay > estimatedDelay) ? (actualDelay - estimatedDelay) : (estimatedDelay - actualDelay);
+        if (delayOffset > (p_ctx->sleepTimeout / 2)) {
+          delayOffset = p_ctx->sleepTimeout - delayOffset;
+        }
+
+        /* update wake-up record table.
+         * Only update the table if number of sent strobes are larger than a certain
+         * value to ensure that the the wake-up strobe stream actually hit periodic channel scan
+         * of the receiver instead of some extended listening following data packet reception */
+        if ((p_ctx->maxUnicastCounter - counter) >= SMARTMAC_CFG_MIN_NUM_STROBE_TO_BE_SENT) {
+          mac_updateWakeupTable(p_ctx, dstShortAddr);
+        }
+        else {
+          if (delayOffset <= p_ctx->scanTimeout) {
+            mac_updateWakeupTable(p_ctx, dstShortAddr);
+          }
+        }
+        trace_printf("<TXDELAY> estimated=%d, actual=%d, numStrobeSent=%d", estimatedDelay, actualDelay, p_ctx->maxUnicastCounter - counter);
+#endif
+
         /* the strobe was acknowledged. The MAC then commence transmission of
          * the actual data frame before declaring completion of transmission
          * process */
@@ -596,11 +598,23 @@ static void mac_txUnicast(struct s_smartMAC *p_ctx, uint8_t *p_data, uint16_t le
         packetbuf_set_attr(PACKETBUF_ATTR_MAC_ACK, dataAckReq);
 
         /* issue transmission request */
-        p_ctx->p_netstk->phy->send(p_data, len, p_err);
-        if (*p_err != NETSTK_ERR_NONE) {
-          TRACE_LOG_ERR("unicast TX err=-%d", *p_err);
-        }
+        maxRetx = 4; //packetbuf_attr(PACKETBUF_ATTR_MAX_MAC_TRANSMISSIONS);
+        retx = 0;
+        while (retx++ < maxRetx) {
+          p_ctx->p_netstk->phy->send(p_data, len, p_err);
+          if (*p_err != NETSTK_ERR_NONE) {
+            TRACE_LOG_ERR("<TX> r=%d, a=%d, -%d", retx, dataAckReq, *p_err);
+          }
 
+          if (dataAckReq == FALSE) {
+            break;
+          }
+          else {
+            if (*p_err != NETSTK_ERR_TX_NOACK) {
+              break;
+            }
+          }
+        }
         isTxDone = TRUE;
         break;
 
@@ -675,42 +689,50 @@ static void mac_on_exit(struct s_smartMAC *p_ctx) {
 static void mac_scan_entry(struct s_smartMAC *p_ctx) {
   /* start scan timer */
   p_ctx->state = E_SMARTMAC_STATE_SCAN;
-  rt_tmr_start(&p_ctx->tmr1Scan);
+  ctimer_restart(&p_ctx->tmr1Scan);
 }
 
 static void mac_scan_exit(struct s_smartMAC *p_ctx) {
-  rt_tmr_stop(&p_ctx->tmr1Scan);
+  ctimer_stop(&p_ctx->tmr1Scan);
 }
 
 
 static void mac_rxPending_entry(struct s_smartMAC *p_ctx) {
   p_ctx->state = E_SMARTMAC_STATE_RX_PENDING;
-  rt_tmr_start(&p_ctx->tmr1RxPending);
+  ctimer_restart(&p_ctx->tmr1RxPending);
 }
 
 static void mac_rxPending_exit(struct s_smartMAC *p_ctx) {
   p_ctx->rxPendingTimeoutCount = 0;
-  rt_tmr_stop(&p_ctx->tmr1RxPending);
+  ctimer_stop(&p_ctx->tmr1RxPending);
 }
 
 static void mac_rxDelay_entry(struct s_smartMAC *p_ctx) {
   p_ctx->state = E_SMARTMAC_STATE_RX_DELAY;
-  rt_tmr_stop(&p_ctx->tmr1RxDelay);
-  rt_tmr_create(&p_ctx->tmr1RxDelay, E_RT_TMR_TYPE_ONE_SHOT, p_ctx->rxDelay, mac_tmrRxDelayCb, p_ctx);
-  rt_tmr_start(&p_ctx->tmr1RxDelay);
+
+  /* this timer should update its interval */
+  ctimer_set(&p_ctx->tmr1RxDelay, p_ctx->rxDelay, mac_tmrRxDelayCb, p_ctx);
 }
 
 static void mac_rxDelay_exit(struct s_smartMAC *p_ctx) {
-  rt_tmr_stop(&p_ctx->tmr1RxDelay);
+  ctimer_stop(&p_ctx->tmr1RxDelay);
 }
 
+#if (NETSTK_CFG_LOOSELY_SYNC_EN == TRUE)
 static void mac_txDelay_entry(struct s_smartMAC *p_ctx) {
+  p_ctx->state = E_SMARTMAC_STATE_TX_DELAY;
 
+  e_nsErr_t err;
+  p_ctx->p_netstk->phy->off(&err);
 }
 
 static void mac_txDelay_exit(struct s_smartMAC *p_ctx) {
+  e_nsErr_t err;
+  p_ctx->p_netstk->phy->on(&err);
 
+  p_ctx->state = E_SMARTMAC_STATE_TX_UNICAST;
 }
+#endif
 
 static void mac_txBroadcast_entry(struct s_smartMAC *p_ctx) {
   p_ctx->state = E_SMARTMAC_STATE_TX_BROADCAST;
@@ -728,8 +750,8 @@ static void mac_txUnicast_exit(struct s_smartMAC *p_ctx) {
 
 }
 
-
-static void mac_tmrSleepCb(void *p_arg) {
+static void mac_tmrWakeupCb(void *p_arg)
+{
   struct s_smartMAC *p_ctx = (struct s_smartMAC *)p_arg;
 
   /* is smartMAC in OFF state? */
@@ -752,11 +774,11 @@ static void mac_tmrScanCb(void *p_arg) {
     /* check if any frame is being received. If yes, restart the timer */
     p_ctx->p_netstk->phy->ioctrl(NETSTK_CMD_RF_IS_RX_BUSY, &isPendingRxFrame, &err);
     if (isPendingRxFrame == TRUE) {
-      rt_tmr_start(&p_ctx->tmr1Scan);
+      ctimer_restart(&p_ctx->tmr1Scan);
     }
     else {
-      mac_scan_exit(p_ctx);
-      mac_off_entry(p_ctx);
+      p_ctx->event = E_SMARTMAC_EVENT_ASYNC_SCAN_EXIT;
+      evproc_putEvent(E_EVPROC_HEAD, NETSTK_MAC_ULE_EVENT, &p_ctx->event);
     }
   }
   else {
@@ -776,16 +798,17 @@ static void mac_tmrRxPendingCb(void *p_arg) {
     p_ctx->p_netstk->phy->ioctrl(NETSTK_CMD_RF_IS_RX_BUSY, &isPendingRxFrame, &err);
     if (isPendingRxFrame == TRUE) {
       p_ctx->rxPendingTimeoutCount++;
-      if (p_ctx->rxPendingTimeoutCount > SMARTMAC_CFG_RXPENDING_TIMEOUT_MAX) {
+      if (p_ctx->rxPendingTimeoutCount > 1) {
         TRACE_LOG_ERR("<RXPENDING> timeout max");
         mac_rxPending_exit(p_ctx);
         mac_off_entry(p_ctx);
       }
       else {
-        rt_tmr_start(&p_ctx->tmr1RxPending);
+        ctimer_restart(&p_ctx->tmr1RxPending);
       }
     }
     else {
+      TRACE_LOG_ERR("<MAC> RxPending timeout %d ms", p_ctx->rxTimeout);
       mac_rxPending_exit(p_ctx);
       mac_off_entry(p_ctx);
     }
@@ -813,7 +836,7 @@ static void mac_tmrRxDelayCb(void *p_arg) {
 }
 
 static uint32_t mac_calcRxDelay(struct s_smartMAC *p_ctx, uint8_t counter) {
-  rt_tmr_tick_t rx_delay = 0;
+  uint32_t rx_delay = 0;
 
   if (counter) {
     rx_delay = counter * p_ctx->strobeTxInterval;
@@ -827,9 +850,100 @@ static uint32_t mac_calcRxDelay(struct s_smartMAC *p_ctx, uint8_t counter) {
   return rx_delay;
 }
 
+#if (NETSTK_CFG_LOOSELY_SYNC_EN == TRUE)
+static void mac_updateWakeupTable(struct s_smartMAC *p_ctx, uint16_t destId)
+{
+  uint8_t ix;
+  for (ix = 0; ix < SMARTMAC_CFG_WAKEUP_TBL_SIZE ; ix++) {
+    if (p_ctx->wakeupTable[ix].destId == destId) {
+      /* the table is usually updated complete strobe transmission, i.e., the strobe was acknowledged,
+       * therefore the strobe transmission time should be omitted */
+      p_ctx->wakeupTable[ix].lastWakeupInterval = bsp_getTick() - p_ctx->strobeTxInterval;
+      break;
+    }
+  }
+}
+
+static uint32_t mac_calcTxDelay(struct s_smartMAC *p_ctx, uint16_t destId)
+{
+  uint8_t isDone;
+  uint32_t ix;
+  uint32_t onQty;
+  uint32_t onNext;
+  uint32_t txDelay;
+  uint32_t minDelay;
+  uint32_t lastWakeup;
+  uint32_t currTime;
+  uint32_t estimatedWakeupInterval = 0;
+
+  /* look for records with regard to the destination node */
+  isDone = TRUE;
+  txDelay = 0;
+  lastWakeup = 0;
+  for (ix = 0; ix < SMARTMAC_CFG_WAKEUP_TBL_SIZE ; ix++) {
+    if (p_ctx->wakeupTable[ix].destId == destId) {
+      lastWakeup = p_ctx->wakeupTable[ix].lastWakeupInterval;
+      break;
+    }
+  }
+
+  if (lastWakeup == 0) {
+    /* the record has not found then allocate an entry for the destination node */
+    for (ix = 0; ix < SMARTMAC_CFG_WAKEUP_TBL_SIZE ; ix++) {
+      if (p_ctx->wakeupTable[ix].lastWakeupInterval == 0) {
+        p_ctx->wakeupTable[ix].destId = destId;
+        break;
+      }
+    }
+  }
+  else {
+    /* preparation */
+    ix = 1;
+    txDelay = 0;
+    isDone = FALSE;
+    currTime = bsp_getTick();
+
+    /* compute number of wake-up intervals since the last recorded interval */
+    onQty = (currTime - lastWakeup) / p_ctx->sleepTimeout;
+
+    /* minimum delay that allows immediate sleep before actual transmission attempt */
+    minDelay = p_ctx->lbtTimeout + SMARTMAC_CFG_MIN_NUM_STROBE_TO_BE_SENT * p_ctx->strobeTxInterval;
+
+    /* wake-up estimation algorithm */
+    do {
+      /* prefer to hit the closest estimated wake-up */
+      onNext = lastWakeup + (onQty + ix) * p_ctx->sleepTimeout;
+      estimatedWakeupInterval = (onNext - currTime);
+
+      if (estimatedWakeupInterval < p_ctx->lbtTimeout) {
+        /* time before estimated wake-up not enough to perform LBT then try to hit the following wake-up */
+        ix++;
+      }
+      else {
+        /* declare that the process has finished */
+        isDone = TRUE;
+
+        /* put radio to sleep when estimated time is sufficient */
+        if (estimatedWakeupInterval > minDelay) {
+          txDelay = estimatedWakeupInterval - minDelay;
+          if (txDelay > 0) {
+            mac_txDelay_entry(p_ctx);
+            bsp_delay_us(txDelay * 1000);
+            mac_txDelay_exit(p_ctx);
+          }
+        }
+        else {
+          /* starts LBT immediately */
+        }
+      }
+    } while (isDone == FALSE);
+  }
+  return estimatedWakeupInterval;
+}
+#endif /* #if (SMARTMAC_CFG_LOOSELY_SYNC_EN == TRUE) */
+
 static void mac_lbt(struct s_smartMAC *p_ctx, e_nsErr_t *p_err) {
-  rt_tmr_tick_t timeout;
-  rt_tmr_tick_t tickstart;
+  uint32_t tickstart;
   uint8_t isPendingRxFrame;
 
   /* initialize immediate variables */
@@ -838,11 +952,10 @@ static void mac_lbt(struct s_smartMAC *p_ctx, e_nsErr_t *p_err) {
   p_ctx->state = E_SMARTMAC_STATE_TX;
 
   isPendingRxFrame = FALSE;
-  timeout = p_ctx->strobeTxInterval + 1;
-  tickstart = rt_tmr_getCurrenTick();
+  tickstart = bsp_getTick();
 
   /* wait for incoming packet until timeout */
-  while ((rt_tmr_getCurrenTick() - tickstart) < timeout) {
+  while ((bsp_getTick() - tickstart) < p_ctx->lbtTimeout) {
     p_ctx->p_netstk->phy->ioctrl(NETSTK_CMD_RF_IS_RX_BUSY, &isPendingRxFrame, p_err);
     if (isPendingRxFrame == TRUE) {
       *p_err = NETSTK_ERR_BUSY;
@@ -851,175 +964,57 @@ static void mac_lbt(struct s_smartMAC *p_ctx, e_nsErr_t *p_err) {
   }
 }
 
-
-static void mac_eventHandler(c_event_t c_event, p_data_t p_data) {
+static void mac_eventHandler(c_event_t c_event, p_data_t p_data)
+{
   struct s_smartMAC *p_ctx = &smartMAC;
-  mac_off_entry(p_ctx);
-  mac_rxDelay_entry(p_ctx);
+  uint8_t data = p_ctx->event;
+  uint32_t ucException = FALSE;
+
+  switch (data) {
+    case E_SMARTMAC_EVENT_RX_DELAY:
+      /* the actual data frame is coming after a significant amount of time,
+       * then transition to RXDELAY until the actual data arrives */
+      mac_scan_exit(p_ctx);
+      mac_on_exit(p_ctx);
+
+      mac_off_entry(p_ctx);
+      if (p_ctx->state == E_SMARTMAC_STATE_OFF) {
+        mac_rxDelay_entry(p_ctx);
+      }
+      break;
+
+    case E_SMARTMAC_EVENT_ASYNC_SCAN_EXIT:
+      mac_scan_exit(p_ctx);
+      mac_off_entry(p_ctx);
+      break;
+
+    case E_SMARTMAC_EVENT_RX_EXTEND:
+      /* keep radio on for a certain amount of time after reception of good packet */
+      switch (p_ctx->state) {
+        case E_SMARTMAC_STATE_SCAN:
+          mac_scan_exit(p_ctx);
+          mac_scan_entry(p_ctx);
+          break;
+
+        case E_SMARTMAC_STATE_RX_PENDING:
+          mac_rxPending_exit(p_ctx);
+          mac_scan_entry(p_ctx);
+          break;
+
+        default:
+          /* unexpected events */
+          ucException = TRUE;
+          break;
+      }
+      break;
+
+    default:
+      /* unexpected events */
+      ucException = TRUE;
+      break;
+  }
+
+  if (ucException == TRUE) {
+    TRACE_LOG_ERR("<SMARTMAC> unexpected events %d", data);
+  }
 }
-
-
-/*
-********************************************************************************
-*                               SELT_TESTING
-********************************************************************************
-*/
-#if (SMARTMAC_CFG_SELF_TEST_EN == TRUE)
-static void mac_selfTest(struct s_smartMAC *p_ctx) {
-  e_nsErr_t err;
-  uint8_t rxStrobeUnicast[] = {0x24, 0x98, 0x00, 0xcd, 0xab, 0xfe, 0xca, 0x21, 0x11, 0x00, 0x00};
-  uint8_t rxStrobeBroadcast[] = {0x24, 0x98, 0x00, 0xcd, 0xab, 0xff, 0xff, 0x21, 0x11, 0x00, 0x00};
-
-  uint8_t rxUnicast[] = {0x61, 0xdc, 0x00, 0xcd, 0xab, 0xfe, 0xca, 0x50, 0x51, 0x52, 0x53};
-  uint8_t rxBroadcast[] = {0x41, 0xdc, 0x00, 0xcd, 0xab, 0xff, 0xff, 0x21, 0x11, 0x50, 0x51, 0x52, 0x53};
-
-
-  bsp_enterCritical();
-  trace_printf("SmartMAC test: ................. started");
-
-  /* TEST: initial transition */
-  {
-    assert_equ("INIT: ", E_SMARTMAC_STATE_OFF, p_ctx->state);
-    assert_equ("INIT: ", E_RT_TMR_STATE_CREATED, rt_tmr_getState(&p_ctx->tmrPowerUp));
-    assert_equ("INIT: ", E_RT_TMR_STATE_CREATED, rt_tmr_getState(&p_ctx->tmr1Scan));
-    assert_equ("INIT: ", E_RT_TMR_STATE_CREATED, rt_tmr_getState(&p_ctx->tmr1RxPending));
-  }
-
-  /* TEST: starting smartMAC */
-  {
-    err = NETSTK_ERR_FATAL;
-    smartMAC_start(&err);
-    assert_equ("START: ", E_RT_TMR_STATE_RUNNING, rt_tmr_getState(&p_ctx->tmrPowerUp));
-    assert_equ("START: ", NETSTK_ERR_NONE, err);
-  }
-
-  /* TEST: OFF-SleepTimeoutEvt */
-  {
-    mac_tmrSleepCb(p_ctx);
-    assert_equ("OFF-SleepTimeoutEvt: ", E_SMARTMAC_STATE_SCAN, p_ctx->state);
-  }
-
-  /* TEST: ON-ScanTimeoutEvt */
-  {
-    mac_tmrScanCb(p_ctx);
-    assert_equ("ON-ScanTimeoutEvt: ", E_SMARTMAC_STATE_OFF, p_ctx->state);
-  }
-
-  /* TEST: RX */
-  {
-    /* TEST: SCAN-RxStrobeUnicastEvt */
-    {
-      mac_tmrSleepCb(p_ctx);  /* trigger SLEEP_TIMEOUT event */
-
-      err = NETSTK_ERR_FATAL;
-      smartMAC_recv(rxStrobeUnicast, sizeof(rxStrobeUnicast), &err);
-      assert_equ("SCAN-RxUnicastStrobeEvt: ", NETSTK_ERR_NONE, err);
-      assert_equ("SCAN-RxUnicastStrobeEvt: ", E_SMARTMAC_STATE_RX_PENDING, p_ctx->state);
-      mac_off_entry(p_ctx);   /* teardown */
-    }
-
-    /* TEST: RXPENDING-RxUnicastEvt */
-    {
-      mac_tmrSleepCb(p_ctx);  /* trigger SLEEP_TIMEOUT event */
-      smartMAC_recv(rxStrobeUnicast, sizeof(rxStrobeUnicast), &err);
-
-      err = NETSTK_ERR_FATAL;
-      smartMAC_recv(rxUnicast, sizeof(rxUnicast), &err);
-      assert_equ("RXPENDING-RxUnicastEvt: ", NETSTK_ERR_NONE, err);
-      assert_equ("RXPENDING-RxUnicastEvt: ", E_SMARTMAC_STATE_OFF, p_ctx->state);
-      mac_off_entry(p_ctx);   /* teardown */
-    }
-
-    /* TEST: RXPENDING-RxPendingTimeoutEvt */
-    {
-      mac_tmrSleepCb(p_ctx);  /* trigger SLEEP_TIMEOUT event */
-      smartMAC_recv(rxStrobeUnicast, sizeof(rxStrobeUnicast), &err);
-
-      mac_tmrRxPendingCb(p_ctx);
-      assert_equ("RXPENDING-RxPendingTimeoutEvt: ", E_SMARTMAC_STATE_OFF, p_ctx->state);
-      mac_off_entry(p_ctx);   /* teardown */
-    }
-
-    /* TEST: RX data frame in SCAN state */
-    {
-      mac_tmrSleepCb(p_ctx);  /* trigger SLEEP_TIMEOUT event */
-
-      err = NETSTK_ERR_FATAL;
-      smartMAC_recv(rxUnicast, sizeof(rxUnicast), &err);
-      assert_equ("SCAN-RxUnicastEvt: ", NETSTK_ERR_NONE, err);
-      assert_equ("SCAN-RxUnicastEvt: ", E_SMARTMAC_STATE_OFF, p_ctx->state);
-      mac_off_entry(p_ctx);   /* teardown */
-    }
-
-    /* TEST: RX late broadcast strobes in SCAN state */
-    {
-      err = NETSTK_ERR_FATAL;
-      mac_tmrSleepCb(p_ctx);  /* trigger SLEEP_TIMEOUT event */
-
-      rxStrobeBroadcast[SMARTMAC_CFG_COUNTER_IX] = 1;
-      smartMAC_recv(rxStrobeBroadcast, sizeof(rxStrobeBroadcast), &err);
-      assert_equ("SCAN-RxBroadcastStrobe1Evt: ", NETSTK_ERR_NONE, err);
-      assert_equ("SCAN-RxBroadcastStrobe1Evt: ", E_SMARTMAC_STATE_SCAN, p_ctx->state);
-
-      rxStrobeBroadcast[SMARTMAC_CFG_COUNTER_IX] = 0;
-      smartMAC_recv(rxStrobeBroadcast, sizeof(rxStrobeBroadcast), &err);
-      assert_equ("SCAN-RxBroadcastStrobe0Evt: ", NETSTK_ERR_NONE, err);
-      assert_equ("SCAN-RxBroadcastStrobe0Evt: ", E_SMARTMAC_STATE_SCAN, p_ctx->state);
-      mac_off_entry(p_ctx);   /* teardown */
-    }
-
-    /* TEST: RX early broadcast strobes followed by actual data frame in SCAN state */
-    {
-      err = NETSTK_ERR_FATAL;
-      mac_tmrSleepCb(p_ctx);  /* trigger SLEEP_TIMEOUT event */
-
-      rxStrobeBroadcast[SMARTMAC_CFG_COUNTER_IX] = 20;
-      smartMAC_recv(rxStrobeBroadcast, sizeof(rxStrobeBroadcast), &err);
-      assert_equ("SCAN-RxBroadcastStrobeEarlyEvt: ", NETSTK_ERR_NONE, err);
-      assert_equ("SCAN-RxBroadcastStrobeEarlyEvt: ", E_SMARTMAC_STATE_RX_DELAY, p_ctx->state);
-
-      mac_tmrRxDelayCb(p_ctx);
-      assert_equ("RXDELAY-RxDelayTimeoutEvt: ", E_SMARTMAC_STATE_SCAN, p_ctx->state);
-
-      rxStrobeBroadcast[SMARTMAC_CFG_COUNTER_IX] = 1;
-      smartMAC_recv(rxStrobeBroadcast, sizeof(rxStrobeBroadcast), &err);
-      rxStrobeBroadcast[SMARTMAC_CFG_COUNTER_IX] = 0;
-      smartMAC_recv(rxStrobeBroadcast, sizeof(rxStrobeBroadcast), &err);
-
-      err = NETSTK_ERR_FATAL;
-      smartMAC_recv(rxBroadcast, sizeof(rxBroadcast), &err);
-      assert_equ("SCAN-RxBroadcastEvt: ", NETSTK_ERR_NONE, err);
-      assert_equ("SCAN-RxBroadcastEvt: ", E_SMARTMAC_STATE_OFF, p_ctx->state);
-
-      mac_off_entry(p_ctx);   /* teardown */
-    }
-
-
-    /* TEST: RX late broadcast strobe, followed by actual data frame in  SCAN state */
-    {
-      mac_tmrSleepCb(p_ctx);  /* trigger SLEEP_TIMEOUT event */
-
-      rxStrobeBroadcast[SMARTMAC_CFG_COUNTER_IX] = 1;
-      smartMAC_recv(rxStrobeBroadcast, sizeof(rxStrobeBroadcast), &err);
-      rxStrobeBroadcast[SMARTMAC_CFG_COUNTER_IX] = 0;
-      smartMAC_recv(rxStrobeBroadcast, sizeof(rxStrobeBroadcast), &err);
-
-      err = NETSTK_ERR_FATAL;
-      smartMAC_recv(rxBroadcast, sizeof(rxBroadcast), &err);
-      assert_equ("SCAN-RxBroadcastEvt: ", NETSTK_ERR_NONE, err);
-      assert_equ("SCAN-RxBroadcastEvt: ", E_SMARTMAC_STATE_OFF, p_ctx->state);
-      mac_off_entry(p_ctx);   /* teardown */
-    }
-  }
-
-  /* TEST: TX */
-  {
-
-  }
-
-  trace_printf("SmartMAC test: ................. finished");
-  bsp_exitCritical();
-  while (1);
-}
-#endif /* SMARTMAC_CFG_SELF_TEST_EN */
-
