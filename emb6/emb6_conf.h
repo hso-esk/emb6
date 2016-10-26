@@ -955,7 +955,14 @@ void uip_log(char *msg);
 
 /*!< Enable/Disable low power mode */
 #ifndef NETSTK_CFG_LOW_POWER_MODE_EN
-#define NETSTK_CFG_LOW_POWER_MODE_EN                        FALSE
+#define NETSTK_CFG_LOW_POWER_MODE_EN                        TRUE
+#endif
+
+/*!< Enable/Disable loosely-sync feature in low power mode */
+#if (NETSTK_CFG_LOW_POWER_MODE_EN == TRUE)
+  #ifndef NETSTK_CFG_LOOSELY_SYNC_EN
+    #define NETSTK_CFG_LOOSELY_SYNC_EN                      FALSE
+  #endif
 #endif
 
 /*!< Enable/Disable Data Whitening */
