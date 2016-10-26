@@ -1665,15 +1665,31 @@ static uint8_t rf_gotoIdle(struct s_rf_ctx *p_ctx) {
   uint8_t isIdleOk = TRUE;
 
   /* wait until radio enters IDLE state */
-  cc112x_spiCmdStrobe(CC112X_SIDLE);
-  while (RF_READ_CHIP_STATE() != RF_STATE_IDLE) {
-    /* do nothing */
+  e_rfState_t chipState = p_ctx->state;
+  do {
     if (RF_IS_RX_BUSY() == TRUE) {
       trace_printf("<IDLE> RX while IDLE");
       isIdleOk = FALSE;
       break;
     }
-  };
+
+    switch (chipState) {
+      case RF_STATE_TX_FIFO_ERR:
+        chipState = cc112x_spiCmdStrobe(CC112X_SFTX) & CC112X_STATE_MASK;
+        break;
+
+      case RF_STATE_RX_FIFO_ERR:
+        chipState = cc112x_spiCmdStrobe(CC112X_SFRX) & CC112X_STATE_MASK;
+        break;
+
+      default:
+        chipState = cc112x_spiCmdStrobe(CC112X_SIDLE) & CC112X_STATE_MASK;
+        break;
+    }
+    if (chipState != RF_STATE_IDLE) {
+      bsp_delay_us(10);
+    }
+  } while (chipState != RF_STATE_IDLE);
 
   if (isIdleOk == TRUE) {
     /* flushing TXFIFO and RXFIFO */
