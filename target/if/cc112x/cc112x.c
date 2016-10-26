@@ -1749,9 +1749,6 @@ static uint8_t rf_gotoWor(struct s_rf_ctx *p_ctx) {
 
   uint8_t isIdleOk;
 
-  p_ctx->numSniffs = 0;
-  p_ctx->numPqtReached = 0;
-
   /* did the transceiver enter Idle state successfully? */
   isIdleOk = rf_gotoIdle(p_ctx);
   if (isIdleOk == TRUE) {
