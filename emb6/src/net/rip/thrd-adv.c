@@ -47,6 +47,18 @@ thrd_process_route64(uint8_t rid_sender, tlv_route64_t *route64_tlv)
 
 	if ( route64_tlv != NULL ) {
 
+		uint8_t sender_cost = 0x0F;
+		thrd_rdb_route_t *sender_route;
+
+		sender_route = thrd_rdb_route_lookup(rid_sender);
+		if ( sender_route != NULL ) {
+			sender_cost = sender_route->R_route_cost;
+		} else {
+			// TODO Check this.
+			LOG_RAW("thrd_process_route64: No route to reach neighbor (%d) detected.\n\r", rid_sender);
+			return THRD_ERROR_FAILED;
+		}
+
 		// LOG_RAW("-x-x-x-x-x-x-x-x-x-x-x-x-x-\n\r");
 		// LOG_RAW("thrd_process_route64: Processing Route64 TLV.\n\r");
 		// LOG_RAW("thrd_process_route64: route64_tlv->id_sequence_number = %d \n\r", route64_tlv->id_sequence_number);
@@ -88,18 +100,26 @@ thrd_process_route64(uint8_t rid_sender, tlv_route64_t *route64_tlv)
 				}
 				// Process Link Quality and Route Data.
 				// Incoming quality.
-				uint8_t lq_rd_data = (route64_tlv->lq_rd[data_cnt] & 0x30) >> 6;
-				if ( lq_rd_data != 0 ) {
-					link = thrd_rdb_link_lookup(id_cnt);
-					link->L_outgoing_quality = lq_rd_data;
-				}
-				// Route data.
-				lq_rd_data = (route64_tlv->lq_rd[data_cnt] & 0x0F);
-				// TODO Check whether the destination differs to the current router id. (Otherwise, we would create a loop).
-				if ( id_cnt == thrd_iface.router_id ) {
-					// Prevent from adding route to myself.
-				} else {
-					thrd_rdb_route_update(rid_sender, id_cnt, lq_rd_data);
+				// uint8_t lq_rd_data = (route64_tlv->lq_rd[data_cnt] & ROUTE64_LQ_RD_IN_MASK) >> 6;
+				uint8_t lq_rd_data = route64_tlv->lq_rd[data_cnt];
+				// Check whether the link quality / route data byte is valid (see spec.).
+				if ( lq_rd_data != ROUTE64_LQ_RD_INVALID ) {
+					uint8_t outgoing_quality = lq_rd_data >> 6;
+					uint8_t incoming_quality = lq_rd_data & ROUTE64_LQ_RD_IN_MASK >> 4;	// TODO
+					if ( outgoing_quality != 0 ) {
+						link = thrd_rdb_link_lookup(id_cnt);
+						if ( link != NULL ) {
+							link->L_outgoing_quality = lq_rd_data;
+						}
+					}
+					// Route data.
+					lq_rd_data &= ROUTE64_LQ_RD_ROUTE_MASK;	// Route cost.
+					// TODO Check whether the destination differs from the current router id. (Otherwise, we would create a loop).
+					if ( id_cnt == thrd_iface.router_id ) {
+						// Prevent from adding route to myself.
+					} else {
+						thrd_rdb_route_update(rid_sender, id_cnt, lq_rd_data);
+					}
 				}
 				data_cnt++;
 			}
@@ -153,7 +173,7 @@ thrd_generate_route64(size_t *len)
 	thrd_rdb_id_t *rid;						// Router IDs.
 	thrd_rdb_link_t *link;
 	thrd_rdb_route_t *route;				// Routing entries.
-	uint8_t lq_rq_pos = 9;					// Position of the first link quality and route data byte.
+	uint8_t lq_rd_pos = 9;					// Position of the first link quality and route data byte.
 
 	route64_data[0] = thrd_partition.ID_sequence_number;
 
@@ -163,7 +183,7 @@ thrd_generate_route64(size_t *len)
 	uint64_t router_id_mask = 0x0000000000000000;
 	for ( rid = thrd_rdb_rid_head(); rid != NULL; rid = thrd_rdb_rid_next(rid) ) {
 
-		uint8_t lq_rd = 0x00;	// Link Quality and Route Data.
+		uint8_t lq_rd = ROUTE64_LQ_RD_INVALID;	// Link Quality and Route Data.
 
 		router_id_mask |= (0x8000000000000000 >> rid->router_id);
 
@@ -185,12 +205,12 @@ thrd_generate_route64(size_t *len)
 			//	lq_rd = 0;
 			// }
 		} else {
-			lq_rd = 0x01;
+			lq_rd = ROUTE64_LQ_RD_INVALID;
 		}
 
-		route64_data[lq_rq_pos] = lq_rd;
-		lq_rq_pos++;
-		*len++;
+		route64_data[lq_rd_pos] = lq_rd;
+		lq_rd_pos++;
+		(*len)++;
 	}
 
 	route64_data[8] = (uint8_t) router_id_mask;

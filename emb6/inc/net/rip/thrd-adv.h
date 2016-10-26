@@ -14,6 +14,12 @@
 // TODO Check!
 #define MAX_ROUTE64_TLV_DATA_SIZE		41		// One plus ceiling (MAX_ROUTER_ID/8) plus the number of assigned router IDs.
 
+// Route64 data masks.
+#define ROUTE64_LQ_RD_IN_MASK			0x30
+#define ROUTE64_LQ_RD_ROUTE_MASK		0x0F
+
+#define ROUTE64_LQ_RD_INVALID			0x01
+
 /*==============================================================================
                                      API FUNCTIONS
  =============================================================================*/
