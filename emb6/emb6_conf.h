@@ -955,7 +955,7 @@ void uip_log(char *msg);
 
 /*!< Enable/Disable low power mode */
 #ifndef NETSTK_CFG_LOW_POWER_MODE_EN
-#define NETSTK_CFG_LOW_POWER_MODE_EN                        TRUE
+#define NETSTK_CFG_LOW_POWER_MODE_EN                        FALSE
 #endif
 
 /*!< Enable/Disable loosely-sync feature in low power mode */
