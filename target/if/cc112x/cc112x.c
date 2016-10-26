@@ -1275,6 +1275,7 @@ static void rf_rx_entry(struct s_rf_ctx *p_ctx) {
   p_ctx->rxLastDataPtr = 0;
   p_ctx->rxLastChksumPtr = 0;
   p_ctx->rxBytesCounter = 0;
+  p_ctx->rxChksum = 0;
   p_ctx->rxIsAddrFiltered = FALSE;
   memset(&p_ctx->rxFrame, 0, sizeof(p_ctx->rxFrame));
 
