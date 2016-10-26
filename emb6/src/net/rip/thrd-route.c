@@ -226,18 +226,40 @@ thrd_rdb_route_nexthop(thrd_rdb_route_t *route)
  * @return				The corresponding incoming quality.
  */
 uint8_t
+thrd_rdb_link_calc_incoming_quality_raw(uint16_t link_margin)
+{
+	if ( link_margin > 20 )
+		return THRD_INCOMING_QUALITY_3;
+	else if ( (link_margin > 10) && (link_margin <= 20) )
+		return THRD_INCOMING_QUALITY_2;
+	else if ( (link_margin > 2) && (link_margin <= 10) )
+		return THRD_INCOMING_QUALITY_1;
+	else
+		return THRD_INCOMING_QUALITY_0;
+}
+
+/* --------------------------------------------------------------------------- */
+
+/**
+ * Calculate the incoming quality based on the measured link margin
+ * (apply bit shifting).
+ * @param link_margin	The measured link margin in dB (shifted by
+ * 						THRD_EXP_WEIGHT_MOV_AVG to avoid rounding errors).
+ * @return				The corresponding incoming quality.
+ */
+uint8_t
 thrd_rdb_link_calc_incoming_quality(uint16_t link_margin)
 {
 	if ( link_margin > (20 << THRD_EXP_WEIGHT_MOV_AVG) )
-		return 3;
+		return THRD_INCOMING_QUALITY_3;
 	else if ( (link_margin > (10 << THRD_EXP_WEIGHT_MOV_AVG))
 			&& (link_margin <= (20 << THRD_EXP_WEIGHT_MOV_AVG)) )
-		return 2;
+		return THRD_INCOMING_QUALITY_2;
 	else if ( (link_margin > (2 << THRD_EXP_WEIGHT_MOV_AVG))
 			&& (link_margin <= (10 << THRD_EXP_WEIGHT_MOV_AVG)) )
-		return 1;
+		return THRD_INCOMING_QUALITY_1;
 	else
-		return 0;
+		return THRD_INCOMING_QUALITY_0;
 }
 
 /* --------------------------------------------------------------------------- */

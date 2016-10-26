@@ -59,6 +59,14 @@ enum thrd_link_cost_t {
 	THRD_LINK_COST_INFINTE = MAX_ROUTE_COST,	// Infinite cost.
 };
 
+/* \brief Incoming quality */
+enum thrd_incoming_quality_t {
+	THRD_INCOMING_QUALITY_0,
+	THRD_INCOMING_QUALITY_1,
+	THRD_INCOMING_QUALITY_2,
+	THRD_INCOMING_QUALITY_3
+};
+
 /* --------------------------------------------------------------------------- */
 
 /* --------------------------------------------------------------------------- */
@@ -87,6 +95,8 @@ thrd_rdb_link_t* thrd_rdb_link_next(thrd_rdb_link_t *r);
 thrd_rdb_route_t* thrd_rdb_route_next(thrd_rdb_route_t *r);
 
 uint8_t thrd_rdb_route_nexthop(thrd_rdb_route_t *route);
+
+uint8_t thrd_rdb_link_calc_incoming_quality_raw(uint16_t link_margin);
 
 uint8_t thrd_rdb_link_calc_incoming_quality(uint16_t link_margin);
 
