@@ -531,6 +531,16 @@ static void mac_txUnicast(struct s_smartMAC *p_ctx, uint8_t *p_data, uint16_t le
   linkaddr_t dstAddr;
   packetbuf_attr_t dstShortAddr;
 
+#if (NETSTK_CFG_LOOSELY_SYNC_EN == TRUE)
+  uint8_t isRxPending = FALSE;
+  p_ctx->p_netstk->phy->ioctrl(NETSTK_CMD_RF_IS_RX_BUSY, &isRxPending, p_err);
+  if (isRxPending == TRUE) {
+    /* a packet is being received and therefore TX should be terminated */
+    *p_err = NETSTK_ERR_BUSY;
+    return;
+  }
+#endif
+
   /* transition to TXUNICAST state from OFF state*/
   mac_txUnicast_entry(p_ctx);
 
