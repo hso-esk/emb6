@@ -14,11 +14,11 @@
  * FCF(2) + SEQ(1) + PANID(2) + DST.ADDR(2) + SRC.ADDR(2) = 11 */
 #define SMARTMAC_STROBE_MAC_HDR_LEN         ( 11u )
 
-uint8_t frame_smartmac_getStrobeLen(void) {
+uint8_t framer_smartmac_getStrobeLen(void) {
   return (PHY_HEADER_LEN + SMARTMAC_STROBE_MAC_HDR_LEN + packetbuf_attr(PACKETBUF_ATTR_MAC_FCS_LEN));
 }
 
-uint16_t frame_smartmac_create(frame_smartmac_st *p_frame, uint8_t *p_buf)
+uint16_t framer_smartmac_create(frame_smartmac_st *p_frame, uint8_t *p_buf)
 {
   uint16_t len = 0;
   uint8_t *p = p_buf;
@@ -79,7 +79,7 @@ uint16_t frame_smartmac_create(frame_smartmac_st *p_frame, uint8_t *p_buf)
 }
 
 
-uint16_t frame_smartmac_parse(uint8_t *p_buf, uint16_t len, frame_smartmac_st *p_frame)
+uint16_t framer_smartmac_parse(uint8_t *p_buf, uint16_t len, frame_smartmac_st *p_frame)
 {
   uint16_t hdr_len = 0;
   uint8_t *p = p_buf;

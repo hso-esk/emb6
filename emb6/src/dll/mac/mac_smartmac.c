@@ -50,14 +50,14 @@ typedef enum
   E_SMARTMAC_STATE_TX_BROADCAST = 0x52,
   E_SMARTMAC_STATE_TX_UNICAST   = 0x53,
   E_SMARTMAC_STATE_ERR          = 0x60,
-}e_smartMACState;
+}e_smartmacState;
 
 typedef enum
 {
   E_SMARTMAC_EVENT_RX_EXTEND,
   E_SMARTMAC_EVENT_RX_DELAY,
   E_SMARTMAC_EVENT_ASYNC_SCAN_EXIT,
-} e_smartMacEvent;
+} e_smartmacEvent;
 
 struct s_wakeupTableEntry {
   uint32_t lastWakeupInterval;
@@ -65,15 +65,15 @@ struct s_wakeupTableEntry {
   uint16_t numStrobeSent;
 };
 
-struct s_smartMAC {
+struct s_smartmac {
   s_ns_t           *p_netstk;
   void             *p_cbTxArg;
   nsTxCbFnct_t      cbTxFnct;
   uint32_t          rxDelay;
-  e_smartMACState   state;
+  e_smartmacState   state;
   uint8_t           event;
 
-  /* smartMAC timing parameters in milliseconds that are relied on underlying layer */
+  /* smartmac timing parameters in milliseconds that are relied on underlying layer */
   uint32_t          sleepTimeout;
   uint8_t           strobeTxInterval;
   uint8_t           scanTimeout;
@@ -102,17 +102,17 @@ struct s_smartMAC {
 *                       LOCAL FUNCTIONS DECLARATION
 ********************************************************************************
 */
-static void smartMAC_init (void *p_netstk, e_nsErr_t *p_err);
-static void smartMAC_start(e_nsErr_t *p_err);
-static void smartMAC_stop(e_nsErr_t *p_err);
-static void smartMAC_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
-static void smartMAC_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
-static void smartMAC_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
+static void smartmac_init (void *p_netstk, e_nsErr_t *p_err);
+static void smartmac_start(e_nsErr_t *p_err);
+static void smartmac_stop(e_nsErr_t *p_err);
+static void smartmac_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
+static void smartmac_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
+static void smartmac_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
 
-static void mac_txStrobe(struct s_smartMAC *p_ctx, uint8_t counter, uint16_t dstShortAddr, e_nsErr_t *p_err);
-static void mac_txBroadcast(struct s_smartMAC *p_ctx, uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
-static void mac_txUnicast(struct s_smartMAC *p_ctx, uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
-static void mac_lbt(struct s_smartMAC *p_ctx, e_nsErr_t *p_err);
+static void mac_txStrobe(struct s_smartmac *p_ctx, uint8_t counter, uint16_t dstShortAddr, e_nsErr_t *p_err);
+static void mac_txBroadcast(struct s_smartmac *p_ctx, uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
+static void mac_txUnicast(struct s_smartmac *p_ctx, uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
+static void mac_lbt(struct s_smartmac *p_ctx, e_nsErr_t *p_err);
 
 static void mac_eventHandler(c_event_t c_event, p_data_t p_data);
 
@@ -122,63 +122,63 @@ static void mac_tmrScanCb(void *p_arg);
 static void mac_tmrRxPendingCb(void *p_arg);
 static void mac_tmrRxDelayCb(void *p_arg);
 
-static uint32_t mac_calcRxDelay(struct s_smartMAC *p_ctx, uint8_t counter);
+static uint32_t mac_calcRxDelay(struct s_smartmac *p_ctx, uint8_t counter);
 
 #if (NETSTK_CFG_LOOSELY_SYNC_EN == TRUE)
-static void mac_updateWakeupTable(struct s_smartMAC *p_ctx, uint16_t destId);
-static uint32_t mac_calcTxDelay(struct s_smartMAC *p_ctx, uint16_t destId);
+static void mac_updateWakeupTable(struct s_smartmac *p_ctx, uint16_t destId);
+static uint32_t mac_calcTxDelay(struct s_smartmac *p_ctx, uint16_t destId);
 #endif
 
 /* state-event handling functions */
-static void mac_off_entry(struct s_smartMAC *p_ctx);
-static void mac_off_sleepTimeout(struct s_smartMAC *p_ctx);
-static void mac_off_exit(struct s_smartMAC *p_ctx);
+static void mac_off_entry(struct s_smartmac *p_ctx);
+static void mac_off_sleepTimeout(struct s_smartmac *p_ctx);
+static void mac_off_exit(struct s_smartmac *p_ctx);
 
-static void mac_on_entry(struct s_smartMAC *p_ctx);
-static void mac_on_exit(struct s_smartMAC *p_ctx);
+static void mac_on_entry(struct s_smartmac *p_ctx);
+static void mac_on_exit(struct s_smartmac *p_ctx);
 
-static void mac_scan_entry(struct s_smartMAC *p_ctx);
-static void mac_scan_exit(struct s_smartMAC *p_ctx);
+static void mac_scan_entry(struct s_smartmac *p_ctx);
+static void mac_scan_exit(struct s_smartmac *p_ctx);
 
-static void mac_rxPending_entry(struct s_smartMAC *p_ctx);
-static void mac_rxPending_exit(struct s_smartMAC *p_ctx);
+static void mac_rxPending_entry(struct s_smartmac *p_ctx);
+static void mac_rxPending_exit(struct s_smartmac *p_ctx);
 
-static void mac_rxDelay_entry(struct s_smartMAC *p_ctx);
-static void mac_rxDelay_exit(struct s_smartMAC *p_ctx);
+static void mac_rxDelay_entry(struct s_smartmac *p_ctx);
+static void mac_rxDelay_exit(struct s_smartmac *p_ctx);
 
 #if (NETSTK_CFG_LOOSELY_SYNC_EN == TRUE)
-static void mac_txDelay_entry(struct s_smartMAC *p_ctx);
-static void mac_txDelay_exit(struct s_smartMAC *p_ctx);
+static void mac_txDelay_entry(struct s_smartmac *p_ctx);
+static void mac_txDelay_exit(struct s_smartmac *p_ctx);
 #endif
 
-static void mac_txBroadcast_entry(struct s_smartMAC *p_ctx);
-static void mac_txBroadcast_exit(struct s_smartMAC *p_ctx);
+static void mac_txBroadcast_entry(struct s_smartmac *p_ctx);
+static void mac_txBroadcast_exit(struct s_smartmac *p_ctx);
 
-static void mac_txUnicast_entry(struct s_smartMAC *p_ctx);
-static void mac_txUnicast_exit(struct s_smartMAC *p_ctx);
+static void mac_txUnicast_entry(struct s_smartmac *p_ctx);
+static void mac_txUnicast_exit(struct s_smartmac *p_ctx);
 
 /*
 ********************************************************************************
 *                               LOCAL VARIABLES
 ********************************************************************************
 */
-static struct s_smartMAC smartMAC;
-static uint8_t smartMacStrobe[15];
+static struct s_smartmac smartmac;
+static uint8_t smartmacStrobe[15];
 
 /*
 ********************************************************************************
 *                               GLOBAL VARIABLES
 ********************************************************************************
 */
-const s_nsMAC_t mac_driver_smartMAC =
+const s_nsMAC_t mac_driver_smartmac =
 {
-   "smartMAC",
-    smartMAC_init,
-    smartMAC_start,
-    smartMAC_stop,
-    smartMAC_send,
-    smartMAC_recv,
-    smartMAC_ioctl,
+   "smartmac",
+    smartmac_init,
+    smartmac_start,
+    smartmac_stop,
+    smartmac_send,
+    smartmac_recv,
+    smartmac_ioctl,
 };
 
 extern uip_lladdr_t uip_lladdr;
@@ -189,8 +189,8 @@ extern uip_lladdr_t uip_lladdr;
 *                           LOCAL FUNCTION DEFINITIONS
 ********************************************************************************
 */
-static void smartMAC_init (void *p_netstk, e_nsErr_t *p_err) {
-  struct s_smartMAC *p_ctx = &smartMAC;
+static void smartmac_init (void *p_netstk, e_nsErr_t *p_err) {
+  struct s_smartmac *p_ctx = &smartmac;
   packetbuf_attr_t macShortAddr;
   uint8_t strobeLen;
 
@@ -230,8 +230,8 @@ static void smartMAC_init (void *p_netstk, e_nsErr_t *p_err) {
 #endif
   packetbuf_set_attr(PACKETBUF_ATTR_MAC_ACK_WAIT_DURATION, macAckWaitDuration);
 
-  /* set SmartMAC attributes */
-  strobeLen = frame_smartmac_getStrobeLen();
+  /* set smartmac attributes */
+  strobeLen = framer_smartmac_getStrobeLen();
   p_ctx->strobeTxInterval = (phySHRDuration + (8 * strobeLen) * phySymbolPeriod + macAckWaitDuration) / 1000 + 1; /* actual TX time is about 1ms longer than expected */
   p_ctx->scanTimeout = p_ctx->strobeTxInterval + 5; /* >=16ms = 4 sniffs */
   p_ctx->lbtTimeout = p_ctx->scanTimeout;
@@ -240,7 +240,7 @@ static void smartMAC_init (void *p_netstk, e_nsErr_t *p_err) {
   p_ctx->rxDelayMin = 3 * p_ctx->strobeTxInterval;
   p_ctx->maxBroadcastCounter = (p_ctx->sleepTimeout + 2 * p_ctx->scanTimeout ) / p_ctx->strobeTxInterval + 1;
   p_ctx->maxUnicastCounter = 2 * p_ctx->maxBroadcastCounter;
-  memset(smartMacStrobe, 0, sizeof(smartMacStrobe));
+  memset(smartmacStrobe, 0, sizeof(smartmacStrobe));
 
   /* initialize local attributes */
   rt_tmr_create(&p_ctx->tmrWakeup, E_RT_TMR_TYPE_PERIODIC, p_ctx->sleepTimeout, mac_tmrWakeupCb, p_ctx);
@@ -258,8 +258,8 @@ static void smartMAC_init (void *p_netstk, e_nsErr_t *p_err) {
 }
 
 
-static void smartMAC_start(e_nsErr_t *p_err) {
-  struct s_smartMAC *p_ctx = &smartMAC;
+static void smartmac_start(e_nsErr_t *p_err) {
+  struct s_smartmac *p_ctx = &smartmac;
 
   /* start wake-up timer */
   rt_tmr_start(&p_ctx->tmrWakeup);
@@ -267,13 +267,13 @@ static void smartMAC_start(e_nsErr_t *p_err) {
 }
 
 
-static void smartMAC_stop(e_nsErr_t *p_err) {
+static void smartmac_stop(e_nsErr_t *p_err) {
 
 }
 
 
-static void smartMAC_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
-  struct s_smartMAC *p_ctx = &smartMAC;
+static void smartmac_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
+  struct s_smartmac *p_ctx = &smartmac;
   int isBroadcastTx;
 
   /* is MAC performing channel scan? */
@@ -326,15 +326,15 @@ static void smartMAC_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
 }
 
 
-static void smartMAC_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
-  struct s_smartMAC *p_ctx = &smartMAC;
+static void smartmac_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
+  struct s_smartmac *p_ctx = &smartmac;
   frame_smartmac_st frame;
 
   /* set return error code to default value */
   *p_err = NETSTK_ERR_NONE;
 
   /* parse the received frame */
-  frame_smartmac_parse(p_data, len, &frame);
+  framer_smartmac_parse(p_data, len, &frame);
 
   /* is MAC in SCAN state? */
   if ((p_ctx->state == E_SMARTMAC_STATE_SCAN)) {
@@ -407,14 +407,14 @@ static void smartMAC_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
 }
 
 
-static void smartMAC_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err) {
+static void smartmac_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err) {
 #if NETSTK_CFG_ARG_CHK_EN
   if (p_err == NULL) {
     return;
   }
 #endif
 
-  struct s_smartMAC *p_ctx = &smartMAC;
+  struct s_smartmac *p_ctx = &smartmac;
 
   *p_err = NETSTK_ERR_NONE;
   switch (cmd) {
@@ -437,15 +437,15 @@ static void smartMAC_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err) {
   }
 }
 
-static void mac_txStrobe(struct s_smartMAC *p_ctx, uint8_t counter, uint16_t dstShortAddr, e_nsErr_t *p_err) {
+static void mac_txStrobe(struct s_smartmac *p_ctx, uint8_t counter, uint16_t dstShortAddr, e_nsErr_t *p_err) {
 
   uint16_t len;
-  uint8_t *p_hdr = &smartMacStrobe[PHY_HEADER_LEN];
+  uint8_t *p_hdr = &smartmacStrobe[PHY_HEADER_LEN];
   frame_smartmac_st frame;
 
   /* set frame attributes to zero */
   memset(&frame, 0, sizeof(frame));
-  memset(&smartMacStrobe, 0, sizeof(smartMacStrobe));
+  memset(&smartmacStrobe, 0, sizeof(smartmacStrobe));
 
   /* set frame fields */
   frame.type = SMARTMAC_FRAME_STROBE;
@@ -456,13 +456,13 @@ static void mac_txStrobe(struct s_smartMAC *p_ctx, uint8_t counter, uint16_t dst
   frame.dest_addr = dstShortAddr;
 
   /* write strobe frame to buffer */
-  len = frame_smartmac_create(&frame, p_hdr);
+  len = framer_smartmac_create(&frame, p_hdr);
 
   /* issue PHY to deliver the strobe */
   p_ctx->p_netstk->phy->send(p_hdr, len, p_err);
 }
 
-static void mac_txBroadcast(struct s_smartMAC *p_ctx, uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
+static void mac_txBroadcast(struct s_smartmac *p_ctx, uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
   uint8_t counter;
   uint8_t dataSeqNo;
   uint8_t dataAckReq;
@@ -520,7 +520,7 @@ static void mac_txBroadcast(struct s_smartMAC *p_ctx, uint8_t *p_data, uint16_t 
   mac_txBroadcast_exit(p_ctx);
 }
 
-static void mac_txUnicast(struct s_smartMAC *p_ctx, uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
+static void mac_txUnicast(struct s_smartmac *p_ctx, uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
 
   uint8_t retx;
   uint8_t maxRetx;
@@ -663,7 +663,7 @@ static void mac_txUnicast(struct s_smartMAC *p_ctx, uint8_t *p_data, uint16_t le
 }
 
 
-static void mac_off_entry(struct s_smartMAC *p_ctx) {
+static void mac_off_entry(struct s_smartmac *p_ctx) {
   e_nsErr_t err = NETSTK_ERR_NONE;
 
   p_ctx->p_netstk->phy->off(&err);
@@ -676,67 +676,67 @@ static void mac_off_entry(struct s_smartMAC *p_ctx) {
   }
 }
 
-static void mac_off_sleepTimeout(struct s_smartMAC *p_ctx) {
+static void mac_off_sleepTimeout(struct s_smartmac *p_ctx) {
   mac_on_entry(p_ctx);
   mac_scan_entry(p_ctx);
 }
 
-static void mac_off_exit(struct s_smartMAC *p_ctx) {
+static void mac_off_exit(struct s_smartmac *p_ctx) {
 
 }
 
-static void mac_on_entry(struct s_smartMAC *p_ctx) {
+static void mac_on_entry(struct s_smartmac *p_ctx) {
   e_nsErr_t err;
 
   p_ctx->state = E_SMARTMAC_STATE_ON;
   p_ctx->p_netstk->phy->on(&err);
 }
 
-static void mac_on_exit(struct s_smartMAC *p_ctx) {
+static void mac_on_exit(struct s_smartmac *p_ctx) {
 
 }
 
-static void mac_scan_entry(struct s_smartMAC *p_ctx) {
+static void mac_scan_entry(struct s_smartmac *p_ctx) {
   /* start scan timer */
   p_ctx->state = E_SMARTMAC_STATE_SCAN;
   ctimer_restart(&p_ctx->tmr1Scan);
 }
 
-static void mac_scan_exit(struct s_smartMAC *p_ctx) {
+static void mac_scan_exit(struct s_smartmac *p_ctx) {
   ctimer_stop(&p_ctx->tmr1Scan);
 }
 
 
-static void mac_rxPending_entry(struct s_smartMAC *p_ctx) {
+static void mac_rxPending_entry(struct s_smartmac *p_ctx) {
   p_ctx->state = E_SMARTMAC_STATE_RX_PENDING;
   ctimer_restart(&p_ctx->tmr1RxPending);
 }
 
-static void mac_rxPending_exit(struct s_smartMAC *p_ctx) {
+static void mac_rxPending_exit(struct s_smartmac *p_ctx) {
   p_ctx->rxPendingTimeoutCount = 0;
   ctimer_stop(&p_ctx->tmr1RxPending);
 }
 
-static void mac_rxDelay_entry(struct s_smartMAC *p_ctx) {
+static void mac_rxDelay_entry(struct s_smartmac *p_ctx) {
   p_ctx->state = E_SMARTMAC_STATE_RX_DELAY;
 
   /* this timer should update its interval */
   ctimer_set(&p_ctx->tmr1RxDelay, p_ctx->rxDelay, mac_tmrRxDelayCb, p_ctx);
 }
 
-static void mac_rxDelay_exit(struct s_smartMAC *p_ctx) {
+static void mac_rxDelay_exit(struct s_smartmac *p_ctx) {
   ctimer_stop(&p_ctx->tmr1RxDelay);
 }
 
 #if (NETSTK_CFG_LOOSELY_SYNC_EN == TRUE)
-static void mac_txDelay_entry(struct s_smartMAC *p_ctx) {
+static void mac_txDelay_entry(struct s_smartmac *p_ctx) {
   p_ctx->state = E_SMARTMAC_STATE_TX_DELAY;
 
   e_nsErr_t err;
   p_ctx->p_netstk->phy->off(&err);
 }
 
-static void mac_txDelay_exit(struct s_smartMAC *p_ctx) {
+static void mac_txDelay_exit(struct s_smartmac *p_ctx) {
   e_nsErr_t err;
   p_ctx->p_netstk->phy->on(&err);
 
@@ -744,25 +744,25 @@ static void mac_txDelay_exit(struct s_smartMAC *p_ctx) {
 }
 #endif
 
-static void mac_txBroadcast_entry(struct s_smartMAC *p_ctx) {
+static void mac_txBroadcast_entry(struct s_smartmac *p_ctx) {
   p_ctx->state = E_SMARTMAC_STATE_TX_BROADCAST;
 }
 
-static void mac_txBroadcast_exit(struct s_smartMAC *p_ctx) {
+static void mac_txBroadcast_exit(struct s_smartmac *p_ctx) {
 
 }
 
-static void mac_txUnicast_entry(struct s_smartMAC *p_ctx) {
+static void mac_txUnicast_entry(struct s_smartmac *p_ctx) {
   p_ctx->state = E_SMARTMAC_STATE_TX_UNICAST;
 }
 
-static void mac_txUnicast_exit(struct s_smartMAC *p_ctx) {
+static void mac_txUnicast_exit(struct s_smartmac *p_ctx) {
 
 }
 
 static void mac_tmrWakeupCb(void *p_arg)
 {
-  struct s_smartMAC *p_ctx = (struct s_smartMAC *)p_arg;
+  struct s_smartmac *p_ctx = (struct s_smartmac *)p_arg;
 
   /* is smartMAC in OFF state? */
   if ((p_ctx->state & 0xF0) == E_SMARTMAC_STATE_OFF) {
@@ -775,7 +775,7 @@ static void mac_tmrWakeupCb(void *p_arg)
 }
 
 static void mac_tmrScanCb(void *p_arg) {
-  struct s_smartMAC *p_ctx = (struct s_smartMAC *)p_arg;
+  struct s_smartmac *p_ctx = (struct s_smartmac *)p_arg;
   e_nsErr_t err = NETSTK_ERR_NONE;
   uint8_t isPendingRxFrame = FALSE;
 
@@ -798,7 +798,7 @@ static void mac_tmrScanCb(void *p_arg) {
 }
 
 static void mac_tmrRxPendingCb(void *p_arg) {
-  struct s_smartMAC *p_ctx = (struct s_smartMAC *)p_arg;
+  struct s_smartmac *p_ctx = (struct s_smartmac *)p_arg;
   e_nsErr_t err = NETSTK_ERR_NONE;
   uint8_t isPendingRxFrame = FALSE;
 
@@ -830,7 +830,7 @@ static void mac_tmrRxPendingCb(void *p_arg) {
 }
 
 static void mac_tmrRxDelayCb(void *p_arg) {
-  struct s_smartMAC *p_ctx = (struct s_smartMAC *)p_arg;
+  struct s_smartmac *p_ctx = (struct s_smartmac *)p_arg;
 
   /* is smartMAC in RXDELAY state? */
   if (p_ctx->state == E_SMARTMAC_STATE_RX_DELAY) {
@@ -845,7 +845,7 @@ static void mac_tmrRxDelayCb(void *p_arg) {
   }
 }
 
-static uint32_t mac_calcRxDelay(struct s_smartMAC *p_ctx, uint8_t counter) {
+static uint32_t mac_calcRxDelay(struct s_smartmac *p_ctx, uint8_t counter) {
   uint32_t rx_delay = 0;
 
   if (counter) {
@@ -861,7 +861,7 @@ static uint32_t mac_calcRxDelay(struct s_smartMAC *p_ctx, uint8_t counter) {
 }
 
 #if (NETSTK_CFG_LOOSELY_SYNC_EN == TRUE)
-static void mac_updateWakeupTable(struct s_smartMAC *p_ctx, uint16_t destId)
+static void mac_updateWakeupTable(struct s_smartmac *p_ctx, uint16_t destId)
 {
   uint8_t ix;
   for (ix = 0; ix < SMARTMAC_CFG_WAKEUP_TBL_SIZE ; ix++) {
@@ -874,7 +874,7 @@ static void mac_updateWakeupTable(struct s_smartMAC *p_ctx, uint16_t destId)
   }
 }
 
-static uint32_t mac_calcTxDelay(struct s_smartMAC *p_ctx, uint16_t destId)
+static uint32_t mac_calcTxDelay(struct s_smartmac *p_ctx, uint16_t destId)
 {
   uint8_t isDone;
   uint32_t ix;
@@ -952,7 +952,7 @@ static uint32_t mac_calcTxDelay(struct s_smartMAC *p_ctx, uint16_t destId)
 }
 #endif /* #if (SMARTMAC_CFG_LOOSELY_SYNC_EN == TRUE) */
 
-static void mac_lbt(struct s_smartMAC *p_ctx, e_nsErr_t *p_err) {
+static void mac_lbt(struct s_smartmac *p_ctx, e_nsErr_t *p_err) {
   uint32_t tickstart;
   uint8_t isPendingRxFrame;
 
@@ -976,7 +976,7 @@ static void mac_lbt(struct s_smartMAC *p_ctx, e_nsErr_t *p_err) {
 
 static void mac_eventHandler(c_event_t c_event, p_data_t p_data)
 {
-  struct s_smartMAC *p_ctx = &smartMAC;
+  struct s_smartmac *p_ctx = &smartmac;
   uint8_t data = p_ctx->event;
   uint32_t ucException = FALSE;
 

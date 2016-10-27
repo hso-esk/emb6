@@ -611,7 +611,7 @@ extern  const s_nsDLLC_t        dllc_driver_802154;
 */
 extern  const s_nsMAC_t         mac_driver_null;
 extern  const s_nsMAC_t         mac_driver_802154;
-extern  const s_nsMAC_t         mac_driver_smartMAC;
+extern  const s_nsMAC_t         mac_driver_smartmac;
 
 /*
 ********************************************************************************

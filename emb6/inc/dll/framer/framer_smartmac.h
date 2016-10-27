@@ -21,9 +21,9 @@ struct s_frame_smartmac {
   uint16_t src_addr;
 };
 
-uint8_t frame_smartmac_getStrobeLen(void);
-uint16_t frame_smartmac_create(frame_smartmac_st *p_frame, uint8_t *p_buf);
-uint16_t frame_smartmac_parse(uint8_t *p_buf, uint16_t len, frame_smartmac_st *p_frame);
+uint8_t framer_smartmac_getStrobeLen(void);
+uint16_t framer_smartmac_create(frame_smartmac_st *p_frame, uint8_t *p_buf);
+uint16_t framer_smartmac_parse(uint8_t *p_buf, uint16_t len, frame_smartmac_st *p_frame);
 
 
 #endif /* FRAMER_SMARTMAC_H_ */
