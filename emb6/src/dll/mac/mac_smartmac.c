@@ -235,7 +235,9 @@ static void smartmac_init (void *p_netstk, e_nsErr_t *p_err) {
   p_ctx->strobeTxInterval = (phySHRDuration + (8 * strobeLen) * phySymbolPeriod + macAckWaitDuration) / 1000 + 1; /* actual TX time is about 1ms longer than expected */
   p_ctx->scanTimeout = p_ctx->strobeTxInterval + 5; /* >=16ms = 4 sniffs */
   p_ctx->lbtTimeout = p_ctx->scanTimeout;
+#if (NETSTK_CFG_LOW_POWER_MODE_EN == TRUE)
   p_ctx->sleepTimeout = mac_phy_config.sleepTimeout;
+#endif
   p_ctx->rxTimeout = 3 * p_ctx->strobeTxInterval;
   p_ctx->rxDelayMin = 3 * p_ctx->strobeTxInterval;
   p_ctx->maxBroadcastCounter = (p_ctx->sleepTimeout + 2 * p_ctx->scanTimeout ) / p_ctx->strobeTxInterval + 1;
