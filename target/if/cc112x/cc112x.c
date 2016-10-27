@@ -61,7 +61,7 @@
 #include "packetbuf.h"
 #include "evproc.h"
 #include "phy_framer_802154.h"
-#include "llframer.h"
+#include "framer_802154_ll.h"
 
 #define  LOGGER_ENABLE        LOGGER_RADIO
 #include "logger.h"
@@ -116,7 +116,7 @@
 */
 #define RF_MAX_FIFO_LEN                     (uint8_t)( 255U )
 #define RF_CFG_FIFO_SIZE                    (uint8_t)( 128U )
-#define RF_CFG_FIFO_THR                     (LLFRAME_MIN_NUM_RX_BYTES - 1)
+#define RF_CFG_FIFO_THR                     (FRAMER802154LL_MIN_NUM_RX_BYTES - 1)
 #define RF_CFG_NUM_RXBYTES                  (RF_CFG_FIFO_THR + 1)
 #define RF_CFG_NUM_TXBYTES                  (RF_CFG_FIFO_SIZE - RF_CFG_NUM_RXBYTES)
 #define RF_CFG_NUM_FREE_TXBYTES             (RF_CFG_FIFO_THR + 1)
@@ -298,7 +298,7 @@ struct s_rf_ctx {
   */
   int8_t  rxRSSI;
   uint8_t rxLQI;
-  llframe_attr_t rxFrame;
+  framer802154ll_attr_t rxFrame;
 
   /* TX state attributes */
   uint8_t *txDataPtr;
@@ -980,7 +980,7 @@ static void rf_rxFifoThresholdISR(void *p_arg) {
     else {
       isRxOk = TRUE;
 
-      if (p_ctx->rxLastDataPtr > LLFRAME_MIN_NUM_RX_BYTES) {
+      if (p_ctx->rxLastDataPtr > FRAMER802154LL_MIN_NUM_RX_BYTES) {
         /* compute number of checksum bytes */
         p_ctx->rxNumRemBytes -= numRxBytes;
         if (p_ctx->rxNumRemBytes < p_ctx->rxFrame.crc_len) {
@@ -994,14 +994,14 @@ static void rf_rxFifoThresholdISR(void *p_arg) {
         /* is address not yet checked and number of received bytes sufficient for
         * address filtering? */
         if ((p_ctx->rxIsAddrFiltered == FALSE) &&
-            (p_ctx->rxLastDataPtr >= (LLFRAME_MIN_NUM_RX_BYTES + p_ctx->rxFrame.min_addr_len))) {
+            (p_ctx->rxLastDataPtr >= (FRAMER802154LL_MIN_NUM_RX_BYTES + p_ctx->rxFrame.min_addr_len))) {
           isRxOk = rf_filterAddr(p_ctx);
         }
   #endif /* NETSTK_CFG_RF_SW_AUTOACK_EN */
       }
       else {
         /* first chunk of bytes is sufficient to obtain incoming frame information */
-        p_ctx->rxNumRemBytes = llframe_parse(&p_ctx->rxFrame, p_ctx->rxBuf, p_ctx->rxLastDataPtr);
+        p_ctx->rxNumRemBytes = framer802154ll_parse(&p_ctx->rxFrame, p_ctx->rxBuf, p_ctx->rxLastDataPtr);
         if (p_ctx->rxNumRemBytes == 0) {
           isRxOk = FALSE;
         }
@@ -1018,7 +1018,7 @@ static void rf_rxFifoThresholdISR(void *p_arg) {
   #endif /* NETSTK_CFG_IEEE_802154G_EN */
 
           /* initialize checksum */
-          p_ctx->rxChksum = llframe_crcInit(&p_ctx->rxFrame);
+          p_ctx->rxChksum = framer802154ll_crcInit(&p_ctx->rxFrame);
           p_ctx->rxLastChksumPtr = p_ctx->rxFrame.crc_offset;
 
           /* compute number of checksum bytes */
@@ -1041,7 +1041,7 @@ static void rf_rxFifoThresholdISR(void *p_arg) {
   }
   else {
     /* otherwise update checksum if there is no error during RX process */
-    p_ctx->rxChksum = llframe_crcUpdate(&p_ctx->rxFrame, &p_ctx->rxBuf[p_ctx->rxLastChksumPtr], numChksumBytes, p_ctx->rxChksum);
+    p_ctx->rxChksum = framer802154ll_crcUpdate(&p_ctx->rxFrame, &p_ctx->rxBuf[p_ctx->rxLastChksumPtr], numChksumBytes, p_ctx->rxChksum);
     p_ctx->rxLastChksumPtr += numChksumBytes;
 
 #if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
@@ -1319,12 +1319,12 @@ static void rf_rx_chksum(struct s_rf_ctx *p_ctx) {
   /* update checksum */
   if (p_ctx->rxLastDataPtr > (p_ctx->rxFrame.crc_len + p_ctx->rxLastChksumPtr)) {
     numChksumBytes = p_ctx->rxLastDataPtr - (p_ctx->rxLastChksumPtr + p_ctx->rxFrame.crc_len);
-    p_ctx->rxChksum = llframe_crcUpdate(&p_ctx->rxFrame, &p_ctx->rxBuf[p_ctx->rxLastChksumPtr], numChksumBytes, p_ctx->rxChksum);
+    p_ctx->rxChksum = framer802154ll_crcUpdate(&p_ctx->rxFrame, &p_ctx->rxBuf[p_ctx->rxLastChksumPtr], numChksumBytes, p_ctx->rxChksum);
     p_ctx->rxLastChksumPtr += numChksumBytes;
   }
-  p_ctx->rxChksum = llframe_crcFinal(&p_ctx->rxFrame, p_ctx->rxChksum);
+  p_ctx->rxChksum = framer802154ll_crcFinal(&p_ctx->rxFrame, p_ctx->rxChksum);
 
-  isChecksumOK = llframe_crcFilter(&p_ctx->rxFrame,
+  isChecksumOK = framer802154ll_crcFilter(&p_ctx->rxFrame,
                                     p_ctx->rxChksum,
                                    &p_ctx->rxBuf[p_ctx->rxLastChksumPtr],
                                     p_ctx->rxFrame.crc_len);
@@ -1533,12 +1533,12 @@ static void rf_tx_rxAckFini(struct s_rf_ctx *p_ctx) {
   /* update checksum */
   if (p_ctx->rxLastDataPtr > (p_ctx->rxFrame.crc_len + p_ctx->rxLastChksumPtr)) {
     numChksumBytes = p_ctx->rxLastDataPtr - (p_ctx->rxLastChksumPtr + p_ctx->rxFrame.crc_len);
-    p_ctx->rxChksum = llframe_crcUpdate(&p_ctx->rxFrame, &p_ctx->rxBuf[p_ctx->rxLastChksumPtr], numChksumBytes, p_ctx->rxChksum);
+    p_ctx->rxChksum = framer802154ll_crcUpdate(&p_ctx->rxFrame, &p_ctx->rxBuf[p_ctx->rxLastChksumPtr], numChksumBytes, p_ctx->rxChksum);
     p_ctx->rxLastChksumPtr += numChksumBytes;
   }
-  p_ctx->rxChksum = llframe_crcFinal(&p_ctx->rxFrame, p_ctx->rxChksum);
+  p_ctx->rxChksum = framer802154ll_crcFinal(&p_ctx->rxFrame, p_ctx->rxChksum);
 
-  isChecksumOK = llframe_crcFilter(&p_ctx->rxFrame,
+  isChecksumOK = framer802154ll_crcFilter(&p_ctx->rxFrame,
                                     p_ctx->rxChksum,
                                    &p_ctx->rxBuf[p_ctx->rxLastChksumPtr],
                                     p_ctx->rxFrame.crc_len);
@@ -1930,7 +1930,7 @@ static uint8_t rf_filterAddr(struct s_rf_ctx *p_ctx) {
   uint8_t ack[10] = { 0 };
 
   /* filter address */
-  p_ctx->rxIsAddrFiltered = llframe_addrFilter(&p_ctx->rxFrame, p_ctx->rxBuf, p_ctx->rxLastDataPtr);
+  p_ctx->rxIsAddrFiltered = framer802154ll_addrFilter(&p_ctx->rxFrame, p_ctx->rxBuf, p_ctx->rxLastDataPtr);
   if (p_ctx->rxIsAddrFiltered == FALSE) {
     ret = FALSE;
   }
@@ -1939,7 +1939,7 @@ static uint8_t rf_filterAddr(struct s_rf_ctx *p_ctx) {
     p_ctx->rxReqAck = p_ctx->rxFrame.is_ack_required;
     if (p_ctx->rxReqAck == TRUE) {
       /* write the ACK to send into TX FIFO */
-      ack_len = llframe_createAck(&p_ctx->rxFrame, ack, sizeof(ack));
+      ack_len = framer802154ll_createAck(&p_ctx->rxFrame, ack, sizeof(ack));
       cc112x_spiTxFifoWrite(ack, ack_len);
 
 #if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
