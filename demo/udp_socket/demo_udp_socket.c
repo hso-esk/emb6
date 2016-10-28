@@ -99,6 +99,10 @@
 
 #define UIP_IP_BUF                      ((struct uip_ip_hdr *)&uip_buf[UIP_LLH_LEN])
 
+/** minimum packet length is equal to size of sequence number (4 bytes) */
+#define DEMO_UDP_PKT_LEN_MIN            (  4u )
+#define DEMO_UDP_PKT_LEN_MAX            ( 40u )
+
 /*
 ********************************************************************************
 *                               LOCAL VARIABLES
@@ -106,6 +110,7 @@
 */
 static struct uip_udp_conn *pudp_socket_conn = (struct uip_udp_conn *) 0;
 
+static uint8_t packetLength;
 #ifdef  DEMO_UDP_SOCKET_ROLE_CLIENT
 static uint32_t udp_socket_currSeqTx;
 static uint32_t udp_socket_lastSeqRx;
@@ -236,16 +241,26 @@ static void udp_socket_eventHandler(c_event_t c_event, p_data_t p_data)
  */
 static void udp_socket_tx(uint32_t seq)
 {
+#ifdef DEMO_UDP_SOCKET_ROLE_CLIENT
+  uint16_t payload_len;
   uint8_t seq_size = sizeof(seq);
-  uint8_t payload[] = { 0, 0, 0, 0, 0x50, 0x51, 0x52, 0x53, 0x54 };
-  uint16_t payload_len = sizeof(payload);
+  uint8_t payload[DEMO_UDP_PKT_LEN_MAX];
 
   /*
    * create packet to send
    */
-  memcpy(payload, &seq, seq_size);
+  memset(payload, 0, sizeof(payload));
 
-#ifdef DEMO_UDP_SOCKET_ROLE_CLIENT
+  memcpy(payload, &seq, seq_size);
+  memset(&payload[seq_size], 0xab, packetLength - seq_size);
+  payload_len = packetLength;
+
+
+  packetLength++;
+  if (packetLength > DEMO_UDP_PKT_LEN_MAX) {
+    packetLength = DEMO_UDP_PKT_LEN_MIN;
+  }
+
   uip_ds6_addr_t *ps_src_addr;
   rpl_dag_t *ps_dag_desc;
 
@@ -266,10 +281,16 @@ static void udp_socket_tx(uint32_t seq)
       uip_create_unspecified(&pudp_socket_conn->ripaddr);
     }
   }
-#endif
+#else
+  uint8_t payload[] = { 0, 0, 0, 0, 0x50, 0x51, 0x52, 0x53, 0x54 };
+  uint16_t payload_len = sizeof(payload);
+  uint8_t seq_size = sizeof(seq);
 
+  /*
+   * create packet to send
+   */
+  memcpy(payload, &seq, seq_size);
 
-#ifdef DEMO_UDP_SOCKET_ROLE_SERVER
   uip_ipaddr_copy(&pudp_socket_conn->ripaddr, &UIP_IP_BUF->srcipaddr);
   uip_udp_packet_send(pudp_socket_conn, payload, payload_len);
   uip_create_unspecified(&pudp_socket_conn->ripaddr);
@@ -311,6 +332,7 @@ int8_t demo_udpSocketInit(void)
 
 #ifdef DEMO_UDP_SOCKET_ROLE_CLIENT
   clock_time_t interval = 0;
+  packetLength = DEMO_UDP_PKT_LEN_MIN;
 
   /* set UDP event timer interval */
   interval  = DEMO_UDP_SEND_INTERVAL;
