@@ -1070,14 +1070,24 @@ static void rf_txFifoThresholdISR(void *p_arg) {
   uint8_t numWrBytes;
   struct s_rf_ctx *p_ctx = &rf_ctx;
 
-  /* entry */
-  if (p_ctx->txNumRemBytes > RF_CFG_FIFO_THR) {
-    numWrBytes = RF_CFG_FIFO_THR;
+#if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
+  /* reset WOR timer at a "right" moment to make sure that one of WOR sniffs will
+   * hit the incoming ACK. This problem happens due to random sniff intervals
+   * following complete frame transmission */
+  if (p_ctx->cfgWOREnabled == TRUE) {
+    cc112x_spiCmdStrobe(CC112X_SWORRST);
   }
-  else {
-    numWrBytes = p_ctx->txNumRemBytes;
+#endif
+
+  if (p_ctx->txNumRemBytes) {
+    if (p_ctx->txNumRemBytes > RF_CFG_FIFO_THR) {
+      numWrBytes = RF_CFG_FIFO_THR;
+    }
+    else {
+      numWrBytes = p_ctx->txNumRemBytes;
+    }
+    rf_writeTxFifo(p_ctx, numWrBytes, &err);
   }
-  rf_writeTxFifo(p_ctx, numWrBytes, &err);
 
 #if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
   /* switch to fixed packet length mode if number of remaining bytes is less than FIFO SIZE
@@ -1460,6 +1470,16 @@ static void rf_tx_sync(struct s_rf_ctx *p_ctx) {
   /* configure RF interrupt */
   rf_intConfig(RF_IOCFG_TXFIFO_THR, RF_INT_TXFIFO_THR, RF_INT_EDGE_TXFIFO_THR, rf_txFifoThresholdISR);
 
+#if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
+  /* configure TXFIFO_THR to trigger WOR timer reset before the frame, which
+   * requires ACK, is completely transmitted. As such the incoming ACK should be
+   * caught surely. This workaround is required in WOR mode only */
+  if ((p_ctx->txReqAck == TRUE) && (p_ctx->cfgWOREnabled == TRUE)) {
+    /* trigger TXFIFO_THR interrupt as TXFIFO has less then 4 bytes */
+    RF_SET_FIFO_THR(128 - 1 - 4);
+  }
+#endif
+
 #if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
   /* switch to fixed packet length mode if number of remaining bytes is less than FIFO SIZE
    * the actual number of remaining bytes to be sent is calculated as follow:
@@ -1773,8 +1793,8 @@ static uint8_t rf_gotoWor(struct s_rf_ctx *p_ctx) {
     rf_setPktLen(CC112X_PKT_LEN_MODE_INFINITE, RF_MAX_FIFO_LEN);
 #endif
 
-    /* configure RF interrupt */
-    rf_intConfig(RF_IOCFG_RXFIFO_THR, RF_INT_RXFIFO_THR, RF_INT_EDGE_RXFIFO_THR, rf_rxFifoThresholdISR);
+    /* reset RXFIFO threshold */
+    RF_SET_FIFO_THR(RF_CFG_FIFO_THR);
 
     /* WOR mode */
     cc112x_spiCmdStrobe(CC112X_SWOR);
