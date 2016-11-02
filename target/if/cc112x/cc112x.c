@@ -1266,8 +1266,17 @@ static void rf_on_entry(struct s_rf_ctx *p_ctx) {
  */
 static void rf_on_exit(struct s_rf_ctx *p_ctx) {
 
+  e_rfState_t currState;
+
   /* disable radio interrupts handling */
   RF_INT_DISABLED();
+
+  /* store current state */
+  currState = p_ctx->state;
+
+  /* put radio to IDLE state */
+  p_ctx->state = RF_STATE_IDLE;
+  rf_gotoIdle(p_ctx);
 
   /* exit substate */
   if ((p_ctx->state & RF_STATE_MASK) == RF_STATE_TX) {
@@ -1276,10 +1285,6 @@ static void rf_on_exit(struct s_rf_ctx *p_ctx) {
   else {
     rf_rx_exit(p_ctx);
   }
-
-  /* put radio to IDLE state */
-  p_ctx->state = RF_STATE_IDLE;
-  rf_gotoIdle(p_ctx);
 }
 
 
