@@ -1268,6 +1268,14 @@ static void rf_on_exit(struct s_rf_ctx *p_ctx) {
   /* disable radio interrupts handling */
   RF_INT_DISABLED();
 
+  /* exit substate */
+  if ((p_ctx->state & RF_STATE_MASK) == RF_STATE_TX) {
+    rf_tx_exit(p_ctx);
+  }
+  else {
+    rf_rx_exit(p_ctx);
+  }
+
   /* put radio to IDLE state */
   p_ctx->state = RF_STATE_IDLE;
   rf_gotoIdle(p_ctx);
