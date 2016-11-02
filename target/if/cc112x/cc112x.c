@@ -1075,7 +1075,7 @@ static void rf_txFifoThresholdISR(void *p_arg) {
   /* reset WOR timer at a "right" moment to make sure that one of WOR sniffs will
    * hit the incoming ACK. This problem happens due to random sniff intervals
    * following complete frame transmission */
-  if (p_ctx->cfgWOREnabled == TRUE) {
+  if ((p_ctx->cfgWOREnabled == TRUE) && (p_ctx->txReqAck == TRUE)) {
     cc112x_spiCmdStrobe(CC112X_SWORRST);
   }
 #endif
