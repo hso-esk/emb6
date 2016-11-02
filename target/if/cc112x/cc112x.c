@@ -43,6 +43,7 @@
  * @file    cc112x.c
  * @date    12.11.2015
  * @author  PN
+ * @version 0.03.00
  * @brief   Implementation of TI transceiver CC112X
  */
 
