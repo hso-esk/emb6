@@ -39,6 +39,8 @@ typedef struct thrd_rdb_link {
 	uint16_t L_link_margin;
 	uint8_t L_incoming_quality;
 	uint8_t L_outgoing_quality;
+	uint32_t challenge;
+	uint32_t fc;
 	struct ctimer L_age;
 } thrd_rdb_link_t;
 
