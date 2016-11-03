@@ -54,20 +54,6 @@
 #define SICSLOWPAN_USE_MESH_HEADER	FALSE
 #endif /* SICSLOWPAN_USE_MESH_HEADER */
 
-#ifdef SICSLOWPAN_USE_MESH_HEADER
-/**
- * \name 6LoWPAN Mesh Header configuration.
- * @{
- */
-typedef struct mesh_hdr_conf {
-	uint8_t V_bit;
-	uint8_t F_bit;
-	uint8_t hops_left;
-} mesh_hdr_conf_t;
-#endif
-
-#define SICSLOWPAN_MAX_MESH_HEADER_SIZE				17		/* bytes */
-
 /* Min and Max compressible UDP ports */
 #define SICSLOWPAN_UDP_PORT_MIN                     0xF0B0
 #define SICSLOWPAN_UDP_PORT_MAX                     0xF0BF   /* F0B0 + 15 */
@@ -93,29 +79,32 @@ typedef struct mesh_hdr_conf {
 #define SICSLOWPAN_COMPRESSION_HC06        2
 /** @} */
 
-/**
- * \name 6lowpan mesh header bit mask.
+/** @} */
+
+#ifdef SICSLOWPAN_USE_MESH_HEADER
+/** \name 6LoWPAN mesh header.
  * @{
  */
+// Maximum mesh header size.
+#define SICSLOWPAN_MAX_MESH_HEADER_SIZE				17		/* bytes */
+
+// 6lowpan mesh header bit mask.
 #define MESH_HEADER_V_EUI_64_LONG_ADDR				0x00 /* Originator: Use EUI-64 address. (bin: 0000 0000) */
 #define MESH_HEADER_V_SHORT_ADDR					0x20 /* Originator: Use  short 16-bit address. (bin: 0010 0000) */
 #define MESH_HEADER_F_EUI_64_LONG_ADDR				0x00 /* Final Destination: Use EUI-64 address. (bin: 0000 0000) */
 #define MESH_HEADER_F_SHORT_ADDR					0x10 /* Final Destination: Use  short 16-bit address. (bin: 0001 0000 ) */
+#define SICSLOWPAN_MAX_MESH_HEADER_SIZE				17	 /* bytes */
 
 // 6LoWPAN mesh header length.
-#define MESH_HEADER_EUI_64_ADDR_LEN					8
-#define MESH_HEADER_SHORT_ADDR_LEN					2
+#define MESH_HEADER_EUI_64_ADDR_LEN					8	 /* bytes */
+#define MESH_HEADER_SHORT_ADDR_LEN					2	 /* bytes */
 
 // 6LoWPAN mesh header configuration.
 #define SICSLOWPAN_MESH_HEADER_V                    MESH_HEADER_V_SHORT_ADDR
 #define SICSLOWPAN_MESH_HEADER_F					MESH_HEADER_F_SHORT_ADDR
 #define SICSLOWPAN_MESH_HEADER_MAX_HOPS				14
-/** @} */
 
-/**
- * \name 6lowpan dispatches
- * @{
- */
+// 6LoWPAN dispatches
 #define SICSLOWPAN_DISPATCH_IPV6                    0x41UL /* 01000001 = 65 */
 #define SICSLOWPAN_DISPATCH_HC1                     0x42UL /* 01000010 = 66 */
 #define SICSLOWPAN_DISPATCH_IPHC                    0x60UL /* 011xxxxx = ... */
@@ -124,13 +113,21 @@ typedef struct mesh_hdr_conf {
 #define SICSLOWPAN_DISPATCH_FRAGN                   0xe0UL /* 11100xxx */
 /** @} */
 
-/**
- * \name 6lowpan dispatch types
- * @{
- */
+// 6LoWPAN dispatch types
 #define SICSLOWPAN_TYPE_MESH_HEADER					0x02	/* 10 */
 #define SICSLOWPAN_TYPE_FRAG_HEADER					0x03	/* 11 */
+
+// 6lowpan mesh header encoding.
+#define SICSLOWPAN_MESH_HDR_SHORT_ADDR_MODE			 2UL								// Short address mode.
+#define SICSLOWPAN_MESH_HDR_LONG_ADDR_MODE	 		 8UL								// Long address mode.
+
+#define SICSLOWPAN_MESH_HDR_V						 1UL								// V bit.
+#define SICSLOWPAN_MESH_HDR_F						 1UL								// F bit.
+#define SICSLOWPAN_MESH_HDR_MAX_HOPS				14UL								// Maximum hops left.
+#define SICSLOWPAN_MESH_HDR_ORIG_ADDR_MODE			SICSLOWPAN_MESH_HDR_SHORT_ADDR_MODE	//
+#define SICSLOWPAN_MESH_HDR_FINAL_ADDR_MODE			SICSLOWPAN_MESH_HDR_SHORT_ADDR_MODE	//
 /** @} */
+#endif
 
 /** \name HC1 encoding
  * @{
@@ -207,21 +204,6 @@ typedef struct mesh_hdr_conf {
 #define SICSLOWPAN_NHC_UDP_CS_P_10  0xF2 /* source = 0xF0 + 8bit inline, dest = 16 bit inline */
 #define SICSLOWPAN_NHC_UDP_CS_P_11  0xF3 /* source & dest = 0xF0B + 4bit inline */
 /** @} */
-
-/**
- * \name 6lowpan mesh header encoding.
- * @{
- */
-#define SICSLOWPAN_MESH_HDR_SHORT_ADDR_MODE			 2UL								// Short address mode.
-#define SICSLOWPAN_MESH_HDR_LONG_ADDR_MODE	 		 8UL								// Long address mode.
-
-#define SICSLOWPAN_MESH_HDR_V						 1UL								// V bit.
-#define SICSLOWPAN_MESH_HDR_F						 1UL								// F bit.
-#define SICSLOWPAN_MESH_HDR_MAX_HOPS				14UL								// Maximum hops left.
-#define SICSLOWPAN_MESH_HDR_ORIG_ADDR_MODE			SICSLOWPAN_MESH_HDR_SHORT_ADDR_MODE	//
-#define SICSLOWPAN_MESH_HDR_FINAL_ADDR_MODE			SICSLOWPAN_MESH_HDR_SHORT_ADDR_MODE	//
-/** @} */
-
 
 /**
  * \name The 6lowpan "headers" length

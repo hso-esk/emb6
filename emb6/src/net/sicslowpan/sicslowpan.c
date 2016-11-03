@@ -90,8 +90,6 @@
 #include "mle_table.h"
 
 
-
-
 #define DEBUG DEBUG_NONE
 #include "uip-debug.h"
 #if DEBUG
@@ -1531,7 +1529,7 @@ static uint8_t output(const uip_lladdr_t *localdest)
 		PRINTFO("Fragmentation sending packet len %d\n\r", uip_len);
 
 		/* Create 1st Fragment */
-		PRINTFO("sicslowpan output: 1rst fragment ");
+		PRINTFO("sicslowpan output: 1st fragment\n\r");
 
 		/* move HC1/HC06/IPv6 header */
 		// memmove(packetbuf_ptr + SICSLOWPAN_MESH_HEADER_LEN + SICSLOWPAN_FRAG1_HDR_LEN, packetbuf_ptr, packetbuf_hdr_len);
@@ -1553,30 +1551,19 @@ static uint8_t output(const uip_lladdr_t *localdest)
 		if ( uip_is_addr_link_local(&dest_addr) ) {
 
 			if ( thrd_is_rloc_addr(&dest_addr) ) {	// Link-local RLOC address.
-
-				// TODO Nidhal: Set Short Address Mode?
+				// Set short address mode.
 				packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_SHORTADDRMODE);
-				// TODO check if i have a short address
-				if(0) // TODO to change with if i have short address
-					packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
-				else
-					packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_LONGADDRMODE);
+				packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
 
 				memmove(packetbuf_ptr + SICSLOWPAN_FRAG1_HDR_LEN, packetbuf_ptr, packetbuf_hdr_len);
-
 				goto send_frag;
 
 			} else {	// Link-local EUI-64 based address.
 				// Reset universal/local bit.
 				thrd_eui_64_invert_universal_local_bit(&dest);
-
-				// TODO Nidhal: Set Short Address Mode?
+				// Set long address mode.
 				packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_LONGADDRMODE);
-				// TODO check if i have a short address
-				if(0) // TODO to change with if i have short address
-					packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
-				else
-					packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_LONGADDRMODE);
+				packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_LONGADDRMODE);
 
 				memmove(packetbuf_ptr + SICSLOWPAN_FRAG1_HDR_LEN, packetbuf_ptr, packetbuf_hdr_len);
 				goto send_frag;
@@ -1591,14 +1578,11 @@ static uint8_t output(const uip_lladdr_t *localdest)
 
 #if ( (THRD_DEV_NETTYPE == THRD_DEV_NET_PED) || (THRD_DEV_NETTYPE == THRD_DEV_NET_SED) )	// RFD -> without routing capability.
 
-			// TODO Forward packet to parent device.
-			// TODO Nidhal: Set Short Address Mode?
+			// Forward packet to parent device.
+			// Set short address mode.
 			packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_SHORTADDRMODE);
-			// TODO check if i have a short address
-			if(0) // TODO to change with if i have short address
-				packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
-			else
-				packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_LONGADDRMODE);
+			packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
+
 			memmove(packetbuf_ptr + SICSLOWPAN_FRAG1_HDR_LEN, packetbuf_ptr, packetbuf_hdr_len);
 
 			// Check whether I am operating as a child (already successfully attached to my parent device).
@@ -1645,17 +1629,10 @@ static uint8_t output(const uip_lladdr_t *localdest)
 						if ( mle_is_child(dest_child_id) ) {
 							PRINTFO("sicslowpan: Destination child id [%d] belongs to a child.\n\r", dest_child_id);
 
-							// TODO Forward packet to parent device.
-							// TODO Nidhal: Set Short Address Mode?
+							// Forward packet to a child.
+							// Set short address mode.
 							packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_SHORTADDRMODE);
-							// TODO check if i have a short address
-							if(1) // TODO to change with if i have short address
-								packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
-							else
-								packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_LONGADDRMODE);
-
-							// memcpy(packetbuf_ptr + packetbuf_hdr_len, (uint8_t *)UIP_IP_BUF + uncomp_hdr_len, uip_len - uncomp_hdr_len);
-							// packetbuf_set_datalen(uip_len - uncomp_hdr_len + packetbuf_hdr_len);
+							packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
 
 							thrd_create_rloc_linkaddr(&dest, dest_rid, dest_child_id);
 
@@ -1673,13 +1650,9 @@ static uint8_t output(const uip_lladdr_t *localdest)
 						 */
 						PRINTFO("sicslowpan: Destination router is a direct neighbor --> send packet without including mesh header.\n\r");
 						// Forward packet to neighboring device.
-						// TODO Nidhal: Set Short Address Mode?
+						// Set short address mode.
 						packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_SHORTADDRMODE);
-						// TODO check if i have a short address
-						if(1) // TODO to change with if i have short address
-							packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
-						else
-							packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_LONGADDRMODE);
+						packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
 
 						// memcpy(packetbuf_ptr + packetbuf_hdr_len, (uint8_t *)UIP_IP_BUF + uncomp_hdr_len, uip_len - uncomp_hdr_len);
 						// packetbuf_set_datalen(uip_len - uncomp_hdr_len + packetbuf_hdr_len);
@@ -1697,12 +1670,9 @@ static uint8_t output(const uip_lladdr_t *localdest)
 						 */
 						PRINTFO("sicslowpan: Send packet including the 6LoWPAN mesh header.\n\r");
 
+						// Set short address mode.
 						packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_SHORTADDRMODE);
-						// TODO check if i have a short address
-						if(1) // TODO to change with if i have short address
-							packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
-						else
-							packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_LONGADDRMODE);
+						packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
 
 #ifdef SICSLOWPAN_USE_MESH_HEADER	// Use mesh header.
 
@@ -1725,9 +1695,9 @@ static uint8_t output(const uip_lladdr_t *localdest)
 							memcpy(&mesh_hdr[sicslowpan_mesh_hdr_len], &thrd_iface.rloc16, MESH_HEADER_SHORT_ADDR_LEN);
 							PRINTFO("thrd_iface.rloc16 = %04x\n\r", thrd_iface.rloc16);
 						} else {	// Child.
-							// Set the originator address field to the local RLOC16.
+							// Set the originator address field to the child's RLOC16.
 							memcpy(&mesh_hdr[sicslowpan_mesh_hdr_len], &src_rloc16, MESH_HEADER_SHORT_ADDR_LEN);
-							PRINTFO("src_rloc16 = %04x\n\r", thrd_iface.rloc16);
+							PRINTFO("src_rloc16 = %04x\n\r", src_rloc16);
 						}
 						sicslowpan_mesh_hdr_len += MESH_HEADER_SHORT_ADDR_LEN;
 #endif /* ( SICSLOWPAN_MESH_HEADER_V == MESH_HEADER_V_EUI_64 ) */
@@ -1766,20 +1736,13 @@ static uint8_t output(const uip_lladdr_t *localdest)
 						// Retrieve next hop router.
 						dest_rid = route->R_next_hop;
 
-						// memcpy(packetbuf_ptr + packetbuf_hdr_len, (uint8_t *)UIP_IP_BUF + uncomp_hdr_len, uip_len - uncomp_hdr_len);
-						// memmove(packetbuf_ptr + sicslowpan_mesh_hdr_len, packetbuf_ptr, packetbuf_hdr_len + uip_len - uncomp_hdr_len);
-
 						memmove(packetbuf_ptr + SICSLOWPAN_FRAG1_HDR_LEN + sicslowpan_mesh_hdr_len, packetbuf_ptr, packetbuf_hdr_len);
 
 						// Set Mesh Type and Header.
 						memcpy(PACKETBUF_FRAG_PTR, mesh_hdr, sicslowpan_mesh_hdr_len);
-						// packetbuf_hdr_len += sicslowpan_mesh_hdr_len;
-						// packetbuf_set_datalen(uip_len - uncomp_hdr_len + packetbuf_hdr_len);
 
 						PRINTFO("Sending packet to next hop router (%d).\n\r", dest_rid);
-
 						thrd_create_rloc_linkaddr(&dest, dest_rid, 0);
-
 						goto send_frag;
 					}
 
@@ -1791,8 +1754,6 @@ static uint8_t output(const uip_lladdr_t *localdest)
 
 #endif /* ( (THRD_DEV_NETTYPE == THRD_DEV_NETTYPE_PED) || (THRD_DEV_NETTYPE == THRD_DEV_NETTYPE_SED) ) */
 		}
-
-		// ---------------------- LZLZLZ --------------------------------------------------------------------------------
 
 		send_frag:
 
@@ -1849,7 +1810,7 @@ static uint8_t output(const uip_lladdr_t *localdest)
 		packetbuf_payload_len = (max_payload - packetbuf_hdr_len) & 0xfffffff8;
 		while(processed_ip_out_len < uip_len) {
 			PRINTFO("sicslowpan output: fragment ");
-			PACKETBUF_FRAG_PTR[PACKETBUF_FRAG_OFFSET] = processed_ip_out_len >> 3;
+			PACKETBUF_FRAG_PTR[PACKETBUF_FRAG_OFFSET + sicslowpan_mesh_hdr_len] = processed_ip_out_len >> 3;
 
 			/* Copy payload and send */
 			if(uip_len - processed_ip_out_len < packetbuf_payload_len) {
@@ -1899,13 +1860,11 @@ static uint8_t output(const uip_lladdr_t *localdest)
 
 			if ( thrd_is_rloc_addr(&dest_addr) ) {	// Link-local RLOC address.
 
-				// TODO Nidhal: Set Short Address Mode?
+				// Set short address mode (receiver) -> IMPORTANT.
 				packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_SHORTADDRMODE);
-				// TODO check if i have a short address
-				if(0) // TODO to change with if i have short address
-					packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
-				else
-					packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_LONGADDRMODE);
+				// Set long address mode (sender)  -> IMPORTANT.
+				packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_LONGADDRMODE);
+
 				memcpy(packetbuf_ptr + packetbuf_hdr_len, (uint8_t *)UIP_IP_BUF + uncomp_hdr_len, uip_len - uncomp_hdr_len);
 				packetbuf_set_datalen(uip_len - uncomp_hdr_len + packetbuf_hdr_len);
 				send_packet(&dest);
@@ -1914,13 +1873,9 @@ static uint8_t output(const uip_lladdr_t *localdest)
 				// Reset universal/local bit.
 				thrd_eui_64_invert_universal_local_bit(&dest);
 
-				// TODO Nidhal: Set Short Address Mode?
+				// Set long address mode.
 				packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_LONGADDRMODE);
-				// TODO check if i have a short address
-				if(0) // TODO to change with if i have short address
-					packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
-				else
-					packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_LONGADDRMODE);
+				packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_LONGADDRMODE);
 
 				memcpy(packetbuf_ptr + packetbuf_hdr_len, (uint8_t *)UIP_IP_BUF + uncomp_hdr_len, uip_len - uncomp_hdr_len);
 				packetbuf_set_datalen(uip_len - uncomp_hdr_len + packetbuf_hdr_len);
@@ -1934,14 +1889,11 @@ static uint8_t output(const uip_lladdr_t *localdest)
 
 #if ( (THRD_DEV_NETTYPE == THRD_DEV_NET_PED) || (THRD_DEV_NETTYPE == THRD_DEV_NET_SED) )	// RFD -> without routing capability.
 
-			// TODO Forward packet to parent device.
-			// TODO Nidhal: Set Short Address Mode?
+			// Forward packet to parent device.
+			// Set short address mode.
 			packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_SHORTADDRMODE);
-			// TODO check if i have a short address
-			if(0) // TODO to change with if i have short address
-				packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
-			else
-				packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_LONGADDRMODE);
+			packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
+
 			memcpy(packetbuf_ptr + packetbuf_hdr_len, (uint8_t *)UIP_IP_BUF + uncomp_hdr_len, uip_len - uncomp_hdr_len);
 			packetbuf_set_datalen(uip_len - uncomp_hdr_len + packetbuf_hdr_len);
 
@@ -1987,14 +1939,10 @@ static uint8_t output(const uip_lladdr_t *localdest)
 						if ( mle_is_child(dest_child_id) ) {
 							PRINTFO("sicslowpan: Destination child id [%d] belongs to a child.\n\r", dest_child_id);
 
-							// TODO Forward packet to parent device.
-							// TODO Nidhal: Set Short Address Mode?
+							// Forward packet to child device.
+							// Set short address mode.
 							packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_SHORTADDRMODE);
-							// TODO check if i have a short address
-							if(1) // TODO to change with if i have short address
-								packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
-							else
-								packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_LONGADDRMODE);
+							packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
 
 							memcpy(packetbuf_ptr + packetbuf_hdr_len, (uint8_t *)UIP_IP_BUF + uncomp_hdr_len, uip_len - uncomp_hdr_len);
 							packetbuf_set_datalen(uip_len - uncomp_hdr_len + packetbuf_hdr_len);
@@ -2013,13 +1961,9 @@ static uint8_t output(const uip_lladdr_t *localdest)
 						 */
 						PRINTFO("sicslowpan: Destination router is a direct neighbor --> send packet without including mesh header.\n\r");
 						// Forward packet to neighboring device.
-						// TODO Nidhal: Set Short Address Mode?
+						// Set short address mode.
 						packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_SHORTADDRMODE);
-						// TODO check if i have a short address
-						if(1) // TODO to change with if i have short address
-							packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
-						else
-							packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_LONGADDRMODE);
+						packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
 
 						memcpy(packetbuf_ptr + packetbuf_hdr_len, (uint8_t *)UIP_IP_BUF + uncomp_hdr_len, uip_len - uncomp_hdr_len);
 						packetbuf_set_datalen(uip_len - uncomp_hdr_len + packetbuf_hdr_len);
@@ -2035,12 +1979,9 @@ static uint8_t output(const uip_lladdr_t *localdest)
 						 */
 						PRINTFO("sicslowpan: Send packet including the 6LoWPAN mesh header.\n\r");
 
+						// Set short address mode.
 						packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_SHORTADDRMODE);
-						// TODO check if i have a short address
-						if(1) // TODO to change with if i have short address
-							packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
-						else
-							packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_LONGADDRMODE);
+						packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
 
 #ifdef SICSLOWPAN_USE_MESH_HEADER	// Use mesh header.
 
@@ -2158,7 +2099,7 @@ static uint8_t output(const uip_lladdr_t *localdest)
 static void
 input(void)
 {
-	printf("6LoWPAN: Incoming packet.\n");
+	PRINTFI("6LoWPAN: Incoming packet.\n");
 
 	// bool forward = FALSE;
 
@@ -2212,25 +2153,24 @@ input(void)
 		uint8_t orig_long_addr[8] = 0;
 		if ( (mesh_hdr_config & 0x20) >> 5 == 0 ) {		// Long address used (V = 0).
 			memcpy(&orig_long_addr, packetbuf_ptr + mesh_hdr_len, 8);
-			// packetbuf_hdr_len += 8; LZ.
 			mesh_hdr_len += 2;
-			printf("6LoWPAN: Incoming packet containing mesh header (V = 0).\n");
+			PRINTFI("6LoWPAN: Incoming packet containing mesh header (V = 0).\n");
 		} else {	// Short address used but not supported (V = 1).
-			printf("6LoWPAN: Incoming packet containing mesh header (V = 1) -> short address mode not supported.\n");
+			PRINTFI("6LoWPAN: Incoming packet containing mesh header (V = 1) -> short address mode not supported.\n");
 		}
 #elif ( SICSLOWPAN_MESH_HEADER_V == MESH_HEADER_V_SHORT_ADDR )	// Originator address: Short address mode.
 		uint16_t orig_short_addr = 0xff;
 		if ( (mesh_hdr_config & 0x20) >> 5 == 1 ) {		// Short Address used.
 			memcpy(&orig_short_addr, packetbuf_ptr + mesh_hdr_len, 2);
+			orig_short_addr = uip_htons(orig_short_addr);	// Arrange byte order.
 			uint8_t orig_rid = THRD_EXTRACT_ROUTER_ID(orig_short_addr);
-			// packetbuf_hdr_len += 2; LZ.
 			mesh_hdr_len += 2;
-			printf("6LoWPAN: Incoming packet containing mesh header (V = 1).\n");
-			printf("6LoWPAN: Originator short address = %04x\n\r", orig_short_addr);
-			printf("6LoWPAN: Originator router ID = %d\n\r", orig_rid);
-			printf("6LoWPAN: Originator child ID = %d\n\r", THRD_EXTRACT_CHILD_ID(orig_short_addr));
+			PRINTFI("6LoWPAN: Incoming packet containing mesh header (V = 1).\n");
+			PRINTFI("6LoWPAN: Originator short address = %04x\n\r", orig_short_addr);
+			PRINTFI("6LoWPAN: Originator router ID = %d\n\r", orig_rid);
+			PRINTFI("6LoWPAN: Originator child ID = %d\n\r", THRD_EXTRACT_CHILD_ID(orig_short_addr));
 		} else {	// EUI-64 used.
-			printf("6LoWPAN: Incoming packet containing mesh header (V = 0) -> long address mode (EUI-64) not supported.\n");
+			PRINTFI("6LoWPAN: Incoming packet containing mesh header (V = 0) -> long address mode (EUI-64) not supported.\n");
 		}
 #endif /* SICSLOWPAN_MESH_HEADER_V */
 		// Mask F bit.
@@ -2239,11 +2179,10 @@ input(void)
 		if ( (mesh_hdr_config & 0x20) >> 5 == 0 ) {		// Long address used (V = 0).
 			memcpy(&dest_long_addr, packetbuf_ptr + mesh_hdr_len, 8);
 			// TODO Check whether the packet is destined to me.
-			// packetbuf_hdr_len += 8; LZ.
 			mesh_hdr_len += 2;
-			printf("6LoWPAN: Incoming packet containing mesh header (F = 0).\n");
+			PRINTFI("6LoWPAN: Incoming packet containing mesh header (F = 0).\n");
 		} else {	// Short address used but not supported (V = 1).
-			printf("6LoWPAN: Incoming packet containing mesh header (F = 1) -> short address mode not supported.\n");
+			PRINTFI("6LoWPAN: Incoming packet containing mesh header (F = 1) -> short address mode not supported.\n");
 		}
 #elif ( SICSLOWPAN_MESH_HEADER_F == MESH_HEADER_F_SHORT_ADDR )	// Destination address: Short address mode.
 		uint16_t dest_short_addr = 0xff;
@@ -2267,17 +2206,14 @@ input(void)
 					// TODO Packet destined to me --> continue with code.
 				}
 
-				PRINTFI("packetbuf_datalen() = %d\n\r", packetbuf_datalen());
-				PRINTFI("packetbuf_hdr_len() = %d\n\r", packetbuf_hdr_len);
-				PRINTFI("uncomp_hdr_len = %d\n\r", uncomp_hdr_len);
-				PRINTFI("packetbuf_payload_len = %d\n\r", packetbuf_payload_len);
-				PRINTFI("sicslowpan_len = %d\n\r", sicslowpan_len);
+				// PRINTFI("packetbuf_datalen() = %d\n\r", packetbuf_datalen());
+				// PRINTFI("packetbuf_hdr_len() = %d\n\r", packetbuf_hdr_len);
+				// PRINTFI("uncomp_hdr_len = %d\n\r", uncomp_hdr_len);
+				// PRINTFI("packetbuf_payload_len = %d\n\r", packetbuf_payload_len);
+				// PRINTFI("sicslowpan_len = %d\n\r", sicslowpan_len);
 
-				// TODO Child ID == 0?
-				// TODO If not: Check Child table.
 			} else {	// Not destined to me.
-				// TODO Forward message.
-				// forward = TRUE;
+				// Forwarding.
 				if ( thrd_dev.net_type == THRD_DEV_NETTYPE_ROUTER || thrd_dev.net_type == THRD_DEV_NETTYPE_LEADER ) {
 
 					if ( hops_left > 0 ) {
@@ -2291,24 +2227,17 @@ input(void)
 						route = thrd_rdb_route_lookup(dest_rid);
 
 						if ( route != NULL ) {
-
-							PRINTFI("6LoWPAN: Forwarding packet including the 6LoWPAN mesh header.\n\r");
-
+							PRINTFI("6LoWPAN: Forwarding packet carrying the 6LoWPAN mesh header.\n\r");
+							// Set short address mode.
 							packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_SHORTADDRMODE);
-							// TODO check if i have a short address
-							if(1) // TODO to change with if i have short address
-								packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
-							else
-								packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_LONGADDRMODE);
+							packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
 
 							// Forward packet to next hop.
 							forward(route->R_next_hop);
-
 							return;
 						} else {
 							// Drop packet.
-							// printf("6LoWPAN: No route found (%d) --> packet dropped.", dest_rid);
-							PRINTFI("6LoWPAN: No route found (%d) --> packet dropped.", 0);
+							PRINTFI("6LoWPAN: No route found (%d) --> packet dropped.", dest_rid);
 							return;
 						}
 					}
@@ -2327,18 +2256,20 @@ input(void)
 		}
 #endif /* SICSLOWPAN_MESH_HEADER_F */
 
+		packetbuf_hdr_len += mesh_hdr_len;
+
 		/*
 		 * Since we support the mesh header, the second header
 		 * we look for is the fragmentation header.
 		 */
-		switch((GET16(PACKETBUF_FRAG_PTR, packetbuf_hdr_len + mesh_hdr_len) & 0xf800) >> 8) {
+		switch((GET16(PACKETBUF_FRAG_PTR, packetbuf_hdr_len) & 0xf800) >> 8) {
 		case SICSLOWPAN_DISPATCH_FRAG1:
 			PRINTFI("sicslowpan input: FRAG1 ");
 			frag_offset = 0;
 			/*       frag_size = (uip_ntohs(PACKETBUF_FRAG_BUF->dispatch_size) & 0x07ff); */
-			frag_size = GET16(PACKETBUF_FRAG_PTR, PACKETBUF_FRAG_DISPATCH_SIZE) & 0x07ff;
+			frag_size = GET16(PACKETBUF_FRAG_PTR, PACKETBUF_FRAG_DISPATCH_SIZE + mesh_hdr_len) & 0x07ff;
 			/*       frag_tag = uip_ntohs(PACKETBUF_FRAG_BUF->tag); */
-			frag_tag = GET16(PACKETBUF_FRAG_PTR, PACKETBUF_FRAG_TAG);
+			frag_tag = GET16(PACKETBUF_FRAG_PTR, PACKETBUF_FRAG_TAG + mesh_hdr_len);
 			PRINTFI("size %d, tag %d, offset %d)\n\r",
 					frag_size, frag_tag, frag_offset);
 			packetbuf_hdr_len += SICSLOWPAN_FRAG1_HDR_LEN;
@@ -2352,9 +2283,10 @@ input(void)
 			 * Offset is in units of 8 bytes
 			 */
 			PRINTFI("sicslowpan input: FRAGN ");
-			frag_offset = PACKETBUF_FRAG_PTR[PACKETBUF_FRAG_OFFSET];
-			frag_tag = GET16(PACKETBUF_FRAG_PTR, PACKETBUF_FRAG_TAG);
-			frag_size = GET16(PACKETBUF_FRAG_PTR, PACKETBUF_FRAG_DISPATCH_SIZE) & 0x07ff;
+			frag_offset = PACKETBUF_FRAG_PTR[PACKETBUF_FRAG_OFFSET + mesh_hdr_len];
+			frag_tag = GET16(PACKETBUF_FRAG_PTR, PACKETBUF_FRAG_TAG + mesh_hdr_len);
+
+			frag_size = GET16(PACKETBUF_FRAG_PTR, PACKETBUF_FRAG_DISPATCH_SIZE + mesh_hdr_len) & 0x07ff;
 			PRINTFI("size %d, tag %d, offset %d)\n\r",
 					frag_size, frag_tag, frag_offset);
 			packetbuf_hdr_len += SICSLOWPAN_FRAGN_HDR_LEN;
@@ -2374,7 +2306,7 @@ input(void)
 		}
 	} else {
 
-		printf("6LoWPAN: incoming packet without mesh header.\n");
+		PRINTFI("6LoWPAN: incoming packet without mesh header.\n");
 
 		// No mesh header used --> the first header we look for is the fragmentation header.
 		switch((GET16(PACKETBUF_FRAG_PTR, PACKETBUF_FRAG_DISPATCH_SIZE) & 0xf800) >> 8) {
@@ -2528,12 +2460,12 @@ input(void)
 		}
 	}
 
-	if(packetbuf_hdr_len == SICSLOWPAN_FRAGN_HDR_LEN) {
+	if(packetbuf_hdr_len == SICSLOWPAN_FRAGN_HDR_LEN + mesh_hdr_len) {
 		/* this is a FRAGN, skip the header compression dispatch section */
 		goto copypayload;
 	}
 
-	packetbuf_hdr_len += mesh_hdr_len;
+	// packetbuf_hdr_len += mesh_hdr_len;
 
 #endif /* SICSLOWPAN_CONF_FRAG */
 
@@ -2684,12 +2616,9 @@ forward(uint8_t dest_rid)
 			thrd_create_linklocal_prefix(&next_hop_addr);
 			thrd_create_rloc_iid(&next_hop_addr, THRD_CREATE_RLOC16(next_hop_rid, 0));
 
+			// Set short address mode.
 			packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_SHORTADDRMODE);
-			// TODO check if i have a short address
-			if(1) // TODO to change with if i have short address
-				packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
-			else
-				packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_LONGADDRMODE);
+			packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
 
 			memmove(packetbuf_hdrptr(), packetbuf_hdrptr() + packetbuf_hdrlen(), packetbuf_datalen());
 			packetbuf_set_datalen(packetbuf_datalen());
