@@ -305,7 +305,6 @@ static void smartmac_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
   isBroadcastTx = packetbuf_holds_broadcast();
   if (*p_err == NETSTK_ERR_NONE) {
     if (isBroadcastTx) {
-      mac_lbt(p_ctx, p_err);
       mac_txBroadcast(p_ctx, p_data, len, p_err);
     }
     else {
@@ -471,55 +470,59 @@ static void mac_txBroadcast(struct s_smartmac *p_ctx, uint8_t *p_data, uint16_t 
   packetbuf_attr_t timeGap;
   packetbuf_attr_t dstShortAddr;
 
-  /* transition to TXBROADCAST state from OFF state*/
-  mac_txBroadcast_entry(p_ctx);
+  /* perform Listen-Before-Talk */
+  mac_lbt(p_ctx, p_err);
+  if (*p_err == NETSTK_ERR_NONE) {
+    /* transition to TXBROADCAST state from OFF state*/
+    mac_txBroadcast_entry(p_ctx);
 
-  /* transmit broadcast strobes */
-  counter = p_ctx->maxBroadcastCounter;
-  dstShortAddr = FRAME802154_BROADCASTADDR;
-  timeGap = packetbuf_attr(PACKETBUF_ATTR_MAC_ACK_WAIT_DURATION);
+    /* transmit broadcast strobes */
+    counter = p_ctx->maxBroadcastCounter;
+    dstShortAddr = FRAME802154_BROADCASTADDR;
+    timeGap = packetbuf_attr(PACKETBUF_ATTR_MAC_ACK_WAIT_DURATION);
 
-  /* store sequence number of the actual data packet to send */
-  dataSeqNo = packetbuf_attr(PACKETBUF_ATTR_MAC_SEQNO);
-  dataAckReq = packetbuf_attr(PACKETBUF_ATTR_MAC_ACK);
+    /* store sequence number of the actual data packet to send */
+    dataSeqNo = packetbuf_attr(PACKETBUF_ATTR_MAC_SEQNO);
+    dataAckReq = packetbuf_attr(PACKETBUF_ATTR_MAC_ACK);
 
-  /* set value of packet buffer ACK required attribute according to transmission
-   * of the unicast strobes */
-  packetbuf_set_attr(PACKETBUF_ATTR_MAC_ACK, FALSE);
+    /* set value of packet buffer ACK required attribute according to transmission
+     * of the unicast strobes */
+    packetbuf_set_attr(PACKETBUF_ATTR_MAC_ACK, FALSE);
 
-  while (counter--) {
-    /* set value of packet buffer sequence number attribute accordingly */
-    packetbuf_set_attr(PACKETBUF_ATTR_MAC_SEQNO, counter);
-    mac_txStrobe(p_ctx, counter, dstShortAddr, p_err);
+    while (counter--) {
+      /* set value of packet buffer sequence number attribute accordingly */
+      packetbuf_set_attr(PACKETBUF_ATTR_MAC_SEQNO, counter);
+      mac_txStrobe(p_ctx, counter, dstShortAddr, p_err);
 
-    /* was the strobe successfully transmitted? */
-    if (*p_err != NETSTK_ERR_NONE) {
-      /* then terminate the transmission process */
-      TRACE_LOG_ERR("txStrobe failed -%d", *p_err);
-      break;
-    }
-    else {
-      /* otherwise wait for a certain amount of time after transmission */
-      bsp_delay_us(timeGap);
+      /* was the strobe successfully transmitted? */
+      if (*p_err != NETSTK_ERR_NONE) {
+        /* then terminate the transmission process */
+        TRACE_LOG_ERR("txStrobe failed -%d", *p_err);
+        break;
+      }
+      else {
+        /* otherwise wait for a certain amount of time after transmission */
+        bsp_delay_us(timeGap);
 
-      /* is the strobe the last one? */
-      if (counter == 0) {
-        /* restore data sequence number and acknowledgment requirement fields */
-        packetbuf_set_attr(PACKETBUF_ATTR_MAC_SEQNO, dataSeqNo);
-        packetbuf_set_attr(PACKETBUF_ATTR_MAC_ACK, dataAckReq);
+        /* is the strobe the last one? */
+        if (counter == 0) {
+          /* restore data sequence number and acknowledgment requirement fields */
+          packetbuf_set_attr(PACKETBUF_ATTR_MAC_SEQNO, dataSeqNo);
+          packetbuf_set_attr(PACKETBUF_ATTR_MAC_ACK, dataAckReq);
 
-        /* then transmit the actual data */
-        p_ctx->p_netstk->phy->send(p_data, len, p_err);
+          /* then transmit the actual data */
+          p_ctx->p_netstk->phy->send(p_data, len, p_err);
+        }
       }
     }
+
+    /* by all means, values of data frame attributes should be restored */
+    packetbuf_set_attr(PACKETBUF_ATTR_MAC_SEQNO, dataSeqNo);
+    packetbuf_set_attr(PACKETBUF_ATTR_MAC_ACK, dataAckReq);
+
+    /* transition to OFF state */
+    mac_txBroadcast_exit(p_ctx);
   }
-
-  /* by all means, values of data frame attributes should be restored */
-  packetbuf_set_attr(PACKETBUF_ATTR_MAC_SEQNO, dataSeqNo);
-  packetbuf_set_attr(PACKETBUF_ATTR_MAC_ACK, dataAckReq);
-
-  /* transition to OFF state */
-  mac_txBroadcast_exit(p_ctx);
 }
 
 static void mac_txUnicast(struct s_smartmac *p_ctx, uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
@@ -567,92 +570,94 @@ static void mac_txUnicast(struct s_smartmac *p_ctx, uint8_t *p_data, uint16_t le
   estimatedDelay = mac_calcTxDelay(p_ctx, dstShortAddr);
 #endif
 
+  /* perform Listen-Before-Talk */
   mac_lbt(p_ctx, p_err);
+  if (*p_err == NETSTK_ERR_NONE) {
+    /* set value of packet buffer ACK required attribute according to transmission
+     * of the unicast strobes */
+    packetbuf_set_attr(PACKETBUF_ATTR_MAC_ACK, TRUE);
+    while ((isTxDone == FALSE) && (counter--)) {
+      /* issue transmission request for unicast strobe */
+      packetbuf_set_attr(PACKETBUF_ATTR_MAC_SEQNO, counter);
+      mac_txStrobe(p_ctx, counter, dstShortAddr, p_err);
 
-  /* set value of packet buffer ACK required attribute according to transmission
-   * of the unicast strobes */
-  packetbuf_set_attr(PACKETBUF_ATTR_MAC_ACK, TRUE);
-  while ((isTxDone == FALSE) && (counter--)) {
-    /* issue transmission request for unicast strobe */
-    packetbuf_set_attr(PACKETBUF_ATTR_MAC_SEQNO, counter);
-    mac_txStrobe(p_ctx, counter, dstShortAddr, p_err);
-
-    switch (*p_err) {
-      case NETSTK_ERR_NONE:
+      switch (*p_err) {
+        case NETSTK_ERR_NONE:
 #if (NETSTK_CFG_LOOSELY_SYNC_EN == TRUE)
-        actualDelay = (bsp_getTick() - txReqInterval) - p_ctx->strobeTxInterval;
-        delayOffset = (actualDelay > estimatedDelay) ? (actualDelay - estimatedDelay) : (estimatedDelay - actualDelay);
-        if (delayOffset > (p_ctx->sleepTimeout / 2)) {
-          delayOffset = p_ctx->sleepTimeout - delayOffset;
-        }
+          actualDelay = (bsp_getTick() - txReqInterval) - p_ctx->strobeTxInterval;
+          delayOffset = (actualDelay > estimatedDelay) ? (actualDelay - estimatedDelay) : (estimatedDelay - actualDelay);
+          if (delayOffset > (p_ctx->sleepTimeout / 2)) {
+            delayOffset = p_ctx->sleepTimeout - delayOffset;
+          }
 
-        /* update wake-up record table.
-         * Only update the table if number of sent strobes are larger than a certain
-         * value to ensure that the the wake-up strobe stream actually hit periodic channel scan
-         * of the receiver instead of some extended listening following data packet reception */
-        if ((p_ctx->maxUnicastCounter - counter) >= SMARTMAC_CFG_MIN_NUM_STROBE_TO_BE_SENT) {
-          mac_updateWakeupTable(p_ctx, dstShortAddr);
-        }
-        else {
-          if (delayOffset <= p_ctx->scanTimeout) {
+          /* update wake-up record table.
+           * Only update the table if number of sent strobes are larger than a certain
+           * value to ensure that the the wake-up strobe stream actually hit periodic channel scan
+           * of the receiver instead of some extended listening following data packet reception */
+          if ((p_ctx->maxUnicastCounter - counter) >= SMARTMAC_CFG_MIN_NUM_STROBE_TO_BE_SENT) {
             mac_updateWakeupTable(p_ctx, dstShortAddr);
           }
-        }
-        TRACE_LOG_MAIN("<TXDELAY> estimated=%d, actual=%d, numStrobeSent=%d", estimatedDelay, actualDelay, p_ctx->maxUnicastCounter - counter);
-#endif
-
-        /* the strobe was acknowledged. The MAC then commence transmission of
-         * the actual data frame before declaring completion of transmission
-         * process */
-
-        /* restore data sequence number and acknowledgment requirement fields */
-        packetbuf_set_attr(PACKETBUF_ATTR_MAC_SEQNO, dataSeqNo);
-        packetbuf_set_attr(PACKETBUF_ATTR_MAC_ACK, dataAckReq);
-
-        /* issue transmission request */
-        maxRetx = 4; //packetbuf_attr(PACKETBUF_ATTR_MAX_MAC_TRANSMISSIONS);
-        retx = 0;
-        while (retx++ < maxRetx) {
-          p_ctx->p_netstk->phy->send(p_data, len, p_err);
-          if (*p_err != NETSTK_ERR_NONE) {
-            TRACE_LOG_ERR("<TX> r=%d, a=%d, -%d", retx, dataAckReq, *p_err);
-          }
-
-          if (dataAckReq == FALSE) {
-            break;
-          }
           else {
-            if (*p_err != NETSTK_ERR_TX_NOACK) {
-              break;
+            if (delayOffset <= p_ctx->scanTimeout) {
+              mac_updateWakeupTable(p_ctx, dstShortAddr);
             }
           }
-        }
-        isTxDone = TRUE;
-        break;
+          TRACE_LOG_MAIN("<TXDELAY> estimated=%d, actual=%d, numStrobeSent=%d", estimatedDelay, actualDelay, p_ctx->maxUnicastCounter - counter);
+#endif
 
-      case NETSTK_ERR_TX_NOACK:
-        /* the strobe was NOT acknowledged. The MAC shall continue transmission
-         * of strobes as long as maximum number of transmission attempts are is
-         * not reached */
-        isTxDone = FALSE;
-        break;
+          /* the strobe was acknowledged. The MAC then commence transmission of
+           * the actual data frame before declaring completion of transmission
+           * process */
 
-      case NETSTK_ERR_TX_TIMEOUT:
-        /* the radio could not transmit the strobe in time. The MAC shall
-         * terminate the transmission process */
-        isTxDone = TRUE;
-        break;
+          /* restore data sequence number and acknowledgment requirement fields */
+          packetbuf_set_attr(PACKETBUF_ATTR_MAC_SEQNO, dataSeqNo);
+          packetbuf_set_attr(PACKETBUF_ATTR_MAC_ACK, dataAckReq);
 
-      case NETSTK_ERR_TX_COLLISION:
-        /* the strobe was NOT transmitted as the channel was busy. The MAC shall
-         * terminate the transmission process */
-        isTxDone = TRUE;
-        break;
+          /* issue transmission request */
+          maxRetx = 4; //packetbuf_attr(PACKETBUF_ATTR_MAX_MAC_TRANSMISSIONS);
+          retx = 0;
+          while (retx++ < maxRetx) {
+            p_ctx->p_netstk->phy->send(p_data, len, p_err);
+            if (*p_err != NETSTK_ERR_NONE) {
+              TRACE_LOG_ERR("<TX> r=%d, a=%d, -%d", retx, dataAckReq, *p_err);
+            }
 
-      default:
-        TRACE_LOG_ERR("txUnicast failed unexpectedly -%d", *p_err);
-        isTxDone = TRUE;
-        break;
+            if (dataAckReq == FALSE) {
+              break;
+            }
+            else {
+              if (*p_err != NETSTK_ERR_TX_NOACK) {
+                break;
+              }
+            }
+          }
+          isTxDone = TRUE;
+          break;
+
+        case NETSTK_ERR_TX_NOACK:
+          /* the strobe was NOT acknowledged. The MAC shall continue transmission
+           * of strobes as long as maximum number of transmission attempts are is
+           * not reached */
+          isTxDone = FALSE;
+          break;
+
+        case NETSTK_ERR_TX_TIMEOUT:
+          /* the radio could not transmit the strobe in time. The MAC shall
+           * terminate the transmission process */
+          isTxDone = TRUE;
+          break;
+
+        case NETSTK_ERR_TX_COLLISION:
+          /* the strobe was NOT transmitted as the channel was busy. The MAC shall
+           * terminate the transmission process */
+          isTxDone = TRUE;
+          break;
+
+        default:
+          TRACE_LOG_ERR("txUnicast failed unexpectedly -%d", *p_err);
+          isTxDone = TRUE;
+          break;
+      }
     }
   }
 
