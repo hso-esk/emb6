@@ -48,7 +48,7 @@ static void handle_max_neighbor_age_timeout(void *ptr);
  memory for each route is allocated from the routerid_memb memory
  block. These routes are maintained on the routerid_list. */
 LIST(routerid_list);
-MEMB(routerid_memb, thrd_rdb_id_t, MAX_ROUTERS); // TODO Check if MAX_ROUTERS is correct?
+MEMB(routerid_memb, thrd_rdb_id_t, MAX_ROUTERS);
 
 /* The 'Router ID Set' is represented by a thrd_rdb_router_id_t structure and
  memory is allocated from the routerid_memb memory
@@ -59,7 +59,7 @@ MEMB(routerid_memb, thrd_rdb_id_t, MAX_ROUTERS); // TODO Check if MAX_ROUTERS is
  memory for each route is allocated from the link_memb memory
  block. These routes are maintained on the link_list. */
 LIST(link_list);
-MEMB(link_memb, thrd_rdb_link_t, MAX_ROUTERS); // TODO Check if MAX_ROUTERS is correct?
+MEMB(link_memb, thrd_rdb_link_t, MAX_ROUTERS);
 
 /* Each 'Route' is represented by a thrd_rdb_route_t structure and
  memory for each route is allocated from the route_memb memory
@@ -428,8 +428,6 @@ thrd_rdb_link_lookup(uint8_t router_id)
 
 	found_link = NULL;
 	for (link = thrd_rdb_link_head(); link != NULL; link = thrd_rdb_link_next(link)) {
-		// LOG_RAW("%d\n", link->L_router_id);
-		// LOG_RAW("\n\r");
 		if (link->L_router_id == router_id) {
 			found_link = link;
 			break;
@@ -469,8 +467,6 @@ thrd_rdb_route_lookup(uint8_t router_id)
 
 	found_route = NULL;
 	for (r = thrd_rdb_route_head(); r != NULL; r = thrd_rdb_route_next(r)) {
-		// LOG_RAW("%d\n", r->R_destination);
-		// LOG_RAW("\n\r");
 		if (r->R_destination == router_id) {
 			found_route = r;
 			break;
@@ -481,7 +477,7 @@ thrd_rdb_route_lookup(uint8_t router_id)
 		LOG_RAW("thrd_rdb_route_lookup: Found route: ");
 		LOG_RAW("%d", router_id);
 		LOG_RAW(" via ");
-		LOG_RAW("%d\n", thrd_rdb_route_nexthop(found_route));	// TODO
+		LOG_RAW("%d\n", thrd_rdb_route_nexthop(found_route));
 		LOG_RAW("\n\r");
 	} else {
 		LOG_RAW("thrd_rdb_route_lookup: No route found\n\r");
@@ -507,19 +503,15 @@ thrd_rdb_rid_add(uint8_t router_id)
 	thrd_rdb_id_t *rid;
 
 	/* Find the corresponding Router ID entry (Router ID Set). */
-
 	rid = thrd_rdb_rid_lookup(router_id);
 
 	/* Check whether the given router id already has an entry in the Router ID Set. */
 	if (rid == NULL) {
 		LOG_RAW("thrd_rdb_rid_add: found unassigned router id %d\n\r", router_id);
-		// LOG_RAW("%d\n", router_id);
-		// LOG_RAW("\n\r");
 
 		/* If there is no router id entry, create one. We first need to
 		 * check if we have room for this router id. If not, we remove the
 		 * least recently used one we have. */
-
 		if (thrd_rdb_rid_num_rids() == MAX_ROUTER_ID) {
 			/* Removing the last router id entry from the Router ID Set. */
 			thrd_rdb_id_t *last;
@@ -557,17 +549,13 @@ thrd_rdb_rid_add(uint8_t router_id)
 			list_insert(routerid_list, rid_prev, rid);
 
 		LOG_RAW("thrd_rdb_rid_add: Added router id %d\n\r", router_id);
-
 		num_rids++;
-
 		LOG_RAW("thrd_rdb_rid_add: num_rids %d\n\r", num_rids);
 
 	} else {
-
 		LOG_RAW("thrd_rdb_rid_add: router id %d is already known\n\r", router_id);
 		LOG_RAW("thrd_rdb_rid_add: num_rids %d\n\r", num_rids);
 		LOG_RAW("-----------------------------------------------------\n\r");
-
 		return NULL;
 	}
 
@@ -595,7 +583,6 @@ thrd_rdb_route_add(uint8_t destination, uint8_t next_hop, uint8_t route_cost)
 		 * is valid (Router ID Set). If valid, create one. We first need to
 		 * check if we have room for this route. If not, we remove the
 		 * least recently used one we have. */
-
 		if (thrd_rdb_route_num_routes() == THRD_CONF_MAX_ROUTES) {
 			/* Removing the oldest route entry from the route table. The
 			 least recently used route is the first route on the set. */
@@ -611,8 +598,7 @@ thrd_rdb_route_add(uint8_t destination, uint8_t next_hop, uint8_t route_cost)
 		if (r == NULL) {
 			/* This should not happen, as we explicitly deallocated one
 			 * route set entry above. */
-			LOG_RAW(
-					ANSI_COLOR_RED "thrd_rdb_route_add: could not allocate route with router id ");
+			LOG_RAW(ANSI_COLOR_RED "thrd_rdb_route_add: could not allocate route with router id ");
 			LOG_RAW("%d\n", destination);
 			LOG_RAW(ANSI_COLOR_RESET "\n\r");
 			return NULL;
@@ -641,9 +627,7 @@ thrd_rdb_route_add(uint8_t destination, uint8_t next_hop, uint8_t route_cost)
 		thrd_trickle_reset();
 
 	} else {
-
 		LOG_RAW(ANSI_COLOR_RED "thrd_rdb_route_add: Route already known." ANSI_COLOR_RESET "\n\r");
-
 		LOG_RAW("thrd_rdb_route_add: num_routes %d\n\r", num_routes);
 		LOG_RAW("-----------------------------------------------------\n\r");
 
@@ -801,13 +785,11 @@ thrd_rdb_link_update(uint8_t router_id, uint8_t link_margin,
 		list_push(link_list, l);
 
 		num_links++;
-
 		LOG_RAW("thrd_rdb_link_update: num_links %d\n\r", num_links);
 
 	} else {
 
 		LOG_RAW("thrd_rdb_link_update: router id %d already known.\n\r", router_id);
-
 		LOG_RAW("thrd_rdb_link_update: num_links %d\n\r", num_links);
 		LOG_RAW("-----------------------------------------------------\n\r");
 
