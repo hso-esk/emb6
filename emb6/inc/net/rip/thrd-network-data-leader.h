@@ -1,10 +1,10 @@
-/*
- * thrd-network-data-leader.h
+/**
+ * \file thrd-network-data-leader.h
+ * \author Institute for reliable Embedded Systems and Communication Electronics
+ * \date 2016/07/13
+ * \version 1.0
  *
- * Created on: 13 Jul 2016
- * Author: Lukas Zimmermann <lzimmer1@stud.hs-offenburg.de>
- *
- * Thread Network Data managed by the Thread Leader.
+ * \brief Thread network data managed by the Thread leader
  */
 
 #ifndef EMB6_INC_NET_RIP_THRD_NETWORK_DATA_LEADER_H_

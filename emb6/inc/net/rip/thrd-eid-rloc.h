@@ -1,9 +1,10 @@
-/*
- * thrd-eid-rloc.h
+/**
+ * \file thrd-eid-rloc.h
+ * \author Institute for reliable Embedded Systems and Communication Electronics
+ * \date 2016/06/07
+ * \version 1.0
  *
- *  Created on: 7 Jun 2016
- *  Author: Lukas Zimmermann <lzimmer1@stud.hs-offenburg.de>
- *  EID-to-RLOC Map Cache.
+ * \brief EID-to-RLOC mapping
  */
 
 #ifndef EMB6_INC_NET_RIP_THRD_EID_RLOC_H_

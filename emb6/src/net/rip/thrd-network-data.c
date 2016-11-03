@@ -1,10 +1,10 @@
-/*
- * thrd-network-data.c
+/**
+ * \file thrd-network-data.c
+ * \author Institute for reliable Embedded Systems and Communication Electronics
+ * \date 2016/07/11
+ * \version 1.0
  *
- * Created on: 11 Jul 2016
- * Author: Lukas Zimmermann <lzimmer1@stud.hs-offenburg.de>
- *
- * Thread Network Data manipulation.
+ * \brief Thread network data manipulation
  */
 
 /*
@@ -20,15 +20,10 @@
 #include "memb.h"
 #include "rip.h"
 #include "thread_conf.h"
-
 #include "er-coap.h"
 #include "er-coap-engine.h"
 #include "rest-engine.h"
-
 #include "thrd-network-data.h"
-
-#define DEBUG DEBUG_PRINT
-#include "uip-debug.h"
 
 /*
  ********************************************************************************

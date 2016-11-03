@@ -1,8 +1,10 @@
-/*
- * thrd-a-as.c
+/**
+ * \file thrd-a-as.c
+ * \author Institute for reliable Embedded Systems and Communication Electronics
+ * \date 2016/07/12
+ * \version 1.0
  *
- *  Author: Lukas Zimmermann <lzimmer1@stud.hs-offenburg.de>
- *  CoAP Resource - Address Solicit Request /a/as.
+ * \brief CoAP resource - address solicit request /a/as
  */
 
 #include "emb6.h"
@@ -11,7 +13,6 @@
 #include "tlv.h"
 #include "net_tlv.h"
 #include "uip.h"
-
 #include "thrd-partition.h"
 #include "thrd-router-id.h"
 #include "thrd-leader-db.h"

@@ -1,10 +1,10 @@
-/*
- * thrd-network-data.h
+/**
+ * \file thrd-network-data.h
+ * \author Institute for reliable Embedded Systems and Communication Electronics
+ * \date 2016/07/11
+ * \version 1.0
  *
- * Created on: 11 Jul 2016
- * Author: Lukas Zimmermann <lzimmer1@stud.hs-offenburg.de>
- *
- * Thread Network Data manipulation.
+ * \brief Thread network data manipulation
  */
 
 #include "bsp.h"

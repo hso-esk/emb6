@@ -1,18 +1,17 @@
-/*
- * thrd-res-an.c
+/**
+ * \file thrd-res-an.c
+ * \author Institute for reliable Embedded Systems and Communication Electronics
+ * \date 2016/06/07
+ * \version 1.0
  *
- *  Created on: 7 Jun 2016
- *  Author: Lukas Zimmermann <lzimmer1@stud.hs-offenburg.de>
- *  CoAP Resource - (Proactive) Address Notification /a/an.
+ * \brief CoAP resource - (proactive) address notification /a/an
  */
-
 
 #include "emb6.h"
 #include "bsp.h"
 #include "er-coap.h"
 #include "tlv.h"
 #include "net_tlv.h"
-
 #include "thrd-addr-query.h"
 #include "thrd-eid-rloc.h"
 #include "thrd-addr.h"

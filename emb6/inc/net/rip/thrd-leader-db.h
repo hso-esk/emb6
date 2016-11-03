@@ -1,10 +1,10 @@
-/*
- * thrd-leader-db.h
+/**
+ * \file thrd-leader-db.h
+ * \author Institute for reliable Embedded Systems and Communication Electronics
+ * \date 2016/04/26
+ * \version 1.0
  *
- *  Created on: 26 Apr 2016
- *  Author: Lukas Zimmermann <lzimmer1@stud.hs-offenburg.de>
- *
- *  Leader database manipulation.
+ * \brief Leader database manipulation
  */
 
 #ifndef EMB6_INC_NET_RIP_THRD_LEADER_DB_H_

@@ -1,9 +1,10 @@
-/*
- * thrd-iface.h
+/**
+ * \file thrd-iface.h
+ * \author Institute for reliable Embedded Systems and Communication Electronics
+ * \date 2016/06/15
+ * \version 1.0
  *
- *  Created on: 15 Jun 2016
- *  Author: Lukas Zimmermann <lzimmer1@stud.hs-offenburg.de>
- *  Thread Interface.
+ * \brief Thread interface
  */
 
 #ifndef EMB6_INC_NET_RIP_THRD_IFACE_H_

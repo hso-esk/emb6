@@ -1,10 +1,10 @@
-/*
- * thrd-send-adv.h
+/**
+ * \file thrd-send-adv.h
+ * \author Institute for reliable Embedded Systems and Communication Electronics
+ * \date 2016/04/29
+ * \version 1.0
  *
- *  Created on: 23 May 2016
- *  Author: Lukas Zimmermann <lzimmer1@stud.hs-offenburg.de>
- *
- *  Sending Advertisements using Trickle.
+ * \brief Sending MLE advertisements using Trickle algorithm
  */
 
 #ifndef EMB6_INC_NET_RIP_THRD_SEND_ADV_H_

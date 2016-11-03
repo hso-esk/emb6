@@ -1,9 +1,10 @@
-/*
- * thrd-res-router.c
+/**
+ * \file thrd-res-aq.c
+ * \author Institute for reliable Embedded Systems and Communication Electronics
+ * \date 2016/06/07
+ * \version 1.0
  *
- *  Created on: 7 Jun 2016
- *  Author: Lukas Zimmermann <lzimmer1@stud.hs-offenburg.de>
- *  CoAP Resource - Address Query /a/aq.
+ * \brief CoAP resource - address query /a/aq
  */
 
 #include "emb6.h"
@@ -12,7 +13,6 @@
 #include "tlv.h"
 #include "net_tlv.h"
 #include "uip.h"
-
 #include "thrd-addr-query.h"
 
 #define     LOGGER_ENABLE                 LOGGER_THRD_NET

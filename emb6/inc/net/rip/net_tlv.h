@@ -1,10 +1,10 @@
-/*
- * net_tlv.h
+/**
+ * \file net_tlv.c
+ * \author Institute for reliable Embedded Systems and Communication Electronics
+ * \date 2016/04/22
+ * \version 1.0
  *
- *  Created on: 22 Apr 2016
- *  Author: Lukas Zimmermann <lzimmer1@stud.hs-offenburg.de>
- *
- *  Network Layer TLVs.
+ * \brief Network layer TLVs
  */
 
 #ifndef EMB6_INC_NET_RIP_NET_TLV_H_

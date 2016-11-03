@@ -1,10 +1,10 @@
-/*
- * thrd-addr.c
+/**
+ * \file thrd-addr.c
+ * \author Institute for reliable Embedded Systems and Communication Electronics
+ * \date 2016/07/25
+ * \version 1.0
  *
- *  Created on: 25 Jul 2016
- *  Author: Lukas Zimmermann <lzimmer1@stud.hs-offenburg.de>
- *
- *  THREAD IPv6 Addressing Tools.
+ * \brief Thread IPv6 addressing tools
  */
 
 #include "emb6.h"

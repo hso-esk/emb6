@@ -1,10 +1,10 @@
-/*
- * thrd-partition.h
+/**
+ * \file thrd-partition.h
+ * \author Institute for reliable Embedded Systems and Communication Electronics
+ * \date 2016/05/23
+ * \version 1.0
  *
- *  Created on: 23 May 2016
- *  Author: Lukas Zimmermann <lzimmer1@stud.hs-offenburg.de>
- *
- *  Thread Network Partitions.
+ * \brief Thread network partitions
  */
 
 #ifndef EMB6_INC_NET_RIP_THRD_PARTITION_H_

@@ -1,13 +1,13 @@
-/*
- * thrd-adv.c
+/**
+ * \file thrd-adv.c
+ * \author Institute for reliable Embedded Systems and Communication Electronics
+ * \date 2016/05/10
+ * \version 1.0
  *
- *  Created on: 10 May 2016
- *  Author: Lukas Zimmermann <lzimmer1@stud.hs-offenburg.de>
- *  MLE Advertisement Processing / Route64 TLV Generation.
+ * \brief MLE advertisement processing / Route64 TLV generation
  */
 
 #include "thrd-adv.h"
-
 #include "emb6.h"
 #include "net_tlv.h"
 #include "thrd-route.h"

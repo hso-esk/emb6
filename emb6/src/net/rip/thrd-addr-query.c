@@ -1,9 +1,10 @@
-/*
- * thrd-addr-query.c
+/**
+ * \file thrd-addr-query.c
+ * \author Institute for reliable Embedded Systems and Communication Electronics
+ * \date 2016/06/06
+ * \version 1.0
  *
- *  Created on: 6 Jun 2016
- *  Author: Lukas Zimmermann <lzimmer1@stud.hs-offenburg.de>
- *  Thread Address Query.
+ * \brief Thread address queries
  */
 
 #include "emb6.h"
@@ -15,14 +16,11 @@
 #include "net_tlv.h"
 #include "uip.h"
 #include "uip-ds6.h"
-
 #include "ctimer.h"
 #include "etimer.h"
-
 #include "er-coap.h"
 #include "er-coap-engine.h"
 #include "rest-engine.h"
-
 #include "thrd-addr-query.h"
 
 #define     LOGGER_ENABLE                 LOGGER_THRD_NET

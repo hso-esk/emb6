@@ -1,10 +1,10 @@
-/*
- * thrd-route.h
+/**
+ * \file thrd-route.h
+ * \author Institute for reliable Embedded Systems and Communication Electronics
+ * \date 2016/04/18
+ * \version 1.0
  *
- *  Created on: 18 Apr 2016
- *  Author: Lukas Zimmermann <lzimmer1@stud.hs-offenburg.de>
- *
- *  Routing database manipulation.
+ * \brief Routing database manipulation
  */
 
 #ifndef EMB6_INC_NET_RIP_THRD_ROUTE_H_

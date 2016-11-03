@@ -1,10 +1,10 @@
-/*
- * thrd-route.c
+/**
+ * \file thrd-route.c
+ * \author Institute for reliable Embedded Systems and Communication Electronics
+ * \date 2016/04/18
+ * \version 1.0
  *
- *  Created on: 18 Apr 2016
- *  Author: Lukas Zimmermann <lzimmer1@stud.hs-offenburg.de>
- *
- *  Routing database manipulation.
+ * \brief Routing database manipulation
  */
 
 /*
@@ -22,15 +22,10 @@
 #include "memb.h"
 #include "rip.h"
 #include "thread_conf.h"
-
 #include "thrd-iface.h"
 #include "thrd-partition.h"
 #include "thrd-send-adv.h"
-
 #include "thrd-route.h"
-
-// #define DEBUG DEBUG_PRINT
-// #include "uip-debug.h"
 
 #define     LOGGER_ENABLE                 LOGGER_THRD_NET
 #include    "logger.h"

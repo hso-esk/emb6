@@ -1,10 +1,10 @@
-/*
- * thrd-leader-db.c
+/**
+ * \file thrd-leader-db.c
+ * \author Institute for reliable Embedded Systems and Communication Electronics
+ * \date 2016/04/26
+ * \version 1.0
  *
- *  Created on: 26 Apr 2016
- *  Author: Lukas Zimmermann <lzimmer1@stud.hs-offenburg.de>
- *
- *  Leader database manipulation.
+ * \brief Leader database manipulation
  */
 
 #include "emb6.h"
@@ -12,7 +12,6 @@
 #include "clist.h"
 #include "memb.h"
 #include "thread_conf.h"
-
 #include "thrd-leader-db.h"
 
 #define     LOGGER_ENABLE                 LOGGER_THRD_NET

@@ -1,20 +1,19 @@
-/*
- * thrd-dev.c
+/**
+ * \file thrd-dev.c
+ * \author Institute for reliable Embedded Systems and Communication Electronics
+ * \date 2016/06/15
+ * \version 1.0
  *
- *  Created on: 15 Jun 2016
- *  Author: Lukas Zimmermann <lzimmer1@stud.hs-offenburg.de>
- *  Thread Device.
+ * \brief Thread device
  */
 
 #include "thread_conf.h"
 #include "thrd-dev.h"
 #include "thrd-iface.h"
 #include "thrd-leader-db.h"
-
 #include "er-coap.h"
 #include "er-coap-engine.h"
 #include "rest-engine.h"
-
 #include "thrd-iface.h"
 #include "thrd-partition.h"
 

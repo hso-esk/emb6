@@ -1,9 +1,10 @@
-/*
- * thrd-addr-query.h
+/**
+ * \file thrd-addr-query.h
+ * \author Institute for reliable Embedded Systems and Communication Electronics
+ * \date 2016/06/06
+ * \version 1.0
  *
- *  Created on: 6 Jun 2016
- *  Author: Lukas Zimmermann <lzimmer1@stud.hs-offenburg.de>
- *  Thread Address Query.
+ * \brief Thread address queries
  */
 
 #ifndef EMB6_INC_NET_RIP_THRD_ADDR_QUERY_H_

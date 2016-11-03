@@ -1,10 +1,10 @@
-/*
- * thrd-partition.c
+/**
+ * \file thrd-partition.c
+ * \author Institute for reliable Embedded Systems and Communication Electronics
+ * \date 2016/05/23
+ * \version 1.0
  *
- *  Created on: 23 May 2016
- *  Author: Lukas Zimmermann <lzimmer1@stud.hs-offenburg.de>
- *
- *  Thread Network Partitions.
+ * \brief Thread network partitions
  */
 
 #include "emb6.h"
@@ -13,16 +13,12 @@
 #include "thrd-partition.h"
 #include "rip.h"
 #include "tlv.h"
-
 #include "thrd-dev.h"
 #include "thrd-eid-rloc.h"
 #include "thrd-route.h"
 #include "thrd-addr-query.h"
 #include "thrd-router-id.h"
 #include "thrd-iface.h"
-
-#define DEBUG DEBUG_PRINT
-#include "uip-debug.h"	// For debugging terminal output.
 
 #define     LOGGER_ENABLE                 LOGGER_THRD_NET
 #include    "logger.h"

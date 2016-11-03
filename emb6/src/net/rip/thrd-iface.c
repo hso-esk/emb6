@@ -1,18 +1,16 @@
-/*
- * thrd-iface.c
+/**
+ * \file thrd-iface.c
+ * \author Institute for reliable Embedded Systems and Communication Electronics
+ * \date 2016/06/15
+ * \version 1.0
  *
- *  Created on: 15 Jun 2016
- *  Author: Lukas Zimmermann <lzimmer1@stud.hs-offenburg.de>
- *  Thread Interface.
+ * \brief Thread interface
  */
 
 #include "thrd-iface.h"
 #include "thrd-dev.h"
 #include "uip-ds6.h"
 #include "thrd-addr.h"
-
-#define DEBUG DEBUG_PRINT
-#include "uip-debug.h"	// For debugging terminal output.
 
 #define     LOGGER_ENABLE                 LOGGER_THRD_NET
 #include    "logger.h"

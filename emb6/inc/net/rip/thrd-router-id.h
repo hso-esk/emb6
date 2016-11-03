@@ -1,9 +1,10 @@
-/*
- * thrd-router-id.h
+/**
+ * \file thrd-router-id.h
+ * \author Institute for reliable Embedded Systems and Communication Electronics
+ * \date 2016/05/23
+ * \version 1.0
  *
- *  Created on: 23 May 2016
- *  Author: Lukas Zimmermann <lzimmer1@stud.hs-offenburg.de>
- *  Router ID Management / Router ID Assignment.
+ * \brief Router ID management / router ID assignment
  */
 
 #ifndef EMB6_INC_NET_RIP_THRD_ROUTER_ID_H_

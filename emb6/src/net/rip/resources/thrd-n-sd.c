@@ -1,16 +1,15 @@
-/*
- * thrd-n-sd.c
+/**
+ * \file thrd-n-sd.c
+ * \author Institute for reliable Embedded Systems and Communication Electronics
+ * \date 2016/07/12
+ * \version 1.0
  *
- * Created on: 12 Jul 2016
- * Author: Lukas Zimmermann <lzimmer1@stud.hs-offenburg.de>
- *
- * CoAP Resource - Server Data Registration /n/sd.
+ * \brief CoAP resource - server data registration /n/sd
  */
 
 #include "emb6.h"
 #include "bsp.h"
 #include "er-coap.h"
-
 #include "thread_conf.h"
 
 #define     LOGGER_ENABLE                 LOGGER_THRD_NET

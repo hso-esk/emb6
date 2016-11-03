@@ -1,34 +1,28 @@
-/*
- * thrd-router-id.c
+/**
+ * \file thrd-router-id.c
+ * \author Institute for reliable Embedded Systems and Communication Electronics
+ * \date 2016/05/23
+ * \version 1.0
  *
- *  Created on: 23 May 2016
- *  Author: Lukas Zimmermann <lzimmer1@stud.hs-offenburg.de>
- *  Router ID Management / Router ID Assignment.
+ * \brief Router ID management / router ID assignment
  */
 
 #include "emb6.h"
 #include "bsp.h"
 #include "thread_conf.h"
 #include "ctimer.h"
-
 #include "thrd-dev.h"
-
 #include "er-coap.h"
 #include "er-coap-engine.h"
 #include "rest-engine.h"
-
 #include "mle_management.h"
 #include "thrd-router-id.h"
 #include "thrd-leader-db.h"
 #include "thrd-partition.h"
 #include "thrd-iface.h"
 #include "thrd-addr.h"
-
 #include "thrd-send-adv.h"
 #include "thrd-route.h"
-
-#define DEBUG DEBUG_PRINT
-#include "uip-debug.h"	// For debugging terminal output.
 
 #define     LOGGER_ENABLE                 LOGGER_THRD_NET
 #include    "logger.h"
@@ -255,24 +249,6 @@ get_unassigned_router_id(void)
 	}
 	return id_cnt;
 }
-
-/*=============================================================================
-                               Router ID Assignment
-===============================================================================*/
-
-/*
-void
-thrd_request_router_id(uip_ipaddr_t *leader_addr, uint8_t *ml_eid, uint8_t *router_id)
-{
-	uint16_t rloc16 = THRD_CREATE_RLOC16(*router_id, 0); // Create RLOC16.
-	len = create_addr_solicit_req_payload(addr_solicit_buf, ml_eid, &rloc16);
-
-	coap_init_message(packet, COAP_TYPE_CON, COAP_POST, 0);
-	coap_set_header_uri_path(packet, service_urls[0]);
-	coap_set_payload(packet, addr_solicit_buf, len);
-	coap_nonblocking_request(leader_addr, UIP_HTONS(COAP_DEFAULT_PORT), packet, thrd_addr_solicit_chunk_handler); // TODO Changing CoAP Port.
-}
-*/
 
 /* --------------------------------------------------------------------------- */
 

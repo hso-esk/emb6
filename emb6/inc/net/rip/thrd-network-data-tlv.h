@@ -1,10 +1,10 @@
-/*
- * thrd-network-data-tlv.h
+/**
+ * \file thrd-network-data-tlv.h
+ * \author Institute for reliable Embedded Systems and Communication Electronics
+ * \date 2016/06/12
+ * \version 1.0
  *
- *  Created on: 12 Jul 2016
- * Author: Lukas Zimmermann <lzimmer1@stud.hs-offenburg.de>
- *
- * Thread Network Data Message Format.
+ * \brief Thread network data message format
  */
 
 #ifndef EMB6_INC_NET_RIP_THRD_NETWORK_DATA_TLV_H_

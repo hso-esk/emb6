@@ -1,9 +1,10 @@
-/*
- * thrd-adv.h
+/**
+ * \file thrd-adv.h
+ * \author Institute for reliable Embedded Systems and Communication Electronics
+ * \date 2016/05/10
+ * \version 1.0
  *
- *  Created on: 10 May 2016
- *  Author: Lukas Zimmermann <lzimmer1@stud.hs-offenburg.de>
- *  MLE Advertisement Processing / Route64 TLV Generation.
+ * \brief MLE advertisement processing / Route64 TLV generation
  */
 
 #ifndef EMB6_INC_NET_RIP_THRD_ADV_H_
