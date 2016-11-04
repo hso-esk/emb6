@@ -76,13 +76,13 @@ typedef enum {
 ===============================================================================*/
 
 #ifndef THRD_USE_ROUTING
-#define THRD_USE_ROUTING == TRUE                // Remove this!!!
+#define THRD_USE_ROUTING				TRUE
 #endif /* THRD_USE_ROUTING */
 
 #if THRD_USE_ROUTING
 #define UIP_CONF_IPV6_THRD_ROUTING		TRUE
 #define SICSLOWPAN_USE_MESH_HEADER		TRUE
-#endif
+#endif /* THRD_USE_ROUTING */
 
 // --------------- THREAD ROUTING PROTOCOL ----------------------
 
@@ -103,8 +103,8 @@ typedef enum {
 #define	ID_SEQUENCE_PERIOD				10
 #define	MAX_NEIGHBOR_AGE				100
 #define	MAX_ROUTE_COST					16
-#define	MAX_ROUTER_ID					62 // 62
-#define	MAX_ROUTERS						32 // 32
+#define	MAX_ROUTER_ID					62
+#define	MAX_ROUTERS						32
 #define	MIN_DOWNGRADE_NEIGHBORS			7
 #define	NETWORK_ID_TIMEOUT				120
 #define	PARENT_ROUTE_TO_LEADER_TIMEOUT	20
