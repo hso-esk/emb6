@@ -85,6 +85,11 @@ typedef enum {
 #define SICSLOWPAN_USE_MESH_HEADER		TRUE
 // #endif
 
+#if THRD_USE_ROUTING
+#define SICSLOWPAN_USE_MESH_HEADER		TRUE
+#define THRD_MESH_UNDER_ROUING			TRUE
+#endif
+
 // --------------- THREAD ROUTING PROTOCOL ----------------------
 
 

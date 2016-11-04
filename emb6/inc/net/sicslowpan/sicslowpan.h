@@ -79,7 +79,15 @@
 #define SICSLOWPAN_COMPRESSION_HC06        2
 /** @} */
 
-/** @} */
+// 6LoWPAN dispatches
+#define SICSLOWPAN_DISPATCH_IPV6                    0x41UL /* 01000001 = 65 */
+#define SICSLOWPAN_DISPATCH_HC1                     0x42UL /* 01000010 = 66 */
+#define SICSLOWPAN_DISPATCH_IPHC                    0x60UL /* 011xxxxx = ... */
+#define SICSLOWPAN_DISPATCH_FRAG1                   0xc0UL /* 11000xxx */
+#define SICSLOWPAN_DISPATCH_FRAGN                   0xe0UL /* 11100xxx */
+
+// 6LoWPAN dispatch types
+#define SICSLOWPAN_TYPE_FRAG_HEADER					0x03	/* 11 */
 
 #ifdef SICSLOWPAN_USE_MESH_HEADER
 /** \name 6LoWPAN mesh header.
@@ -104,18 +112,13 @@
 #define SICSLOWPAN_MESH_HEADER_F					MESH_HEADER_F_SHORT_ADDR
 #define SICSLOWPAN_MESH_HEADER_MAX_HOPS				14
 
-// 6LoWPAN dispatches
-#define SICSLOWPAN_DISPATCH_IPV6                    0x41UL /* 01000001 = 65 */
-#define SICSLOWPAN_DISPATCH_HC1                     0x42UL /* 01000010 = 66 */
-#define SICSLOWPAN_DISPATCH_IPHC                    0x60UL /* 011xxxxx = ... */
+// 6LoWPAN mesh header dispatch
 #define SICSLOWPAN_DISPATCH_MESH					0xb0UL /* 1011xxxx = ... */		// LZ.
-#define SICSLOWPAN_DISPATCH_FRAG1                   0xc0UL /* 11000xxx */
-#define SICSLOWPAN_DISPATCH_FRAGN                   0xe0UL /* 11100xxx */
+
 /** @} */
 
-// 6LoWPAN dispatch types
+// 6LoWPAN mesh header dispatch types
 #define SICSLOWPAN_TYPE_MESH_HEADER					0x02	/* 10 */
-#define SICSLOWPAN_TYPE_FRAG_HEADER					0x03	/* 11 */
 
 // 6lowpan mesh header encoding.
 #define SICSLOWPAN_MESH_HDR_SHORT_ADDR_MODE			 2UL								// Short address mode.
@@ -127,7 +130,7 @@
 #define SICSLOWPAN_MESH_HDR_ORIG_ADDR_MODE			SICSLOWPAN_MESH_HDR_SHORT_ADDR_MODE	//
 #define SICSLOWPAN_MESH_HDR_FINAL_ADDR_MODE			SICSLOWPAN_MESH_HDR_SHORT_ADDR_MODE	//
 /** @} */
-#endif
+#endif /* SICSLOWPAN_USE_MESH_HEADER */
 
 /** \name HC1 encoding
  * @{
