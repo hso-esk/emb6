@@ -2,7 +2,6 @@ thread_node = {
 	'demo' : [
 	],
 	'emb6' : [
-		'rpl',
 		'coap',
 		'sock',
 		'ipv6',
