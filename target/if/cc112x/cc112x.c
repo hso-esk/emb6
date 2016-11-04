@@ -557,7 +557,6 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
   uint32_t txTimeout;
   uint8_t enterRx;
   uint8_t exitTx;
-  uint8_t numWrBytes;
   struct s_rf_ctx *p_ctx = &rf_ctx;
 
   if (RF_IS_RX_BUSY() == TRUE) {
@@ -587,48 +586,49 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
   p_ctx->txStatus = RF_TX_STATUS_NONE;
   enterRx = TRUE;
   exitTx = TRUE;
-  txTimeout = 0;
+  txTimeout = packetbuf_attr(PACKETBUF_ATTR_PHY_TXTIMEOUT);
 
-  /* try to write data to TX FIFO until it's full */
-  do {
-    /* write as many as RF_CFG_TX_FIFO_THR bytes */
-    if (p_ctx->txNumRemBytes > RF_CFG_TX_FIFO_THR) {
-      numWrBytes = RF_CFG_TX_FIFO_THR;
-    }
-    else {
-      numWrBytes = p_ctx->txNumRemBytes;
-    }
-    rf_writeTxFifo(p_ctx, numWrBytes, p_err);
-  } while (p_ctx->txNumRemBytes > 0);
+  /* give radio enough time to perform TXONCCA */
+  bsp_delay_us(100);
+  if (RF_READ_CHIP_STATE() != RF_STATE_TX) {
+    /* TXONCCA failed */
+    p_ctx->txErr = NETSTK_ERR_TX_COLLISION;
+    rf_tx_term(p_ctx);
+  }
+  else {
+    /* write as many bytes to TXFIFO as possible */
+    rf_writeTxFifo(p_ctx, RF_CFG_FIFO_SIZE, p_err);
 
-  /* wait for complete transmission of the frame until timeout */
-  tickstart = bsp_getTick();
-  do {
-    /* was the frame transmitted successfully? */
-    if ((p_ctx->txStatus == RF_TX_STATUS_DONE) ||
-        (p_ctx->txStatus == RF_TX_STATUS_WFA)) {
-      break;
-    }
+    /* wait for complete transmission of the frame until timeout */
+    tickstart = bsp_getTick();
+    do {
+      /* was the frame transmitted successfully? */
+      if ((p_ctx->txStatus == RF_TX_STATUS_DONE) ||
+          (p_ctx->txStatus == RF_TX_STATUS_WFA)) {
+        break;
+      }
 
-    /* was a frame being received? */
-    if (RF_IS_RX_BUSY() == TRUE) {
-      p_ctx->txErr = NETSTK_ERR_TX_COLLISION;
-      rf_tx_term(p_ctx);
-      break;
-    }
-
-    /* radio should enter TX state after preamble is sent */
-    if (txTimeout > 6) {
-      if ((p_ctx->state & RF_STATE_MASK) != RF_STATE_TX) {
+      /* was a frame being received? */
+      if (RF_IS_RX_BUSY() == TRUE) {
         p_ctx->txErr = NETSTK_ERR_TX_COLLISION;
+        TRACE_LOG_ERR("<TX> TXONCCA failed, this is not supported to happen");
         rf_tx_term(p_ctx);
         break;
       }
-    }
 
-    /* update TX timeout */
-    txTimeout = bsp_getTick() - tickstart;
-  } while (txTimeout < 40);
+      /* radio should enter TX state after preamble is sent */
+      if ((bsp_getTick() - tickstart) > 6) {
+        if ((p_ctx->state & RF_STATE_MASK) != RF_STATE_TX) {
+          /* check if transceiver was reset */
+          rf_chkReset(p_ctx);
+
+          p_ctx->txErr = NETSTK_ERR_TX_COLLISION;
+          rf_tx_term(p_ctx);
+          break;
+        }
+      }
+    } while ((bsp_getTick() - tickstart) < txTimeout);
+  }
 
   if (p_ctx->txStatus == RF_TX_STATUS_DONE) {
     if (p_ctx->txErr == NETSTK_ERR_FATAL) {
@@ -1068,7 +1068,6 @@ static void rf_rxFifoThresholdISR(void *p_arg) {
 static void rf_txFifoThresholdISR(void *p_arg) {
 
   e_nsErr_t err;
-  uint8_t numWrBytes;
   struct s_rf_ctx *p_ctx = &rf_ctx;
 
 #if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
@@ -1080,27 +1079,8 @@ static void rf_txFifoThresholdISR(void *p_arg) {
   }
 #endif
 
-  if (p_ctx->txNumRemBytes) {
-    if (p_ctx->txNumRemBytes > RF_CFG_FIFO_THR) {
-      numWrBytes = RF_CFG_FIFO_THR;
-    }
-    else {
-      numWrBytes = p_ctx->txNumRemBytes;
-    }
-    rf_writeTxFifo(p_ctx, numWrBytes, &err);
-  }
-
-#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
-  /* switch to fixed packet length mode if number of remaining bytes is less than FIFO SIZE
-   * the actual number of remaining bytes to be sent is calculated as follow:
-   * totNumRemBytes = numBytesInTxFifo + numRemBytes
-   * numBytesInTxFifo = RF_CFG_NUM_TXBYTES
-   */
-  if ((p_ctx->pktLenMode == CC112X_PKT_LEN_MODE_INFINITE) &&
-      (p_ctx->txNumRemBytes < (RF_MAX_FIFO_LEN + 1 - RF_CFG_NUM_TXBYTES))) {
-    rf_setPktLen(CC112X_PKT_LEN_MODE_FIXED, p_ctx->txDataLen);
-  }
-#endif /* NETSTK_CFG_IEEE_802154G_EN */
+  /* write as many bytes as possible */
+  rf_writeTxFifo(p_ctx, RF_CFG_FIFO_THR, &err);
 }
 
 
@@ -1481,9 +1461,6 @@ static void rf_tx_sync(struct s_rf_ctx *p_ctx) {
   p_ctx->state = RF_STATE_TX_SYNC;
   rf_tx_entry(p_ctx);
 
-  /* configure RF interrupt */
-  rf_intConfig(RF_IOCFG_TXFIFO_THR, RF_INT_TXFIFO_THR, RF_INT_EDGE_TXFIFO_THR, rf_txFifoThresholdISR);
-
 #if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
   /* configure TXFIFO_THR to trigger WOR timer reset before the frame, which
    * requires ACK, is completely transmitted. As such the incoming ACK should be
@@ -1494,17 +1471,8 @@ static void rf_tx_sync(struct s_rf_ctx *p_ctx) {
   }
 #endif
 
-#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
-  /* switch to fixed packet length mode if number of remaining bytes is less than FIFO SIZE
-   * the actual number of remaining bytes to be sent is calculated as follow:
-   * totNumRemBytes = numBytesInTxFifo + numRemBytes
-   * numBytesInTxFifo = RF_CFG_NUM_TXBYTES
-   */
-  if ((p_ctx->pktLenMode == CC112X_PKT_LEN_MODE_INFINITE) &&
-      (p_ctx->txDataLen < (RF_MAX_FIFO_LEN + 1))) {
-    rf_setPktLen(CC112X_PKT_LEN_MODE_FIXED, p_ctx->txDataLen);
-  }
-#endif /* NETSTK_CFG_IEEE_802154G_EN */
+  /* enable TXFIFO threshold interrupt */
+  rf_intConfig(RF_IOCFG_TXFIFO_THR, RF_INT_TXFIFO_THR, RF_INT_EDGE_TXFIFO_THR, rf_txFifoThresholdISR);
 }
 
 
@@ -1895,19 +1863,40 @@ static void rf_writeTxFifo(struct s_rf_ctx *p_ctx, uint8_t totNumBytes, e_nsErr_
   /* set return error code */
   *p_err = NETSTK_ERR_NONE;
 
-  /* write small chunk of data at a time to reduce long continuous critical section due to SPI operations */
-  while (totNumBytes > 0) {
-    if (totNumBytes > RF_CFG_TX_FIFO_THR) {
-      numWrBytes = RF_CFG_TX_FIFO_THR;
+#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
+  if (p_ctx->pktLenMode == CC112X_PKT_LEN_MODE_INFINITE) {
+    /* switch to fixed packet length mode if number of remaining bytes is less
+     * than FIFO SIZE the actual number of remaining bytes to be sent is
+     * calculated as follow:
+     * totNumRemBytes = numBytesInTxFifo + numRemBytes
+     * numBytesInTxFifo = RF_CFG_NUM_TXBYTES */
+    if ((p_ctx->txDataLen < (RF_MAX_FIFO_LEN + 1)) ||
+        (p_ctx->txNumRemBytes < (RF_MAX_FIFO_LEN + 1 - RF_CFG_NUM_TXBYTES))) {
+      rf_setPktLen(CC112X_PKT_LEN_MODE_FIXED, p_ctx->txDataLen);
     }
-    else {
-      numWrBytes = totNumBytes;
+  }
+#endif
+
+  if ((totNumBytes > 0) && (p_ctx->txNumRemBytes > 0)) {
+    /* adjust maximum number of bytes that is allowed to write to TXFIFO */
+    if (totNumBytes >= RF_CFG_FIFO_SIZE) {
+      totNumBytes = RF_CFG_FIFO_SIZE;
     }
 
-    cc112x_spiTxFifoWrite(p_ctx->txDataPtr, numWrBytes);
-    p_ctx->txNumRemBytes -= numWrBytes;
-    p_ctx->txDataPtr += numWrBytes;
-    totNumBytes -= numWrBytes;
+    /* keep writing until no bytes are left */
+    while (totNumBytes > 0) {
+      /* keep track of number of remaining bytes to send to avoid buffer underflow */
+      totNumBytes = MIN(totNumBytes, p_ctx->txNumRemBytes);
+
+      /* write those bytes in small chunks */
+      numWrBytes = MIN(totNumBytes, RF_CFG_TX_FIFO_THR);
+      cc112x_spiTxFifoWrite(p_ctx->txDataPtr, numWrBytes);
+
+      /* update TX attributes */
+      p_ctx->txNumRemBytes -= numWrBytes;
+      p_ctx->txDataPtr += numWrBytes;
+      totNumBytes -= numWrBytes;
+    }
   }
 }
 
