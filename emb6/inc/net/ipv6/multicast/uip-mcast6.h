@@ -63,8 +63,11 @@
 #include "emb6.h"
 #include "uip-mcast6-engines.h"
 #include "uip-mcast6-route.h"
+#if UIP_MCAST6_ENGINE == UIP_MCAST6_ENGINE_SMRF
 #include "smrf.h"
+#elif UIP_MCAST6_ENGINE == UIP_MCAST6_ENGINE_ROLL_TM
 #include "roll-tm.h"
+#endif
 
 #include <string.h>
 /*---------------------------------------------------------------------------*/

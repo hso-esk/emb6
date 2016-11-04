@@ -49,13 +49,17 @@
 #include "uip-mcast6-route.h"
 #include "uip-mcast6-stats.h"
 #include "smrf.h"
+#if NET_USE_RPL
 #include "rpl.h"
+#endif
 #include "packetbuf.h"
 #include "random.h"
 //#include "net/netstack.h"
 
 #define DEBUG DEBUG_NONE
 #include "uip-debug.h"
+
+#if NET_USE_RPL
 
 /*---------------------------------------------------------------------------*/
 /* Macros */
@@ -215,4 +219,5 @@ const struct uip_mcast6_driver smrf_driver = {
   in,
 };
 /*---------------------------------------------------------------------------*/
+#endif /* NET_USE_RPL */
 /** @} */
