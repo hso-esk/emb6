@@ -159,6 +159,7 @@ static void phy_init(void *p_netstk, e_nsErr_t *p_err)
   packetbuf_attr_t symbol_period;
   packetbuf_attr_t symbol_per_octet;
   packetbuf_attr_t shr_duration;
+  packetbuf_attr_t tx_timeout;
 
   if (mac_phy_config.modulation == MODULATION_2FSK50) {
     /* 2FSK, 50kbps => symbol period = 20us */
@@ -174,6 +175,10 @@ static void phy_init(void *p_netstk, e_nsErr_t *p_err)
     /* SHR = preamble + 2-byte-SYNC */
     shr_duration = (mac_phy_config.preamble_len + 2) * symbol_per_octet * symbol_period;
     packetbuf_set_attr(PACKETBUF_ATTR_PHY_SHR_DURATION, shr_duration);
+
+    /* set TX timeout in ticks */
+    tx_timeout = (shr_duration + PHY_PSDU_MAX * symbol_per_octet * symbol_period) / bsp_get(E_BSP_GET_TRES);
+    packetbuf_set_attr(PACKETBUF_ATTR_PHY_TXTIMEOUT, tx_timeout);
 
     /* set returned error */
     *p_err = NETSTK_ERR_NONE;
