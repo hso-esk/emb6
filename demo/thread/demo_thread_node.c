@@ -41,16 +41,16 @@
 /**
  *      \addtogroup emb6
  *      @{
- *      \addtogroup demo_coap
+ *      \addtogroup thread
  *      @{
- *      \addtogroup demo_coap_server
+ *      \addtogroup demo_thread_node
  *      @{
 */
-/*! \file   demo_coap_srv.c
+/*! \file   demo_thread_node.c
 
- \author Peter Lehmann
+ \author Lukas Zimmermann, Nidhal Mars
 
- \brief  CoAP Server example application
+ \brief  Thread node example application
 
  \version 0.0.1
  */
@@ -60,25 +60,18 @@
  INCLUDE FILES
  =============================================================================*/
 
+#include "demo_thread_node.h"
+
 #include "er-coap.h"
 #include "rest-engine.h"
-#include "demo_coap_srv.h"
 #include "emb6.h"
 #include "etimer.h"
 #include "uip.h"
 #include "bsp.h"
 
 #include "mle_management.h"
-
 #include "thrd-dev.h"
-#include "thrd-route.h"
-#include "thrd-leader-db.h"
-#include "thrd-addr-query.h"
-#include "thrd-router-id.h"
 #include "thrd-partition.h"
-#include "thrd-adv.h"
-#include "thrd-send-adv.h"
-
 #include "thrd-iface.h"
 #include "thrd-network-data.h"
 
@@ -91,68 +84,59 @@
 
 #define     SEND_INTERVAL               5
 
-static struct etimer timer;
-
+//static struct etimer timer;
 uint8_t cnt = 0;
-uip_ipaddr_t test_eid;
 
 /*==============================================================================
                                LOCAL FUNCTION PROTOTYPES
  =============================================================================*/
 
-static void timer_callback(c_event_t c_event, p_data_t p_data);
-static void execute_routine(void);
+//static void timer_callback(c_event_t c_event, p_data_t p_data);
+//static void execute_routine(void);
 
 /*==============================================================================
                                        LOCAL FUNCTIONS
  =============================================================================*/
 
-static void
-timer_callback(c_event_t c_event, p_data_t p_data)
-{
-	if (etimer_expired(&timer))
-	{
-		execute_routine();
-		etimer_restart(&timer);
-	}
-} /* _mcast_callback */
+//static void
+//timer_callback(c_event_t c_event, p_data_t p_data)
+//{
+//	if (etimer_expired(&timer))
+//	{
+//		execute_routine();
+//		etimer_restart(&timer);
+//	}
+//} /* _mcast_callback */
 
-/*----------------------------------------------------------------------------*/
-/*    demo_coapInit()                                                           */
-/*----------------------------------------------------------------------------*/
-
-static void
-execute_routine(void)
-{
-	switch(cnt) {
-	case 0:
-
-		PRINTF("----------------------------------------------------\n");
-		break;
-	case 1:
-		thrd_addr_qry_request(&test_eid);
-		PRINTF("----------------------------------------------------\n");
-		break;
-	case 2:
-		thrd_addr_qry_request(&test_eid);
-		PRINTF("----------------------------------------------------\n");
-		break;
-	case 3:
-		thrd_addr_qry_request(&test_eid);
-		PRINTF("----------------------------------------------------\n");
-		break;
-	default:
-		exit(0);
-		break;
-	}
-	cnt++;
-}
+//static void
+//execute_routine(void)
+//{
+//	switch(cnt) {
+//	case 0:
+//
+//		PRINTF("----------------------------------------------------\n");
+//		break;
+//	case 1:
+//		PRINTF("----------------------------------------------------\n");
+//		break;
+//	case 2:
+//		PRINTF("----------------------------------------------------\n");
+//		break;
+//	case 3:
+//		PRINTF("----------------------------------------------------\n");
+//		break;
+//	default:
+//		exit(0);
+//		break;
+//	}
+//	cnt++;
+//}
 
 /*==============================================================================
                                          API FUNCTIONS
  =============================================================================*/
 
-int8_t demo_thrdCoapInit(void)
+int8_t demo_threadNodeInit(void)
 {
 	// Initialize Thread device.
 	thrd_dev_init();
@@ -162,25 +146,9 @@ int8_t demo_thrdCoapInit(void)
 	thrd_network_data_init();
 
 	if ( !mle_init() ){ return 0; }
-	//mle_set_parent_mode();
-	//mle_set_child_mode();
-
-	// Initialize routing database.
-	// thrd_rdb_init();
-
-	// Initialize leader database.
-	// thrd_ldb_init();
-
-	// thrd_iface.router_id = 2;
-
-	// thrd_eid_rloc_db_init();
-
-	// thrd_trickle_init();
-
-	// thrd_partition_start();
 
 	/* set periodic timer */
-	//etimer_set(&timer, SEND_INTERVAL * bsp_get(E_BSP_GET_TRES), timer_callback);
+	// etimer_set(&timer, SEND_INTERVAL * bsp_get(E_BSP_GET_TRES), timer_callback);
 
     return 1;
 }
@@ -189,7 +157,7 @@ int8_t demo_thrdCoapInit(void)
 /*    demo_coapConf()                                                           */
 /*----------------------------------------------------------------------------*/
 
-uint8_t demo_thrdCoapConf(s_ns_t* p_netstk)
+uint8_t demo_threadNodeConf(s_ns_t* p_netstk)
 {
     uint8_t c_ret = 1;
 

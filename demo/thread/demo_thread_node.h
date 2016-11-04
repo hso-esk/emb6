@@ -58,6 +58,9 @@
 
     \version 0.0.1
 */
+
+#include "emb6.h"
+
 #ifndef DEMO_COAP_SRV_H_
 #define DEMO_COAP_SRV_H_
 /*==============================================================================
@@ -70,7 +73,7 @@
 
 */
 /*============================================================================*/
-int8_t demo_thrdCoapInit(void);
+extern int8_t demo_threadNodeInit(void);
 
 /*============================================================================*/
 /*!
@@ -79,7 +82,7 @@ int8_t demo_thrdCoapInit(void);
     \return 0 - error, 1 - success
 */
 /*============================================================================*/
-uint8_t demo_thrdCoapConf(s_ns_t* pst_netStack);
+extern uint8_t demo_threadNodeConf(s_ns_t* pst_netStack);
 
 #endif /* DEMO_COAP_SRV_H_ */
 /** @} */

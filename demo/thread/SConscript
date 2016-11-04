@@ -1,4 +1,4 @@
-thrd_coap = {
+thread_node = {
 	'demo' : [
 	],
 	'emb6' : [
@@ -21,8 +21,8 @@ thrd_coap = {
 	],
 # C global defines
 	'CPPDEFINES' : [
-		('DEMO_USE_THRD_COAP',1),
-		('CONF_USE_SERVER',1),
+		('DEMO_USE_THREAD',1),
+#		('CONF_USE_SERVER',1),
 		('THRD_USE_ROUTING',1),
 	],
 # GCC flags
@@ -30,4 +30,4 @@ thrd_coap = {
 	]	
 }
 
-Return('thrd_coap')
+Return('thread_node')

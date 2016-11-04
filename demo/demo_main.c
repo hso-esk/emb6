@@ -81,10 +81,6 @@
 #include "demo_udp_socket.h"
 #endif
 
-#if DEMO_USE_THREAD
-#include "thread_demo.h"
-#endif
-
 #if DEMO_USE_COAP
 #if CONF_USE_SERVER
 #include "demo_coap_srv.h"
@@ -146,20 +142,8 @@
 #include "demo_mcast_sink.h"
 #endif
 
-#if DEMO_USE_ROUTE_ROOT
-#include "demo_route_root.h"
-#endif
-
-#if DEMO_USE_ROUTE_SINK
-#include "demo_route_sink.h"
-#endif
-
-#if DEMO_USE_THRD_COAP
-#if CONF_USE_SERVER
-#include "demo_coap_srv.h"
-#else
-#include "demo_coap_cli.h"
-#endif
+#if DEMO_USE_THREAD
+#include "demo_thread_node.h"
 #endif
 
 /*==============================================================================
@@ -245,10 +229,6 @@ static void loc_demoAppsConf(s_ns_t* pst_netStack, e_nsErr_t *p_err)
     demo_udpSocketCfg(pst_netStack);
     #endif
 
-	#if DEMO_USE_THREAD
-	demo_threadCfg(pst_netStack);
-	#endif
-
     #if DEMO_USE_APTB
     demo_aptbConf(pst_netStack);
     #endif
@@ -277,16 +257,8 @@ static void loc_demoAppsConf(s_ns_t* pst_netStack, e_nsErr_t *p_err)
     demo_mcastSinkConf(pst_netStack);
 	#endif
 
-	#if DEMO_USE_ROUTE_ROOT
-	demo_routeRootConf(pst_netStack);
-	#endif
-
-	#if DEMO_USE_ROUTE_SINK
-	demo_routeSinkConf(pst_netStack);
-	#endif
-
-	#if DEMO_USE_THRD_COAP
-	demo_thrdCoapConf(pst_netStack);
+	#if DEMO_USE_THREAD
+	demo_threadNodeConf(pst_netStack);
 	#endif
 
     /* set returned error code */
@@ -332,12 +304,6 @@ static uint8_t loc_demoAppsInit(void)
     }
     #endif
 
-	#if DEMO_USE_THREAD
-	if (!demo_threadInit()) {
-		return 0;
-	}
-	#endif
-
     #if DEMO_USE_APTB
     if (!demo_aptbInit()) {
         return 0;
@@ -380,20 +346,8 @@ static uint8_t loc_demoAppsInit(void)
     }
 	#endif
 
-	#if DEMO_USE_ROUTE_ROOT
-	if (!demo_routeRootInit()) {
-		return 0;
-	}
-	#endif
-
-	#if DEMO_USE_ROUTE_SINK
-	if (!demo_routeSinkInit()) {
-		return 0;
-	}
-	#endif
-
-	#if DEMO_USE_THRD_COAP
-	if (!demo_thrdCoapInit()) {
+	#if DEMO_USE_THREAD
+	if (!demo_threadNodeInit()) {
 		return 0;
 	}
 	#endif
