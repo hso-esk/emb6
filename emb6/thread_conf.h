@@ -79,15 +79,9 @@ typedef enum {
 #define THRD_USE_ROUTING == TRUE                // Remove this!!!
 #endif /* THRD_USE_ROUTING */
 
-// #if THRD_USE_ROUTING == TRUE
-#define UIP_CONF_IPV6_THRD_ROUTING		TRUE
-#define THRD_SICSLOWPAN_ROUTING			TRUE
-#define SICSLOWPAN_USE_MESH_HEADER		TRUE
-// #endif
-
 #if THRD_USE_ROUTING
+#define UIP_CONF_IPV6_THRD_ROUTING		TRUE
 #define SICSLOWPAN_USE_MESH_HEADER		TRUE
-#define THRD_MESH_UNDER_ROUING			TRUE
 #endif
 
 // --------------- THREAD ROUTING PROTOCOL ----------------------

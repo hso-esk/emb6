@@ -1509,6 +1509,9 @@ static uint8_t output(const uip_lladdr_t *localdest)
 	max_payload = MAC_MAX_PAYLOAD - framer_hdrlen - p_ns->dllsec->get_overhead();
 
 	if((int)uip_len - (int)uncomp_hdr_len > max_payload - (int)packetbuf_hdr_len) {		// 6LoWPAN Fragmentation.
+
+#if SICSLOWPAN_USE_MESH_HEADER
+
 #if SICSLOWPAN_CONF_FRAG
 		struct queuebuf *q;
 		/*
@@ -1530,18 +1533,6 @@ static uint8_t output(const uip_lladdr_t *localdest)
 
 		/* Create 1st Fragment */
 		PRINTFO("sicslowpan output: 1st fragment\n\r");
-
-		/* move HC1/HC06/IPv6 header */
-		// memmove(packetbuf_ptr + SICSLOWPAN_MESH_HEADER_LEN + SICSLOWPAN_FRAG1_HDR_LEN, packetbuf_ptr, packetbuf_hdr_len);
-
-		// ------------------------- LZ -------------------------------------------------------------------------------------
-
-		// --- neu.
-
-// #define SICSLOWPAN_USE_MESH_HEADER TRUE
-
-#ifdef SICSLOWPAN_USE_MESH_HEADER
-#ifdef UIP_CONF_IPV6_THRD_ROUTING
 
 		uip_ipaddr_t src_addr;
 		src_addr = UIP_IP_BUF->srcipaddr;
@@ -1570,8 +1561,6 @@ static uint8_t output(const uip_lladdr_t *localdest)
 			}
 			return 1;
 		}
-
-		// --- here.
 
 		// Check whether the destination address is not a multicast address (unicast: dest != NULL, multicast: dest = NULL).
 		if ( !uip_is_addr_mcast(&dest_addr) ) {	// Unicast address (probably mesh-local).
@@ -1654,9 +1643,6 @@ static uint8_t output(const uip_lladdr_t *localdest)
 						packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_SHORTADDRMODE);
 						packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
 
-						// memcpy(packetbuf_ptr + packetbuf_hdr_len, (uint8_t *)UIP_IP_BUF + uncomp_hdr_len, uip_len - uncomp_hdr_len);
-						// packetbuf_set_datalen(uip_len - uncomp_hdr_len + packetbuf_hdr_len);
-
 						thrd_create_rloc_linkaddr(&dest, dest_rid, 0);
 
 						memmove(packetbuf_ptr + SICSLOWPAN_FRAG1_HDR_LEN, packetbuf_ptr, packetbuf_hdr_len);
@@ -1674,8 +1660,6 @@ static uint8_t output(const uip_lladdr_t *localdest)
 						packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_SHORTADDRMODE);
 						packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
 
-#ifdef SICSLOWPAN_USE_MESH_HEADER	// Use mesh header.
-
 						sicslowpan_mesh_hdr_len = 1;
 
 						// Create mesh type.
@@ -1687,7 +1671,7 @@ static uint8_t output(const uip_lladdr_t *localdest)
 #elif ( SICSLOWPAN_MESH_HEADER_V == MESH_HEADER_V_SHORT_ADDR )	// V: Short address mode.
 						// Set V bit to 1.
 						mesh_type |= MESH_HEADER_V_SHORT_ADDR;
-						// Check whether the originstor IPv6 address belongs to a child (child -> parent forwarding).
+						// Check whether the originator IPv6 address belongs to a child (child -> parent forwarding).
 						uint16_t src_rloc16 = thrd_extract_rloc16_from_rloc_address(&src_addr);
 						uint8_t src_child_id = THRD_EXTRACT_CHILD_ID(src_rloc16);
 						if ( thrd_rloc16_belongs_to_router(src_child_id) ) {	// Router.
@@ -1716,8 +1700,6 @@ static uint8_t output(const uip_lladdr_t *localdest)
 						memcpy(&mesh_hdr[sicslowpan_mesh_hdr_len], &dest_rloc16, MESH_HEADER_SHORT_ADDR_LEN);
 						sicslowpan_mesh_hdr_len += MESH_HEADER_SHORT_ADDR_LEN;
 #endif /* ( SICSLOWPAN_MESH_HEADER_F == MESH_HEADER_F_EUI_64 ) */
-
-#endif /* SICSLOWPAN_USE_MESH_HEADER */
 
 						// Set hops left.
 						mesh_type |= SICSLOWPAN_MESH_HDR_MAX_HOPS;
@@ -1847,7 +1829,7 @@ static uint8_t output(const uip_lladdr_t *localdest)
 			return 0;
 #endif /* SICSLOWPAN_CONF_FRAG */
 
-	} else {	// Without Fragmentation. ------------------------------------------------------------------------------------------
+	} else {	// Without Fragmentation.
 
 		PRINTFO("6LoWPAN: Sending packet without fragmentation.\n");
 
@@ -1983,7 +1965,7 @@ static uint8_t output(const uip_lladdr_t *localdest)
 						packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_SHORTADDRMODE);
 						packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_SHORTADDRMODE);
 
-#ifdef SICSLOWPAN_USE_MESH_HEADER	// Use mesh header.
+// #ifdef SICSLOWPAN_USE_MESH_HEADER	// Use mesh header.
 
 						sicslowpan_mesh_hdr_len = 1;
 
@@ -2026,7 +2008,7 @@ static uint8_t output(const uip_lladdr_t *localdest)
 						sicslowpan_mesh_hdr_len += MESH_HEADER_SHORT_ADDR_LEN;
 #endif /* ( SICSLOWPAN_MESH_HEADER_F == MESH_HEADER_F_EUI_64 ) */
 
-#endif /* SICSLOWPAN_USE_MESH_HEADER */
+// #endif /* SICSLOWPAN_USE_MESH_HEADER */
 
 						// Set hops left.
 						mesh_type |= SICSLOWPAN_MESH_HDR_MAX_HOPS;
@@ -2075,9 +2057,134 @@ static uint8_t output(const uip_lladdr_t *localdest)
 			packetbuf_set_datalen(uip_len - uncomp_hdr_len + packetbuf_hdr_len);
 			send_packet(&dest);
 		}
-#else
-		// TODO Insert your Mesh Header specific implementation here.
-#endif /* UIP_CONF_IPV6_THRD_ROUTING */
+#else /* SICSLOWPAN_USE_MESH_HEADER */
+		// Without 6LoWPAN mesh header.
+
+#if SICSLOWPAN_CONF_FRAG
+		struct queuebuf *q;
+		/*
+		 * The outbound IPv6 packet is too large to fit into a single 15.4
+		 * packet, so we fragment it into multiple packets and send them.
+		 * The first fragment contains frag1 dispatch, then
+		 * IPv6/HC1/HC06/HC_UDP dispatchs/headers.
+		 * The following fragments contain only the fragn dispatch.
+		 */
+		int estimated_fragments = ((int)uip_len) / ((int)MAC_MAX_PAYLOAD - SICSLOWPAN_FRAGN_HDR_LEN) + 1;
+		int freebuf = queuebuf_numfree() - 1;
+		PRINTFO("uip_len: %d, fragments: %d, free bufs: %d\n", uip_len, estimated_fragments, freebuf);
+		if(freebuf < estimated_fragments) {
+			PRINTFO("Dropping packet, not enough free bufs\n");
+			return 0;
+		}
+
+		PRINTFO("Fragmentation sending packet len %d\n\r", uip_len);
+
+		/* Create 1st Fragment */
+		PRINTFO("sicslowpan output: 1rst fragment ");
+
+		/* move HC1/HC06/IPv6 header */
+		memmove(packetbuf_ptr + SICSLOWPAN_FRAG1_HDR_LEN, packetbuf_ptr, packetbuf_hdr_len);
+
+		/*
+		 * FRAG1 dispatch + header
+		 * Note that the length is in units of 8 bytes
+		 */
+		/*     PACKETBUF_FRAG_BUF->dispatch_size = */
+		/*       uip_htons((SICSLOWPAN_DISPATCH_FRAG1 << 8) | uip_len); */
+		SET16(PACKETBUF_FRAG_PTR, PACKETBUF_FRAG_DISPATCH_SIZE,
+				((SICSLOWPAN_DISPATCH_FRAG1 << 8) | uip_len));
+		/*     PACKETBUF_FRAG_BUF->tag = uip_htons(my_tag); */
+		SET16(PACKETBUF_FRAG_PTR, PACKETBUF_FRAG_TAG, my_tag);
+		my_tag++;
+
+		/* Copy payload and send */
+		packetbuf_hdr_len += SICSLOWPAN_FRAG1_HDR_LEN;
+		packetbuf_payload_len = (max_payload - packetbuf_hdr_len) & 0xfffffff8;
+		PRINTFO("(len %d, tag %d)\n\r", packetbuf_payload_len, my_tag);
+		memcpy(packetbuf_ptr + packetbuf_hdr_len,
+				(uint8_t *)UIP_IP_BUF + uncomp_hdr_len, packetbuf_payload_len);
+		packetbuf_set_datalen(packetbuf_payload_len + packetbuf_hdr_len);
+		q = queuebuf_new_from_packetbuf();
+		if(q == NULL) {
+			PRINTFO("could not allocate queuebuf for first fragment, dropping packet\n\r");
+			return 0;
+		}
+		send_packet(&dest);
+		queuebuf_to_packetbuf(q);
+		queuebuf_free(q);
+		q = NULL;
+
+		/* Check tx result. */
+		if((last_tx_status == MAC_TX_COLLISION) ||
+				(last_tx_status == MAC_TX_ERR) ||
+				(last_tx_status == MAC_TX_ERR_FATAL)) {
+			PRINTFO("error in fragment tx, dropping subsequent fragments.\n\r");
+			return 0;
+		}
+
+		/* set processed_ip_out_len to what we already sent from the IP payload*/
+		processed_ip_out_len = packetbuf_payload_len + uncomp_hdr_len;
+
+		/*
+		 * Create following fragments
+		 * Datagram tag is already in the buffer, we need to set the
+		 * FRAGN dispatch and for each fragment, the offset
+		 */
+		packetbuf_hdr_len = SICSLOWPAN_FRAGN_HDR_LEN;
+		/*     PACKETBUF_FRAG_BUF->dispatch_size = */
+		/*       uip_htons((SICSLOWPAN_DISPATCH_FRAGN << 8) | uip_len); */
+		SET16(PACKETBUF_FRAG_PTR, PACKETBUF_FRAG_DISPATCH_SIZE,
+				((SICSLOWPAN_DISPATCH_FRAGN << 8) | uip_len));
+		packetbuf_payload_len = (max_payload - packetbuf_hdr_len) & 0xfffffff8;
+		while(processed_ip_out_len < uip_len) {
+			PRINTFO("sicslowpan output: fragment ");
+			PACKETBUF_FRAG_PTR[PACKETBUF_FRAG_OFFSET] = processed_ip_out_len >> 3;
+
+			/* Copy payload and send */
+			if(uip_len - processed_ip_out_len < packetbuf_payload_len) {
+				/* last fragment */
+				packetbuf_payload_len = uip_len - processed_ip_out_len;
+			}
+			PRINTFO("(offset %d, len %d, tag %d)\n\r",
+					processed_ip_out_len >> 3, packetbuf_payload_len, my_tag);
+			memcpy(packetbuf_ptr + packetbuf_hdr_len,
+					(uint8_t *)UIP_IP_BUF + processed_ip_out_len, packetbuf_payload_len);
+			packetbuf_set_datalen(packetbuf_payload_len + packetbuf_hdr_len);
+			q = queuebuf_new_from_packetbuf();
+			if(q == NULL) {
+				PRINTFO("could not allocate queuebuf, dropping fragment\n\r");
+				return 0;
+			}
+			send_packet(&dest);
+			queuebuf_to_packetbuf(q);
+			queuebuf_free(q);
+			q = NULL;
+			processed_ip_out_len += packetbuf_payload_len;
+
+			/* Check tx result. */
+			if((last_tx_status == MAC_TX_COLLISION) ||
+					(last_tx_status == MAC_TX_ERR) ||
+					(last_tx_status == MAC_TX_NOACK) ||
+					(last_tx_status == MAC_TX_ERR_FATAL)) {
+				PRINTFO("error in fragment tx, dropping subsequent fragments.\n\r");
+				return 0;
+			}
+		}
+#else /* SICSLOWPAN_CONF_FRAG */
+		PRINTFO("sicslowpan output: Packet too large to be sent without fragmentation support; dropping packet\n\r");
+		return 0;
+#endif /* SICSLOWPAN_CONF_FRAG */
+	} else {
+
+		/*
+		 * The packet does not need to be fragmented
+		 * copy "payload" and send
+		 */
+		memcpy(packetbuf_ptr + packetbuf_hdr_len, (uint8_t *)UIP_IP_BUF + uncomp_hdr_len,
+				uip_len - uncomp_hdr_len);
+		packetbuf_set_datalen(uip_len - uncomp_hdr_len + packetbuf_hdr_len);
+		send_packet(&dest);
+
 #endif /* SICSLOWPAN_USE_MESH_HEADER */
 	}
 	return 1;
@@ -2133,8 +2240,10 @@ input(void)
 		sicslowpan_len = 0;
 		processed_ip_in_len = 0;
 	}
+
+// #undef SICSLOWPAN_USE_MESH_HEADER
+
 #ifdef SICSLOWPAN_USE_MESH_HEADER
-#ifdef UIP_CONF_IPV6_THRD_ROUTING
 	/*
 	 * Since we support the mesh header, the first header
 	 * we look for is the mesh header.
@@ -2188,10 +2297,7 @@ input(void)
 		uint16_t dest_short_addr = 0xff;
 		if ( (mesh_hdr_config & 0x20) >> 5 == 1 ) {		// Short Address used.
 			memcpy(&dest_short_addr, packetbuf_ptr + mesh_hdr_len, 2);
-
-#ifdef THRD_SICSLOWPAN_ROUTING
 			dest_short_addr = uip_htons(dest_short_addr);	// Arrange byte order.
-
 			uint8_t dest_rid = THRD_EXTRACT_ROUTER_ID(dest_short_addr);
 
 			PRINTFI("6LoWPAN: Destination short address = %04x\n\r", dest_short_addr);
@@ -2206,24 +2312,16 @@ input(void)
 					// TODO Packet destined to me --> continue with code.
 				}
 
-				// PRINTFI("packetbuf_datalen() = %d\n\r", packetbuf_datalen());
-				// PRINTFI("packetbuf_hdr_len() = %d\n\r", packetbuf_hdr_len);
-				// PRINTFI("uncomp_hdr_len = %d\n\r", uncomp_hdr_len);
-				// PRINTFI("packetbuf_payload_len = %d\n\r", packetbuf_payload_len);
-				// PRINTFI("sicslowpan_len = %d\n\r", sicslowpan_len);
-
 			} else {	// Not destined to me.
 				// Forwarding.
 				if ( thrd_dev.net_type == THRD_DEV_NETTYPE_ROUTER || thrd_dev.net_type == THRD_DEV_NETTYPE_LEADER ) {
 
 					if ( hops_left > 0 ) {
-
 						// Decrement hops left in the packet buffer.
 						mesh_hdr_config--;
 						memcpy(packetbuf_ptr + PACKETBUF_MESH_HEADER_POS, &mesh_hdr_config, 1);
 
 						thrd_rdb_route_t *route;
-						// route = thrd_rdb_route_lookup(dest_rid);
 						route = thrd_rdb_route_lookup(dest_rid);
 
 						if ( route != NULL ) {
@@ -2243,7 +2341,6 @@ input(void)
 					}
 				}
 			}
-#endif /* THRD_SICSLOWPAN_ROUTING */
 
 			mesh_hdr_len += 2;
 			PRINTFI("6LoWPAN: Incoming packet containing mesh header (F = 1).\n");
@@ -2352,8 +2449,8 @@ input(void)
 		}
 	}
 
-#else
-	// TODO Insert your Mesh Header specific implementation here.
+#else /* SICSLOWPAN_USE_MESH_HEADER */
+	// Without 6LoWPAN mesh header.
 
 	/*
 	 * Since we don't support the mesh and broadcast header, the first header
@@ -2400,7 +2497,6 @@ input(void)
 	default:
 		break;
 	}
-#endif /* UIP_CONF_IPV6_THRD_ROUTING */
 #endif /* SICSLOWPAN_USE_MESH_HEADER */
 
 	/* We are currently reassembling a packet, but have just received the first
@@ -2501,7 +2597,6 @@ input(void)
 			return;
 		}
 
-
 #if SICSLOWPAN_CONF_FRAG
 	copypayload:
 #endif /*SICSLOWPAN_CONF_FRAG*/
@@ -2597,7 +2692,7 @@ input(void)
 /** @} */
 
 /*--------------------------------------------------------------------*/
-#ifdef THRD_SICSLOWPAN_ROUTING
+#ifdef SICSLOWPAN_USE_MESH_HEADER
 /**
  * Mesh-under forwarding.
  * Forward a received packet using the destination RLOC16 address.
@@ -2637,7 +2732,7 @@ forward(uint8_t dest_rid)
 	}
 }
 /** @} */
-#endif /* THRD_SICSLOWPAN_ROUTING */
+#endif /* SICSLOWPAN_USE_MESH_HEADER */
 
 /*--------------------------------------------------------------------*/
 /* \brief 6lowpan init function (called by the MAC layer)             */
