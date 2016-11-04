@@ -82,12 +82,13 @@
 
 #include "uip-ds6-nbr.h"
 
+#if SICSLOWPAN_USE_MESH_HEADER
 #include "thrd-addr.h"
 #include "thrd-route.h"
 #include "thrd-iface.h"
 #include "thrd-dev.h"
-
 #include "mle_table.h"
+#endif /* SICSLOWPAN_USE_MESH_HEADER */
 
 
 #define DEBUG DEBUG_NONE
