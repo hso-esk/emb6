@@ -1,20 +1,19 @@
-thread_sink = {
+thrd_coap = {
 	'demo' : [
 	],
 	'emb6' : [
-		'sock',
 		'rpl',
+		'coap',
+		'sock',
 		'ipv6',
 		'sicslowpan',
 		'dllsec',
-		'mle',
 		'dllc',
 		'mac',
 		'framer',
 		'phy',
-		'nullmac',
-		'802154framer',
 		'ipv6mc',
+		'mle',
 		'thread',
 	],
 	'utils' : [
@@ -22,13 +21,13 @@ thread_sink = {
 	],
 # C global defines
 	'CPPDEFINES' : [
-		('DEMO_USE_THREAD_SINK',1),
-		#('DEMO_USE_UDPALIVE',1),
-		('NET_USE_RPL',1),
+		('DEMO_USE_THRD_COAP',1),
+		('CONF_USE_SERVER',1),
+		('THRD_USE_ROUTING',1),
 	],
 # GCC flags
 	'CFLAGS' : [
 	]	
 }
 
-Return('thread_sink')
+Return('thrd_coap')
