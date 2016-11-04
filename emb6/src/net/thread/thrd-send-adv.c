@@ -162,7 +162,7 @@ trickle_reset(void)
 	ctimer_restart(&ci);
 	ctimer_restart(&ct);
 
-	t.interval = t.i_min;				// I.
+	t.interval = t.i_min;			// I.
 	t.t_next = random_interval();	// t.
 
 	LOG_RAW("trickle_reset: Timer (I) will expire in %lu secs.\n",

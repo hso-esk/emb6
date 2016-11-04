@@ -58,29 +58,16 @@ thrd_process_route64(uint8_t rid_sender, tlv_route64_t *route64_tlv)
 			LOG_RAW("thrd_process_route64: No route to reach neighbor (%d) detected.\n\r", rid_sender);
 			return THRD_ERROR_FAILED;
 		}
-
-		// LOG_RAW("-x-x-x-x-x-x-x-x-x-x-x-x-x-\n\r");
-		// LOG_RAW("thrd_process_route64: Processing Route64 TLV.\n\r");
-		// LOG_RAW("thrd_process_route64: route64_tlv->id_sequence_number = %d \n\r", route64_tlv->id_sequence_number);
-		// LOG_RAW("thrd_process_route64: thrd_partition.ID_sequence_number = %d \n\r", thrd_partition.ID_sequence_number);
-		// LOG_RAW("-x-x-x-x-x-x-x-x-x-x-x-x-x-\n\r");
-
 		// Calculate wether the incoming ID sequence number is more recent than the currently stored one (see spec. v1.1).
 		uint8_t ID_seq_num_recent = ( ( route64_tlv->id_sequence_number - thrd_partition.ID_sequence_number ) % 256 );
 
-		// LOG_RAW("ID_seq_num_recent = %d\n\r", ID_seq_num_recent);
-
 		if ( ID_seq_num_recent <= 127 ) {
-
-			// LOG_RAW("thrd_process_route64: route64_tlv->ID_sequence_number is more recent.\n\r");
 
 			// Set ID sequence number.
 			thrd_partition.ID_sequence_number = route64_tlv->id_sequence_number;
 			// Empty the Router ID Set.
 			thrd_rdb_rid_empty();
 		}
-
-		// printf("router_id_mask = %02x\n", router_id_mask);
 
 		uint64_t bit_mask = 0x8000000000000000;
 		uint8_t data_cnt = 0;
@@ -100,7 +87,6 @@ thrd_process_route64(uint8_t rid_sender, tlv_route64_t *route64_tlv)
 				}
 				// Process Link Quality and Route Data.
 				// Incoming quality.
-				// uint8_t lq_rd_data = (route64_tlv->lq_rd[data_cnt] & ROUTE64_LQ_RD_IN_MASK) >> 6;
 				uint8_t lq_rd_data = route64_tlv->lq_rd[data_cnt];
 				// Check whether the link quality / route data byte is valid (see spec.).
 				if ( lq_rd_data != ROUTE64_LQ_RD_INVALID ) {
@@ -114,7 +100,7 @@ thrd_process_route64(uint8_t rid_sender, tlv_route64_t *route64_tlv)
 					}
 					// Route data.
 					lq_rd_data &= ROUTE64_LQ_RD_ROUTE_MASK;	// Route cost.
-					// TODO Check whether the destination differs from the current router id. (Otherwise, we would create a loop).
+					// Check whether the destination differs from my router id. (Otherwise, we would create a loop).
 					if ( id_cnt == thrd_iface.router_id ) {
 						// Prevent from adding route to myself.
 					} else {

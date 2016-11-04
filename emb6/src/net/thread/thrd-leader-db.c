@@ -142,8 +142,6 @@ thrd_ldb_ida_add(uint8_t router_id, uint8_t *owner, clock_time_t reuse_time)
 	/* Check whether the given router id already has an entry in the Router ID Set. */
 	if ( ida == NULL ) {
 		LOG_RAW("thrd_ldb_ida_add: router id %d unknown\n\r", router_id);
-		// LOG_RAW("%d\n", router_id);
-		// LOG_RAW("\n\r");
 
 		/* If there is no router id entry, create one. We first need to
 		 * check if we have room for this router id. If not, we remove the
@@ -174,11 +172,8 @@ thrd_ldb_ida_add(uint8_t router_id, uint8_t *owner, clock_time_t reuse_time)
 		/* Add new router id first - assuming that there is a reason to add this
 		 * and that there is a packet coming soon. */
 		list_push(idassign_list, ida);
-
 		LOG_RAW("thrd_ldb_ida_add: Added router id %d\n\r", router_id);
-
 		num_ida++;
-
 		LOG_RAW("thrd_ldb_ida_add: num_ida %d\n\r", num_ida);
 
 	} else {

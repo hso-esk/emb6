@@ -25,6 +25,9 @@
 #include "rest-engine.h"
 #include "thrd-network-data.h"
 
+#define     LOGGER_ENABLE                 LOGGER_THRD_NET
+#include    "logger.h"
+
 /*
  ********************************************************************************
  *                          LOCAL FUNCTION DECLARATIONS

@@ -198,12 +198,6 @@ coap_init()
 {
 	LOG_RAW("thrd_eid_rloc_coap_init: Starting EID-to-RLOC Mapping (CoAP).\n\r");
 	THRD_REALM_LOCAL_ALL_ROUTERS_ADDR(&rlar_ipaddr);
-	/* Receives all CoAP messages */
-	// coap_init_engine();
-
-	/* Initialize the REST engine. */
-	// rest_init_engine();
-
 	// Bind the resources to their Uri-Path.
 	rest_activate_resource(&thrd_res_a_aq, "a/aq");
 	rest_activate_resource(&thrd_res_a_an, "a/an");

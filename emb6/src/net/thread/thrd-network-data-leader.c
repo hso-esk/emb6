@@ -20,16 +20,14 @@
 #include "memb.h"
 #include "rip.h"
 #include "thread_conf.h"
-
 #include "er-coap.h"
 #include "er-coap-engine.h"
 #include "rest-engine.h"
-
 #include "thrd-network-data.h"
 #include "thrd-network-data-leader.h"
 
-#define DEBUG DEBUG_PRINT
-#include "uip-debug.h"
+#define     LOGGER_ENABLE                 LOGGER_THRD_NET
+#include    "logger.h"
 
 
 /*
@@ -66,12 +64,7 @@ extern resource_t thrd_res_n_sd;
 static void
 coap_init()
 {
-	PRINTF("Starting Thread Network Data (CoAP).\n\r");
-	/* Receives all CoAP messages */
-	// coap_init_engine();
-	/* Initialize the REST engine. */
-	// rest_init_engine();
-
+	LOG_RAW("Starting Thread Network Data (CoAP).\n\r");
 	// Bind the resources to their Uri-Path.
 	rest_activate_resource(&thrd_res_n_sd, "n/sd");
 }
