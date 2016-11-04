@@ -21,9 +21,9 @@ emb6 = {
 	'mle' : [
 		'mle/*',
 	],
-	'rip' : [
-		'net/rip/resources/*',
-		'net/rip/*',
+	'thread' : [
+		'net/thread/resources/*',
+		'net/thread/*',
 	],
 	'mdns' : [
 		'apl/dns/*',

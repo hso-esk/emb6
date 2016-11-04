@@ -14,7 +14,7 @@ thrd_coap = {
 		'phy',
 		'ipv6mc',
 		'mle',
-		'rip',
+		'thread',
 	],
 	'utils' : [
 		'*',

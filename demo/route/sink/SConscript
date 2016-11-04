@@ -11,7 +11,7 @@ routesink = {
 		'802154framer',
 		'ipv6mc',
 		'mle',
-		'rip',
+		'thread',
 		'coap',
 	],
 	'utils' : [

@@ -15,7 +15,7 @@ thread_root = {
 		'nullmac',
 		'802154framer',
 		'ipv6mc',
-	'rip',
+		'thread',
 	],
 	'utils' : [
 		'*',
