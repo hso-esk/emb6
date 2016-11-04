@@ -76,7 +76,7 @@ typedef enum {
 ===============================================================================*/
 
 #ifndef THRD_USE_ROUTING
-#define THRD_USE_ROUTING				TRUE
+#define THRD_USE_ROUTING				FALSE
 #endif /* THRD_USE_ROUTING */
 
 #if THRD_USE_ROUTING
