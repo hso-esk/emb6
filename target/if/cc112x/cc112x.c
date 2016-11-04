@@ -1636,7 +1636,7 @@ static void rf_tx_exit(struct s_rf_ctx *p_ctx) {
   /* no need to change RF settings as ACK is missing because the radio is already put to RX_IDLE */
   if (p_ctx->txErr != NETSTK_ERR_TX_NOACK) {
     /* configure RF interrupt */
-    RF_WR_REGS(&cc112x_cfg_iocfgOff[RF_IOCFG_RXFIFO_THR]);
+    RF_WR_REGS(&cc112x_cfg_iocfgOff[RF_IOCFG_TXFIFO_THR]);
 
 #if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
     /* use infinite packet length mode by default */
