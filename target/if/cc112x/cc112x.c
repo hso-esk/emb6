@@ -43,6 +43,7 @@
  * @file    cc112x.c
  * @date    12.11.2015
  * @author  PN
+ * @version 0.03.00
  * @brief   Implementation of TI transceiver CC112X
  */
 
@@ -54,17 +55,14 @@
  */
 #include "emb6.h"
 #include "board_conf.h"
-
 #include "cc112x.h"
 #include "cc112x_cfg.h"
 #include "cc112x_spi.h"
-
-#include "rt_tmr.h"
 #include "ctimer.h"
 #include "packetbuf.h"
 #include "evproc.h"
 #include "phy_framer_802154.h"
-#include "llframer.h"
+#include "framer_802154_ll.h"
 
 #define  LOGGER_ENABLE        LOGGER_RADIO
 #include "logger.h"
@@ -78,7 +76,6 @@
 #include "crc.h"
 #endif
 
-#define RF_CFG_DEBUG_EN                     FALSE
 
 /*
  ********************************************************************************
@@ -120,7 +117,7 @@
 */
 #define RF_MAX_FIFO_LEN                     (uint8_t)( 255U )
 #define RF_CFG_FIFO_SIZE                    (uint8_t)( 128U )
-#define RF_CFG_FIFO_THR                     (LLFRAME_MIN_NUM_RX_BYTES - 1)
+#define RF_CFG_FIFO_THR                     (FRAMER802154LL_MIN_NUM_RX_BYTES - 1)
 #define RF_CFG_NUM_RXBYTES                  (RF_CFG_FIFO_THR + 1)
 #define RF_CFG_NUM_TXBYTES                  (RF_CFG_FIFO_SIZE - RF_CFG_NUM_RXBYTES)
 #define RF_CFG_NUM_FREE_TXBYTES             (RF_CFG_FIFO_THR + 1)
@@ -129,16 +126,6 @@
 
 /*!< Maximum packet length */
 #define RF_MAX_PACKET_LEN                   (uint16_t)(PHY_PSDU_MAX + PHY_HEADER_LEN)
-
-/*!< Chip states */
-#define RF_CHIP_STATE_IDLE                  (uint8_t)( 0x00 )
-#define RF_CHIP_STATE_RX                    (uint8_t)( 0x10 )
-#define RF_CHIP_STATE_TX                    (uint8_t)( 0x20 )
-#define RF_CHIP_STATE_FSTXON                (uint8_t)( 0x30 )
-#define RF_CHIP_STATE_CALIBRATE             (uint8_t)( 0x40 )
-#define RF_CHIP_STATE_SETTLING              (uint8_t)( 0x50 )
-#define RF_CHIP_STATE_RX_FIFO_ERR           (uint8_t)( 0x60 )
-#define RF_CHIP_STATE_TX_FIFO_ERR           (uint8_t)( 0x70 )
 
 /*!< MARC status */
 #define RF_MARC_STATUS_NO_FAILURE           (uint8_t)( 0x00 )
@@ -161,40 +148,25 @@
 #define RF_RSSI_OFFSET                      ( 102 )
 #define RF_RSSI_RES                         ( 0.0625 )
 
+/*!< Calibration */
+#define VCDAC_START_OFFSET 2
+#define FS_VCO2_INDEX 0
+#define FS_VCO4_INDEX 1
+#define FS_CHP_INDEX 2
+
 #ifndef MIN
 #define MIN(a_, b_)           (((a_) > (b_)) ? (b_) : (a_))
 #endif
 
-
-#define RF_TRIGGER_EVENT()  \
-  do {  \
-    evproc_putEvent(E_EVPROC_HEAD, NETSTK_RF_EVENT, NULL);  \
-  } while(0)
-
-/*!< retrieve chip state from chip status value */
-#define RF_GET_CHIP_STATE(_chip_status) \
-  (uint8_t)((_chip_status) & 0x70)
-
 #define RF_READ_CHIP_STATE()  \
-  (cc112x_spiCmdStrobe(CC112X_SNOP) & 0x70)
+  (cc112x_spiCmdStrobe(CC112X_SNOP) & CC112X_STATE_MASK)
 
 /*!< write multiple registers */
 #define RF_WR_REGS(regs_) \
   do {  \
     uint8_t len_; \
     len_ = sizeof((regs_)) / sizeof(s_regSettings_t);   \
-    rf_configureRegs((regs_), len_);                \
-  } while(0)
-
-/*!< configure length of incoming packet
-* the PKT_LEN register is set to mod(length, 256).
-* See also CC112x User's guide 8.1.5
-*/
-#define RF_SET_PKT_LEN(len_)  \
-  do {  \
-    uint8_t wr_byte_; \
-    wr_byte_ = (len_) % 256U; \
-    cc112x_spiRegWrite(CC112X_PKT_LEN, &(wr_byte_), 1); \
+    rf_configureRegs((regs_), len_);                    \
   } while(0)
 
 /*!< configure packet length mode of radio */
@@ -204,6 +176,7 @@
     cc112x_spiRegWrite(CC112X_PKT_CFG0, &wr_byte, 1);  \
   } while(0)
 
+/*!< configure FIFO threshold */
 #define RF_SET_FIFO_THR(thr_) \
   do {  \
     uint8_t wr_byte = thr_;   \
@@ -215,14 +188,28 @@
     ((rf_ctx.state >= RF_STATE_RX_SYNC)   &&  \
      (rf_ctx.state <= RF_STATE_RX_TXACK_FINI))
 
+/*!< radio state mask */
+#define RF_STATE_MASK                   ( 0xF0u )
+
 /*!< Radio interrupt configuration macros */
 #define RF_INT_PKT_BEGIN                E_TARGET_EXT_INT_0  //GPIO0
 #define RF_INT_RXFIFO_THR               E_TARGET_EXT_INT_1  //GPIO2
+#define RF_INT_TXFIFO_THR               E_TARGET_EXT_INT_1  //GPIO2
+#define RF_INT_PQT_REACHED              E_TARGET_EXT_INT_1  //GPIO2
 #define RF_INT_PKT_END                  E_TARGET_EXT_INT_2  //GPIO3
+
 #define RF_INT_EDGE_PKT_BEGIN           E_TARGET_INT_EDGE_RISING
 #define RF_INT_EDGE_RXFIFO_THR          E_TARGET_INT_EDGE_RISING
+#define RF_INT_EDGE_TXFIFO_THR          E_TARGET_INT_EDGE_FALLING
+#define RF_INT_EDGE_PQT_REACHED         E_TARGET_INT_EDGE_RISING
 #define RF_INT_EDGE_PKT_END             E_TARGET_INT_EDGE_FALLING
 
+#define RF_IOCFG_PKT_BEGIN              0u
+#define RF_IOCFG_RXFIFO_THR             1u
+#define RF_IOCFG_PKT_END                2u
+
+#define RF_IOCFG_TXFIFO_THR             3u
+#define RF_IOCFG_PQT_REACHED            4u
 
 #define RF_INT_CONFIG()  \
   do {    \
@@ -278,6 +265,11 @@ typedef enum e_rf_state {
   RF_STATE_SLEEP          = 0x80,
 } e_rfState_t;
 
+typedef enum {
+  RF_TX_STATUS_NONE = 0x00,
+  RF_TX_STATUS_WFA  = 0x01,
+  RF_TX_STATUS_DONE = 0x02,
+} e_rfTxStatus_t;
 
 struct s_rf_ctx {
   s_ns_t *p_netstk;
@@ -287,7 +279,7 @@ struct s_rf_ctx {
   uint8_t cfgFreqChanNum;
   uint8_t cfgWOREnabled;
   uint8_t regVerify;
-  uint8_t isAckRequired;
+  uint8_t pktLenMode;
 
   uint16_t rxBytesCounter;
   uint16_t rxNumRemBytes;
@@ -297,8 +289,8 @@ struct s_rf_ctx {
   /* RX state attributes */
   uint8_t rxReqAck;
   uint8_t rxBuf[RF_MAX_PACKET_LEN];
-  uint8_t rxLastDataPtr;
-  uint8_t rxLastChksumPtr;
+  uint16_t rxLastDataPtr;
+  uint16_t rxLastChksumPtr;
 
   /* 2-byte appended status
   * - STATUS[0]:  7-0   RSSI
@@ -307,29 +299,17 @@ struct s_rf_ctx {
   */
   int8_t  rxRSSI;
   uint8_t rxLQI;
-  llframe_attr_t rxFrame;
+  framer802154ll_attr_t rxFrame;
 
   /* TX state attributes */
   uint8_t *txDataPtr;
   uint16_t txDataLen;
+  uint16_t txNumRemBytes;
   uint8_t txReqAck;
   uint8_t txStatus;
   e_nsErr_t txErr;
 
-#if (RF_CFG_DEBUG_EN == TRUE)
-  struct ctimer dbgTmr;
-  e_rfState_t dbgChipState;
-  uint8_t dbgEvtStatus;
-#endif
-
-#if (EMB6_TEST_CFG_CONT_RX_EN == TRUE)
-  uint16_t numRxPackets;
-#endif
 };
-
-#define RF_TX_STATUS_NONE         0x00
-#define RF_TX_STATUS_WFA          0x01
-#define RF_TX_STATUS_DONE         0x02
 
 
 /*
@@ -338,7 +318,6 @@ struct s_rf_ctx {
 ********************************************************************************
 */
 static struct s_rf_ctx rf_ctx;
-
 
 
 /*
@@ -355,18 +334,21 @@ static void rf_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
 
 static void rf_pktRxTxBeginISR(void *p_arg);
 static void rf_rxFifoThresholdISR(void *p_arg);
+static void rf_txFifoThresholdISR(void *p_arg);
 static void rf_pktRxTxEndISR(void *p_arg);
 
 static void rf_readRxStatus(struct s_rf_ctx *p_ctx);
-static void rf_readRxFifo(struct s_rf_ctx *p_ctx, uint8_t numBytes);
+static uint8_t rf_readRxFifo(struct s_rf_ctx *p_ctx, uint8_t numBytes);
+static void rf_writeTxFifo(struct s_rf_ctx *p_ctx, uint8_t totNumBytes, e_nsErr_t *p_err);
+static void rf_intConfig(uint8_t iocfg, en_targetExtInt_t e_extInt, en_targetIntEdge_t e_edge, pfn_intCallb_t cbfnct);
 
 #if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
 static void rf_setPktLen(uint8_t mode, uint16_t len);
 #endif
 
-static void rf_gotoIdle(struct s_rf_ctx *p_ctx);
-static void rf_gotoRx(struct s_rf_ctx *p_ctx);
-static void rf_gotoWor(struct s_rf_ctx *p_ctx);
+static uint8_t rf_gotoIdle(struct s_rf_ctx *p_ctx);
+static uint8_t rf_gotoRx(struct s_rf_ctx *p_ctx);
+static uint8_t rf_gotoWor(struct s_rf_ctx *p_ctx);
 
 static void rf_listen(struct s_rf_ctx *p_ctx);
 
@@ -382,14 +364,20 @@ static void rf_rx_chksum(struct s_rf_ctx *p_ctx);
 static void rf_rx_fini(struct s_rf_ctx *p_ctx);
 static void rf_rx_term(struct s_rf_ctx *p_ctx);
 static void rf_rx_exit(struct s_rf_ctx *p_ctx);
+#if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
+static void rf_rx_txAckSync(struct s_rf_ctx *p_ctx);
+static void rf_rx_txAckFini(struct s_rf_ctx *p_ctx);
+#endif
 
 static void rf_tx_entry(struct s_rf_ctx *p_ctx);
 static void rf_tx_sync(struct s_rf_ctx *p_ctx);
 static void rf_tx_fini(struct s_rf_ctx *p_ctx);
-static void rf_tx_rxAckSync(struct s_rf_ctx *p_ctx);
-static void rf_tx_rxAckFini(struct s_rf_ctx *p_ctx);
 static void rf_tx_term(struct s_rf_ctx *p_ctx);
 static void rf_tx_exit(struct s_rf_ctx *p_ctx);
+#if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
+static void rf_tx_rxAckSync(struct s_rf_ctx *p_ctx);
+static void rf_tx_rxAckFini(struct s_rf_ctx *p_ctx);
+#endif
 
 static void rf_eventHandler(c_event_t c_event, p_data_t p_data);
 static void rf_exceptionHandler(struct s_rf_ctx *p_ctx, uint8_t marcStatus, e_rfState_t chipState);
@@ -397,10 +385,10 @@ static void rf_exceptionHandler(struct s_rf_ctx *p_ctx, uint8_t marcStatus, e_rf
 static void rf_configureRegs(const s_regSettings_t *p_regs, uint8_t len);
 static void rf_manualCalibration(void);
 static void rf_calibrateRCOsc(void);
-static void rf_cca(e_nsErr_t *p_err);
+static void rf_cca(struct s_rf_ctx *p_ctx, e_nsErr_t *p_err);
 
-#if (CC112X_CFG_RETX_EN == TRUE)
-static void cc112x_retx(e_nsErr_t *p_err);
+#if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
+static uint8_t rf_filterAddr(struct s_rf_ctx *p_ctx);
 #endif
 
 static void rf_chkReset(struct s_rf_ctx *p_ctx);
@@ -413,10 +401,6 @@ static void rf_txPowerGet(int8_t *p_power, e_nsErr_t *p_err);
 static void rf_chanNumSet(uint8_t chan_num, e_nsErr_t *p_err);
 static void rf_opModeSet(e_nsRfOpMode mode, e_nsErr_t *p_err);
 static void rf_readRSSI(int8_t *p_val, e_nsErr_t *p_err);
-
-#if (RF_CFG_DEBUG_EN == TRUE)
-static void rf_tmrDbgCb(void *p_arg);
-#endif
 
 
 /*
@@ -470,6 +454,7 @@ static void rf_init(void *p_netstk, e_nsErr_t *p_err)
   RF_WR_REGS(cc112x_cfg_ieee802154g_default);
 #endif
 
+  /* set FIFO threshold */
   RF_SET_FIFO_THR(RF_CFG_FIFO_THR);
 
   /* calibrate radio according to cc112x errata */
@@ -478,26 +463,12 @@ static void rf_init(void *p_netstk, e_nsErr_t *p_err)
   /* calibrate RC oscillator */
   rf_calibrateRCOsc();
 
-  /* configurations of radio interrupts */
-  RF_INT_CONFIG();
-
-  /* is IEEE Std. 802.15.4g supported? */
-#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
-  /* then use infinite packet length mode by default */
-  rf_setPktLen(CC112X_PKT_LEN_MODE_INFINITE, RF_MAX_FIFO_LEN);
-#endif
-
   /* initialize local variables */
   evproc_regCallback(NETSTK_RF_EVENT, rf_eventHandler);
 
   /* configure operating mode and channel number */
   p_ctx->cfgFreqChanNum = 0;
   p_ctx->cfgOpMode = NETSTK_RF_OP_MODE_CSM;
-
-  /* debug watchdog timer */
-#if (RF_CFG_DEBUG_EN == TRUE)
-  ctimer_set(&p_ctx->dbgTmr, 10000, rf_tmrDbgCb, p_ctx);
-#endif
 
   /* transition to SLEEP state */
   rf_sleep_entry(p_ctx);
@@ -506,7 +477,7 @@ static void rf_init(void *p_netstk, e_nsErr_t *p_err)
 
 /**
  * @brief turn radio driver on
- * @param p_err point to variable storing return error code
+ * @param p_err   point to variable storing return error code
  */
 static void rf_on(e_nsErr_t *p_err)
 {
@@ -519,7 +490,7 @@ static void rf_on(e_nsErr_t *p_err)
   struct s_rf_ctx *p_ctx = &rf_ctx;
 
   /* is the driver sleeping? */
-  if ((p_ctx->state & 0xF0) == RF_STATE_SLEEP) {
+  if ((p_ctx->state & RF_STATE_MASK) == RF_STATE_SLEEP) {
     /* then exit SLEEP state */
     rf_sleep_exit(p_ctx);
 
@@ -531,9 +502,10 @@ static void rf_on(e_nsErr_t *p_err)
   *p_err = NETSTK_ERR_NONE;
 }
 
+
 /**
  * @brief turn radio driver off
- * @param p_err point to variable storing return error code
+ * @param p_err   point to variable storing return error code
  */
 static void rf_off(e_nsErr_t *p_err) {
 #if NETSTK_CFG_ARG_CHK_EN
@@ -544,24 +516,31 @@ static void rf_off(e_nsErr_t *p_err) {
 
   struct s_rf_ctx *p_ctx = &rf_ctx;
 
-  /* is the driver on? */
-  if ((p_ctx->state & 0xF0) != RF_STATE_SLEEP) {
-    /* then exits ON state */
-    rf_on_exit(p_ctx);
-
-    /* then turn it off */
-    rf_sleep_entry(p_ctx);
-  }
-
-  /* set return error code */
+  /* set default return error code */
   *p_err = NETSTK_ERR_NONE;
+
+  /* is the driver on? */
+  if ((p_ctx->state & RF_STATE_MASK) != RF_STATE_SLEEP) {
+    if (RF_IS_RX_BUSY() == TRUE) {
+      /* a frame is being received */
+      *p_err = NETSTK_ERR_BUSY;
+    }
+    else {
+      /* then exits ON state */
+      rf_on_exit(p_ctx);
+
+      /* then turn it off */
+      rf_sleep_entry(p_ctx);
+    }
+  }
 }
+
 
 /**
  * @brief handle transmission request from upper layer
- * @param p_data  point to buffer holding frame to send
- * @param len     length of frame to send
- * @param p_err   point to variable storing return error code
+ * @param p_data    point to buffer holding frame to send
+ * @param len       length of frame to send
+ * @param p_err     point to variable storing return error code
  */
 static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
 #if NETSTK_CFG_ARG_CHK_EN
@@ -574,160 +553,129 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
   }
 #endif
 
-  uint8_t numTxBytes;
   uint32_t tickstart;
   uint32_t txTimeout;
-  uint8_t marcStatus0, txOnCCA;
+  uint8_t enterRx;
+  uint8_t exitTx;
   struct s_rf_ctx *p_ctx = &rf_ctx;
 
-  if (p_ctx->state != RF_STATE_RX_IDLE) {
-    if ((p_ctx->state & 0xF0) == RF_STATE_RX_IDLE) {
-      /* radio is in middle of packet reception process */
-      *p_err = NETSTK_ERR_CHANNEL_ACESS_FAILURE;
-    } else {
-      /* radio is performing other tasks */
-      TRACE_LOG_ERR("<RFTX> refused ds=%02x", p_ctx->state);
-      *p_err = NETSTK_ERR_BUSY;
-    }
+  if (RF_IS_RX_BUSY() == TRUE) {
+    /* radio is in middle of packet reception process */
+    *p_err = NETSTK_ERR_CHANNEL_ACESS_FAILURE;
     return;
   }
 
   /* otherwise start transmission process */
 
-  /* TODO put radio back to RX state if eWOR is enabled */
+  /* put radio back to RX state if eWOR is enabled */
   if (p_ctx->cfgWOREnabled == TRUE) {
-    rf_gotoRx(p_ctx);
-  }
-
-  /* write frame to send into TX FIFO */
-  uint16_t txNumRxBytes;
-  uint8_t *txDataPtr;
-
-  txNumRxBytes = len;
-  txDataPtr = p_data;
-
-  while (txNumRxBytes > 0) {
-    if (txNumRxBytes > RF_CFG_TX_FIFO_THR) {
-      cc112x_spiTxFifoWrite(txDataPtr, RF_CFG_TX_FIFO_THR);
-      txNumRxBytes -= RF_CFG_TX_FIFO_THR;
-      txDataPtr += RF_CFG_TX_FIFO_THR;
-    }
-    else {
-      cc112x_spiTxFifoWrite(txDataPtr, txNumRxBytes);
-      txNumRxBytes = 0;
-      p_data += txNumRxBytes;
+    if (rf_gotoRx(p_ctx) == FALSE) {
+      /* radio is in middle of packet reception process */
+      *p_err = NETSTK_ERR_CHANNEL_ACESS_FAILURE;
+      return;
     }
   }
 
-  /* verifying number of written bytes */
-  cc112x_spiRegRead(CC112X_NUM_TXBYTES, &numTxBytes, 1);
-  if (numTxBytes != len) {
-    TRACE_LOG_ERR("<send> failed to write to TXFIFO %d/%d", numTxBytes, len);
-    /* then put radio to idle and flush TXFIFO */
-    cc112x_spiCmdStrobe(CC112X_SIDLE);
-    cc112x_spiCmdStrobe(CC112X_SFTX);
-    /* exit TX state */
-    rf_tx_exit(p_ctx);
-    /* enter RX state */
-    rf_rx_entry(p_ctx);
-    *p_err = NETSTK_ERR_FATAL;
-    return;
-  }
-
-  /* is IEEE Std. 802.15.4g supported? */
-#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
-  /* then store length of packet to send */
-  p_ctx->txDataLen = len;
-#endif /* NETSTK_CFG_IEEE_802154G_EN */
-
-  p_ctx->txStatus = RF_TX_STATUS_NONE;
-
-  /* issue the radio transmission command */
+  /* simply issue the radio transmission command right away */
   cc112x_spiCmdStrobe(CC112X_STX);
 
-  /* wait for complete transmission of the frame until timeout */
-  txOnCCA = FALSE;
-  tickstart = rt_tmr_getCurrenTick();
-  do {
-    if ((p_ctx->txStatus == RF_TX_STATUS_DONE) ||
-        (p_ctx->txStatus == RF_TX_STATUS_WFA)) {
-      /* frame was transmitted successfully */
-      break;
-    }
+  /* set TX process attributes */
+  p_ctx->txDataPtr = p_data;
+  p_ctx->txDataLen = len;
+  p_ctx->txNumRemBytes = len;
+  p_ctx->txStatus = RF_TX_STATUS_NONE;
+  enterRx = TRUE;
+  exitTx = TRUE;
+  txTimeout = packetbuf_attr(PACKETBUF_ATTR_PHY_TXTIMEOUT);
 
-    /* poll for TXONCCA status for first 2ms */
-    if ((txTimeout < 2) && (txOnCCA == FALSE)) {
-      cc112x_spiRegRead(CC112X_MARC_STATUS0, &marcStatus0, 1);
-      txOnCCA = (marcStatus0 & 0x04) >> 2;
-      if (txOnCCA == TRUE) {
-        /* then transmission was denied due to channel access failure */
+  /* give radio enough time to perform TXONCCA */
+  bsp_delay_us(100);
+  if (RF_READ_CHIP_STATE() != RF_STATE_TX) {
+    /* TXONCCA failed */
+    p_ctx->txErr = NETSTK_ERR_TX_COLLISION;
+    rf_tx_term(p_ctx);
+  }
+  else {
+    /* write as many bytes to TXFIFO as possible */
+    rf_writeTxFifo(p_ctx, RF_CFG_FIFO_SIZE, p_err);
+
+    /* wait for complete transmission of the frame until timeout */
+    tickstart = bsp_getTick();
+    do {
+      /* was the frame transmitted successfully? */
+      if ((p_ctx->txStatus == RF_TX_STATUS_DONE) ||
+          (p_ctx->txStatus == RF_TX_STATUS_WFA)) {
+        break;
+      }
+
+      /* was a frame being received? */
+      if (RF_IS_RX_BUSY() == TRUE) {
         p_ctx->txErr = NETSTK_ERR_TX_COLLISION;
+        TRACE_LOG_ERR("<TX> TXONCCA failed, this is not supported to happen");
         rf_tx_term(p_ctx);
         break;
       }
-    }
 
-    txTimeout = rt_tmr_getCurrenTick() - tickstart;
-  } while (txTimeout < 30); // 30ms
+      /* radio should enter TX state after preamble is sent */
+      if ((bsp_getTick() - tickstart) > 6) {
+        if ((p_ctx->state & RF_STATE_MASK) != RF_STATE_TX) {
+          /* check if transceiver was reset */
+          rf_chkReset(p_ctx);
+
+          p_ctx->txErr = NETSTK_ERR_TX_COLLISION;
+          rf_tx_term(p_ctx);
+          break;
+        }
+      }
+    } while ((bsp_getTick() - tickstart) < txTimeout);
+  }
 
   if (p_ctx->txStatus == RF_TX_STATUS_DONE) {
-    *p_err = p_ctx->txErr;
-
-    /* exit TX state */
-    rf_tx_exit(p_ctx);
-
     if (p_ctx->txErr == NETSTK_ERR_FATAL) {
-      /* exception was thrown and radio was already put to RX_IDLE state */
-    }
-    else if (p_ctx->txErr == NETSTK_ERR_TX_COLLISION) {
-      /* channel was detected busy and radio was already put to RX_SYNC state */
-    }
-    else {
-      /* enter RX state */
-      rf_rx_entry(p_ctx);
+      /* exception was thrown and radio was already put to RX_IDLE state or
+       * channel was detected busy and radio was already put to RX_SYNC state */
+      enterRx = FALSE;
     }
   }
 #if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
   else if (p_ctx->txStatus == RF_TX_STATUS_WFA) {
+    /* reset TX status to default before waiting for ACK */
+    p_ctx->txErr = NETSTK_ERR_TX_NOACK;
+
+    /* wait for ACK for at most ackWaitDuration */
     packetbuf_attr_t waitForAckTimeout;
     waitForAckTimeout = packetbuf_attr(PACKETBUF_ATTR_MAC_ACK_WAIT_DURATION);
-
-    /* FIXME ackWaitDuration in eWOR mode seems to be ~300us longer than what's
-     * specified by the IEEE Std. 802.15.4-2011 */
     if (p_ctx->cfgWOREnabled == TRUE) {
-      waitForAckTimeout += 300;
+      waitForAckTimeout += 300; // compromise ackWaitDuration
     }
-
-    /* wait for at most ackWaitDuration */
     bsp_delay_us(waitForAckTimeout);
-
-    *p_err = NETSTK_ERR_TX_NOACK;
-    if (p_ctx->txStatus == RF_TX_STATUS_DONE) {
-      *p_err = p_ctx->txErr;
-    }
-
-    /* exit TX state */
-    rf_tx_exit(p_ctx);
-    /* enter RX state */
-    rf_rx_entry(p_ctx);
   }
 #endif /* NETSTK_CFG_RF_CC112X_AUTOACK_EN */
   else {
-    *p_err = NETSTK_ERR_TX_TIMEOUT;
+    /* packet failed to be transmit within timeout */
+    p_ctx->txErr = NETSTK_ERR_TX_TIMEOUT;
+    TRACE_LOG_ERR("<TX> timeout");
 
-    /* check if transceiver was reset? */
+    /* check if transceiver was reset */
     rf_chkReset(p_ctx);
+  }
 
-    /* was TXFIFO error? */
-    if (RF_READ_CHIP_STATE() == RF_STATE_TX_FIFO_ERR) {
-      /* then put radio to idle and flush TXFIFO */
-      cc112x_spiCmdStrobe(CC112X_SIDLE);
-      cc112x_spiCmdStrobe(CC112X_SFTX);
-    }
+  /* set return error code */
+  *p_err = p_ctx->txErr;
 
-    /* exit TX state */
+  /* is chip already set to idle listening */
+  if (p_ctx->txErr == NETSTK_ERR_TX_NOACK) {
+    p_ctx->state = RF_STATE_RX_IDLE;
+    enterRx = FALSE;
+  }
+
+  /* exit TX state */
+  if (exitTx == TRUE) {
     rf_tx_exit(p_ctx);
-    /* enter RX state */
+  }
+
+  /* need to enter RX state? */
+  if (enterRx == TRUE) {
     rf_rx_entry(p_ctx);
   }
 }
@@ -735,9 +683,9 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
 
 /**
  * @brief handle incoming frame reception
- * @param p_buf point to buffer holding the received frame
- * @param len   length of the frame
- * @param p_err point to variable storing return error code
+ * @param p_buf   point to buffer holding the received frame
+ * @param len     length of the frame
+ * @param p_err   point to variable storing return error code
  */
 static void rf_recv(uint8_t *p_buf, uint16_t len, e_nsErr_t *p_err) {
 #if NETSTK_CFG_ARG_CHK_EN
@@ -745,14 +693,31 @@ static void rf_recv(uint8_t *p_buf, uint16_t len, e_nsErr_t *p_err) {
     return;
   }
 #endif
-}
 
+  struct s_rf_ctx *p_ctx = &rf_ctx;
+
+  /* set default error code */
+  *p_err = NETSTK_ERR_NONE;
+
+  /* signal upper layer */
+  p_ctx->p_netstk->phy->recv(p_ctx->rxBuf, p_ctx->rxBytesCounter, p_err);
+
+  /* is the frame discarded by upper layers? */
+  if (*p_err != NETSTK_ERR_NONE) {
+    TRACE_LOG_ERR("<RXFINI> discarded e=-%d", *p_err);
+    trace_printHex("", p_ctx->rxBuf, p_ctx->rxBytesCounter);
+  }
+
+  /* exit and re-enter RX state */
+  rf_rx_exit(p_ctx);
+  rf_rx_entry(p_ctx);
+}
 
 /**
  * @brief handle miscellaneous commands
- * @param cmd   command identifier
- * @param p_val opaque pointer referenced to variable holding/storing attribute value
- * @param p_err point to variable storing return error code
+ * @param cmd     command identifier
+ * @param p_val   opaque pointer referenced to variable holding/storing attribute value
+ * @param p_err   point to variable storing return error code
  */
 static void rf_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err) {
 #if NETSTK_CFG_ARG_CHK_EN
@@ -776,18 +741,7 @@ static void rf_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err) {
       break;
 
     case NETSTK_CMD_RF_CCA_GET:
-      rf_cca(p_err);
-      break;
-
-    case NETSTK_CMD_RF_RETX:
-#if (CC112X_CFG_RETX_EN == TRUE)
-      /* retransmit the last frame
-      * - write TxFirst to the previous value
-      */
-      cc112x_retx(p_err);
-#else
-      *p_err = NETSTK_ERR_CMD_UNSUPPORTED;
-#endif
+      rf_cca(p_ctx, p_err);
       break;
 
     case NETSTK_CMD_RF_IS_RX_BUSY:
@@ -809,6 +763,15 @@ static void rf_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err) {
 
     case NETSTK_CMD_RF_WOR_EN:
       if (p_val) {
+        /* backup current state */
+        e_rfState_t prevState = p_ctx->state;
+        if (prevState == RF_STATE_SLEEP) {
+          rf_sleep_exit(p_ctx);
+        }
+        else {
+          rf_on_exit(p_ctx);
+        }
+
         rf_ctx.cfgWOREnabled = *((uint8_t *) p_val);
 
         /* read value of registers to modify */
@@ -832,6 +795,14 @@ static void rf_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err) {
           /* set preamble length to 4 bytes */
           preambleCfg1 = 0x19;
           cc112x_spiRegWrite(CC112X_PREAMBLE_CFG1, &preambleCfg1, 1);
+        }
+
+        /* restore previous state */
+        if (prevState == RF_STATE_SLEEP) {
+          rf_sleep_entry(p_ctx);
+        }
+        else {
+          rf_on_entry(p_ctx);
         }
       }
       else {
@@ -872,7 +843,7 @@ static void rf_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err) {
 
 /**
  * @brief interrupt subroutine to handle beginning of packet reception/transmission
- * @param p_arg point to variable holding callback argument
+ * @param p_arg   point to variable holding callback argument
  */
 static void rf_pktRxTxBeginISR(void *p_arg) {
   (void) &p_arg;
@@ -882,7 +853,6 @@ static void rf_pktRxTxBeginISR(void *p_arg) {
   struct s_rf_ctx *p_ctx = &rf_ctx;
 
   /* entry */
-  bsp_extIntClear(RF_INT_PKT_BEGIN);
   cc112x_spiRegRead(CC112X_MARC_STATUS1, &marc_status, 1);
   chip_state = RF_READ_CHIP_STATE();
   TRACE_LOG_MAIN("<B>: ds=%02x, ms=%02x, cs=%02x", p_ctx->state, marc_status, chip_state);
@@ -932,10 +902,6 @@ static void rf_pktRxTxBeginISR(void *p_arg) {
               rf_rx_sync(p_ctx);
             }
           } else if (marc_status == RF_MARC_STATUS_TX_ON_CCA_FAILED) {
-            /* channel was busy while attempting to transmit */
-            p_ctx->txErr = NETSTK_ERR_TX_COLLISION;
-            rf_tx_term(p_ctx);
-
             /* the radio just finished receiving SYNC words */
             rf_rx_sync(p_ctx);
           } else {
@@ -947,13 +913,7 @@ static void rf_pktRxTxBeginISR(void *p_arg) {
         case RF_STATE_RX_FINI:
           if ((marc_status == RF_MARC_STATUS_NO_FAILURE) && (p_ctx->rxReqAck == TRUE)) {
             /* SYNC words of ACK frame were transmitted */
-            p_ctx->state = RF_STATE_RX_TXACK_SYNC;
-
-            /* is IEEE Std. 802.15.4g supported? */
-#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
-            /* then switch to fixed packet length mode */
-            rf_setPktLen(CC112X_PKT_LEN_MODE_FIXED, p_ctx->txDataLen);
-#endif /* NETSTK_CFG_IEEE_802154G_EN */
+            rf_rx_txAckSync(p_ctx);
           } else {
             TRACE_LOG_ERR("<B> exception ds=%02x, ms=%02x, cs=%02x", p_ctx->state, marc_status, chip_state);
             rf_exceptionHandler(p_ctx, marc_status, chip_state);
@@ -983,156 +943,159 @@ static void rf_pktRxTxBeginISR(void *p_arg) {
   TRACE_LOG_MAIN("</B>: ds=%02x, ms=%02x, cs=%02x", p_ctx->state, marc_status, chip_state);
 }
 
+
 /**
  * @brief interrupt subroutine to handle RXFIFO threshold
- * @param p_arg point to variable holding callback argument
+ * @param p_arg   point to variable holding callback argument
  */
 static void rf_rxFifoThresholdISR(void *p_arg) {
+
   (void) &p_arg;
 
-  uint8_t numRxBytes;
-  uint8_t numChksumBytes;
+  uint8_t isRxOk = TRUE;
+  uint8_t numRxBytes = 0;
+  uint8_t numChksumBytes = 0;
   struct s_rf_ctx *p_ctx = &rf_ctx;
 
   /* entry */
-  bsp_extIntClear(RF_INT_RXFIFO_THR);
   if ((p_ctx->state != RF_STATE_RX_SYNC) &&
       (p_ctx->state != RF_STATE_TX_RXACK_SYNC)) {
     return;
   }
 
+  /* read number of bytes in RXFIFO */
   cc112x_spiRegRead(CC112X_NUM_RXBYTES, &numRxBytes, 1);
+  if (numRxBytes < RF_CFG_FIFO_THR) {
+    /* number of received bytes is not sufficient */
+    TRACE_LOG_MAIN("<RXFIFO_THR> insufficient %d %d %02x", numRxBytes, RF_CFG_FIFO_THR, p_ctx->state);
+    return;
+  }
 
-  /* do */
-  if ((numRxBytes > RF_CFG_FIFO_THR) &&
-      ((p_ctx->rxNumRemBytes == 0) || (p_ctx->rxNumRemBytes > (RF_CFG_FIFO_THR + 1))))  {
-    /* read bytes from RX FIFO */
-    rf_readRxFifo(p_ctx, numRxBytes);
+  if ((p_ctx->rxNumRemBytes == 0) ||
+      (p_ctx->rxNumRemBytes > (RF_CFG_FIFO_THR + 1))) {
 
-    if (p_ctx->rxLastDataPtr == LLFRAME_MIN_NUM_RX_BYTES) {
-      /* parse */
-      p_ctx->rxNumRemBytes = llframe_parse(&p_ctx->rxFrame, p_ctx->rxBuf, p_ctx->rxLastDataPtr);
-      if (p_ctx->rxNumRemBytes == 0) {
-        /* invalid frame */
-        TRACE_LOG_MAIN("dropped frame due to bad format");
-        /* then terminate RX process */
-        rf_rx_term(p_ctx);
-        return;
-      }
-      p_ctx->rxBytesCounter = p_ctx->rxFrame.tot_len;
-
-#if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
-      if ((p_ctx->rxBuf[PHY_HEADER_LEN] == 0x02) &&
-          (p_ctx->txReqAck == FALSE)) {
-        /* receive unwanted ACK then terminate reception process */
-        TRACE_LOG_MAIN("<RXACK> dropped unwanted ACK seq=%02x", p_ctx->rxBuf[PHY_HEADER_LEN + 2]);
-        rf_rx_term(p_ctx);
-        return;
-      }
-#endif
-
-      /* is IEEE Std. 802.15.4g supported? */
-#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
-      /* then switch to fixed packet length mode */
-      rf_setPktLen(CC112X_PKT_LEN_MODE_FIXED, p_ctx->rxBytesCounter);
-#endif
-
-#if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
-      /* does incoming frame require ACK? */
-      p_ctx->rxReqAck = p_ctx->rxFrame.is_ack_required;
-      if (p_ctx->rxReqAck == TRUE) {
-        /* write the ACK to send into TX FIFO */
-        uint8_t ack[10] = {0};
-        uint8_t ack_len;
-        ack_len = llframe_createAck(&p_ctx->rxFrame, ack, sizeof(ack));
-        cc112x_spiTxFifoWrite(ack, ack_len);
-
-        /* FIXME cannot write ACK to TXFIFO */
-        uint8_t numTxBytes;
-        cc112x_spiRegRead(CC112X_NUM_TXBYTES, &numTxBytes, 1);
-        if (numTxBytes != ack_len) {
-          TRACE_LOG_ERR("<ACK> TXFIFOWR_FAILED, seq=%02x, cs=%02x", ack[PHY_HEADER_LEN + 2], RF_READ_CHIP_STATE());
-          rf_rx_term(p_ctx);
-          return;
-        }
-
-        /* is IEEE Std. 802.15.4g supported? */
-#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
-        /* then store length of ACK to send for later setting packet length modes */
-        p_ctx->txDataLen = ack_len;
-#endif /* NETSTK_CFG_IEEE_802154G_EN */
-      }
-#endif /* NETSTK_CFG_RF_SW_AUTOACK_EN */
-
-      /* initialize checksum */
-      p_ctx->rxChksum = llframe_crcInit(&p_ctx->rxFrame);
-      p_ctx->rxLastChksumPtr = p_ctx->rxFrame.crc_offset;
-      numChksumBytes = p_ctx->rxLastDataPtr - p_ctx->rxLastChksumPtr;
-
-      /* update checksum */
-      p_ctx->rxChksum = llframe_crcUpdate(&p_ctx->rxFrame, &p_ctx->rxBuf[p_ctx->rxLastChksumPtr], numChksumBytes, p_ctx->rxChksum);
-      p_ctx->rxLastChksumPtr += numChksumBytes;
+    /* read bytes from RXFIFO */
+    if (rf_readRxFifo(p_ctx, numRxBytes) == 0) {
+      isRxOk = FALSE;
     }
     else {
-      if (p_ctx->rxNumRemBytes >= numRxBytes) {
-        p_ctx->rxNumRemBytes -= numRxBytes;
+      isRxOk = TRUE;
 
-#if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
-        /* compute length of checksum data */
+      if (p_ctx->rxLastDataPtr > FRAMER802154LL_MIN_NUM_RX_BYTES) {
+        /* compute number of checksum bytes */
+        p_ctx->rxNumRemBytes -= numRxBytes;
         if (p_ctx->rxNumRemBytes < p_ctx->rxFrame.crc_len) {
           numChksumBytes = numRxBytes - (p_ctx->rxFrame.crc_len - p_ctx->rxNumRemBytes);
-        } else {
+        }
+        else {
           numChksumBytes = numRxBytes;
         }
 
+  #if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
         /* is address not yet checked and number of received bytes sufficient for
         * address filtering? */
         if ((p_ctx->rxIsAddrFiltered == FALSE) &&
-            (p_ctx->rxLastDataPtr >= (LLFRAME_MIN_NUM_RX_BYTES + p_ctx->rxFrame.min_addr_len))) {
-          /* then perform address filtering */
-          p_ctx->rxIsAddrFiltered = llframe_addrFilter(&p_ctx->rxFrame, p_ctx->rxBuf, p_ctx->rxLastDataPtr);
-
-          /* is address invalid? */
-          if (p_ctx->rxIsAddrFiltered == FALSE) {
-            TRACE_LOG_MAIN("dropped frame due to invalid address");
-
-            /* then terminate RX process */
-            rf_rx_term(p_ctx);
-            return;
-          }
+            (p_ctx->rxLastDataPtr >= (FRAMER802154LL_MIN_NUM_RX_BYTES + p_ctx->rxFrame.min_addr_len))) {
+          isRxOk = rf_filterAddr(p_ctx);
         }
-
-        /* update checksum */
-        p_ctx->rxChksum = llframe_crcUpdate(&p_ctx->rxFrame, &p_ctx->rxBuf[p_ctx->rxLastChksumPtr], numChksumBytes, p_ctx->rxChksum);
-        p_ctx->rxLastChksumPtr += numChksumBytes;
-#endif /* NETSTK_CFG_RF_SW_AUTOACK_EN */
+  #endif /* NETSTK_CFG_RF_SW_AUTOACK_EN */
       }
       else {
-        /* ignore unexpected ISRs */
-        TRACE_LOG_MAIN("unexpected ISR rxNumRemBytes=%d, ds=%02x", p_ctx->rxNumRemBytes, p_ctx->state);
+        /* first chunk of bytes is sufficient to obtain incoming frame information */
+        p_ctx->rxNumRemBytes = framer802154ll_parse(&p_ctx->rxFrame, p_ctx->rxBuf, p_ctx->rxLastDataPtr);
+        if (p_ctx->rxNumRemBytes == 0) {
+          isRxOk = FALSE;
+        }
+        else {
+          /* set total number of received bytes */
+          p_ctx->rxBytesCounter = p_ctx->rxFrame.tot_len;
+
+  #if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
+          /* switch to fixed packet length mode if total of remaining bytes is less than RF_MAX_FIFO_LEN */
+          if ((p_ctx->pktLenMode == CC112X_PKT_LEN_MODE_INFINITE) &&
+              (p_ctx->rxBytesCounter < (RF_MAX_FIFO_LEN + 1))) {
+            rf_setPktLen(CC112X_PKT_LEN_MODE_FIXED, p_ctx->rxBytesCounter);
+          }
+  #endif /* NETSTK_CFG_IEEE_802154G_EN */
+
+          /* initialize checksum */
+          p_ctx->rxChksum = framer802154ll_crcInit(&p_ctx->rxFrame);
+          p_ctx->rxLastChksumPtr = p_ctx->rxFrame.crc_offset;
+
+          /* compute number of checksum bytes */
+          numChksumBytes = p_ctx->rxLastDataPtr - p_ctx->rxLastChksumPtr;
+
+  #if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
+          /* filter unwanted ACKs */
+          if ((p_ctx->rxBuf[PHY_HEADER_LEN ] == 0x02) && (p_ctx->txReqAck == FALSE)) {
+            isRxOk = FALSE;
+          }
+  #endif /* NETSTK_CFG_RF_SW_AUTOACK_EN */
+        }
       }
     }
   }
 
-  /* exit */
+  /* is RX process OK so far? */
+  if (isRxOk == FALSE) {
+    rf_rx_term(p_ctx);
+  }
+  else {
+    /* otherwise update checksum if there is no error during RX process */
+    p_ctx->rxChksum = framer802154ll_crcUpdate(&p_ctx->rxFrame, &p_ctx->rxBuf[p_ctx->rxLastChksumPtr], numChksumBytes, p_ctx->rxChksum);
+    p_ctx->rxLastChksumPtr += numChksumBytes;
 
+#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
+    /* switch to fixed packet length mode if number of remaining bytes is less than FIFO_SIZE */
+    if ((p_ctx->pktLenMode == CC112X_PKT_LEN_MODE_INFINITE) &&
+        (p_ctx->rxNumRemBytes < (RF_MAX_FIFO_LEN + 1))) {
+      rf_setPktLen(CC112X_PKT_LEN_MODE_FIXED, p_ctx->rxBytesCounter);
+    }
+
+    /* disable RXFIFO_THR interrupt once number of remaining bytes is less than FIFO_THR */
+    if (p_ctx->rxNumRemBytes <= RF_CFG_FIFO_THR) {
+      bsp_extIntDisable(RF_INT_RXFIFO_THR);
+    }
+#endif /* NETSTK_CFG_IEEE_802154G_EN */
+  }
+}
+
+
+/**
+ * @brief interrupt subroutine to handle TXFIFO threshold
+ * @param p_arg   point to variable holding callback argument
+ */
+static void rf_txFifoThresholdISR(void *p_arg) {
+
+  e_nsErr_t err;
+  struct s_rf_ctx *p_ctx = &rf_ctx;
+
+#if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
+  /* reset WOR timer at a "right" moment to make sure that one of WOR sniffs will
+   * hit the incoming ACK. This problem happens due to random sniff intervals
+   * following complete frame transmission */
+  if ((p_ctx->cfgWOREnabled == TRUE) && (p_ctx->txReqAck == TRUE)) {
+    cc112x_spiCmdStrobe(CC112X_SWORRST);
+  }
+#endif
+
+  /* write as many bytes as possible */
+  rf_writeTxFifo(p_ctx, RF_CFG_FIFO_THR, &err);
 }
 
 
 /**
  * @brief interrupt subroutine to handle ending of packet reception/transmission
- * @param p_arg point to variable holding callback argument
+ * @param p_arg   point to variable holding callback argument
  */
 static void rf_pktRxTxEndISR(void *p_arg) {
   (void) &p_arg;
 
   uint8_t marc_status;
   uint8_t chip_state;
-  en_evprocResCode_t ret;
   struct s_rf_ctx *p_ctx = &rf_ctx;
 
   /* entry */
-  bsp_extIntClear(RF_INT_PKT_END);
   if ((p_ctx->cfgWOREnabled == TRUE) &&
       ((p_ctx->state == RF_STATE_RX_IDLE) ||
        (p_ctx->state == RF_STATE_RX_FINI) ||
@@ -1168,7 +1131,7 @@ static void rf_pktRxTxEndISR(void *p_arg) {
       /* 'good' marc_status */
       switch (p_ctx->state) {
         case RF_STATE_RX_SYNC:
-          if (marc_status == RF_MARC_STATUS_RX_FINI) {
+          if ((marc_status == RF_MARC_STATUS_RX_FINI) && (p_ctx->rxBytesCounter)) {
             rf_rx_chksum(p_ctx);
           } else {
             TRACE_LOG_ERR("<E> exception ds=%02x, ms=%02x, cs=%02x", p_ctx->state, marc_status, chip_state);
@@ -1179,13 +1142,7 @@ static void rf_pktRxTxEndISR(void *p_arg) {
         case RF_STATE_RX_TXACK_SYNC:
           if (marc_status == RF_MARC_STATUS_TX_FINI) {
             /* a responding ACK was successfully transmitted then signal upper layer */
-            p_ctx->state = RF_STATE_RX_TXACK_FINI;
-            ret = evproc_putEvent(E_EVPROC_HEAD, NETSTK_RF_EVENT, p_ctx);
-
-            /* store event-triggering status */
-#if (RF_CFG_DEBUG_EN == TRUE)
-            p_ctx->dbgEvtStatus = ret;
-#endif /* RF_CFG_DEBUG_EN */
+            rf_rx_txAckFini(p_ctx);
           } else {
             TRACE_LOG_ERR("<E> exception ds=%02x, ms=%02x, cs=%02x", p_ctx->state, marc_status, chip_state);
             rf_exceptionHandler(p_ctx, marc_status, chip_state);
@@ -1237,12 +1194,22 @@ static void rf_pktRxTxEndISR(void *p_arg) {
  * @param p_ctx point to variable holding radio context structure
  */
 static void rf_sleep_entry(struct s_rf_ctx *p_ctx) {
-  /* force radio to enter IDLE state */
-  rf_gotoIdle(p_ctx);
 
-  /* finally put the radio to POWERDOWN state */
-  p_ctx->state = RF_STATE_SLEEP;
-  cc112x_spiCmdStrobe(CC112X_SPWD);
+  uint8_t isIdleOk;
+
+  /* force radio to enter IDLE state */
+  isIdleOk = rf_gotoIdle(p_ctx);
+  if (isIdleOk == TRUE) {
+    /* configure RX GPIOx */
+    RF_WR_REGS(cc112x_cfg_iocfgOff);
+
+    /* finally put the radio to POWERDOWN state */
+    p_ctx->state = RF_STATE_SLEEP;
+    cc112x_spiCmdStrobe(CC112X_SPWD);
+  }
+  else {
+    TRACE_LOG_ERR("<SLEEP> failed to enter");
+  }
 }
 
 
@@ -1251,11 +1218,10 @@ static void rf_sleep_entry(struct s_rf_ctx *p_ctx) {
  * @param p_ctx point to variable holding radio context structure
  */
 static void rf_sleep_exit(struct s_rf_ctx *p_ctx) {
+
+  /* put radio to IDLE state */
   p_ctx->state = RF_STATE_IDLE;
-  cc112x_spiCmdStrobe(CC112X_SIDLE);
-  while (RF_READ_CHIP_STATE() != RF_STATE_IDLE) {
-    /* wait until the chip goes to IDLE state */
-  }
+  rf_gotoIdle(p_ctx);
 }
 
 
@@ -1264,8 +1230,10 @@ static void rf_sleep_exit(struct s_rf_ctx *p_ctx) {
  * @param p_ctx point to variable holding radio context structure
  */
 static void rf_on_entry(struct s_rf_ctx *p_ctx) {
-  /* enable radio interrupts handling */
-  RF_INT_ENABLED();
+
+  /* configure common RX GPIOx */
+  rf_intConfig(RF_IOCFG_PKT_BEGIN, RF_INT_PKT_BEGIN, RF_INT_EDGE_PKT_BEGIN, rf_pktRxTxBeginISR);
+  rf_intConfig(RF_IOCFG_PKT_END, RF_INT_PKT_END, RF_INT_EDGE_PKT_END, rf_pktRxTxEndISR);
 
   /* transition to RX_IDLE state */
   rf_rx_entry(p_ctx);
@@ -1277,13 +1245,26 @@ static void rf_on_entry(struct s_rf_ctx *p_ctx) {
  * @param p_ctx point to variable holding radio context structure
  */
 static void rf_on_exit(struct s_rf_ctx *p_ctx) {
+
+  e_rfState_t currState;
+
   /* disable radio interrupts handling */
   RF_INT_DISABLED();
 
-  /* put the radio to IDLE state and flush FIFOs */
-  cc112x_spiCmdStrobe(CC112X_SIDLE);
-  cc112x_spiCmdStrobe(CC112X_SFRX);
-  cc112x_spiCmdStrobe(CC112X_SFTX);
+  /* store current state */
+  currState = p_ctx->state;
+
+  /* put radio to IDLE state */
+  p_ctx->state = RF_STATE_IDLE;
+  rf_gotoIdle(p_ctx);
+
+  /* exit substate */
+  if ((p_ctx->state & RF_STATE_MASK) == RF_STATE_TX) {
+    rf_tx_exit(p_ctx);
+  }
+  else {
+    rf_rx_exit(p_ctx);
+  }
 }
 
 
@@ -1292,12 +1273,14 @@ static void rf_on_exit(struct s_rf_ctx *p_ctx) {
  * @param p_ctx point to variable holding radio context structure
  */
 static void rf_rx_entry(struct s_rf_ctx *p_ctx) {
-  TRACE_LOG_MAIN("+++ RF: RX_ENTRY");
+
   /* initialize RX attributes */
   p_ctx->rxReqAck = FALSE;
   p_ctx->rxNumRemBytes = 0;
   p_ctx->rxLastDataPtr = 0;
   p_ctx->rxLastChksumPtr = 0;
+  p_ctx->rxBytesCounter = 0;
+  p_ctx->rxChksum = 0;
   p_ctx->rxIsAddrFiltered = FALSE;
   memset(&p_ctx->rxFrame, 0, sizeof(p_ctx->rxFrame));
 
@@ -1312,32 +1295,40 @@ static void rf_rx_entry(struct s_rf_ctx *p_ctx) {
  * @param p_ctx point to variable holding radio context structure
  */
 static void rf_rx_sync(struct s_rf_ctx *p_ctx) {
+
   p_ctx->state = RF_STATE_RX_SYNC;
   LED_RX_ON();
+
+  /* configure RF interrupt */
+  rf_intConfig(RF_IOCFG_RXFIFO_THR, RF_INT_RXFIFO_THR, RF_INT_EDGE_RXFIFO_THR, rf_rxFifoThresholdISR);
 }
 
 
 /**
- * @brief handle event
- * @param p_ctx point to variable holding radio context structure
+ * @brief calculate checksum of received frames
+ * @param p_ctx   point to variable holding radio context structure
  */
 static void rf_rx_chksum(struct s_rf_ctx *p_ctx) {
+
   uint8_t isChecksumOK;
   uint8_t numChksumBytes;
 
   /* read remaining bytes from RX FIFO */
-  rf_readRxFifo(p_ctx, p_ctx->rxNumRemBytes);
+  if (p_ctx->rxNumRemBytes) {
+    rf_readRxFifo(p_ctx, p_ctx->rxNumRemBytes);
+    p_ctx->rxNumRemBytes = 0;
+  }
 
 #if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
   /* update checksum */
   if (p_ctx->rxLastDataPtr > (p_ctx->rxFrame.crc_len + p_ctx->rxLastChksumPtr)) {
     numChksumBytes = p_ctx->rxLastDataPtr - (p_ctx->rxLastChksumPtr + p_ctx->rxFrame.crc_len);
-    p_ctx->rxChksum = llframe_crcUpdate(&p_ctx->rxFrame, &p_ctx->rxBuf[p_ctx->rxLastChksumPtr], numChksumBytes, p_ctx->rxChksum);
+    p_ctx->rxChksum = framer802154ll_crcUpdate(&p_ctx->rxFrame, &p_ctx->rxBuf[p_ctx->rxLastChksumPtr], numChksumBytes, p_ctx->rxChksum);
     p_ctx->rxLastChksumPtr += numChksumBytes;
   }
-  p_ctx->rxChksum = llframe_crcFinal(&p_ctx->rxFrame, p_ctx->rxChksum);
+  p_ctx->rxChksum = framer802154ll_crcFinal(&p_ctx->rxFrame, p_ctx->rxChksum);
 
-  isChecksumOK = llframe_crcFilter(&p_ctx->rxFrame,
+  isChecksumOK = framer802154ll_crcFilter(&p_ctx->rxFrame,
                                     p_ctx->rxChksum,
                                    &p_ctx->rxBuf[p_ctx->rxLastChksumPtr],
                                     p_ctx->rxFrame.crc_len);
@@ -1359,15 +1350,9 @@ static void rf_rx_chksum(struct s_rf_ctx *p_ctx) {
     rf_readRxStatus(p_ctx);
 
     p_ctx->state = RF_STATE_RX_FINI;
-
     if (p_ctx->rxReqAck == FALSE) {
       /* signal upper layer */
-      en_evprocResCode_t ret = evproc_putEvent(E_EVPROC_HEAD, NETSTK_RF_EVENT, p_ctx);
-
-#if (RF_CFG_DEBUG_EN == TRUE)
-      /* store event-triggering status */
-      p_ctx->dbgEvtStatus = ret;
-#endif
+      evproc_putEvent(E_EVPROC_HEAD, NETSTK_RF_EVENT, p_ctx);
     }
   }
   else {
@@ -1380,65 +1365,54 @@ static void rf_rx_chksum(struct s_rf_ctx *p_ctx) {
 
 /**
  * @brief handle event of a good packet being completely received in RX state
- * @param p_ctx point to variable holding radio context structure
+ * @param p_ctx   point to variable holding radio context structure
  */
 static void rf_rx_fini(struct s_rf_ctx *p_ctx) {
-#if (RF_CFG_DEBUG_EN == TRUE)
-  /* clear event-triggering status once the event is consumed */
-  p_ctx->dbgEvtStatus = 0;
-#endif
 
-  /* exit and re-enter RX state */
-  rf_rx_exit(p_ctx);
-  rf_rx_entry(p_ctx);
+  /* signal upper layer */
+  e_nsErr_t err;
+  rf_recv(p_ctx->rxBuf, p_ctx->rxBytesCounter, &err);
+}
 
-#if (EMB6_TEST_CFG_CONT_RX_EN == TRUE)
-  ++p_ctx->numRxPackets;
-  if ((p_ctx->numRxPackets % 10) == 0) {
-    trace_printf("%d | %d", p_ctx->numRxPackets, p_ctx->rxRSSI);
-  }
-  return;
-#endif
 
-  /* set the error code to default */
-  e_nsErr_t err = NETSTK_ERR_NONE;
-  TRACE_LOG_MAIN("+++ RF: RX_FINI seq=%02x, %d bytes", p_ctx->rxBuf[PHY_HEADER_LEN + 2], p_ctx->rxBytesCounter);
-  //trace_printHex("+++ RF: RX_FINI", p_ctx->rxBuf, p_ctx->rxBytesCounter);
+#if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
+/**
+ * @brief handle event of ACK SYNC transmission in RX state
+ * @param p_ctx   point to variable holding radio context structure
+ */
+static void rf_rx_txAckSync(struct s_rf_ctx *p_ctx) {
 
-  /* then signal upper layer */
-  p_ctx->p_netstk->phy->recv(p_ctx->rxBuf, p_ctx->rxBytesCounter, &err);
-  if ((err != NETSTK_ERR_NONE) &&
-      (err != NETSTK_ERR_INVALID_ADDRESS)) {
-    /* the frame is discarded by upper layers */
-    TRACE_LOG_ERR("+++ RF: RX_FINI discarded e=-%d", err);
-    trace_printHex("", p_ctx->rxBuf, p_ctx->rxBytesCounter);
-  }
+  p_ctx->state = RF_STATE_RX_TXACK_SYNC;
 
-  // flush local RX buffer
-  p_ctx->rxBytesCounter = 0;
+  /* is IEEE Std. 802.15.4g supported? */
+#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
+  /* then switch to fixed packet length mode */
+  rf_setPktLen(CC112X_PKT_LEN_MODE_FIXED, p_ctx->txDataLen);
+#endif /* NETSTK_CFG_IEEE_802154G_EN */
 }
 
 
 /**
+ * @brief handle event of ACK transmission in RX state
+ * @param p_ctx   point to variable holding radio context structure
+ */
+static void rf_rx_txAckFini(struct s_rf_ctx *p_ctx) {
+
+  p_ctx->state = RF_STATE_RX_TXACK_FINI;
+  evproc_putEvent(E_EVPROC_HEAD, NETSTK_RF_EVENT, p_ctx);
+}
+#endif
+
+
+/**
  * @brief handle event of reception termination in RX state
- * @param p_ctx point to variable holding radio context structure
+ * @param p_ctx   point to variable holding radio context structure
  */
 static void rf_rx_term(struct s_rf_ctx *p_ctx) {
-  TRACE_LOG_MAIN("+++ RF: RX_TERM");
 
   /* set sub-state */
   p_ctx->state = RF_STATE_RX_TERM;
-
-  /* handle reception termination events in RF critical section
-  * - put the radio to IDLE state
-  * - flush RX FIFO
-  * - flush TX FIFO
-  */
-  RF_INT_DISABLED();
-  cc112x_spiCmdStrobe(CC112X_SIDLE);
-  cc112x_spiCmdStrobe(CC112X_SFRX);
-  cc112x_spiCmdStrobe(CC112X_SFTX);
-  RF_INT_ENABLED();
+  memset(p_ctx->rxBuf, 0, sizeof(p_ctx->rxBuf));
 
   /* exit RX state */
   rf_rx_exit(p_ctx);
@@ -1450,11 +1424,14 @@ static void rf_rx_term(struct s_rf_ctx *p_ctx) {
 
 /**
  * @brief handle exit function of RX state
- * @param p_ctx point to variable holding radio context structure
+ * @param p_ctx   point to variable holding radio context structure
  */
 static void rf_rx_exit(struct s_rf_ctx *p_ctx) {
-  TRACE_LOG_MAIN("+++ RF: RX_EXIT");
+
   LED_RX_OFF();
+
+  /* configure RF interrupt */
+  RF_WR_REGS(&cc112x_cfg_iocfgOff[RF_IOCFG_RXFIFO_THR]);
 
 #if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
   /* use infinite packet length mode by default */
@@ -1465,7 +1442,7 @@ static void rf_rx_exit(struct s_rf_ctx *p_ctx) {
 
 /**
  * @brief handle entry function in TX state
- * @param p_ctx point to variable holding radio context structure
+ * @param p_ctx   point to variable holding radio context structure
  */
 static void rf_tx_entry(struct s_rf_ctx *p_ctx) {
   LED_TX_ON();
@@ -1477,25 +1454,34 @@ static void rf_tx_entry(struct s_rf_ctx *p_ctx) {
 
 /**
  * @brief handle event of SYNC words transmitted in TX state
- * @param p_ctx point to variable holding radio context structure
+ * @param p_ctx   point to variable holding radio context structure
  */
 static void rf_tx_sync(struct s_rf_ctx *p_ctx) {
+
   p_ctx->state = RF_STATE_TX_SYNC;
   rf_tx_entry(p_ctx);
 
-  /* is IEEE Std. 802.15.4g supported? */
-#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
-  /* then switch to fixed packet length mode */
-  rf_setPktLen(CC112X_PKT_LEN_MODE_FIXED, p_ctx->txDataLen);
+#if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
+  /* configure TXFIFO_THR to trigger WOR timer reset before the frame, which
+   * requires ACK, is completely transmitted. As such the incoming ACK should be
+   * caught surely. This workaround is required in WOR mode only */
+  if ((p_ctx->txReqAck == TRUE) && (p_ctx->cfgWOREnabled == TRUE)) {
+    /* trigger TXFIFO_THR interrupt as TXFIFO has less then 4 bytes */
+    RF_SET_FIFO_THR(128 - 1 - 4);
+  }
 #endif
+
+  /* enable TXFIFO threshold interrupt */
+  rf_intConfig(RF_IOCFG_TXFIFO_THR, RF_INT_TXFIFO_THR, RF_INT_EDGE_TXFIFO_THR, rf_txFifoThresholdISR);
 }
 
 
 /**
  * @brief handle event of a frame successfully transmitted in TX state
- * @param p_ctx point to variable holding radio context structure
+ * @param p_ctx   point to variable holding radio context structure
  */
 static void rf_tx_fini(struct s_rf_ctx *p_ctx) {
+
   p_ctx->state = RF_STATE_TX_FINI;
   p_ctx->txErr = NETSTK_ERR_NONE;
 
@@ -1513,48 +1499,48 @@ static void rf_tx_fini(struct s_rf_ctx *p_ctx) {
     rf_listen(p_ctx);
   }
 #endif /* NETSTK_CFG_RF_CC112X_AUTOACK_EN */
-
-  /* is IEEE Std. 802.15.4g supported? */
-#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
-  /* then switch back to infinite packet length mode */
-  rf_setPktLen(CC112X_PKT_LEN_MODE_INFINITE, RF_MAX_FIFO_LEN);
-#endif
-
-  TRACE_LOG_MAIN("<TXFINI> txStatus=%02x", p_ctx->txStatus);
 }
 
 
 #if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
 /**
  * @brief handle event of ACK SYNC reception in TX state
- * @param p_ctx point to variable holding radio context structure
+ * @param p_ctx   point to variable holding radio context structure
  */
 static void rf_tx_rxAckSync(struct s_rf_ctx *p_ctx) {
+
   p_ctx->state = RF_STATE_TX_RXACK_SYNC;
 
+  /* configure RF interrupt */
+  rf_intConfig(RF_IOCFG_RXFIFO_THR, RF_INT_RXFIFO_THR, RF_INT_EDGE_RXFIFO_THR, rf_rxFifoThresholdISR);
 }
+
 
 /**
  * @brief handle event of ACK reception in TX state
- * @param p_ctx point to variable holding radio context structure
+ * @param p_ctx   point to variable holding radio context structure
  */
 static void rf_tx_rxAckFini(struct s_rf_ctx *p_ctx) {
+
   uint8_t isChecksumOK;
   uint8_t numChksumBytes;
   packetbuf_attr_t expSeqNo;
 
   /* read remaining bytes from RX FIFO */
-  rf_readRxFifo(p_ctx, p_ctx->rxNumRemBytes);
+  if (p_ctx->rxNumRemBytes) {
+    rf_readRxFifo(p_ctx, p_ctx->rxNumRemBytes);
+    p_ctx->rxNumRemBytes = 0;
+  }
 
   /* update checksum */
   if (p_ctx->rxLastDataPtr > (p_ctx->rxFrame.crc_len + p_ctx->rxLastChksumPtr)) {
     numChksumBytes = p_ctx->rxLastDataPtr - (p_ctx->rxLastChksumPtr + p_ctx->rxFrame.crc_len);
-    p_ctx->rxChksum = llframe_crcUpdate(&p_ctx->rxFrame, &p_ctx->rxBuf[p_ctx->rxLastChksumPtr], numChksumBytes, p_ctx->rxChksum);
+    p_ctx->rxChksum = framer802154ll_crcUpdate(&p_ctx->rxFrame, &p_ctx->rxBuf[p_ctx->rxLastChksumPtr], numChksumBytes, p_ctx->rxChksum);
     p_ctx->rxLastChksumPtr += numChksumBytes;
   }
-  p_ctx->rxChksum = llframe_crcFinal(&p_ctx->rxFrame, p_ctx->rxChksum);
+  p_ctx->rxChksum = framer802154ll_crcFinal(&p_ctx->rxFrame, p_ctx->rxChksum);
 
-  isChecksumOK = llframe_crcFilter(&p_ctx->rxFrame,
+  isChecksumOK = framer802154ll_crcFilter(&p_ctx->rxFrame,
                                     p_ctx->rxChksum,
                                    &p_ctx->rxBuf[p_ctx->rxLastChksumPtr],
                                     p_ctx->rxFrame.crc_len);
@@ -1572,23 +1558,30 @@ static void rf_tx_rxAckFini(struct s_rf_ctx *p_ctx) {
     }
     else {
       p_ctx->txErr = NETSTK_ERR_TX_NOACK;
+
+      /* bad ACK handling */
+      rf_tx_term(p_ctx);
+      rf_rx_entry(p_ctx);
     }
   }
   else {
     /* discard the received frame */
     p_ctx->txErr = NETSTK_ERR_TX_NOACK;
+
+    /* bad ACK handling */
+    rf_tx_term(p_ctx);
+    rf_rx_entry(p_ctx);
   }
 
   /* indicate TX process has finished */
   p_ctx->txStatus = RF_TX_STATUS_DONE;
-  TRACE_LOG_MAIN("+++ RF: RX_ACK seq=%02x, err=-%d", p_ctx->rxBuf[PHY_HEADER_LEN + 2], p_ctx->txErr);
 }
 #endif
 
 
 /**
  * @brief handle event of transmission termination in TX state
- * @param p_ctx point to variable holding radio context structure
+ * @param p_ctx   point to variable holding radio context structure
  */
 static void rf_tx_term(struct s_rf_ctx *p_ctx) {
   uint8_t txLast;
@@ -1598,38 +1591,37 @@ static void rf_tx_term(struct s_rf_ctx *p_ctx) {
   /* force radio to flush TXFIFO by manipulating TXFIFO pointers */
   cc112x_spiRegRead(CC112X_TXLAST, &txLast, 1);
   cc112x_spiRegWrite(CC112X_TXFIRST, &txLast, 1);
-
-  /* is IEEE Std. 802.15.4g supported? */
-#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
-  /* then switch back to infinite packet length mode */
-  rf_setPktLen(CC112X_PKT_LEN_MODE_INFINITE, RF_MAX_FIFO_LEN);
-#endif
 }
 
 
 /**
  * @brief handle exit function of TX state
- * @param p_ctx point to variable holding radio context structure
+ * @param p_ctx   point to variable holding radio context structure
  */
 static void rf_tx_exit(struct s_rf_ctx *p_ctx) {
   LED_TX_OFF();
+
+  /* no need to change RF settings as ACK is missing because the radio is already put to RX_IDLE */
+  if (p_ctx->txErr != NETSTK_ERR_TX_NOACK) {
+    /* configure RF interrupt */
+    RF_WR_REGS(&cc112x_cfg_iocfgOff[RF_IOCFG_TXFIFO_THR]);
+
+#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
+    /* use infinite packet length mode by default */
+    RF_SET_PKT_LEN_MODE(CC112X_PKT_LEN_MODE_INFINITE);
+#endif /* NETSTK_CFG_IEEE_802154G_EN */
+  }
+
   p_ctx->txErr = NETSTK_ERR_NONE;
   p_ctx->txStatus = RF_TX_STATUS_NONE;
   p_ctx->txReqAck = FALSE;
-
-#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
-  /* use infinite packet length mode by default */
-  RF_SET_PKT_LEN_MODE(CC112X_PKT_LEN_MODE_INFINITE);
-#endif /* NETSTK_CFG_IEEE_802154G_EN */
-
-  TRACE_LOG_MAIN("+++ RF: TX_EXIT");
 }
 
 
 /**
  * @brief radio state dispatcher function
- * @param c_event
- * @param p_data
+ * @param c_event   event to handle
+ * @param p_data    point to callback data
  */
 static void rf_eventHandler(c_event_t c_event, p_data_t p_data) {
   (void)p_data;
@@ -1653,9 +1645,6 @@ static void rf_eventHandler(c_event_t c_event, p_data_t p_data) {
  * @param chipState   state of radio chip at which exception was thrown
  */
 static void rf_exceptionHandler(struct s_rf_ctx *p_ctx, uint8_t marcStatus, e_rfState_t chipState) {
-#if (RF_CFG_DEBUG_EN == TRUE)
-  p_ctx->dbgChipState = chipState;
-#endif
 
   /* terminate TX process */
   p_ctx->txErr = NETSTK_ERR_FATAL;
@@ -1672,93 +1661,135 @@ static void rf_exceptionHandler(struct s_rf_ctx *p_ctx, uint8_t marcStatus, e_rf
  ********************************************************************************
  */
 
-#if (RF_CFG_DEBUG_EN == TRUE)
-/**
- * @brief debugging timer callback
- */
-static void rf_tmrDbgCb(void *p_arg) {
-  struct s_rf_ctx *p_ctx = (struct s_rf_ctx *)p_arg;
-
-  /* is the radio awake? */
-  if ((p_ctx->state & 0xF0) != RF_STATE_SLEEP) {
-    /* then record chip state */
-    p_ctx->dbgChipState = RF_READ_CHIP_STATE();
-  }
-  trace_printf("DBG cs=%02x, ds=%02x, evt=%d",
-      p_ctx->dbgChipState, p_ctx->state, p_ctx->dbgEvtStatus);
-}
-#endif
-
 /**
  * @brief put the radio into IDLE state
- * @param p_ctx point to variable holding radio context structure
+ * @param p_ctx   point to variable holding radio context structure
  */
-static void rf_gotoIdle(struct s_rf_ctx *p_ctx) {
-  cc112x_spiCmdStrobe(CC112X_SIDLE);
-  while (RF_READ_CHIP_STATE() != RF_STATE_IDLE) {
-    /* do nothing */
-  };
+static uint8_t rf_gotoIdle(struct s_rf_ctx *p_ctx) {
+
+  uint8_t isIdleOk = TRUE;
+
+  /* wait until radio enters IDLE state */
+  e_rfState_t chipState = p_ctx->state;
+  do {
+    if (RF_IS_RX_BUSY() == TRUE) {
+      trace_printf("<IDLE> RX while IDLE");
+      isIdleOk = FALSE;
+      break;
+    }
+
+    switch (chipState) {
+      case RF_STATE_TX_FIFO_ERR:
+        chipState = cc112x_spiCmdStrobe(CC112X_SFTX) & CC112X_STATE_MASK;
+        break;
+
+      case RF_STATE_RX_FIFO_ERR:
+        chipState = cc112x_spiCmdStrobe(CC112X_SFRX) & CC112X_STATE_MASK;
+        break;
+
+      default:
+        chipState = cc112x_spiCmdStrobe(CC112X_SIDLE) & CC112X_STATE_MASK;
+        break;
+    }
+    if (chipState != RF_STATE_IDLE) {
+      bsp_delay_us(10);
+    }
+  } while (chipState != RF_STATE_IDLE);
+
+  if (isIdleOk == TRUE) {
+    /* flushing TXFIFO and RXFIFO */
+    cc112x_spiCmdStrobe(CC112X_SFTX);
+    cc112x_spiCmdStrobe(CC112X_SFRX);
+  }
+
+  return isIdleOk;
 }
+
 
 /**
  * @brief put the radio into idle listening state
- * @param p_ctx point to variable holding radio context structure
+ * @param p_ctx   point to variable holding radio context structure
  */
-static void rf_gotoRx(struct s_rf_ctx *p_ctx) {
-  /* force radio to enter IDLE state */
-  rf_gotoIdle(p_ctx);
+static uint8_t rf_gotoRx(struct s_rf_ctx *p_ctx) {
 
-#if (NETSTK_CFG_WOR_EN == TRUE)
-  uint8_t rfendCfg0;
+  uint8_t isIdleOk;
 
-  /* read value of registers to modify */
-  cc112x_spiRegRead(CC112X_RFEND_CFG0, &rfendCfg0, 1);
+  /* did the transceiver enter Idle state successfully? */
+  isIdleOk = rf_gotoIdle(p_ctx);
+  if (isIdleOk == TRUE) {
+    /* disable RX termination in RX mode */
+    if (p_ctx->cfgWOREnabled == TRUE) {
+      uint8_t rfendCfg0;
+      /* read value of registers to modify */
+      cc112x_spiRegRead(CC112X_RFEND_CFG0, &rfendCfg0, 1);
+      /* disable RX termination based on CS */
+      rfendCfg0 &= ~0x09;
+      cc112x_spiRegWrite(CC112X_RFEND_CFG0, &rfendCfg0, 1);
+    }
 
-  /* disable RX termination based on CS */
-  rfendCfg0 &= ~0x09;
-  cc112x_spiRegWrite(CC112X_RFEND_CFG0, &rfendCfg0, 1);
+    /* is IEEE Std. 802.15.4g supported? */
+#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
+    /* then switch back to infinite packet length mode */
+    rf_setPktLen(CC112X_PKT_LEN_MODE_INFINITE, RF_MAX_FIFO_LEN);
 #endif
 
-  /* RX mode */
-  cc112x_spiCmdStrobe(CC112X_SRX);
-  while (RF_READ_CHIP_STATE() != RF_STATE_RX_IDLE) {
-    /* do nothing */
+    /* configure RF interrupt */
+    rf_intConfig(RF_IOCFG_RXFIFO_THR, RF_INT_RXFIFO_THR, RF_INT_EDGE_RXFIFO_THR, rf_rxFifoThresholdISR);
+
+    /* wait until radio enters RX state */
+    cc112x_spiCmdStrobe(CC112X_SRX);
+    while (RF_READ_CHIP_STATE() != RF_STATE_RX_IDLE) {
+      /* do nothing */
+    }
   }
+  return isIdleOk;
 }
+
 
 /**
  * @brief put the radio into WOR state
- * @param p_ctx point to variable holding radio context structure
+ * @param p_ctx   point to variable holding radio context structure
  */
-static void rf_gotoWor(struct s_rf_ctx *p_ctx) {
-  /* force radio to enter IDLE state */
-  rf_gotoIdle(p_ctx);
+static uint8_t rf_gotoWor(struct s_rf_ctx *p_ctx) {
 
-#if (NETSTK_CFG_WOR_EN == TRUE)
-  uint8_t rfendCfg0;
+  uint8_t isIdleOk;
 
-  /* read value of registers to modify */
-  cc112x_spiRegRead(CC112X_RFEND_CFG0, &rfendCfg0, 1);
+  /* did the transceiver enter Idle state successfully? */
+  isIdleOk = rf_gotoIdle(p_ctx);
+  if (isIdleOk == TRUE) {
+    /* Setting radio registers must be done in IDLE state when WOR is enabled */
 
-  /* enable RX termination based on CS */
-  rfendCfg0 |= 0x09;
-  cc112x_spiRegWrite(CC112X_RFEND_CFG0, &rfendCfg0, 1);
+    /* enable RX termination in WOR mode */
+    if (p_ctx->cfgWOREnabled == TRUE) {
+      uint8_t rfendCfg0;
+      /* read value of registers to modify */
+      cc112x_spiRegRead(CC112X_RFEND_CFG0, &rfendCfg0, 1);
+      /* enable RX termination based on CS */
+      rfendCfg0 |= 0x09;
+      cc112x_spiRegWrite(CC112X_RFEND_CFG0, &rfendCfg0, 1);
+    }
+
+    /* is IEEE Std. 802.15.4g supported? */
+#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
+    /* then switch back to infinite packet length mode */
+    rf_setPktLen(CC112X_PKT_LEN_MODE_INFINITE, RF_MAX_FIFO_LEN);
 #endif
 
-  /* WOR mode */
-  cc112x_spiCmdStrobe(CC112X_SWOR);
+    /* reset RXFIFO threshold */
+    RF_SET_FIFO_THR(RF_CFG_FIFO_THR);
+
+    /* WOR mode */
+    cc112x_spiCmdStrobe(CC112X_SWOR);
+  }
+  return isIdleOk;
 }
+
 
 /**
  * @brief put the radio into idle listening
  * @param p_ctx point to variable holding radio context structure
  */
 static void rf_listen(struct s_rf_ctx *p_ctx) {
-  /* flushing TXFIFO can avoid problem of writing ACK to TXFIFO */
-  RF_INT_DISABLED();
-  rf_gotoIdle(p_ctx);
-  cc112x_spiCmdStrobe(CC112X_SFTX);
-  cc112x_spiCmdStrobe(CC112X_SFRX);
 
   if (p_ctx->cfgWOREnabled == TRUE) {
     /* eWOR mode */
@@ -1767,8 +1798,8 @@ static void rf_listen(struct s_rf_ctx *p_ctx) {
     /* RX mode */
     rf_gotoRx(p_ctx);
   }
-  RF_INT_ENABLED();
 }
+
 
 /**
  * @brief configure multiple radio registers
@@ -1785,6 +1816,7 @@ static void rf_configureRegs(const s_regSettings_t *p_regs, uint8_t len) {
   }
 }
 
+
 /**
  * @brief read appended status of the most recently received frame
  * @param p_ctx point to variable holding radio context structure
@@ -1797,44 +1829,158 @@ static void rf_readRxStatus(struct s_rf_ctx *p_ctx) {
   p_ctx->rxLQI = rxStatus[1] & 0x7F;
 }
 
+
 /**
  * @brief read bytes from RX FIFO
  * @param p_ctx     point to variable holding radio context structure
  * @param numBytes  number of bytes to read
  * @return
  */
-static void rf_readRxFifo(struct s_rf_ctx *p_ctx, uint8_t numBytes) {
+static uint8_t rf_readRxFifo(struct s_rf_ctx *p_ctx, uint8_t numBytes) {
+
+  /* check buffer overflow */
+  if ((p_ctx->rxLastDataPtr + numBytes) > RF_MAX_PACKET_LEN) {
+    return 0;
+  }
+
   /* read a given number of bytes from RX FIFO and append to RX buffer */
   cc112x_spiRxFifoRead(&p_ctx->rxBuf[p_ctx->rxLastDataPtr], numBytes);
   p_ctx->rxLastDataPtr += numBytes;
+  return numBytes;
+}
+
+
+/**
+ * @brief   Write a given number of bytes to TXFIFO
+ * @param p_ctx         point to variable holding radio context structure
+ * @param totNumBytes   total number of bytes to write
+ * @param p_err         point to variable storing returned error code
+ */
+static void rf_writeTxFifo(struct s_rf_ctx *p_ctx, uint8_t totNumBytes, e_nsErr_t *p_err) {
+
+  uint8_t numWrBytes;
+
+  /* set return error code */
+  *p_err = NETSTK_ERR_NONE;
+
+#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
+  if (p_ctx->pktLenMode == CC112X_PKT_LEN_MODE_INFINITE) {
+    /* switch to fixed packet length mode if number of remaining bytes is less
+     * than FIFO SIZE the actual number of remaining bytes to be sent is
+     * calculated as follow:
+     * totNumRemBytes = numBytesInTxFifo + numRemBytes
+     * numBytesInTxFifo = RF_CFG_NUM_TXBYTES */
+    if ((p_ctx->txDataLen < (RF_MAX_FIFO_LEN + 1)) ||
+        (p_ctx->txNumRemBytes < (RF_MAX_FIFO_LEN + 1 - RF_CFG_NUM_TXBYTES))) {
+      rf_setPktLen(CC112X_PKT_LEN_MODE_FIXED, p_ctx->txDataLen);
+    }
+  }
+#endif
+
+  if ((totNumBytes > 0) && (p_ctx->txNumRemBytes > 0)) {
+    /* adjust maximum number of bytes that is allowed to write to TXFIFO */
+    if (totNumBytes >= RF_CFG_FIFO_SIZE) {
+      totNumBytes = RF_CFG_FIFO_SIZE;
+    }
+
+    /* keep writing until no bytes are left */
+    while (totNumBytes > 0) {
+      /* keep track of number of remaining bytes to send to avoid buffer underflow */
+      totNumBytes = MIN(totNumBytes, p_ctx->txNumRemBytes);
+
+      /* write those bytes in small chunks */
+      numWrBytes = MIN(totNumBytes, RF_CFG_TX_FIFO_THR);
+      cc112x_spiTxFifoWrite(p_ctx->txDataPtr, numWrBytes);
+
+      /* update TX attributes */
+      p_ctx->txNumRemBytes -= numWrBytes;
+      p_ctx->txDataPtr += numWrBytes;
+      totNumBytes -= numWrBytes;
+    }
+  }
+}
+
+
+/**
+ * @brief   Configure radio interrupt
+ * @param iocfg     radio GPIO pin
+ * @param e_extInt  related MCU interrupt
+ * @param e_edge    interrupt edge to detect
+ * @param cbfnct    callback function
+ */
+static void rf_intConfig(uint8_t iocfg, en_targetExtInt_t e_extInt, en_targetIntEdge_t e_edge,
+    pfn_intCallb_t cbfnct) {
+
+  RF_WR_REGS(&cc112x_cfg_iocfgOn[iocfg]);
+  bsp_extIntRegister(e_extInt, e_edge, cbfnct);
+  bsp_extIntClear(e_extInt);
+  bsp_extIntEnable(e_extInt);
 }
 
 
 #if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
 /**
  * @brief set packet length mode and packet size
- * @param mode
- * @param len
+ * @param mode    packet length mode to set
+ * @param len     packet length
  */
 static void rf_setPktLen(uint8_t mode, uint16_t len) {
 
-  uint8_t writeByte;
+  uint8_t pktLen;
+  struct s_rf_ctx *p_ctx = &rf_ctx;
 
   /* set packet length */
-  writeByte = len % (RF_MAX_FIFO_LEN + 1);
-  RF_SET_PKT_LEN(writeByte);
+  pktLen = len % (RF_MAX_FIFO_LEN + 1);
+  cc112x_spiRegWrite(CC112X_PKT_LEN, &pktLen, 1);
 
   /* set packet length mode */
   RF_SET_PKT_LEN_MODE(mode);
+  p_ctx->pktLenMode = mode;
+}
+#endif
+
+
+#if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
+/**
+ * @brief   Perform address filtering
+ * @param p_ctx     point to variable holding radio context structure
+ * @return  TRUE if passed, otherwise FALSE
+ */
+static uint8_t rf_filterAddr(struct s_rf_ctx *p_ctx) {
+
+  uint8_t ret = TRUE;
+  uint8_t ack_len = 0;
+  uint8_t ack[10] = { 0 };
+
+  /* filter address */
+  p_ctx->rxIsAddrFiltered = framer802154ll_addrFilter(&p_ctx->rxFrame, p_ctx->rxBuf, p_ctx->rxLastDataPtr);
+  if (p_ctx->rxIsAddrFiltered == FALSE) {
+    ret = FALSE;
+  }
+  else {
+    /* does incoming frame require ACK? */
+    p_ctx->rxReqAck = p_ctx->rxFrame.is_ack_required;
+    if (p_ctx->rxReqAck == TRUE) {
+      /* write the ACK to send into TX FIFO */
+      ack_len = framer802154ll_createAck(&p_ctx->rxFrame, ack, sizeof(ack));
+      cc112x_spiTxFifoWrite(ack, ack_len);
+
+#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
+      /* store length of ACK to send for later setting packet length modes */
+      p_ctx->txDataLen = ack_len;
+#endif /* NETSTK_CFG_IEEE_802154G_EN */
+    }
+  }
+  return ret;
 }
 #endif /* NETSTK_CFG_IEEE_802154G_EN */
 
 
-#define VCDAC_START_OFFSET 2
-#define FS_VCO2_INDEX 0
-#define FS_VCO4_INDEX 1
-#define FS_CHP_INDEX 2
+/**
+ * @brief   Manual calibrate radio
+ */
 static void rf_manualCalibration(void) {
+
   uint8_t original_fs_cal2;
   uint8_t calResults_for_vcdac_start_high[3];
   uint8_t calResults_for_vcdac_start_mid[3];
@@ -1911,7 +2057,11 @@ static void rf_manualCalibration(void) {
 }
 
 
+/**
+ * @brief   Calibrate RC oscillator
+ */
 static void rf_calibrateRCOsc(void) {
+
   uint8_t temp;
 
   /* Read current register value */
@@ -1932,7 +2082,12 @@ static void rf_calibrateRCOsc(void) {
 }
 
 
-static void rf_cca(e_nsErr_t *p_err) {
+/**
+ * @brief   Perform Clear Channel Assessment
+ * @param p_err   point to variable storing returned error code
+ */
+static void rf_cca(struct s_rf_ctx *p_ctx, e_nsErr_t *p_err) {
+
 #if NETSTK_CFG_ARG_CHK_EN
   if (p_err == NULL) {
     return;
@@ -1940,123 +2095,74 @@ static void rf_cca(e_nsErr_t *p_err) {
 #endif
 
   uint8_t rssi_status;
-  struct s_rf_ctx *p_ctx = &rf_ctx;
+  uint32_t tickStart;
+  uint32_t ccaTimeout;
 
-  if (p_ctx->state != RF_STATE_RX_IDLE) {
+  if (RF_IS_RX_BUSY() == TRUE) {
     *p_err = NETSTK_ERR_BUSY;
+    return;
+  }
+
+  /* put radio back to RX state if eWOR is enabled */
+  if (p_ctx->cfgWOREnabled == TRUE) {
+    rf_gotoRx(p_ctx);
+    if (RF_IS_RX_BUSY() == TRUE) {
+      /* radio is in middle of packet reception process */
+      *p_err = NETSTK_ERR_BUSY;
+      return;
+    }
+  }
+
+  /* poll for valid carrier sense until timeout */
+  tickStart = bsp_getTick();
+
+  /* since atomic time unit is 1ms, ensure CCA timeout is at least 1ms */
+  do {
+    /* verify if either carrier sense is valid? */
+    cc112x_spiRegRead( CC112X_RSSI0, &rssi_status, 1);
+    if ((rssi_status & RF_RSSI0_CARRIER_SENSE_VALID ) != 0) {
+      break;
+    }
+
+    /* is a packet being received? */
+    if (RF_IS_RX_BUSY() == TRUE) {
+      *p_err = NETSTK_ERR_BUSY;
+      return;
+    }
+
+    /* update CCA timeout */
+    ccaTimeout = bsp_getTick() - tickStart;
+  } while (ccaTimeout < 2);
+
+  /* was CCA timeout expired? If so carrier sense is invalid */
+  if ((rssi_status & RF_RSSI0_CARRIER_SENSE_VALID ) == 0) {
+    /* then a runtime error was detected. The driver is still in RX_IDLE but the radio
+     * did not give a valid carrier sense in time. In this case simply force the radio
+     * to RX_IDLE and declare channel access failure */
+    rf_rx_term(p_ctx);
+    *p_err = NETSTK_ERR_CHANNEL_ACESS_FAILURE;
   }
   else {
-    /* TODO put radio back to RX state if eWOR is enabled */
-    if (p_ctx->cfgWOREnabled == TRUE) {
-      rf_gotoRx(p_ctx);
-    }
-
-    /* poll for valid carrier sense until timeout */
-    rt_tmr_tick_t tickstart;
-
-    /* since atomic time unit is 1ms, ensure CCA timeout is at least 1ms */
-    tickstart = rt_tmr_getCurrenTick();
-    while ((rt_tmr_getCurrenTick() - tickstart) < 2) {
-      cc112x_spiRegRead(CC112X_RSSI0, &rssi_status, 1);
-
-      /* verify if either carrier sense is valid or a packet is arrived */
-      if (((rssi_status & RF_RSSI0_CARRIER_SENSE_VALID) != 0) ||
-          (p_ctx->state != RF_STATE_RX_IDLE)) {
-        break;
-      }
-    }
-
-    /* has a packet arrived? */
-    if (p_ctx->state != RF_STATE_RX_IDLE) {
-      /* then set packet reception a higher priority than CCA */
-      *p_err = NETSTK_ERR_BUSY;
+    /* was carrier detected? */
+    if (rssi_status & RF_RSSI0_CARRIER_DETECTED) {
+      /* then declare channel busy */
+      *p_err = NETSTK_ERR_CHANNEL_ACESS_FAILURE;
     }
     else {
-      /* TODO put radio back to RX state if eWOR is enabled after CCA process is
-       * finished */
-
-      /* was CCA timeout expired? If so carrier sense is invalid */
-      if ((rssi_status & RF_RSSI0_CARRIER_SENSE_VALID) == 0) {
-        /* then a runtime error was detected. The driver is still in RX_IDLE but the radio
-         * did not give a valid carrier sense in time. In this case simply force the radio
-         * to RX_IDLE and declare channel access failure */
-        rf_rx_term(p_ctx);
-        *p_err = NETSTK_ERR_CHANNEL_ACESS_FAILURE;
-      }
-      else {
-        /* was carrier detected? */
-        if (rssi_status & RF_RSSI0_CARRIER_DETECTED) {
-          /* then declare channel busy */
-          *p_err = NETSTK_ERR_CHANNEL_ACESS_FAILURE;
-        }
-        else {
-          /* declare channel free */
-          *p_err = NETSTK_ERR_NONE;
-
-          /* then go back to eWOR when enabled */
-          if (p_ctx->cfgWOREnabled == TRUE) {
-            rf_gotoWor(p_ctx);
-          }
-        }
-      }
-    }
-  }
-}
-
-
-#if (CC112X_CFG_RETX_EN == TRUE)
-static void cc112x_retx(e_nsErr_t *p_err)
-{
-  if ((rf_ctx.state != RF_STATE_RX_IDLE) &&
-      (rf_ctx.state != RF_STATE_IDLE)) {
-    *p_err = NETSTK_ERR_BUSY;
-  } else {
-    /* entry:
-    * - go to the IDLE state
-    * - disable RX interrupt
-    */
-    cc112x_gotoIdle();
-    rf_waitRdy();
-    RF_INT_DISABLE();
-
-    /* do:
-    * - go to the TX_BUSY state
-    * - rewrite TX first pointer
-    * - enable TX interrupts
-    * - issue STX strobe
-    */
-    rf_ctx.state = RF_STATE_TX_BUSY;
-    cc112x_spiRegWrite(CC112X_TXFIRST, &rf_txFirstPtr, 1);
-
-
-    LED_TX_ON();
-    RF_INT_TX_ENABLED();
-    cc112x_spiCmdStrobe(CC112X_STX);
-
-    /* wait for packet to be sent */
-    uint16_t iteration = 0xffff;
-    while ((rf_ctx.state == RF_STATE_TX_BUSY) && (iteration > 0)) {
-      iteration--;
-    }
-    if (rf_ctx.state == RF_STATE_TX_FINI) {
-      /* TX finished successfully */
+      /* declare channel free */
       *p_err = NETSTK_ERR_NONE;
-    } else {
-      /* TX error handling */
-      *p_err = NETSTK_ERR_TX_TIMEOUT;
-    }
 
-    /* exit:
-    * - go to state RX
-    */
-    LED_TX_OFF();
-    cc112x_gotoRX();
+      /* then go back to eWOR when enabled */
+      if (p_ctx->cfgWOREnabled == TRUE) {
+        rf_gotoWor(p_ctx);
+      }
+    }
   }
 }
-#endif
 
 
 static void rf_chkReset(struct s_rf_ctx *p_ctx) {
+
   e_nsErr_t err;
   uint8_t read_byte;
 
@@ -2094,7 +2200,11 @@ static void rf_chkReset(struct s_rf_ctx *p_ctx) {
 }
 
 
+/**
+ * @brief   Reset radio transceiver
+ */
 static void rf_reset(void) {
+
   /* by issuing a manual reset, all internal registers are set to their default
   * values and the radio will go to the IDLE state
   */
@@ -2104,7 +2214,13 @@ static void rf_reset(void) {
   rf_waitRdy();
 }
 
+
+/**
+ * @brief   Check part number and part version of the radio chip
+ * @param p_err   point to variable storing returned error code
+ */
 static void rf_chkPartnumber(e_nsErr_t *p_err) {
+
   uint8_t part_number;
   uint8_t part_version;
 
@@ -2127,7 +2243,11 @@ static void rf_chkPartnumber(e_nsErr_t *p_err) {
 }
 
 
+/**
+ * @brief   wait until radio chip is ready
+ */
 static void rf_waitRdy(void) {
+
   rf_status_t chip_status;
   do {
     chip_status = cc112x_spiCmdStrobe(CC112X_SNOP);
@@ -2135,7 +2255,13 @@ static void rf_waitRdy(void) {
 }
 
 
+/**
+ * @brief   set transceiver transmission power
+ * @param power   transmission power to set
+ * @param p_err   point to variable storing returned error code
+ */
 static void rf_txPowerSet(int8_t power, e_nsErr_t *p_err) {
+
 #if NETSTK_CFG_ARG_CHK_EN
   if (p_err == NULL) {
     return;
@@ -2149,12 +2275,17 @@ static void rf_txPowerSet(int8_t power, e_nsErr_t *p_err) {
    * PA_POWER_RAMP = PA_CFG1[5:0] ~> PA_POWER_RAMP_MASK = 0x3F
    */
   pa_power_ramp = ((power + 18) * 2 - 1) & 0x3Fu;
-  cc112x_spiRegWrite(CC112X_PA_CFG1, &pa_power_ramp, 1);
+  cc112x_spiRegWrite(CC112X_PA_CFG2, &pa_power_ramp, 1);
   *p_err = NETSTK_ERR_NONE;
 }
 
-
+/**
+ * @brief   obtain transceiver transmission power
+ * @param p_power point to variable storing transmission power
+ * @param p_err   point to variable storing returned error code
+ */
 static void rf_txPowerGet(int8_t *p_power, e_nsErr_t *p_err) {
+
 #if NETSTK_CFG_ARG_CHK_EN
   if (p_err == NULL) {
     return;
@@ -2171,7 +2302,7 @@ static void rf_txPowerGet(int8_t *p_power, e_nsErr_t *p_err) {
   /*
    * Output power = (PA_POWER_RAMP+1)/2 - 18 [dBm]
    */
-  cc112x_spiRegRead(CC112X_PA_CFG1, &pa_power_ramp, 1);
+  cc112x_spiRegRead(CC112X_PA_CFG2, &pa_power_ramp, 1);
   pa_power_ramp &= 0x3F;
   *p_power = ((pa_power_ramp + 1) / 2) - 18;
   *p_err = NETSTK_ERR_NONE;
@@ -2184,6 +2315,7 @@ static void rf_txPowerGet(int8_t *p_power, e_nsErr_t *p_err) {
  * @param   p_err       Pointer to variable holding returned error code
  */
 static void rf_chanNumSet(uint8_t chan_num, e_nsErr_t *p_err) {
+
 #if NETSTK_CFG_ARG_CHK_EN
   if (p_err == NULL) {
     return;
@@ -2194,6 +2326,7 @@ static void rf_chanNumSet(uint8_t chan_num, e_nsErr_t *p_err) {
   uint32_t freq_center = 0;
   uint32_t freq_delta = 0;
   uint8_t write_byte = 0;
+  e_rfState_t prevState;
   struct s_rf_ctx *p_ctx = &rf_ctx;
 
   /* set returned error value to default */
@@ -2257,8 +2390,14 @@ static void rf_chanNumSet(uint8_t chan_num, e_nsErr_t *p_err) {
    * configure frequency registers only when arguments are valid
    */
   if (*p_err == NETSTK_ERR_NONE) {
-    /* put radio to IDLE state before setting frequency */
-    rf_gotoIdle(p_ctx);
+    /* backup current state */
+    prevState = p_ctx->state;
+    if (prevState == RF_STATE_SLEEP) {
+      rf_sleep_exit(p_ctx);
+    }
+    else {
+      rf_on_exit(p_ctx);
+    }
 
     /* set operation frequency */
     freq_reg = freq_center + rf_ctx.cfgFreqChanNum * freq_delta;
@@ -2272,10 +2411,18 @@ static void rf_chanNumSet(uint8_t chan_num, e_nsErr_t *p_err) {
 
     write_byte = (freq_reg & 0x000000FF);
     cc112x_spiRegWrite(CC112X_FREQ0, &write_byte, 1);
-  }
 
-  /* frequency calibration */
-  rf_manualCalibration();
+    /* frequency calibration */
+    rf_manualCalibration();
+
+    /* restore previous state */
+    if (prevState == RF_STATE_SLEEP) {
+      rf_sleep_entry(p_ctx);
+    }
+    else {
+      rf_on_entry(p_ctx);
+    }
+  }
 }
 
 /**
@@ -2326,8 +2473,8 @@ static void rf_opModeSet(e_nsRfOpMode mode, e_nsErr_t *p_err) {
 
 /**
  * @brief   Read Receiver Signal Strength Indicator
- * @param p_val
- * @param p_err
+ * @param p_val   point to variable storing RSSI value to read
+ * @param p_err   point to variable storing returned error code
  */
 static void rf_readRSSI(int8_t *p_val, e_nsErr_t *p_err) {
   /* get real RSSI from most recently received frame */

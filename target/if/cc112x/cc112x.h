@@ -271,6 +271,7 @@
 #define CC112X_AFC                      0x37      /*  AFC     - Automatic Frequency Correction */
 
 /* Chip states returned in status byte */
+#define CC112X_STATE_MASK               0x70
 #define CC112X_STATE_IDLE               0x00
 #define CC112X_STATE_RX                 0x10
 #define CC112X_STATE_TX                 0x20

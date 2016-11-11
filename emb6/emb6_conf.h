@@ -918,24 +918,37 @@ void uip_log(char *msg);
 *                          NETSTACK CONFIGURATIONS
 ********************************************************************************
 */
+ /*!< Enable/Disable support for IEEE Std. 802.15.4G */
 #ifndef NETSTK_CFG_IEEE_802154G_EN
 #define NETSTK_CFG_IEEE_802154G_EN                          FALSE
 #endif
 
 #if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
+ /*!< Enable/Disable 2k-length frame support in 802.15.4G mode */
   #ifndef NETSTK_CFG_2K_FRAME_EN
-    #define NETSTK_CFG_2K_FRAME_EN                          FALSE
-  #endif /* NETSTK_CFG_2K_FRAME_EN */
-#endif /* NETSTK_CFG_IEEE_802154G_EN */
+    #define NETSTK_CFG_2K_FRAME_EN                          TRUE
+  #endif
 
+  /*!< Enable/Disable MR-FSK PHY, see IEEE Std. 802.15.4g-2012 */
+  #ifndef NETSTK_CFG_MR_FSK_PHY_EN
+    #define NETSTK_CFG_MR_FSK_PHY_EN                        TRUE
+  #endif
+#endif
+
+/*!< Enable/Disable auto-acknowledgment on MAC */
 #ifndef NETSTK_CFG_MAC_SW_AUTOACK_EN
 #define NETSTK_CFG_MAC_SW_AUTOACK_EN                        FALSE
 #endif
 
+/*!< Enable/Disable automatic on/off to netstack
+ * If the netstack receives transmission request in sleep mode, it shall
+ * go back to the sleep mode upon complete transmission process
+ */
 #ifndef NETSTK_CFG_AUTO_ONOFF_EN
 #define NETSTK_CFG_AUTO_ONOFF_EN                            FALSE
 #endif
 
+/*!< Enable/Disable PHY MR-FSK operation mode, see IEEE Std. 802.15.4g-2012 table 68d */
 #define NETSTK_CFG_PHY_OP_MODE_1_EN                         TRUE
 #define NETSTK_CFG_PHY_OP_MODE_2_EN                         FALSE
 #define NETSTK_CFG_PHY_OP_MODE_3_EN                         FALSE
@@ -945,8 +958,14 @@ void uip_log(char *msg);
 #define NETSTK_CFG_LOW_POWER_MODE_EN                        FALSE
 #endif
 
+/*!< Enable/Disable loosely-sync feature in low power mode */
+#if (NETSTK_CFG_LOW_POWER_MODE_EN == TRUE)
+  #ifndef NETSTK_CFG_LOOSELY_SYNC_EN
+    #define NETSTK_CFG_LOOSELY_SYNC_EN                      FALSE
+  #endif
+#endif
 
- /*!< Enable/Disable Data Whitening */
+/*!< Enable/Disable Data Whitening */
 #ifndef NETSTK_CFG_DATA_WHITENING_EN
 #define NETSTK_CFG_DATA_WHITENING_EN                        FALSE
 #endif
@@ -956,11 +975,26 @@ void uip_log(char *msg);
 #define NETSTK_CFG_WOR_EN                                   FALSE
 #endif
 
+/*!< CSMA configuration */
 #define NETSTK_CFG_CSMA_MIN_BE                    (uint8_t )(   3u )
 #define NETSTK_CFG_CSMA_MAX_BE                    (uint8_t )(   5u )
 #define NETSTK_CFG_CSMA_MAX_BACKOFF               (uint8_t )(   4u )
 #define NETSTK_CFG_CSMA_UNIT_BACKOFF_US           (uint32_t)( 400u )  /* @50kbps 2FSK */
 
+/*!< Default transceiver's transmission power */
+#ifndef TX_POWER
+#define TX_POWER              0
+#endif
+
+/*!< Default transceiver's receive sensitivity */
+#ifndef RX_SENSITIVITY
+#define RX_SENSITIVITY      -100
+#endif
+
+/*!< Default transceiver's transmission power */
+#ifndef MAC_ADDR_WORD
+#define MAC_ADDR_WORD       0xffff
+#endif
 
 /*
 ********************************************************************************
@@ -968,93 +1002,6 @@ void uip_log(char *msg);
 ********************************************************************************
 */
 #define NETSTK_CFG_ARG_CHK_EN               ( 1u )
-
-
- /*=============================================================================
-                                 POWER_SAVING SECTION
- =============================================================================*/
-/**
- * @addtogroup  Configurations
- * @{
- */
-#define MAC_ULE_CFG_LOOSE_SYNC_EN                      (TRUE)
-#define MAC_ULE_CFG_POWERUP_INTERVAL_IN_MS             (uint32_t)(  500u )
-#define MAC_ULE_CFG_STROBE_TX_INTERVAL_IN_MS           (MAC_ULE_CFG_POWERUP_INTERVAL_IN_MS * 2)
-
-#if (MAC_ULE_CFG_LOOSE_SYNC_EN == TRUE)
-#define MAC_ULE_CFG_PWRON_TBL_SIZE                     (uint8_t )(   3u  )
-#define MAC_ULE_CFG_QTY_STROBE_SENT_IN_ADVANCE         (uint8_t )(   3u  )      /*!< variable   */
-#endif
- /**
-  * @}
-  */
-
-
- /**
-  * @addtogroup  Porting
-  * @note        These following parameters are hardware-specific. Measurements
-  *              should be taken on every platform for which the APSS module is
-  *              ported.
-  *              t_scan = t_strobe_gap + t_tx(strobe_len + sync_len + preamble_detection_len) + T_sniff
-  *
-  *
-  *              i.e. Guideline for calculating APSS parameters for RF
-  *                   transceiver TI CC1120:
-  *
-  *              preamble_detection_len = 4 bits = 0.5 byte
-  *
-  *              sync_len = 4 bytes
-  *
-  *              strobe_len = preamble_len + sync_len + strobe_payload_len + CRC_len
-  *                         =     24       +     4    +         5          +    2
-  *                         = 35 bytes ~ 5.4ms@50kbps
-  *
-  *              t_strobe_gap = t_tx_strobe + 2 * t_tx_rx_turnaround
-  *                           ~      5.4    +      2 * 1
-  *                           ~ 8ms
-  *
-  *              T_sniff@24byte_preamble = t_wakeup + t_rx  + t_sleep
-  *                                      ~  0.5665  + 0.315 +  2.868 (SmartRFStudio)
-  *                                      ~  3.75ms
-  *
-  *              => t_scan ~ 8 + t_tx((35 + 4 + 0.5)bytes@50kbps) + 3.75
-  *                        ~ 8 +            6,1         + 3.75
-  *                        ~ 18ms (minimum)
-  *
-  *              However @18ms, scanning performance is not reliable. A small
-  *              time period of 1-2ms is added as a trade-off for better performance.
-  *              This time addition is usually caused by transition time of RF
-  *              driver implementation.
-  */
-#define MAC_ULE_PORT_SCAN_DURATION_IN_MS                (uint32_t)(  20u )          /*!< fixed, hardware-specific       */
-#define MAC_ULE_PORT_ON_TO_OFF_TIME_IN_MS               (uint32_t)(   8u )          /*!< fixed, hardware-specific, 06   */
-#define MAC_ULE_PORT_OFF_TO_ON_TIME_IN_MS               (uint32_t)(  10u )          /*!< fixed, hardware-specific, 15   */
-#define MAC_ULE_PORT_TX_RX_TURNAROUND_IN_MS             (uint32_t)(   1u )          /*!< fixed, hardware-specific, 01   */
-#define MAC_ULE_PORT_STROBE_TX_TIME_IN_MS               (uint32_t)(   8u )          /*!< fixed, hardware-specific, 08   */
-#define MAC_ULE_PORT_STROBE_TX_GAP_TIME_IN_MS           (uint32_t)(   8u )          /*!< fixed, hardware-specific, 09   */
-#define MAC_ULE_PORT_RX_PAYLOAD_OFFSET_IN_MS            (uint32_t)(   2u )          /*!< variable, needed for better performance 2   */
-
-#define MAC_ULE_PORT_WFA_TIMEOUT_IN_MS                  15
-#define MAC_ULE_PORT_WFD_TIMEOUT_IN_MS                  15
-
-
-#define MAC_ULE_PORT_STROBE_TX_INTERVAL_IN_MS           (uint32_t)(  16U )
-
-#define MAC_ULE_CFG_STROBE_TX_MAX                       (uint8_t )(MAC_ULE_CFG_STROBE_TX_INTERVAL_IN_MS     /   \
-                                                                   MAC_ULE_PORT_STROBE_TX_INTERVAL_IN_MS)
-
-/**
- * @note    Broadcast feature is at the moment only available with SmartMAC
- */
-#define MAC_ULE_CFG_BROADCAST_TX_ADDITION               (uint8_t)( 2u )
-#define MAC_ULE_CFG_BROADCAST_TX_MAX                    (uint8_t)(MAC_ULE_CFG_POWERUP_INTERVAL_IN_MS       /       \
-                                                              MAC_ULE_PORT_STROBE_TX_INTERVAL_IN_MS    +       \
-                                                              MAC_ULE_CFG_BROADCAST_TX_ADDITION)
-
-
-/**
- * @}
- */
 
 
 #endif /* EMB6_CONF_H_ */

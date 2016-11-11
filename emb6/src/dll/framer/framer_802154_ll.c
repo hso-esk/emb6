@@ -7,15 +7,15 @@
 #include "emb6.h"
 #include "framer_802154.h"
 #include "framer_smartmac.h"
+#include "framer_802154_ll.h"
 #include "phy_framer_802154.h"
 #include "packetbuf.h"
 #include "linkaddr.h"
 #include "crc.h"
 #include "logger.h"
-#include "llframer.h"
 
 
-uint16_t llframe_parse(llframe_attr_t *p_frame, uint8_t *p_buf, uint16_t len) {
+uint16_t framer802154ll_parse(framer802154ll_attr_t *p_frame, uint8_t *p_buf, uint16_t len) {
   uint8_t *p_mhr;
   uint8_t frameType;
   uint8_t destAddrMode;
@@ -34,8 +34,8 @@ uint16_t llframe_parse(llframe_attr_t *p_frame, uint8_t *p_buf, uint16_t len) {
 
   p_frame->tot_len = PHY_HEADER_LEN + pktLen;
   p_frame->crc_offset = PHY_HEADER_LEN;
-  if ((p_frame->tot_len < LLFRAME_MIN_NUM_RX_BYTES) ||
-      (p_frame->tot_len > LLFRAME_MAX_NUM_RX_BYTES)) {
+  if ((p_frame->tot_len < FRAMER802154LL_MIN_NUM_RX_BYTES) ||
+      (p_frame->tot_len > FRAMER802154LL_MAX_NUM_RX_BYTES)) {
     /* invalid length */
     return 0;
   }
@@ -84,12 +84,12 @@ uint16_t llframe_parse(llframe_attr_t *p_frame, uint8_t *p_buf, uint16_t len) {
   }
 
   /* return number of remaining bytes without checksum */
-  numRemBytes = p_frame->tot_len - LLFRAME_MIN_NUM_RX_BYTES;
+  numRemBytes = p_frame->tot_len - FRAMER802154LL_MIN_NUM_RX_BYTES;
   return numRemBytes;
 }
 
 
-uint8_t llframe_createAck(llframe_attr_t *p_frame, uint8_t *p_buf, uint16_t len) {
+uint8_t framer802154ll_createAck(framer802154ll_attr_t *p_frame, uint8_t *p_buf, uint16_t len) {
   uint8_t *p = p_buf;
   uint8_t *p_mhr = &p_buf[PHY_HEADER_LEN];
   uint8_t ack_len;
@@ -145,7 +145,7 @@ uint8_t llframe_createAck(llframe_attr_t *p_frame, uint8_t *p_buf, uint16_t len)
 }
 
 
-uint8_t llframe_addrFilter(llframe_attr_t *p_frame, uint8_t *p_buf, uint16_t len) {
+uint8_t framer802154ll_addrFilter(framer802154ll_attr_t *p_frame, uint8_t *p_buf, uint16_t len) {
   uint8_t ix;
   uint8_t *p;
   uint8_t destAddr[8];
@@ -224,7 +224,7 @@ uint8_t llframe_addrFilter(llframe_attr_t *p_frame, uint8_t *p_buf, uint16_t len
   return TRUE;
 }
 
-uint32_t llframe_crcInit(llframe_attr_t *p_frame) {
+uint32_t framer802154ll_crcInit(framer802154ll_attr_t *p_frame) {
   if (p_frame->crc_len == 2) {
     return CRC16_INIT;
   } else {
@@ -232,7 +232,7 @@ uint32_t llframe_crcInit(llframe_attr_t *p_frame) {
   }
 }
 
-uint32_t llframe_crcUpdate(llframe_attr_t *p_frame, uint8_t *p_data, uint16_t len, uint32_t curCRC) {
+uint32_t framer802154ll_crcUpdate(framer802154ll_attr_t *p_frame, uint8_t *p_data, uint16_t len, uint32_t curCRC) {
   if (p_frame->crc_len == 2) {
     return crc_16_updateN(curCRC, p_data, len);
   }
@@ -241,7 +241,7 @@ uint32_t llframe_crcUpdate(llframe_attr_t *p_frame, uint8_t *p_data, uint16_t le
   }
 }
 
-uint32_t llframe_crcFinal(llframe_attr_t *p_frame, uint32_t curCRC) {
+uint32_t framer802154ll_crcFinal(framer802154ll_attr_t *p_frame, uint32_t curCRC) {
   if (p_frame->crc_len == 4) {
     uint16_t len;
     len = p_frame->tot_len - p_frame->crc_len - PHY_HEADER_LEN;
@@ -255,7 +255,7 @@ uint32_t llframe_crcFinal(llframe_attr_t *p_frame, uint32_t curCRC) {
 }
 
 
-uint8_t llframe_crcFilter(llframe_attr_t *p_frame, uint32_t actCRC, uint8_t *p_expCRC, uint16_t len) {
+uint8_t framer802154ll_crcFilter(framer802154ll_attr_t *p_frame, uint32_t actCRC, uint8_t *p_expCRC, uint16_t len) {
   uint32_t expCRC = 0;
   uint8_t is_matched;
 

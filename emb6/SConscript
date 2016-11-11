@@ -22,7 +22,7 @@ emb6 = {
 		'apl/dns/*',
 	],
 	'sock' : [
-		'tport/*',
+		'sock/*',
 	],
 	'ipv6' : [
 		'net/ipv6/*',

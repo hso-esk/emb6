@@ -142,6 +142,22 @@ static const s_regSettings_t cc112x_cfg_worSmartRFTesting[] = {
 };
 #endif /* EMB6_TEST_CFG_WOR_EN */
 
+static const s_regSettings_t cc112x_cfg_iocfgOn[] = {
+    {CC112X_IOCFG0,             0x06},  /* PKT_BEGIN, unchanged at runtime */
+    {CC112X_IOCFG2,             0x00},  /* RXFIFO_THR,  changed at runtime */
+    {CC112X_IOCFG3,             0x06},  /* PKT_END,   unchanged at runtime */
+
+    {CC112X_IOCFG2,             0x02},  /* TXFIFO_THR,  changed at runtime */
+    {CC112X_IOCFG2,             0x0B},  /* PQT_REACHED, changed at runtime */
+};
+
+
+static const s_regSettings_t cc112x_cfg_iocfgOff[] = {
+    {CC112X_IOCFG0,             0xB0},  /* Impedance */
+    {CC112X_IOCFG2,             0xB0},  /* Impedance */
+    {CC112X_IOCFG3,             0xB0},  /* Impedance */
+};
+
 /**
  * @brief   Default register settings for IEEE-802.15.4g
  *          Carrier Frequency:  863.125MHz
@@ -160,15 +176,11 @@ static const s_regSettings_t cc112x_cfg_ieee802154g_default[] =
 {
     {CC112X_IOCFG1,             0xB0},  /* Impedance */
 
-    {CC112X_IOCFG0,             0x06},  /* PKT_BEGIN */
-    {CC112X_IOCFG2,             0x00},  /* RXFIFO_THR */
-    {CC112X_IOCFG3,             0x06},  /* PKT_END */
-
     {CC112X_SYNC3,              0x90},  /* SFD[15-8] FEC not supported and phyMRFSKSFD = 0 -> SFD = 0x904E */
     {CC112X_SYNC2,              0x4E},  /* SFD[ 7-0] ... */
     {CC112X_SYNC1,              0x51},  /* don't care */
     {CC112X_SYNC0,              0xDE},  /* don't care */
-    {CC112X_SYNC_CFG1,          0x08},  /* AUTO_CLEAR = 1, enabled; RX_CONFIG_LIMITATION = 0 */
+    {CC112X_SYNC_CFG1,          0x48},  /* AUTO_CLEAR = 1, enabled; RX_CONFIG_LIMITATION = 0 */
     {CC112X_SYNC_CFG0,          0x1B},  /* 16H bits SYCN3-SYNC2 */
 
     {CC112X_DEVIATION_M,        0x99},  /* Deviation 25kHz */
@@ -186,9 +198,9 @@ static const s_regSettings_t cc112x_cfg_ieee802154g_default[] =
     {CC112X_SYMBOL_RATE1,       0x99},
     {CC112X_SYMBOL_RATE0,       0x99},
 
-    {CC112X_AGC_REF,            0x3E},
+    {CC112X_AGC_REF,            0x3C},
     {CC112X_AGC_CS_THR,         0x0C},  /* default 0C -90dBm; 0x2A = -60dBm; 0x16 = -0x80dBm */
-    {CC112X_AGC_CFG1,           0xA0},
+    {CC112X_AGC_CFG1,           0xA9},
     {CC112X_AGC_CFG0,           0xC0},  /* RSSI_VALID_CNT = 00b; 0x02 */
     {CC112X_FIFO_CFG,           0x00},  /* Automatically flushes when CRC error occurred */
 

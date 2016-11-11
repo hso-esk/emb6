@@ -218,7 +218,7 @@ s_hal_gpio_pin_t s_hal_gpio[e_hal_gpios_max] = {
 /** External interrupt GPIOs table */
 s_hal_gpio_pin_t s_hal_exti_gpio[E_TARGET_EXT_INT_MAX] = {
   {EFM32_IO_PORT_RF_IRQ_0, EFM32_IO_PIN_RF_IRQ_0, gpioModeInputPull, 0},  /* E_TARGET_EXT_INT_0 */
-  {EFM32_IO_PORT_RF_IRQ_2, EFM32_IO_PIN_RF_IRQ_2, gpioModeInputPull, 0},  /* E_TARGET_EXT_INT_1 */
+  {EFM32_IO_PORT_RF_IRQ_2, EFM32_IO_PIN_RF_IRQ_2, gpioModeInputPull, 1},  /* E_TARGET_EXT_INT_1 */
   {EFM32_IO_PORT_RF_IRQ_3, EFM32_IO_PIN_RF_IRQ_3, gpioModeInputPull, 0},  /* E_TARGET_EXT_INT_2 */
   {0, 0, 0, 0},  /* E_TARGET_EXT_INT_3 is not supported */
 
@@ -362,10 +362,12 @@ static void _hal_uartInit( void )
 static void _hal_tcCb( void )
 {
   /* Indicate timer update to the emb6 timer */
+  hal_enterCritical();
   if (l_hal_tick % CONF_TICK_SEC == 0) {
     l_hal_sec++;
   }
   l_hal_tick++;
+  hal_exitCritical();
 
   /* update real-time timers*/
   rt_tmr_update();
@@ -403,11 +405,9 @@ void TIMER1_IRQHandler()
 {
   uint32_t flags;
 
-  INT_Disable();
   flags = TIMER_IntGet(TIMER1);
   _hal_tcCb();
   TIMER_IntClear(TIMER1, flags);
-  INT_Enable();
 }
 
 void USART0_RX_IRQHandler(void)

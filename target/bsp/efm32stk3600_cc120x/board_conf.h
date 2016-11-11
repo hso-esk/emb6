@@ -138,6 +138,12 @@
  */
 #define EMB6_PROC_DELAY                     0
 
+/* enable auto-acknowledgment of radio driver */
+#define NETSTK_CFG_RF_SW_AUTOACK_EN         TRUE
+
+/* radio transceiver does not support standard-specified checksum */
+#define NETSTK_CFG_RF_CRC_EN                FALSE
+
 /*============================================================================*/
 /*!
 \brief    emb6 board configuration fuction
