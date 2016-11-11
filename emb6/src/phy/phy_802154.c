@@ -315,7 +315,7 @@ static void phy_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
   fcs_len = packetbuf_attr(PACKETBUF_ATTR_MAC_FCS_LEN);
 
 #if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
-  uint8_t psdu_len;
+  uint16_t psdu_len;
   p_data += PHY_HEADER_LEN;
   psdu_len = (len - PHY_HEADER_LEN) - fcs_len;
 
