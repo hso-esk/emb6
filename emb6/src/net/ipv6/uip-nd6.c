@@ -121,8 +121,14 @@ void uip_log(char *msg);
 #define UIP_ND6_OPT_RDNSS_BUF ((uip_nd6_opt_dns *)&uip_buf[uip_l2_l3_icmp_hdr_len + nd6_opt_offset])
 /** @} */
 
+#if UIP_ND6_SEND_NA || UIP_ND6_SEND_RA || !UIP_CONF_ROUTER
 static uint8_t nd6_opt_offset;                     /** Offset from the end of the icmpv6 header to the option in uip_buf*/
 static uint8_t *nd6_opt_llao;   /**  Pointer to llao option in uip_buf */
+static uip_ds6_nbr_t *nbr; /**  Pointer to a nbr cache entry*/
+static uip_ds6_defrt_t *defrt; /**  Pointer to a router list entry */
+static uip_ds6_addr_t *addr; /**  Pointer to an interface address */
+#endif /* UIP_ND6_SEND_NA || UIP_ND6_SEND_RA || !UIP_CONF_ROUTER */
+
 
 #if !UIP_CONF_ROUTER            // TBD see if we move it to ra_input
 static uip_nd6_opt_prefix_info *nd6_opt_prefix_info; /**  Pointer to prefix information option in uip_buf */
@@ -131,9 +137,7 @@ static uip_ipaddr_t ipaddr;
 #if (!UIP_CONF_ROUTER || UIP_ND6_SEND_RA)
 static uip_ds6_prefix_t *prefix; /**  Pointer to a prefix list entry */
 #endif
-static uip_ds6_nbr_t *nbr; /**  Pointer to a nbr cache entry*/
-static uip_ds6_defrt_t *defrt; /**  Pointer to a router list entry */
-static uip_ds6_addr_t *addr; /**  Pointer to an interface address */
+
 /*------------------------------------------------------------------*/
 /* create a llao */ 
 static void
@@ -148,7 +152,7 @@ create_llao(uint8_t *llao, uint8_t type) {
 
 /*------------------------------------------------------------------*/
 
-
+#if UIP_ND6_SEND_NA
 static void
 ns_input(void)
 {
@@ -328,6 +332,7 @@ discard:
   uip_len = 0;
   return;
 }
+#endif /* UIP_ND6_SEND_NA */
 
 
 
@@ -394,6 +399,7 @@ uip_nd6_ns_output(uip_ipaddr_t * src, uip_ipaddr_t * dest, uip_ipaddr_t * tgt)
   PRINTF("\n");
   return;
 }
+#if UIP_ND6_SEND_NA
 /*------------------------------------------------------------------*/
 /**
  * Neighbor Advertisement Processing
@@ -563,7 +569,7 @@ discard:
   uip_len = 0;
   return;
 }
-
+#endif /* UIP_ND6_SEND_NA */
 
 #if UIP_CONF_ROUTER
 #if UIP_ND6_SEND_RA
@@ -864,7 +870,7 @@ ra_input(void)
                               (uip_lladdr_t *)&nd6_opt_llao[UIP_ND6_OPT_DATA_OFFSET],
                   1, NBR_STALE);
       } else {
-        uip_lladdr_t *lladdr = uip_ds6_nbr_get_ll(nbr);
+    	uip_lladdr_t *lladdr = (uip_lladdr_t *)uip_ds6_nbr_get_ll(nbr);
         if(nbr->state == NBR_INCOMPLETE) {
           nbr->state = NBR_STALE;
         }
