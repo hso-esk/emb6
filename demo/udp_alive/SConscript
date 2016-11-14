@@ -19,6 +19,7 @@ udp_alive = {
 	'CPPDEFINES' : [
 		('DEMO_USE_UDPALIVE',1),
 		('NET_USE_RPL',1),
+		('NETSTACK_CONF_WITH_RIME',1),
 	],
 # GCC flags
 	'CFLAGS' : [

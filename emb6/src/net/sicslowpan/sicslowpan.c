@@ -1356,11 +1356,6 @@ send_packet(linkaddr_t *dest)
   packetbuf_set_addr(PACKETBUF_ADDR_SENDER,(void*)&uip_lladdr);
 #endif
 
-  /* Force acknowledge from sender (test hardware autoacks) */
-#if SICSLOWPAN_CONF_ACK_ALL
-    packetbuf_set_attr(PACKETBUF_ATTR_RELIABLE, 1);
-#endif
-
     if ((p_ns != NULL) && (p_ns->dllsec != NULL)) {
         /* Provide a callback function to receive the result of
          a packet transmission. */
