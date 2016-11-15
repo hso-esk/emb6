@@ -33,15 +33,12 @@
 #include "bsp.h"
 #include "clist.h"
 #include "etimer.h"
-
+#include "cc.h"
 #include "tcp-socket.h"
 
 #include <stdio.h>
 #include <string.h>
 
-#ifndef MIN
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-#endif /* MIN */
 
 static void relisten(struct tcp_socket *s);
 

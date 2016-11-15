@@ -76,6 +76,7 @@
  * @{
  */
 #include "emb6.h"
+#include "cc.h"
 #include "uip.h"
 #include "uipopt.h"
 #include "uip-icmp6.h"
@@ -2335,7 +2336,7 @@ void
 uip_send(const void *data, int len)
 {
   int copylen;
-#define MIN(a,b) ((a) < (b)? (a): (b))
+
   if(uip_sappdata != NULL) {
       copylen = MIN(len, UIP_BUFSIZE - UIP_LLH_LEN - UIP_TCPIP_HLEN -
               (int)((char *)uip_sappdata -

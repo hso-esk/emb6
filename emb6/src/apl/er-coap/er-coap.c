@@ -40,7 +40,7 @@
 #include <stdio.h>
 
 #include "random.h"
-
+#include "cc.h"
 #include "er-coap.h"
 #include "er-coap-transactions.h"
 

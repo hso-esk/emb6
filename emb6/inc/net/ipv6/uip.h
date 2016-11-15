@@ -57,6 +57,7 @@
 #define UIP_H_
 
 #include "emb6.h"
+#include "cc.h"
 
 /* Header sizes. */
 #if NETSTACK_CONF_WITH_IPV6
