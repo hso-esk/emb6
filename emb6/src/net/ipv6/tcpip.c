@@ -258,7 +258,7 @@ tcp_connect(const uip_ipaddr_t *ripaddr, uint16_t port, void *appstate)
 void
 tcp_unlisten(uint16_t port,uint8_t conn_id)
 {
-  static unsigned char i;
+  unsigned char i;
   struct listenport *l;
 
   l = s.listenports;
@@ -276,7 +276,7 @@ tcp_unlisten(uint16_t port,uint8_t conn_id)
 void
 tcp_listen(uint16_t port, uint8_t conn_id)
 {
-  static unsigned char i;
+  unsigned char i;
   struct listenport *l;
 
   l = s.listenports;
@@ -384,7 +384,7 @@ static void
 eventhandler(c_event_t ev, p_data_t data)
 {
 #if UIP_TCP
-  static unsigned char i;
+  unsigned char i;
 //  register struct listenport *l;
 #endif /*UIP_TCP*/
 
@@ -737,7 +737,7 @@ tcpip_uipcall(void)
 
 #if UIP_TCP
  {
-   static unsigned char i;
+   unsigned char i;
    register struct listenport *l;
    
    /* If this is a connection request for a listening port, we must
@@ -780,7 +780,7 @@ void tcpip_init(void)
 {
 #if UIP_TCP
  {
-   static unsigned char i;
+   unsigned char i;
 
    for(i = 0; i < UIP_LISTENPORTS; ++i) {
      s.listenports[i].port = 0;
