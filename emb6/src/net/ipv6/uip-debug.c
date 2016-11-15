@@ -47,6 +47,12 @@ uip_debug_ipaddr_print(const uip_ipaddr_t *addr)
   uint16_t a;
   unsigned int i;
   int f;
+#endif /* UIP_CONF_IPV6 */
+  if(addr == NULL) {
+    PRINTA("(NULL IP addr)");
+    return;
+  }
+#if UIP_CONF_IPV6
   for(i = 0, f = 0; i < sizeof(uip_ipaddr_t); i += 2) {
     a = (addr->u8[i] << 8) + addr->u8[i + 1];
     if(a == 0 && f >= 0) {
@@ -72,7 +78,7 @@ uip_debug_lladdr_print(const uip_lladdr_t *addr)
 {
   unsigned int i;
   if(addr == NULL) {
-    printf("(NULL LL addr)");
+	PRINTA("(NULL LL addr)");
     return;
   }
   for(i = 0; i < sizeof(uip_lladdr_t); i++) {
