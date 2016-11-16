@@ -117,17 +117,19 @@ coap_set_option_header(unsigned int delta, size_t length, uint8_t *buffer)
 
   buffer[0] = coap_option_nibble(delta) << 4 | coap_option_nibble(length);
 
-  /* avoids code duplication without function overhead */
-  unsigned int *x = &delta;
+  if(delta > 268) {
+    buffer[++written] = ((delta - 269) >> 8) & 0xff;
+    buffer[++written] = (delta - 269) & 0xff;
+  } else if(delta > 12) {
+    buffer[++written] = (delta - 13);
+  }
 
-  do {
-    if(*x > 268) {
-      buffer[++written] = (*x - 269) >> 8;
-      buffer[++written] = (*x - 269);
-    } else if(*x > 12) {
-      buffer[++written] = (*x - 13);
-    }
-  } while(x != (unsigned int *)&length && (x = (unsigned int *)&length));
+  if(length > 268) {
+    buffer[++written] = ((length - 269) >> 8) & 0xff;
+    buffer[++written] = (length - 269) & 0xff;
+  } else if(length > 12) {
+    buffer[++written] = (length - 13);
+  }
 
   PRINTF("WRITTEN %u B opt header\n", 1 + written);
 
