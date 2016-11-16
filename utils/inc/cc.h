@@ -45,6 +45,7 @@
 #ifndef CC_H_
 #define CC_H_
 
+#include "cc-gcc.h"
 
 /**
  * Configure if the C compiler supports the "register" keyword for
@@ -107,6 +108,10 @@
 #define CC_INLINE CC_CONF_INLINE
 #else /* CC_CONF_INLINE */
 #define CC_INLINE
+#endif /* CC_CONF_INLINE */
+
+#ifdef CC_CONF_ALIGN
+#define CC_ALIGN(n) CC_CONF_ALIGN(n)
 #endif /* CC_CONF_INLINE */
 
 /**
