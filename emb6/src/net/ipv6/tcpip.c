@@ -161,8 +161,8 @@ unsigned char tcpip_is_forwarding; /* Forwarding right now? */
 
 //PROCESS(tcpip_process, "TCP/IP stack");
 
-#if UIP_TCP
 /*---------------------------------------------------------------------------*/
+#if UIP_TCP || UIP_CONF_IP_FORWARD
 static void
 start_periodic_tcp_timer(void)
 {
@@ -170,7 +170,7 @@ start_periodic_tcp_timer(void)
     etimer_restart(&periodic);
   }
 }
-#endif /* UIP_TCP */
+#endif /* UIP_TCP || UIP_CONF_IP_FORWARD */
 /*---------------------------------------------------------------------------*/
 static void
 check_for_tcp_syn(void)
