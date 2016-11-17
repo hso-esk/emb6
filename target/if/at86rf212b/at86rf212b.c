@@ -1279,7 +1279,7 @@ static void _rf212b_init(void *p_netstk, e_nsErr_t *p_err)
         }
     #if PRINT_PCK_STAT
         ctimer_init();
-        ctimer_set(&pckstat_ct,TIMESTAMP_PERIOD_SEC * bsp_get(E_BSP_GET_TRES),&_show_stat,NULL);
+        ctimer_set(&pckstat_ct,TIMESTAMP_PERIOD_SEC * bsp_getTRes(),&_show_stat,NULL);
     #endif /* PRINT_PCK_STAT */
     }
     error:
