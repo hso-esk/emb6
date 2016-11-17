@@ -41,8 +41,11 @@
 #ifndef UIP_DS6_ROUTE_H
 #define UIP_DS6_ROUTE_H
 
+#include "nbr-table.h"
 #include "stimer.h"
 #include "clist.h"
+
+NBR_TABLE_DECLARE(nbr_routes);
 
 void uip_ds6_route_init(void);
 
