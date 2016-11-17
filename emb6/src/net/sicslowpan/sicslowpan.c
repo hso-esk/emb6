@@ -228,7 +228,7 @@ static uint8_t uncomp_hdr_len;
 static int last_tx_status;
 /** @} */
 
-static uint16_t my_tag;
+
 static int last_rssi;
 
 /* ----------------------------------------------------------------- */
@@ -238,6 +238,8 @@ static int last_rssi;
  * temporary memory allocation. In that case the number of available
  * buffers will be lower for a short time.
  **/
+#if SICSLOWPAN_CONF_FRAG
+static uint16_t my_tag;
 
 /** The total length of the IPv6 packet in the sicslowpan_buf. */
 
@@ -450,7 +452,7 @@ copy_frags2uip(int context)
   /* deallocate all the fragments for this context */
   clear_fragments(context);
 }
-
+#endif /* SICSLOWPAN_CONF_FRAG */
 
 /* -------------------------------------------------------------------------- */
 
@@ -1795,13 +1797,14 @@ input(void)
 {
   /* size of the IP packet (read from fragment) */
   uint16_t frag_size = 0;
-  int8_t frag_context = 0;
   /* offset of the fragment in the IP packet */
   uint8_t frag_offset = 0;
   uint8_t *buffer;
 
 #if SICSLOWPAN_CONF_FRAG
   uint8_t is_fragment = 0;
+  int8_t frag_context = 0;
+
   /* tag of the fragment */
   uint16_t frag_tag = 0;
   uint8_t first_fragment = 0, last_fragment = 0;

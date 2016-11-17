@@ -125,6 +125,8 @@
 /** Do we support 6lowpan fragmentation */
 #define SICSLOWPAN_CONF_FRAG                 TRUE
 
+#define SICSLOWPAN_CONF_FRAGMENT_BUFFERS     4
+
 /** Most browsers reissue GETs after 3 seconds which stops frag reassembly, longer MAXAGE does no good */
 #define SICSLOWPAN_CONF_MAXAGE               3
 
