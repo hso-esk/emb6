@@ -286,7 +286,7 @@ uip_ds6_prefix_add(uip_ipaddr_t *ipaddr, uint8_t ipaddrlen,
     }
     PRINTF("Adding prefix ");
     PRINT6ADDR(&locprefix->ipaddr);
-    PRINTF("length %u, vlifetime%lu\n\r", ipaddrlen, interval);
+    PRINTF("length %u, vlifetime %lu\n\r", ipaddrlen, interval);
   }
   return NULL;
 }
@@ -607,7 +607,7 @@ uip_ds6_dad(uip_ds6_addr_t *addr)
    * If we arrive here it means DAD succeeded, otherwise the dad process
    * would have been interrupted in ds6_dad_ns/na_input
    */
-  PRINTF("DAD succeeded, ipaddr:");
+  PRINTF("DAD succeeded, ipaddr: ");
   PRINT6ADDR(&addr->ipaddr);
   PRINTF("\n\r");
 

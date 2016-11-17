@@ -171,7 +171,7 @@ ns_input(void)
   PRINT6ADDR(&UIP_IP_BUF->srcipaddr);
   PRINTF(" to ");
   PRINT6ADDR(&UIP_IP_BUF->destipaddr);
-  PRINTF(" with target address");
+  PRINTF(" with target address ");
   PRINT6ADDR((uip_ipaddr_t *) (&UIP_ND6_NS_BUF->tgtipaddr));
   PRINTF("\n");
   UIP_STAT(++uip_stat.nd6.recv);
@@ -399,11 +399,11 @@ uip_nd6_ns_output(uip_ipaddr_t * src, uip_ipaddr_t * dest, uip_ipaddr_t * tgt)
   UIP_ICMP_BUF->icmpchksum = ~uip_icmp6chksum();
 
   UIP_STAT(++uip_stat.nd6.sent);
-  PRINTF("Sending NS to");
+  PRINTF("Sending NS to ");
   PRINT6ADDR(&UIP_IP_BUF->destipaddr);
-  PRINTF("from");
+  PRINTF(" from ");
   PRINT6ADDR(&UIP_IP_BUF->srcipaddr);
-  PRINTF("with target address");
+  PRINTF(" with target address ");
   PRINT6ADDR(tgt);
   PRINTF("\n");
   return;
@@ -435,11 +435,11 @@ na_input(void)
   uint8_t is_solicited;
   uint8_t is_override;
 
-  PRINTF("Received NA from");
+  PRINTF("Received NA from ");
   PRINT6ADDR(&UIP_IP_BUF->srcipaddr);
-  PRINTF("to");
+  PRINTF(" to ");
   PRINT6ADDR(&UIP_IP_BUF->destipaddr);
-  PRINTF("with target address");
+  PRINTF(" with target address ");
   PRINT6ADDR((uip_ipaddr_t *) (&UIP_ND6_NA_BUF->tgtipaddr));
   PRINTF("\n");
   UIP_STAT(++uip_stat.nd6.recv);
@@ -587,9 +587,9 @@ static void
 rs_input(void)
 {
 
-  PRINTF("Received RS from");
+  PRINTF("Received RS from ");
   PRINT6ADDR(&UIP_IP_BUF->srcipaddr);
-  PRINTF("to");
+  PRINTF(" to ");
   PRINT6ADDR(&UIP_IP_BUF->destipaddr);
   PRINTF("\n");
   UIP_STAT(++uip_stat.nd6.recv);
@@ -810,9 +810,9 @@ uip_nd6_rs_output(void)
   UIP_ICMP_BUF->icmpchksum = ~uip_icmp6chksum();
 
   UIP_STAT(++uip_stat.nd6.sent);
-  PRINTF("Sendin RS to");
+  PRINTF("Sendin RS to ");
   PRINT6ADDR(&UIP_IP_BUF->destipaddr);
-  PRINTF("from");
+  PRINTF(" from ");
   PRINT6ADDR(&UIP_IP_BUF->srcipaddr);
   PRINTF("\n");
   return;
@@ -830,9 +830,9 @@ uip_nd6_rs_output(void)
 void
 ra_input(void)
 {
-  PRINTF("Received RA from");
+  PRINTF("Received RA from ");
   PRINT6ADDR(&UIP_IP_BUF->srcipaddr);
-  PRINTF("to");
+  PRINTF(" to ");
   PRINT6ADDR(&UIP_IP_BUF->destipaddr);
   PRINTF("\n");
   UIP_STAT(++uip_stat.nd6.recv);
@@ -930,9 +930,9 @@ ra_input(void)
               prefix->isinfinite = 1;
               break;
             default:
-              PRINTF("Updating timer of prefix");
+              PRINTF("Updating timer of prefix ");
               PRINT6ADDR(&prefix->ipaddr);
-              PRINTF("new value %lu\n", uip_ntohl(nd6_opt_prefix_info->validlt));
+              PRINTF(" new value %lu\n", uip_ntohl(nd6_opt_prefix_info->validlt));
               stimer_set(&prefix->vlifetime,
                          uip_ntohl(nd6_opt_prefix_info->validlt));
               prefix->isinfinite = 0;
@@ -955,9 +955,9 @@ ra_input(void)
               if((uip_ntohl(nd6_opt_prefix_info->validlt) > 2 * 60 * 60) ||
                  (uip_ntohl(nd6_opt_prefix_info->validlt) >
                   stimer_remaining(&addr->vlifetime))) {
-                PRINTF("Updating timer of address");
+                PRINTF("Updating timer of address ");
                 PRINT6ADDR(&addr->ipaddr);
-                PRINTF("new value %lu\n",
+                PRINTF(" new value %lu\n",
                        uip_ntohl(nd6_opt_prefix_info->validlt));
                 stimer_set(&addr->vlifetime,
                            uip_ntohl(nd6_opt_prefix_info->validlt));
@@ -965,7 +965,7 @@ ra_input(void)
                 stimer_set(&addr->vlifetime, 2 * 60 * 60);
                 PRINTF("Updating timer of address ");
                 PRINT6ADDR(&addr->ipaddr);
-                PRINTF("new value %lu\n", (unsigned long)(2 * 60 * 60));
+                PRINTF(" new value %lu\n", (unsigned long)(2 * 60 * 60));
               }
               addr->isinfinite = 0;
             } else {
