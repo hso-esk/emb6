@@ -1,4 +1,7 @@
 /*
+ * --- License --------------------------------------------------------------*
+ */
+/*
  * emb6 is licensed under the 3-clause BSD license. This license gives everyone
  * the right to use and distribute the code, either in binary or source code
  * format, as long as the copyright license is retained in the source code.
@@ -9,12 +12,7 @@
  * more adaptivity during run-time.
  *
  * The license text is:
- *
- * Copyright (c) 2015,
- * Hochschule Offenburg, University of Applied Sciences
- * Laboratory Embedded Systems and Communications Electronics.
- * All rights reserved.
- *
+
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  * 1. Redistributions of source code must retain the above copyright notice,
@@ -36,394 +34,539 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
+ * Copyright (c) 2016,
+ * Hochschule Offenburg, University of Applied Sciences
+ * Institute of reliable Embedded Systems and Communications Electronics.
+ * All rights reserved.
  */
-/*============================================================================*/
-/**  \addtogroup emb6
- *      @{
- *      \addtogroup bsp Board Support Package
- *   @{
+
+/*
+ * --- Module Description ---------------------------------------------------*
  */
-/*! \file   bsp.h
-
-    \author Artem Yushev, 
-            Phuong Nguyen
-
-    \brief  Definition of the API for board support packaged (BSP) used by
-            the embetter_main.c demo implementation.
-
-    \details The demo implementation of embetter_main.c uses the following
-            services from the hardware:
-              - initialization: bsp_init() is called after the emBetter stack
-                is initialized and leaves room for the initialization of other
-                parts of the BSP such as starting the timer.
-              - start: bsp_start() is called when the initialization of all
-                protocols is finished. Here the hardware dependent interfaces,
-                such as an Ethernet interface can be initialized.
-              - console: for handling menu commands, characters read by a
-                console must be provided.
-              - LED: some boards provide LED support and this is to be added
-                in the corresponding function.
-
-
-    \version 0.0.1
-*/
-
+/**
+ *  \file       bsp.h
+ *  \author     Institute of reliable Embedded Systems
+ *              and Communication Electronics
+ *  \date       $Date$
+ *  \version    $Version$
+ *
+ *  \brief      Definition of the Board Support Package used by emb::6.
+ *
+ *              The BSP is an intermediate layer between emb::6 and the HAL. The
+ *              stacks calls functions from the BSP which calls functions from the
+ *              HAL. However the BSP provides some common additional logic e.g.
+ *              for toggling LEDs.
+ */
 #ifndef __BSP_H__
 #define __BSP_H__
 
-/*============================================================================*/
-
-/*==============================================================================
-                                 INCLUDE FILES
-==============================================================================*/
+/*
+ * --- Includes -------------------------------------------------------------*
+ */
 #include "target.h"
 
-/*==============================================================================
-                                     MACROS
-==============================================================================*/
-#define LEDS_SUPPORTED                5
 
-#define BSP_PIN_DIROUTPUT           TRUE
-#define BSP_PIN_DIRINPUT            FALSE
-
-#define BSP_PIN_UP                  TRUE
-#define BSP_PIN_DOWN                FALSE
-
-
-/*==============================================================================
-                                     ENUMS
-==============================================================================*/
-//! Define the action the function bsp_led() must provide
-typedef enum E_BSP_LED_ACTION
+/*
+ * --- Type Definitions -----------------------------------------------------*
+ */
+/**
+ * \brief Defines the action to access an LED.
+ *
+ *        LEDS can be access on different ways. The BSP supports
+ *        enabling, disabling, toggling and blinking of LEDs.
+ */
+typedef enum EN_BSP_LED_OP_T
 {
-    //! Turn on the selected LED
-    E_BSP_LED_ON,
-    //! Turn off the selected LED
-    E_BSP_LED_OFF,
-    //! Toggle the selected LED
-    E_BSP_LED_TOGGLE
-} en_bspLedAction_t;
+    /** Turn on the selected LED */
+    EN_BSP_LED_OP_ON,
+    /** Turn off the selected LED */
+    EN_BSP_LED_OP_OFF,
+    /** set an LED mask */
+    EN_BSP_LED_OP_SET,
+    /** Toggle the selected LED */
+    EN_BSP_LED_OP_TOGGLE,
+    /** Let the selected LED blink */
+    EN_BSP_LED_OP_BLINK
 
-//! Define the leds color
-typedef enum E_BSP_LED_IDX
-{
-    //! Define LED0
-    E_BSP_LED_0 = 0x00,
-    //! Define LED1
-    E_BSP_LED_1 = 0x01,
-    //! Define LED2
-    E_BSP_LED_2 = 0x02,
-    //! Define LED3
-    E_BSP_LED_3 = 0x03,
-    //! Define LED4
-    E_BSP_LED_4 = 0x04,
-} en_bspLedIdx_t;
-
-//! Define the action the function bsp_wdt() must provide
-typedef enum E_BSP_WDT_ACTION
-{
-    //! Reset watchdog timer
-    E_BSP_WDT_RESET,
-    //! Start watchdog timer
-    E_BSP_WDT_START,
-    //! Stop watchdog timer
-    E_BSP_WDT_STOP,
-    //! Periodic watchdog timer
-    E_BSP_WDT_PERIODIC
-} en_bspWdtAction_t;
-
-//! Define the action the function bsp_wdt() must provide
-typedef enum E_BSP_PIN_ACTION
-{
-    //! Configure pin
-    E_BSP_PIN_CONF,
-    //! Set pin
-    E_BSP_PIN_SET,
-    //! Reset pin
-    E_BSP_PIN_CLR,
-    //! Get pin
-    E_BSP_PIN_GET
-} en_bspPinAction_t;
-
-//! Define the action the function bsp_wdt() must provide
-typedef enum E_BSP_GET_TYPE
-{
-    //! Ticks
-    E_BSP_GET_TICK,
-    //! Seconds
-    E_BSP_GET_SEC,
-    //! Ticks in one seconds (time resolution)
-    E_BSP_GET_TRES
-}en_bspParams_t;
-
-
-/*==============================================================================
-                         STRUCTURES AND OTHER TYPEDEFS
-==============================================================================*/
-
-
-/*==============================================================================
-                               MACROS
-==============================================================================*/
-#define LED_RX_ON()                 bsp_led(E_BSP_LED_0, E_BSP_LED_ON)
-#define LED_RX_OFF()                bsp_led(E_BSP_LED_0, E_BSP_LED_OFF)
-#define LED_TX_ON()                 bsp_led(E_BSP_LED_1, E_BSP_LED_ON)
-#define LED_TX_OFF()                bsp_led(E_BSP_LED_1, E_BSP_LED_OFF)
-#define LED_SCAN_ON()               bsp_led(E_BSP_LED_2, E_BSP_LED_ON)
-#define LED_SCAN_OFF()              bsp_led(E_BSP_LED_2, E_BSP_LED_OFF)
-#define LED_MEAS_ON()               bsp_led(E_BSP_LED_4, E_BSP_LED_ON)
-#define LED_MEAS_OFF()              bsp_led(E_BSP_LED_4, E_BSP_LED_OFF)
-#define LED_ERROR()                 bsp_led(E_BSP_LED_4, E_BSP_LED_ON)
-#define LED_ERR_ON()                bsp_led(E_BSP_LED_4, E_BSP_LED_ON)
-#define LED_ERR_OFF()               bsp_led(E_BSP_LED_4, E_BSP_LED_OFF)
-
-
-/*==============================================================================
-                         FUNCTION PROTOTYPES OF THE API
-==============================================================================*/
-
-/*============================================================================*/
-/*!
-    \brief  Initialization of the board support package
-
-            This function is called after the initialization of the emBetter
-            TCP/IP stack. At this point, internal data structures of all modules
-            of the emBetter stack are reset to their initial states.
-            A BSP can initialize at this point the timer and the UART for the
-            console.
-
-     \param * to a network stack structure
-*/
-/*============================================================================*/
-uint8_t bsp_init(s_ns_t *);
-
-/*============================================================================*/
-/*!
-    \brief  Startup code for the board support package
-
-            This function is called by embetter_main.c after all protocols are
-            initialized. The BSP may initialize network interfaces such as an
-            Ethernet interface here.
-*/
-/*============================================================================*/
-void bsp_start(void);
-
-/*============================================================================*/
-/*!
-    \brief  Services and protocols of the board support package
-
-            This function is called periodically out of the main() application
-            loop. If a BSP requires to perform actions on a periodic base, this
-            function is to be used for such actions.
-
-*/
-/*============================================================================*/
-void bsp_entry(void);
-
-/*============================================================================*/
-/*!
-    \brief  Returns a character from the stdin
-
-            Polls characters from the stdin, this function must be non-blocking.
-
-    \return >=0  the value of the character that was received
-    \return -1   no character is present or an error occurred
-
-*/
-/*============================================================================*/
-int bsp_getChar(void);
-
-/*============================================================================*/
-/*!
-    \brief  Do some LED toggling
-
-    \param  ui_led          The index of the LED that should be manipulated
-    \param  en_ledAction    The action that should be executed
-
-    \return 0       LED was off and is set now to state en_ledAction
-    \return 1       LED was on and is set now to state en_ledAction
-*/
-/*============================================================================*/
-uint16_t bsp_led(en_bspLedIdx_t ui_led, en_bspLedAction_t en_ledAction);
-
-
-/*============================================================================*/
-/** \brief  This function enters critical section on the target
- *
- */
-/*============================================================================*/
-void bsp_enterCritical(void);
-
-/*============================================================================*/
-/** \brief  This function exits critical section on the target
- *
- */
-/*============================================================================*/
-void bsp_exitCritical(void);
-
-/*============================================================================*/
-/** \brief  This function will return system ticks
- *
- *  \retval    ticks
- */
-/*============================================================================*/
-clock_time_t bsp_getTick(void);
-
-/*============================================================================*/
-/** \brief  This function will return seconds
- *
- *  \retval    seconds
- */
-/*============================================================================*/
-clock_time_t bsp_getSec(void);
-
-/*============================================================================*/
-/** \brief  This function makes a delay on the target
- *
- *  \param  i_delay Delay in microseconds
- */
-/*============================================================================*/
-void bsp_delay_us(uint32_t i_delay);
-
-/*============================================================================*/
-/** \brief  This function initialize given control pin
- *
- *  \param  e_pinType    Type of a pin
- *
- *  \retval    pointer to a pin
- */
-/*============================================================================*/
-void * bsp_pinInit(en_targetExtPin_t e_pinType);
-
-/*============================================================================*/
-/** \brief  This function control a GPIO pin
- *
- *  \param  e_pinAct  action to be taken on the pin
- *  \param  p_pin     point to the pin description
- */
-/*============================================================================*/
-uint8_t bsp_pin(en_bspPinAction_t e_pinAct, void * p_pin);
-
-/*============================================================================*/
-/** \brief      This function configures external interrupt. By default, the
- *              external interrupt is disabled after being configured.
- *
- *  \param          e_extInt            source of an interrupt
- *  \param          e_edge              edge upon which the interrupt occurs
- *  \param          pfn_intCallback     callback function pointer
- *
- *  \return         none
- */
-/*============================================================================*/
-void bsp_extIntRegister(en_targetExtInt_t e_extInt, en_targetIntEdge_t e_edge,
-    pfn_intCallb_t pfn_intCallback);
-
-/*============================================================================*/
-/** \brief      This function clear state of external interrupt
- *
- *  \param          e_extInt            source of an interrupt
- *
- *  \return         none
- */
-/*============================================================================*/
-void bsp_extIntClear(en_targetExtInt_t e_extInt);
-
-/*============================================================================*/
-/** \brief      This function enables external interrupt
- *
- *  \param          e_extInt            source of an interrupt
- *
- *  \return         none
- */
-/*============================================================================*/
-void bsp_extIntEnable(en_targetExtInt_t e_extInt);
-
-/*============================================================================*/
-/** \brief      This function disable external interrupt
- *
- *  \param          e_extInt            source of an interrupt
- *
- *  \return         none
- */
-/*============================================================================*/
-void bsp_extIntDisable(en_targetExtInt_t e_extInt);
-
-/*----------------------------------------------------------------------------*/
-/** \brief  This function configures SPI interface
- *
- *  \return        pointer to an allocated memory
- */
-/*---------------------------------------------------------------------------*/
-void *bsp_spiInit(void);
-
-/*----------------------------------------------------------------------------*/
-/** \brief  This function selects slave with which we will work
- *  \param         p_spi    Pointer to spi description entity
- *  \param        action    true or false
- *
- *  \return        0 if failed, 1 id ok
- */
-/*----------------------------------------------------------------------------*/
-uint8_t bsp_spiSlaveSel(void * p_spi, bool action);
-
-/*----------------------------------------------------------------------------*/
-/** \brief  This function simultaneously transmit and receive data from SPI
- *
- *  \param         p_tx    Pointer to buffer holding data to send
- *  \param         p_rx    Pointer to buffer holding data to send
- *  \param         len     Size of data to send
- *
- *  \return        none
- */
-/*----------------------------------------------------------------------------*/
-void bsp_spiTxRx(uint8_t *p_tx, uint8_t *p_rx, uint16_t len);
-
-/*----------------------------------------------------------------------------*/
-/** \brief  This function reads data via given SPI interface.
- *     TODO    Implement selecting of an interface instance.
- *  \param  p_reg Pointer where to store received data
- *  \param    i_length Length of a data to be received
- *
- *  \returns The actual value of the read register.
- */
-/*----------------------------------------------------------------------------*/
-uint8_t bsp_spiRead(uint8_t * p_reg, uint16_t i_length);
-
-/*----------------------------------------------------------------------------*/
-/** \brief  This function writes a new value via given SPI interface
- *          registers.
- *
- *
- *  \param  value         Pointer to a value.
- *  \param  i_length     Length of a data to be received
- */
-/*----------------------------------------------------------------------------*/
-void bsp_spiWrite(uint8_t * value, uint16_t i_length);
-
-
-/*============================================================================*/
-/** \brief  This function will manipulate a watchdog timer
- *    \param wdtAct    type of an action with watchdog timer: reset, start or stop.
- */
-/*============================================================================*/
-void bsp_wdt(en_bspWdtAction_t wdtAct);
-
-/*============================================================================*/
-/** \brief  This function will return parameter specified by type
- *
- */
-/*============================================================================*/
-uint32_t bsp_get(en_bspParams_t en_param);
-
+} en_bsp_led_op_t;
 
 
 /**
- * @brief   This function returns a upper-bounded random number
- * @param   max     Maximum possible value of the returned random number
- * @return
+ * \brief Defines the action to control the watchdog.
+ *
+ *        Several actions are available to control a watchdog such as
+ *        to start or stop it. This enumeration shows the available
+ *        actions to access the watchdog.
  */
-uint32_t bsp_getrand(uint32_t max);
+typedef enum EN_BSP_WD_CTRL_T
+{
+    /** Reset watchdog timer */
+    EN_BSP_WD_RESET,
+    /** Start watchdog timer */
+    EN_BSP_WD_START,
+    /** Stop watchdog timer */
+    EN_BSP_WD_STOP,
+    /** Periodic watchdog timer */
+    EN_BSP_WD_PERIODIC
 
+} en_bsp_wd_ctrl_t;
+
+
+/*
+ *  --- Global Functions Definition ------------------------------------------*
+ */
+/**
+ * bsp_init()
+ *
+ * \brief   Initialize the Board Support Package and the underlying HAL.
+ *
+ *          This function is called at the initialization to initialize the
+ *          Board Support Package and the underlying Hardware Abstraction Layer.
+ *          During this initialization the according implementation prepares the
+ *          general hardware for the according board.
+ *
+ * \param  p_ns   Pointer to the network stack structure.
+ *
+ * \return  0 on success or negative value on error.
+ */
+int8_t bsp_init( s_ns_t* p_ns );
+
+/**
+ * bsp_enterCritical()
+ *
+ * \brief   Enter critical section e.g. to prevent interrupt during execution.
+ *
+ *          This function is called whenever a critical section is entered. In
+ *          a critical section no interrupt routines shall be executed in order
+ *          to avoid unwanted behavior of the software. Once the critical
+ *          section was left pending interrupt routines can be executed.
+ *
+ * \return  0 on success or negative value on error.
+ */
+int8_t bsp_enterCritical( void );
+
+
+/**
+ * bsp_exitCritical()
+ *
+ * \brief   Exit a critical section and allow interrupts.
+ *
+ *          Every time a critical section was finished this function will be
+ *          called in order to allow the execution of interrupt service
+ *          routines.
+ *
+ * \return  0 on success or negative value on error.
+ */
+int8_t bsp_exitCritical( void );
+
+
+/**
+ * bsp_watchdog()
+ *
+ * \brief   Controls a watchdog timer.
+ *
+ *          Watchdog timer are used to prevent a system from hanging. Therefore
+ *          a watchdog has to be triggered continuously to reset it. Otherwise
+ *          if it expires it will reset the system. This function is used to
+ *          control the watchdog timer.
+ *
+ * \param   ctrl  Used to control the watchdog. See enumeration description.
+ *
+ * \return  0 on success or negative value on error.
+ */
+int8_t bsp_watchdog( en_bsp_wd_ctrl_t ctrl );
+
+
+/**
+ * bsp_getrand()
+ *
+ * \brief   Provide a random value.
+ *
+ *          Random values are used within emb::6 e.g. to generate random
+ *          timeouts. Therefore a random seed is required that shall be
+ *          provided by the hardware if this function is called. The
+ *          random number can be generated e.g. by an ADC.
+ *
+ * \param   min   Minimum random value to get.
+ * \param   max   Maximum random value to get.
+ *
+ * \return  A random number in the range of [min,max].
+ */
+uint32_t bsp_getrand( uint32_t min, uint32_t max );
+
+
+/**
+ * bsp_getTick()
+ *
+ * \brief   Return system clock in ticks.
+ *
+ *          The software internal clock counts in ticks, whereas the resolution
+ *          is dependent on the underlying HAL implementation. This function
+ *          returns the current clock value in ticks.
+ *
+ * \return  Current system clock value in ticks.
+ */
+clock_time_t bsp_getTick( void );
+
+
+/**
+ * bsp_getSec()
+ *
+ * \brief   Return the current system clock in seconds.
+ *
+ *          The software internal clock counts in ticks, whereas the resolution
+ *          is dependent on the underlying HAL implementation. This function
+ *          returns the current clock value in seconds.
+ *
+ * \return  Current system clock value in seconds.
+ */
+clock_time_t bsp_getSec( void );
+
+
+/**
+ * bsp_getTRes()
+ *
+ * \brief   Return system time resolution.
+ *
+ *          The software internal clock counts in ticks, whereas the resolution
+ *          is dependent on the underlying HAL implementation. This function
+ *          returns the clock resolution as ticks per second.
+ *
+ * \return  Current system clock value in ticks.
+ */
+clock_time_t bsp_getTRes( void );
+
+
+/**
+ * bsp_delayUs()
+ *
+ * \brief   Wait for a specific time before continuing execution.
+ *
+ *          This function provides the possibility to delay the execution for
+ *          a specific amount of time. The duration of the execution can be
+ *          specified in microsecods.
+ *
+ * \param   delay    Time of delay in microseconds.
+ *
+ * \return  0 on success or negative value on error.
+ */
+int8_t bsp_delayUs( uint32_t delay );
+
+
+/**
+ * bsp_pinInit()
+ *
+ * \brief   Initializes a specific Pin.
+ *
+ *          This function is used to initialize a specific pin. The initialization
+ *          is implemented in the according HAL together with the board config
+ *          to create a valid mapping of the pin.
+ *
+ * \param   pin   The pin to initialize.
+ *
+ * \return  NULL on failure (e.g. not implemented) or a pointer to the hardware
+ *          dependent pin structure used for further operations.
+ */
+void* bsp_pinInit( en_hal_pin_t pin );
+
+
+/**
+ * bsp_pinSet()
+ *
+ * \brief   Set the value of a specific pin.
+ *
+ *          This function is used to set the value of a specific pin. The
+ *          value of the pin can either be 0 or 1.
+ *
+ * \param   pin   The pin to set the value for.
+ * \param   val   Value to set. All values other than 0 will be treated as 1.
+ *
+ * \return  0 on success or negative value on error.
+ */
+int8_t bsp_pinSet( void* p_pin, uint8_t val );
+
+
+/**
+ * bsp_pinGet()
+ *
+ * \brief   Get the value of a specific pin.
+ *
+ *          This function is used to get the value of a specific pin. The
+ *          value of the pin can either be 0 or 1.
+ *
+ * \param   pin   The pin to get the value from.
+ *
+   \return  The value of the pin [0,1] on success or negative value on error.
+ *
+ */
+int8_t bsp_pinGet( void* p_pin );
+
+
+/**
+ * bsp_led()
+ *
+ * \brief   Control an LED.
+ *
+ *          This function is used to control a specific LED. An LED can either
+ *          be enabled, disabled, toggled or it can blink. For blinking, an
+ *          internal timer will be used.
+ *
+ * \param   led   The LED(s) to control as a bitmask.
+ * \param   op    Operation to perform.
+ *
+ * \return  The value of the led [0,1] on success or negative value on error.
+ */
+int8_t bsp_led( uint8_t led, en_bsp_led_op_t op );
+
+
+/**
+ * bsp_pinIRQRegister()
+ *
+ * \brief   Register and configure an external interrupt.
+ *
+ *          The stack uses several so called external interrupts e.g. used
+ *          for the communication with the radio module or for the the UART
+ *          access. This function configures such an external interrupt. By
+ *          default, the external interrupt is disabled after being configured.
+ *
+ * \param   p_pin   Pin to which the interrupt belongs to.
+ * \param   edge    Edge type to trigger the interrupt
+ * \param   pf_cb   Callback used when the interrupt occurs.
+ *
+ * \return  0 on success or negative value on error.
+ */
+int8_t bsp_pinIRQRegister( void* p_pin, en_hal_irqedge_t edge,
+    pf_hal_irqCb_t pf_cb );
+
+
+/**
+ * bsp_pinIRQEnable()
+ *
+ * \brief   Enable an external interrupt.
+ *
+ *          The stack uses several so called external interrupts e.g. used
+ *          for the communication with the radio module or for the the UART
+ *          access. This function is used to enable an external interrupt.
+ *
+ * \param   p_pin   Pin of the external interrupt to enable.
+ *
+ * \return  0 on success or negative value on error.
+ */
+int8_t bsp_pinIRQEnable( void* p_pin );
+
+
+/**
+ * bsp_pinIRQDisable()
+ *
+ * \brief   Disable an external interrupt.
+ *
+ *          The stack uses several so called external interrupts e.g. used
+ *          for the communication with the radio module or for the the UART
+ *          access. This function is used to disable an external interrupt.
+ *
+ * \param   p_pin   Pin of the external interrupt to disable.
+ *
+ * \return  0 on success or negative value on error.
+ */
+int8_t bsp_pinIRQDisable( void* p_pin );
+
+/**
+ * bsp_pinIRQClear()
+ *
+ * \brief   Clear an external interrupt.
+ *
+ *          The stack uses several so called external interrupts e.g. used
+ *          for the communication with the radio module or for the the UART
+ *          access. This function is used to clear an external interrupt e.g
+ *          after it has occurred or to ignore it.
+ *
+ * \param   p_pin   Pin of the external interrupt to clear.
+ *
+ * \return  0 on success or negative value on error.
+ */
+int8_t bsp_pinIRQClear( void* p_pin );
+
+
+/**
+ * hal_spiInit()
+ *
+ * \brief   Initialize SPI interface.
+ *
+ *          The stack uses an SPI interface to communicate with most of the
+ *          transceiver drivers. Therefore the HAl has to provide the
+ *          according functions to access the SPI interface. This function
+ *          initializes the SPI e.g. by configuring the according PINs and
+ *          the SPI core.
+ *
+ * \param   spi     SPI type to initialize.
+ *
+ * \return  A pointer to the SPI instance on success or NULL in case of an error.
+ */
+void* bsp_spiInit( en_hal_spi_t spi );
+
+
+#if defined(HAL_SUPPORT_SPI)
+/**
+ * bsp_spiSlaveSel()
+ *
+ * \brief   Select an SPI slave.
+ *
+ *          The stack uses an SPI interface to communicate with most of the
+ *          transceiver drivers. Therefore the HAl has to provide the
+ *          according functions to access the SPI interface. This function
+ *          (de-)asserts the SPI slave select line.
+ *
+ * \param   p_spi   The SPI interface to (de-)select.
+ * \param   p_cs    CS pin to use.
+ * \param   select  1 (or greater) to select the interface and 0 to deselect.
+ * \param   inv     Use inverted logic or not.
+ *
+ * \return  0 on success or negative value on error.
+ */
+int8_t bsp_spiSlaveSel( void* p_spi, void* p_cs, uint8_t select, uint8_t inv );
+
+
+/**
+ * bsp_spiTxRx()
+ *
+ * \brief   Simultaneously transmit and received data via SPI.
+ *
+ *          The stack uses an SPI interface to communicate with most of the
+ *          transceiver drivers. Therefore the HAl has to provide the
+ *          according functions to access the SPI interface. This function
+ *          simultaneously transmitts and receives data.
+ *
+ * \param   p_spi   The SPI interface to read/write.
+ * \param   p_tx    Transmit buffer.
+ * \param   p_rx    Receive buffer.
+ * \param   len     Length of the buffer.
+ *
+ * \return  The number of bytes transmitted/received on success or negative
+ *          value on error.
+ */
+int32_t bsp_spiTRx( void* p_spi, uint8_t* p_tx, uint8_t* p_rx, uint16_t len );
+
+
+/**
+ * bsp_spiRx()
+ *
+ * \brief   Read data from SPI.
+ *
+ *          The stack uses an SPI interface to communicate with most of the
+ *          transceiver drivers. Therefore the HAl has to provide the
+ *          according functions to access the SPI interface. This function
+ *          receives data from the SPI interface.
+ *
+ * \param   p_spi   The SPI interface to read.
+ * \param   p_rx    Receive buffer.
+ * \param   len     Length of the buffer.
+ *
+ * \return  The number of bytes received on success or negative value on error.
+ */
+int32_t bsp_spiRx( void* p_spi, uint8_t * p_rx, uint16_t len );
+
+
+/**
+ * bsp_spiTx()
+ *
+ * \brief   Transmit data via SPI.
+ *
+ *          The stack uses an SPI interface to communicate with most of the
+ *          transceiver drivers. Therefore the HAl has to provide the
+ *          according functions to access the SPI interface. This function
+ *          transmits data via the SPI interface.
+ *
+ * \param   p_spi   The SPI interface to write.
+ * \param   p_tx    Transmit buffer.
+ * \param   len     Length of the buffer.
+ *
+ * \return  The number of bytes transmitted on success or negative value on error.
+ */
+int32_t bsp_spiTx( void* p_spi, uint8_t* p_tx, uint16_t len );
+#endif /* #if defined(HAL_SUPPORT_SPI) */
+
+
+#if defined(HAL_SUPPORT_UART)
+/**
+ * bsp_uartInit()
+ *
+ * \brief   Initialize UART interface.
+ *
+ *          The stack uses several UARTs. Therefore the HAl has to provide the
+ *          according functions to access the UART interfaces. This function
+ *          initializes the UART e.g. by configuring the according PINs,
+ *          the core and the BAUD rate.
+ *
+ * \param   uart  UART type to initialize.
+ *
+ * \return  A pointer to the UART instance on success or NULL in case of an error.
+ */
+void* bsp_uartInit( en_hal_uart_t uart );
+
+
+/**
+ * bsp_uartRx()
+ *
+ * \brief   Read data from UART.
+ *
+ *          The stack uses several UARTs. Therefore the HAl has to provide the
+ *          according functions to access the UART interfaces. This function
+ *          receives data from the UART interface.
+ *
+ * \param   p_uart  The UART interface to read.
+ * \param   p_rx    Receive buffer.
+ * \param   len     Length of the buffer.
+ *
+ * \return  The number of bytes received on success or negative value on error.
+ */
+int32_t bsp_uartRx( void* p_uart, uint8_t * p_rx, uint16_t len );
+
+
+/**
+ * hal_uartTx()
+ *
+ * \brief   Transmit data via UART.
+ *
+ *          The stack uses several UARTs. Therefore the HAl has to provide the
+ *          according functions to access the UART interfaces. This function
+ *          transmits data via the UART interface.
+ *
+ * \param   p_uart  The UART interface to write.
+ * \param   p_tx    Transmit buffer.
+ * \param   len     Length of the buffer.
+ *
+ * \return  The number of bytes transmitted on success or negative value on error.
+ */
+int32_t bsp_uartTx( void* p_uart, uint8_t* p_tx, uint16_t len );
+#endif /* #if defined(HAL_SUPPORT_UART) */
+
+
+/**
+ * bsp_periphIRQRegister()
+ *
+ * \brief   Register an interrupt from a peripheral.
+ *
+ *          This function can be used to register the IRQ of a peripheral
+ *          to a specific callback. This is used e.g for the extif app
+ *          to get characters from UART.
+ *
+ * \param   irq     Type of IRQ to register.
+ * \param   pf_cb   Callback function to register for the IRQ.
+ * \param   p_data  Callback specific data.
+ *
+ * \return  0 on success or negative value on error.
+ */
+int8_t bsp_periphIRQRegister( en_hal_periphirq_t irq, pf_hal_irqCb_t pf_cb,
+    void* p_data );
+
+
+/**
+ * bsp_getChar()
+ *
+ * \brief   Returns a character from the stdin.
+ *
+ * \return  character on success or negative value on error.
+ */
+int bsp_getChar( void );
 #endif /* __BSP_H__ */
-/** @} */
-/** @} */
+
