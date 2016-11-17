@@ -41,6 +41,7 @@
 #ifndef UIP_DS6_ROUTE_H
 #define UIP_DS6_ROUTE_H
 
+#include "uip.h"
 #include "nbr-table.h"
 #include "stimer.h"
 #include "clist.h"
