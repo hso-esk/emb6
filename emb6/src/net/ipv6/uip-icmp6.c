@@ -313,6 +313,10 @@ uip_icmp6_send(const uip_ipaddr_t *dest, int type, int code, int payload_len)
   UIP_ICMP_BUF->icmpchksum = ~uip_icmp6chksum();
 
   uip_len = UIP_IPH_LEN + UIP_ICMPH_LEN + payload_len;
+
+  UIP_STAT(++uip_stat.icmp.sent);
+  UIP_STAT(++uip_stat.ip.sent);
+
   tcpip_ipv6_output();
 }
 /*---------------------------------------------------------------------------*/
