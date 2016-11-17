@@ -85,8 +85,8 @@ static inline size_t
 print_timestamp(char *s, size_t len, clock_time_t t) {
 #if HAVE_SNPRINTF == 1
   return snprintf(s, len, "%u.%03u",
-		  (unsigned int)(t / bsp_get(E_BSP_GET_TRES)),
-		  (unsigned int)(t % bsp_get(E_BSP_GET_TRES)));
+		  (unsigned int)(t / bsp_getTRes()),
+		  (unsigned int)(t % bsp_getTRes()));
 #else /* HAVE_SNPRINTF */
   /* @todo do manual conversion of timestamp */
   return 0;

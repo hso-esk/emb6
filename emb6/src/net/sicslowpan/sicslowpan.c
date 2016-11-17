@@ -1369,7 +1369,7 @@ send_packet(linkaddr_t *dest)
 
   /* If we are sending multiple packets in a row, we need to let the
      watchdog know that we are still alive. */
-  bsp_wdt(E_BSP_WDT_RESET);
+    bsp_watchdog( EN_BSP_WD_RESET );
 
 }
 /*--------------------------------------------------------------------*/
@@ -1742,7 +1742,7 @@ input(void)
 
       sicslowpan_len = frag_size;
       reass_tag = frag_tag;
-      timer_set(&reass_timer, SICSLOWPAN_REASS_MAXAGE * bsp_get(E_BSP_GET_TRES));
+      timer_set(&reass_timer, SICSLOWPAN_REASS_MAXAGE * bsp_getTRes());
       PRINTFI("sicslowpan input: INIT FRAGMENTATION (len %d, tag %d)\n\r",
              sicslowpan_len, reass_tag);
       linkaddr_copy(&frag_sender, packetbuf_addr(PACKETBUF_ADDR_SENDER));

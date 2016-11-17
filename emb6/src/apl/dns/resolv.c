@@ -499,7 +499,7 @@ start_name_collision_check(clock_time_t after)
 	 * probing to be in compliance with the MDNS spec. */
 	/* Wait extra time if specified in data */
 	etimer_set(&probe,
-			(bsp_get(E_BSP_GET_TRES) * (random_rand() & 0xFF) / 1024) + after,
+			(bsp_getTRes() * (random_rand() & 0xFF) / 1024) + after,
 			mdns_probe_process);
 }
 /*---------------------------------------------------------------------------*/
@@ -902,7 +902,7 @@ newdata(const uip_ipaddr_t *source_addr,
          * but this should eventually converge to something reasonable.
          */
         if(nauthrr) {
-          start_name_collision_check(bsp_get(E_BSP_GET_TRES));
+          start_name_collision_check(bsp_getTRes());
         }
       }
     }
@@ -1471,7 +1471,7 @@ resolv_found(char *name, uip_ipaddr_t * ipaddr)
       /* Re-add the .local suffix */
       strncat(resolv_hostname, ".local", RESOLV_CONF_MAX_DOMAIN_NAME_SIZE);
 
-      start_name_collision_check(bsp_get(E_BSP_GET_TRES) * 5);
+      start_name_collision_check(bsp_getTRes() * 5);
     } else if(mdns_state == MDNS_STATE_READY) {
       /* We found a collision after we had already asserted
        * that we owned this name. We need to immediately

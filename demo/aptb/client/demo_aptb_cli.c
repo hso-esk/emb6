@@ -78,7 +78,7 @@
 #include    "logger.h"
 
 
-#define     SEND_INTERVAL           5 * bsp_get(E_BSP_GET_TRES)
+#define     SEND_INTERVAL           5 * bsp_getTRes()
 #define     MAX_S_PAYLOAD_LEN       256
 #define     MAX_C_PAYLOAD_LEN       40
 

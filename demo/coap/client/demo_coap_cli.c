@@ -169,7 +169,7 @@ int8_t demo_coapInit(void)
     coap_init_engine();
 
     /* set request intervall */
-    etimer_set(&et, TOGGLE_INTERVAL * bsp_get(E_BSP_GET_TRES), _demo_coapCl_callback);
+    etimer_set(&et, TOGGLE_INTERVAL * bsp_getTRes(), _demo_coapCl_callback);
     return 1;
 }
 

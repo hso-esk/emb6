@@ -705,9 +705,9 @@ static void mac_csma(e_nsErr_t *p_err)
   while (nb <= NETSTK_CFG_CSMA_MAX_BACKOFF) {
     /* delay for random (2^BE - 1) unit backoff periods */
     max_random = (1 << be) - 1;
-    delay  = bsp_getrand(max_random);
+    delay  = bsp_getrand(0, max_random);
     delay *= NETSTK_CFG_CSMA_UNIT_BACKOFF_US;
-    bsp_delay_us(delay);
+    bsp_delayUs(delay);
 
     /* perform CCA */
     pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_CCA_GET, 0, p_err);
