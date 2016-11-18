@@ -463,7 +463,7 @@ int8_t bsp_pinIRQRegister( void* p_pin, en_hal_irqedge_t edge,
     pf_hal_irqCb_t pf_cb )
 {
   EMB6_ASSERT_RET( p_pin != NULL, -1 );
-  return bsp_pinIRQRegister( p_pin, edge, pf_cb );
+  return hal_pinIRQRegister( p_pin, edge, pf_cb );
 } /* bsp_pinIRQRegister() */
 
 
