@@ -1305,11 +1305,6 @@ static uint8_t output(const uip_lladdr_t *localdest)
   /* The MAC address of the destination of the packet */
   linkaddr_t dest;
 
-#if SICSLOWPAN_CONF_FRAG
-  /* Number of bytes processed. */
-  uint16_t processed_ip_out_len;
-#endif /* SICSLOWPAN_CONF_FRAG */
-
   /* init */
   uncomp_hdr_len = 0;
   packetbuf_hdr_len = 0;
@@ -1389,7 +1384,10 @@ static uint8_t output(const uip_lladdr_t *localdest)
   max_payload = MAC_MAX_PAYLOAD - framer_hdrlen;
   if((int)uip_len - (int)uncomp_hdr_len > max_payload - (int)packetbuf_hdr_len) {
 #if SICSLOWPAN_CONF_FRAG
-    struct queuebuf *q;
+	/* Number of bytes processed. */
+	uint16_t processed_ip_out_len;
+
+	struct queuebuf *q;
     uint16_t frag_tag;
 
     /*
