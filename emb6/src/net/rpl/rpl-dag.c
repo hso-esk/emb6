@@ -1283,7 +1283,7 @@ rpl_process_dio(uip_ipaddr_t *from, rpl_dio_t *dio)
         PRINTF("RPL: Global repair\n\r");
         if(dio->prefix_info.length != 0) {
           if(dio->prefix_info.flags & UIP_ND6_RA_FLAG_AUTONOMOUS) {
-            PRINTF("RPL : Prefix announced in DIO\n\r");
+            PRINTF("RPL: Prefix announced in DIO\n\r");
             rpl_set_prefix(dag, &dio->prefix_info.prefix, dio->prefix_info.length);
           }
         }
@@ -1345,7 +1345,7 @@ rpl_process_dio(uip_ipaddr_t *from, rpl_dio_t *dio)
   /* Prefix Information Option treated to add new prefix */
   if(dio->prefix_info.length != 0) {
     if(dio->prefix_info.flags & UIP_ND6_RA_FLAG_AUTONOMOUS) {
-      PRINTF("RPL : Prefix announced in DIO\n\r");
+      PRINTF("RPL: Prefix announced in DIO\n\r");
       rpl_set_prefix(dag, &dio->prefix_info.prefix, dio->prefix_info.length);
     }
   }
