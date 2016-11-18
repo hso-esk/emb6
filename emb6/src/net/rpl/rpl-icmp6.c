@@ -672,11 +672,6 @@ dao_input(void)
 
   uip_ipaddr_copy(&dao_sender_addr, &UIP_IP_BUF->srcipaddr);
 
-  /* Destination Advertisement Object */
-  PRINTF("RPL: Received a DAO from ");
-  PRINT6ADDR(&dao_sender_addr);
-  PRINTF("\n\r");
-
   buffer = UIP_ICMP_PAYLOAD;
   buffer_length = uip_len - uip_l3_icmp_hdr_len;
 
@@ -712,8 +707,12 @@ dao_input(void)
   learned_from = uip_is_addr_mcast(&dao_sender_addr) ?
           RPL_ROUTE_FROM_MULTICAST_DAO : RPL_ROUTE_FROM_UNICAST_DAO;
 
-  PRINTF("RPL: DAO from %s\n",
-          learned_from == RPL_ROUTE_FROM_UNICAST_DAO? "unicast": "multicast");
+  /* Destination Advertisement Object */
+  PRINTF("RPL: Received a (%s) DAO with sequence number %u from ",
+      learned_from == RPL_ROUTE_FROM_UNICAST_DAO? "unicast": "multicast", sequence);
+  PRINT6ADDR(&dao_sender_addr);
+  PRINTF("\n");
+
   if(learned_from == RPL_ROUTE_FROM_UNICAST_DAO) {
       /* Check whether this is a DAO forwarding loop. */
       parent = rpl_find_parent(dag, &dao_sender_addr);
@@ -823,7 +822,7 @@ dao_input(void)
   }
 
 
-  PRINTF("RPL: adding DAO route\n\r");
+  PRINTF("RPL: Adding DAO route\n\r");
 
   /* Update and add neighbor - if no room - fail. */
   if((nbr = rpl_icmp6_update_nbr_table(&dao_sender_addr, NBR_TABLE_REASON_RPL_DAO, instance)) == NULL) {
@@ -899,7 +898,7 @@ dao_input(void)
     }
 
     if(should_ack) {
-      PRINTF("RPL: sending DAO ACK\n\r");
+      PRINTF("RPL: Sending DAO ACK\n\r");
       dao_ack_output(instance, &dao_sender_addr, sequence,
                      RPL_DAO_ACK_UNCONDITIONAL_ACCEPT);
     }
@@ -1084,7 +1083,8 @@ dao_output_target_seq(rpl_parent_t *parent, uip_ipaddr_t *prefix,
   buffer[pos++] = 0; /* path seq - ignored */
   buffer[pos++] = lifetime;
 
-  PRINTF("RPL: Sending %sDAO with prefix ", lifetime == RPL_ZERO_LIFETIME ? "No-Path " : "");
+  PRINTF("RPL: Sending a %sDAO with sequence number %u, lifetime %u, prefix ",
+      lifetime == RPL_ZERO_LIFETIME ? "No-Path " : "", seq_no, lifetime);
   PRINT6ADDR(prefix);
   PRINTF(" to ");
   PRINT6ADDR(rpl_get_parent_ipaddr(parent));
@@ -1128,15 +1128,14 @@ dao_ack_input(void)
     return;
   }
 
-  PRINTF("RPL: Received a DAO ACK with sequence number %d (%d) and status %d from ",
-         sequence, instance->my_dao_seqno, status);
+  PRINTF("RPL: Received a DAO %s with sequence number %d (%d) and status %d from ",
+   status < 128 ? "ACK" : "NACK",
+		 sequence, instance->my_dao_seqno, status);
   PRINT6ADDR(&UIP_IP_BUF->srcipaddr);
   PRINTF("\n\r");
 
 
   if(sequence == instance->my_dao_seqno) {
-	PRINTF("RPL: DAO %s for me!\n\r", status < 128 ? "ACK" : "NACK");
-
 	rpl_set_downward_link(status < 128);
 
     /* always stop the retransmit timer when the ACK arrived */
@@ -1156,7 +1155,7 @@ dao_ack_input(void)
 #endif
 
   } else {
-    /* this DAO should be forwarded to another recently registered route */
+	/* this DAO ACK should be forwarded to another recently registered route */
     uip_ds6_route_t *re;
     uip_ipaddr_t *nexthop;
     if((re = find_route_entry_by_dao_ack(sequence)) != NULL) {
@@ -1166,9 +1165,9 @@ dao_ack_input(void)
 
       nexthop = uip_ds6_route_nexthop(re);
       if(nexthop == NULL) {
-        PRINTF("No next hop to fwd DAO ACK to\n\r");
+    	PRINTF("RPL: No next hop to fwd DAO ACK to\n\r");
       } else {
-    	PRINTF("Fwd DAO ACK to:");
+    	PRINTF("RPL: Fwd DAO ACK to:");
     	PRINT6ADDR(nexthop);
     	PRINTF("\n\r");
         buffer[2] = re->state.dao_seqno_in;
@@ -1180,7 +1179,7 @@ dao_ack_input(void)
         uip_ds6_route_rm(re);
       }
     } else {
-      PRINTF("No route entry to fwd DAO ACK to\n\r");
+      PRINTF("RPL: No route entry to fwd DAO ACK to\n\r");
     }
   }
 #endif /* RPL_WITH_DAO_ACK */
@@ -1194,7 +1193,7 @@ dao_ack_output(rpl_instance_t *instance, uip_ipaddr_t *dest, uint8_t sequence,
 #if RPL_WITH_DAO_ACK
   unsigned char *buffer;
 
-  PRINTF("RPL: Sending a DAO ACK with sequence number %d to ", sequence);
+  PRINTF("RPL: Sending a DAO %s with sequence number %d to ", status < 128 ? "ACK" : "NACK", sequence);
   PRINT6ADDR(dest);
   PRINTF(" with status %d\n\r", status);
 
