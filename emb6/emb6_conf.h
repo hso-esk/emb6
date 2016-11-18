@@ -185,6 +185,13 @@
 #define UIP_CONF_IPV6_RPL                   TRUE
 #endif
 
+/* If RPL is enabled also enable the RPL NBR Policy */
+#if UIP_CONF_IPV6_RPL
+#ifndef NBR_TABLE_FIND_REMOVABLE
+#define NBR_TABLE_FIND_REMOVABLE rpl_nbr_policy_find_removable
+#endif /* NBR_TABLE_FIND_REMOVABLE */
+#endif /* UIP_CONF_IPV6_RPL */
+
 /** Set to 1 to enable RPL statistics */
 #define    RPL_CONF_STATS                   FALSE
 
