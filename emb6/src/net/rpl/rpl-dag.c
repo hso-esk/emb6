@@ -88,7 +88,7 @@ rpl_instance_t *default_instance;
 
 /*---------------------------------------------------------------------------*/
 void
-rpl_print_neighbor_list()
+rpl_print_neighbor_list(void)
 {
   if(default_instance != NULL && default_instance->current_dag != NULL &&
       default_instance->of != NULL && default_instance->of->calculate_rank != NULL) {
