@@ -1794,8 +1794,8 @@ void sicslowpan_init(s_ns_t* p_netStack)
 #ifdef SICSLOWPAN_CONF_ADDR_CONTEXT_0
     SICSLOWPAN_CONF_ADDR_CONTEXT_0;
 #else
-  addr_contexts[0].prefix[0] = 0xaa;
-  addr_contexts[0].prefix[1] = 0xaa;
+  addr_contexts[0].prefix[0] = UIP_DS6_DEFAULT_PREFIX_0;
+  addr_contexts[0].prefix[1] = UIP_DS6_DEFAULT_PREFIX_1;
 #endif
 #endif /* SICSLOWPAN_CONF_MAX_ADDR_CONTEXTS > 0 */
 
