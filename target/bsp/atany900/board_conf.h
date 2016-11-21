@@ -216,7 +216,7 @@
  */
 
 /**
- * bsp_led()
+ * board_conf()
  *
  * \brief   Configure board.
  *
