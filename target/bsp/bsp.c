@@ -200,8 +200,13 @@ int8_t bsp_init (s_ns_t * ps_ns)
 #endif /* #if (HAL_SUPPORT_LEDNUM > 0) */
 
   /* Initialize internal structures */
+#if defined(HAL_SUPPORT_LED)
   memset( bsp_leds, 0, sizeof(bsp_leds) );
+#endif /* #if defined(HAL_SUPPORT_LED) */
+
+#if defined(HAL_SUPPORT_SPI)
   memset( bsp_spis, 0, sizeof(bsp_spis) );
+#endif /* #if defined(HAL_SUPPORT_SPI) */
 
 #if (HAL_SUPPORT_LEDNUM > 0)
   /* get all the LEDs */
@@ -409,6 +414,7 @@ int8_t bsp_pinGet( void* p_pin )
 */
 int8_t bsp_led( uint8_t led, en_bsp_led_op_t op )
 {
+#if defined(HAL_SUPPORT_LED)
   int i;
   EMB6_ASSERT_RET( bsp_leds[led].p_pin != NULL, -1 );
 
@@ -451,6 +457,7 @@ int8_t bsp_led( uint8_t led, en_bsp_led_op_t op )
     /* next LED */
     ledMsk = (led >> 1);
   }
+#endif /* #if defined(HAL_SUPPORT_LED) */
   return 0;
 } /* bsp_led() */
 
