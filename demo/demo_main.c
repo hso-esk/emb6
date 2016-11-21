@@ -380,7 +380,7 @@ int main(int argc, char **argv)
 
   /* Initialize BSP */
   ret = bsp_init(&st_netstack);
-  if (ret != 1) {
+  if (ret != 0) {
     err = NETSTK_ERR_INIT;
     emb6_errorHandler(&err);
   }
