@@ -45,7 +45,6 @@
 /*==============================================================================
  MACROS
  ==============================================================================*/
-
 #ifndef EMB6_ASSERT_CFG
 #define EMB6_ASSERT_CFG                     1
 #endif /* #ifndef EMB6_ASSERT_DEBUG_PRINT_V_CFG */
@@ -132,6 +131,13 @@ do { \
 #define EMB6_ASSERT_RETFN(x, f, a, b) do{(a=b);EMB6_ASSERT_FN(x, f)} while(0)
 #endif /* EMB6_ASSERT_RETFN */
 
+#endif /* #if defined(EMB6_ASSERT_CFG) */
+
+/** this macro is required by DTLS */
+#if defined(EMB6_ASSERT_CFG)
+#define assert(x)                           EMB6_ASSERT(x)
+#else
+#define assert(x)
 #endif /* #if defined(EMB6_ASSERT_CFG) */
 
 #endif /* ASSERT_H_ */
