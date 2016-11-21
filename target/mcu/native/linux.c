@@ -1,4 +1,7 @@
 /*
+ * --- License --------------------------------------------------------------*
+ */
+/*
  * emb6 is licensed under the 3-clause BSD license. This license gives everyone
  * the right to use and distribute the code, either in binary or source code
  * format, as long as the copyright license is retained in the source code.
@@ -9,12 +12,7 @@
  * more adaptivity during run-time.
  *
  * The license text is:
- *
- * Copyright (c) 2015,
- * Hochschule Offenburg, University of Applied Sciences
- * Laboratory Embedded Systems and Communications Electronics.
- * All rights reserved.
- *
+
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  * 1. Redistributions of source code must retain the above copyright notice,
@@ -36,44 +34,34 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
+ * Copyright (c) 2016,
+ * Hochschule Offenburg, University of Applied Sciences
+ * Institute of reliable Embedded Systems and Communications Electronics.
+ * All rights reserved.
  */
-/*============================================================================*/
+
+/*
+ * --- Module Description ---------------------------------------------------*
+ */
 /**
- * \addtogroup bsp
- * @{
- * \addtogroup mcu MCU HAL library
- * @{
- */
-/**
- * \addtogroup linux
- * @{
+ *  \file       linux.c
+ *  \author     Institute of reliable Embedded Systems
+ *              and Communication Electronics
+ *  \date       $Date$
+ *  \version    $Version$
  *
- * This is an PC emulation library for upper layers.
+ *  \brief      PC emulation library for upper layers of emb::6.
  *
  */
-/*! \file   linux/linux.c
 
-    \author Artem Yushev 
-
-    \brief  This is an PC emulation library for upper layers.
-
-   \version 0.0.1
-*/
-/*============================================================================*/
-/*==============================================================================
-                                     MACROS
-==============================================================================*/
-#define     LOGGER_ENABLE        LOGGER_HAL
-#define     _POSIX_C_SOURCE      199309L
-
-/*==============================================================================
-                                 INCLUDE FILES
-==============================================================================*/
+/*
+ *  --- Includes -------------------------------------------------------------*
+ */
 #define _XOPEN_SOURCE
 #define _XOPEN_SOURCE_EXTENDED
+#define _POSIX_C_SOURCE         199309L
+
 #include <stdio.h>
-#include "target.h"
-#include "hwinit.h"
 #include <unistd.h>
 #include <time.h>
 #include <termios.h>
@@ -83,43 +71,62 @@
 #include <sys/time.h>
 #include <sys/signal.h>
 #include <stdlib.h>
+#include "emb6.h"
+#include "hal.h"
 
+
+/*
+ *  --- Macros ------------------------------------------------------------- *
+ */
+#define LOGGER_ENABLE           LOGGER_HAL
 #include "logger.h"
-/*==============================================================================
-                                     ENUMS
-==============================================================================*/
 
-/*==============================================================================
-                         STRUCTURES AND OTHER TYPEDEFS
-==============================================================================*/
 
-/*==============================================================================
-                           LOCAL FUNCTION PROTOTYPES
-==============================================================================*/
+/*
+ * --- Type Definitions -----------------------------------------------------*
+ */
+typedef struct
+{
+  /** callback function */
+  pf_hal_irqCb_t pf_cb;
+  /** data pointer */
+  void* p_data;
+
+} s_hal_irq;
+
+
+/*
+ *  --- Local Variables ---------------------------------------------------- *
+ */
+/** Definition of the peripheral callback functions */
+static s_hal_irq s_hal_irqs[EN_HAL_PERIPHIRQ_MAX];
+
+static struct timespec tim = { 0, 0 };
+
+#if DEMO_USE_EXTIF
+static int fdm = -1;
+static pf_hal_irqCb_t isr_rxCallb = NULL;
+#endif /* #if DEMO_USE_EXTIF */
+
+
+/*
+ *  --- Local Function Prototypes ------------------------------------------ *
+ */
 #if DEMO_USE_EXTIF
 static void _printAndExit( const char* rpc_reason );
 static void signal_handler_IO (int status);
 static void signal_handler_interrupt(int signum);
 #endif /* #if DEMO_USE_EXTIF */
 
-/*==============================================================================
-                          VARIABLE DECLARATIONS
-==============================================================================*/
-static    struct timespec             tim = {0,0};
+
+/*
+ *  --- Local Functions ---------------------------------------------------- *
+ */
 #if DEMO_USE_EXTIF
-static int fdm = -1;
-pfn_intCallb_t isr_rxCallb = NULL;
-#endif /* #if DEMO_USE_EXTIF */
-/*==============================================================================
-                                LOCAL CONSTANTS
-==============================================================================*/
-
-
-/*==============================================================================
-                                LOCAL FUNCTIONS
-==============================================================================*/
-
-#if DEMO_USE_EXTIF
+/*---------------------------------------------------------------------------*/
+/*
+* putchar()
+*/
 int putchar (int __c)
 {
     int ret = 0;
@@ -127,15 +134,23 @@ int putchar (int __c)
     if( fdm != -1 )
         write( fdm, &c, 1 );
     return ret;
-}
+} /* putchar() */
 
+/*---------------------------------------------------------------------------*/
+/*
+* _printAndExit()
+*/
 static void _printAndExit( const char* rpc_reason )
 {
     perror(rpc_reason);
     perror("\n");
     exit( 1 );
-}
+} /* _printAndExit() */
 
+/*---------------------------------------------------------------------------*/
+/*
+* signal_handler_IO()
+*/
 static void signal_handler_IO (int status)
 {
     char bufin;
@@ -147,207 +162,329 @@ static void signal_handler_IO (int status)
         if((isr_rxCallb != NULL) && (ret > 0))
             isr_rxCallb(&bufin);
     } while( ret > 0 );
-}
+} /* signal_handler_IO() */
 
+/*---------------------------------------------------------------------------*/
+/*
+* signal_handler_interrupt()
+*/
 static void signal_handler_interrupt(int signum)
 {
     close(fdm);
     exit(1);
-}
-
+} /* signal_handler_interrupt() */
 #endif /* #if DEMO_USE_EXTIF */
 
-/*==============================================================================
-                                 API FUNCTIONS
-==============================================================================*/
 
-/*==============================================================================
- hal_extIntInit()
- =============================================================================*/
-void hal_extiRegister( en_targetExtInt_t e_extInt, en_targetIntEdge_t e_edge,
-		pfn_intCallb_t pfn_intCallback )
-{
-    hal_enterCritical();
+/*
+ * --- Global Function Definitions ----------------------------------------- *
+ */
 
-    if( pfn_intCallback != NULL )
-    {
-		switch( e_extInt )
-		{
-			case E_TARGET_RADIO_INT:
-				break;
-#if DEMO_USE_EXTIF
-			case E_TARGET_USART_INT:
-				isr_rxCallb = pfn_intCallback;
-				break;
-#endif /* DEMO_USE_EXTIF */
-			default:
-				break;
-		}
-    }
-    hal_exitCritical();
-} /* hal_extIntInit() */
-
-/*==============================================================================
- hal_extiClear()
- =============================================================================*/
-void hal_extiClear(en_targetExtInt_t e_extInt)
-{
-} /* hal_extiClear() */
-
-/*==============================================================================
- hal_extiEnable()
- =============================================================================*/
-void hal_extiEnable(en_targetExtInt_t e_extInt)
-{
-} /* hal_extiEnable() */
-
-/*==============================================================================
- hal_extiDisable()
- =============================================================================*/
-void hal_extiDisable(en_targetExtInt_t e_extInt)
-{
-} /* hal_extiDisable() */
-
-/*==============================================================================
-  hal_delay_us()
- =============================================================================*/
-void hal_delay_us(uint32_t l_delay)
-{
-    tim.tv_nsec = l_delay*1000;
-    nanosleep(&tim, NULL);
-} /* hal_delay_us() */
-/*==============================================================================
- hal_enterCritical()
- =============================================================================*/
-void hal_enterCritical(void)
-{
-    /* Not implemented */
-}
-/*==============================================================================
- hal_exitCritical()
- =============================================================================*/
-void hal_exitCritical(void)
-{
-    /* Not implemented */
-}
-/*==============================================================================
- hal_ledOff()
- =============================================================================*/
-void hal_ledOff(uint16_t ui_led)
-{
-    /* LED disable */
-    LOG1_INFO("LED-OFF: %d", ui_led);
-}
-/*==============================================================================
- hal_ledOn()
- =============================================================================*/
-void hal_ledOn(uint16_t ui_led)
-{
-    /* LED enable */
-    LOG1_INFO("LED-ON: %d", ui_led);
-}
-/*==============================================================================
- hal_init()
- =============================================================================*/
-int8_t hal_init (void)
+/*---------------------------------------------------------------------------*/
+/*
+* hal_init()
+*/
+int8_t hal_init( void )
 {
 #if DEMO_USE_EXTIF
-    struct sigaction saio;
-    struct sigaction saint;
-    const char *symlink_path;
+  struct sigaction saio;
+  struct sigaction saint;
+  const char *symlink_path;
 
-    fdm = open("/dev/ptmx", O_RDWR);  /* open master */
-    if( fdm < 0 )
-    {
-        _printAndExit( "Error on posix_openpt()" );
-    }
-    if( grantpt(fdm) < 0 )            /* change permission of slave */
-    {
-        _printAndExit( "Error on grantpt()" );
-    }
-    if( unlockpt(fdm) < 0 )          /* unlock slave */
-    {
-        _printAndExit( "Error on unlockpt()" );
-    }
+  fdm = open("/dev/ptmx", O_RDWR);  /* open master */
+  if( fdm < 0 )
+  {
+      _printAndExit( "Error on posix_openpt()" );
+  }
+  if( grantpt(fdm) < 0 )            /* change permission of slave */
+  {
+      _printAndExit( "Error on grantpt()" );
+  }
+  if( unlockpt(fdm) < 0 )          /* unlock slave */
+  {
+      _printAndExit( "Error on unlockpt()" );
+  }
 
-    saio.sa_handler = signal_handler_IO;
-    saio.sa_flags = 0;
-    saio.sa_restorer = NULL;
-    sigaction(SIGIO,&saio,NULL);
+  saio.sa_handler = signal_handler_IO;
+  saio.sa_flags = 0;
+  saio.sa_restorer = NULL;
+  sigaction(SIGIO,&saio,NULL);
 
-    memset(&saint, 0, sizeof(struct sigaction));
-    saint.sa_handler = signal_handler_interrupt;
-    sigaction(SIGINT ,&saint,NULL);
+  memset(&saint, 0, sizeof(struct sigaction));
+  saint.sa_handler = signal_handler_interrupt;
+  sigaction(SIGINT ,&saint,NULL);
 
-    fcntl(fdm, F_SETFL, O_NDELAY | O_NONBLOCK | O_ASYNC);
+  fcntl(fdm, F_SETFL, O_NDELAY | O_NONBLOCK | O_ASYNC);
 
-    symlink_path = "/dev/6lbr/if";
+  symlink_path = "/dev/6lbr/if";
 
-    unlink(symlink_path);
-    if ( symlink(ptsname(fdm), symlink_path) < 0 )
-    {
-        _printAndExit("Error on symlink");
-    }
-
+  unlink(symlink_path);
+  if ( symlink(ptsname(fdm), symlink_path) < 0 )
+  {
+      _printAndExit("Error on symlink");
+  }
 #endif /* DEMO_USE_EXTIF */
 
-    return 1;
-}
-/*==============================================================================
- hal_watchdogReset()
- =============================================================================*/
-void hal_watchdogReset(void)
-{
-    /* Not implemented */
-}
-/*==============================================================================
- hal_watchdogStart()
- =============================================================================*/
-void hal_watchdogStart(void)
-{
-    /* Not implemented */
-}
-/*==============================================================================
- hal_watchdogStop()
- =============================================================================*/
-void hal_watchdogStop(void)
-{
-    /* Not implemented */
-}
-/*==============================================================================
- hal_getrand()
- =============================================================================*/
-uint8_t hal_getrand(void)
-{
-    // We don't need special kind of seed or rand.
-    srand(time(NULL));
-    int r = rand();
-    return ((uint8_t) r);
-}
+  return 0;
+} /* hal_init() */
 
-clock_time_t hal_getTRes(void)
+/*---------------------------------------------------------------------------*/
+/*
+* hal_enterCritical()
+*/
+int8_t hal_enterCritical( void )
 {
-    return 1000;
-}
-/*==============================================================================
-  hal_getTick()
- =============================================================================*/
-uint32_t hal_getTick(void)
+  /* Not implemented */
+  return -1;
+} /* hal_enterCritical() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_exitCritical()
+*/
+int8_t hal_exitCritical( void )
 {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return ((tv.tv_sec * 1000 + tv.tv_usec / 1000) & 0xffffffff);
+  /* Not implemented */
+  return -1;
+} /* hal_exitCritical() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_watchdogStart()
+*/
+int8_t hal_watchdogStart( void )
+{
+  /* Not implemented */
+  return -1;
+} /* hal_watchdogStart() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_watchdogReset()
+*/
+int8_t hal_watchdogReset( void )
+{
+  /* Not implemented */
+  return -1;
+} /* hal_watchdogReset() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_watchdogStop()
+*/
+int8_t hal_watchdogStop( void )
+{
+  /* Not implemented */
+  return -1;
+} /* hal_watchdogStop() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_getrand()
+*/
+uint32_t hal_getrand( void )
+{
+  // We don't need special kind of seed or rand.
+  srand(time(NULL));
+  int r = rand();
+  return ((uint8_t) r);
+} /* hal_getrand() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_getTick()
+*/
+clock_time_t hal_getTick( void )
+{
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  return ((tv.tv_sec * 1000 + tv.tv_usec / 1000) & 0xffffffff);
 } /* hal_getTick() */
 
-/*==============================================================================
-  hal_getSec()
- =============================================================================*/
-uint32_t hal_getSec(void)
+/*---------------------------------------------------------------------------*/
+/*
+* hal_getSec()
+*/
+clock_time_t hal_getSec( void )
 {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return tv.tv_sec;
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  return tv.tv_sec;
 } /* hal_getSec() */
-/** @} */
-/** @} */
-/** @} */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_getTRes()
+*/
+clock_time_t hal_getTRes( void )
+{
+  return 1000;
+} /* hal_getTRes() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_delayUs()
+*/
+int8_t hal_delayUs( uint32_t delay )
+{
+  tim.tv_nsec = delay * 1000;
+  nanosleep(&tim, NULL);
+  return 0;
+} /* hal_delayUs() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_pinInit()
+*/
+void* hal_pinInit( en_hal_pin_t pin )
+{
+  return -1;
+} /* hal_pinInit() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_pinSet()
+*/
+int8_t hal_pinSet( void* p_pin, uint8_t val )
+{
+  return -1;
+} /* hal_pinSet() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_pinGet()
+*/
+int8_t hal_pinGet( void* p_pin )
+{
+  return -1;
+} /* hal_pinGet() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_pinIRQRegister()
+*/
+int8_t hal_pinIRQRegister( void* p_pin, en_hal_irqedge_t edge,
+    pf_hal_irqCb_t pf_cb )
+{
+  /* Not implemented */
+  return -1;
+} /* hal_pinIRQRegister() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_pinIRQEnable()
+*/
+int8_t hal_pinIRQEnable( void* p_pin )
+{
+  /* Not implemented */
+  return -1;
+} /* hal_pinIRQEnable() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_pinIRQDisable()
+*/
+int8_t hal_pinIRQDisable( void* p_pin )
+{
+  /* Not implemented */
+  return -1;
+} /* hal_pinIRQDisable() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_pinIRQClear()
+*/
+int8_t hal_pinIRQClear( void* p_pin )
+{
+  return -1;
+} /* hal_pinIRQClear() */
+
+#if defined(HAL_SUPPORT_SPI)
+/*---------------------------------------------------------------------------*/
+/*
+* hal_spiInit()
+*/
+void* hal_spiInit( en_hal_spi_t spi )
+{
+  return NULL;
+} /* hal_spiInit() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_spiTRx()
+*/
+int32_t hal_spiTRx( void* p_spi, uint8_t* p_tx, uint8_t* p_rx, uint16_t len )
+{
+  return -1;
+} /* hal_spiTRx() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_spiRx()
+*/
+int32_t hal_spiRx( void* p_spi, uint8_t * p_rx, uint16_t len )
+{
+  return -1;
+} /* hal_spiRx() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_spiTx()
+*/
+int32_t hal_spiTx( void* p_spi, uint8_t* p_tx, uint16_t len )
+{
+  return -1;
+} /* hal_spiTx() */
+#endif /* #if defined(HAL_SUPPORT_SPI) */
+
+#if defined(HAL_SUPPORT_UART)
+/*---------------------------------------------------------------------------*/
+/*
+* hal_uartInit()
+*/
+void* hal_uartInit( en_hal_uart_t uart )
+{
+  return NULL;
+} /* hal_uartInit() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_uartRx()
+*/
+int32_t hal_uartRx( void* p_uart, uint8_t * p_rx, uint16_t len )
+{
+  return 0;
+} /* hal_uartRx() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_uartTx()
+*/
+int32_t hal_uartTx( void* p_uart, uint8_t* p_tx, uint16_t len )
+{
+  return 0;
+} /* hal_uartTx() */
+#endif /* #if defined(HAL_SUPPORT_UART) */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_periphIRQRegister()
+*/
+int8_t hal_periphIRQRegister( en_hal_periphirq_t irq, pf_hal_irqCb_t pf_cb,
+    void* p_data )
+{
+  /* set the callback and data pointer */
+  s_hal_irqs[irq].pf_cb = pf_cb;
+  s_hal_irqs[irq].p_data = p_data;
+
+  return 0;
+} /* hal_periphIRQRegister() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_debugInit()
+*/
+int8_t hal_debugInit( void )
+{
+  return 0;
+} /* hal_debugInit() */
