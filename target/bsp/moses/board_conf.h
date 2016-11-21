@@ -174,8 +174,9 @@
 #define EFM32_LED_ACTIVE_HIGH               FALSE
 
 /*
- * DELAY
+ * --- Stack Macro Definitions ---------------------------------------------- *
  */
+/** additional delay between consecutive iteration of emb6 process */
 #define EMB6_PROC_DELAY                     0
 
 
@@ -197,7 +198,7 @@
  */
 
 /**
- * bsp_led()
+ * board_conf()
  *
  * \brief   Configure board.
  *
