@@ -71,7 +71,6 @@
 #include <sys/time.h>
 #include <sys/signal.h>
 #include <stdlib.h>
-#include "emb6.h"
 #include "hal.h"
 
 
@@ -81,6 +80,7 @@
 #define LOGGER_ENABLE           LOGGER_HAL
 #include "logger.h"
 
+#define NATIVE_TICK_SECONDS       ( 1000u )
 
 /*
  * --- Type Definitions -----------------------------------------------------*
@@ -298,7 +298,7 @@ clock_time_t hal_getTick( void )
 {
   struct timeval tv;
   gettimeofday(&tv, NULL);
-  return ((tv.tv_sec * 1000 + tv.tv_usec / 1000) & 0xffffffff);
+  return ((tv.tv_sec * NATIVE_TICK_SECONDS + tv.tv_usec / NATIVE_TICK_SECONDS) & 0xffffffff);
 } /* hal_getTick() */
 
 /*---------------------------------------------------------------------------*/
@@ -318,7 +318,7 @@ clock_time_t hal_getSec( void )
 */
 clock_time_t hal_getTRes( void )
 {
-  return 1000;
+  return NATIVE_TICK_SECONDS;
 } /* hal_getTRes() */
 
 /*---------------------------------------------------------------------------*/
