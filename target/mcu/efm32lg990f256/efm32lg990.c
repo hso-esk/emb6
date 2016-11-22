@@ -106,7 +106,6 @@
  */
 typedef struct
 {
-  /* TODO missing MCU-specific attributes */
   /** Port */
   GPIO_Port_TypeDef port;
   /** Pin */
@@ -185,7 +184,6 @@ static clock_time_t volatile l_hal_sec;
 /** Definition of the IOs */
 static s_hal_gpio_pin_t s_hal_gpio[EN_HAL_PIN_MAX] = {
 
-  /* TODO missing LEDs definition */
 #if defined(HAL_SUPPORT_LED0)
   {EFM32_IO_PORT_LED0, EFM32_IO_PIN_LED0, gpioModePushPull, EFM32_LED_OUT_VAL, EFM32_LED_ACTIVE_LOW, NULL}, /* LED0 */
 #endif /* #if defined(HAL_SUPPORT_LED0) */
@@ -202,7 +200,6 @@ static s_hal_gpio_pin_t s_hal_gpio[EN_HAL_PIN_MAX] = {
   {EFM32_IO_PORT_LED4, EFM32_IO_PIN_LED4, gpioModePushPull, EFM32_LED_OUT_VAL, EFM32_LED_ACTIVE_LOW, NULL}, /* LED4 */
 #endif /* #if defined(HAL_SUPPORT_LED4) */
 
-  /* TODO missing RF_SPI definition */
 #if defined(HAL_SUPPORT_RFSPI)
   {EFM32_IO_PORT_USART_CLK, EFM32_IO_PIN_USART_CLK, gpioModePushPull, 0, FALSE, NULL}, /* RF SPI CLK */
   {EFM32_IO_PORT_USART_TX, EFM32_IO_PIN_USART_TX, gpioModePushPull, 0, FALSE, NULL}, /* RF SPI TX */
