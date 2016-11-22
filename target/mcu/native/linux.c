@@ -400,41 +400,7 @@ int8_t hal_pinIRQClear( void* p_pin )
 } /* hal_pinIRQClear() */
 
 #if defined(HAL_SUPPORT_SPI)
-/*---------------------------------------------------------------------------*/
-/*
-* hal_spiInit()
-*/
-void* hal_spiInit( en_hal_spi_t spi )
-{
-  return NULL;
-} /* hal_spiInit() */
-
-/*---------------------------------------------------------------------------*/
-/*
-* hal_spiTRx()
-*/
-int32_t hal_spiTRx( void* p_spi, uint8_t* p_tx, uint8_t* p_rx, uint16_t len )
-{
-  return -1;
-} /* hal_spiTRx() */
-
-/*---------------------------------------------------------------------------*/
-/*
-* hal_spiRx()
-*/
-int32_t hal_spiRx( void* p_spi, uint8_t * p_rx, uint16_t len )
-{
-  return -1;
-} /* hal_spiRx() */
-
-/*---------------------------------------------------------------------------*/
-/*
-* hal_spiTx()
-*/
-int32_t hal_spiTx( void* p_spi, uint8_t* p_tx, uint16_t len )
-{
-  return -1;
-} /* hal_spiTx() */
+#error "SPI is not supported on native platform"
 #endif /* #if defined(HAL_SUPPORT_SPI) */
 
 #if defined(HAL_SUPPORT_UART)
