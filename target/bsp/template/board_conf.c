@@ -82,15 +82,11 @@ int8_t board_conf( s_ns_t* p_ns )
 {
   EMB6_ASSERT_RET( p_ns != NULL, -1 );
 
-  /* stack driver selection */
-  p_ns->dllc = &dllc_driver_802154;
-#if (NETSTK_CFG_LOW_POWER_MODE_EN == TRUE)
-  p_ns->mac  = &mac_driver_smartmac;
-#else
-  p_ns->mac  = &mac_driver_802154;
-#endif /* #if (NETSTK_CFG_LOW_POWER_MODE_EN == TRUE) */
-  p_ns->phy  = &phy_driver_802154;
-  p_ns->rf   = &rf_driver_ticc120x;
+  /* TODO add missing stack driver selection */
+  p_ns->dllc = &dllc_driver_null;
+  p_ns->mac  = &mac_driver_null;
+  p_ns->phy  = &phy_driver_null;
+  p_ns->rf   = &rf_driver_null;
 
   return 0;
 } /* board_conf */
