@@ -1,4 +1,7 @@
 /*
+ * --- License --------------------------------------------------------------*
+ */
+/*
  * emb6 is licensed under the 3-clause BSD license. This license gives everyone
  * the right to use and distribute the code, either in binary or source code
  * format, as long as the copyright license is retained in the source code.
@@ -9,12 +12,7 @@
  * more adaptivity during run-time.
  *
  * The license text is:
- *
- * Copyright (c) 2015,
- * Hochschule Offenburg, University of Applied Sciences
- * Laboratory Embedded Systems and Communications Electronics.
- * All rights reserved.
- *
+
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  * 1. Redistributions of source code must retain the above copyright notice,
@@ -36,574 +34,616 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
+ * Copyright (c) 2016,
+ * Hochschule Offenburg, University of Applied Sciences
+ * Institute of reliable Embedded Systems and Communications Electronics.
+ * All rights reserved.
  */
-/*============================================================================*/
+
+/*
+ * --- Module Description ---------------------------------------------------*
+ */
+/**
+ *  \file       hal_template.c
+ *  \author     Institute of reliable Embedded Systems
+ *              and Communication Electronics
+ *  \date       $Date$
+ *  \version    $Version$
+ *
+ *  \brief      HAL implementation for MSP430x5xx MCU.
+ *
+ */
+
+/*
+ *  --- Includes -------------------------------------------------------------*
+ */
+#include <msp430.h>
+#include "hal.h"
+
+#include "mcu.h"
+#include "io.h"
+
+
+/*
+ *  --- Macros ------------------------------------------------------------- *
+ */
+/** Enable/Disable logger */
+#define LOGGER_ENABLE                   LOGGER_HAL
+#include "logger.h"
+
+/** Number of ticks per second */
+#define MSP430_TICK_SECONDS             ( 1000u )
+
+/** Tick pre-scaler */
+#define MSP430_TICK_SCALER              ( 2u )
+
+/** Enable/Disable high logic */
+#define MSP430_IO_HIGH_LOGIC            FALSE
+
+/*
+ * --- Type Definitions -----------------------------------------------------*
+ */
 
 /**
- * @file    target.c
- * @author  PN
- * @brief   HAL implementation of TI MSP430x5xx
+ * \brief   Description of a single Pin.
+ *
+ *          A pin consists of several attributes such as its port
+ *          and pin numbers and the output mode and IRQ callbacks.
  */
-
-#include "target.h"
-
-
-/*
-********************************************************************************
-*                                  INCLUDES
-********************************************************************************
-*/
-
-#include <msp430.h>
-
-#include "targetconfig.h"
-#include "target.h"
-
-#include "bsp.h"
-#include "io.h"
-#include "int.h"
-#include "lcd.h"
-#include "mcu.h"
-#include "led.h"
-#include "key.h"
-#include "spi.h"
-#include "tmr.h"
-#include "uart.h"
-#include "rtc.h"
-#include "infoflash.h"
-#include "rt_tmr.h"
-
-
-/*
-********************************************************************************
-*                               LOCAL DEFINES
-********************************************************************************
-*/
-#define TARGET_CFG_ARG_CHK_EN                   ( 1u )
-
-#define TARGET_CFG_SYSTICK_RESOLUTION           (clock_time_t)( 1000u )
-#define TARGET_CFG_SYSTICK_SCALER               (clock_time_t)(    2u )
-
-
-/*
-********************************************************************************
-*                               LOCAL DATATYPE
-********************************************************************************
-*/
-typedef uint8_t     spiDesc_t;
-
-/*
-********************************************************************************
-*                               LOCAL VARIABLES
-********************************************************************************
-*/
-static s_io_pin_desc_t s_target_extIntPin[] =
+typedef struct
 {
-    {&gps_io_port[TARGETCONFIG_RF_GPIO0_PORT], TARGETCONFIG_RF_GPIO0_PIN, TARGETCONFIG_RF_GPIO0_MSK},
-    {&gps_io_port[TARGETCONFIG_RF_GPIO2_PORT], TARGETCONFIG_RF_GPIO2_PIN, TARGETCONFIG_RF_GPIO2_MSK},
-    {&gps_io_port[TARGETCONFIG_RF_GPIO3_PORT], TARGETCONFIG_RF_GPIO3_PIN, TARGETCONFIG_RF_GPIO3_MSK},
+  /** Port  */
+  s_io_port_desc_t* PORT;
+  /** PIN */
+  uint8_t PIN;
+    /** PIN */
+  uint8_t MSK;
+  /** IRQ callback */
+  pf_hal_irqCb_t pf_cb;
 
-    /* todo added UART interrupt */
+} s_hal_gpio_pin_t;
+
+
+/**
+ * \brief   Description of an SPI interface.
+ *
+ *          An SPI interface of the EFM32 consists of the according
+ *          pins and handles.
+ */
+typedef struct
+{
+  /** clk pin */
+  s_hal_gpio_pin_t* p_clkPin;
+  /** tx  pin */
+  s_hal_gpio_pin_t* p_txPin;
+  /** rx pin */
+  s_hal_gpio_pin_t* p_rxPin;
+  /** chip select pin */
+  s_hal_gpio_pin_t* p_csPin;
+
+} s_hal_spi_t;
+
+
+/**
+ * \brief   Description of an UART interface.
+ *
+ *          A UART interface of the EFM32 consists of the according
+ *          pins and handles.
+ */
+typedef struct
+{
+  /* TODO missing MCU-specific attributes */
+
+  /** tx pin */
+  s_hal_gpio_pin_t* p_txPin;
+  /** rx  pin */
+  s_hal_gpio_pin_t* p_rxPin;
+
+} s_hal_uart_t;
+
+
+/** IRQ structure declaration */
+typedef struct
+{
+  /** callback function */
+  pf_hal_irqCb_t pf_cb;
+  /** data pointer */
+  void* p_data;
+
+} s_hal_irq;
+
+
+/*
+ *  --- Local Variables ---------------------------------------------------- *
+ */
+/** Ticks since startup */
+static clock_time_t volatile l_hal_tick;
+/** Seconds since startup */
+static clock_time_t volatile l_hal_sec;
+
+/** Definition of the IOs */
+static s_hal_gpio_pin_t s_hal_gpio[EN_HAL_PIN_MAX] = {
+  /* TODO missing LEDs definition */
+#if defined(HAL_SUPPORT_LED0)
+  {&gps_io_port[MSP430_IO_PORT_LED0], MSP430_IO_PIN_LED0, MSP430_IO_MASK_LED0},
+#endif /* #if defined(HAL_SUPPORT_LED0) */
+#if defined(HAL_SUPPORT_LED1)
+  {&gps_io_port[MSP430_IO_PORT_LED1], MSP430_IO_PIN_LED1, MSP430_IO_MASK_LED1},
+#endif /* #if defined(HAL_SUPPORT_LED1) */
+#if defined(HAL_SUPPORT_LED2)
+  {&gps_io_port[MSP430_IO_PORT_LED2], MSP430_IO_PIN_LED2, MSP430_IO_MASK_LED2},
+#endif /* #if defined(HAL_SUPPORT_LED2) */
+#if defined(HAL_SUPPORT_LED3)
+  {&gps_io_port[MSP430_IO_PORT_LED3], MSP430_IO_PIN_LED3, MSP430_IO_MASK_LED3},
+#endif /* #if defined(HAL_SUPPORT_LED3) */
+
+  /* TODO missing RF_SPI definition */
+#if defined(HAL_SUPPORT_RFSPI)
+  {&gps_io_port[MSP430_IO_PORT_SPI_CLK], MSP430_IO_PIN_SPI_CLK, MSP430_IO_MASK_SPI_CLK},
+  {&gps_io_port[MSP430_IO_PORT_SPI_MOSI], MSP430_IO_PIN_SPI_MOSI, MSP430_IO_MASK_SPI_MOSI},
+  {&gps_io_port[MSP430_IO_PORT_SPI_MISO], MSP430_IO_PIN_SPI_MISO, MSP430_IO_MASK_SPI_MISO},
+  {&gps_io_port[MSP430_IO_PORT_SPI_CS], MSP430_IO_PIN_SPI_CS, MSP430_IO_MASK_SPI_CS},
+#endif /* #if defined(HAL_SUPPORT_RFSPI) */
+
+#if defined(HAL_SUPPORT_RFCTRL0)
+  {&gps_io_port[MSP430_IO_PORT_RF_CTRL0], MSP430_IO_PIN_RF_CTRL0, MSP430_IO_MASK_RF_CTRL0},
+#endif /* #if defined(HAL_SUPPORT_RFCTRL0) */
+#if defined(HAL_SUPPORT_RFCTRL1)
+  {&gps_io_port[MSP430_IO_PORT_RF_CTRL1], MSP430_IO_PIN_RF_CTRL1, MSP430_IO_MASK_RF_CTRL1},
+#endif /* #if defined(HAL_SUPPORT_RFCTRL1) */
+#if defined(HAL_SUPPORT_RFCTRL2)
+  {&gps_io_port[MSP430_IO_PORT_RF_CTRL2], MSP430_IO_PIN_RF_CTRL2, MSP430_IO_MASK_RF_CTRL2},
+#endif /* #if defined(HAL_SUPPORT_RFCTRL2) */
+
+#if defined(HAL_SUPPORT_SLIPUART)
+  {NULL, NULL, NULL},
+#endif /* #if defined(HAL_SUPPORT_SLIPUART) */
+
 };
 
-static clock_time_t volatile    hal_ticks;
-static spiDesc_t                hal_rfspi;
-static pfn_intCallb_t           hal_uartCb;
 
-/*
-********************************************************************************
-*                           LOCAL FUNCTION DEFINITIONS
-********************************************************************************
-*/
-static void _hal_systick(void);
-static void _hal_isrSysTick( void *p_arg );
-static void _hal_isrUartCb(uint8_t c);
+#if defined(HAL_SUPPORT_RFSPI)
+/** Definition of the SPI interface */
+static s_hal_spi_t s_hal_spi = {
+  /* TODO add missing definition */
 
-/*
-********************************************************************************
-*                           LOCAL FUNCTION DEFINITIONS
-********************************************************************************
-*/
-static void _hal_isrSysTick( void *p_arg )
-{
-    hal_ticks++;
-    if ((hal_ticks % TARGET_CFG_SYSTICK_SCALER) == 0) {
-        rt_tmr_update();
-    }
-}
+  .p_clkPin = &s_hal_gpio[EN_HAL_PIN_RFSPICLK],
+  .p_txPin  = &s_hal_gpio[EN_HAL_PIN_RFSPITX],
+  .p_rxPin  = &s_hal_gpio[EN_HAL_PIN_RFSPIRX],
+  .p_csPin  = &s_hal_gpio[EN_HAL_PIN_RFSPICS]
+};
+#endif /* #if defined(HAL_SUPPORT_RFSPI) */
 
-static void _hal_isrUartCb(uint8_t c)
-{
-    if (hal_uartCb) {
-        hal_uartCb(&c);
-    }
-}
 
-static void _hal_systick(void)
-{
-    uint16_t period;
+#if defined(HAL_SUPPORT_SLIPUART)
+/** Definition of the SPI interface */
+static s_hal_uart_t s_hal_uart = {
+  /* TODO add missing definition */
 
-    period = (uint16_t)(TARGET_CFG_SYSTICK_RESOLUTION /
-                        TARGET_CFG_SYSTICK_SCALER);
-    tmr_config(E_TMR_0, period);
-    tmr_start(E_TMR_0, _hal_isrSysTick );
-}
+  .p_txPin  = &s_hal_gpio[EN_HAL_PIN_SLIPUARTTX],
+  .p_rxPin  = &s_hal_gpio[EN_HAL_PIN_SLIPUARTRX],
+};
+#endif /* #if defined(HAL_SUPPORT_RFSPI) */
 
-static void _hal_uartInit(void)
-{
-    uart_init();
-    uart_config(E_UART_SEL_UART1, 115200, _hal_isrUartCb);
-}
+
+/** Definition of the peripheral callback functions */
+static s_hal_irq s_hal_irqs[EN_HAL_PERIPHIRQ_MAX];
 
 
 /*
-********************************************************************************
-*                           GLOBAL FUNCTION DEFINITIONS
-********************************************************************************
-*/
-
-#ifndef GCC_COMPILER
-int putchar(int c)
-{
-    uart_send(E_UART_SEL_UART1, (char *)&c, 1);
-    return c;
-}
-#endif /* #ifndef GCC_COMPILER */
-
-
-/*
-********************************************************************************
-*                            API FUNCTION DEFINITIONS
-********************************************************************************
-*/
-void hal_enterCritical(void)
-{
-    __disable_interrupt();
-}
-
-
-void hal_exitCritical(void)
-{
-    __enable_interrupt();
-}
-
-
-/**
- *  \brief      This function should initialize all of the MCU peripherals
- *  \return     status
+ *  --- Local Function Prototypes ------------------------------------------ *
  */
-int8_t hal_init(void)
+static void _hal_tcInit( void );
+static void _hal_tcCb( void *arg );
+static void _hal_uartRxCb( uint8_t c );
+
+/*
+ *  --- Local Functions ---------------------------------------------------- *
+ */
+
+/*---------------------------------------------------------------------------*/
+/*
+* _hal_clkInit()
+*/
+static void _hal_tcInit( void )
 {
-    int i = 0;
+  uint16_t period;
 
+  period = (uint16_t)(MSP430_TICK_SECONDS / MSP430_TICK_SCALER);
+  tmr_config(MSP430_SYSTICK_TMR, period);
+  tmr_start(MSP430_SYSTICK_TMR, _hal_tcCb );
 
-    hal_enterCritical();
-    {
-        /*
-         * Initialize peripherals: UART, SPI, LED,...
-         * As BSP implementation is common for all platform at the time of writing,
-         * platform-specific modules shall be initialized in this function
-         */
+} /* _hal_clkInit() */
 
-        /* initialize IO */
-        io_init();
-
-        /* initialize system clock */
-        mcu_sysClockInit( MCU_SYSCLK_25MHZ );
-
-        /* initialize interrupts */
-        int_init();
-
-        /* initialize timer */
-        tmr_init();
-
-        /* initialize LEDs */
-        led_init();
-
-        /* initialize keys */
-        key_init();
-
-        /* initialize RF SPI */
-#if (TARGET_CONFIG_RF == TRUE)
-        spi_rfInit(4);
-#endif
-
-        /* initialize LCD */
-#if (TARGET_CONFIG_LCD == TRUE)
-        spi_lcdInit(MCU_SYSCLK_8MHZ);
-        lcd_init();
-#endif
-
-        /* initialize UART */
-        _hal_uartInit();
-        hal_uartCb = 0;
-
-        /* initialize info flash */
-        infoflash_init();
-
-        /* initialize RTC */
-        rtc_init();
-
-        /* Initialize System tick timer */
-        _hal_systick();
-
-        /* Enable global interrupt */
-        _BIS_SR(GIE);
-
-        /* delay */
-        for( i = 0; i < TARGET_CONFIG_INIT_DELAY_NUM; i++ )
-            __delay_cycles( TARGET_CONFIG_INIT_DELAY_CYCLES );
-    }
-    hal_exitCritical();
-
-    /*
-     * Initialize HAL local variables
-     */
-    hal_rfspi = 0;
-    hal_ticks = 0;
-    return 1;
-}
-
-
-uint8_t hal_getrand(void)
+/*---------------------------------------------------------------------------*/
+/*
+* _hal_tcCb()
+*/
+static void _hal_tcCb( void *arg )
 {
-    /*TODO missing implementation */
-    return (uint8_t)hal_ticks;
-}
+  (void)&arg;
 
+  /* Indicate timer update to the emb6 timer */
+  hal_enterCritical();
+  if (l_hal_tick % MSP430_TICK_SECONDS == 0) {
+    l_hal_sec++;
+  }
+  l_hal_tick++;
+  hal_exitCritical();
 
-void hal_ledOn(uint16_t ui_led)
+  /* update real-time timers*/
+  rt_tmr_update();
+
+} /* _hal_tcCb() */
+
+#if defined(HAL_SUPPORT_UART)
+#if defined(HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX)
+/*---------------------------------------------------------------------------*/
+/*
+* _hal_uartRxCb()
+*/
+static void _hal_uartRxCb( uint8_t c )
 {
-    switch (ui_led) {
-#if TARGET_CONFIG_LED1
-        case E_BSP_LED_0:
-            led_set(E_LED_1);
-            break;
-#endif
-#if TARGET_CONFIG_LED2
-        case E_BSP_LED_1:
-            led_set(E_LED_2);
-            break;
-#endif
-#if TARGET_CONFIG_LED3
-        case E_BSP_LED_2:
-            led_set(E_LED_3);
-            break;
-#endif
-#if TARGET_CONFIG_LED4
-        case E_BSP_LED_4:
-            led_set(E_LED_4);
-            break;
-#endif
-        default:
-            break;
-    }
-}
+  if( s_hal_irqs[EN_HAL_PERIPHIRQ_SLIPUART_RX].pf_cb != NULL )
+  {
+    s_hal_irqs[EN_HAL_PERIPHIRQ_SLIPUART_RX].pf_cb( &c );
+  }
+} /* _hal_uartRxCb() */
+#endif /* #if defined(HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX) */
+#endif /* #if defined(HAL_SUPPORT_UART) */
 
+/*
+ * --- Global Function Definitions ----------------------------------------- *
+ */
 
-void hal_ledOff(uint16_t ui_led)
+/*---------------------------------------------------------------------------*/
+/*
+* hal_init()
+*/
+int8_t hal_init( void )
 {
-    switch (ui_led) {
-#if TARGET_CONFIG_LED1
-        case E_BSP_LED_0:
-            led_clear(E_LED_1);
-            break;
-#endif
-#if TARGET_CONFIG_LED2
-        case E_BSP_LED_1:
-            led_clear(E_LED_2);
-            break;
-#endif
-#if TARGET_CONFIG_LED3
-        case E_BSP_LED_2:
-            led_clear(E_LED_3);
-            break;
-#endif
-#if TARGET_CONFIG_LED4
-        case E_BSP_LED_4:
-            led_clear(E_LED_4);
-            break;
-#endif
-        default:
-            break;
-    }
-}
+  /* initialize system clock */
+  mcu_sysClockInit( MCU_SYSCLK_25MHZ );
 
+  /* initialize timer counter */
+  _hal_tcInit();
 
-void hal_extiRegister(en_targetExtInt_t     e_pin,
-                      en_targetIntEdge_t    e_edge,
-                      pfn_intCallb_t        pf_cb)
+  /* initialize external interrupts */
+  int_init();
+
+  /* Enable global interrupt */
+  _BIS_SR(GIE);
+
+  return 0;
+} /* hal_init() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_enterCritical()
+*/
+int8_t hal_enterCritical( void )
 {
-    uint8_t int_edge;
+  __disable_interrupt();
+  return 0;
+} /* hal_enterCritical() */
 
-
-#if NETSTK_CFG_ARG_CHK_EN
-    if (pf_cb == NULL) {
-        return;
-    }
-#endif
-
-    /* register external interrupts */
-    switch (e_pin) {
-        case E_TARGET_EXT_INT_0:
-        case E_TARGET_EXT_INT_1:
-        case E_TARGET_EXT_INT_2:
-            /* get corresponding edge configuration */
-            if (e_edge == E_TARGET_INT_EDGE_FALLING) {
-                int_edge = INT_EDGE_FALLING;
-            } else {
-                int_edge = INT_EDGE_RISING;
-            }
-
-            /* supported external interrupts are treated evenly */
-            io_extiRegister(&s_target_extIntPin[e_pin], int_edge, pf_cb);
-            break;
-
-        case E_TARGET_USART_INT:
-            /* register callback function */
-            hal_uartCb = pf_cb;
-            break;
-
-        case E_TARGET_RADIO_INT:
-        case E_TARGET_EXT_INT_3:
-        case E_TARGET_EXT_INT_MAX:
-        default:
-            /* unsupported external interrupts */
-            break;
-    }
-}
-
-void hal_extiClear(en_targetExtInt_t e_pin)
+/*---------------------------------------------------------------------------*/
+/*
+* hal_exitCritical()
+*/
+int8_t hal_exitCritical( void )
 {
-    switch (e_pin) {
-        case E_TARGET_EXT_INT_0:
-        case E_TARGET_EXT_INT_1:
-        case E_TARGET_EXT_INT_2:
-            io_extiClear(&s_target_extIntPin[e_pin]);
-            break;
+  __enable_interrupt();
+  return 0;
+} /* hal_exitCritical() */
 
-        case E_TARGET_USART_INT:
-            /* register callback function */
-            hal_uartCb = 0;
-            break;
-
-        case E_TARGET_RADIO_INT:
-        case E_TARGET_EXT_INT_3:
-        case E_TARGET_EXT_INT_MAX:
-        default:
-            /* unsupported external interrupts */
-            break;
-    }
-}
-
-void hal_extiEnable(en_targetExtInt_t e_pin)
+/*---------------------------------------------------------------------------*/
+/*
+* hal_watchdogStart()
+*/
+int8_t hal_watchdogStart( void )
 {
-    switch (e_pin) {
-        case E_TARGET_EXT_INT_0:
-        case E_TARGET_EXT_INT_1:
-        case E_TARGET_EXT_INT_2:
-            io_extiEnable(&s_target_extIntPin[e_pin]);
-            break;
+  /* TODO missing implementation */
+  return -1;
+} /* hal_watchdogStart() */
 
-        case E_TARGET_USART_INT:
-            break;
-
-        case E_TARGET_RADIO_INT:
-        case E_TARGET_EXT_INT_3:
-        case E_TARGET_EXT_INT_MAX:
-        default:
-            /* unsupported external interrupts */
-            break;
-    }
-}
-
-void hal_extiDisable(en_targetExtInt_t e_pin)
+/*---------------------------------------------------------------------------*/
+/*
+* hal_watchdogReset()
+*/
+int8_t hal_watchdogReset( void )
 {
-    switch (e_pin) {
-        case E_TARGET_EXT_INT_0:
-        case E_TARGET_EXT_INT_1:
-        case E_TARGET_EXT_INT_2:
-            io_extiDisable(&s_target_extIntPin[e_pin]);
-            break;
+  /* TODO missing implementation */
+  return -1;
+} /* hal_watchdogReset() */
 
-        case E_TARGET_USART_INT:
-            break;
-
-        case E_TARGET_RADIO_INT:
-        case E_TARGET_EXT_INT_3:
-        case E_TARGET_EXT_INT_MAX:
-        default:
-            /* unsupported external interrupts */
-            break;
-    }
-}
-
-
-void hal_delay_us(uint32_t ul_delay)
+/*---------------------------------------------------------------------------*/
+/*
+* hal_watchdogStop()
+*/
+int8_t hal_watchdogStop( void )
 {
-    /*
-     * Note(s)
-     *
-     * hal_delay_us() is only called by emb6.c to make a delay multiple of 500us,
-     * which is equivalent to 1 systick
-     */
-    uint32_t tick_stop;
+  /* TODO missing implementation */
+  return -1;
+} /* hal_watchdogStop() */
 
-
-    hal_enterCritical();
-    tick_stop  = hal_ticks;
-    tick_stop += ul_delay / 500;
-    hal_exitCritical();
-    while (tick_stop > hal_ticks) {
-        /* do nothing */
-    }
-}
-
-
-uint8_t hal_gpioPinInit(uint8_t c_pin, uint8_t c_dir, uint8_t c_initState)
+/*---------------------------------------------------------------------------*/
+/*
+* hal_getrand()
+*/
+uint32_t hal_getrand( void )
 {
-    /*TODO missing implementation */
-    return 0;
-}
+  /* TODO missing implementation */
+  return l_hal_tick;
+} /* hal_getrand() */
 
-
-void * hal_ctrlPinInit(en_targetExtPin_t e_pinType)
+/*---------------------------------------------------------------------------*/
+/*
+* hal_getTick()
+*/
+clock_time_t hal_getTick( void )
 {
-    /*TODO missing implementation */
-    return NULL;
-}
+  return l_hal_tick;
+} /* hal_getTick() */
 
-
-void hal_pinSet(void * p_pin)
+/*---------------------------------------------------------------------------*/
+/*
+* hal_getSec()
+*/
+clock_time_t hal_getSec( void )
 {
-    /*TODO missing implementation */
-}
+  return l_hal_sec;
+} /* hal_getSec() */
 
-
-void hal_pinClr(void * p_pin)
+/*---------------------------------------------------------------------------*/
+/*
+* hal_getTRes()
+*/
+clock_time_t hal_getTRes( void )
 {
-    /*TODO missing implementation */
-}
+  return MSP430_TICK_SECONDS;
+} /* hal_getTRes() */
 
-
-uint8_t hal_pinGet(void * p_pin)
+/*---------------------------------------------------------------------------*/
+/*
+* hal_delayUs()
+*/
+int8_t hal_delayUs( uint32_t delay )
 {
-    return 0;
-}
+  /*
+   * Note(s)
+   *
+   * hal_delay_us() is only called by emb6.c to make a delay multiple of 500us,
+   * which is equivalent to 1 systick
+   */
+  uint32_t tick_stop;
 
+  hal_enterCritical();
+  tick_stop  = l_hal_tick;
+  tick_stop += delay * MSP430_TICK_SCALER / MSP430_TICK_SECONDS;
+  hal_exitCritical();
+  while (tick_stop > l_hal_tick) {
+    /* do nothing */
+  }
 
-void *hal_spiInit(void)
+  return 0;
+} /* hal_delayUs() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_pinInit()
+*/
+void* hal_pinInit( en_hal_pin_t pin )
 {
-#if (TARGET_CONFIG_RF == TRUE)
-    return &hal_rfspi;
+  s_hal_gpio_pin_t* p_pin = NULL;
+  p_pin = &s_hal_gpio[pin];
+
+  /* configure the pin as output */
+  *p_pin[pin].PORT->PSEL &= ~p_pin[pin].MSK;
+  /* set as output */
+  *p_pin[pin].PORT->PDIR |= p_pin[pin].MSK;
+  /* disable */
+#if (MSP430_IO_HIGH_LOGIC == TRUE)
+  *p_pin[pin].PORT->POUT &= ~p_pin[pin].MSK;
 #else
-    return NULL;
-#endif
-}
+  *p_pin[pin].PORT->POUT |= p_pin[pin].MSK;
+#endif /* #if (MSP430_IO_HIGH_LOGIC == TRUE) */
 
+  return p_pin;
+} /* hal_pinInit() */
 
-/**
- * @brief   Select/Deselect a SPI driver
- * @param   p_spi
- * @param   action
- * @return
- */
-uint8_t hal_spiSlaveSel(void *p_spi, bool action)
+/*---------------------------------------------------------------------------*/
+/*
+* hal_pinSet()
+*/
+int8_t hal_pinSet( void* p_pin, uint8_t val )
 {
-#if TARGET_CFG_ARG_CHK_EN
-  if (p_spi == NULL) {
-    return 0;
-  }
-#endif
+  s_hal_gpio_pin_t* p_gpioPin = (s_hal_gpio_pin_t *)p_pin;
 
-  if (action == TRUE) {
-    spi_rfSelect();
-  } else {
-    spi_rfDeselect();
-  }
-  return 1;
-}
+  EMB6_ASSERT_RET( p_gpioPin != NULL, -1 );
 
-void hal_spiTxRx(uint8_t *p_tx, uint8_t *p_rx, uint16_t len)
+  io_set(p_gpioPin->PORT);
+  return -1;
+} /* hal_pinSet() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_pinGet()
+*/
+int8_t hal_pinGet( void* p_pin )
 {
-    spi_rfTxRx(p_tx, p_rx, len);
-}
+  s_hal_gpio_pin_t* p_gpioPin = (s_hal_gpio_pin_t *)p_pin;
 
-/**
- * @brief   Read a given number of data from a SPI bus
- * @param   p_data  Point to buffer holding data to receive
- * @param   i_len   Length of data to receive
- * @return
- */
-uint8_t hal_spiRead(uint8_t *p_data, uint16_t i_len)
+  EMB6_ASSERT_RET( p_gpioPin != NULL, -1 );
+
+  return io_get(p_gpioPin->PORT);
+} /* hal_pinGet() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_pinIRQRegister()
+*/
+int8_t hal_pinIRQRegister( void* p_pin, en_hal_irqedge_t edge,
+    pf_hal_irqCb_t pf_cb )
 {
-    uint8_t ret;
+  s_hal_gpio_pin_t* p_gpioPin = (s_hal_gpio_pin_t *)p_pin;
 
+  EMB6_ASSERT_RET( p_gpioPin != NULL, -1 );
 
-#if TARGET_CFG_ARG_CHK_EN
-    if ((p_data == NULL) ||
-        (i_len == 0)) {
-        return 0;
-    }
-#endif
+  /* supported external interrupts are treated evenly
+   * edge=1: rising; otherwise falling */
+  io_extiRegister(p_gpioPin, (edge == EN_HAL_IRQEDGE_RISING) || (edge == EN_HAL_IRQEDGE_EITHER), pf_cb);
 
-    ret = spi_rfRead(p_data, i_len);
-    return ret;
-}
+  return 0;
+} /* hal_pinIRQRegister() */
 
-
-/**
- * @brief   Write a given number of bytes onto a SPI bus
- * @param   p_data  Point to data to send
- * @param   i_len   Length of data to send
- */
-void hal_spiWrite(uint8_t *p_data, uint16_t i_len)
+/*---------------------------------------------------------------------------*/
+/*
+* hal_pinIRQEnable()
+*/
+int8_t hal_pinIRQEnable( void* p_pin )
 {
-#if TARGET_CFG_ARG_CHK_EN
-    if ((p_data == NULL) ||
-        (i_len == 0)) {
-        return;
-    }
-#endif
+  s_hal_gpio_pin_t* p_gpioPin = (s_hal_gpio_pin_t *)p_pin;
 
-    spi_rfWrite(p_data, i_len);
-}
+  EMB6_ASSERT_RET( p_gpioPin != NULL, -1 );
 
+  io_extiEnable( p_gpioPin );
+  return 0;
+} /* hal_pinIRQEnable() */
 
-void hal_watchdogReset(void)
+/*---------------------------------------------------------------------------*/
+/*
+* hal_pinIRQDisable()
+*/
+int8_t hal_pinIRQDisable( void* p_pin )
 {
-    /*TODO missing implementation */
-}
+  s_hal_gpio_pin_t* p_gpioPin = (s_hal_gpio_pin_t *)p_pin;
 
+  EMB6_ASSERT_RET( p_gpioPin != NULL, -1 );
 
-void hal_watchdogStart(void)
+  io_extiDisable( p_gpioPin );
+  return 0;
+} /* hal_pinIRQDisable() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_pinIRQClear()
+*/
+int8_t hal_pinIRQClear( void* p_pin )
 {
-    /*TODO missing implementation */
-}
+  s_hal_gpio_pin_t* p_gpioPin = (s_hal_gpio_pin_t *)p_pin;
 
+  EMB6_ASSERT_RET( p_gpioPin != NULL, -1 );
 
-void hal_watchdogStop(void)
+  io_extiClear( p_gpioPin );
+  return 0;
+} /* hal_pinIRQClear() */
+
+#if defined(HAL_SUPPORT_SPI)
+/*---------------------------------------------------------------------------*/
+/*
+* hal_spiInit()
+*/
+void* hal_spiInit( en_hal_spi_t spi )
 {
-    /*TODO missing implementation */
-}
+  spi_trxInit(4);
+  return s_hal_spi_t;
+} /* hal_spiInit() */
 
-
-clock_time_t hal_getTick(void)
+/*---------------------------------------------------------------------------*/
+/*
+* hal_spiTRx()
+*/
+int32_t hal_spiTRx( void* p_spi, uint8_t* p_tx, uint8_t* p_rx, uint16_t len )
 {
-    return TmrCurTick;
-}
+  EMB6_ASSERT_RET( p_spi != NULL, -1 );
+  EMB6_ASSERT_RET( p_spi != &s_hal_spi_t, -1 );
 
+  spi_rfTxRx(p_tx, p_rx, len);
+  return len;
+} /* hal_spiTRx() */
 
-clock_time_t hal_getSec(void)
+/*---------------------------------------------------------------------------*/
+/*
+* hal_spiRx()
+*/
+int32_t hal_spiRx( void* p_spi, uint8_t * p_rx, uint16_t len )
 {
-    clock_time_t secs = 0;
+  EMB6_ASSERT_RET( p_spi != NULL, -1 );
+  EMB6_ASSERT_RET( p_spi != &s_hal_spi_t, -1 );
 
-    secs = TmrCurTick / TARGET_CFG_SYSTICK_RESOLUTION;
-    return secs;
-}
+  return spi_rfRead(p_rx, len);
+} /* hal_spiRx() */
 
-
-clock_time_t hal_getTRes(void)
+/*---------------------------------------------------------------------------*/
+/*
+* hal_spiTx()
+*/
+int32_t hal_spiTx( void* p_spi, uint8_t* p_tx, uint16_t len )
 {
-    return TARGET_CFG_SYSTICK_RESOLUTION;
-}
+  EMB6_ASSERT_RET( p_spi != NULL, -1 );
+  EMB6_ASSERT_RET( p_spi != &s_hal_spi_t, -1 );
+
+  spi_rfWrite(p_tx, len);
+  return len;
+} /* hal_spiTx() */
+#endif /* #if defined(HAL_SUPPORT_SPI) */
+
+#if defined(HAL_SUPPORT_UART)
+/*---------------------------------------------------------------------------*/
+/*
+* hal_uartInit()
+*/
+void* hal_uartInit( en_hal_uart_t uart )
+{
+  uart_init();
+  uart_config(MSP430_SLIP_UART, MSP430_SLIP_UART_BAUD, _hal_uartRxCb);
+  return &s_hal_uart;
+} /* hal_uartInit() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_uartRx()
+*/
+int32_t hal_uartRx( void* p_uart, uint8_t * p_rx, uint16_t len )
+{
+  EMB6_ASSERT_RET( p_uart != &s_hal_uart, -1 );
+
+  /* not supported */
+  return -1;
+} /* hal_uartRx() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_uartTx()
+*/
+int32_t hal_uartTx( void* p_uart, uint8_t* p_tx, uint16_t len )
+{
+  EMB6_ASSERT_RET( p_uart != &s_hal_uart, -1 );
+
+  return uart_send(MSP430_SLIP_UART, p_tx, len);
+} /* hal_uartTx() */
+#endif /* #if defined(HAL_SUPPORT_UART) */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_periphIRQRegister()
+*/
+int8_t hal_periphIRQRegister( en_hal_periphirq_t irq, pf_hal_irqCb_t pf_cb,
+    void* p_data )
+{
+  /* set the callback and data pointer */
+  s_hal_irqs[irq].pf_cb = pf_cb;
+  s_hal_irqs[irq].p_data = p_data;
+
+  return 0;
+} /* hal_periphIRQRegister() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_debugInit()
+*/
+int8_t hal_debugInit( void )
+{
+  return -1;
+} /* hal_debugInit() */
