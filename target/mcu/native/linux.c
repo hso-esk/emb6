@@ -103,26 +103,26 @@ static s_hal_irq s_hal_irqs[EN_HAL_PERIPHIRQ_MAX];
 
 static struct timespec tim = { 0, 0 };
 
-#if DEMO_USE_EXTIF
+#if defined(HAL_SUPPORT_SLIPUART)
 static int fdm = -1;
 static pf_hal_irqCb_t isr_rxCallb = NULL;
-#endif /* #if DEMO_USE_EXTIF */
+#endif /* #if defined(HAL_SUPPORT_SLIPUART) */
 
 
 /*
  *  --- Local Function Prototypes ------------------------------------------ *
  */
-#if DEMO_USE_EXTIF
+#if defined(HAL_SUPPORT_SLIPUART)
 static void _printAndExit( const char* rpc_reason );
 static void signal_handler_IO (int status);
 static void signal_handler_interrupt(int signum);
-#endif /* #if DEMO_USE_EXTIF */
+#endif /* #if defined(HAL_SUPPORT_SLIPUART) */
 
 
 /*
  *  --- Local Functions ---------------------------------------------------- *
  */
-#if DEMO_USE_EXTIF
+#if defined(HAL_SUPPORT_SLIPUART)
 /*---------------------------------------------------------------------------*/
 /*
 * putchar()
@@ -173,7 +173,7 @@ static void signal_handler_interrupt(int signum)
     close(fdm);
     exit(1);
 } /* signal_handler_interrupt() */
-#endif /* #if DEMO_USE_EXTIF */
+#endif /* #if defined(HAL_SUPPORT_SLIPUART) */
 
 
 /*
@@ -186,7 +186,7 @@ static void signal_handler_interrupt(int signum)
 */
 int8_t hal_init( void )
 {
-#if DEMO_USE_EXTIF
+#if defined(HAL_SUPPORT_SLIPUART)
   struct sigaction saio;
   struct sigaction saint;
   const char *symlink_path;
@@ -223,7 +223,7 @@ int8_t hal_init( void )
   {
       _printAndExit("Error on symlink");
   }
-#endif /* DEMO_USE_EXTIF */
+#endif /* #if defined(HAL_SUPPORT_SLIPUART) */
 
   return 0;
 } /* hal_init() */
