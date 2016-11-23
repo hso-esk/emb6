@@ -10,7 +10,7 @@ brd_conf = {
     'mcu'           : 'samd20',
 
 # Transceiver source description (HEAD/target/if folder)
-    'if'            : 'at86rf212b',
+    'if'            : 'at86rf212b', 
 
     'startupfile'   : 'GCC/startup_samd20.c',
     'scriptfile'    : 'GCC/samd20g18_flash.ld'
