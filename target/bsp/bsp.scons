@@ -10,6 +10,11 @@ bsp += [{
 }]
 
 bsp += [{
+    'id'        : 'atany900_pro3',        'mac_addr' : '0x13A6',
+    'txrx'      : ['-11','-60'],          'mode'     : qpsk100
+}]
+
+bsp += [{
     'id'        : 'atany900_pro5',        'mac_addr' : '0x16A6',
     'txrx'      : ['-11','-60'],          'mode'     : qpsk100
 }]
