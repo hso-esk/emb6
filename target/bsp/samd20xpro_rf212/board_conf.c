@@ -37,61 +37,55 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-/**  \addtogroup emb6
- *      @{
- *      \addtogroup bsp Board Support Package
- *   @{
- *   \addtogroup board
- *   @{
- *      \addtogroup samd20xpro_rf212 Board SAM D20 Xplained Pro with AT86RF212 specific configuration
- *   @{
- */
-/*! \file   samd20xpro_rf212/board_conf.c
-
-    \author Artem Yushev, 
-
-    \brief  Board Configuration for SAM D20 Xplained Pro Starter Kit with AT86RF212 Transceiver
-
-    \version 0.0.1
-*/
 
 /*
-********************************************************************************
-*                                   INCLUDES
-********************************************************************************
-*/
+ * --- Module Description ---------------------------------------------------*
+ */
+/**
+ *  \file       board_conf.c
+ *  \author     Institute of reliable Embedded Systems
+ *              and Communication Electronics
+ *  \date       $Date$
+ *  \version    $Version$
+ *
+ *  \brief      Definition of the Board Configuration.
+ *
+ *              The Board Configuration configures the underlying MCU and
+ *              transceiver.
+ */
+
+/*
+ *  --- Includes -------------------------------------------------------------*
+ */
 #include "emb6.h"
-
+#include "assert.h"
 #include "board_conf.h"
-#include "hwinit.h"
-#include "logger.h"
-#include "bsp.h"
 
+/*
+ * --- Macro Definitions --------------------------------------------------- *
+ */
 /** Enable or disable logging */
-#define        LOGGER_ENABLE          LOGGER_BSP
+#define LOGGER_ENABLE             LOGGER_BSP
+#include "logger.h"
 
-uint8_t board_conf(s_ns_t* p_netstk)
+
+/*
+ *  --- Global Functions Definition ------------------------------------------*
+ */
+
+/*---------------------------------------------------------------------------*/
+/*
+* board_conf()
+*/
+int8_t board_conf( s_ns_t* p_ns )
 {
-  uint8_t c_ret = 1;
+  EMB6_ASSERT_RET( p_ns != NULL, -1 );
 
-  hal_gpioPinInit(SAMD20_SPI0_SCK_PIN, BSP_PIN_DIROUTPUT, BSP_PIN_UP);
-  hal_gpioPinInit(SAMD20_SPI0_MOSI_PIN, BSP_PIN_DIROUTPUT, BSP_PIN_UP);
-  hal_gpioPinInit(SAMD20_SPI0_MISO_PIN, BSP_PIN_DIRINPUT, BSP_PIN_UP);
-  hal_gpioPinInit(SAMD20_SPI0_CS_PIN, BSP_PIN_DIROUTPUT, BSP_PIN_UP);
+  p_ns->dllc = &dllc_driver_802154;
+  p_ns->mac  = &mac_driver_null;
+  p_ns->phy  = &phy_driver_null;
+  p_ns->rf   = &rf_driver_at212;
 
-  if (p_netstk != NULL) {
-    p_netstk->dllc = &dllc_driver_802154;
-    p_netstk->mac  = &mac_driver_null;
-    p_netstk->phy  = &phy_driver_null;
-    p_netstk->rf   = &rf_driver_at212;
-  } else {
-    LOG_ERR("Network stack pointer is NULL");
-    c_ret = 0;
-  }
+  return 0;
+} /* board_conf */
 
-  return c_ret;
-}
-/** @} */
-/** @} */
-/** @} */
-/** @} */
