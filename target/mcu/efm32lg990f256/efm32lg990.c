@@ -181,6 +181,9 @@ static clock_time_t volatile l_hal_tick;
 /** Seconds since startup */
 static clock_time_t volatile l_hal_sec;
 
+/** Debug Uart instance */
+USART_TypeDef *uartStdio = NULL;
+
 /** Definition of the IOs */
 static s_hal_gpio_pin_t s_hal_gpio[EN_HAL_PIN_MAX] = {
 
