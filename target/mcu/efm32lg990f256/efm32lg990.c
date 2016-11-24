@@ -114,6 +114,8 @@ typedef struct
   GPIO_Mode_TypeDef mode;
   /** Value */
   uint8_t val;
+  /** Inverted flag */
+  uint8_t inv;
   /** IRQ callback */
   pf_hal_irqCb_t pf_cb;
 
