@@ -261,11 +261,9 @@ int packetbuf_ftrreduce(int size);
 typedef uint16_t packetbuf_attr_t;
 
 struct packetbuf_attr {
-/*   uint8_t type; */
   packetbuf_attr_t val;
 };
 struct packetbuf_addr {
-/*   uint8_t type; */
   linkaddr_t addr;
 };
 
@@ -368,7 +366,6 @@ static const linkaddr_t *packetbuf_addr(uint8_t type);
 static inline int
 packetbuf_set_attr(uint8_t type, const packetbuf_attr_t val)
 {
-/*   packetbuf_attrs[type].type = type; */
   packetbuf_attrs[type].val = val;
   return 1;
 }
@@ -381,7 +378,6 @@ packetbuf_attr(uint8_t type)
 static inline int
 packetbuf_set_addr(uint8_t type, const linkaddr_t *addr)
 {
-/*   packetbuf_addrs[type - PACKETBUF_ADDR_FIRST].type = type; */
   linkaddr_copy(&packetbuf_addrs[type - PACKETBUF_ADDR_FIRST].addr, addr);
   return 1;
 }

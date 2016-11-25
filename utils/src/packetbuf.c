@@ -304,7 +304,6 @@ packetbuf_attr(uint8_t type)
 int
 packetbuf_set_addr(uint8_t type, const linkaddr_t *addr)
 {
-/*   packetbuf_addrs[type - PACKETBUF_ADDR_FIRST].type = type; */
   linkaddr_copy(&packetbuf_addrs[type - PACKETBUF_ADDR_FIRST].addr, addr);
   return 1;
 }
