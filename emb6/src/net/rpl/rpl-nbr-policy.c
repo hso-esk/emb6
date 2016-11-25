@@ -115,12 +115,9 @@ update_nbr(void)
     linkaddr_t *lladdr = nbr_table_get_lladdr(ds6_neighbors, nbr);
     is_used = 0;
 
-    /*
-     * Check if this neighbor is used as nexthop and therefor being a
-     * RPL child.
-    */
-
-    if(uip_ds6_route_is_nexthop(&nbr->ipaddr) != 0) {
+    /* Check if this neighbor is used as nexthop and therefor being a
+       RPL child. */
+    if(uip_ds6_route_is_nexthop((uip_lladdr_t *)lladdr) != 0) {
       is_used++;
       num_children++;
     }
