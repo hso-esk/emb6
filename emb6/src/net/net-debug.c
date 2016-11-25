@@ -26,31 +26,41 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * This file is part of the Contiki operating system.
- *
  */
+
 /**
  * \file
- *         A set of debugging macros for the IP stack
- *
- * \author Nicolas Tsiftes <nvt@sics.se>
+ *         A set of debugging tools for the IP stack
+ * \author
+ *         Nicolas Tsiftes <nvt@sics.se>
  *         Niclas Finne <nfi@sics.se>
  *         Joakim Eriksson <joakime@sics.se>
  *         Simon Duquennoy <simon.duquennoy@inria.fr>
  */
 
-#ifndef UIP_DEBUG_H
-#define UIP_DEBUG_H
+#include "emb6.h"
+#include "net-debug.h"
 
-#include "uip.h"
-#include <stdio.h>
-
-void uip_debug_ipaddr_print(const uip_ipaddr_t *addr);
-
-#if (DEBUG) & DEBUG_PRINT
-#define PRINT6ADDR(addr) uip_debug_ipaddr_print(addr)
-#else
-#define PRINT6ADDR(addr)
-#endif /* (DEBUG) & DEBUG_PRINT */
-
-#endif /* UIP_DEBUG_H */
+/*---------------------------------------------------------------------------*/
+void
+net_debug_lladdr_print(const uip_lladdr_t *addr)
+{
+  if(addr == NULL) {
+    PRINTA("(NULL LL addr)");
+    return;
+  } else {
+#if NETSTACK_CONF_WITH_RIME
+    /* Rime uses traditionally a %u.%u format */
+    PRINTA("%u.%u", addr->addr[0], addr->addr[1]);
+#else /* NETSTACK_CONF_WITH_RIME */
+    unsigned int i;
+    for(i = 0; i < LINKADDR_SIZE; i++) {
+      if(i > 0) {
+        PRINTA(":");
+      }
+      PRINTA("%02x", addr->addr[i]);
+    }
+#endif /* NETSTACK_CONF_WITH_RIME */
+  }
+}
+/*---------------------------------------------------------------------------*/
