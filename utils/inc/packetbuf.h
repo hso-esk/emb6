@@ -367,24 +367,6 @@ enum {
  * packetbuf attribute enumeration */
 #include "packetbuf_ext.h"
 
-/* Define surrogates when 802.15.4 security is off */
-#if !LLSEC802154_SECURITY_LEVEL
-enum {
-  PACKETBUF_ATTR_SECURITY_LEVEL,
-  PACKETBUF_ATTR_FRAME_COUNTER_BYTES_0_1,
-  PACKETBUF_ATTR_FRAME_COUNTER_BYTES_2_3
-};
-#endif /* LLSEC802154_SECURITY_LEVEL */
-
-/* Define surrogates when not using explicit keys */
-#if !LLSEC802154_USES_EXPLICIT_KEYS
-enum {
-  PACKETBUF_ATTR_KEY_ID_MODE,
-  PACKETBUF_ATTR_KEY_INDEX,
-  PACKETBUF_ATTR_KEY_SOURCE_BYTES_0_1
-};
-#endif /* LLSEC802154_USES_EXPLICIT_KEYS */
-
 #define PACKETBUF_ATTR_PACKET_TYPE_DATA      0
 #define PACKETBUF_ATTR_PACKET_TYPE_ACK       1
 #define PACKETBUF_ATTR_PACKET_TYPE_STREAM    2
