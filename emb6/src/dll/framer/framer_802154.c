@@ -106,7 +106,7 @@ addr_len(uint8_t mode)
   }
 }
 /*----------------------------------------------------------------------------*/
-#if LLSEC802154_USES_EXPLICIT_KEYS
+#if LLSEC802154_USES_AUX_HEADER && LLSEC802154_USES_EXPLICIT_KEYS
 static uint8_t
 get_key_id_len(uint8_t key_id_mode)
 {
@@ -121,7 +121,7 @@ get_key_id_len(uint8_t key_id_mode)
     return 0;
   }
 }
-#endif /* LLSEC802154_USES_EXPLICIT_KEYS */
+#endif /* LLSEC802154_USES_AUX_HEADER && LLSEC802154_USES_EXPLICIT_KEYS */
 
 #if NETSTK_CFG_IEEE_802154G_EN
 /**
@@ -422,7 +422,7 @@ field_len(frame802154_t *p, field_length_t *flen)
   flen->dest_addr_len = addr_len(p->fcf.dest_addr_mode & 3);
   flen->src_addr_len = addr_len(p->fcf.src_addr_mode & 3);
 
-#if LLSEC802154_SECURITY_LEVEL
+#if LLSEC802154_USES_AUX_HEADER
   /* Aux security header */
   if(p->fcf.security_enabled & 1) {
     flen->aux_sec_len = 1; /* FCF + possibly frame counter and key ID */
@@ -437,7 +437,7 @@ field_len(frame802154_t *p, field_length_t *flen)
           flen->aux_sec_len += get_key_id_len(p->aux_hdr.security_control.key_id_mode);
       #endif /* LLSEC802154_USES_EXPLICIT_KEYS */
   }
-#endif /* LLSEC802154_SECURITY_LEVEL */
+#endif /* LLSEC802154_USES_AUX_HEADER */
 }
 /*----------------------------------------------------------------------------*/
 /**
@@ -535,7 +535,7 @@ frame802154_create(frame802154_t *p, uint8_t *buf)
     for (c = flen.src_addr_len; c > 0; c--) {
         buf[pos++] = p->src_addr[c - 1];
     }
-#if LLSEC802154_SECURITY_LEVEL
+#if LLSEC802154_USES_AUX_HEADER
     /* Aux header */
     if(flen.aux_sec_len) {
         buf[pos++] = p->aux_hdr.security_control.security_level
@@ -564,7 +564,7 @@ frame802154_create(frame802154_t *p, uint8_t *buf)
         }
 #endif /* LLSEC802154_USES_EXPLICIT_KEYS */
     }
-#endif /* LLSEC802154_SECURITY_LEVEL */
+#endif /* LLSEC802154_USES_AUX_HEADER */
 
     return (int) pos;
 }
@@ -695,7 +695,7 @@ frame802154_parse(uint8_t *data, int len, frame802154_t *pf)
         linkaddr_copy((linkaddr_t *) &(pf->src_addr), &linkaddr_null);
         pf->src_pid = 0;
     }
-#if LLSEC802154_SECURITY_LEVEL
+#if LLSEC802154_USES_AUX_HEADER
     if(fcf.security_enabled) {
         pf->aux_hdr.security_control.security_level = p[0] & 7;
 #if LLSEC802154_USES_EXPLICIT_KEYS
@@ -724,7 +724,7 @@ frame802154_parse(uint8_t *data, int len, frame802154_t *pf)
         }
 #endif /* LLSEC802154_USES_EXPLICIT_KEYS */
     }
-#endif /* LLSEC802154_SECURITY_LEVEL */
+#endif /* LLSEC802154_USES_AUX_HEADER */
 
 #if NETSTK_CFG_IEEE_802154G_EN
     /* parse Information Element Fields */

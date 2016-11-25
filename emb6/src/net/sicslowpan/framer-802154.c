@@ -101,7 +101,7 @@ static int8_t create_frame(int type, int do_create)
   /* Insert IEEE 802.15.4 version bits. */
   params.fcf.frame_version = FRAME802154_VERSION;
 
-#if LLSEC802154_SECURITY_LEVEL
+#if LLSEC802154_USES_AUX_HEADER
   if(packetbuf_attr(PACKETBUF_ATTR_SECURITY_LEVEL)) {
       params.fcf.security_enabled = 1;
     }
@@ -119,7 +119,7 @@ static int8_t create_frame(int type, int do_create)
   params.aux_hdr.key_index = packetbuf_attr(PACKETBUF_ATTR_KEY_INDEX);
   params.aux_hdr.key_source.u16[0] = packetbuf_attr(PACKETBUF_ATTR_KEY_SOURCE_BYTES_0_1);
 #endif /* LLSEC802154_USES_EXPLICIT_KEYS */
-#endif /* LLSEC802154_SECURITY_LEVEL */
+#endif /* LLSEC802154_USES_AUX_HEADER */
 
 
   /* Increment and set the data sequence number. */
@@ -242,7 +242,7 @@ static int8_t parse(void)
     packetbuf_set_attr(PACKETBUF_ATTR_PACKET_ID, frame.seq);
 #endif
 
-#if LLSEC802154_SECURITY_LEVEL
+#if LLSEC802154_USES_AUX_HEADER
     if(frame.fcf.security_enabled) {
           packetbuf_set_attr(PACKETBUF_ATTR_SECURITY_LEVEL, frame.aux_hdr.security_control.security_level);
 #if LLSEC802154_USES_FRAME_COUNTER
@@ -255,7 +255,7 @@ static int8_t parse(void)
           packetbuf_set_attr(PACKETBUF_ATTR_KEY_SOURCE_BYTES_0_1, frame.aux_hdr.key_source.u16[0]);
 #endif /* LLSEC802154_USES_EXPLICIT_KEYS */
         }
-#endif /* LLSEC802154_SECURITY_LEVEL */
+#endif /* LLSEC802154_USES_AUX_HEADER */
 
 
     PRINTF("15.4-IN: %2X", frame.fcf.frame_type);
