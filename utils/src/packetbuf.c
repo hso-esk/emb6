@@ -50,6 +50,7 @@
 //#include <string.h>
 
 #include "linkaddr.h"
+#include "cc.h"
 
 struct packetbuf_attr packetbuf_attrs[PACKETBUF_NUM_ATTRS];
 struct packetbuf_addr packetbuf_addrs[PACKETBUF_NUM_ADDRS];
@@ -93,7 +94,7 @@ packetbuf_copyfrom(const void *from, uint16_t len)
   uint16_t l;
 
   packetbuf_clear();
-  l = len > PACKETBUF_SIZE? PACKETBUF_SIZE: len;
+  l = MIN(PACKETBUF_SIZE, len);
   memcpy(packetbufptr, from, l);
   buflen = l;
   return l;
