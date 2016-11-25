@@ -115,9 +115,12 @@ update_nbr(void)
     linkaddr_t *lladdr = nbr_table_get_lladdr(ds6_neighbors, nbr);
     is_used = 0;
 
-    /* Check if this neighbor is used as nexthop and therefor being a
-       RPL child. */
-    if(uip_ds6_route_is_nexthop((uip_lladdr_t *)lladdr) != 0) {
+    /*
+     * Check if this neighbor is used as nexthop and therefor being a
+     * RPL child.
+     */
+
+     if(uip_ds6_route_is_nexthop(&nbr->ipaddr) != 0) {
       is_used++;
       num_children++;
     }
@@ -127,10 +130,10 @@ update_nbr(void)
       num_parents++;
 
       if(parent->dag != NULL && parent->dag->preferred_parent == parent) {
-        /*
+    	/*
          * This is the preferred parent for the DAG and must not be removed
-         * Note: this assumes that only RPL adds default routes.
-         */
+    	 * Note: this assumes that only RPL adds default routes.
+    	 */
       } else if(is_used == 0 && worst_rank < INFINITE_RANK &&
                 parent->rank > 0 &&
                 parent->dag != NULL &&
