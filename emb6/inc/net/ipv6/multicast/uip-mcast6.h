@@ -64,6 +64,7 @@
 #include "uip-mcast6-engines.h"
 #include "uip-mcast6-route.h"
 #include "smrf.h"
+#include "esmrf.h"
 #include "roll-tm.h"
 
 #include <string.h>
@@ -159,6 +160,11 @@ struct uip_mcast6_driver {
 #define RPL_CONF_MULTICAST     1
 
 #define UIP_MCAST6             smrf_driver
+
+#elif UIP_MCAST6_ENGINE == UIP_MCAST6_ENGINE_ESMRF
+#define RPL_CONF_MULTICAST     1
+#define UIP_MCAST6             esmrf_driver
+
 #else
 #error "Multicast Enabled with an Unknown Engine."
 #error "Check the value of UIP_MCAST6_CONF_ENGINE in conf files."
