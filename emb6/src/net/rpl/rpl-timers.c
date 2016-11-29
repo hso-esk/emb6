@@ -375,7 +375,7 @@ get_probing_delay(rpl_dag_t *dag)
   if(dag != NULL && dag->instance != NULL
       && dag->instance->urgent_probing_target != NULL) {
     /* Urgent probing needed (to find out if a neighbor may become preferred parent) */
-    return random_rand() % (CLOCK_SECOND * 10);
+    return random_rand() % (bsp_get(E_BSP_GET_TRES) * 10);
   } else {
     /* Else, use normal probing interval */
     return ((RPL_PROBING_INTERVAL) / 2) + random_rand() % (RPL_PROBING_INTERVAL);
