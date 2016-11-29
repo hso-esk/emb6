@@ -52,6 +52,7 @@
 #include "random.h"
 #include "uip-nd6.h"
 #include "uip-ds6.h"
+#include "uip-mcast6.h"
 #include "uip-packetqueue.h"
 #include "bsp.h"
 
