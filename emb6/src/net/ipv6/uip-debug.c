@@ -41,7 +41,6 @@
 
 /*---------------------------------------------------------------------------*/
 void
-void
 uip_debug_ipaddr_print(const uip_ipaddr_t *addr)
 {
 #if UIP_CONF_IPV6
