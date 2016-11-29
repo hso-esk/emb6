@@ -42,6 +42,7 @@
 #ifndef UIP_DEBUG_H
 #define UIP_DEBUG_H
 
+#include "net-debug.h"
 #include "uip.h"
 #include <stdio.h>
 

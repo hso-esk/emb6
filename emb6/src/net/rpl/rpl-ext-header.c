@@ -50,7 +50,7 @@
 #include "packetbuf.h"
 
 #define DEBUG DEBUG_NONE
-#include "uip-debug.h"
+#include "net-debug.h"
 
 #include <limits.h>
 #include <string.h>

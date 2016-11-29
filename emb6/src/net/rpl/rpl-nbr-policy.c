@@ -50,7 +50,7 @@
 #include "uip-ds6-route.h"
 
 #define DEBUG DEBUG_NONE
-#include "uip-debug.h"
+#include "net-debug.h"
 
 /*
  * Policy for neighbor adds

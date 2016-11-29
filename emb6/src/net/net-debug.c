@@ -38,7 +38,6 @@
  *         Simon Duquennoy <simon.duquennoy@inria.fr>
  */
 
-#include "emb6.h"
 #include "net-debug.h"
 
 /*---------------------------------------------------------------------------*/

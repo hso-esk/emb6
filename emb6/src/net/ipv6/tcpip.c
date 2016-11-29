@@ -58,7 +58,7 @@
 #include <string.h>
 #include "evproc.h"
 #define DEBUG DEBUG_NONE
-#include "uip-debug.h"
+#include "net-debug.h"
 
 
 #if UIP_LOGGING

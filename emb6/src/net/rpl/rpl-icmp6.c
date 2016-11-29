@@ -60,7 +60,7 @@
 #include <string.h>
 
 #define DEBUG DEBUG_NONE
-
+#include "net-debug.h"
 #include "uip-debug.h"
 
 /*---------------------------------------------------------------------------*/

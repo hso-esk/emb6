@@ -50,7 +50,7 @@
 #include "ctimer.h"
 
 #define DEBUG DEBUG_NONE
-#include "uip-debug.h"
+#include "net-debug.h"
 
 /* A configurable function called after update of the RPL DIO interval */
 #ifdef RPL_CALLBACK_NEW_DIO_INTERVAL
