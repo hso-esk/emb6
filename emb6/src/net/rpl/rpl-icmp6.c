@@ -1065,7 +1065,7 @@ handle_dao_retransmission(void *ptr)
       return;
     }
 
-    if(instance->of->dao_ack_callback) {
+    if(RPL_IS_STORING(instance) && instance->of->dao_ack_callback) {
       /* Inform the objective function about the timeout. */
       instance->of->dao_ack_callback(parent, RPL_DAO_ACK_TIMEOUT);
     }
@@ -1278,11 +1278,15 @@ dao_ack_input(void)
     return;
   }
 
-  parent = rpl_find_parent(instance->current_dag, &UIP_IP_BUF->srcipaddr);
-  if(parent == NULL) {
-	/* not a known instance - drop the packet and ignore */
-    uip_clear_buf();
-    return;
+  if(RPL_IS_STORING(instance)) {
+    parent = rpl_find_parent(instance->current_dag, &UIP_IP_BUF->srcipaddr);
+    if(parent == NULL) {
+      /* not a known instance - drop the packet and ignore */
+      uip_clear_buf();
+      return;
+    }
+  } else {
+    parent = NULL;
   }
 
   PRINTF("RPL: Received a DAO %s with sequence number %d (%d) and status %d from ",
@@ -1299,7 +1303,7 @@ dao_ack_input(void)
     ctimer_stop(&instance->dao_retransmit_timer);
 
     /* Inform objective function on status of the DAO ACK */
-    if(instance->of->dao_ack_callback) {
+    if(RPL_IS_STORING(instance) && instance->of->dao_ack_callback) {
       instance->of->dao_ack_callback(parent, status);
     }
 
@@ -1313,7 +1317,7 @@ dao_ack_input(void)
     }
 #endif
 
-  } else {
+  } else if(RPL_IS_STORING(instance)) {
 	/* this DAO ACK should be forwarded to another recently registered route */
     uip_ds6_route_t *re;
     uip_ipaddr_t *nexthop;
