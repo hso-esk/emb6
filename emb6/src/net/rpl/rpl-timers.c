@@ -43,6 +43,7 @@
 //#include "contiki-conf.h"
 #include "emb6.h"
 #include "rpl-private.h"
+#include "link-stats.h"
 #if UIP_CONF_IPV6_MULTICAST
 #include "uip-mcast6.h"
 #endif

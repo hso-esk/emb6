@@ -204,6 +204,13 @@
  * When MRHOF (RFC6719) is used with ETX, no metric container must
  * be used; instead the rank carries ETX directly.
  */
+#ifdef RPL_CONF_WITH_MC
+#define RPL_WITH_MC RPL_CONF_WITH_MC
+#else /* RPL_CONF_WITH_MC */
+#define RPL_WITH_MC 0
+#endif /* RPL_CONF_WITH_MC */
+
+/* The MC advertised in DIOs and propagating from the root */
 #ifdef RPL_CONF_DAG_MC
 #define RPL_DAG_MC                          RPL_CONF_DAG_MC
 #else
@@ -286,14 +293,6 @@
 #define RPL_MAX_DAG_PER_INSTANCE     2
 #endif /* RPL_CONF_MAX_DAG_PER_INSTANCE */
 
-/**
- * Initial metric attributed to a link when the ETX is unknown
- */
-#ifndef RPL_CONF_INIT_LINK_METRIC
-#define RPL_INIT_LINK_METRIC                rpl_config.linkMetric
-#else
-#define RPL_INIT_LINK_METRIC                RPL_CONF_INIT_LINK_METRIC
-#endif
 /*
  * RPL Default route lifetime
  * The RPL route lifetime is used for the downward routes and for the default
@@ -425,15 +424,6 @@
 #define RPL_PROBING_INTERVAL RPL_CONF_PROBING_INTERVAL
 #else
 #define RPL_PROBING_INTERVAL (120 * bsp_get(E_BSP_GET_TRES))
-#endif
-
-/*
- * RPL probing expiration time.
- * */
-#ifdef RPL_CONF_PROBING_EXPIRATION_TIME
-#define RPL_PROBING_EXPIRATION_TIME RPL_CONF_PROBING_EXPIRATION_TIME
-#else
-#define RPL_PROBING_EXPIRATION_TIME (10 * 60 * bsp_get(E_BSP_GET_TRES))
 #endif
 
 /*
