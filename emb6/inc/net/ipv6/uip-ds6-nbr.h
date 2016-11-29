@@ -49,8 +49,6 @@
 #include "uip.h"
 #include "stimer.h"
 #include "uip-ds6.h"
-#include "nbr-table.h"
-
 #if UIP_CONF_IPV6_QUEUE_PKT
 #include "uip-packetqueue.h"
 #endif                          /*UIP_CONF_QUEUE_PKT */
