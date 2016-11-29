@@ -31,7 +31,9 @@
  */
 
 #include "emb6.h"
-#include "clock.h"
+#include "bsp.h"
+// #include "clock.h"
+#include "ctimer.h"
 #include "packetbuf.h"
 #include "nbr-table.h"
 #include "link-stats.h"
@@ -51,7 +53,7 @@
 /* Maximum value for the freshness counter */
 #define FRESHNESS_MAX                   16
 /* Statistics with no update in FRESHNESS_EXPIRATION_TIMEOUT is not fresh */
-#define FRESHNESS_EXPIRATION_TIME       (10 * 60 * CLOCK_SECOND)
+#define FRESHNESS_EXPIRATION_TIME       (10 * 60 * bsp_get(E_BSP_GET_TRES))
 
 /* EWMA (exponential moving average) used to maintain statistics over time */
 #define EWMA_SCALE            100
@@ -206,6 +208,6 @@ void
 link_stats_init(void)
 {
   nbr_table_register(link_stats, NULL);
-  ctimer_set(&periodic_timer, 60 * CLOCK_SECOND * FRESHNESS_HALF_LIFE,
+  ctimer_set(&periodic_timer, 60 * bsp_get(E_BSP_GET_TRES) * FRESHNESS_HALF_LIFE,
       periodic, NULL);
 }
