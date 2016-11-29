@@ -378,27 +378,6 @@
 #endif
 
 /*
- * Embed support for storing mode
- */
-#ifdef RPL_CONF_WITH_STORING
-#define RPL_WITH_STORING RPL_CONF_WITH_STORING
-#else /* RPL_CONF_WITH_STORING */
-#define RPL_WITH_STORING 1
-#endif /* RPL_CONF_WITH_STORING */
-
-/*
- * Embed support for non-storing mode
- */
-#ifdef RPL_CONF_WITH_NON_STORING
-#define RPL_WITH_NON_STORING RPL_CONF_WITH_NON_STORING
-#else /* RPL_CONF_WITH_NON_STORING */
-#define RPL_WITH_NON_STORING 0
-#endif /* RPL_CONF_WITH_NON_STORING */
-
-#define RPL_IS_STORING(instance) (RPL_WITH_STORING && ((instance) != NULL) && ((instance)->mop > RPL_MOP_NON_STORING))
-#define RPL_IS_NON_STORING(instance) (RPL_WITH_NON_STORING && ((instance) != NULL) && ((instance)->mop == RPL_MOP_NON_STORING))
-
-/*
  * RPL DAO ACK support. When enabled, DAO ACK will be sent and requested.
  * This will also enable retransmission of DAO when no ack is received.
  * */
@@ -499,6 +478,19 @@
 #else
 #define RPL_DIS_START_DELAY             5
 #endif
+
+/* RPL_CONF_MOP specifies the RPL mode of operation that will be
+ * advertised by the RPL root. Possible values: RPL_MOP_NO_DOWNWARD_ROUTES,
+ * RPL_MOP_NON_STORING, RPL_MOP_STORING_NO_MULTICAST, RPL_MOP_STORING_MULTICAST */
+#ifndef RPL_CONF_MOP
+#define RPL_CONF_MOP RPL_MOP_STORING_NO_MULTICAST
+#endif /* RPL_CONF_MOP */
+
+/* RPL_NS_CONF_LINK_NUM specifies the maximum number of links a RPL root
+ * will maintain in non-storing mode. */
+#ifndef RPL_NS_CONF_LINK_NUM
+#define RPL_NS_CONF_LINK_NUM 20
+#endif /* RPL_NS_CONF_LINK_NUM */
 
 /*=============================================================================
                                   uIP SECTION
