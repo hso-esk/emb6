@@ -117,9 +117,9 @@ rpl_purge_routes(void)
   uip_ds6_route_t *r;
   uip_ipaddr_t prefix;
   rpl_dag_t *dag;
-  #if RPL_CONF_MULTICAST
+#if RPL_WITH_MULTICAST
     uip_mcast6_route_t *mcast_route;
-  #endif
+#endif
 
   /* First pass, decrement lifetime */
   r = uip_ds6_route_head();
@@ -162,7 +162,7 @@ rpl_purge_routes(void)
     }
   }
 
-  #if RPL_CONF_MULTICAST
+#if RPL_WITH_MULTICAST
     mcast_route = uip_mcast6_route_list_head();
 
     while(mcast_route != NULL) {
@@ -174,16 +174,16 @@ rpl_purge_routes(void)
         mcast_route = list_item_next(mcast_route);
       }
     }
-  #endif
+#endif
 }
 /*---------------------------------------------------------------------------*/
 void
 rpl_remove_routes(rpl_dag_t *dag)
 {
   uip_ds6_route_t *r;
-  #if RPL_CONF_MULTICAST
+#if RPL_WITH_MULTICAST
     uip_mcast6_route_t *mcast_route;
-  #endif
+#endif
 
   r = uip_ds6_route_head();
 
@@ -196,7 +196,7 @@ rpl_remove_routes(rpl_dag_t *dag)
     }
   }
 
-  #if RPL_CONF_MULTICAST
+#if RPL_WITH_MULTICAST
     mcast_route = uip_mcast6_route_list_head();
 
     while(mcast_route != NULL) {
@@ -207,7 +207,7 @@ rpl_remove_routes(rpl_dag_t *dag)
         mcast_route = list_item_next(mcast_route);
       }
     }
-  #endif
+#endif
 }
 /*---------------------------------------------------------------------------*/
 void

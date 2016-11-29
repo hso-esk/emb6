@@ -456,9 +456,9 @@ uip_init(void)
   }
 #endif /* UIP_UDP */
 
-  #if UIP_CONF_IPV6_MULTICAST
+#if UIP_IPV6_MULTICAST
     UIP_MCAST6.init();
-  #endif
+#endif
 }
 /*---------------------------------------------------------------------------*/
 #if UIP_TCP && UIP_ACTIVE_OPEN
@@ -1196,7 +1196,7 @@ uip_process(uint8_t flag)
      * All multicast engines must hook in here. After this function returns, we
      * expect UIP_BUF to be unmodified
      */
-#if UIP_CONF_IPV6_MULTICAST
+#if UIP_IPV6_MULTICAST
     if(uip_is_addr_mcast_routable(&UIP_IP_BUF->destipaddr)) {
       if(UIP_MCAST6.in() == UIP_MCAST6_ACCEPT) {
         /* Deliver up the stack */
@@ -1206,7 +1206,7 @@ uip_process(uint8_t flag)
         goto drop;
       }
     }
-#endif /* UIP_CONF_IPV6_MULTICAST */
+#endif /* UIP_IPV6_MULTICAST */
   /* TBD Some Parameter problem messages */
   if(!uip_ds6_is_my_addr(&UIP_IP_BUF->destipaddr) &&
      !uip_ds6_is_my_maddr(&UIP_IP_BUF->destipaddr)) {
@@ -1279,9 +1279,9 @@ uip_process(uint8_t flag)
   uip_ext_bitmap = 0;
 #endif /* UIP_CONF_ROUTER */
 
-  #if UIP_CONF_IPV6_MULTICAST
+#if UIP_IPV6_MULTICAST
     process:
-  #endif
+#endif
 
   while(1) {
     switch(*uip_next_hdr){
