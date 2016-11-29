@@ -96,7 +96,7 @@ int
 link_stats_is_fresh(const struct link_stats *stats)
 {
   return (stats != NULL)
-      && clock_time() - stats->last_tx_time < FRESHNESS_EXPIRATION_TIME
+      && bsp_getTick() - stats->last_tx_time < FRESHNESS_EXPIRATION_TIME
       && stats->freshness >= FRESHNESS_TARGET;
 }
 /*---------------------------------------------------------------------------*/
@@ -154,7 +154,7 @@ link_stats_packet_sent(const linkaddr_t *lladdr, int status, int numtx)
   }
 
   /* Update last timestamp and freshness */
-  stats->last_tx_time = clock_time();
+  stats->last_tx_time = bsp_getTick();
   stats->freshness = MIN(stats->freshness + numtx, FRESHNESS_MAX);
 
   /* ETX used for this update */
