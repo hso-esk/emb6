@@ -1079,14 +1079,15 @@ rpl_join_instance(uip_ipaddr_t *from, rpl_dio_t *dio)
   if((!RPL_WITH_NON_STORING && dio->mop == RPL_MOP_NON_STORING)
       || (!RPL_WITH_STORING && (dio->mop == RPL_MOP_STORING_NO_MULTICAST
           || dio->mop == RPL_MOP_STORING_MULTICAST))) {
-    PRINTF("RPL: DIO advertising a non-supported MOP %u\n", dio->mop);
+    PRINTF("RPL: DIO advertising a non-supported MOP %u\n\r", dio->mop);
+    return;
   }
 
   /* Determine the objective function by using the
      objective code point of the DIO. */
   of = rpl_find_of(dio->ocp);
   if(of == NULL) {
-    PRINTF("RPL: DIO for DAG instance %u does not specify a supported OF: %u\n",
+    PRINTF("RPL: DIO for DAG instance %u does not specify a supported OF: %u\n\r",
            dio->instance_id, dio->ocp);
     return;
   }
