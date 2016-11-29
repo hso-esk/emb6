@@ -895,7 +895,7 @@ ext_hdr_options_process(void)
          */
 #if UIP_CONF_IPV6_RPL
         PRINTF("Processing RPL option\n\r");
-        if(rpl_verify_hbh_header(uip_ext_opt_offset)) {
+        if(!rpl_verify_hbh_header(uip_ext_opt_offset)) {
           PRINTF("RPL Option Error: Dropping Packet\n\r");
           return 1;
         }
@@ -1230,14 +1230,6 @@ uip_process(uint8_t flag)
         UIP_STAT(++uip_stat.ip.drop);
         goto send;
       }
-
-#if UIP_CONF_IPV6_RPL
-      PRINTF("RPL header update error\n");
-          /* Packet can not be forwarded */
-          PRINTF("RPL Forward Option Error\n");
-          goto drop;
-      }
-#endif /* UIP_CONF_IPV6_RPL */
 
       UIP_IP_BUF->ttl = UIP_IP_BUF->ttl - 1;
       PRINTF("Forwarding packet to ");
