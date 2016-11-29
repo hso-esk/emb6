@@ -209,7 +209,7 @@
 #define RPL_MOP_DEFAULT                 RPL_MOP_STORING_MULTICAST
 #else
 #define RPL_MOP_DEFAULT                 RPL_MOP_STORING_NO_MULTICAST
-#endif /* UIP_IPV6_MULTICAST_RPL */
+#endif /* RPL_CONF_MULTICAST */
 #endif /* RPL_CONF_MOP */
 
 /*
