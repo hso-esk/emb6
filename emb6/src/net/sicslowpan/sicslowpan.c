@@ -66,6 +66,7 @@
 
 #include "timer.h"
 //#include "dev/watchdog.h"
+#include "link-stats.h"
 #include "bsp.h"
 #include "tcpip.h"
 #include "uip.h"
@@ -1538,6 +1539,9 @@ input(void)
   uint16_t frag_tag = 0;
   uint8_t first_fragment = 0, last_fragment = 0;
 #endif /*SICSLOWPAN_CONF_FRAG*/
+
+  /* Update link statistics */
+  link_stats_input_callback(packetbuf_addr(PACKETBUF_ADDR_SENDER));
 
   /* init */
   uncomp_hdr_len = 0;
