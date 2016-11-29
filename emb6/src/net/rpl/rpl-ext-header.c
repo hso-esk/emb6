@@ -78,17 +78,17 @@ rpl_verify_hbh_header(int uip_ext_opt_offset)
   rpl_parent_t *sender = NULL;
 
   if(UIP_HBHO_BUF->len != RPL_HOP_BY_HOP_LEN - 8) {
-    PRINTF("RPL: Hop-by-hop extension header has wrong size\n");
+    PRINTF("RPL: Hop-by-hop extension header has wrong size\n\r");
     return 1;
   }
 
   if(UIP_EXT_HDR_OPT_RPL_BUF->opt_type != UIP_EXT_HDR_OPT_RPL) {
-    PRINTF("RPL: Non RPL Hop-by-hop option\n");
+    PRINTF("RPL: Non RPL Hop-by-hop option\n\r");
     return 1;
   }
 
   if(UIP_EXT_HDR_OPT_RPL_BUF->opt_len != RPL_HDR_OPT_LEN) {
-    PRINTF("RPL: Bad header option! (wrong length)\n");
+    PRINTF("RPL: Bad header option! (wrong length)\n\r");
     return 1;
   }
 
@@ -119,7 +119,7 @@ rpl_verify_hbh_header(int uip_ext_opt_offset)
   }
 
   if(!instance->current_dag->joined) {
-    PRINTF("RPL: No DAG in the instance\n");
+    PRINTF("RPL: No DAG in the instance\n\r");
     return 1;
   }
 
@@ -147,7 +147,7 @@ rpl_verify_hbh_header(int uip_ext_opt_offset)
   );
 
   if((down && !sender_closer) || (!down && sender_closer)) {
-    PRINTF("RPL: Loop detected - senderrank: %d my-rank: %d sender_closer: %d\n",
+    PRINTF("RPL: Loop detected - senderrank: %d my-rank: %d sender_closer: %d\n\r",
         sender_rank, instance->current_dag->rank,
         sender_closer);
     /* Attempt to repair the loop by sending a unicast DIO back to the sender
@@ -158,12 +158,12 @@ rpl_verify_hbh_header(int uip_ext_opt_offset)
     }
     if(UIP_EXT_HDR_OPT_RPL_BUF->flags & RPL_HDR_OPT_RANK_ERR) {
       RPL_STAT(rpl_stats.loop_errors++);
-      PRINTF("RPL: Rank error signalled in RPL option!\n");
+      PRINTF("RPL: Rank error signalled in RPL option!\n\r");
       /* Packet must be dropped and dio trickle timer reset, see RFC6550 - 11.2.2.2 */
       rpl_reset_dio_timer(instance);
       return 1;
     }
-    PRINTF("RPL: Single error tolerated\n");
+    PRINTF("RPL: Single error tolerated\n\r");
     RPL_STAT(rpl_stats.loop_warnings++);
     UIP_EXT_HDR_OPT_RPL_BUF->flags |= RPL_HDR_OPT_RANK_ERR;
     return 0;
@@ -280,7 +280,7 @@ rpl_process_srh_header(void)
     path_len = ((ext_len - padding - RPL_RH_LEN - RPL_SRH_LEN - (16 - cmpre)) / (16 - cmpri)) + 1;
     (void)path_len;
 
-    PRINTF("RPL: read SRH, path len %u, segments left %u, Cmpri %u, Cmpre %u, ext len %u (padding %u)\n",
+    PRINTF("RPL: read SRH, path len %u, segments left %u, Cmpri %u, Cmpre %u, ext len %u (padding %u)\n\r",
         path_len, segments_left, cmpri, cmpre, ext_len, padding);
 
     if(segments_left == 0) {
@@ -353,7 +353,7 @@ insert_srh_header(void)
   dag = rpl_get_dag(&UIP_IP_BUF->destipaddr);
 
   if(dag == NULL) {
-    PRINTF("RPL: SRH DAG not found\n");
+    PRINTF("RPL: SRH DAG not found\n\r");
     return 0;
   }
 
@@ -365,12 +365,12 @@ insert_srh_header(void)
 
   root_node = rpl_ns_get_node(dag, &dag->dag_id);
   if(root_node == NULL) {
-    PRINTF("RPL: SRH root node not found\n");
+    PRINTF("RPL: SRH root node not found\n\r");
     return 0;
   }
 
   if(!rpl_ns_is_node_reachable(dag, &UIP_IP_BUF->destipaddr)) {
-    PRINTF("RPL: SRH no path found to destination\n");
+    PRINTF("RPL: SRH no path found to destination\n\r");
     return 0;
   }
 
@@ -382,7 +382,7 @@ insert_srh_header(void)
   cmpre = 15;
 
   if(node == root_node) {
-    PRINTF("RPL: SRH no need to insert SRH\n");
+    PRINTF("RPL: SRH no need to insert SRH\n\r");
     return 0;
   }
 
@@ -394,16 +394,9 @@ insert_srh_header(void)
     cmpri = MIN(cmpri, count_matching_bytes(&node_addr, &UIP_IP_BUF->destipaddr, 16));
     cmpre = cmpri;
 
-    if(node->parent != root_node) {
-      PRINTF("RPL: SRH Hop ");
-      PRINT6ADDR(&node_addr);
-      PRINTF("\n\r");
-    } else if(((DEBUG) & DEBUG_PRINT)) {
-      rpl_ns_get_node_global_addr(&node_addr, node);
-      PRINTF("RPL: SRH Next Hop ");
-      PRINT6ADDR(&node_addr);
-      PRINTF("\n\r");
-    }
+    PRINTF("RPL: SRH Hop ");
+    PRINT6ADDR(&node_addr);
+    PRINTF("\n\r");
     node = node->parent;
     path_len++;
   }
@@ -416,12 +409,12 @@ insert_srh_header(void)
   padding = ext_len % 8 == 0 ? 0 : (8 - (ext_len % 8));
   ext_len += padding;
 
-  PRINTF("RPL: SRH Path len: %u, ComprI %u, ComprE %u, ext len %u (padding %u)\n",
+  PRINTF("RPL: SRH Path len: %u, ComprI %u, ComprE %u, ext len %u (padding %u)\n\r",
       path_len, cmpri, cmpre, ext_len, padding);
 
   /* Check if there is enough space to store the extension header */
   if(uip_len + ext_len > UIP_BUFSIZE) {
-    PRINTF("RPL: Packet too long: impossible to add source routing header (%u bytes)\n", ext_len);
+    PRINTF("RPL: Packet too long: impossible to add source routing header (%u bytes)\n\r", ext_len);
     return 1;
   }
 
@@ -521,7 +514,7 @@ update_hbh_header(void)
 
   switch(UIP_EXT_HDR_OPT_BUF->type) {
   case UIP_EXT_HDR_OPT_RPL:
-    PRINTF("RPL: Updating RPL option\n");
+    PRINTF("RPL: Updating RPL option\n\r");
     UIP_EXT_HDR_OPT_RPL_BUF->senderrank = UIP_HTONS(instance->current_dag->rank);
 
     if(RPL_IS_STORING(instance)) { /* In non-storing mode, downwards traffic does not have the HBH option */
@@ -532,10 +525,10 @@ update_hbh_header(void)
       if((UIP_EXT_HDR_OPT_RPL_BUF->flags & RPL_HDR_OPT_DOWN)) {
         if(uip_ds6_route_lookup(&UIP_IP_BUF->destipaddr) == NULL) {
           UIP_EXT_HDR_OPT_RPL_BUF->flags |= RPL_HDR_OPT_FWD_ERR;
-          PRINTF("RPL forwarding error\n");
+          PRINTF("RPL forwarding error\n\r");
           /* We should send back the packet to the originating parent,
              but it is not feasible yet, so we send a No-Path DAO instead */
-          PRINTF("RPL generate No-Path DAO\n");
+          PRINTF("RPL generate No-Path DAO\n\r");
           parent = rpl_get_parent((uip_lladdr_t *)packetbuf_addr(PACKETBUF_ADDR_SENDER));
           if(parent != NULL) {
             dao_output_target(parent, &UIP_IP_BUF->destipaddr, RPL_ZERO_LIFETIME);
@@ -551,11 +544,11 @@ update_hbh_header(void)
           /* No route was found, so this packet will go towards the RPL
              root. If so, we should not set the down flag. */
           UIP_EXT_HDR_OPT_RPL_BUF->flags &= ~RPL_HDR_OPT_DOWN;
-          PRINTF("RPL option going up\n");
+          PRINTF("RPL option going up\n\r");
         } else {
           /* A DAO route was found so we set the down flag. */
           UIP_EXT_HDR_OPT_RPL_BUF->flags |= RPL_HDR_OPT_DOWN;
-          PRINTF("RPL option going down\n");
+          PRINTF("RPL option going down\n\r");
         }
       }
     }
@@ -563,7 +556,7 @@ update_hbh_header(void)
     uip_ext_len = last_uip_ext_len;
     return 1;
   default:
-    PRINTF("RPL: Multi Hop-by-hop options not implemented\n");
+    PRINTF("RPL: Multi Hop-by-hop options not implemented\n\r");
     uip_ext_len = last_uip_ext_len;
     return 1;
   }
@@ -581,9 +574,9 @@ insert_hbh_header(void)
   uip_ext_opt_offset = 2;
 
   /* Insert hop-by-hop header */
-  PRINTF("RPL: Creating hop-by-hop option\n");
+  PRINTF("RPL: Creating hop-by-hop option\n\r");
   if(uip_len + RPL_HOP_BY_HOP_LEN > UIP_BUFSIZE) {
-    PRINTF("RPL: Packet too long: impossible to add hop-by-hop option\n");
+    PRINTF("RPL: Packet too long: impossible to add hop-by-hop option\n\r");
     uip_ext_len = last_uip_ext_len;
     return 0;
   }
@@ -661,7 +654,7 @@ rpl_remove_header(void)
   uip_ext_len = 0;
   uip_next_hdr = &UIP_IP_BUF->proto;
 
-  PRINTF("RPL: Verifying the presence of RPL extension headers\n");
+  PRINTF("RPL: Verifying the presence of RPL extension headers\n\r");
 
   /* Look for hop-by-hop and routing headers */
   while(uip_next_hdr != NULL) {
@@ -682,7 +675,7 @@ rpl_remove_header(void)
       if(UIP_IP_BUF->len[1] > temp_len) {
         UIP_IP_BUF->len[0]--;
       }
-      PRINTF("RPL: Removing RPL extension header (type %u, len %u)\n", *uip_next_hdr, rpl_ext_hdr_len);
+      PRINTF("RPL: Removing RPL extension header (type %u, len %u)\n\r", *uip_next_hdr, rpl_ext_hdr_len);
       memmove(UIP_EXT_BUF, ((uint8_t *)UIP_EXT_BUF) + rpl_ext_hdr_len, uip_len - UIP_IPH_LEN);
       break;
     default:
