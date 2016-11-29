@@ -801,6 +801,7 @@ dao_input_storing(void)
     /* independent if we remove or not - ACK the request */
     if(flags & RPL_DAO_K_FLAG) {
     /* indicate that we accepted the no-path DAO */
+    uip_clear_buf();
     dao_ack_output(instance, &dao_sender_addr, sequence,
                    RPL_DAO_ACK_UNCONDITIONAL_ACCEPT);
     }
@@ -889,6 +890,7 @@ dao_input_storing(void)
 
     if(should_ack) {
       PRINTF("RPL: Sending DAO ACK\n\r");
+      uip_clear_buf();
       dao_ack_output(instance, &dao_sender_addr, sequence,
           RPL_DAO_ACK_UNCONDITIONAL_ACCEPT);
     }
