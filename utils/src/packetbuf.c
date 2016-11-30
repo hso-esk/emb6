@@ -81,7 +81,6 @@ packetbuf_clear(void)
 {
   buflen = bufptr = 0;
   hdrlen = 0;
-  ftrptr = PACKETBUF_HDR_SIZE;
 
   packetbuf_attr_clear();
 }
