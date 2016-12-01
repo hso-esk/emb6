@@ -1,0 +1,41 @@
+lwm2m = {
+	'demo' : [
+		'*',
+	],
+	'emb6' : [
+		'lwm2m',
+		'coap',
+		'sock',
+		'rpl',
+		'ipv6',
+		'sicslowpan',
+		'dllsec',
+		'dllc',
+		'mac',
+		'framer',
+		'phy',
+	],
+	'utils' : [
+		'*',
+	],
+# C global defines
+	'CPPDEFINES' : [
+    ('NET_USE_RPL',1),
+    ('DEMO_USE_LWM2M',1),
+    ('LWM2M_ENGINE_CLIENT_ENDPOINT_NAME', '\\"emb6-LWM2MDemo\\"'),
+    ('LWM2M_DEVICE_MANUFACTURER', '\\"ivESK\\"'),
+    ('LWM2M_DEVICE_TYPE', '\\"Demo-Device\\"'),
+    ('LWM2M_DEVICE_MODEL_NUMBER', '\\"NIKI\\"'),
+    ('LWM2M_DEVICE_SERIAL_NO', '\\"2016-09-20-0001\\"'),
+    ('LWM2M_DEVICE_HW_VERSION', '\\"R1\\"'),
+    ('LWM2M_DEVICE_FIRMWARE_VERSION', '\\"v0.1.0\\"'),
+    ('LWM2M_DEVICE_SW_VERSION', '\\"S1\\"'),
+    ('LWM2M_DEVICE_ERRCODE', 0),
+    ('LWM2M_DEVICE_TIMEZONE', '\\"GMT+1\\"'),
+	],
+# GCC flags
+	'CFLAGS' : [
+	]	
+}
+
+Return('lwm2m')

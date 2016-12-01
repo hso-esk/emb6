@@ -82,8 +82,16 @@
 #include "demo_udp_socket.h"
 #endif
 
+
 #if DEMO_USE_UDP_SOCKET_SIMPLE
 #include "demo_udp_socket_simple.h"
+#endif
+
+#if DEMO_USE_LWM2M
+#if CONF_USE_SERVER
+#else
+#include "demo_lwm2m_cli.h"
+#endif
 #endif
 
 #if DEMO_USE_COAP
@@ -214,6 +222,10 @@ static void loc_demoAppsConf(s_ns_t* pst_netStack, e_nsErr_t *p_err)
   demo_extifConf(pst_netStack);
   #endif
 
+#if DEMO_USE_LWM2M
+  demo_lwm2mConf(pst_netStack);
+#endif
+
   #if DEMO_USE_COAP
   demo_coapConf(pst_netStack);
   #endif
@@ -276,6 +288,12 @@ static uint8_t loc_demoAppsInit(void)
       return 0;
   }
   #endif
+
+#if DEMO_USE_LWM2M
+if (!demo_lwm2mInit()) {
+    return 0;
+}
+#endif
 
   #if DEMO_USE_MDNS
   if (!demo_mdnsInit()) {

@@ -21,6 +21,7 @@ dtls_cli    = ('dtls','client')
 dtls_srv    = ('dtls','server')
 mdns_cli    = ('mdns','client')
 mdns_srv    = ('mdns','server')
+lwm2m_cli   = ('lwm2m','client')
 
 trg         = []
 
@@ -487,7 +488,11 @@ trg += [{
     'bsp'       : get_descr(bsp, 'native')
 }]
 
-
+trg += [{
+    'id'        : 'lwm2mc_luxcli',
+    'apps_conf' : [ lwm2m_cli, x86_cli ],
+    'bsp'       : get_descr(bsp, 'native')
+}]
 
 trg += [{
     'id'        : 'cs_cc13xx',
