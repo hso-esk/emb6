@@ -406,7 +406,7 @@ static void cc13xx_Ioctl (e_nsIocCmd_t    cmd,
     case NETSTK_CMD_RF_SENS_SET:
     case NETSTK_CMD_RF_SENS_GET:
     case NETSTK_CMD_RF_IS_RX_BUSY:
-    case NETSTK_CMD_RF_802154G_EU_CHAN:
+    case NETSTK_CMD_RF_CHAN_NUM_SET:
     case NETSTK_CMD_RF_WOR_EN:
     default:
       /* unsupported commands are treated in same way */
