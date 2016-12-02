@@ -44,7 +44,7 @@
 
 /* radio transceiver does not support standard-specified checksum */
 #ifndef NETSTK_CFG_RF_CRC_EN
-#define NETSTK_CFG_RF_CRC_EN                FALSE
+#define NETSTK_CFG_RF_CRC_EN                TRUE
 #endif
 
 #ifndef CC13XX_LCD_ENABLE

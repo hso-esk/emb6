@@ -40,7 +40,15 @@
 /*==============================================================================
                             TYPEDEF STRUCT
 ==============================================================================*/
-/* Enumeration for the sf_rf_reset() function. */
+#include "evproc.h"
+#define RF_SEM_POST(_event_)          evproc_putEvent(E_EVPROC_HEAD, _event_, NULL)
+#define RF_SEM_WAIT(_event_)          evproc_regCallback(_event_, cc13xx_eventHandler)
+
+/* RSSI threshold for clear channel assessment. Here -100dBm */
+#define RF_CCA_RSSI_THR               -90
+#define RF_TX_POWER                   (TX_POWER + 130)
+
+
 typedef enum
 {
   /** No signal detected. Channel is free */

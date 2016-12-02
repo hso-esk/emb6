@@ -38,6 +38,9 @@ extern "C" {
 #include "rflib/rf_dbell.h"
 #include "rflib/rf_queue.h"
 #include "driverlib/rf_mailbox.h"
+#include "bsp.h"
+#include "sf_cc13xx_802_15_4_ch26.h"
+#include "sf_rf_6lowpan.h"
 
 #if USE_TI_RTOS
 #include <ti/drivers/rf/RF.h>
@@ -124,25 +127,362 @@ extern "C" {
 /*==============================================================================
                             TYPEDEF ENUMS
 ==============================================================================*/
+
 /*==============================================================================
-                            TYPEDEF ENUMS
-==============================================================================*/
-/*==============================================================================
-                            TYPEDEF STRUCTS
+                            FUNCTION PROTOTYPES
 ==============================================================================*/
 
- /** TX data ctx of the rf module. */
- typedef struct S_RF_TX_CTX_T
- {
-   /** Size of the hole telegram. */
-   uint16_t i_telegramLength;
-   /** Number of bytes in data array */
-   uint16_t i_fillLevel;
-   /** Len of the last transmitted block */
-   uint16_t i_lastTxLen;
+bool loc_reset(bool b_isrEnabled, E_RF_MODE_t e_mode);
+void loc_rxIsr(uint32_t l_flag);
+
+#if USE_TI_RTOS
+static void loc_txIsr(RF_Handle h, RF_CmdHandle ch, RF_Event e);
+static void loc_rfClose(void);
+static void loc_rfOpen(void);
+static RF_CmdHandle loc_rfPostCmd(RF_Op* pOp, RF_Priority ePri, RF_Callback pCb);
+#else
+void loc_txIsr(uint32_t l_flag);
+static void loc_switchToHfXtalOsc(void);
+#endif /* USE_TI_RTOS */
+
+/** Configuration helper functions. @{ */
+#if CC13XX_RX_ENABLED
+static SF_INLINE bool loc_startRx(void);
+#endif /* CC13XX_RX_ENABLED */
+
+
+static void sf_rf_init_cca_cmd(void);
+
+/*==============================================================================
+                            API FUNCTION
+==============================================================================*/
+st_cc1310_t cc1310;
+#define RX_BUFF_SIZE 500
+uint8_t RxBuff[RX_BUFF_SIZE];
+uint8_t dummy_ACK[] = {0x05, 0x02, 0x10, 0x1f};
+
+static bool rf_driver_init(void)
+{
+  rfc_returnValue_t returnValue;
+
+  returnValue = RFC_selectRadioMode(RFC_GFSK);
+  if(returnValue == RFC_OK)
+  {
+    /* 1.2. Enable RF Core */
+    returnValue = RFC_enableRadio();
+    if(returnValue == RFC_OK)
+    {
+      /* 1.3. Switch to HF XTAL. Needs to be done before running the RFC setup. */
+      loc_switchToHfXtalOsc();
+      return true;
+    }
+  }
+  return false;
+}
+
+
+static void rx_call_back(uint32_t l_flag)
+{
+  if(IRQ_RX_OK == (l_flag & IRQ_RX_OK))
+  {
+    bsp_led( E_BSP_LED_1, E_BSP_LED_OFF );
+    bsp_led( E_BSP_LED_0, E_BSP_LED_ON );
+    bsp_led( E_BSP_LED_3, E_BSP_LED_TOGGLE );
+    rf_driver_routine(RF_STATUS_RX);
+    rf_driver_routine(RF_STATUS_RX_LISTEN);
+    /* signal complete reception interrupt */
+    RF_SEM_POST(NETSTK_RF_EVENT);
+
+  }
+  if(IRQ_RX_NOK == (l_flag & IRQ_RX_NOK))
+  {
+    bsp_led( E_BSP_LED_1, E_BSP_LED_ON );
+    bsp_led( E_BSP_LED_0, E_BSP_LED_OFF );
+    bsp_led( E_BSP_LED_3, E_BSP_LED_TOGGLE );
+    rf_driver_routine(RF_STATUS_RX_LISTEN);
+  }
+}
+
+
+
+
+uint8_t rf_driver_routine(e_rf_status_t state)
+{
+  /* Return value of lib functions */
+  static rfc_returnValue_t returnValue;
+  /* State of the receiver */
+  static rfc_cmdStatus_t cmdStatus;
+  volatile uint16_t i = 0x00U;
+
+  /* check wheter we have to update the state or not */
+  if(state!=RF_STATUS_NONE)
+    cc1310.state=state;
+
+  switch(cc1310.state)
+  {
+  case RF_STATUS_INIT :
+
+    if(rf_driver_init())
+    {
+      /* initiate command pointer */
+      cc1310.conf.ps_cmdPropRadioDivSetup=(rfc_radioOp_t*)&RF_802_15_4_ch26_cmdPropRadioDivSetup;
+      cc1310.conf.ps_cmdFs=(rfc_radioOp_t*)&RF_802_15_4_ch26_cmdFs;
+      cc1310.rx.p_cmdPropRxAdv=&RF_802_15_4_ch26_cmdPropRxAdv_test;
+      cc1310.tx.p_cmdPropTxAdv=&RF_802_15_4_ch26_cmdPropTxAdv_test;
+
+      /*initiate CCA command */
+      sf_rf_set_numOfRssiMeas(CC13xx_NUM_OFF_RSSI_CHECKS_DEFAULT);
+      sf_rf_init_cca_cmd();
+
+      /* disable  interrupt  */
+      RFC_registerCpe0Isr(NULL);
+      RFC_registerCpe1Isr(NULL);
+      RFC_sendDirectCmd(CMDR_DIR_CMD(CMD_ABORT));
+
+      /* initialize RX queue */
+      if(RFQueue_defineQueue(&cc1310.rx.dataQueue, RxBuff, RX_BUFF_SIZE , 1 , 450 + 3 ) != 0x00U)
+      {
+        /* Failed to allocate space for all data entries */
+        bsp_led( E_BSP_LED_3, E_BSP_LED_ON );
+        return ROUTINE_ERROR_INIT_QUEUE ;
+      }
+
+      if (RFC_enableRadio() != RFC_OK)
+      {
+        bsp_led( E_BSP_LED_3, E_BSP_LED_ON );
+        return ROUTINE_ERROR_ENABLE_RADIO;
+      }
+
+      returnValue = RFC_setupRadio(cc1310.conf.ps_cmdPropRadioDivSetup);
+      if(returnValue == RFC_OK)
+      {
+        /* Send CMD_FS command to RF Core */
+        for(i; i<0x7FFF;i++);
+        cmdStatus = RFC_sendRadioOp(cc1310.conf.ps_cmdFs);
+        if(cmdStatus != RFC_CMDSTATUS_DONE)
+        {
+          bsp_led( E_BSP_LED_3, E_BSP_LED_ON );
+          return ROUTINE_ERROR_FS_CMD ;
+        }
+      }
+      /* Initialize interrupts */
+      RFC_registerCpe0Isr(rx_call_back);
+      RFC_enableCpe0Interrupt(IRQ_RX_OK);
+      RFC_enableCpe0Interrupt(IRQ_RX_NOK);
+
+      return ROUTINE_DONE ;
+    }
+    else
+    {
+      bsp_led( E_BSP_LED_3, E_BSP_LED_ON );
+      return ROUTINE_ERROR_INIT_RF ;
+    }
+
+  case RF_STATUS_IDLE :
+    break;
+  case RF_STATUS_SLEEP :
+    break;
+  case RF_STATUS_TX :
+
+    /* TODO add check whether the radio is on & setup correctly etc */
+
+    /* Stop last cmd (usually it is Rx cmd ) */
+    RFC_sendDirectCmd(CMDR_DIR_CMD(CMD_ABORT));
+    /* Send tx command  */
+    cmdStatus = RFC_sendRadioOp((rfc_radioOp_t*)cc1310.tx.p_cmdPropTxAdv);
+    /* Since we sent a blocking cmd then we check the state */
+    if(cmdStatus != RFC_CMDSTATUS_DONE)
+    {
+      bsp_led( E_BSP_LED_3, E_BSP_LED_ON );
+      return ROUTINE_ERROR_TX_CMD ;
+    }
+    else
+      return ROUTINE_DONE ;
+
+  case RF_STATUS_RX_LISTEN :
+
+    /* TODO add check whether the radio is on & setup correctly etc */
+
+    RFC_sendDirectCmd(CMDR_DIR_CMD(CMD_ABORT));
+    cc1310.rx.p_currentDataEntry=(rfc_dataEntryGeneral_t*)cc1310.rx.dataQueue.pCurrEntry;
+    /* Set the Data Entity queue for received data */
+    cc1310.rx.p_cmdPropRxAdv->pQueue = &cc1310.rx.dataQueue;
+    /* Set rx statistics output struct */
+    cc1310.rx.p_cmdPropRxAdv->pOutput= (uint8_t*)&cc1310.rx.rxStatistics;
+
+    /* Send CMD_PROP_RX command to RF Core */
+    cmdStatus=RFC_sendRadioOp_nb((rfc_radioOp_t*)cc1310.rx.p_cmdPropRxAdv , NULL);
+    if(cmdStatus != RFC_CMDSTATUS_DONE)
+    {
+      bsp_led( E_BSP_LED_3, E_BSP_LED_ON );
+      return ROUTINE_ERROR_RX_CMD ;
+    }
+    return ROUTINE_DONE ;
+
+  case RF_STATUS_RX :
+
+    /* when we receive data */
+    cc1310.rx.p_currentDataEntry = (rfc_dataEntryGeneral_t*)RFQueue_getDataEntry();
+    cc1310.rx.p_currentDataEntry->status=DATA_ENTRY_PENDING;
+
+    /* TODO Get rssi value from the queue  */
+
+    cc1310.rx.LenLastPkt = *(uint8_t*)(&cc1310.rx.p_currentDataEntry->data) + 1;
+    cc1310.rx.p_lastPkt = (uint8_t*)(&cc1310.rx.p_currentDataEntry->data) ;
+
+    return ROUTINE_DONE ;
+
+  case RF_STATUS_CCA :
+
+    /* TODO add check whether the radio is on & setup correctly etc */
+
+    /* Stop last cmd (usually it is Rx cmd ) */
+    RFC_sendDirectCmd(CMDR_DIR_CMD(CMD_ABORT));
+    /* update command */
+    cc1310.cca.s_cmdCS.numRssiBusy =cc1310.cca.c_numOfRssiMeas;
+    cc1310.cca.s_cmdCS.numRssiIdle =cc1310.cca.c_numOfRssiMeas;
+    /* Start carrier sense */
+    cmdStatus = RFC_sendRadioOp((rfc_radioOp_t*)&cc1310.cca.s_cmdCS);
+    /* Check if the command was processed correctly */
+    if(cmdStatus == RFC_CMDSTATUS_DONE)
+    {
+      /* Check the status of the CS command */
+      if(cc1310.cca.s_cmdCS.status == PROP_DONE_IDLE)
+      {
+        return ROUTINE_CCA_RESULT_IDLE;
+      }
+      else
+        return ROUTINE_CCA_RESULT_BUSY;
+    }
+    return ROUTINE_CCA_ERROR_STATE;
+
+  case RF_STATUS_ERROR :
+    /* TODO handle error here */
+    break;
+  };
+
+  return true ;
+}
+
+e_rf_status_t sf_rf_get_Status(void)
+{
+  return cc1310.state;
+}
+
+uint8_t* sf_rf_get_p_lastPkt(void)
+{
+  return cc1310.rx.p_lastPkt;
+}
+
+uint16_t sf_rf_get_LenLastPkt(void)
+{
+  return cc1310.rx.LenLastPkt;
+}
+
+uint8_t sf_rf_getRssi(void)
+{
+  return cc1310.rx.c_rssiValue;
+}
+
+uint8_t sf_rf_init_tx(uint8_t *pc_data, uint16_t  i_len)
+{
+  if (pc_data!=NULL && i_len > 1)
+  {
+    cc1310.tx.p_cmdPropTxAdv->pktLen = i_len ;
+    cc1310.tx.p_cmdPropTxAdv->pPkt = pc_data;
+    cc1310.tx.p_cmdPropTxAdv->pPkt[0] = i_len - 1 + 2 ;
+
+    return 1;
+  }
+  return 0;
+}
+
+
+bool sf_rf_set_numOfRssiMeas(uint8_t num)
+{
+  if( num )
+    cc1310.cca.c_numOfRssiMeas=num;
+  else
+    return false;
+  return true;
+}
+
+static void sf_rf_init_cca_cmd(void)
+{
+  /* Fill the carrier sense command */
+  /* The command ID number 0x3805 */
+  cc1310.cca.s_cmdCS.commandNo = CMD_PROP_CS;
+  /* An integer telling the status of the command.
+   * This value is updated by the radio CPU during operation and may be read by the system
+   * CPU at any time. */
+  cc1310.cca.s_cmdCS.status = 0U;
+  /* Pointer to the next operation to run after this operation is done */
+  cc1310.cca.s_cmdCS.pNextOp = NULL;
+  /* Absolute or relative start time (depending on the value of startTrigger) */
+  cc1310.cca.s_cmdCS.startTime = 0U;
+  /* The type of trigger. */
+  cc1310.cca.s_cmdCS.startTrigger.triggerType = TRIG_NOW;
+  /* 0: No alternative trigger command */
+  cc1310.cca.s_cmdCS.startTrigger.bEnaCmd = 0U;
+  /* The trigger number of the CMD_TRIGGER command that triggers this action */
+  cc1310.cca.s_cmdCS.startTrigger.triggerNo = 0U;
+  /* 0: A trigger in the past is never triggered, or for start of commands, give an error */
+  cc1310.cca.s_cmdCS.startTrigger.pastTrig = 0U;
+  /* Condition for running next command: Rule for how to proceed */
+  cc1310.cca.s_cmdCS.condition.rule = 1U;
+  /* Number of skips if the rule involves skipping */
+  cc1310.cca.s_cmdCS.condition.nSkip = 0U;
+  /* 0: Keep synth running if command ends with channel Idle */
+  cc1310.cca.s_cmdCS.csFsConf.bFsOffIdle = 0U;
+  /* 0: Keep synth running if command ends with channel Busy */
+  cc1310.cca.s_cmdCS.csFsConf.bFsOffBusy = 0U;
+  /* If 1, enable RSSI as a criterion. */
+  cc1310.cca.s_cmdCS.csConf.bEnaRssi = 1U;
+  /* If 0, disable correlation as a criterion. */
+  cc1310.cca.s_cmdCS.csConf.bEnaCorr = 0U;
+  /* 0: Busy if either RSSI or correlation indicates Busy */
+  cc1310.cca.s_cmdCS.csConf.operation = 0U;
+  /* 1: End carrier sense on channel Busy */
+  cc1310.cca.s_cmdCS.csConf.busyOp = 1U;
+  /* 1: End on channel Idle */
+  cc1310.cca.s_cmdCS.csConf.idleOp = 1U;
+  /* 0: Timeout with channel state Invalid treated as Busy */
+  cc1310.cca.s_cmdCS.csConf.timeoutRes = 0U;
+  /* Set the RSSI threshold value for a busy channel */
+  cc1310.cca.s_cmdCS.rssiThr = RF_CCA_RSSI_THR;
+  /* Number of consecutive RSSI measurements below the threshold needed before
+   * the channel is declared Idle.  */
+  cc1310.cca.s_cmdCS.numRssiIdle = cc1310.cca.c_numOfRssiMeas;
+  /* Number of consecutive RSSI measurements above the threshold needed before
+   * the channel is declared Busy */
+  cc1310.cca.s_cmdCS.numRssiBusy = cc1310.cca.c_numOfRssiMeas;
+  /* The type of trigger */
+  cc1310.cca.s_cmdCS.csEndTrigger.triggerType = TRIG_NEVER;
+  /* 0: No alternative trigger command */
+  cc1310.cca.s_cmdCS.csEndTrigger.bEnaCmd = 0U;
+  /* The trigger number of the CMD_TRIGGER command that triggers this action */
+  cc1310.cca.s_cmdCS.csEndTrigger.triggerNo = 0U;
+  /* 0: A trigger in the past is never triggered, or for start of commands, give an error */
+  cc1310.cca.s_cmdCS.csEndTrigger.pastTrig = 0U;
+  /*  Time used together with csEndTrigger for ending the operation. */
+  cc1310.cca.s_cmdCS.csEndTime = 0U;
+}
+
+/***********************************************************************/
+
+
+/** TX data ctx of the rf module. */
+typedef struct S_RF_TX_CTX_T
+{
+  /** Size of the hole telegram. */
+  uint16_t i_telegramLength;
+  /** Number of bytes in data array */
+  uint16_t i_fillLevel;
+  /** Len of the last transmitted block */
+  uint16_t i_lastTxLen;
   /** Pointer to the current tx command */
   rfc_CMD_PROP_TX_ADV_t* ps_cmdPropTxAdv;
- } s_rf_txCtx_t;
+} s_rf_txCtx_t;
 
 /** RX data ctx of the rf module. */
 typedef struct S_RF_RX_CTX_T
@@ -181,9 +521,9 @@ uint8_t gc_signalStrength;
 /* Static variable to store the current radio channel configuration */
 rfc_radioOp_t* gps_cmdFs = NULL;
 
- /** Postamble to use for the current Tx packet */
+/** Postamble to use for the current Tx packet */
 uint8_t gc_rfPostamble;
- /** Size of Postamble to use for the current Tx packet */
+/** Size of Postamble to use for the current Tx packet */
 uint8_t gc_rfPostambleSize;
 
 /** Status of the RF module. */
@@ -193,14 +533,14 @@ volatile E_RF_STATUS_t ge_rfStatus;
 uint32_t gl_interruptFlag = 0x00U;
 
 #if defined(__TI_COMPILER_VERSION__)
-	#pragma DATA_ALIGN (gac_data, 4);
+#pragma DATA_ALIGN (gac_data, 4);
 #elif defined(__IAR_SYSTEMS_ICC__)
-	#pragma data_alignment = 4
+#pragma data_alignment = 4
 #endif
 /** Storage of the telegram payload for RX/TX */
 static uint8_t gac_data[RF_QUEUE_DATA_ENTRY_BUFFER_SIZE(NUM_DATA_ENTRIES,
-                                        RF_RX_ARRAY_SIZE,
-                                        NUM_APPENDED_BYTES)];
+    RF_RX_ARRAY_SIZE,
+    NUM_APPENDED_BYTES)];
 
 /* Pointer to the command "cmdPropRadioDivSetup" */
 rfc_radioOp_t* gps_cmdPropRadioDivSetup;
@@ -222,7 +562,7 @@ RF_CmdHandle gsi_rx_cmd;
 
 /************************* TX specific variabled ******************************/
 #if CC13XX_TX_ENABLED
- /** Global call back function pointer for tx events */
+/** Global call back function pointer for tx events */
 static fp_rf_evt_tx gfp_tx = NULL;
 /** Context for TX opperations*/
 s_rf_txCtx_t gs_rf_txCtx;
@@ -244,27 +584,6 @@ RF_Mode RF_prop =
 };
 #endif /* USE_TI_RTOS */
 
-/*==============================================================================
-                            FUNCTION PROTOTYPES
-==============================================================================*/
-
-bool loc_reset(bool b_isrEnabled, E_RF_MODE_t e_mode);
-void loc_rxIsr(uint32_t l_flag);
-
-#if USE_TI_RTOS
-static void loc_txIsr(RF_Handle h, RF_CmdHandle ch, RF_Event e);
-static void loc_rfClose(void);
-static void loc_rfOpen(void);
-static RF_CmdHandle loc_rfPostCmd(RF_Op* pOp, RF_Priority ePri, RF_Callback pCb);
-#else
-void loc_txIsr(uint32_t l_flag);
-static void loc_switchToHfXtalOsc(void);
-#endif /* USE_TI_RTOS */
-
-/** Configuration helper functions. @{ */
-#if CC13XX_RX_ENABLED
-static SF_INLINE bool loc_startRx(void);
-#endif /* CC13XX_RX_ENABLED */
 
 
 /*==============================================================================
@@ -277,37 +596,37 @@ static SF_INLINE bool loc_startRx(void);
  * @param   None
  *
  * @return  None
-*******************************************************************************/
+ *******************************************************************************/
 static void loc_switchToHfXtalOsc(void)
 {
-    /* Enable OSC DIG interface to change clock sources */
-    OSCInterfaceEnable();
+  /* Enable OSC DIG interface to change clock sources */
+  OSCInterfaceEnable();
 
-    /* Check to not enable XOSC if already enabled */
-    if(OSCClockSourceGet(OSC_SRC_CLK_HF) != OSC_XOSC_HF)
-    {
-        /* Disable autostart of XOSC state machine */
-        DDI32BitsSet(AUX_DDI0_OSC_BASE,
-                     DDI_0_OSC_O_AMPCOMPCTL,
-                     DDI_0_OSC_AMPCOMPCTL_AMPCOMP_SW_CTRL);
+  /* Check to not enable XOSC if already enabled */
+  if(OSCClockSourceGet(OSC_SRC_CLK_HF) != OSC_XOSC_HF)
+  {
+    /* Disable autostart of XOSC state machine */
+    DDI32BitsSet(AUX_DDI0_OSC_BASE,
+        DDI_0_OSC_O_AMPCOMPCTL,
+        DDI_0_OSC_AMPCOMPCTL_AMPCOMP_SW_CTRL);
 
-        /* Request to switch to the crystal to enable radio operation. */
-        OSCClockSourceSet(OSC_SRC_CLK_MF | OSC_SRC_CLK_HF, OSC_XOSC_HF);
+    /* Request to switch to the crystal to enable radio operation. */
+    OSCClockSourceSet(OSC_SRC_CLK_MF | OSC_SRC_CLK_HF, OSC_XOSC_HF);
 
-        /* Wait for a while */
-        CPUdelay(48000000/3*0.002);
+    /* Wait for a while */
+    CPUdelay(48000000/3*0.002);
 
-        /* Enable autostart, will start the state machine */
-        DDI32BitsClear(AUX_DDI0_OSC_BASE,
-                       DDI_0_OSC_O_AMPCOMPCTL,
-                       DDI_0_OSC_AMPCOMPCTL_AMPCOMP_SW_CTRL);
+    /* Enable autostart, will start the state machine */
+    DDI32BitsClear(AUX_DDI0_OSC_BASE,
+        DDI_0_OSC_O_AMPCOMPCTL,
+        DDI_0_OSC_AMPCOMPCTL_AMPCOMP_SW_CTRL);
 
-        /* Switch the HF source - Done via ROM API*/
-        OSCHfSourceSwitch();
-    }
+    /* Switch the HF source - Done via ROM API*/
+    OSCHfSourceSwitch();
+  }
 
-    /* Disable OSC DIG interface */
-    OSCInterfaceDisable();
+  /* Disable OSC DIG interface */
+  OSCInterfaceDisable();
 }/* loc_switchToHfXtalOsc() */
 #endif /* !USE_TI_RTOS */
 
@@ -318,7 +637,7 @@ static void loc_switchToHfXtalOsc(void)
  * @param   None
  *
  * @return  None
-*******************************************************************************/
+ *******************************************************************************/
 static void loc_rfClose(void)
 {
   if(gps_rfHandle != NULL)
@@ -329,7 +648,7 @@ static void loc_rfClose(void)
   else
   {
     while(1);
-    #warning remove debugging while loop
+#warning remove debugging while loop
   }/* if...else */
 }/* loc_rfClose() */
 #endif /* USE_TI_RTOS */
@@ -341,7 +660,7 @@ static void loc_rfClose(void)
  * @param   None
  *
  * @return  None
-*******************************************************************************/
+ *******************************************************************************/
 static void loc_rfOpen(void)
 {
   if(gps_rfHandle == NULL)
@@ -370,13 +689,13 @@ static void loc_rfOpen(void)
  *  @param pCb   Callback function called upon command completion (and some other events).
  *               If RF_postCmd() fails no callback is made
  *  @return      A handle to the RF command. Negative value indicates an error
-*******************************************************************************/
+ *******************************************************************************/
 static RF_CmdHandle loc_rfPostCmd(RF_Op* pOp, RF_Priority ePri, RF_Callback pCb)
 {
   RF_CmdHandle cmdHandle = -5;
   if (NULL != gps_rfHandle)
   {
-      cmdHandle = RF_postCmd(gps_rfHandle, pOp, ePri, pCb);
+    cmdHandle = RF_postCmd(gps_rfHandle, pOp, ePri, pCb);
   }
   else
   {
@@ -402,8 +721,8 @@ bool loc_reset(bool b_isrEnabled, E_RF_MODE_t e_mode)
 
   /* Check if the transceiver is already in the needed state */
   if((b_isrEnabled == true) &&
-     (e_mode == E_RF_MODE_RUN) &&
-     (ge_rfStatus == E_RF_STATUS_RX_LISTEN))
+      (e_mode == E_RF_MODE_RUN) &&
+      (ge_rfStatus == E_RF_STATUS_RX_LISTEN))
   {
     b_return = true;
   }/* if */
@@ -413,28 +732,28 @@ bool loc_reset(bool b_isrEnabled, E_RF_MODE_t e_mode)
     RFC_registerCpe0Isr(NULL);
     sf_rf_setPowerMode(E_RF_POWERMODE_IDLE);
 
-    #if CC13XX_RX_ENABLED
+#if CC13XX_RX_ENABLED
     /* Check if the device has to be configurated for receive mode */
     if(E_RF_MODE_RUN == e_mode)
     {
       sf_rf_setConfigRx();
     }/* if */
-    #endif /* CC13XX_RX_ENABLED */
+#endif /* CC13XX_RX_ENABLED */
 
     if(b_isrEnabled && (E_RF_MODE_RUN == e_mode))
     {
-      #if CC13XX_RX_ENABLED
+#if CC13XX_RX_ENABLED
       b_return = loc_startRx();
-      #endif /* CC13XX_RX_ENABLED */
+#endif /* CC13XX_RX_ENABLED */
     }/* if */
     else if((false == b_isrEnabled) && (E_RF_MODE_WAIT == e_mode))
     {
-      #if USE_TI_RTOS
+#if USE_TI_RTOS
       ge_rfStatus = E_RF_STATUS_SLEEP;
       gps_cmdFs = NULL;
       b_return = true;
       loc_rfClose();
-      #else
+#else
       /* Set transceiver to lpm */
       if (RFC_disableRadio() == RFC_OK)
       {
@@ -442,7 +761,7 @@ bool loc_reset(bool b_isrEnabled, E_RF_MODE_t e_mode)
         gps_cmdFs = NULL;
         b_return = true;
       }/* if */
-      #endif /* USE_TI_RTOS */
+#endif /* USE_TI_RTOS */
     } /* if ... else */
   }/* if..else */
   return b_return;
@@ -461,13 +780,13 @@ static SF_INLINE bool loc_startRx(void)
   bool b_return = true;
 
   if((ge_rfStatus != E_RF_STATUS_RX_LISTEN) &&
-     (NULL != gs_rf_rxCtx.ps_cmdPropRxAdv))
+      (NULL != gs_rf_rxCtx.ps_cmdPropRxAdv))
   {
     /****** STEP 4 - Prepare Data Entries **************************************
      * Create a Data Queue with one Data Entry
      **************************************************************************/
     if(RFQueue_defineQueue(&gs_rf_rxCtx.s_dataQueue, gac_data, sizeof(gac_data),
-                       NUM_DATA_ENTRIES, RF_RX_ARRAY_SIZE) == 0x00U)
+        NUM_DATA_ENTRIES, RF_RX_ARRAY_SIZE) == 0x00U)
     {
       /* Set the length for the  "Rx_Data_Written" interrupt */
       gs_rf_rxCtx.ps_currentDataEntry = (rfc_dataEntryPartial_t*)gs_rf_rxCtx.s_dataQueue.pCurrEntry;
@@ -501,7 +820,7 @@ static SF_INLINE bool loc_startRx(void)
       gs_rf_rxCtx.pc_dataPointer = NULL;
       gs_rf_rxCtx.c_rssiValue = 0x00U;
 
-      #if USE_TI_RTOS
+#if USE_TI_RTOS
       /* Send none blocking rx command */
       gsi_rx_cmd = loc_rfPostCmd((RF_Op*)gs_rf_rxCtx.ps_cmdPropRxAdv, RF_PriorityNormal, NULL);
       if(gsi_rx_cmd < 0)
@@ -509,10 +828,10 @@ static SF_INLINE bool loc_startRx(void)
         /* Something is wrong */
         b_return = false;
       }/* if */
-      #else
+#else
       /* 5.3. Send CMD_PROP_RX command to RF Core */
       RFC_sendRadioOp_nb((rfc_radioOp_t*)gs_rf_rxCtx.ps_cmdPropRxAdv, NULL);
-      #endif /* USE_TI_RTOS */
+#endif /* USE_TI_RTOS */
     }/* if */
     else
     {
@@ -532,7 +851,7 @@ static SF_INLINE bool loc_startRx(void)
  *  callback is called from SWI context and provides the relevant #RF_Handle,
  *  pointer to the relevant radio operation as well as an #RF_Event that indicates
  *  what has occurred.
-*******************************************************************************/
+ *******************************************************************************/
 void loc_txIsr(RF_Handle h, RF_CmdHandle ch, RF_Event e)
 {
   if(e == RF_EventCmdDone)
@@ -548,7 +867,7 @@ void loc_txIsr(RF_Handle h, RF_CmdHandle ch, RF_Event e)
  * @param   l_flag Interrupt flag of the dbell
  *
  * @return  None
-*******************************************************************************/
+ *******************************************************************************/
 void loc_txIsr(uint32_t l_flag)
 {
   /* Store the interrupt. The other stuff will be handled in the run function */
@@ -562,7 +881,7 @@ void loc_txIsr(uint32_t l_flag)
  * @param   l_flag Interrupt flag of the dbell
  *
  * @return  None
-*******************************************************************************/
+ *******************************************************************************/
 void loc_rxIsr(uint32_t l_flag)
 {
   if(IRQ_RX_N_DATA_WRITTEN == (l_flag & IRQ_RX_N_DATA_WRITTEN))
@@ -573,9 +892,9 @@ void loc_rxIsr(uint32_t l_flag)
     gs_rf_rxCtx.i_rxFillLevel += RF_RX_THRESHOLD;
 
     /* If the radio will not be polled we have to call the run function here */
-    #if (false == CC13XX_IS_POLLED_RADIO)
+#if (false == CC13XX_IS_POLLED_RADIO)
     sf_rf_run();
-    #endif /* CC13XX_IS_POLLED_RADIO */
+#endif /* CC13XX_IS_POLLED_RADIO */
   }/* if */
 
   /* Clear all unmasked CPE/HW interrupts. */
@@ -613,10 +932,12 @@ void sf_rf_setConfigRx(void)
 /*============================================================================*/
 /** sf_rf_getRfStatus() */
 /*============================================================================*/
+
 E_RF_STATUS_t sf_rf_getRfStatus(void)
 {
   return ge_rfStatus;
-}/* sf_rf_getRfStatus() */
+}
+
 /*==============================================================================
                             FUNCTIONS
 ==============================================================================*/
@@ -629,10 +950,10 @@ bool sf_rf_init(rfc_RPID_t e_rpid, rfc_radioOp_t* ps_cmdPropRadioDivSetup)
   /* Rerturn value of the function */
   bool b_ret = false;
 
-  #if !USE_TI_RTOS
+#if !USE_TI_RTOS
   /* Return value of lib functions */
   rfc_returnValue_t returnValue;
-  #endif /* !USE_TI_RTOS */
+#endif /* !USE_TI_RTOS */
 
   /* Initialize global variables */
   gs_rf_txCtx.i_telegramLength = 0x00U;
@@ -645,7 +966,7 @@ bool sf_rf_init(rfc_RPID_t e_rpid, rfc_radioOp_t* ps_cmdPropRadioDivSetup)
   gps_cmdPropRadioDivSetup = ps_cmdPropRadioDivSetup;
   gc_signalStrength = RF_DEFAULT_TX_POWER;
 
-  #if USE_TI_RTOS
+#if USE_TI_RTOS
   gsi_rx_cmd = -5;
   RF_Params_init(&gs_rfParams);
   loc_rfOpen();
@@ -653,7 +974,7 @@ bool sf_rf_init(rfc_RPID_t e_rpid, rfc_radioOp_t* ps_cmdPropRadioDivSetup)
   {
     b_ret = true;
   }/* if */
-  #else
+#else
   /* 1.1. Select mode */
   returnValue = RFC_selectRadioMode(e_rpid);
 
@@ -669,7 +990,7 @@ bool sf_rf_init(rfc_RPID_t e_rpid, rfc_radioOp_t* ps_cmdPropRadioDivSetup)
       b_ret = true;
     }/* if */
   }/* if */
-  #endif /* USE_TI_RTOS */
+#endif /* USE_TI_RTOS */
   return b_ret;
 } /* sf_rf_init() */
 
@@ -691,13 +1012,13 @@ bool sf_rf_setCallback(fp_rf_evt_tx fp_tx, fp_rf_evt_rx fp_rx, fp_rf_evt_configR
 
   if((NULL != fp_tx) && (NULL != fp_rx) && (NULL != fp_confRx))
   {
-    #if CC13XX_TX_ENABLED
+#if CC13XX_TX_ENABLED
     gfp_tx = fp_tx;
-    #endif /* CC13XX_TX_ENABLED */
-    #if CC13XX_RX_ENABLED
+#endif /* CC13XX_TX_ENABLED */
+#if CC13XX_RX_ENABLED
     gfp_rx = fp_rx;
     gfp_confRx = fp_confRx;
-    #endif /* CC13XX_RX_ENABLED */
+#endif /* CC13XX_RX_ENABLED */
     b_ret = true;
   } /* if */
 
@@ -718,9 +1039,9 @@ bool sf_rf_reset(void)
 /** sf_rf_txInit() */
 /*============================================================================*/
 bool sf_rf_txInit(uint16_t i_len, bool b_useLongPreamble,
-                  rfc_CMD_PROP_TX_ADV_t* ps_cmdPropTxAdv,
-                  rfc_radioOp_t* ps_cmdPropRadioDivSetup,
-                  rfc_radioOp_t* ps_cmdFs)
+    rfc_CMD_PROP_TX_ADV_t* ps_cmdPropTxAdv,
+    rfc_radioOp_t* ps_cmdPropRadioDivSetup,
+    rfc_radioOp_t* ps_cmdFs)
 {
   bool b_return = false;
 
@@ -777,13 +1098,13 @@ bool sf_rf_txData(uint8_t *pc_data, uint16_t i_len)
   /* return variable */
   bool b_return = false;
 
-  #if USE_TI_RTOS
+#if USE_TI_RTOS
   /* Result of the tx command */
   RF_CmdHandle si_result;
-  #endif /* USE_TI_RTOS */
+#endif /* USE_TI_RTOS */
 
   if(((gs_rf_txCtx.i_fillLevel + i_len) <= gs_rf_txCtx.i_telegramLength) &&
-     (NULL != gs_rf_txCtx.ps_cmdPropTxAdv))
+      (NULL != gs_rf_txCtx.ps_cmdPropTxAdv))
   {
     /* Copy the telegram data in to local buffer */
     MEMCPY(&gac_data[gs_rf_txCtx.i_fillLevel], pc_data, i_len);
@@ -815,7 +1136,7 @@ bool sf_rf_txData(uint8_t *pc_data, uint16_t i_len)
       /* Set the pointer to the payload */
       gs_rf_txCtx.ps_cmdPropTxAdv->pPkt = gac_data;
 
-      #if USE_TI_RTOS
+#if USE_TI_RTOS
       si_result = loc_rfPostCmd((RF_Op*)&RF_868_30_cmdPropTxAdv, RF_PriorityNormal, loc_txIsr);
 
       /* Negative value indicates an error */
@@ -823,11 +1144,11 @@ bool sf_rf_txData(uint8_t *pc_data, uint16_t i_len)
       {
         b_return = true;
       }
-      #else
+#else
       /* 4.2. Send packet using CMD_PROP_TX with non blocking call */
       RFC_sendRadioOp_nb((rfc_radioOp_t*)gs_rf_txCtx.ps_cmdPropTxAdv, loc_txIsr);
       b_return = true;
-      #endif /* USE_TI_RTOS */
+#endif /* USE_TI_RTOS */
 
       if(true == b_return)
       {
@@ -957,14 +1278,14 @@ bool sf_rf_setRfChannel(rfc_radioOp_t* ps_cmdPropRadioDivSetup, rfc_radioOp_t* p
   /* Return value of this function */
   bool b_return = false;
 
-  #if USE_TI_RTOS
+#if USE_TI_RTOS
   RF_CmdHandle si_cmdFsHandle;
-  #else
+#else
   /* Return value of lib functions */
   rfc_returnValue_t returnValue;
   /* State of the receiver */
   rfc_cmdStatus_t cmdStatus;
-  #endif /* USE_TI_RTOS */
+#endif /* USE_TI_RTOS */
 
   gps_cmdPropRadioDivSetup = ps_cmdPropRadioDivSetup;
 
@@ -972,7 +1293,7 @@ bool sf_rf_setRfChannel(rfc_radioOp_t* ps_cmdPropRadioDivSetup, rfc_radioOp_t* p
   if((gps_cmdFs != ps_cmdFs) && (ps_cmdFs != NULL))
   {
 
-    #if USE_TI_RTOS
+#if USE_TI_RTOS
     /* To update the setting we have to close the old handle and open a new one */
     loc_rfClose();
     /* Open the new rf handle with the correct div setup */
@@ -986,7 +1307,7 @@ bool sf_rf_setRfChannel(rfc_radioOp_t* ps_cmdPropRadioDivSetup, rfc_radioOp_t* p
       RF_waitCmd(gps_rfHandle, si_cmdFsHandle, RF_EventCmdDone);
       b_return = true;
     }/* if */
-    #else
+#else
     /****** STEP 2 - Setup radio ***********************************************/
     /* Send CMD_PROP_RADIO_DIV_SETUP command to RF Core */
     returnValue = RFC_setupRadio(gps_cmdPropRadioDivSetup);
@@ -1002,7 +1323,7 @@ bool sf_rf_setRfChannel(rfc_radioOp_t* ps_cmdPropRadioDivSetup, rfc_radioOp_t* p
         b_return = true;
       }/* if */
     }/* if */
-    #endif /* USE_TI_RTOS */
+#endif /* USE_TI_RTOS */
 
     if(true == b_return)
     {
@@ -1012,8 +1333,8 @@ bool sf_rf_setRfChannel(rfc_radioOp_t* ps_cmdPropRadioDivSetup, rfc_radioOp_t* p
   }/* if */
   else if(gps_cmdFs == ps_cmdFs)
   {
-	/* The radio is already configured */
-	b_return = true;
+    /* The radio is already configured */
+    b_return = true;
   }
   return b_return;
 } /* sf_rf_setRfChannel() */
@@ -1050,7 +1371,7 @@ bool sf_rf_setSignalStrength(uint8_t c_signal)
   s_cmdTxPower.commandNo = CMD_SET_TX_POWER;
 
   /* Values from smart rf studio v2.1.0 ***************************************/
- /* Set the minimum */
+  /* Set the minimum */
   if(c_signal <= 124U) /* -10dbm */
   {
     s_cmdTxPower.txPower.IB =        0x00U;
@@ -1074,41 +1395,41 @@ bool sf_rf_setSignalStrength(uint8_t c_signal)
     /* Check which setting should be used. */
     switch(c_signal)
     {
-      case 143U:                                                     /* 13dBm */
-        s_cmdTxPower.txPower.IB =        0x3FU;
-        s_cmdTxPower.txPower.GC =        0x00U;
-        s_cmdTxPower.txPower.boost =     0x00U;
-        s_cmdTxPower.txPower.tempCoeff = 0x00U;
-        break;
+    case 143U:                                                     /* 13dBm */
+      s_cmdTxPower.txPower.IB =        0x3FU;
+      s_cmdTxPower.txPower.GC =        0x00U;
+      s_cmdTxPower.txPower.boost =     0x00U;
+      s_cmdTxPower.txPower.tempCoeff = 0x00U;
+      break;
 
-      case 142U:                                                     /* 12dBm */
-        s_cmdTxPower.txPower.IB =        0x14U;
-        s_cmdTxPower.txPower.GC =        0x00U;
-        s_cmdTxPower.txPower.boost =     0x00U;
-        s_cmdTxPower.txPower.tempCoeff = 0x00U;
-        break;
+    case 142U:                                                     /* 12dBm */
+      s_cmdTxPower.txPower.IB =        0x14U;
+      s_cmdTxPower.txPower.GC =        0x00U;
+      s_cmdTxPower.txPower.boost =     0x00U;
+      s_cmdTxPower.txPower.tempCoeff = 0x00U;
+      break;
 
-      case 141U: case 140U: case 139U: case 138U:                    /* 10dBm */
-        s_cmdTxPower.txPower.IB =        0x11U;
-        s_cmdTxPower.txPower.GC =        0x03U;
-        s_cmdTxPower.txPower.boost =     0x00U;
-        s_cmdTxPower.txPower.tempCoeff = 0x00U;
-        break;
+    case 141U: case 140U: case 139U: case 138U:                    /* 10dBm */
+      s_cmdTxPower.txPower.IB =        0x11U;
+      s_cmdTxPower.txPower.GC =        0x03U;
+      s_cmdTxPower.txPower.boost =     0x00U;
+      s_cmdTxPower.txPower.tempCoeff = 0x00U;
+      break;
 
-      case 137U: case 136U: case 135U: case 134U: case 133U:         /*  5dBm */
-        s_cmdTxPower.txPower.IB =        0x05U;
-        s_cmdTxPower.txPower.GC =        0x03U;
-        s_cmdTxPower.txPower.boost =     0x00U;
-        s_cmdTxPower.txPower.tempCoeff = 0x00U;
-        break;
+    case 137U: case 136U: case 135U: case 134U: case 133U:         /*  5dBm */
+      s_cmdTxPower.txPower.IB =        0x05U;
+      s_cmdTxPower.txPower.GC =        0x03U;
+      s_cmdTxPower.txPower.boost =     0x00U;
+      s_cmdTxPower.txPower.tempCoeff = 0x00U;
+      break;
 
-      case 132U: case 131U: case 130U: case 129U: case 128U: case 127U:
-      case 126U: case 125U:                                          /*  0dBm */
-        s_cmdTxPower.txPower.IB =        0x02U;
-        s_cmdTxPower.txPower.GC =        0x03U;
-        s_cmdTxPower.txPower.boost =     0x00U;
-        s_cmdTxPower.txPower.tempCoeff = 0x00U;
-        break;
+    case 132U: case 131U: case 130U: case 129U: case 128U: case 127U:
+    case 126U: case 125U:                                          /*  0dBm */
+      s_cmdTxPower.txPower.IB =        0x02U;
+      s_cmdTxPower.txPower.GC =        0x03U;
+      s_cmdTxPower.txPower.boost =     0x00U;
+      s_cmdTxPower.txPower.tempCoeff = 0x00U;
+      break;
     }/* switch */
     gc_signalStrength = c_signal;
   } /* else */
@@ -1149,60 +1470,60 @@ bool sf_rf_setPowerMode(E_RF_POWERMODE_t e_powermode)
   /* Go to required power mode immediately. */
   switch(e_powermode)
   {
-    case E_RF_POWERMODE_IDLE:
-      if(ge_rfStatus != E_RF_STATUS_IDLE)
+  case E_RF_POWERMODE_IDLE:
+    if(ge_rfStatus != E_RF_STATUS_IDLE)
+    {
+      if(ge_rfStatus == E_RF_STATUS_SLEEP)
       {
-        if(ge_rfStatus == E_RF_STATUS_SLEEP)
+#if USE_TI_RTOS
+        loc_rfOpen();
+        ge_rfStatus = E_RF_STATUS_IDLE;
+#else
+        if (RFC_enableRadio() == RFC_OK)
         {
-          #if USE_TI_RTOS
-          loc_rfOpen();
           ge_rfStatus = E_RF_STATUS_IDLE;
-          #else
-          if (RFC_enableRadio() == RFC_OK)
-          {
-            ge_rfStatus = E_RF_STATUS_IDLE;
-          }/* if */
-          #endif /* USE_TI_RTOS */
         }/* if */
-        else
-        {
-          /* Disable interrupt */
-          RFC_registerCpe0Isr(NULL);
-
-          #if USE_TI_RTOS
-          /* First stop the receiving */
-          if(gsi_rx_cmd >= 0)
-          {
-            RF_abortCmd(gps_rfHandle, gsi_rx_cmd);
-            gsi_rx_cmd = -5;
-          }/* if */
-          #else
-          /* Stop any radio opperration */
-          RFC_sendDirectCmd(CMDR_DIR_CMD(CMD_ABORT));
-          /* Wait until radio operation is completed */
-          #endif
-          ge_rfStatus = E_RF_STATUS_IDLE;
-        }/* if...else */
+#endif /* USE_TI_RTOS */
       }/* if */
-      b_return = true;
-      break;
-    case E_RF_POWERMODE_OFF:
-      if(ge_rfStatus != E_RF_STATUS_SLEEP)
+      else
       {
-        loc_reset(false, E_RF_MODE_WAIT);
-      }/* if */
-      b_return = true;
-      break;
+        /* Disable interrupt */
+        RFC_registerCpe0Isr(NULL);
 
-    case E_RF_POWERMODE_RX:
-      loc_reset(true, E_RF_MODE_RUN);
-      b_return = true;
-      break;
+#if USE_TI_RTOS
+        /* First stop the receiving */
+        if(gsi_rx_cmd >= 0)
+        {
+          RF_abortCmd(gps_rfHandle, gsi_rx_cmd);
+          gsi_rx_cmd = -5;
+        }/* if */
+#else
+        /* Stop any radio opperration */
+        RFC_sendDirectCmd(CMDR_DIR_CMD(CMD_ABORT));
+        /* Wait until radio operation is completed */
+#endif
+        ge_rfStatus = E_RF_STATUS_IDLE;
+      }/* if...else */
+    }/* if */
+    b_return = true;
+    break;
+  case E_RF_POWERMODE_OFF:
+    if(ge_rfStatus != E_RF_STATUS_SLEEP)
+    {
+      loc_reset(false, E_RF_MODE_WAIT);
+    }/* if */
+    b_return = true;
+    break;
 
-    default:
-      /* Invalid power mode. */
-      b_return = false;
-      break;
+  case E_RF_POWERMODE_RX:
+    loc_reset(true, E_RF_MODE_RUN);
+    b_return = true;
+    break;
+
+  default:
+    /* Invalid power mode. */
+    b_return = false;
+    break;
   } /* switch */
 
   return b_return;
@@ -1224,80 +1545,81 @@ void sf_rf_run(void)
 
   switch(ge_rfStatus)
   {
-    /* TX interrupt handling ************************************************/
-    case E_RF_STATUS_TX:
-      if((gl_interruptFlag & IRQ_LAST_COMMAND_DONE) == IRQ_LAST_COMMAND_DONE)
-      {
-        /* Sending is finished. Inform the higher layers */
-        ge_rfStatus = E_RF_STATUS_IDLE;
-        /* Reset the interrupt flag */
-        gl_interruptFlag = 0x00U;
+  /* TX interrupt handling ************************************************/
+  case E_RF_STATUS_TX:
+    if((gl_interruptFlag & IRQ_LAST_COMMAND_DONE) == IRQ_LAST_COMMAND_DONE)
+    {
+      /* Sending is finished. Inform the higher layers */
+      ge_rfStatus = E_RF_STATUS_IDLE;
+      /* Reset the interrupt flag */
+      gl_interruptFlag = 0x00U;
 
-        /* Fire the tx event */
-        if(NULL != gfp_tx)
-        {
-          gfp_tx(gs_rf_txCtx.i_lastTxLen);
-        }/* if */
+      /* Fire the tx event */
+      if(NULL != gfp_tx)
+      {
+        gfp_tx(gs_rf_txCtx.i_lastTxLen);
       }/* if */
-      break;
+    }/* if */
+    break;
 
-    case E_RF_STATUS_RX_LISTEN:
-      if((gl_interruptFlag & IRQ_RX_N_DATA_WRITTEN) == IRQ_RX_N_DATA_WRITTEN)
+  case E_RF_STATUS_RX_LISTEN:
+    if((gl_interruptFlag & IRQ_RX_N_DATA_WRITTEN) == IRQ_RX_N_DATA_WRITTEN)
+    {
+      /* The first bytes of a telegram where received */
+      ge_rfStatus = E_RF_STATUS_RX;
+      /* Reset the interrupt flag */
+      gl_interruptFlag = 0x00U;
+
+      if(NULL != gfp_rx)
       {
-        /* The first bytes of a telegram where received */
-        ge_rfStatus = E_RF_STATUS_RX;
-        /* Reset the interrupt flag */
-        gl_interruptFlag = 0x00U;
+        gfp_rx(RF_NEW_TLG);
+      }/* if */
 
-        if(NULL != gfp_rx)
-        {
-          gfp_rx(RF_NEW_TLG);
-        }/* if */
-
-        /* Read out the RSSI value of the current telegram */
-        if(CMDSTA_Done == MB_SendCommand((uint32_t) &s_cmdGetRssi))
-        {
-          /* "The  RSSI  is  returned  in result byte 2 (bit 23:16) of CMDSTA,
+      /* Read out the RSSI value of the current telegram */
+      if(CMDSTA_Done == MB_SendCommand((uint32_t) &s_cmdGetRssi))
+      {
+        /* "The  RSSI  is  returned  in result byte 2 (bit 23:16) of CMDSTA,
              cf. Figure 3. The RSSI is given on signed form in dBm. If no RSSI
              is available, this is signaled with a special value of the RSSI
             (-128, or 0x80)." cc13xx_pg2_rfcore_hal.pdf v.0.2 */
-          l_cmdStateValue = HWREG(RFC_DBELL_BASE + RFC_DBELL_O_CMDSTA);
-          l_cmdStateValue = l_cmdStateValue>>16;
-          l_cmdStateValue &= 0xFF;
-          gs_rf_rxCtx.c_rssiValue = (uint8_t)l_cmdStateValue;
-        }/* if */
+        l_cmdStateValue = HWREG(RFC_DBELL_BASE + RFC_DBELL_O_CMDSTA);
+        l_cmdStateValue = l_cmdStateValue>>16;
+        l_cmdStateValue &= 0xFF;
+        gs_rf_rxCtx.c_rssiValue = (uint8_t)l_cmdStateValue;
       }/* if */
-      break;
+    }/* if */
+    break;
     /* RX interrupt handling ************************************************/
-    case E_RF_STATUS_RX:
-      if((gs_rf_rxCtx.i_rxFillLevel - gs_rf_rxCtx.i_numberOfReadedByte) >=
-         gs_rf_rxCtx.i_numberOfRequestedByte)
+  case E_RF_STATUS_RX:
+    if((gs_rf_rxCtx.i_rxFillLevel - gs_rf_rxCtx.i_numberOfReadedByte) >=
+        gs_rf_rxCtx.i_numberOfRequestedByte)
+    {
+      gs_rf_rxCtx.ps_currentDataEntry = (rfc_dataEntryPartial_t*)RFQueue_getDataEntry();
+      if(NULL != gs_rf_rxCtx.pc_dataPointer)
       {
-        gs_rf_rxCtx.ps_currentDataEntry = (rfc_dataEntryPartial_t*)RFQueue_getDataEntry();
-        if(NULL != gs_rf_rxCtx.pc_dataPointer)
-        {
-          pc_packetDataPointer = &gs_rf_rxCtx.ps_currentDataEntry->rxData;
-          MEMCPY(gs_rf_rxCtx.pc_dataPointer,
-                 &pc_packetDataPointer[gs_rf_rxCtx.i_numberOfReadedByte],
-                 gs_rf_rxCtx.i_numberOfRequestedByte);
-        }
-        gs_rf_rxCtx.i_numberOfReadedByte += gs_rf_rxCtx.i_numberOfRequestedByte;
-        if(NULL != gfp_rx)
-        {
-          i_tmpLen = gs_rf_rxCtx.i_numberOfRequestedByte;
-          gs_rf_rxCtx.i_numberOfRequestedByte = 0xFFFFU;
-          gfp_rx(i_tmpLen);
-        }/* if */
-
-        /* Reset the interrupt flag */
-        gl_interruptFlag = 0x00U;
+        pc_packetDataPointer = &gs_rf_rxCtx.ps_currentDataEntry->rxData;
+        MEMCPY(gs_rf_rxCtx.pc_dataPointer,
+            &pc_packetDataPointer[gs_rf_rxCtx.i_numberOfReadedByte],
+            gs_rf_rxCtx.i_numberOfRequestedByte);
+      }
+      gs_rf_rxCtx.i_numberOfReadedByte += gs_rf_rxCtx.i_numberOfRequestedByte;
+      if(NULL != gfp_rx)
+      {
+        i_tmpLen = gs_rf_rxCtx.i_numberOfRequestedByte;
+        gs_rf_rxCtx.i_numberOfRequestedByte = 0xFFFFU;
+        gfp_rx(i_tmpLen);
       }/* if */
-      break;
 
-    default:
-      break;
+      /* Reset the interrupt flag */
+      gl_interruptFlag = 0x00U;
+    }/* if */
+    break;
+
+  default:
+    break;
   }/* switch */
 }/* sf_rf_run() */
+
 
 /*============================================================================*/
 /** sf_rf_getRxStartAddr() */
