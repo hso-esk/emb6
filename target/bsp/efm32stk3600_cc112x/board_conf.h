@@ -96,7 +96,7 @@
 #define HAL_SUPPORT_RFCTRL0                 TRUE
 #endif /* #ifndef HAL_SUPPORT_RFSPI */
 /** Port of the RF control pin0 */
-#define EFM32_IO_PORT_RF_CTRL_0             gpioPortD
+#define EFM32_IO_PORT_RF_CTRL_0             gpioPortC
 /** Pin index of the RF control pin0 */
 #define EFM32_IO_PIN_RF_CTRL_0              3
 
@@ -105,7 +105,7 @@
 #define HAL_SUPPORT_RFCTRL1                 TRUE
 #endif /* #ifndef HAL_SUPPORT_RFSPI */
 /** Port of the RF control pin1 */
-#define EFM32_IO_PORT_RF_CTRL_1             gpioPortD
+#define EFM32_IO_PORT_RF_CTRL_1             gpioPortC
 /** Pin index of the RF control pin1 */
 #define EFM32_IO_PIN_RF_CTRL_1              4
 
@@ -114,7 +114,7 @@
 #define HAL_SUPPORT_RFCTRL2                 TRUE
 #endif /* #ifndef HAL_SUPPORT_RFSPI */
 /** Port of the RF control pin2 */
-#define EFM32_IO_PORT_RF_CTRL_2             gpioPortD
+#define EFM32_IO_PORT_RF_CTRL_2             gpioPortC
 /** Pin index of the RF control pin2 */
 #define EFM32_IO_PIN_RF_CTRL_2              5
 
