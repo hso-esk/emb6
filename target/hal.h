@@ -149,12 +149,12 @@ typedef enum EN_HAL_PIN_T
 #endif /* #if (HAL_SUPPORT_LEDNUM > 4) */
 
 #if defined(HAL_SUPPORT_RFSPI)
-    /** RF SPI TX */
-    EN_HAL_PIN_RFSPIRX,
-    /** RF SPI TX */
-    EN_HAL_PIN_RFSPITX,
     /** RF SPI CLK */
     EN_HAL_PIN_RFSPICLK,
+    /** RF SPI TX */
+    EN_HAL_PIN_RFSPITX,
+    /** RF SPI RX */
+    EN_HAL_PIN_RFSPIRX,
     /** RF SPI CS */
     EN_HAL_PIN_RFSPICS,
 #endif /* #if defined(HAL_SUPPORT_RFSPI) */
