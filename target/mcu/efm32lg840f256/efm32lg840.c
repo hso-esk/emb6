@@ -85,11 +85,11 @@
 /** number of ticks per second */
 #define EFM32_TICK_SECONDS            1000
 
-#ifndef EFM32_LED_ACTIVE_LOW
-#define EFM32_LED_ACTIVE_LOW          FALSE
+#ifndef EFM32_PIN_ACTIVE_LOW
+#define EFM32_PIN_ACTIVE_LOW          TRUE
 #endif /* #ifndef EFM32_LED_ACTIVE_HIGH */
 
-#if EFM32_LED_ACTIVE_LOW
+#if EFM32_PIN_ACTIVE_LOW
 #define EFM32_LED_OUT_VAL             1
 #else /* #ifndef EFM32_LED_ACTIVE_HIGH */
 #define EFM32_LED_OUT_VAL             0
@@ -195,19 +195,19 @@ USART_TypeDef *uartStdio = NULL;
 static s_hal_gpio_pin_t s_hal_gpio[EN_HAL_PIN_MAX] = {
 
 #if defined(HAL_SUPPORT_LED0)
-  {EFM32_IO_PORT_LED0, EFM32_IO_PIN_LED0, gpioModePushPull, EFM32_LED_OUT_VAL, EFM32_LED_ACTIVE_LOW, NULL}, /* LED0 */
+  {EFM32_IO_PORT_LED0, EFM32_IO_PIN_LED0, gpioModePushPull, EFM32_LED_OUT_VAL, EFM32_PIN_ACTIVE_LOW, NULL}, /* LED0 */
 #endif /* #if defined(HAL_SUPPORT_LED0) */
 #if defined(HAL_SUPPORT_LED1)
-  {EFM32_IO_PORT_LED1, EFM32_IO_PIN_LED1, gpioModePushPull, EFM32_LED_OUT_VAL, EFM32_LED_ACTIVE_LOW, NULL}, /* LED1 */
+  {EFM32_IO_PORT_LED1, EFM32_IO_PIN_LED1, gpioModePushPull, EFM32_LED_OUT_VAL, EFM32_PIN_ACTIVE_LOW, NULL}, /* LED1 */
 #endif /* #if defined(HAL_SUPPORT_LED1) */
 #if defined(HAL_SUPPORT_LED2)
-  {EFM32_IO_PORT_LED2, EFM32_IO_PIN_LED2, gpioModePushPull, EFM32_LED_OUT_VAL, EFM32_LED_ACTIVE_LOW, NULL}, /* LED2 */
+  {EFM32_IO_PORT_LED2, EFM32_IO_PIN_LED2, gpioModePushPull, EFM32_LED_OUT_VAL, EFM32_PIN_ACTIVE_LOW, NULL}, /* LED2 */
 #endif /* #if defined(HAL_SUPPORT_LED2) */
 #if defined(HAL_SUPPORT_LED3)
-  {EFM32_IO_PORT_LED3, EFM32_IO_PIN_LED3, gpioModePushPull, EFM32_LED_OUT_VAL, EFM32_LED_ACTIVE_LOW, NULL}, /* LED3 */
+  {EFM32_IO_PORT_LED3, EFM32_IO_PIN_LED3, gpioModePushPull, EFM32_LED_OUT_VAL, EFM32_PIN_ACTIVE_LOW, NULL}, /* LED3 */
 #endif /* #if defined(HAL_SUPPORT_LED3) */
 #if defined(HAL_SUPPORT_LED4)
-  {EFM32_IO_PORT_LED4, EFM32_IO_PIN_LED4, gpioModePushPull, EFM32_LED_OUT_VAL, EFM32_LED_ACTIVE_LOW, NULL}, /* LED4 */
+  {EFM32_IO_PORT_LED4, EFM32_IO_PIN_LED4, gpioModePushPull, EFM32_LED_OUT_VAL, EFM32_PIN_ACTIVE_LOW, NULL}, /* LED4 */
 #endif /* #if defined(HAL_SUPPORT_LED4) */
 
 #if defined(HAL_SUPPORT_RFSPI)
@@ -763,10 +763,21 @@ int8_t hal_pinSet( void* p_pin, uint8_t val )
   {
     p_gpioPin->val = val ? 1 : 0;
     if( p_gpioPin->val )
+    {
+#if (EFM32_PIN_ACTIVE_LOW == FALSE)
       GPIO_PinOutSet(p_gpioPin->port, p_gpioPin->pin);
-    else
+#else
       GPIO_PinOutClear(p_gpioPin->port, p_gpioPin->pin);
-
+#endif
+    }
+    else
+    {
+#if (EFM32_PIN_ACTIVE_LOW == FALSE)
+      GPIO_PinOutClear(p_gpioPin->port, p_gpioPin->pin);
+#else
+      GPIO_PinOutSet(p_gpioPin->port, p_gpioPin->pin);
+#endif
+    }
     return p_gpioPin->val;
   }
   else
