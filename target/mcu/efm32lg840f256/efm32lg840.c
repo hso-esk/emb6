@@ -570,6 +570,9 @@ int8_t hal_init (void)
   /* initialize SysTicks */
   _hal_tcInit();
 
+  /* initialize external interrupts */
+  GPIOINT_Init();
+
   /* set priority of IRQs */
   NVIC_SetPriorityGrouping(4);
 #if defined(HAL_SUPPORT_SLIPUART)
@@ -801,12 +804,6 @@ int8_t hal_pinIRQRegister( void* p_pin, en_hal_irqedge_t edge,
     pf_hal_irqCb_t pf_cb )
 {
   s_hal_gpio_pin_t* p_pinGpio = (s_hal_gpio_pin_t*)p_pin;
-
-  /*
-   * This functions initializes the dispatcher register. Typically
-   * GPIOINT_Init() is called once in your startup code.
-   */
-  GPIOINT_Init();
 
   if( p_pinGpio == NULL )
     return -1;
