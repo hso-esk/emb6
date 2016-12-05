@@ -762,11 +762,6 @@ void* hal_spiInit( en_hal_spi_t spi )
   s_hal_spi.pHndl = &s_hal_spi.hndl;
   SPIDRV_Init( s_hal_spi.pHndl, &spiInit );
 
-  /* configure manual chip select pin */
-  GPIO_PinModeSet( s_hal_spi.p_csPin->port, s_hal_spi.p_csPin->pin, s_hal_spi.p_csPin->mode, s_hal_spi.p_csPin->val );
-  /* set chip select pin */
-  GPIO_PinOutSet( s_hal_spi.p_csPin->port, s_hal_spi.p_csPin->pin );
-
   return &s_hal_spi;
 } /* hal_spiInit() */
 
