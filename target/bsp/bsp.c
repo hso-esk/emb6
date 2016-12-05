@@ -529,6 +529,7 @@ int8_t bsp_spiSlaveSel( void* p_spi, void* p_cs, uint8_t select, uint8_t inv  )
   uint8_t ret = 0;
   s_bsp_spi_t* p_bspSpi = (s_bsp_spi_t*)p_spi;
   EMB6_ASSERT_RET( p_bspSpi != NULL, -1 );
+  EMB6_ASSERT_RET( p_cs != NULL, -1 );
 
   if( select == TRUE)
   {
@@ -539,8 +540,7 @@ int8_t bsp_spiSlaveSel( void* p_spi, void* p_cs, uint8_t select, uint8_t inv  )
       p_bspSpi->locked = TRUE;
 
       /* enable SPI */
-      if( p_cs != NULL )
-        ret = hal_pinSet( p_cs, inv ? FALSE : TRUE );
+      ret = hal_pinSet( p_cs, inv ? FALSE : TRUE );
     }
     else
     {
@@ -556,8 +556,7 @@ int8_t bsp_spiSlaveSel( void* p_spi, void* p_cs, uint8_t select, uint8_t inv  )
       p_bspSpi->locked = FALSE;
 
       /* disable SPI */
-      if( p_cs != NULL )
-        ret = hal_pinSet( p_cs, inv ? TRUE : FALSE );
+      ret = hal_pinSet( p_cs, inv ? TRUE : FALSE );
       bsp_exitCritical();
     }
     else
