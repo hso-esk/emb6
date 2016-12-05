@@ -336,7 +336,7 @@ void mac_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 #else
   for (ix = 0; ix < 5000; ix++) {
     pmac_netstk->phy->send(p_data, len, p_err);
-    bsp_delay_us(waitForAckTimeout);
+    bsp_delayUs(waitForAckTimeout);
   }
 #endif
 
