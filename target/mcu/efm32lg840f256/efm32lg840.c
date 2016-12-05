@@ -820,7 +820,7 @@ int8_t hal_pinIRQRegister( void* p_pin, en_hal_irqedge_t edge,
 
   GPIO_IntConfig( p_pinGpio->port, p_pinGpio->pin,
       (edge == EN_HAL_IRQEDGE_RISING) || (edge == EN_HAL_IRQEDGE_EITHER),
-      (edge == EN_HAL_IRQEDGE_RISING) || (edge == EN_HAL_IRQEDGE_EITHER),
+      (edge == EN_HAL_IRQEDGE_FALLING) || (edge == EN_HAL_IRQEDGE_EITHER),
       FALSE );
 
   return 0;
