@@ -219,7 +219,7 @@ static s_hal_gpio_pin_t s_hal_gpio[EN_HAL_PIN_MAX] = {
 
 #if defined(HAL_SUPPORT_RFCTRL0)
   {EFM32_IO_PORT_RF_CTRL_0, EFM32_IO_PIN_RF_CTRL_0, gpioModeInputPull, FALSE, 0, NULL}, /* RF CTRL 0 */
-#endif /* #if defined(HAL_SUPPORT_RFCTRL1) */
+#endif /* #if defined(HAL_SUPPORT_RFCTRL0) */
 #if defined(HAL_SUPPORT_RFCTRL1)
   {EFM32_IO_PORT_RF_CTRL_1, EFM32_IO_PIN_RF_CTRL_1, gpioModeInputPull, FALSE, 1, NULL}, /* RF CTRL 1 */
 #endif /* #if defined(HAL_SUPPORT_RFCTRL1) */
@@ -258,7 +258,7 @@ static s_hal_uart_t s_hal_uart = {
   .p_txPin  = &s_hal_gpio[EN_HAL_PIN_SLIPUARTTX],
   .p_rxPin  = &s_hal_gpio[EN_HAL_PIN_SLIPUARTRX],
 };
-#endif /* #if defined(HAL_SUPPORT_RFSPI) */
+#endif /* #if defined(HAL_SUPPORT_SLIPUART) */
 
 
 /** Definition of the peripheral callback functions */
@@ -989,8 +989,7 @@ void* hal_uartInit( en_hal_uart_t uart )
    * UART instance */
   _hal_uartInit( &s_hal_uart );
   return &s_hal_uart;
-
-}/* bsp_uartInit() */
+}/* hal_uartInit() */
 
 
 
