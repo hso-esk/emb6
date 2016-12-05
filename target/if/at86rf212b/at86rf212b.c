@@ -1190,8 +1190,8 @@ static void _rf212b_init(void *p_netstk, e_nsErr_t *p_err)
     bsp_delayUs(E_TIME_TO_ENTER_P_ON);
     /* Init spi interface and transceiver. Transceiver utilize spi interface. */
     p_rst = bsp_pinInit( EN_HAL_PIN_RFCTRL0);
-    p_slpTrig = bsp_pinInit( EN_HAL_PIN_RFICTRL1);
-    p_irq = bsp_pinInit( EN_HAL_PIN_RFICTRL2);
+    p_slpTrig = bsp_pinInit( EN_HAL_PIN_RFCTRL1);
+    p_irq = bsp_pinInit( EN_HAL_PIN_RFCTRL2);
     at86rf_halSpiInit();
 
     if ((p_rst != NULL) && (p_slpTrig != NULL) && (p_netstk != NULL))

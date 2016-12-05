@@ -165,23 +165,23 @@ typedef enum EN_HAL_PIN_T
 #endif /* #if defined(HAL_SUPPORT_RFCTRL0) */
 #if defined(HAL_SUPPORT_RFCTRL1)
     /** RF CTRL1 */
-    EN_HAL_PIN_RFICTRL1,
+    EN_HAL_PIN_RFCTRL1,
 #endif /* #if defined(HAL_SUPPORT_RFCTRL1) */
 #if defined(HAL_SUPPORT_RFCTRL2)
     /** RF CTRL2 */
-    EN_HAL_PIN_RFICTRL2,
+    EN_HAL_PIN_RFCTRL2,
 #endif /* #if defined(HAL_SUPPORT_RFCTRL2) */
 #if defined(HAL_SUPPORT_RFCTRL3)
     /** RF CTRL3 */
-    EN_HAL_PIN_RFICTRL3,
+    EN_HAL_PIN_RFCTRL3,
 #endif /* #if defined(HAL_SUPPORT_RFCTRL3) */
 #if defined(HAL_SUPPORT_RFCTRL4)
     /** RF CTRL4 */
-    EN_HAL_PIN_RFICTRL4,
+    EN_HAL_PIN_RFCTRL4,
 #endif /* #if defined(HAL_SUPPORT_RFCTRL4) */
 #if defined(HAL_SUPPORT_RFCTRL5)
     /** RF CTRL5 */
-    EN_HAL_PIN_RFICTRL5,
+    EN_HAL_PIN_RFCTRL5,
 #endif /* #if defined(HAL_SUPPORT_RFCTRL5) */
 
 #if defined(HAL_SUPPORT_SLIPUART)

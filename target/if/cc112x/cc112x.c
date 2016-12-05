@@ -448,8 +448,8 @@ static void rf_init(void *p_netstk, e_nsErr_t *p_err)
 
   /* initialize GPIOs for interrupts */
   p_ctx->p_exti0Pin = bsp_pinInit( EN_HAL_PIN_RFCTRL0 );
-  p_ctx->p_exti0Pin = bsp_pinInit( EN_HAL_PIN_RFICTRL1 );
-  p_ctx->p_exti0Pin = bsp_pinInit( EN_HAL_PIN_RFICTRL2 );
+  p_ctx->p_exti1Pin = bsp_pinInit( EN_HAL_PIN_RFCTRL1 );
+  p_ctx->p_exti2Pin = bsp_pinInit( EN_HAL_PIN_RFCTRL2 );
 
   /* reset the transceiver. Afterwards the chip will be in IDLE state */
   rf_reset();
