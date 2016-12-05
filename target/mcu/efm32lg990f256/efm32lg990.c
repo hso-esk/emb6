@@ -45,7 +45,7 @@
  * --- Module Description ---------------------------------------------------*
  */
 /**
- *  \file       hal_template.c
+ *  \file       efm32lg990.c
  *  \author     Institute of reliable Embedded Systems
  *              and Communication Electronics
  *  \date       $Date$
