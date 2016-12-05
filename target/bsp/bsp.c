@@ -578,7 +578,7 @@ int32_t bsp_spiTRx( void* p_spi, uint8_t* p_tx, uint8_t* p_rx, uint16_t len )
   EMB6_ASSERT_RET( p_spi != NULL, -1 );
   EMB6_ASSERT_RET( p_tx != NULL, -1 );
   EMB6_ASSERT_RET( p_rx != NULL, -1 );
-  return hal_spiTRx( p_spi, p_tx, p_rx, len );
+  return hal_spiTRx( ((s_bsp_spi_t *)p_spi)->p_spi, p_tx, p_rx, len );
 } /* bsp_spiTRx() */
 
 
@@ -590,7 +590,7 @@ int32_t bsp_spiRx( void* p_spi, uint8_t * p_rx, uint16_t len )
 {
   EMB6_ASSERT_RET( p_spi != NULL, -1 );
   EMB6_ASSERT_RET( p_rx != NULL, -1 );
-  return hal_spiRx( p_spi, p_rx, len );
+  return hal_spiRx( ((s_bsp_spi_t *)p_spi)->p_spi, p_rx, len );
 } /* bsp_spiRx() */
 
 
@@ -602,7 +602,7 @@ int32_t bsp_spiTx( void* p_spi, uint8_t* p_tx, uint16_t len )
 {
   EMB6_ASSERT_RET( p_spi != NULL, -1 );
   EMB6_ASSERT_RET( p_tx != NULL, -1 );
-  return hal_spiTx( p_spi, p_tx, len );
+  return hal_spiTx( ((s_bsp_spi_t *)p_spi)->p_spi, p_tx, len );
 } /* hal_spiTx() */
 #endif /* #if defined(HAL_SUPPORT_SPI) */
 
