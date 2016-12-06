@@ -218,13 +218,13 @@ static s_hal_gpio_pin_t s_hal_gpio[EN_HAL_PIN_MAX] = {
 #endif /* #if defined(HAL_SUPPORT_RFSPI) */
 
 #if defined(HAL_SUPPORT_RFCTRL0)
-  {EFM32_IO_PORT_RF_CTRL_0, EFM32_IO_PIN_RF_CTRL_0, gpioModeInputPull, FALSE, 0, NULL}, /* RF CTRL 0 */
+  {EFM32_IO_PORT_RF_CTRL_0, EFM32_IO_PIN_RF_CTRL_0, EFM32_IO_PINMODE_RF_CTRL_0, FALSE, 0, NULL}, /* RF CTRL 0 */
 #endif /* #if defined(HAL_SUPPORT_RFCTRL0) */
 #if defined(HAL_SUPPORT_RFCTRL1)
-  {EFM32_IO_PORT_RF_CTRL_1, EFM32_IO_PIN_RF_CTRL_1, gpioModeInputPull, FALSE, 1, NULL}, /* RF CTRL 1 */
+  {EFM32_IO_PORT_RF_CTRL_1, EFM32_IO_PIN_RF_CTRL_1, EFM32_IO_PINMODE_RF_CTRL_1, FALSE, 1, NULL}, /* RF CTRL 1 */
 #endif /* #if defined(HAL_SUPPORT_RFCTRL1) */
 #if defined(HAL_SUPPORT_RFCTRL2)
-  {EFM32_IO_PORT_RF_CTRL_2, EFM32_IO_PIN_RF_CTRL_2, gpioModeInputPull, FALSE, 0, NULL}, /* RF CTRL 2 */
+  {EFM32_IO_PORT_RF_CTRL_2, EFM32_IO_PIN_RF_CTRL_2, EFM32_IO_PINMODE_RF_CTRL_2, FALSE, 0, NULL}, /* RF CTRL 2 */
 #endif /* #if defined(HAL_SUPPORT_RFCTRL2) */
 
 #if defined(HAL_SUPPORT_RFCTRL3) || defined(HAL_SUPPORT_RFCTRL4) || defined(HAL_SUPPORT_RFCTRL5)
@@ -496,7 +496,7 @@ static void _hal_uartDbgInit( void )
 static void _hal_extiCb( uint8_t pin )
 {
   int i;
-  for( i = 0; i < EN_HAL_PIN_MAX; i++ )
+  for( i = EN_HAL_PIN_RFCTRL0; i < EN_HAL_PIN_MAX; i++ )
   {
     if( s_hal_gpio[i].pin == pin )
     {
@@ -505,6 +505,7 @@ static void _hal_extiCb( uint8_t pin )
       {
         /* call the according callback function */
         s_hal_gpio[i].pf_cb( NULL );
+        return;
       }
     }
   }

@@ -99,6 +99,8 @@
 #define EFM32_IO_PORT_RF_CTRL_0             gpioPortC
 /** Pin index of the RF control pin0 */
 #define EFM32_IO_PIN_RF_CTRL_0              3
+/** Pin mode */
+#define EFM32_IO_PINMODE_RF_CTRL_0          gpioModeInputPull
 
 /** Enable RF control 1 */
 #ifndef HAL_SUPPORT_RFCTRL1
@@ -108,6 +110,8 @@
 #define EFM32_IO_PORT_RF_CTRL_1             gpioPortC
 /** Pin index of the RF control pin1 */
 #define EFM32_IO_PIN_RF_CTRL_1              4
+/** Pin mode */
+#define EFM32_IO_PINMODE_RF_CTRL_1          gpioModeInputPull
 
 /** Enable RF control 2 */
 #ifndef HAL_SUPPORT_RFCTRL2
@@ -117,7 +121,8 @@
 #define EFM32_IO_PORT_RF_CTRL_2             gpioPortC
 /** Pin index of the RF control pin2 */
 #define EFM32_IO_PIN_RF_CTRL_2              5
-
+/** Pin mode */
+#define EFM32_IO_PINMODE_RF_CTRL_2          gpioModeInputPull
 
 #if defined(HAL_SUPPORT_SLIPUART)
 /** USART used for SLIP interface */
