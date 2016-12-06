@@ -42,6 +42,8 @@ extern "C" {
 #include "sf_cc13xx_802_15_4_ch26.h"
 #include "sf_rf_6lowpan.h"
 
+#include "llframer.h"
+
 #if USE_TI_RTOS
 #include <ti/drivers/rf/RF.h>
 #include "rfLib/patch/apply_wmbus_tmode_mce_patch.h"
@@ -180,18 +182,37 @@ static bool rf_driver_init(void)
   return false;
 }
 
+llframe_attr_t frame;
+uint8_t ack[10];
+uint8_t ack_length;
 
 static void rx_call_back(uint32_t l_flag)
 {
   if(IRQ_RX_OK == (l_flag & IRQ_RX_OK))
   {
-    bsp_led( E_BSP_LED_1, E_BSP_LED_OFF );
-    bsp_led( E_BSP_LED_0, E_BSP_LED_ON );
-    bsp_led( E_BSP_LED_3, E_BSP_LED_TOGGLE );
+      bsp_led( E_BSP_LED_1, E_BSP_LED_OFF );
+      bsp_led( E_BSP_LED_0, E_BSP_LED_ON );
+      bsp_led( E_BSP_LED_3, E_BSP_LED_TOGGLE );
+
+      cc1310.rx.p_currentDataEntry = (rfc_dataEntryGeneral_t*)RFQueue_getDataEntry();
+
+      llframe_parse(&frame, (uint8_t*)(&cc1310.rx.p_currentDataEntry->data), *(uint8_t*)(&cc1310.rx.p_currentDataEntry->data) + 1);
+     if(frame.is_ack_required)
+     {
+      ack_length=llframe_createAck(&frame,ack, sizeof(ack));
+
+      cc1310.tx.p_cmdPropTxAdv->pktLen = ack_length  ;
+      cc1310.tx.p_cmdPropTxAdv->pPkt = ack;
+      //sf_rf_init_tx(ack,   ack_length);
+
+      RFC_sendRadioOp_nb((rfc_radioOp_t*)cc1310.tx.p_cmdPropTxAdv,NULL);
+     }
     rf_driver_routine(RF_STATUS_RX);
     rf_driver_routine(RF_STATUS_RX_LISTEN);
+
     /* signal complete reception interrupt */
-    RF_SEM_POST(NETSTK_RF_EVENT);
+    //RF_SEM_POST(NETSTK_RF_EVENT);
+
 
   }
   if(IRQ_RX_NOK == (l_flag & IRQ_RX_NOK))
@@ -265,6 +286,8 @@ uint8_t rf_driver_routine(e_rf_status_t state)
           return ROUTINE_ERROR_FS_CMD ;
         }
       }
+      else
+          return ROUTINE_ERROR_SETUP_RADIO;
       /* Initialize interrupts */
       RFC_registerCpe0Isr(rx_call_back);
       RFC_enableCpe0Interrupt(IRQ_RX_OK);
@@ -330,6 +353,7 @@ uint8_t rf_driver_routine(e_rf_status_t state)
     cc1310.rx.LenLastPkt = *(uint8_t*)(&cc1310.rx.p_currentDataEntry->data) + 1;
     cc1310.rx.p_lastPkt = (uint8_t*)(&cc1310.rx.p_currentDataEntry->data) ;
 
+
     return ROUTINE_DONE ;
 
   case RF_STATUS_CCA :
@@ -391,7 +415,6 @@ uint8_t sf_rf_init_tx(uint8_t *pc_data, uint16_t  i_len)
     cc1310.tx.p_cmdPropTxAdv->pktLen = i_len ;
     cc1310.tx.p_cmdPropTxAdv->pPkt = pc_data;
     cc1310.tx.p_cmdPropTxAdv->pPkt[0] = i_len - 1 + 2 ;
-
     return 1;
   }
   return 0;
