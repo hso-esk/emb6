@@ -23,7 +23,7 @@ void at86rf_halSpiInit(void)
 uint8_t at86rf_halSpiBitRead(uint8_t c_addr, uint8_t c_mask, uint8_t c_off )
 {
     uint8_t c_data;
-    if (!bsp_spiSlaveSel(p_at86RfSpi, p_at86RfSpiCs, TRUE, TRUE)) {
+    if (0 != bsp_spiSlaveSel(p_at86RfSpi, p_at86RfSpiCs, TRUE, TRUE)) {
         LOG_ERR("%s\n\r","SPI transaction failed - bitread.");
         return 0;
     }
@@ -40,7 +40,7 @@ uint8_t at86rf_halSpiBitRead(uint8_t c_addr, uint8_t c_mask, uint8_t c_off )
 uint8_t at86rf_halSpiRegRead(uint8_t c_addr)
 {
     uint8_t c_data;
-    if (!bsp_spiSlaveSel(p_at86RfSpi, p_at86RfSpiCs, TRUE, TRUE)) {
+    if (0 != bsp_spiSlaveSel(p_at86RfSpi, p_at86RfSpiCs, TRUE, TRUE)) {
         LOG_ERR("%s\n\r","SPI transaction failed - regread.");
         return 0;
     }
@@ -53,7 +53,7 @@ uint8_t at86rf_halSpiRegRead(uint8_t c_addr)
 
 void at86rf_halSpiRegWrite(uint8_t c_addr, uint8_t c_data)
 {
-    if (!bsp_spiSlaveSel(p_at86RfSpi, p_at86RfSpiCs, TRUE, TRUE)) {
+    if (0 != bsp_spiSlaveSel(p_at86RfSpi, p_at86RfSpiCs, TRUE, TRUE)) {
         LOG_ERR("%s\n\r","SPI transaction failed - regwrite.");
         return;
     }
@@ -65,7 +65,7 @@ void at86rf_halSpiRegWrite(uint8_t c_addr, uint8_t c_data)
 
 void at86rf_halSpiFrameRead(uint8_t c_addr, uint8_t * pc_data, uint16_t * pi_len)
 {
-    if (!bsp_spiSlaveSel(p_at86RfSpi, p_at86RfSpiCs, TRUE, TRUE)) {
+    if (0 != bsp_spiSlaveSel(p_at86RfSpi, p_at86RfSpiCs, TRUE, TRUE)) {
         LOG_ERR("%s\n\r","SPI transaction failed - fread.");
         return;
     }
@@ -78,7 +78,7 @@ void at86rf_halSpiFrameRead(uint8_t c_addr, uint8_t * pc_data, uint16_t * pi_len
 
 void at86rf_halSpiFrameWrite(uint8_t c_addr, uint8_t * pc_data, uint8_t c_len)
 {
-    if (!bsp_spiSlaveSel(p_at86RfSpi, p_at86RfSpiCs, TRUE, TRUE)) {
+    if (0 != bsp_spiSlaveSel(p_at86RfSpi, p_at86RfSpiCs, TRUE, TRUE)) {
         LOG_ERR("%s\n\r","SPI transaction failed - fwrite.");
         return;
     }
