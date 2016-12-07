@@ -91,6 +91,10 @@
 #include "rpl-private.h"
 #endif
 
+#if UIP_ND6_SEND_NA
+#include "uip-ds6-nbr.h"
+#endif /* UIP_ND6_SEND_NA */
+
 /*---------------------------------------------------------------------------*/
 /* For Debug, logging, statistics                                            */
 /*---------------------------------------------------------------------------*/
@@ -1153,6 +1157,11 @@ uip_process(uint8_t flag)
     PRINTF("Dropping packet, src is mcast\n\r");
     goto drop;
   }
+
+  /* Refresh neighbor state after receiving a unicast message */
+#if UIP_ND6_SEND_NA
+  uip_ds6_nbr_refresh_reachable_state(&UIP_IP_BUF->srcipaddr);
+#endif /* UIP_ND6_SEND_NA */
 
 #if UIP_CONF_ROUTER
   /*
