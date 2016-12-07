@@ -240,9 +240,8 @@ static int8_t parse(void)
     } else {
       packetbuf_set_attr(PACKETBUF_ATTR_MAC_SEQNO, 0xffff);
     }
-#if NETSTACK_CONF_WITH_RIME
     packetbuf_set_attr(PACKETBUF_ATTR_PACKET_ID, frame.seq);
-#endif
+
 
 #if LLSEC802154_USES_AUX_HEADER
     if(frame.fcf.security_enabled) {
