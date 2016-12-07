@@ -552,11 +552,11 @@ remove_ext_hdr(void)
     memmove(((uint8_t *)UIP_TCP_BUF), (uint8_t *)UIP_TCP_BUF + uip_ext_len,
         uip_len - UIP_IPH_LEN - uip_ext_len);
 
-    uip_len = uip_len - UIP_IPH_LEN - uip_ext_len;
+    uip_len -= uip_ext_len;
 
     /* Update the IP length. */
-    UIP_IP_BUF->len[0] = (uip_len) >> 8;
-    UIP_IP_BUF->len[1] = (uip_len) & 0xff;
+    UIP_IP_BUF->len[0] = (uip_len - UIP_IPH_LEN) >> 8;
+    UIP_IP_BUF->len[1] = (uip_len - UIP_IPH_LEN) & 0xff;
     uip_ext_len = 0;
   }
 }
