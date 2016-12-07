@@ -395,6 +395,12 @@ tcp_socket_max_sendlen(struct tcp_socket *s)
   return s->output_data_maxlen - s->output_data_len;
 }
 /*---------------------------------------------------------------------------*/
+int
+tcp_socket_queuelen(struct tcp_socket *s)
+{
+  return s->output_data_len;
+}
+/*---------------------------------------------------------------------------*/
 const s_nsSocket_t tcp_socket_driver = {
         "tcp_bsd_socket",
         NULL,
