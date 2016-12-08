@@ -44,6 +44,9 @@
 #define ROUTINE_CCA_RESULT_BUSY        0x08
 #define ROUTINE_CCA_ERROR_STATE        0x09
 #define ROUTINE_ERROR_SETUP_RADIO      0x10
+#define ROUTINE_ERROR_TX_NOACK         0x11
+#define ROUTINE_FATAL_ERROR            0x12
+#define ROUTINE_ERROR_DISABLE_RADIO    0x13
 
 #define CC13xx_NUM_OFF_RSSI_CHECKS_DEFAULT 5U
 
@@ -98,6 +101,16 @@ typedef struct
 
 typedef struct
 {
+  /** flag used to mention that the radio layer is waiting for ACK after transmitting a packet */
+    uint8_t Tx_waiting_Ack;
+  /** expected sequence number for the ACK */
+    uint8_t expSeqNo;
+  /** Time out for waiting ACK  */
+    uint16_t waitForAckTimeout;
+  /** flag to set when an is received */
+    uint8_t Ack_received;
+  /** Signal Strength */
+    uint8_t signalStrength;
   /** Pointer to the current tx command */
   rfc_CMD_PROP_TX_ADV_t* p_cmdPropTxAdv;
 } st_tx_cmd_t;

@@ -133,13 +133,11 @@ void cc13xx_eventHandler(c_event_t c_event, p_data_t p_data)
   {
     ps_rf_netstk->phy->recv(sf_rf_get_p_lastPkt(), sf_rf_get_LenLastPkt(), &err);
 
-    //gi_bytesReceived = 0;
-
     /* The transceiver shall be ready for TX request before
      * signaling upper layer of the received frame */
     // TODO to check this
-  }/* if */
-}/* cc13xx_eventHandler() */
+  }
+}
 
 /*==============================================================================
                             FUNCTIONS
@@ -163,36 +161,39 @@ bool sf_rf_6lowpan_init(void *p_netstk)
   RF_SEM_WAIT(NETSTK_RF_EVENT);
 
   return true;
-}/* sf_rf_6lowpan_init() */
+}
 
 /*============================================================================*/
 /** sf_rf_6lowpan_sendBlocking() */
 /*============================================================================*/
-bool sf_rf_6lowpan_sendBlocking(uint8_t *pc_data, uint16_t  i_len)
+uint8_t sf_rf_6lowpan_sendBlocking(uint8_t *pc_data, uint16_t  i_len)
 {
-
+    uint8_t status;
   /* init tx cmd */
   if (!sf_rf_init_tx(pc_data,i_len))
   {
     bsp_led( E_BSP_LED_3, E_BSP_LED_ON );
-    return false;
+    return 0;
   }
   /* call the routine with tx state to send the packet*/
-  if(rf_driver_routine(RF_STATUS_TX) != ROUTINE_DONE)
+  status = rf_driver_routine(RF_STATUS_TX);
+  if(status != ROUTINE_DONE && status != ROUTINE_ERROR_TX_NOACK )
   {
-    bsp_led( E_BSP_LED_3, E_BSP_LED_ON );
-    return false;
+      bsp_led( E_BSP_LED_3, E_BSP_LED_ON );
+      return 0;
   }
-
-  #if CC13XX_TX_LED_ENABLED
-  bsp_led( E_BSP_LED_2, E_BSP_LED_TOGGLE );
-  #endif
-
-  /* Set the transceiver in rx mode */
-  // TODO check if we have to add delay here
-  rf_driver_routine(RF_STATUS_RX_LISTEN);
-
-  return true;
+  else
+  {
+        #if CC13XX_TX_LED_ENABLED
+          bsp_led( E_BSP_LED_2, E_BSP_LED_TOGGLE );
+        #endif
+        /* Set the transceiver in rx mode */
+          rf_driver_routine(RF_STATUS_RX_LISTEN);
+        if(status== ROUTINE_DONE)
+            return 1;
+        else
+            return 2;
+  }
 }
 
 /*============================================================================*/
@@ -201,15 +202,19 @@ bool sf_rf_6lowpan_sendBlocking(uint8_t *pc_data, uint16_t  i_len)
 void sf_rf_6lowpan_sleep(void)
 {
   sf_rf_sleep();
-} /* sf_rf_6lowpan_sleep() */
+}
 
 /*============================================================================*/
 /** sf_rf_6lowpan_startRx() */
 /*============================================================================*/
 bool sf_rf_6lowpan_startRx(void) //  called by the radio : cc13xx_On (e_nsErr_t *p_err)
 {
-  // TODO check if we have to initialise again
-  // TODO turn radio to rx mode
+  /* TODO check if we have to initialize/wake */
+  if(rf_driver_routine(RF_STATUS_INIT)!= ROUTINE_DONE)
+        return false;
+  /* Turn radio to RX mode */
+  if(rf_driver_routine(RF_STATUS_RX_LISTEN)!= ROUTINE_DONE)
+      return false;
 
   return true;
 }
@@ -220,7 +225,7 @@ bool sf_rf_6lowpan_startRx(void) //  called by the radio : cc13xx_On (e_nsErr_t 
 uint8_t sf_rf_6lowpan_getTxPower(void)
 {
   return sf_rf_getSignalStrength();
-}/* sf_rf_6lowpan_getTxPower() */
+}
 
 /*============================================================================*/
 /** sf_rf_6lowpan_setTxPower() */
@@ -228,7 +233,7 @@ uint8_t sf_rf_6lowpan_getTxPower(void)
 bool sf_rf_6lowpan_setTxPower(uint8_t c_txPower)
 {
   return sf_rf_setSignalStrength(c_txPower);
-}/* sf_rf_6lowpan_setTxPower() */
+}
 
 /*============================================================================*/
 /** sf_rf_6lowpan_getRssi() */

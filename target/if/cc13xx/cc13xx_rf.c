@@ -211,6 +211,21 @@ static void loc_cc13xx_cca(e_nsErr_t *p_err)
   }/* switch */
 }/* loc_cc13xx_cca() */
 
+
+
+
+/**
+ * @brief   Select operating channel number
+ * @param   chan_num    Channel number to select
+ * @param   p_err       Pointer to variable holding returned error code
+ */
+static void loc_rf_chanNumSet(uint8_t chan_num, e_nsErr_t *p_err) {
+
+  /* set returned error value to default */
+  *p_err = NETSTK_ERR_NONE;
+
+}
+
 /*
 ********************************************************************************
 *                           API FUNCTION DEFINITIONS
@@ -302,6 +317,7 @@ static void cc13xx_Send (uint8_t      *p_data,
                          uint16_t     len,
                          e_nsErr_t    *p_err)
 {
+    uint8_t retVal;
   #if NETSTK_CFG_ARG_CHK_EN
   if (p_err == NULL)
   {
@@ -322,10 +338,14 @@ static void cc13xx_Send (uint8_t      *p_data,
     *p_err = NETSTK_ERR_INVALID_ARGUMENT;
     return;
   }
-
-  if(sf_rf_6lowpan_sendBlocking(p_data, len))
+  retVal=sf_rf_6lowpan_sendBlocking(p_data, len);
+  if(retVal==1)
   {
     *p_err = NETSTK_ERR_NONE;
+  }
+  else if(retVal==2)
+  {
+    *p_err = NETSTK_ERR_TX_NOACK;
   }
   else
   {
@@ -407,6 +427,7 @@ static void cc13xx_Ioctl (e_nsIocCmd_t    cmd,
     case NETSTK_CMD_RF_SENS_GET:
     case NETSTK_CMD_RF_IS_RX_BUSY:
     case NETSTK_CMD_RF_CHAN_NUM_SET:
+      loc_rf_chanNumSet((int8_t*)p_val,*p_err);
     case NETSTK_CMD_RF_WOR_EN:
     default:
       /* unsupported commands are treated in same way */

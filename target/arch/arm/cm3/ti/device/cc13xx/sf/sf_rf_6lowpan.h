@@ -83,7 +83,7 @@ bool sf_rf_6lowpan_init(void *p_netstk);
  * \return    \ref true if successful.
  */
 /*============================================================================*/
-bool sf_rf_6lowpan_sendBlocking(uint8_t *pc_data, uint16_t  i_len);
+uint8_t sf_rf_6lowpan_sendBlocking(uint8_t *pc_data, uint16_t  i_len);
 
 /*============================================================================*/
 /**
