@@ -1,256 +1,436 @@
+##
+# emb6 is licensed under the 3-clause BSD license. This license gives everyone
+# the right to use and distribute the code, either in binary or source code
+# format, as long as the copyright license is retained in the source code.
+#
+# The emb6 is derived from the Contiki OS platform with the explicit approval
+# from Adam Dunkels. However, emb6 is made independent from the OS through the
+# removal of protothreads. In addition, APIs are made more flexible to gain
+# more adaptivity during run-time.
+#
+# The license text is:
+#
+# Copyright (c) 2015,
+# Hochschule Offenburg, University of Applied Sciences
+# Laboratory Embedded Systems and Communications Electronics.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 1. Redistributions of source code must retain the above copyright notice,
+# this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+# 3. The name of the author may not be used to endorse or promote products
+#    derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+# WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO
+# EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+# OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+# OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+# ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+##
+
+
 import os
 import glob
 
+## Clear all sources and includes
 sources = []
 includes = []
-prj_path = './'
+
+## set the current working directory as the project path
+prjPath = './'
+
 
 Import('genv', 'trg', 'apps', 'bsp')
 
-# Function to find already included files in the source list
-def add_sources(src2add):
+# Function to add sources to compilation.
+#
+# This function adds source files to the compilation process. Therefore
+# either single files can be added or templates using '*' as a wildcard
+# (e.g. /path/to/sources/*.c)
+#
+# param     scr     Source file to add.
+#
+def addSources( src ):
     global sources
     global genv
 
-    for tmp_src in genv.Glob(src2add):
+    # Find all files matching the given filename or template and add it
+    # to the list of sources.
+    for file in genv.Glob( src ):
         try:
-            sources.remove(File(tmp_src))
+            sources.remove( File( file ) )
         except ValueError:
             pass
-        sources.append(File(tmp_src))
+        sources.append( File( file ) )
 
-# Function to find already included files in the include list
-def add_include(incpath2add):
+
+
+# Function to add direcories to the include path.
+#
+# This function adds a given directory to the include path used for
+# the compilation. Therefore the input is a specific directory. In
+# case a file name is given as parameter the accoring directory of
+# the file will be used.
+#
+# param     inc     A specific include path.
+#
+def addIncludePath( inc ):
     global includes
-    global genv
-    incpath = os.path.dirname(incpath2add)
+
+    # Get the path name from the parameter. In case this is a file
+    # only the directory name will be used.
+    path = os.path.dirname( inc )
 
     try:
-        includes.remove(str(incpath))
+        includes.remove( str( path ) )
     except ValueError:
         pass
-    includes.append(str(incpath))
+    includes.append( str( path ) )
 
-# Add source files from HEAD/demo/<APP_NAME>/<CONF_NAME>
-def prep_demo(__dconf, __dpath):
-    global prj_path
-    # Add demo root files
-    add_include(prj_path + 'demo/*')
-    add_sources(prj_path + 'demo/*.c')
-    if 'demo' in __dconf:
-        add_include(__dpath + '/')
-        add_sources(__dpath + '/*.c')
-        for demo_file in __dconf['demo']:
-            add_include(__dpath + '/' + demo_file)
-            add_sources(__dpath + '/' + demo_file + '.c')
 
-def prep_emb6(__dconf):
-    global prj_path
+
+# Prepare the demo application for the build configuration.
+#
+# This function prepares the demo application for the actual build.
+# Therefore the common demo files will be added to the compilation
+# sources and the according common include directories wil be added.
+# Afterwards the demo specific files and directories will be added.
+#
+# param   demoConf  The demo configuration which is used.
+# param   demoPath  The path to the specific demo application.
+#
+def prepareDemo( demoConf, demoPath ):
+    global prjPath
+
+    # Add demo root files and include directory.
+    addIncludePath(prjPath + 'demo/*')
+    addSources(prjPath + 'demo/*.c')
+
+    # Check for demo specific sources and include
+    # directories.
+    if 'demo' in demoConf:
+
+        # Add demo specific root path to include direcoties and
+        # add the the source files to the build.
+        addIncludePath( demoPath + '/' )
+        addSources( demoPath + '/*.c' )
+
+        # Run through the paths included in the demo specific configuration
+        # and add all of them to the build sources and include directories.
+        for path in demoConf['demo']:
+            addIncludePath( demoPath + '/' + path )
+            addSources( demoPath + '/' + path + '.c' )
+
+
+
+# Prepare the emb::6 core for the build configuration.
+#
+# This function prepares the emb::6 core for the build. As first
+# step it adds the common source files and include directories. Then
+# it checks for all the emb::6 modules that are required by the actual
+# demo configuration. The paths included by those modules will be added
+# to the include directories and the source list of the build.
+#
+# param   demoConf  The demo configuration which is used.
+#
+def prepareEmb6( demoConf ):
+    global prjPath
     global genv
 
-    emb6_path = prj_path + 'emb6/'
-    emb6_modules = genv.SConscript(emb6_path + 'SConscript')
+    emb6Path = prjPath + 'emb6/'
+    emb6Modules = genv.SConscript( emb6Path + 'SConscript')
 
-    # Add emb6 files from HEAD/emb6/ folder
-    add_include(emb6_path)
-    add_include(emb6_path + 'inc/')
-    add_sources(emb6_path + '*.c')
-    if 'emb6' in __dconf:
-        for req_libmodule in __dconf['emb6']:
-            if req_libmodule in emb6_modules:
-                for lib_file in emb6_modules[req_libmodule]:
-                    add_include(emb6_path + 'inc/' + lib_file)
-                    add_sources(emb6_path + 'src/' + lib_file+'.c')
+    # Add common include paths and source files.
+    addIncludePath( emb6Path )
+    addIncludePath( emb6Path + 'inc/' )
+    addSources( emb6Path + '*.c' )
 
-# Add utils headers from HEAD/utils/ folder
-def prep_utils(__dconf):
-    global prj_path
+    # Check for emb::6 specific sources and include
+    # directories.
+    if 'emb6' in demoConf:
 
-    utils_path = prj_path + 'utils/'
-    if 'utils' in __dconf:
-        for util_file in __dconf['utils']:
-            add_include(utils_path + 'inc/' + util_file)
-            add_sources(utils_path + 'src/' + util_file+'.c')
+        # Run through all the modules that are specified by the demo
+        # configuration and add the paths and sources.
+        for module in demoConf['emb6']:
+            if module in emb6Modules:
+                for path in emb6Modules[module]:
+                    addIncludePath( emb6Path + 'inc/' + path )
+                    addSources( emb6Path + 'src/' + path +'.c' )
 
-def prep_apps(__app, __aconf):
-    global prj_path
+
+
+# Prepare the utils for the build configuration.
+#
+# This function prepares the utilities for the actual build. It
+# includes all files mentiond in the utility configuration.
+#
+# param   demoConf  The demo configuration which is used.
+#
+def prepareUtils( demoConf ):
+    global prjPath
+
+    utilsPath = prjPath + 'utils/'
+
+    # Check for demo specific sources and include
+    # directories.
+    if 'utils' in demoConf:
+
+        # Run through all the modules that are specified by the demo
+        # configuration and add the paths and sources.
+        for path in demoConf['utils']:
+            addIncludePath( utilsPath + 'inc/' + path )
+            addSources( utilsPath + 'src/' + path+'.c' )
+
+
+
+# Prepare application for the build configuration.
+#
+# This function prepares the application for the actual build. Depending
+# on its configuration the according sources and includes will be added.
+#
+# param   appl     The application that shall be configured.
+# param   appConf  The app configuration which is used.
+#
+def prepareApp( app, appConf ):
+    global prjPath
     global genv
 
-    if __aconf != '':
-        demo_path = prj_path + 'demo/' + __app + '/' + __aconf
+    if appConf != '':
+        demoPath = prjPath + 'demo/' + app + '/' + appConf
     else:
-        demo_path = prj_path + 'demo/' + __app
+        demoPath = prjPath + 'demo/' + app
 
     # Import configuration settings
-    demo_conf = genv.SConscript(demo_path + '/SConscript')
+    demoConf = genv.SConscript(demoPath + '/SConscript')
 
-    prep_demo(demo_conf, demo_path)
+    prepareDemo( demoConf, demoPath )
+    prepareEmb6( demoConf )
+    prepareUtils( demoConf )
+    genv.MergeFlags( demoConf )
 
-    prep_emb6(demo_conf)
 
-    prep_utils(demo_conf)
 
-    genv.MergeFlags(demo_conf)
+# Prepare the board support package for the build configuration.
+#
+# This function prepares the bsp for the actual build. The board
+# support package consist of general source and header files that
+# must all be used for al kind of builds.
+#
+# param   targetPath    Path to the target root directory.
+#
+def prepareBsp( targetPath ):
+    bspPath = targetPath + 'bsp/'
 
-# Process core source and headers
-def prep_board_core(__trg_path, __conf):
-    bsp_path = __trg_path + 'bsp/'
+    # Add general board support package source files and
+    # include directories to build.
+    addIncludePath( bspPath )
+    addSources( bspPath + '*.c' )
 
-    # Add board source files and headers
-    add_include(bsp_path + bsp['id'] + '/')
-    add_sources(bsp_path + bsp['id'] + '/*.c')
-    add_include(bsp_path)
-    add_sources(bsp_path + '*.c')
+    # Add board specific board support package source files and
+    # include directories to build.
+    addIncludePath( bspPath + bsp['id'] + '/' )
+    addSources( bspPath + bsp['id'] + '/*.c' )
 
-    # Add common source files and headers
-    add_include(__trg_path)
-    add_sources(__trg_path + '*.c')
 
-# Add mcu source files and libs
-def prep_board_mcu(__trg_path, __conf):
-    mcu_path = __trg_path + 'mcu/'
-
-    add_include(mcu_path + __conf['mcu']+'/')
-    add_sources(mcu_path + __conf['mcu']+'/*.c')
-
-# Add transceiver source files and libs
-def prep_board_if(__trg_path,__conf) :
-    global bsp
-    global genv
-    if_path  = __trg_path + 'if/'
-
-    genv.MergeFlags({'CPPPATH' : [os.path.dirname(if_path + __conf['if']+'/')]})
-    add_sources(if_path + __conf['if']+'/*.c')
-
-    #Define transmitter output power macro
+    #Define mac address
     mmac = 'MAC_ADDR_WORD='+ bsp['mac_addr']
-    genv.MergeFlags({'CPPDEFINES' : mmac})
-
     #Define transmitter output power macro
     mtx_pwr = [('TX_POWER', bsp['txrx'][0])]
-    genv.MergeFlags({'CPPDEFINES' : mtx_pwr})
-
     #Define transmitter receive sensitivity macro
     mrx_sens = 'RX_SENSITIVITY=' + bsp['txrx'][1]
-    genv.MergeFlags({'CPPDEFINES' : mrx_sens})
-
     #Define transmitter modulation macro
     mmode = 'MODULATION='+ bsp['mode']
+
+    # Merge user flags
+    genv.MergeFlags({'CPPDEFINES' : mmac})
+    genv.MergeFlags({'CPPDEFINES' : mtx_pwr})
+    genv.MergeFlags({'CPPDEFINES' : mrx_sens})
     genv.MergeFlags({'CPPDEFINES' : mmode})
 
-def prep_board_arch(__trg_path,__conf):
-    global bsp_path
+
+
+# Prepare the hardware abstraction layer for the build configuration.
+#
+# This function prepares the hal for the actual build. Each MCU
+# requires its own HAL implementation which is included into the
+# build using this function. Therefore it uses the 'mcu' configuration
+# from the board configuration to determine the directory of the
+# according HAL implementation.
+#
+# param   targetConf    Target configuration to get mcu from.
+# param   targetPath    Path to the target root directory.
+#
+def prepareHal( targetConf, targetPath ):
+    mcuPath = targetPath + 'mcu/'
+
+    addIncludePath( mcuPath + targetConf['mcu']+'/' )
+    addSources( mcuPath + targetConf['mcu']+'/*.c' )
+
+
+
+# Prepare the radio interface for the build configuration.
+#
+# This function prepares the radio interface for the actual build. Each board
+# uses a specific radio interface driver. Therefore this function uses the 'if'
+# configuration from the board configuration to determine the directory of the
+# according interface driver implementation.
+#
+# param   targetConf    Target configuration to get if from.
+# param   targetPath    Path to the target root directory.
+#
+def prepareInterface( targetConf, targetPath ):
+    ifPath  = targetPath + 'if/'
+
+    # Add interface specific source files and include directories.
+    addIncludePath(ifPath + targetConf['if'] + '/')
+    addSources(ifPath + targetConf['if']+'/*.c')
+
+
+
+# Prepare the achitecture for the build configuration.
+#
+# This function prepares the architecture for the actual build. Each MCU
+# has an accoring architecture, such as MSP or Cortex. They usually share
+# some common code basis which is configured here.
+# Furthermore this function also configures the toolchain which is used
+# for building the application for the specific target.
+#
+# param   targetConf    Target configuration to get if from.
+# param   targetPath    Path to the target root directory.
+#
+def prepareArch( targetConf, targetPath ):
     global genv
 
-    arch_path = __trg_path + 'arch/'
-
-    # Path ./target/arch/<arch>/<family>/<vendor>/
-    mcu_path = arch_path + __conf['arch'] + '/' + \
-               __conf['family'] + '/' + __conf['vendor']
+    # Assemble root arch path and vendor specific path
+    # from configuration.
+    archPath = targetPath + 'arch/'
+    vendorPath = archPath + targetConf['arch'] + '/' + \
+        targetConf['family'] + '/' + targetConf['vendor']
 
     # Import arch configuration
-    arch_conf = genv.SConscript(mcu_path+'/SConscript')
+    archConf = genv.SConscript( vendorPath+'/SConscript' )
 
-    # Add all include folder and sources which are common for a selected arch
-    if 'extra' in arch_conf:
-          for extra_dir in arch_conf['extra']:
-              add_include(mcu_path + '/' +extra_dir + '/')
-              add_include(mcu_path + '/' +extra_dir+'/inc/')
-              add_sources(mcu_path +'/'+ extra_dir +'/*.c')
-              add_sources(mcu_path +'/'+ extra_dir +'/src/*.c')
+    # Add all include folder and sources which are common for a
+    # selected architecture.
+    if 'extra' in archConf:
+        for extraPath in archConf['extra']:
+            addIncludePath( vendorPath + '/' + extraPath + '/' )
+            addIncludePath( vendorPath + '/' + extraPath + '/inc/' )
+            addSources( vendorPath + '/' + extraPath + '/*.c' )
+            addSources( vendorPath + '/' + extraPath + '/src/*.c' )
 
     # Add all include folder and sources for a selected device
-    add_include(mcu_path+'/device/'+__conf['cpu']+ '/')
-    add_include(mcu_path+'/device/'+__conf['cpu']+'/inc/')
-    add_sources(mcu_path+'/device/'+__conf['cpu']+'/*.c')
-    add_sources(mcu_path+'/device/'+__conf['cpu']+'/src/*.c')
+    addIncludePath( vendorPath + '/device/' + targetConf['cpu'] + '/' )
+    addIncludePath( vendorPath + '/device/' + targetConf['cpu'] + '/inc/' )
+    addSources( vendorPath + '/device/' + targetConf['cpu'] + '/*.c')
+    addSources( vendorPath + '/device/' + targetConf['cpu'] + '/src/*.c' )
 
     # Append toolchain configuration
-    # Path ./target/arch/<arch>/<family>/<vendor>/SConscript
-    toolchain = genv.SConscript(mcu_path+'/toolchain/'+\
-                    __conf['toolchain']+'/SConscript')
-    genv['CC']      = toolchain['CC']
-    genv['AS']      = toolchain['AS']
-    genv['LINK']    = toolchain['LINK']
+    toolchain = genv.SConscript( vendorPath + '/toolchain/' + \
+        targetConf['toolchain'] + '/SConscript' )
+
+    genv['CC'] = toolchain['CC']
+    genv['AS'] = toolchain['AS']
+    genv['LINK'] = toolchain['LINK']
     genv['OBJCOPY'] = toolchain['OBJCOPY']
-    genv['SIZE']    = toolchain['SIZE']
+    genv['SIZE'] = toolchain['SIZE']
     genv.MergeFlags(toolchain)
 
     # Add startup file
-    if 'startupfile' in __conf:
-          add_sources(mcu_path+'/device/'+__conf['cpu']+\
-              '/startup/'+__conf['startupfile'])
+    if 'startupfile' in targetConf:
+        addSources( vendorPath + '/device/' + targetConf['cpu'] + \
+            '/startup/' + targetConf['startupfile'] )
 
     # Add linker script file
-    if 'scriptfile' in __conf:
-        lflags = '-T'+mcu_path+'/device/'+\
-                 __conf['cpu']+'/ldscript/'+__conf['scriptfile']
-        genv.MergeFlags({'LINKFLAGS' : lflags})
+    if 'scriptfile' in targetConf:
+        lflags = '-T' + vendorPath + '/device/' + \
+                 targetConf['cpu'] + '/ldscript/' + targetConf['scriptfile']
+        genv.MergeFlags({'LINKFLAGS' : lflags} )
 
-def prep_board():
-    global prj_path
+
+
+# Prepare the board for the build configuration.
+#
+# This function prepares the board for the actual build. Therefore
+# it runs the according functions to prepare the BSP, HAL,
+# radio interface and arcgitecture.
+#
+# param   targetConf    Target configuration to get if from.
+# param   targetPath    Path to the target root directory.
+#
+def prepareBoard():
+    global prjPath
     global bsp
     global genv
 
-    trg_path = prj_path + 'target/'
-    board_conf = genv.SConscript(trg_path + 'bsp/' + bsp['id']+'/SConscript')
+    targetPath = prjPath + 'target/'
+    boardConf = genv.SConscript( targetPath + 'bsp/' + bsp['id'] + '/SConscript' )
+
+    # Add common source files and headers
+    addIncludePath( targetPath )
+    addSources( targetPath + '*.c' )
+
+    # Prepare bsp, hal interface and arch
+    prepareBsp( targetPath )
+    prepareHal( boardConf['brd'], targetPath )
+    prepareInterface( boardConf['brd'], targetPath )
+    prepareArch( boardConf['brd'], targetPath )
 
     # Merge core flags
-    print trg_path + 'bsp/' + bsp['id']+'/SConscript'
+    genv.MergeFlags( boardConf['std'] )
 
-    genv.MergeFlags(board_conf['std'])
-
-    prep_board_core(trg_path, board_conf['brd'])
-
-    prep_board_mcu(trg_path, board_conf['brd'])
-
-    prep_board_if(trg_path, board_conf['brd'])
-
-    prep_board_arch(trg_path, board_conf['brd'])
 
 ################################################################################
-############################## MAIN APPLICATION ################################
+#                              MAIN SCRIPT                                     #
 ################################################################################
-add_include(prj_path)
-#genv.Append(CPPPATH = ['./'])
 
-for app_conf in apps:
-    app = app_conf[0]
-    conf = app_conf[1]
+# Add root path to includes
+addIncludePath( prjPath )
+
+for appConf in apps:
+    app = appConf[0]
+    conf = appConf[1]
     print '> Configure project for ' + app + ' application' + \
           ' and ' + conf + ' configuration'
-    prep_apps(app, conf)
+    # Prepare application with its configuration */
+    prepareApp( app, conf )
 
-# Import board configuration 
-prep_board()
+# Prepare board configuration
+prepareBoard()
 
 #Define logger level
 try:
     Import('log_lvl')
     __log_lvl = 'LOGGER_LEVEL='+ log_lvl
-    genv.MergeFlags({'CPPDEFINES' : __log_lvl})
+    genv.MergeFlags( {'CPPDEFINES' : __log_lvl} )
 except:
     pass
 
-# Compile program
-genv.MergeFlags({'CPPPATH' : includes})
+# Set dependencies
+genv.MergeFlags( {'CPPPATH' : includes} )
 
-Delete(trg+'.elf')
-retf = genv.Program(target = trg  + '.elf', source = sources)
-genv.Clean(retf, '*')
+# Compile program
+Delete( trg + '.elf' )
+retf = genv.Program( target = trg  + '.elf', source = sources )
+genv.Clean( retf, '*' )
 
 # Show program size
-psize = genv.Command(' ', trg + '.elf', Action('$SIZE $SOURCE'))
-genv.Clean(psize, '*')
+psize = genv.Command( ' ', trg + '.elf', Action('$SIZE $SOURCE') )
+genv.Clean( psize, '*' )
 
 # Create hex file
-Delete(trg+'.hex')
-hex_file = genv.Command(trg+'.hex', trg+'.elf', Action('$OBJCOPY -O ihex $SOURCE $TARGET', '$OBJCOPYCOMSTR'))
-genv.Clean(hex_file, '*')
-
-# Create binary
-#Delete(trg+'.bin')
-#bin_file = genv.Command(trg+'.bin', trg+'.elf', Action('$OBJCOPY -O binary $SOURCE $TARGET', '$OBJCOPYCOMSTR'))
-#genv.Clean(bin_file, '*')
+Delete( trg + '.hex' )
+hex_file = genv.Command( trg +'.hex', trg +'.elf', Action('$OBJCOPY -O ihex $SOURCE $TARGET', '$OBJCOPYCOMSTR') )
+genv.Clean( hex_file, '*' )
 
 Return('retf')
