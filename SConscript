@@ -50,7 +50,7 @@ includes = []
 prjPath = './'
 
 
-Import('genv', 'trg', 'apps', 'bsp')
+Import('genv', 'targetName', 'demos', 'bsp', 'customCFlags')
 
 # Function to add sources to compilation.
 #
@@ -242,23 +242,6 @@ def prepareBsp( targetPath ):
     addSources( bspPath + bsp['id'] + '/*.c' )
 
 
-    #Define mac address
-    mmac = 'MAC_ADDR_WORD='+ bsp['mac_addr']
-    #Define transmitter output power macro
-    mtx_pwr = [('TX_POWER', bsp['txrx'][0])]
-    #Define transmitter receive sensitivity macro
-    mrx_sens = 'RX_SENSITIVITY=' + bsp['txrx'][1]
-    #Define transmitter modulation macro
-    mmode = 'MODULATION='+ bsp['mode']
-
-    # Merge user flags
-    genv.MergeFlags({'CPPDEFINES' : mmac})
-    genv.MergeFlags({'CPPDEFINES' : mtx_pwr})
-    genv.MergeFlags({'CPPDEFINES' : mrx_sens})
-    genv.MergeFlags({'CPPDEFINES' : mmode})
-
-
-
 # Prepare the hardware abstraction layer for the build configuration.
 #
 # This function prepares the hal for the actual build. Each MCU
@@ -390,6 +373,16 @@ def prepareBoard():
     genv.MergeFlags( boardConf['std'] )
 
 
+def prepareCFlags():
+
+    if( customCFlags is None ):
+        return
+
+    # Split the flags and merge them
+    flags = customCFlags.split()
+    genv.MergeFlags({'CPPDEFINES' : flags})
+
+
 ################################################################################
 #                              MAIN SCRIPT                                     #
 ################################################################################
@@ -397,16 +390,19 @@ def prepareBoard():
 # Add root path to includes
 addIncludePath( prjPath )
 
-for appConf in apps:
-    app = appConf[0]
-    conf = appConf[1]
-    print '> Configure project for ' + app + ' application' + \
+
+for demoConf in demos:
+    demo = demoConf['demo'][0]
+    conf = demoConf['demo'][1]
+    print '> Configure project for ' + demo + ' demo' + \
           ' and ' + conf + ' configuration'
     # Prepare application with its configuration */
-    prepareApp( app, conf )
+    prepareApp( demo, conf )
 
 # Prepare board configuration
 prepareBoard()
+# Prepare Custom Flags
+prepareCFlags()
 
 #Define logger level
 try:
@@ -420,17 +416,17 @@ except:
 genv.MergeFlags( {'CPPPATH' : includes} )
 
 # Compile program
-Delete( trg + '.elf' )
-retf = genv.Program( target = trg  + '.elf', source = sources )
+Delete( targetName + '.elf' )
+retf = genv.Program( target = targetName  + '.elf', source = sources )
 genv.Clean( retf, '*' )
 
 # Show program size
-psize = genv.Command( ' ', trg + '.elf', Action('$SIZE $SOURCE') )
+psize = genv.Command( ' ', targetName + '.elf', Action('$SIZE $SOURCE') )
 genv.Clean( psize, '*' )
 
 # Create hex file
-Delete( trg + '.hex' )
-hex_file = genv.Command( trg +'.hex', trg +'.elf', Action('$OBJCOPY -O ihex $SOURCE $TARGET', '$OBJCOPYCOMSTR') )
+Delete( targetName + '.hex' )
+hex_file = genv.Command( targetName +'.hex', targetName +'.elf', Action('$OBJCOPY -O ihex $SOURCE $TARGET', '$OBJCOPYCOMSTR') )
 genv.Clean( hex_file, '*' )
 
 Return('retf')

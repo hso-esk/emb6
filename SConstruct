@@ -45,14 +45,23 @@ import string
 import re
 import os
 import atexit
+import shutil
 from collections import defaultdict
 
-AddOption('--colors',
-          dest='use_colors', action='store_true',
-          default=False,
-          help='Enable colored build output')
 
-def color_out(__env):
+## set the current working directory as the project path
+prjPath = './'
+
+
+# Prepare print style for compilation.
+#
+# Depending on the options selected, different print outputs can
+# be used e.g. colored output or verbose output. This function
+# initialized the according print styles.
+#
+# param   env           Environment to configure.
+#
+def createInfoPrints( env ):
     # Enable color building message output
     colors = {}
     if GetOption('use_colors'):
@@ -69,144 +78,329 @@ def color_out(__env):
             colors['end']    = ''
 
 
-    compile = '%sCompiling %s==> %s$SOURCE%s' % \
-    (colors['blue'], colors['purple'], colors['yellow'], colors['end'])
+    compileStr = '%sCompiling %s==> %s$SOURCE%s' % \
+      (colors['blue'], colors['purple'], colors['yellow'], colors['end'])
     
-    link    = '%sLinking Program %s==> %s$TARGET%s' % \
-    (colors['red'], colors['purple'], colors['yellow'], colors['end'])
+    linkStr = '%sLinking Program %s==> %s$TARGET%s' % \
+      (colors['red'], colors['purple'], colors['yellow'], colors['end'])
 
-    link_lib= '%sLinking Static Library %s==> %s$TARGET%s' % \
-    (colors['red'], colors['purple'], colors['yellow'], colors['end'])
+    linkLibStr = '%sLinking Static Library %s==> %s$TARGET%s' % \
+      (colors['red'], colors['purple'], colors['yellow'], colors['end'])
 
-    # Set default values
-    __env['CXXCOMSTR']  = compile
-    __env['CCCOMSTR']   = compile
-    __env['ARCOMSTR']   = link_lib
-    __env['LINKCOMSTR'] = link    
+    # Set values
+    env['CXXCOMSTR']  = compileStr
+    env['CCCOMSTR']   = compileStr
+    env['ARCOMSTR']   = linkLibStr
+    env['LINKCOMSTR'] = linkStr
 
-# Print a logo and a project name
 
-def assign_opt():
-    AddOption('--target',
-              dest='target', type='string',
+# Create command line options for the script.
+#
+# The script accepts several command line options. This function
+# initializes the according options.
+#
+def createOptions():
+
+
+    AddOption('--clean-all',
+              dest='cleanAll', action='store_true',
+              default=False,
+              help='Clean all targets')
+
+
+    AddOption('--show-demos',
+              dest='showDemos', action='store_true',
+              default=False,
+              help='Show a list of available demo applications')
+
+
+    AddOption('--show-bsps',
+              dest='showBsps', action='store_true',
+              default=False,
+              help='Show a list of available BSPs')
+
+
+    AddOption('--colors',
+              dest='use_colors', action='store_true',
+              default=False,
+              help='Enable colored build output')
+
+    AddOption('--output',
+              dest='outputName', type='string',
               nargs=1, action='store', 
-              metavar='TARGET_NAME',
-              help='Target name lskfjlsdf')
+              metavar='<out.elf>',
+              help='Name of the output file')
 
-    AddOption('--mac',
-              dest='bsp_mac', type='string',
+    AddOption('--demos',
+              dest='demos', type='string',
               nargs=1, action='store',
-              metavar='MAC_ADDR',
-              help='Two bytes of target mac address e.g. mac=0xffff')
+              metavar='<demoa,demob>',
+              help='Names of the demos to use as a comma separated list')
 
-    AddOption('--rx_sens','--rxs',
-              dest='bsp_rxs', type='string',
+    AddOption('--ccflags',
+              dest='customCFlags', type='string',
               nargs=1, action='store', 
-              metavar='RX_SENS',
-              help='Specify receiver sensitivity. Target specific.')
+              metavar='<DEBUG,MAX=5>',
+              help='Custom Compilation Flags as comma separated list ')
 
-    AddOption('--tx_pwr', '--txp',
-              dest='bsp_txp', type='string',
-              nargs=1, action='store', metavar='TX_POWER',
-              help='Specify transmitter output power')
+    AddOption('--bsp',
+              dest='bsp', type='string',
+              nargs=1, action='store',
+              metavar='<bsp>',
+              help='Name of the Board Support Package (BSP) to use')
 
-    AddOption('--logger', '--lo',
+    AddOption('--logger',
               dest='log_lvl', type='string',
-              nargs=1, action='store', metavar='LOGGER_LEVEL',
+              nargs=1, action='store', metavar='<0/1/2/3>',
               help='Specify level of logger [from 0 to 3]')
 
     AddOption('--verb',
               dest='verbose', type='int',
-              nargs=1, action='store', metavar='VERBOSE',
+              nargs=1, action='store', metavar='<0/1>',
               help='Show link commands [0 or 1]')
 
-# Print list of supported target and exit
-def print_trgs_exit(__trgs):
-    print "List of supported targets:"
-    print '%-25s%-20s%-20s' % ('Target name', 'MCU type', 'Transceiver type')
-    for __trg_id  in __trgs:
-        bsp_conf = SConscript('target/bsp/'+__trg_id['bsp']['id']+'/SConscript')
-        print '%-25s%-20s%-20s' % (__trg_id['id'], bsp_conf['brd']['mcu'], bsp_conf['brd']['if'])
+
+
+def helpAndExit():
+  exit(0)
+
+
+
+# Get available Demos
+#
+# This function retrieves all the available demos. Therfore it parses
+# the according SCons file for the available demo configurations.
+#
+# return    The availabe demo configuration as array.
+def getDemos():
+
+    demosPath = prjPath + '/demo'
+
+    # Get the available Demos
+    demos = SConscript('SCons.demos')
+    demos = sorted(demos)
+    return demos
+
+
+# Get Demos from Name
+#
+# Get specific Demos from a name. This function is used to obtain
+# specific Demos e.g. from a name given by the command line options.
+#
+# param   name    Name of the Demos to get (comma separated).
+#
+# return  The specific Demos or 'None' if it does not exist.
+def getDemosfromName( name ):
+    # check if the given demos exist
+    demos = []
+    demosValid = 0;
+    demosAvail = getDemos();
+
+    if( name is None ):
+        return None
+
+    demosSplit = name.split(',')
+
+    for demo in demosSplit:
+        demosValid = 0;
+        for demoAvail in demosAvail:
+          if( demoAvail['id'] == demo ):
+              demosValid = 1;
+              demos += [demoAvail]
+              break;
+
+    if demosValid == 0:
+        return None
+
+    return demos
+
+
+# Get available Board Support Packages
+#
+# This functions checks for available Board Support Packages. Therefore
+# this function runs through all the BSP directory and reads one BSP
+# per directory.
+#
+# return
+def getBSPs():
+
+    bspsPath = prjPath + 'target/bsp'
+
+    # Get the available BSPs by checking all directories
+    bspDirs = [b for b in os.listdir( bspsPath ) if os.path.isdir( os.path.join( bspsPath, b ) )]
+    bspDirs = sorted( bspDirs )
+
+    bsps = [];
+
+    # Run through all BSP folders and get the configuration from the according
+    # Scons file located in it.
+    for bsp in bspDirs:
+        bspConf = SConscript( 'target/bsp/' + bsp + '/SConscript' )
+        bsps += [{
+            'id'  : bsp,
+            'bsp' : bspConf
+        }]
+    return bsps
+
+
+# Get BSP from Name
+#
+# Get a specific BSP from a name. This function is used to obtain
+# a specific BSP e.g. from a name given by the command line options.
+#
+# param   name    Name of the BSP to get.
+#
+# return  The specific BSP or 'None' if it does not exist.
+def getBSPfromName( name ):
+    # check if the given bsp exists
+    bspValid = 0;
+    bspsAvail = getBSPs();
+
+    if( name is None ):
+        return None
+
+    for bspAvail in bspsAvail:
+        if( bspAvail['id'] == name ):
+            bspValid = 1;
+            break;
+
+    if bspValid == 0:
+        return None
+
+    return bspAvail
+
+
+# Print list of supported application and exit.
+#
+# This function retrieves all the available demos and prints them on
+# the command line as a sorted list. Afterwards the script will be
+# stopped.
+def printDemosandExit():
+    demos = getDemos()
+    print "List of supported demos:"
+
+    print '%-25s%-20s%-20s' % ('Demo Name', 'Demo', 'Configuration')
+    print '======================================================================'
+    for demo in demos:
+        print '%-25s%-20s%-20s' % (demo['id'], demo['demo'][0], demo['demo'][1])
     exit(1)
 
-# Process users options and generate target description
-def proc_opt_get_trg(__genv,__trgs):
-    __trg_id = __genv.GetOption('target')
-    __trg_desc = get_descr(__trgs,__trg_id)
-    if __trg_desc == 'null':
-        print "Error: Specify target board. Use --target option"
-        print_trgs_exit(__trgs)
 
-    # Get Receiver sensitivity and overwrite default if required
-    __bsp_rxs = __genv.GetOption('bsp_rxs')
-    if __bsp_rxs:
-        __trg_desc['bsp']['txrx'][1] = __bsp_rxs
+# Print list of supported application and exit.
+#
+# This function retrieves all the available demos and prints them on
+# the command line as a sorted list. Afterwards the script will be
+# stopped.
+def printBSPsandExit():
+    bsps = getBSPs()
+    print "List of supported Board Support Packages:"
+    print '%-25s%-20s%-20s' % ('BSP Name', 'MCU Type', 'Transceiver Type')
+    print '======================================================================'
+    for bsp in bsps:
+        print '%-25s%-20s%-20s' % (bsp['id'], bsp['bsp']['brd']['mcu'], bsp['bsp']['brd']['if'])
+    exit(1)
 
-    # Get transmitter output power and overwrite default if required
-    __bsp_txp = __genv.GetOption('bsp_txp')
-    if __bsp_txp:
-        __trg_desc['bsp']['txrx'][0] = __bsp_txp
 
-    # Get mac address and overwrite default if required
-    __bsp_mac = __genv.GetOption('bsp_mac')
-    if __bsp_mac:
-        if len(__bsp_mac) != 6:
-            print "Error: Specified last two bytes of MAC address are't OK. Should be --mac=0xFFFF"
-            exit(1)
-        else:
-            __trg_desc['bsp']['mac_addr'] = __bsp_mac
+
+################################################################################
+#                              MAIN SCRIPT                                     #
+################################################################################
+
+Help("""
+**** emb::6 Build Environment ****
+
+Type: 'scons --demos=<DemoA, DemoB> --bsp=<bsp>' to build the program.
+Type  'scons --show-demos' to display the demos which are availabe for build.
+Type  'scons --show-bsps' to display the demos which are availabe for build.
+""")
+
+# Get global environment
+genv = Environment( ENV = os.environ, tools=['gcc', 'gnulink'] )
+
+# Build, Cache and Binaries directory
+buildDir = "build"
+cacheDir = buildDir + '/cache'
+binDir = "bin"
+
+# Configure build by choosing the number of cores to use for the build and
+# by selecting the directory for the build cache.
+numCPU = int( os.environ.get('numCPU', 4) )
+SetOption( 'num_jobs', numCPU )
+CacheDir( cacheDir )
+
+
+# Create available command line options
+createOptions()
+
+if not genv.GetOption('help'):
+
+    # Check if all targets shall be cleaned
+    if genv.GetOption('cleanAll'):
+        print 'Cleaning all targets ...'
+        shutil.rmtree( buildDir, True )
+        shutil.rmtree( cacheDir, True )
+        shutil.rmtree( binDir, True )
+        exit(0)
 
     # Make output colorfull
     if not genv.GetOption('verbose'):
-        color_out(genv)
+        createInfoPrints(genv)
 
-    return __trg_desc
+    # get demos and BSP configured vi athe command line
+    demos = getDemosfromName( genv.GetOption('demos') )
+    bsp = getBSPfromName( genv.GetOption('bsp') )
 
-def get_descr(__db, __name):
-    for __db_entry in __db:
-        if __db_entry['id'] == __name:
-            return __db_entry
-    return 'null'
+    if( genv.GetOption('showDemos') ):
+        printDemosandExit()
+    if( genv.GetOption('showBsps')):
+        printBSPsandExit()
 
-######################## MAIN ###################################
-# Get global environment
-genv = Environment(ENV = os.environ, tools=['gcc', 'gnulink'])
+    # Chek if demos are OK
+    if( demos is None ):
+        print( 'Invalid or no Demo configured.' )
+        printDemosandExit()
 
-# Set number of jobs
-num_cpu = int(os.environ.get('NUM_CPU', 4))
-SetOption('num_jobs', num_cpu)
-CacheDir('./build/cache')
+    # Check if BSP is OK
+    if( bsp is None ):
+        print( 'Invalid or no Board Support Package configured.' )
+        printBSPsandExit()
 
-# Install and assign available options
-assign_opt()
 
-# Get target description
-target = proc_opt_get_trg(genv, SConscript('targets.scons'))
+    # Create the ouput name of the target. This is either the name
+    # specified by command line or automatically assembled name.
+    targetName = genv.GetOption('outputName')
+    if( targetName is None ):
+        targetName = ''
+        # Create the name from the Demos included
+        for demo in demos:
+            targetName += demo['id']
 
-trg   = target['id'] + '_' + target['bsp']['mac_addr']
-apps  = target['apps_conf']
-bsp   = target['bsp']
-args =  'genv trg apps bsp'
+    # Forward some variables
+    customCFlags = genv.GetOption('customCFlags')
+    args = 'genv targetName demos bsp customCFlags'
+    # Also formward the Log-Level if enabled
+    if genv.GetOption('log_lvl'):
+        log_lvl = genv.GetOption('log_lvl')
+        args += ' log_lvl'
 
-if genv.GetOption('log_lvl'):
-    log_lvl = genv.GetOption('log_lvl')
-    args += ' log_lvl'
+    buildDir = buildDir + '/'+ targetName + '/'
+    file = genv.SConscript('SConscript', variant_dir = buildDir, duplicate = 0, exports = args)
 
-build_dir = './build/'+ trg + '/'
+    # copy bin file to ./bin directory
+    file = genv.Install( binDir, [file] )
+    genv.Clean( file, '*' )
 
-file = genv.SConscript('SConscript', variant_dir=build_dir, duplicate=0, exports=args)
-
-# copy bin file to ./bin directory 
-file = genv.Install('./bin/', [file])
-genv.Clean(file, '*')
-
-print '====================================================================' 
-print '> Select configuration parameters...'
-print '> Target name =                  ' + trg
-print '> Application and Config =       ' + str(apps)
-print '> Board name =                   ' + bsp['id']
-print '> MAC address =                  ' + bsp['mac_addr']
-print '> Output power (dBm) =           ' + bsp['txrx'][0]
-print '> Receiver\'s sensitivity (dBm) =' + bsp['txrx'][1]
-print '> Transmitter\'s modulation =    ' + bsp['mode']
-print '====================================================================' 
+    print '===================================================================='
+    print '> Select configuration parameters...'
+    print '> Target Name:                  ' + targetName
+    if( demo['demo'][1] == "" ):
+        print '> Application and Config:       ' + demos[0]['id'] + ' [' + demos[0]['demo'][0] + ',' + demos[0]['demo'][1] + ']'
+    else:
+        print '> Application and Config:       ' + demos[0]['id'] + ' [' + demos[0]['demo'][0] + ']'
+    for demo in demos[1:]:
+        if( demo['demo'][1] == "" ):
+            print '>                               ' + demo['id'] + ' [' + demo['demo'][0] + ']'
+        else:
+            print '>                               ' + demo['id'] + ' [' + demo['demo'][0] + ',' + demo['demo'][1] + ']'
+    print '> Board Name:                   ' + bsp['id']
+    print '===================================================================='
