@@ -173,6 +173,9 @@ def prepareEmb6( demoConf ):
         addIncludePath( emb6Path + 'inc/' + sources )
         addSources( emb6Path + 'src/' + sources +'.c' )
 
+    # Merge Flags for Net Configuration
+    genv.MergeFlags( netModules[net] )
+
 
 
 # Prepare the utils for the build configuration.
