@@ -52,71 +52,7 @@ extern "C" {
 /*==============================================================================
                             VARIABLES
 ==============================================================================*/
-
-uint8_t* gpc_rxBuf;
 static s_ns_t *ps_rf_netstk;
-
-uint16_t gi_bytesReceived;
-uint8_t gc_rxRssi;
-/*==============================================================================
-                            FUNCTION PROTOTYPES
-==============================================================================*/
-
-void loc_evtRx(uint16_t i_len);
-void loc_evtTx(uint16_t i_len);
-void loc_configRx(s_rf_rxConf_t* ps_rxConf);
-/*==============================================================================
-                         LOCAL FUNCTIONS
-==============================================================================*/
-/*============================================================================*/
-/*!
- * @brief Function which handles the reception of 6lowPan telegrams.
- *
- * @param i_len       Length of the received data. @ref RF_NEW_TLG indicates
- *                    the receiption of a valid preamble and syncword
- */
-/*============================================================================*/
-void loc_evtRx(uint16_t i_len)
-{
-
-  #if CC13XX_RX_LED_ENABLED
-  bsp_led( E_BSP_LED_3, E_BSP_LED_TOGGLE );
-  #endif
-
-  /* signal complete reception interrupt */
-  RF_SEM_POST(NETSTK_RF_EVENT);
-
-
-}/* loc_evtRx() */
-
-/*============================================================================*/
-/*!
- * @brief Function which handles the transmission of 6lowPan telegrams.
- *
- * @param i_len       Length of the transmitted data.
- */
-/*============================================================================*/
-void loc_evtTx(uint16_t i_len)
-{
-}/* loc_evtTx() */
-
-/*============================================================================*/
-/**
- * @brief  Sets the configuration for RX.
- *
- * @param ps_rxConf    Pointer to the rx config struct
- */
-/*============================================================================*/
-void loc_configRx(s_rf_rxConf_t* ps_rxConf)
-{
-  if(NULL != ps_rxConf)
-  {
-    ps_rxConf->ps_cmdPropRadioDivSetup = (rfc_radioOp_t*)&RF_802_15_4_ch26_cmdPropRadioDivSetup;
-    ps_rxConf->ps_cmdFs = (rfc_radioOp_t*)&RF_802_15_4_ch26_cmdFs;
-    ps_rxConf->ps_cmdPropRxAdv = &RF_802_15_4_ch26_cmdPropRxAdv;
-    ps_rxConf->b_return = true;
-  }/* if */
-}/* loc_configRx() */
 
 /*============================================================================*/
 /**
@@ -149,8 +85,6 @@ bool sf_rf_6lowpan_init(void *p_netstk)
 {
   /* store pointer to global netstack structure */
   ps_rf_netstk = (s_ns_t *)p_netstk;
-  /* Initialize global variable. Set the lowest RSSI value as default -255dBm */
-  /*TODO check this */ gc_rxRssi = 0xFFU;
 
   /* call the routine with init state to initialize the driver */
   if(rf_driver_routine(RF_STATUS_INIT) != ROUTINE_DONE )
@@ -265,7 +199,6 @@ E_RF_CCA_RESULT_t sf_rf_6lowpan_cca(uint8_t c_numOfRssiMeas)
   rf_driver_routine(RF_STATUS_RX_LISTEN);
   return e_return;
 }
-
 
 #ifdef __cplusplus
 }
