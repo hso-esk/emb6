@@ -24,10 +24,6 @@ extern rfc_CMD_PROP_RADIO_DIV_SETUP_t RF_802_15_4_ch26_cmdPropRadioDivSetup;
 extern rfc_CMD_FS_t RF_802_15_4_ch26_cmdFs;
 extern rfc_CMD_PROP_TX_ADV_t RF_802_15_4_ch26_cmdPropTxAdv;
 extern rfc_CMD_PROP_RX_ADV_t RF_802_15_4_ch26_cmdPropRxAdv;
-extern rfc_CMD_PROP_TX_ADV_t RF_802_15_4_ch26_cmdPropTxAdv_test;
-extern rfc_CMD_PROP_RX_ADV_t RF_802_15_4_ch26_cmdPropRxAdv_test;
-
-
 
 
 #endif // RF_802_15_4_CH26

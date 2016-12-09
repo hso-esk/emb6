@@ -128,90 +128,9 @@ rfc_CMD_FS_t RF_802_15_4_ch26_cmdFs =
     .tdcPrecal = 0x0000,
 };
 
+
 // CMD_PROP_TX_ADV
 rfc_CMD_PROP_TX_ADV_t RF_802_15_4_ch26_cmdPropTxAdv =
-{
-    .commandNo = 0x3803,
-    .status = 0x0000,
-    .pNextOp = 0, // INSERT APPLICABLE POINTER: (uint8_t*)&xxx
-    .startTime = 0x00000000,
-    .startTrigger.triggerType = 0x0,
-    .startTrigger.bEnaCmd = 0x0,
-    .startTrigger.triggerNo = 0x0,
-    .startTrigger.pastTrig = 0x0,
-    .condition.rule = 0x1,
-    .condition.nSkip = 0x0,
-    .pktConf.bFsOff = 0x0,
-    .pktConf.bUseCrc = 0x0,
-    .pktConf.bCrcIncSw = 0x0,
-    .pktConf.bCrcIncHdr = 0x0,
-    .numHdrBits = 0x00,
-    .pktLen = 0x0000,
-    .startConf.bExtTxTrig = 0x0,
-    .startConf.inputMode = 0x0,
-    .startConf.source = 0x0,
-    .preTrigger.triggerType = 0x0,
-    .preTrigger.bEnaCmd = 0x0,
-    .preTrigger.triggerNo = 0x0,
-    .preTrigger.pastTrig = 0x0,
-    .preTime = 0x00000000,
-    .syncWord = 0x0000904e,
-    .pPkt = 0, // INSERT APPLICABLE POINTER: (uint8_t*)&xxx
-};
-
-// CMD_PROP_RX_ADV
-rfc_CMD_PROP_RX_ADV_t RF_802_15_4_ch26_cmdPropRxAdv =
-{
-    .commandNo = 0x3804,
-    .status = 0x0000,
-    .pNextOp = 0, // INSERT APPLICABLE POINTER: (uint8_t*)&xxx
-    .startTime = 0x00000000,
-    .startTrigger.triggerType = 0x0,
-    .startTrigger.bEnaCmd = 0x0,
-    .startTrigger.triggerNo = 0x0,
-    .startTrigger.pastTrig = 0x0,
-    .condition.rule = 0x1,
-    .condition.nSkip = 0x0,
-    .pktConf.bFsOff = 0x0,
-    .pktConf.bRepeatOk = 0x0,
-    .pktConf.bRepeatNok = 0x0,
-    .pktConf.bUseCrc = 0x0,
-    .pktConf.bCrcIncSw = 0x0,
-    .pktConf.bCrcIncHdr = 0x0,
-    .pktConf.endType = 0x0,
-    .pktConf.filterOp = 0x0,
-    .rxConf.bAutoFlushIgnored = 0x0,
-    .rxConf.bAutoFlushCrcErr = 0x0,
-    .rxConf.bIncludeHdr = 0x0,
-    .rxConf.bIncludeCrc = 0x0,
-    .rxConf.bAppendRssi = 0x0,
-    .rxConf.bAppendTimestamp = 0x0,
-    .rxConf.bAppendStatus = 0x0,
-    .syncWord0 = 0x0000904e,
-    .syncWord1 = 0x00000000,
-    .maxPktLen = 0x0000,
-    .hdrConf.numHdrBits = 0x0,
-    .hdrConf.lenPos = 0x0,
-    .hdrConf.numLenBits = 0x0,
-    .addrConf.addrType = 0x0,
-    .addrConf.addrSize = 0x0,
-    .addrConf.addrPos = 0x0,
-    .addrConf.numAddr = 0x0,
-    .lenOffset = 0x00,
-    .endTrigger.triggerType = 0x0,
-    .endTrigger.bEnaCmd = 0x0,
-    .endTrigger.triggerNo = 0x0,
-    .endTrigger.pastTrig = 0x0,
-    .endTime = 0x00000000,
-    .pAddr = 0, // INSERT APPLICABLE POINTER: (uint8_t*)&xxx
-    .pQueue = 0, // INSERT APPLICABLE POINTER: (dataQueue_t*)&xxx
-    .pOutput = 0, // INSERT APPLICABLE POINTER: (uint8_t*)&xxx
-};
-
-
-
-// CMD_PROP_TX_ADV
-rfc_CMD_PROP_TX_ADV_t RF_802_15_4_ch26_cmdPropTxAdv_test =
 {
     .commandNo = 0x3803,
     .status = 0x0000,
@@ -251,7 +170,7 @@ rfc_CMD_PROP_TX_ADV_t RF_802_15_4_ch26_cmdPropTxAdv_test =
 
 
 // CMD_PROP_RX_ADV
-rfc_CMD_PROP_RX_ADV_t RF_802_15_4_ch26_cmdPropRxAdv_test =
+rfc_CMD_PROP_RX_ADV_t RF_802_15_4_ch26_cmdPropRxAdv =
 {
     .commandNo = 0x3804,
     .status = 0x0000,

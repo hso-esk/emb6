@@ -227,8 +227,8 @@ uint8_t rf_driver_routine(e_rf_status_t state)
       /* initiate command pointer */
       cc1310.conf.ps_cmdPropRadioDivSetup=(rfc_radioOp_t*)&RF_802_15_4_ch26_cmdPropRadioDivSetup;
       cc1310.conf.ps_cmdFs=(rfc_radioOp_t*)&RF_802_15_4_ch26_cmdFs;
-      cc1310.rx.p_cmdPropRxAdv=&RF_802_15_4_ch26_cmdPropRxAdv_test;
-      cc1310.tx.p_cmdPropTxAdv=&RF_802_15_4_ch26_cmdPropTxAdv_test;
+      cc1310.rx.p_cmdPropRxAdv=&RF_802_15_4_ch26_cmdPropRxAdv;
+      cc1310.tx.p_cmdPropTxAdv=&RF_802_15_4_ch26_cmdPropTxAdv;
 
       /*initiate CCA command */
       sf_rf_set_numOfRssiMeas(CC13xx_NUM_OFF_RSSI_CHECKS_DEFAULT);
