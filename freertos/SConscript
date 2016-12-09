@@ -38,38 +38,26 @@
 #
 ##
 
-arch = {
+freertos = {
 
-    'extra' : [
-        'CMSIS',
-        'utils',
-        'device/common',
+    'base' : [
+        'FreeRTOSV8.2.3/FreeRTOS/Source/*',
+        'FreeRTOSV8.2.3/FreeRTOS/Source/include/*',
+    ],
+
+    'portableCM3' : [
+        'FreeRTOSV8.2.3/FreeRTOS/Source/portable/GCC/ARM_CM3/*',
+        'FreeRTOSV8.2.3/FreeRTOS/Source/portable/MemMang/heap_1',
     ],
 
     # C global defines
     'CPPDEFINES' : [
+        ('USE_FREERTOS', 1),
     ],
 
     # GCC flags
     'CFLAGS' : [
-    ],
-
-    'os' : {
-
-        'freertos' : {
-            'source' : [
-                'portableCM3'
-            ],
-
-             # C global defines
-            'CPPDEFINES' : [
-            ],
-
-            # GCC flags
-            'CFLAGS' : [
-            ],
-        }
-    }
+    ]
 }
 
-Return('arch')
+Return('freertos')

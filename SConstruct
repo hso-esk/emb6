@@ -152,6 +152,14 @@ def createOptions():
               metavar='<net-role>',
               help='Network type and its role')
 
+    AddOption('--os',
+              dest='osSel', type='choice',
+              action='store',
+              choices=['none', 'freertos',],
+              default='none',
+              metavar='<osSel>',
+              help='Oprating System to use')
+
 
     AddOption('--mac',
               dest='mac', type='string',
@@ -367,6 +375,7 @@ if not genv.GetOption('help'):
     demos = getDemosfromName( genv.GetOption('demos') )
     bsp = getBSPfromName( genv.GetOption('bsp') )
     net =  genv.GetOption('net')
+    osSel =  genv.GetOption('osSel')
     mac =  genv.GetOption('mac')
 
     if( genv.GetOption('showDemos') ):
@@ -409,13 +418,16 @@ if not genv.GetOption('help'):
         # Add the bsp name
         targetName += '-' + bsp['id']
 
+        # Add the os name
+        targetName += '-' + osSel
+
         if( mac is not None ):
           # Add the mac address
           targetName += '_' + mac
 
     # Forward some variables
     customCFlags = genv.GetOption('customCFlags')
-    args = 'genv targetName demos bsp net mac customCFlags'
+    args = 'genv targetName demos bsp net osSel mac customCFlags'
     # Also formward the Log-Level if enabled
     if genv.GetOption('log_lvl'):
         log_lvl = genv.GetOption('log_lvl')

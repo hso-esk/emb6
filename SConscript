@@ -50,7 +50,7 @@ includes = []
 prjPath = './'
 
 
-Import('genv', 'targetName', 'demos', 'bsp', 'net', 'mac', 'customCFlags')
+Import('genv', 'targetName', 'demos', 'bsp', 'net', 'osSel', 'mac', 'customCFlags')
 
 # Function to add sources to compilation.
 #
@@ -96,6 +96,37 @@ def addIncludePath( inc ):
     except ValueError:
         pass
     includes.append( str( path ) )
+
+
+# Prepare an operating system for the build configuration.
+#
+# This function prepares the selected operation system for
+# the actual build.
+#
+# param   osSel         The OS selection.
+#
+def prepareOS( osSel ):
+    global prjPath
+    global genv
+
+    # If no OS selection was made we can skip
+    # the following parts.
+    if( osSel == "none"):
+        return
+
+    osPath = prjPath + osSel +'/'
+    osModules = genv.SConscript(osPath + 'SConscript')
+
+    # Add basic OS files and merge flags
+    addIncludePath(osPath)
+    addIncludePath(osPath + '*.h')
+    addSources(osPath + '*.c')
+    for module in osModules['base']:
+        addIncludePath(osPath + module)
+        addSources(osPath + module + '.c')
+
+    # Merge Flags for OS Configuration
+    genv.MergeFlags( osModules )
 
 
 
@@ -299,8 +330,10 @@ def prepareInterface( targetConf, targetPath ):
 #
 # param   targetConf    Target configuration to get if from.
 # param   targetPath    Path to the target root directory.
+# param   osSel         The OS selection.
 #
-def prepareArch( targetConf, targetPath ):
+def prepareArch( targetConf, targetPath, osSel ):
+    global prjPath
     global genv
 
     # Assemble root arch path and vendor specific path
@@ -349,6 +382,38 @@ def prepareArch( targetConf, targetPath ):
                  targetConf['cpu'] + '/ldscript/' + targetConf['scriptfile']
         genv.MergeFlags({'LINKFLAGS' : lflags} )
 
+    # If no OS selection was made we can skip
+    # the following parts.
+    if( osSel == "none"):
+        return
+
+    # Check if the given OS is supported by the
+    # given architecture.
+    if( 'os' not in archConf ):
+        print 'OS ' +  osSel + ' is not supported for this target.'
+        exit(1)
+    if( osSel not in archConf['os'] ):
+        print 'OS ' +  osSel + ' is not supported for this target.'
+        exit(1)
+
+    # Get the OS configuration for the current
+    # selected architecture.
+    osConf = archConf['os'][osSel]       
+
+    # Get the modules from the OS specific SConsfile
+    osPath = prjPath + osSel +'/'
+    osModules = genv.SConscript(osPath + 'SConscript')
+
+    # Add the architecture specific source files and
+    # include directories
+    for module in osConf['source']:
+        for source in osModules[module]:
+            addIncludePath(osPath + source)
+            addSources(osPath + source + '.c')
+
+    # Merge Flags for OS Configuration
+    genv.MergeFlags( osConf )
+
 
 
 # Prepare the board for the build configuration.
@@ -376,7 +441,7 @@ def prepareBoard():
     prepareBsp( targetPath )
     prepareHal( boardConf['brd'], targetPath )
     prepareInterface( boardConf['brd'], targetPath )
-    prepareArch( boardConf['brd'], targetPath )
+    prepareArch( boardConf['brd'], targetPath, osSel )
 
     # Merge core flags
     genv.MergeFlags( boardConf['std'] )
@@ -413,6 +478,8 @@ for demoConf in demos:
     # Prepare application with its configuration */
     prepareApp( demo, conf )
 
+# Prepare operating system
+prepareOS( osSel )
 # Prepare board configuration
 prepareBoard()
 # Prepare Custom Flags

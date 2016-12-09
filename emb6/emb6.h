@@ -664,7 +664,21 @@ void emb6_init(s_ns_t* pst_netStack, e_nsErr_t *p_err);
 
 */
 /*============================================================================*/
-void emb6_process(uint16_t delay);
+void emb6_process(int32_t delay);
+
+/*============================================================================*/
+/*!
+\brief   emb6 process function
+
+    This function handles all events and timers of the emb6 stack in a loop
+
+\param   delay sets a delay in µs at the end of the function
+
+\return  none
+
+*/
+/*============================================================================*/
+void emb6_process(int32_t delay);
 
 /*============================================================================*/
 /*!
