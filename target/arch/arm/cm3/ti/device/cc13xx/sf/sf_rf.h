@@ -222,4 +222,15 @@ void sf_rf_sleep(void);
 void sf_rf_wake(void);
 
 
+/*============================================================================*/
+/**
+ * @brief  update frequency.
+ *
+ * @param frequency         //!<        The frequency in MHz to tune to
+ * @param fractFreq;        //!<        Fractional part of the frequency to tune to
+ */
+/*============================================================================*/
+
+bool sf_rf_update_frequency(uint16_t frequency, uint16_t fractFreq);
+
 #endif /* __RF_H__ */

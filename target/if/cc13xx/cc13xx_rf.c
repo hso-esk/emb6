@@ -221,9 +221,11 @@ static void loc_cc13xx_cca(e_nsErr_t *p_err)
  */
 static void loc_rf_chanNumSet(uint8_t chan_num, e_nsErr_t *p_err) {
 
-  /* set returned error value to default */
-  *p_err = NETSTK_ERR_NONE;
-
+    /* set the desired channel */
+    if(sf_rf_6lowpan_chanNumSet(chan_num))
+        *p_err = NETSTK_ERR_NONE;
+    else
+        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
 }
 
 /*

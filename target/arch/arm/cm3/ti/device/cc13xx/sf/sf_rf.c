@@ -1,3 +1,4 @@
+
 /**
 * @code
 *  ___ _____ _   ___ _  _____ ___  ___  ___ ___
@@ -39,7 +40,7 @@ extern "C" {
 #include "rflib/rf_queue.h"
 #include "driverlib/rf_mailbox.h"
 #include "bsp.h"
-#include "sf_cc13xx_802_15_4_ch26.h"
+#include <cc13xx_cfg.h>
 #include "sf_rf_6lowpan.h"
 
 #include "llframer.h"
@@ -225,10 +226,10 @@ uint8_t rf_driver_routine(e_rf_status_t state)
     if(rf_driver_init())
     {
       /* initiate command pointer */
-      cc1310.conf.ps_cmdPropRadioDivSetup=(rfc_radioOp_t*)&RF_802_15_4_ch26_cmdPropRadioDivSetup;
-      cc1310.conf.ps_cmdFs=(rfc_radioOp_t*)&RF_802_15_4_ch26_cmdFs;
-      cc1310.rx.p_cmdPropRxAdv=&RF_802_15_4_ch26_cmdPropRxAdv;
-      cc1310.tx.p_cmdPropTxAdv=&RF_802_15_4_ch26_cmdPropTxAdv;
+      cc1310.conf.ps_cmdPropRadioDivSetup=(rfc_radioOp_t*)&RF_802_15_4_cmdPropRadioDivSetup;
+      cc1310.conf.ps_cmdFs=(rfc_radioOp_t*)&RF_802_15_4_cmdFs;
+      cc1310.rx.p_cmdPropRxAdv=&RF_802_15_4_cmdPropRxAdv;
+      cc1310.tx.p_cmdPropTxAdv=&RF_802_15_4_cmdPropTxAdv;
 
       /*initiate CCA command */
       sf_rf_set_numOfRssiMeas(CC13xx_NUM_OFF_RSSI_CHECKS_DEFAULT);
@@ -535,6 +536,28 @@ static void sf_rf_init_cca_cmd(void)
 }
 
 
+
+bool sf_rf_update_frequency(uint16_t frequency, uint16_t fractFreq)
+{
+    /* check the struct is already initialized */
+    if(cc1310.conf.ps_cmdFs== NULL)
+        return false;
+    ((rfc_CMD_FS_t*)cc1310.conf.ps_cmdFs)->frequency=frequency;
+    ((rfc_CMD_FS_t*)cc1310.conf.ps_cmdFs)->fractFreq=fractFreq;
+
+    /* Stop the last command : it should be RX command (May be no command in sleepy mode) */
+    RFC_sendDirectCmd(CMDR_DIR_CMD(CMD_ABORT));
+    /* TODO check if we have to setup the radio again */
+
+    /* Send CMD_FS command to RF Core */
+    if(RFC_sendRadioOp(cc1310.conf.ps_cmdFs) != RFC_CMDSTATUS_DONE)
+    {
+      bsp_led( E_BSP_LED_3, E_BSP_LED_ON );
+      return false ;
+    }
+
+  return true;
+}
 
 /*==============================================================================
                          LOCAL FUNCTIONS

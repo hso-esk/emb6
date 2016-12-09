@@ -153,5 +153,12 @@ E_RF_CCA_RESULT_t sf_rf_6lowpan_cca(uint8_t c_numOfRssiMeas);
 /*============================================================================*/
 void cc13xx_eventHandler(c_event_t c_event, p_data_t p_data);
 
+
+/*============================================================================*/
+/**
+ * @brief  Select Channel
+ */
+/*============================================================================*/
+bool sf_rf_6lowpan_chanNumSet(uint8_t chan_num);
 /*! @} sf_6lowpan_rf */
 #endif /* __SF_RF_6LOWPAN_H__ */

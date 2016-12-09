@@ -1,3 +1,4 @@
+
 /**
  * @code
  *  ___ _____ _   ___ _  _____ ___  ___  ___ ___
@@ -36,7 +37,7 @@ extern "C" {
 
 #include "rflib/rf_cc1350.h"
 #include "sf_rf.h"
-#include "sf_cc13xx_802_15_4_ch26.h"
+#include <cc13xx_cfg.h>
 #include "sf_rf_6lowpan.h"
 #include "bsp/ti_cc13xx/board_conf.h"
 
@@ -198,6 +199,41 @@ E_RF_CCA_RESULT_t sf_rf_6lowpan_cca(uint8_t c_numOfRssiMeas)
   /* Set the transceiver in RX mode */
   rf_driver_routine(RF_STATUS_RX_LISTEN);
   return e_return;
+}
+
+
+bool sf_rf_6lowpan_chanNumSet(uint8_t chan_num)
+{
+    uint8_t retVal;
+    /* TODO Check all case (sleepy mode)
+     * either wake up and configure ans sleep again
+     * or
+     * update struct and wake up fct with setup the radio with new freq
+     * */
+    if(sf_rf_get_Status()== RF_STATUS_RX_LISTEN )
+    {
+        /* FIXME we should use either lookup table or calculate it using expression */
+        switch (chan_num)
+        {
+        case 0:
+            if(sf_rf_update_frequency(0x035f, 0x2000))
+                retVal= true;
+            break;
+        case 26:
+            if(sf_rf_update_frequency(0x0364, 0x5333))
+                retVal= true;
+            break;
+        default:
+            /* return error : invalid argument or unsupported channel */
+            retVal= false;
+            break;
+        }
+        /* Set the transceiver in RX mode */
+        rf_driver_routine(RF_STATUS_RX_LISTEN);
+    }
+    else
+        retVal= false;
+return retVal;
 }
 
 #ifdef __cplusplus
