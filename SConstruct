@@ -153,6 +153,13 @@ def createOptions():
               help='Network type and its role')
 
 
+    AddOption('--mac',
+              dest='mac', type='string',
+              nargs=1, action='store',
+              metavar='<mac-address>',
+              help='Last two bytes of target mac address e.g. mac=0xffff')
+
+
     AddOption('--ccflags',
               dest='customCFlags', type='string',
               nargs=1, action='store',
@@ -360,6 +367,7 @@ if not genv.GetOption('help'):
     demos = getDemosfromName( genv.GetOption('demos') )
     bsp = getBSPfromName( genv.GetOption('bsp') )
     net =  genv.GetOption('net')
+    mac =  genv.GetOption('mac')
 
     if( genv.GetOption('showDemos') ):
         printDemosandExit()
@@ -386,14 +394,28 @@ if not genv.GetOption('help'):
     # specified by command line or automatically assembled name.
     targetName = genv.GetOption('outputName')
     if( targetName is None ):
+
+        #Use first demo as start name
         targetName = ''
-        # Create the name from the Demos included
-        for demo in demos:
-            targetName += demo['id']
+        targetName += demos[0]['id']
+
+        # Create the name from the following demos included
+        for demoName in demos[1:]:
+            targetName += '.' + demoName['id']
+
+        # Add the network role
+        targetName += '-' + net
+
+        # Add the bsp name
+        targetName += '-' + bsp['id']
+
+        if( mac is not None ):
+          # Add the mac address
+          targetName += '_' + mac
 
     # Forward some variables
     customCFlags = genv.GetOption('customCFlags')
-    args = 'genv targetName demos bsp net customCFlags'
+    args = 'genv targetName demos bsp net mac customCFlags'
     # Also formward the Log-Level if enabled
     if genv.GetOption('log_lvl'):
         log_lvl = genv.GetOption('log_lvl')
@@ -409,7 +431,7 @@ if not genv.GetOption('help'):
     print '===================================================================='
     print '> Select configuration parameters...'
     print '> Target Name:                  ' + targetName
-    if( demo['demo'][1] == "" ):
+    if( demos[0]['demo'][1] == "" ):
         print '> Application and Config:       ' + demos[0]['id'] + ' [' + demos[0]['demo'][0] + ',' + demos[0]['demo'][1] + ']'
     else:
         print '> Application and Config:       ' + demos[0]['id'] + ' [' + demos[0]['demo'][0] + ']'

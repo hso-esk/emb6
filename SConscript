@@ -50,7 +50,7 @@ includes = []
 prjPath = './'
 
 
-Import('genv', 'targetName', 'demos', 'bsp', 'net', 'customCFlags')
+Import('genv', 'targetName', 'demos', 'bsp', 'net', 'mac', 'customCFlags')
 
 # Function to add sources to compilation.
 #
@@ -384,12 +384,17 @@ def prepareBoard():
 
 def prepareCFlags():
 
-    if( customCFlags is None ):
-        return
+    if( mac is not None ):
 
-    # Split the flags and merge them
-    flags = customCFlags.split(',')
-    genv.MergeFlags({'CPPDEFINES' : flags})
+        # Merge flags for the MAC address
+        mmac = 'MAC_ADDR_WORD='+ mac
+        genv.MergeFlags({'CPPDEFINES' : mmac})
+
+    if( customCFlags is not None ):
+
+        # Split the flags and merge them
+        flags = customCFlags.split(',')
+        genv.MergeFlags({'CPPDEFINES' : flags})
 
 
 ################################################################################
