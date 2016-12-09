@@ -137,17 +137,27 @@ def createOptions():
               metavar='<demoa,demob>',
               help='Names of the demos to use as a comma separated list')
 
-    AddOption('--ccflags',
-              dest='customCFlags', type='string',
-              nargs=1, action='store', 
-              metavar='<DEBUG,MAX=5>',
-              help='Custom Compilation Flags as comma separated list ')
-
     AddOption('--bsp',
               dest='bsp', type='string',
               nargs=1, action='store',
               metavar='<bsp>',
               help='Name of the Board Support Package (BSP) to use')
+
+
+    AddOption('--net',
+              dest='net', type='choice',
+              action='store',
+              choices=['rpl-router', 'rpl-dagroot',],
+              default='rpl-router',
+              metavar='<net-role>',
+              help='Network type and its role')
+
+
+    AddOption('--ccflags',
+              dest='customCFlags', type='string',
+              nargs=1, action='store',
+              metavar='<DEBUG,MAX=5>',
+              help='Custom Compilation Flags as comma separated list ')
 
     AddOption('--logger',
               dest='log_lvl', type='string',
@@ -349,6 +359,7 @@ if not genv.GetOption('help'):
     # get demos and BSP configured vi athe command line
     demos = getDemosfromName( genv.GetOption('demos') )
     bsp = getBSPfromName( genv.GetOption('bsp') )
+    net =  genv.GetOption('net')
 
     if( genv.GetOption('showDemos') ):
         printDemosandExit()
@@ -365,6 +376,11 @@ if not genv.GetOption('help'):
         print( 'Invalid or no Board Support Package configured.' )
         printBSPsandExit()
 
+    # Check if Network Configuration is OK
+    if( net is None ):
+        print( 'Invalid network configured.' )
+        exit(1)
+
 
     # Create the ouput name of the target. This is either the name
     # specified by command line or automatically assembled name.
@@ -377,7 +393,7 @@ if not genv.GetOption('help'):
 
     # Forward some variables
     customCFlags = genv.GetOption('customCFlags')
-    args = 'genv targetName demos bsp customCFlags'
+    args = 'genv targetName demos bsp net customCFlags'
     # Also formward the Log-Level if enabled
     if genv.GetOption('log_lvl'):
         log_lvl = genv.GetOption('log_lvl')

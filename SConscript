@@ -50,7 +50,7 @@ includes = []
 prjPath = './'
 
 
-Import('genv', 'targetName', 'demos', 'bsp', 'customCFlags')
+Import('genv', 'targetName', 'demos', 'bsp', 'net', 'customCFlags')
 
 # Function to add sources to compilation.
 #
@@ -148,7 +148,7 @@ def prepareEmb6( demoConf ):
     global genv
 
     emb6Path = prjPath + 'emb6/'
-    emb6Modules = genv.SConscript( emb6Path + 'SConscript')
+    emb6Modules, netModules = genv.SConscript( emb6Path + 'SConscript')
 
     # Add common include paths and source files.
     addIncludePath( emb6Path )
@@ -166,6 +166,12 @@ def prepareEmb6( demoConf ):
                 for path in emb6Modules[module]:
                     addIncludePath( emb6Path + 'inc/' + path )
                     addSources( emb6Path + 'src/' + path +'.c' )
+
+
+    # Include the network configuration
+    for sources in netModules[net]['sources']:
+        addIncludePath( emb6Path + 'inc/' + sources )
+        addSources( emb6Path + 'src/' + sources +'.c' )
 
 
 

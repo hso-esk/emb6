@@ -45,6 +45,19 @@
 demos = []
 
 
+# The APTB demo is an application that was wittesn specifically for the usage
+# in the APTB of ivESK. There is a server and a client configuration available.
+# The client continuously transmitts packets to the server.
+demos += [{
+    'id'    : 'APTPSrv',
+    'demo'  : ('aptb','server'),
+}]
+demos += [{
+    'id'    : 'APTBCli',
+    'demo'  : ('aptb','client'),
+}]
+
+
 # CoAP based alppications can be of server or client role. This application
 # includes the CoAP sources so that either resources can be accessed when
 # using a client or resources can be provided in case of a server.
@@ -106,20 +119,6 @@ demos += [{
     'id'    : 'ExtIf',
     'demo'  : ('extif',''),
 }]
-
-
-# The APTB demo is an application that was wittesn specifically for the usage
-# in the APTB of ivESK. There is a server and a client configuration available.
-# The client continuously transmitts packets to the server.
-demos += [{
-    'id'    : 'APTPSrv',
-    'demo'  : ('aptb','server'),
-}]
-demos += [{
-    'id'    : 'APTBCli',
-    'demo'  : ('aptb','client'),
-}]
-
 
 
 # The DTLS demo gives an example of how to establish a secured connection

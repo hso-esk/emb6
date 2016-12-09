@@ -43,7 +43,7 @@
 # groups the different layers and application for further usage within the
 # SCons build system.
 
-
+# This holds the modules for the emb::6 core.
 emb6 = {
 
    # Common source files that are mainly used from all of
@@ -105,12 +105,6 @@ emb6 = {
 		'net/ipv6/multicast/*',
 	],
 
-	# Adds the sources for the Routing over Low Power and Lossy Networks
-	# protocol (RPL).
-	'rpl' : [
-		'net/rpl/*',
-	],
-
 	# Sources of the 6LoWPAN frame handling such as the compression,
 	# fragmentation etc.
 	'sicslowpan':  [
@@ -155,11 +149,55 @@ emb6 = {
 	],
 
 # C global defines
-	'defines' : [
+	'CPPDEFINES' : [
 	],
 # GCC flags
-	'cflags' : [
+	'CFLAGS' : [
 	]	
 }
 
-Return('emb6')
+
+# This holds the modules for the emb::6 network functionality. Here all
+# the available network roles can be selected.
+net = {
+
+    'rpl-dagroot' : {
+        # Adds the sources for the Routing over Low Power and Lossy Networks
+        # protocol (RPL).
+        'sources' : [
+            'net/rpl/*',
+        ],
+        
+        # C global defines
+        'CPPDEFINES' : [
+            ('NET_USE_RPL',1),
+            ('EMB6_INIT_ROOT',1),
+        ],
+        
+        # GCC flags
+        'CFLAGS' : [
+        ] 
+    },
+    
+    'rpl-router' : {
+        # Adds the sources for the Routing over Low Power and Lossy Networks
+        # protocol (RPL).
+        'sources' : [
+            'net/rpl/*',
+        ],
+        
+        # C global defines
+        'CPPDEFINES' : [
+            ('NET_USE_RPL',1),
+        ],
+        
+        # GCC flags
+        'CFLAGS' : [
+        ] 
+    }
+}
+
+
+
+
+Return('emb6', 'net')
