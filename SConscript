@@ -385,7 +385,7 @@ def prepareCFlags():
         return
 
     # Split the flags and merge them
-    flags = customCFlags.split()
+    flags = customCFlags.split(',')
     genv.MergeFlags({'CPPDEFINES' : flags})
 
 
