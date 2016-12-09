@@ -164,10 +164,10 @@ def createOptions():
               nargs=1, action='store', metavar='<0/1/2/3>',
               help='Specify level of logger [from 0 to 3]')
 
-    AddOption('--verb',
-              dest='verbose', type='int',
-              nargs=1, action='store', metavar='<0/1>',
-              help='Show link commands [0 or 1]')
+    AddOption('--verbose',
+              dest='verbose', action='store_true',
+              default=False,
+              help='Show build commands')
 
 
 
