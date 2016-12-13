@@ -406,6 +406,10 @@ def prepareArch( targetConf, targetPath, osSel ):
 
     # Add the architecture specific source files and
     # include directories
+    for source in osConf['extra']:
+            addIncludePath( vendorPath + '/' + source )
+            addSources( vendorPath + '/' + source + '/*.c')
+
     for module in osConf['source']:
         for source in osModules[module]:
             addIncludePath(osPath + source)

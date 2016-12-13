@@ -183,6 +183,18 @@ typedef struct
 
 }s_emb6_startup_params_t;
 
+#if USE_FREERTOS
+/**
+ * LED task parameters
+ */
+typedef struct
+{
+    int en;
+    int delay;
+
+}s_led_task_param_t;
+#endif /* #if USE_FREERTOS */
+
 /*==============================================================================
                                      ENUMS
  =============================================================================*/
@@ -196,7 +208,7 @@ s_emb6_startup_params_t emb6_startupParams;
 
 #if USE_FREERTOS
 /** parameters for the LED Taks */
-extern s_led_task_param_t ledTaskParams;
+ s_led_task_param_t ledTaskParams;
 #endif /* #if USE_FREERTOS */
 
 /*==============================================================================

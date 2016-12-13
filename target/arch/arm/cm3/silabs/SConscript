@@ -38,6 +38,8 @@
 #
 ##
 
+# This section includes all the source files and definitions that are
+# required for a build of the specific architecture.
 arch = {
 
     'extra' : [
@@ -54,11 +56,18 @@ arch = {
     'CFLAGS' : [
     ],
 
+    # This section provides additional resources needed for specific
+    # operating systems.
     'os' : {
 
+        # FreeRTOS specific section.
         'freertos' : {
             'source' : [
                 'portableCM3'
+            ],
+
+            'extra' : [
+                'freertos/*'
             ],
 
              # C global defines
