@@ -88,9 +88,9 @@ bool sf_rf_6lowpan_init(void *p_netstk)
   ps_rf_netstk = (s_ns_t *)p_netstk;
 
   /* call the routine with init state to initialize the driver */
-  if(rf_driver_routine(RF_STATUS_INIT) != ROUTINE_DONE )
+  if(sf_rf_switchState(RF_STATUS_INIT) != ROUTINE_DONE )
     return false;
-  if(rf_driver_routine(RF_STATUS_RX_LISTEN)!= ROUTINE_DONE)
+  if(sf_rf_switchState(RF_STATUS_RX_LISTEN)!= ROUTINE_DONE)
     return false;
   /* initialize local variables */
   RF_SEM_WAIT(NETSTK_RF_EVENT);
@@ -111,7 +111,7 @@ uint8_t sf_rf_6lowpan_sendBlocking(uint8_t *pc_data, uint16_t  i_len)
     return 0;
   }
   /* call the routine with tx state to send the packet*/
-  status = rf_driver_routine(RF_STATUS_TX);
+  status = sf_rf_switchState(RF_STATUS_TX);
   if(status != ROUTINE_DONE && status != ROUTINE_ERROR_TX_NOACK )
   {
       bsp_led( E_BSP_LED_3, E_BSP_LED_ON );
@@ -123,7 +123,7 @@ uint8_t sf_rf_6lowpan_sendBlocking(uint8_t *pc_data, uint16_t  i_len)
           bsp_led( E_BSP_LED_2, E_BSP_LED_TOGGLE );
         #endif
         /* Set the transceiver in rx mode */
-          rf_driver_routine(RF_STATUS_RX_LISTEN);
+          sf_rf_switchState(RF_STATUS_RX_LISTEN);
         if(status== ROUTINE_DONE)
             return 1;
         else
@@ -145,10 +145,10 @@ void sf_rf_6lowpan_sleep(void)
 bool sf_rf_6lowpan_startRx(void) //  called by the radio : cc13xx_On (e_nsErr_t *p_err)
 {
   /* TODO check if we have to initialize/wake */
-  if(rf_driver_routine(RF_STATUS_INIT)!= ROUTINE_DONE)
+  if(sf_rf_switchState(RF_STATUS_INIT)!= ROUTINE_DONE)
         return false;
   /* Turn radio to RX mode */
-  if(rf_driver_routine(RF_STATUS_RX_LISTEN)!= ROUTINE_DONE)
+  if(sf_rf_switchState(RF_STATUS_RX_LISTEN)!= ROUTINE_DONE)
       return false;
 
   return true;
@@ -159,7 +159,7 @@ bool sf_rf_6lowpan_startRx(void) //  called by the radio : cc13xx_On (e_nsErr_t 
 /*============================================================================*/
 uint8_t sf_rf_6lowpan_getTxPower(void)
 {
-  return sf_rf_getSignalStrength();
+  return sf_rf_getTxPower();
 }
 
 /*============================================================================*/
@@ -167,7 +167,7 @@ uint8_t sf_rf_6lowpan_getTxPower(void)
 /*============================================================================*/
 bool sf_rf_6lowpan_setTxPower(uint8_t c_txPower)
 {
-  return sf_rf_setSignalStrength(c_txPower);
+  return sf_rf_setTxPower(c_txPower);
 }
 
 /*============================================================================*/
@@ -189,7 +189,7 @@ E_RF_CCA_RESULT_t sf_rf_6lowpan_cca(uint8_t c_numOfRssiMeas)
   /* set number of RSSI measurement */
   sf_rf_set_numOfRssiMeas(c_numOfRssiMeas);
   /* Check if we are in the expected state: TODO check if this needed */
-    returnValue=rf_driver_routine(RF_STATUS_CCA);
+    returnValue=sf_rf_switchState(RF_STATUS_CCA);
     if(returnValue == ROUTINE_CCA_RESULT_IDLE)
       e_return = E_RF_CCA_RESULT_IDLE;
     else if (returnValue == ROUTINE_CCA_RESULT_BUSY )
@@ -197,7 +197,7 @@ E_RF_CCA_RESULT_t sf_rf_6lowpan_cca(uint8_t c_numOfRssiMeas)
     else
       e_return = E_RF_CCA_RESULT_INVALID_RF_STATE;
   /* Set the transceiver in RX mode */
-  rf_driver_routine(RF_STATUS_RX_LISTEN);
+  sf_rf_switchState(RF_STATUS_RX_LISTEN);
   return e_return;
 }
 
@@ -226,8 +226,7 @@ bool sf_rf_6lowpan_chanNumSet(uint8_t chan_num)
             Delta=0x3333;
             break;
         default:
-            retVal= false;
-            break;
+            return false;
         }
 
         /* calculate the frequency parameters for desired channel */
@@ -239,7 +238,7 @@ bool sf_rf_6lowpan_chanNumSet(uint8_t chan_num)
         else
           retVal= false;
         /* Set the transceiver in RX mode */
-        rf_driver_routine(RF_STATUS_RX_LISTEN);
+        sf_rf_switchState(RF_STATUS_RX_LISTEN);
     }
     else
         retVal= false;

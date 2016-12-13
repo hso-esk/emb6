@@ -164,12 +164,12 @@ static void rx_call_back(uint32_t l_flag)
       else
       {
         /* handle the received packet */
-        rf_driver_routine(RF_STATUS_RX);
+        sf_rf_switchState(RF_STATUS_RX);
         /* signal complete reception interrupt */
         RF_SEM_POST(NETSTK_RF_EVENT);
       }
       /* set RX mode again */
-      rf_driver_routine(RF_STATUS_RX_LISTEN);
+      sf_rf_switchState(RF_STATUS_RX_LISTEN);
       bsp_led( E_BSP_LED_1, E_BSP_LED_OFF );
       bsp_led( E_BSP_LED_0, E_BSP_LED_ON );
       bsp_led( E_BSP_LED_3, E_BSP_LED_TOGGLE );
@@ -177,7 +177,7 @@ static void rx_call_back(uint32_t l_flag)
   else if(IRQ_RX_NOK == (l_flag & IRQ_RX_NOK))
   {
     /* set RX mode again */
-    rf_driver_routine(RF_STATUS_RX_LISTEN);
+    sf_rf_switchState(RF_STATUS_RX_LISTEN);
     bsp_led( E_BSP_LED_1, E_BSP_LED_ON );
     bsp_led( E_BSP_LED_0, E_BSP_LED_OFF );
     bsp_led( E_BSP_LED_3, E_BSP_LED_TOGGLE );
@@ -185,11 +185,11 @@ static void rx_call_back(uint32_t l_flag)
   else if(IRQ_INTERNAL_ERROR == (l_flag & IRQ_INTERNAL_ERROR))
   {
       /* Initialize the driver again */
-      if(rf_driver_routine(RF_STATUS_INIT) != ROUTINE_DONE )
-          rf_driver_routine(RF_STATUS_ERROR);
+      if(sf_rf_switchState(RF_STATUS_INIT) != ROUTINE_DONE )
+          sf_rf_switchState(RF_STATUS_ERROR);
       /* Send RX command to the radio */
-      if(rf_driver_routine(RF_STATUS_RX_LISTEN)!= ROUTINE_DONE)
-          rf_driver_routine(RF_STATUS_ERROR);
+      if(sf_rf_switchState(RF_STATUS_RX_LISTEN)!= ROUTINE_DONE)
+          sf_rf_switchState(RF_STATUS_ERROR);
     bsp_led( E_BSP_LED_1, E_BSP_LED_ON );
     bsp_led( E_BSP_LED_0, E_BSP_LED_ON );
   }
@@ -197,7 +197,7 @@ static void rx_call_back(uint32_t l_flag)
           || (IRQ_RX_ABORTED == (l_flag & IRQ_RX_ABORTED)) )
   {
     /* set RX mode again */
-    rf_driver_routine(RF_STATUS_RX_LISTEN);
+    sf_rf_switchState(RF_STATUS_RX_LISTEN);
     bsp_led( E_BSP_LED_1, E_BSP_LED_ON );
     bsp_led( E_BSP_LED_0, E_BSP_LED_ON );
   }
@@ -206,7 +206,7 @@ static void rx_call_back(uint32_t l_flag)
 
 
 
-uint8_t rf_driver_routine(e_rf_status_t state)
+uint8_t sf_rf_switchState(e_rf_status_t state)
 {
   /* Return value of lib functions */
   static rfc_returnValue_t returnValue;
@@ -628,7 +628,7 @@ void sf_rf_sleep(void)
  /* TODO check the state before */
 
  /* Turn OFF radio core and disable interrupt */
- rf_driver_routine(RF_STATUS_SLEEP);
+ sf_rf_switchState(RF_STATUS_SLEEP);
 
 }
 
@@ -638,14 +638,14 @@ void sf_rf_sleep(void)
 void sf_rf_wake(void)
 {
     /* TODO  again */
-    rf_driver_routine(RF_STATUS_INIT);
+    sf_rf_switchState(RF_STATUS_INIT);
   return;
 } /* sf_rf_wake() */
 
 /*============================================================================*/
 /** sf_rf_setSignalStrength() */
 /*============================================================================*/
-bool sf_rf_setSignalStrength(uint8_t c_signal)
+bool sf_rf_setTxPower(uint8_t c_signal)
 {
   bool b_return = true;
   /** Command for setting the tx power */
@@ -726,7 +726,7 @@ bool sf_rf_setSignalStrength(uint8_t c_signal)
 /*============================================================================*/
 /** sf_rf_getSignalStrength() */
 /*============================================================================*/
-uint8_t sf_rf_getSignalStrength(void)
+uint8_t sf_rf_getTxPower(void)
 {
   return cc1310.tx.signalStrength;
 }

@@ -129,7 +129,7 @@ typedef struct
 } st_cc1310_t;
 
 
-uint8_t         rf_driver_routine(e_rf_status_t stat);
+uint8_t         sf_rf_switchState(e_rf_status_t stat);
 e_rf_status_t   sf_rf_get_Status(void);
 uint8_t         sf_rf_getRssi(void);
 uint8_t         sf_rf_init_tx(uint8_t *pc_data, uint16_t  i_len);
@@ -195,7 +195,7 @@ bool sf_rf_setRfChannel(rfc_radioOp_t* ps_cmdPropRadioDivSetup,
  *                       to the next supported value.
  */
 /*============================================================================*/
-bool sf_rf_setSignalStrength(uint8_t c_signal);
+bool sf_rf_setTxPower(uint8_t c_signal);
 
 /*============================================================================*/
 /**
@@ -205,7 +205,7 @@ bool sf_rf_setSignalStrength(uint8_t c_signal);
  *                       not known.
  */
 /*============================================================================*/
-uint8_t sf_rf_getSignalStrength(void);
+uint8_t sf_rf_getTxPower(void);
 
 /*============================================================================*/
 /**
