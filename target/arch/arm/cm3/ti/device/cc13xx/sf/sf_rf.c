@@ -542,13 +542,21 @@ bool sf_rf_update_frequency(uint16_t frequency, uint16_t fractFreq)
     /* check the struct is already initialized */
     if(cc1310.conf.ps_cmdFs== NULL)
         return false;
-    ((rfc_CMD_FS_t*)cc1310.conf.ps_cmdFs)->frequency=frequency;
-    ((rfc_CMD_FS_t*)cc1310.conf.ps_cmdFs)->fractFreq=fractFreq;
 
     /* Stop the last command : it should be RX command (May be no command in sleepy mode) */
     RFC_sendDirectCmd(CMDR_DIR_CMD(CMD_ABORT));
-    /* TODO check if we have to setup the radio again */
-
+    /* check if the center frequency is changed then we have to setup the radio again */
+    if(((rfc_CMD_PROP_RADIO_DIV_SETUP_t*)cc1310.conf.ps_cmdPropRadioDivSetup)->centerFreq != frequency)
+    {
+        /* set the new center Frequency */
+        ((rfc_CMD_PROP_RADIO_DIV_SETUP_t*)cc1310.conf.ps_cmdPropRadioDivSetup)->centerFreq=frequency;
+        /* send Setup command again */
+        if(RFC_setupRadio(cc1310.conf.ps_cmdPropRadioDivSetup) != RFC_OK)
+            return false ;
+    }
+    /* update FS command */
+    ((rfc_CMD_FS_t*)cc1310.conf.ps_cmdFs)->frequency=frequency;
+    ((rfc_CMD_FS_t*)cc1310.conf.ps_cmdFs)->fractFreq=fractFreq;
     /* Send CMD_FS command to RF Core */
     if(RFC_sendRadioOp(cc1310.conf.ps_cmdFs) != RFC_CMDSTATUS_DONE)
     {

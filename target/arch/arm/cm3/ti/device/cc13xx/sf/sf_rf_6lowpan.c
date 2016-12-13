@@ -205,29 +205,39 @@ E_RF_CCA_RESULT_t sf_rf_6lowpan_cca(uint8_t c_numOfRssiMeas)
 bool sf_rf_6lowpan_chanNumSet(uint8_t chan_num)
 {
     uint8_t retVal;
+    uint16_t Cent_freq;
+    uint16_t Frac_Freq;
+    uint16_t Delta;
+    uint8_t OpMode=1;
     /* TODO Check all case (sleepy mode)
      * either wake up and configure ans sleep again
      * or
      * update struct and wake up fct with setup the radio with new freq
      * */
-    if(sf_rf_get_Status()== RF_STATUS_RX_LISTEN )
+    if( (sf_rf_get_Status()== RF_STATUS_RX_LISTEN) && chan_num <= 33 )
     {
-        /* FIXME we should use either lookup table or calculate it using expression */
-        switch (chan_num)
+
+        /* check the operation mode */
+        switch(OpMode)
         {
-        case 0:
-            if(sf_rf_update_frequency(0x035f, 0x2000))
-                retVal= true;
-            break;
-        case 26:
-            if(sf_rf_update_frequency(0x0364, 0x5333))
-                retVal= true;
+        case 1 :
+            Cent_freq=0x035F;
+            Frac_Freq=0x2000;
+            Delta=0x3333;
             break;
         default:
-            /* return error : invalid argument or unsupported channel */
             retVal= false;
             break;
         }
+
+        /* calculate the frequency parameters for desired channel */
+        Cent_freq = Cent_freq + (chan_num / 5);
+        Frac_Freq = Frac_Freq + (chan_num % 5) * Delta;
+        /* update frequency */
+        if(sf_rf_update_frequency(Cent_freq, Frac_Freq))
+          retVal= true;
+        else
+          retVal= false;
         /* Set the transceiver in RX mode */
         rf_driver_routine(RF_STATUS_RX_LISTEN);
     }
