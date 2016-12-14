@@ -64,11 +64,12 @@
 /*
  * --- Macro Definitions --------------------------------------------------- *
  */
-/* Enable RF SPI */
+/** Enable RF SPI */
 #ifndef HAL_SUPPORT_RFSPI
 #define HAL_SUPPORT_RFSPI                   TRUE
 #endif /* #ifndef HAL_SUPPORT_RFSPI */
 
+/* add platform-specific SPIx configurations */
 /** USART used for RF SPI */
 #define EFM32_RFSPI_USART                   SPIDRV_MASTER_USART1
 /** Routing for the RF SPI pins */
@@ -90,117 +91,114 @@
 /** Pin index of the RF SPI cs pin */
 #define EFM32_IO_PIN_USART_CS               3
 
-/* Enable RF control 0 */
+/* add platform-specific RF_GPIOx configuration */
+/** Enable RF control 0 */
 #ifndef HAL_SUPPORT_RFCTRL0
 #define HAL_SUPPORT_RFCTRL0                 TRUE
 #endif /* #ifndef HAL_SUPPORT_RFSPI */
 /** Port of the RF control pin0 */
 #define EFM32_IO_PORT_RF_CTRL_0             gpioPortD
 /** Pin index of the RF control pin0 */
-#define EFM32_IO_PIN_RF_CTRL_0               4
+#define EFM32_IO_PIN_RF_CTRL_0              4
 /** Pin mode */
 #define EFM32_IO_PINMODE_RF_CTRL_0          gpioModeInputPull
 
-/* Enable RF control 0 */
+/** Enable RF control 1 */
 #ifndef HAL_SUPPORT_RFCTRL1
 #define HAL_SUPPORT_RFCTRL1                 TRUE
 #endif /* #ifndef HAL_SUPPORT_RFSPI */
 /** Port of the RF control pin1 */
-#define EFM32_IO_PORT_RF_CTRL_1              gpioPortD
+#define EFM32_IO_PORT_RF_CTRL_1             gpioPortD
 /** Pin index of the RF control pin1 */
-#define EFM32_IO_PIN_RF_CTRL_1               8
+#define EFM32_IO_PIN_RF_CTRL_1              8
 /** Pin mode */
 #define EFM32_IO_PINMODE_RF_CTRL_1          gpioModeInputPull
 
-/* Enable RF control 0 */
+/** Enable RF control 2 */
 #ifndef HAL_SUPPORT_RFCTRL2
-#define HAL_SUPPORT_RFCTRL2                  TRUE
+#define HAL_SUPPORT_RFCTRL2                 TRUE
 #endif /* #ifndef HAL_SUPPORT_RFSPI */
 /** Port of the RF control pin2 */
-#define EFM32_IO_PORT_RF_CTRL_2              gpioPortD
+#define EFM32_IO_PORT_RF_CTRL_2             gpioPortD
 /** Pin index of the RF control pin2 */
-#define EFM32_IO_PIN_RF_CTRL_2               6
+#define EFM32_IO_PIN_RF_CTRL_2              6
 /** Pin mode */
 #define EFM32_IO_PINMODE_RF_CTRL_2          gpioModeInputPull
 
+/* add platform-specific SLIPUART configuration */
 #if defined(HAL_SUPPORT_SLIPUART)
-/* Enable SLIP UART and IRQ */
 #define EFM32_SLIP_UART                     USART0
 #define EFM32_SLIP_UART_LOC                 UART_ROUTE_LOCATION_LOC3
-
 #define EFM32_SLIP_UART_PORT_USART_TX       gpioPortE
 #define EFM32_SLIP_UART_PIN_USART_TX        13
-
 #define EFM32_SLIP_UART_PORT_USART_RX       gpioPortE
 #define EFM32_SLIP_UART_PIN_USART_RX        12
-
 #define EFM32_SLIP_UART_BAUD                115200
 #define EFM32_SLIP_UART_RXIRQHNDL           USART0_RX_IRQHandler
 #endif /* #if defined(HAL_SUPPORT_SLIPUART) */
 
-/* Enable SLIP UART and IRQ */
+/* add debugging channel configuration */
 #define EFM32_DEBUG_UART                    USART0
 #define EFM32_DEBUG_UART_LOC                USART_ROUTE_LOCATION_LOC1
-
 #define EFM32_DEBUG_UART_PORT_USART_TX      gpioPortE
 #define EFM32_DEBUG_UART_PIN_USART_TX       0
-
 #define EFM32_DEBUG_UART_PORT_USART_RX      gpioPortE
 #define EFM32_DEBUG_UART_PIN_USART_RX       1
-
 #define EFM32_DEBUG_UART_BAUD               115200
 
-
-/* Enable LED  support */
+/* add platform-specific LEDs configuration */
+/** Number of supported LEDs */
 #ifndef HAL_SUPPORT_LEDNUM
 #define HAL_SUPPORT_LEDNUM                  2
 #endif /* #ifndef HAL_SUPPORT_LEDNUM */
 
-/* Enable LED0 port */
+/** Enable LED0 */
 #ifndef HAL_SUPPORT_LED0
 #define HAL_SUPPORT_LED0                    TRUE
 #endif /* #ifndef HAL_SUPPORT_LED0 */
-
 /** LED0 port */
 #define EFM32_IO_PORT_LED0                  gpioPortA
 /** LED0 pin index */
 #define EFM32_IO_PIN_LED0                   1
 
-/* Enable LED1 port */
+/** Enable LED1 */
 #ifndef HAL_SUPPORT_LED1
 #define HAL_SUPPORT_LED1                    TRUE
 #endif /* #ifndef HAL_SUPPORT_LED1 */
-
 /** LED1 port */
 #define EFM32_IO_PORT_LED1                  gpioPortA
 /** LED1 pin index */
 #define EFM32_IO_PIN_LED1                   2
 
+
 /*
- * DELAY
+ * --- Stack Macro Definitions ---------------------------------------------- *
  */
+/** additional delay between consecutive iteration of emb6 process */
 #define EMB6_PROC_DELAY                     0
 
-
+/** transceiver manufacture identifier */
 #define CC112X_PART_NUMBER                  0x48
 #define CC112X_PART_VERSION                 0x23
 
-#ifndef MODULATION
+/** transceiver modulation scheme */
+#if !defined(MODULATION)
 #define MODULATION                          MODULATION_2FSK50
-#endif
+#endif /* #if !defined(MODULATION) */
 
-/* enable auto-acknowledgment of radio driver */
+/** enable auto-acknowledgment of radio driver */
 #define NETSTK_CFG_RF_SW_AUTOACK_EN         TRUE
 
-/* radio transceiver does not support standard-specified checksum */
+/** radio transceiver does not support standard-specified checksum */
 #define NETSTK_CFG_RF_CRC_EN                FALSE
+
 
 /*
  *  --- Global Functions Definition ------------------------------------------*
  */
 
 /**
- * bsp_led()
+ * board_conf()
  *
  * \brief   Configure board.
  *

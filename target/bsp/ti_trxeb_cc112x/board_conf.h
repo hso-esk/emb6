@@ -73,6 +73,7 @@
 #define HAL_SUPPORT_RFSPI                   TRUE
 #endif /* #ifndef HAL_SUPPORT_RFSPI */
 
+/* add platform-specific SPIx configurations */
 /** Port of RF-SPI clock pin */
 #define MSP430_IO_PORT_SPI_CLK              E_IO_PORT_P3
 /** Pin of RF-SPI clock */
@@ -101,7 +102,7 @@
 /** Mask of RF-SPI clock pin */
 #define MSP430_IO_MASK_SPI_CS               (1 << MSP430_IO_PIN_SPI_CS)
 
-
+/* add platform-specific RF_GPIOx configuration */
 /** Enable RF control 0 */
 #ifndef HAL_SUPPORT_RFCTRL0
 #define HAL_SUPPORT_RFCTRL0                 TRUE
@@ -135,8 +136,7 @@
 /** Mask of RF control 1 pin */
 #define MSP430_IO_MASK_RF_CTRL2             (1 << MSP430_IO_PIN_RF_CTRL2)
 
-/* TODO add platform-specific SLIPUART configuration */
-
+/* add platform-specific SLIPUART configuration */
 #if defined(HAL_SUPPORT_SLIPUART)
 /** USART used for SLIP interface */
 #define MSP430_SLIP_UART                    E_UART_SEL_UART1
@@ -144,14 +144,11 @@
 #define MSP430_SLIP_UART_BAUD               115200
 #endif /* #if defined(HAL_SUPPORT_SLIPUART) */
 
-/* TODO add number of platform-specific LEDs */
-
+/* add platform-specific LEDs configuration */
 /** Number of supported LEDs */
 #ifndef HAL_SUPPORT_LEDNUM
 #define HAL_SUPPORT_LEDNUM                  ( 4 )
 #endif /* #ifndef HAL_SUPPORT_LEDNUM */
-
-/* TODO add platform-specific LEDs configuration */
 
 /** Enable LED0 */
 #ifndef HAL_SUPPORT_LED0
@@ -203,6 +200,17 @@
  */
 /** additional delay between consecutive iteration of emb6 process */
 #define EMB6_PROC_DELAY                     ( 0 )
+
+/** transceiver modulation scheme */
+#if !defined(MODULATION)
+#define MODULATION                          MODULATION_2FSK50
+#endif /* #if !defined(MODULATION) */
+
+/** enable auto-acknowledgment of radio driver */
+#define NETSTK_CFG_RF_SW_AUTOACK_EN         TRUE
+
+/** radio transceiver does not support standard-specified checksum */
+#define NETSTK_CFG_RF_CRC_EN                FALSE
 
 
 /*

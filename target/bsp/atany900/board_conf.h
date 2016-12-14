@@ -59,16 +59,17 @@
 /*
  * --- Includes -------------------------------------------------------------*
  */
-#include "emb6.h"
 
-#include <avr/io.h>
-#include <avr/interrupt.h>
 
+/*
+ * --- Macro Definitions --------------------------------------------------- *
+ */
 /* Enable RF SPI */
 #ifndef HAL_SUPPORT_RFSPI
 #define HAL_SUPPORT_RFSPI                   TRUE
 #endif /* #ifndef HAL_SUPPORT_RFSPI */
 
+/* add platform-specific SPIx configurations */
 /** RF SPI CLK data port */
 #define ATM1281_RFSPI_CLK_PORT              PORTB
 /** RF SPI CLK data direction */
@@ -97,8 +98,8 @@
 /** RF SPI CS pin */
 #define ATM1281_RFSPI_CS_PIN                0x00
 
-
-/* Enable RF control 0 */
+/* add platform-specific RF_GPIOx configuration */
+/** Enable RF control 0 */
 #ifndef HAL_SUPPORT_RFCTRL0
 #define HAL_SUPPORT_RFCTRL0                 TRUE
 #endif /* #ifndef HAL_SUPPORT_RFSPI */
@@ -109,7 +110,7 @@
 /** RF Reset pin */
 #define ATM1281_RESET_PIN                   0x07
 
-/* Enable RF control 0 */
+/** Enable RF control 1 */
 #ifndef HAL_SUPPORT_RFCTRL1
 #define HAL_SUPPORT_RFCTRL1                 TRUE
 #endif /* #ifndef HAL_SUPPORT_RFSPI */
@@ -120,7 +121,7 @@
 /** RF Sleep pin */
 #define ATM1281_SLP_TR_PIN                  0x04
 
-/* Enable RF control 0 */
+/** Enable RF control 2 */
 #ifndef HAL_SUPPORT_RFCTRL2
 #define HAL_SUPPORT_RFCTRL2                 TRUE
 #endif /* #ifndef HAL_SUPPORT_RFSPI */
@@ -132,46 +133,6 @@
 #define ATM1281_RFIRQ_PIN                   0x05
 /** RF IRQ num */
 #define ATM1281_RFIRQ_IRQNUM                INT5
-
-
-/* Enable LED  support */
-#ifndef HAL_SUPPORT_LEDNUM
-#define HAL_SUPPORT_LEDNUM                  3
-#endif /* #ifndef HAL_SUPPORT_LEDNUM */
-
-/* Enable LED0 port */
-#ifndef HAL_SUPPORT_LED0
-#define HAL_SUPPORT_LED0                    TRUE
-#endif /* #ifndef HAL_SUPPORT_LED0 */
-/** RF LED RED data port */
-#define ATM1281_LED0_PORT                   PORTB
-/** RF LED RED data direction */
-#define ATM1281_LED0_DDR                    DDRB
-/** RF LED RED pin */
-#define ATM1281_LED0_PIN                    0x05
-
-/* Enable LED1 port */
-#ifndef HAL_SUPPORT_LED1
-#define HAL_SUPPORT_LED1                    TRUE
-#endif /* #ifndef HAL_SUPPORT_LED2 */
-/** RF LED YELLOW data port */
-#define ATM1281_LED1_PORT                   PORTB
-/** RF LED YELLOW data direction */
-#define ATM1281_LED1_DDR                    DDRB
-/** RF LED YELLOW pin */
-#define ATM1281_LED1_PIN                    0x06
-
-/* Enable LED1 port */
-#ifndef HAL_SUPPORT_LED2
-#define HAL_SUPPORT_LED2                    TRUE
-#endif /* #ifndef HAL_SUPPORT_LED2 */
-/** RF LED GREEN data port */
-#define ATM1281_LED2_PORT                   PORTB
-/** RF LED GREEN data direction */
-#define ATM1281_LED2_DDR                    DDRB
-/** RF LED GREEN pin */
-#define ATM1281_LED2_PIN                    0x07
-
 
 /** Different UART baudrates available */
 #define ATM1281_USART_BAUD_2400             207
@@ -188,26 +149,59 @@
 #define ATM1281_USART_BAUD_250000           1
 #define ATM1281_USART_BAUD_500000           0
 
+/* add platform-specific SLIPUART configuration */
 #if defined (HAL_SUPPORT_SLIPUART)
-
-/* Debug UART instance*/
 #define ATM1281_UART_SLIP_INST              1
-
-/* Set the UART BAUD rate */
-#ifndef ATM1281_UART_SLIP_BAUD
 #define ATM1281_UART_SLIP_BAUD              ATM1281_USART_BAUD_38400
-#endif /* #ifndef UART_BAUD */
-
-#else
-
-/* Debug UART instance*/
-#define ATM1281_UART_DEBUG_INST             1
-
-/* Set the UART BAUD rate */
-#ifndef ATM1281_UART_DEBUG_BAUD
-#define ATM1281_UART_DEBUG_BAUD             ATM1281_USART_BAUD_38400
-#endif /* #ifndef UART_BAUD */
 #endif /* #if defined (HAL_SUPPORT_SLIP_UART) */
+
+/* add debugging channel configuration */
+#define ATM1281_UART_DEBUG_INST             1
+#define ATM1281_UART_DEBUG_BAUD             ATM1281_USART_BAUD_38400
+
+/* add platform-specific LEDs configuration */
+/** Number of supported LEDs */
+#ifndef HAL_SUPPORT_LEDNUM
+#define HAL_SUPPORT_LEDNUM                  3
+#endif /* #ifndef HAL_SUPPORT_LEDNUM */
+
+/** Enable LED0 */
+#ifndef HAL_SUPPORT_LED0
+#define HAL_SUPPORT_LED0                    TRUE
+#endif /* #ifndef HAL_SUPPORT_LED0 */
+/** RF LED RED data port */
+#define ATM1281_LED0_PORT                   PORTB
+/** RF LED RED data direction */
+#define ATM1281_LED0_DDR                    DDRB
+/** RF LED RED pin */
+#define ATM1281_LED0_PIN                    0x05
+
+/** Enable LED1 */
+#ifndef HAL_SUPPORT_LED1
+#define HAL_SUPPORT_LED1                    TRUE
+#endif /* #ifndef HAL_SUPPORT_LED2 */
+/** RF LED YELLOW data port */
+#define ATM1281_LED1_PORT                   PORTB
+/** RF LED YELLOW data direction */
+#define ATM1281_LED1_DDR                    DDRB
+/** RF LED YELLOW pin */
+#define ATM1281_LED1_PIN                    0x06
+
+/** Enable LED2 */
+#ifndef HAL_SUPPORT_LED2
+#define HAL_SUPPORT_LED2                    TRUE
+#endif /* #ifndef HAL_SUPPORT_LED2 */
+/** RF LED GREEN data port */
+#define ATM1281_LED2_PORT                   PORTB
+/** RF LED GREEN data direction */
+#define ATM1281_LED2_DDR                    DDRB
+/** RF LED GREEN pin */
+#define ATM1281_LED2_PIN                    0x07
+
+
+/*
+ * --- Stack Macro Definitions ---------------------------------------------- *
+ */
 
 /** transceiver supports standard-specific checksum algorithm */
 #define NETSTK_CFG_RF_CRC_EN                TRUE

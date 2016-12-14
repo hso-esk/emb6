@@ -69,14 +69,14 @@
 #ifndef HAL_SUPPORT_RFSPI
 #define HAL_SUPPORT_RFSPI                     TRUE
 #endif /* #ifndef HAL_SUPPORT_RFSPI */
+
+/* add platform-specific SPIx configurations */
 #define SAMD20_RFSPI_SERCOM                   SERCOM0
 #define SAMD20_RFSPI_SERCOM_MUX_SETTING       SPI_SIGNAL_MUX_SETTING_E
 #define SAMD20_RFSPI_SERCOM_PMUX0             PINMUX_PA04D_SERCOM0_PAD0
-#define SAMD20_RFSPI_SERCOM_PMUX1             PINMUX_UNUSED       // PINMUX_PA05D_SERCOM0_PAD1
+#define SAMD20_RFSPI_SERCOM_PMUX1             PINMUX_UNUSED
 #define SAMD20_RFSPI_SERCOM_PMUX2             PINMUX_PA06D_SERCOM0_PAD2
 #define SAMD20_RFSPI_SERCOM_PMUX3             PINMUX_PA07D_SERCOM0_PAD3
-
-/* TODO add platform-specific SPIx configurations */
 /** RF SPI clock pin */
 #define SAMD20_IO_PIN_SPI_CLK                 PIN_PA07
 /** RF SPI MOSI pin */
@@ -86,8 +86,7 @@
 /** RF SPI chip select pin */
 #define SAMD20_IO_PIN_SPI_CS                  PIN_PA05
 
-/* TODO add platform-specific RF_GPIOx configuration */
-
+/* add platform-specific RF_GPIOx configuration */
 /** Enable RF control 0 */
 #ifndef HAL_SUPPORT_RFCTRL0
 #define HAL_SUPPORT_RFCTRL0                   TRUE
@@ -114,8 +113,7 @@
 #define SAMD20_IO_PIN_RF_IRQ_PINMUX           PINMUX_PB09A_EIC_EXTINT9
 #define SAMD20_IO_PIN_RF_IRQ_CHANNEL          9
 
-
-/* TODO add platform-specific SLIPUART configuration */
+/* add platform-specific SLIPUART configuration */
 #if defined(HAL_SUPPORT_SLIPUART)
 #define SAMD20_SLIP_UART_SERCOM               SERCOM4
 #define SAMD20_SLIP_UART_BAUDRATE             38400
@@ -124,35 +122,42 @@
 #define SAMD20_SLIP_UART_SERCOM_PMUX1         PINMUX_UNUSED
 #define SAMD20_SLIP_UART_SERCOM_PMUX2         PINMUX_PB10D_SERCOM4_PAD2
 #define SAMD20_SLIP_UART_SERCOM_PMUX3         PINMUX_PB11D_SERCOM4_PAD3
-#define SAMD20_SLIP_UART_PIN_TX               PIN_PB10  /* TODO set the correct pin */
-#define SAMD20_SLIP_UART_PIN_RX               PIN_PB11  /* TODO set the correct pin */
+#define SAMD20_SLIP_UART_PIN_TX               PIN_PB10
+#define SAMD20_SLIP_UART_PIN_RX               PIN_PB11
 #endif /* #if defined(HAL_SUPPORT_SLIPUART) */
 
+/* add debugging channel configuration */
+#define SAMD20_DEBUG_UART_SERCOM              SERCOM4
+#define SAMD20_DEBUG_UART_BAUDRATE            38400
+#define SAMD20_DEBUG_UART_SERCOM_MUX_SETTING  USART_RX_3_TX_2_XCK_3
+#define SAMD20_DEBUG_UART_SERCOM_PMUX0        PINMUX_UNUSED
+#define SAMD20_DEBUG_UART_SERCOM_PMUX1        PINMUX_UNUSED
+#define SAMD20_DEBUG_UART_SERCOM_PMUX2        PINMUX_PB10D_SERCOM4_PAD2
+#define SAMD20_DEBUG_UART_SERCOM_PMUX3        PINMUX_PB11D_SERCOM4_PAD3
+#define SAMD20_DEBUG_UART_PIN_TX              PIN_PB10
+#define SAMD20_DEBUG_UART_PIN_RX              PIN_PB11
 
-/* TODO add number of platform-specific LEDs */
-
+/* add platform-specific LEDs configuration */
 /** Number of supported LEDs */
 #ifndef HAL_SUPPORT_LEDNUM
 #define HAL_SUPPORT_LEDNUM                    ( 3 )
 #endif /* #ifndef HAL_SUPPORT_LEDNUM */
 
-/* TODO add platform-specific LEDs configuration */
-
-/** Disable/Enable LED0 */
+/** Enable LED0 */
 #ifndef HAL_SUPPORT_LED0
 #define HAL_SUPPORT_LED0                      TRUE
 #endif /* #ifndef HAL_SUPPORT_LED0 */
 /** LED0 (red) port */
 #define SAMD20_IO_PIN_LED0                    PIN_PA23
 
-/** Disable/Enable LED1 */
+/** Enable LED1 */
 #ifndef HAL_SUPPORT_LED1
 #define HAL_SUPPORT_LED1                      TRUE
 #endif /* #ifndef HAL_SUPPORT_LED1 */
 /** LED1 (yellow) port */
 #define SAMD20_IO_PIN_LED1                    PIN_PA15
 
-/** Disable/Enable LED2 */
+/** Enable LED2 */
 #ifndef HAL_SUPPORT_LED2
 #define HAL_SUPPORT_LED2                      TRUE
 #endif /* #ifndef HAL_SUPPORT_LED2 */
@@ -164,7 +169,7 @@
  * --- Stack Macro Definitions ---------------------------------------------- *
  */
 /** additional delay between consecutive iteration of emb6 process */
-#define EMB6_PROC_DELAY                     ( 0 )
+#define EMB6_PROC_DELAY                       ( 1 )
 
 /** transceiver supports standard-specific checksum algorithm */
 #define NETSTK_CFG_RF_CRC_EN                  TRUE

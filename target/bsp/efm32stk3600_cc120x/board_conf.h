@@ -69,6 +69,7 @@
 #define HAL_SUPPORT_RFSPI                   TRUE
 #endif /* #ifndef HAL_SUPPORT_RFSPI */
 
+/* add platform-specific SPIx configurations */
 /** USART used for RF SPI */
 #define EFM32_RFSPI_USART                   SPIDRV_MASTER_USART1
 /** Routing for the RF SPI pins */
@@ -90,7 +91,7 @@
 /** Pin index of the RF SPI cs pin */
 #define EFM32_IO_PIN_USART_CS               3
 
-
+/* add platform-specific RF_GPIOx configuration */
 /** Enable RF control 0 */
 #ifndef HAL_SUPPORT_RFCTRL0
 #define HAL_SUPPORT_RFCTRL0                 TRUE
@@ -124,11 +125,12 @@
 /** Pin mode */
 #define EFM32_IO_PINMODE_RF_CTRL_2          gpioModeInputPull
 
+/* add platform-specific SLIPUART configuration */
 #if defined(HAL_SUPPORT_SLIPUART)
 /** USART used for SLIP interface */
-#define EFM32_SLIP_UART                     USART0
+#define EFM32_SLIP_UART                     UART0
 /** Routing for the SLIP UART pins */
-#define EFM32_SLIP_UART_LOC                 USART_ROUTE_LOCATION_LOC1
+#define EFM32_SLIP_UART_LOC                 UART_ROUTE_LOCATION_LOC1
 /** Port of the SLIP UART TX pin */
 #define EFM32_SLIP_UART_PORT_USART_TX       gpioPortE
 /** Pin index of the SLIP UART TX pin */
@@ -140,14 +142,14 @@
 /** Baudrate of SLIP UART */
 #define EFM32_SLIP_UART_BAUD                115200
 /** RX interrupt handler for SLIP UART */
-#define EFM32_SLIP_UART_RXIRQHNDL           USART0_RX_IRQHandler
+#define EFM32_SLIP_UART_RXIRQHNDL           UART0_RX_IRQHandler
 #endif /* #if defined(HAL_SUPPORT_SLIPUART) */
 
-
+/* add debugging channel configuration */
 /** USART used for DEBUG interface */
-#define EFM32_DEBUG_UART                    USART0
+#define EFM32_DEBUG_UART                    UART0
 /** Routing for the DEBUG UART pins */
-#define EFM32_DEBUG_UART_LOC                USART_ROUTE_LOCATION_LOC1
+#define EFM32_DEBUG_UART_LOC                UART_ROUTE_LOCATION_LOC1
 /** Port of the DEBUG UART TX pin */
 #define EFM32_DEBUG_UART_PORT_USART_TX      gpioPortE
 /** Pin index of the DEBUG UART TX pin */
@@ -159,7 +161,7 @@
 /** Baudrate of DEBUG UART */
 #define EFM32_DEBUG_UART_BAUD               115200
 
-
+/* add platform-specific LEDs configuration */
 /** Number of supported LEDs */
 #ifndef HAL_SUPPORT_LEDNUM
 #define HAL_SUPPORT_LEDNUM                  ( 2 )
@@ -191,9 +193,9 @@
 #define EMB6_PROC_DELAY                     ( 0 )
 
 /** Default modulation scheme */
-#ifndef MODULATION
+#if !defined(MODULATION)
 #define MODULATION                          MODULATION_2FSK50
-#endif
+#endif /* #if !defined(MODULATION) */
 
 /** Enable auto-acknowledgment of radio driver */
 #define NETSTK_CFG_RF_SW_AUTOACK_EN         TRUE

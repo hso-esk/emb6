@@ -66,17 +66,19 @@
 /*
  * --- Macro Definitions --------------------------------------------------- *
  */
-/* Disable LED  support */
+/* add platform-specific LEDs configuration */
+/** Number of supported LEDs */
 #ifndef HAL_SUPPORT_LEDNUM
-#define HAL_SUPPORT_LEDNUM                  0
+#define HAL_SUPPORT_LEDNUM                    ( 0 )
 #endif /* #ifndef HAL_SUPPORT_LEDNUM */
 
 
 /*
  * --- Stack Macro Definitions ---------------------------------------------- *
  */
-/* radio transceiver does support checksum computation */
-#define NETSTK_CFG_RF_CRC_EN                TRUE
+
+/** transceiver supports standard-specific checksum algorithm */
+#define NETSTK_CFG_RF_CRC_EN                  TRUE
 
 
 /*

@@ -68,13 +68,14 @@
 #ifndef HAL_SUPPORT_RFSPI
 #define HAL_SUPPORT_RFSPI                     TRUE
 #endif /* #ifndef HAL_SUPPORT_RFSPI */
+
+/* add platform-specific SPIx configurations */
 #define SAMD20_RFSPI_SERCOM                   SERCOM0
 #define SAMD20_RFSPI_SERCOM_MUX_SETTING       SPI_SIGNAL_MUX_SETTING_E
 #define SAMD20_RFSPI_SERCOM_PMUX0             PINMUX_PA04D_SERCOM0_PAD0
 #define SAMD20_RFSPI_SERCOM_PMUX1             PINMUX_UNUSED
 #define SAMD20_RFSPI_SERCOM_PMUX2             PINMUX_PA06D_SERCOM0_PAD2
 #define SAMD20_RFSPI_SERCOM_PMUX3             PINMUX_PA07D_SERCOM0_PAD3
-
 /** RF SPI clock pin */
 #define SAMD20_IO_PIN_SPI_CLK                 PIN_PA07
 /** RF SPI MOSI pin */
@@ -84,7 +85,7 @@
 /** RF SPI chip select pin */
 #define SAMD20_IO_PIN_SPI_CS                  PIN_PA05
 
-
+/* add platform-specific RF_GPIOx configuration */
 /** Enable RF control 0 */
 #ifndef HAL_SUPPORT_RFCTRL0
 #define HAL_SUPPORT_RFCTRL0                   TRUE
@@ -111,7 +112,7 @@
 #define SAMD20_IO_PIN_RF_IRQ_PINMUX           PINMUX_PB04A_EIC_EXTINT4
 #define SAMD20_IO_PIN_RF_IRQ_CHANNEL          4
 
-
+/* add platform-specific SLIPUART configuration */
 #if defined(HAL_SUPPORT_SLIPUART)
 #define SAMD20_SLIP_UART_SERCOM               SERCOM3
 #define SAMD20_SLIP_UART_BAUDRATE             38400
@@ -120,11 +121,22 @@
 #define SAMD20_SLIP_UART_SERCOM_PMUX1         PINMUX_UNUSED
 #define SAMD20_SLIP_UART_SERCOM_PMUX2         PINMUX_PA24C_SERCOM3_PAD2
 #define SAMD20_SLIP_UART_SERCOM_PMUX3         PINMUX_PA25C_SERCOM3_PAD3
-#define SAMD20_SLIP_UART_PIN_TX               PIN_PA24  /* TODO set the correct pin */
-#define SAMD20_SLIP_UART_PIN_RX               PIN_PA25  /* TODO set the correct pin */
+#define SAMD20_SLIP_UART_PIN_TX               PIN_PA24
+#define SAMD20_SLIP_UART_PIN_RX               PIN_PA25
 #endif /* #if defined(HAL_SUPPORT_SLIPUART) */
 
+/* add debugging channel configuration */
+#define SAMD20_DEBUG_UART_SERCOM              SERCOM3
+#define SAMD20_DEBUG_UART_BAUDRATE            38400
+#define SAMD20_DEBUG_UART_SERCOM_MUX_SETTING  USART_RX_3_TX_2_XCK_3
+#define SAMD20_DEBUG_UART_SERCOM_PMUX0        PINMUX_UNUSED
+#define SAMD20_DEBUG_UART_SERCOM_PMUX1        PINMUX_UNUSED
+#define SAMD20_DEBUG_UART_SERCOM_PMUX2        PINMUX_PA24C_SERCOM3_PAD2
+#define SAMD20_DEBUG_UART_SERCOM_PMUX3        PINMUX_PA25C_SERCOM3_PAD3
+#define SAMD20_DEBUG_UART_PIN_TX              PIN_PA24
+#define SAMD20_DEBUG_UART_PIN_RX              PIN_PA25
 
+/* add platform-specific LEDs configuration */
 /** Number of supported LEDs */
 #ifndef HAL_SUPPORT_LEDNUM
 #define HAL_SUPPORT_LEDNUM                    ( 1 )
@@ -142,7 +154,7 @@
  * --- Stack Macro Definitions ---------------------------------------------- *
  */
 /** additional delay between consecutive iteration of emb6 process */
-#define EMB6_PROC_DELAY                       ( 0 )
+#define EMB6_PROC_DELAY                       ( 1 )
 
 /** transceiver supports standard-specific checksum algorithm */
 #define NETSTK_CFG_RF_CRC_EN                  TRUE
