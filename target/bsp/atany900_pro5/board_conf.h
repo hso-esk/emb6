@@ -170,6 +170,9 @@
 /** additional delay between consecutive iteration of emb6 process */
 #define EMB6_PROC_DELAY                     ( 0 )
 
+/** transceiver supports standard-specific checksum algorithm */
+#define NETSTK_CFG_RF_CRC_EN                  TRUE
+
 
 /*
  *  --- Global Functions Definition ------------------------------------------*

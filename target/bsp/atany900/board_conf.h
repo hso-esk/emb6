@@ -209,6 +209,8 @@
 #endif /* #ifndef UART_BAUD */
 #endif /* #if defined (HAL_SUPPORT_SLIP_UART) */
 
+/** transceiver supports standard-specific checksum algorithm */
+#define NETSTK_CFG_RF_CRC_EN                TRUE
 
 
 /*
