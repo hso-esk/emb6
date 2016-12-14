@@ -103,6 +103,11 @@
 #define LED_2_ACTIVE                                false
 #define LED_2_INACTIVE                              !LED_2_ACTIVE
 
+
+/** transceiver supports standard-specific checksum algorithm */
+#define NETSTK_CFG_RF_CRC_EN                        TRUE
+
+
 /*============================================================================*/
 /*!
  \brief    emb6 board configuration fuction

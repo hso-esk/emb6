@@ -86,6 +86,10 @@
 #define HAL_LED_CLR                             |=
 
 
+/** transceiver supports standard-specific checksum algorithm */
+#define NETSTK_CFG_RF_CRC_EN                    TRUE
+
+
 /*============================================================================*/
 /*!
 \brief    emb6 board configuration fuction

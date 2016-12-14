@@ -130,6 +130,11 @@
 #define EFM32_IO_PORT_LED1                  gpioPortE
 #define EFM32_IO_PIN_LED1                   3
 
+
+/** transceiver supports standard-specific checksum algorithm */
+#define NETSTK_CFG_RF_CRC_EN                TRUE
+
+
 /*============================================================================*/
 /*!
 \brief    emb6 board configuration fuction

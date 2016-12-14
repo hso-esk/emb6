@@ -57,7 +57,7 @@
 ==============================================================================*/
 #include "emb6.h"
 #include "bsp.h"
-
+#include "board_conf.h"
 #include "at86rf212b.h"
 #include "at86rf212b_regmap.h"
 #include "at86rf_hal_spi.h"
@@ -68,6 +68,10 @@
 /*==============================================================================
                                      MACROS
 ==============================================================================*/
+#if (NETSTK_CFG_RF_CRC_EN != TRUE)
+#error "missing or wrong radio checksum setting in board_conf.h"
+#endif
+
 #define     LOGGER_ENABLE        LOGGER_RADIO
 #include    "logger.h"
 
