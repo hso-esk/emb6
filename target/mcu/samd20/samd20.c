@@ -263,7 +263,7 @@ static s_hal_gpio_pin_t s_hal_gpio[EN_HAL_PIN_MAX] = {
   {SAMD20_IO_PIN_RF_SLP, SAMD20_DIR_OUT, SAMD20_IO_PIN_UP, 0, PORT_PIN_PULL_UP, SAMD20_IO_IRQ_INVALID, NULL},
 #endif /* #if defined(HAL_SUPPORT_RFCTRL1) */
 #if defined(HAL_SUPPORT_RFCTRL2)
-  {SAMD20_IO_PIN_RF_IRQ, SAMD20_DIR_IN, SAMD20_IO_PIN_UP, 0, PORT_PIN_PULL_UP, SAMD20_IO_PIN_RF_IRQ_CHANNEL, NULL},
+  {SAMD20_IO_PIN_RF_IRQ, SAMD20_DIR_IN, SAMD20_IO_PIN_UP, SAMD20_IO_PIN_RF_IRQ_PINMUX, PORT_PIN_PULL_NONE, SAMD20_IO_PIN_RF_IRQ_CHANNEL, NULL},
 #endif /* #if defined(HAL_SUPPORT_RFCTRL2) */
 
 #if defined(HAL_SUPPORT_SLIPUART)
@@ -561,7 +561,7 @@ int8_t hal_pinGet( void* p_pin )
 int8_t hal_pinIRQRegister( void* p_pin, en_hal_irqedge_t edge,
     pf_hal_irqCb_t pf_cb )
 {
-  struct extint_chan_conf s_chanConfig;
+  static struct extint_chan_conf s_chanConfig;
   s_hal_gpio_pin_t* p_gpioPin = (s_hal_gpio_pin_t *)p_pin;
 
   EMB6_ASSERT_RET( p_gpioPin != NULL, -1 );
