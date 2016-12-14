@@ -766,10 +766,7 @@ void* hal_uartInit( en_hal_uart_t uart )
   /* enable UART */
   usart_enable( &s_hal_uart );
 
-  // Initialize Serial Interface using Stdio Library
-  //stdio_serial_init( &s_hal_uart, SAMD20_SLIP_UART_SERCOM, &s_usartConfig );
-
-  return NULL;
+  return &s_hal_uart;
 } /* hal_uartInit() */
 
 /*---------------------------------------------------------------------------*/
