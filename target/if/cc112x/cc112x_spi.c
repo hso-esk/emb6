@@ -68,8 +68,8 @@
 #define RADIO_READ_ACCESS       (uint8_t)( 0x80 )
 #define RADIO_WRITE_ACCESS      (uint8_t)( 0x00 )
 
-#define CC112X_SPI_ON()         do {bsp_spiSlaveSel(cc112x_spiHandle, cc112x_spiCsIoHandle, TRUE, FALSE);} while(0)
-#define CC112X_SPI_OFF()        do {bsp_spiSlaveSel(cc112x_spiHandle, cc112x_spiCsIoHandle, FALSE, FALSE);} while(0)
+#define CC112X_SPI_ON()         do {bsp_spiSlaveSel(cc112x_spiHandle, cc112x_spiCsIoHandle, TRUE, TRUE);} while(0)
+#define CC112X_SPI_OFF()        do {bsp_spiSlaveSel(cc112x_spiHandle, cc112x_spiCsIoHandle, FALSE, TRUE);} while(0)
 
 
 /*
