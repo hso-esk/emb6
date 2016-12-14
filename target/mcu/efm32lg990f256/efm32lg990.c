@@ -911,8 +911,17 @@ int8_t hal_periphIRQRegister( en_hal_periphirq_t irq, pf_hal_irqCb_t pf_cb,
 */
 int8_t hal_debugInit( void )
 {
-  USART_TypeDef *p_uartDebug = EFM32_DEBUG_UART;
+  /* #1:  check if debugging utility is enabled (i.e., LOGGER_LEVEL > 0) ?
+   * #2:  check if debugging channel is available (i.e., UART or Trace) ?
+   * #3:  initialize debugging utility if #1 and #2 conditions are met
+   */
+#if (LOGGER_LEVEL > 0) && (HAL_SUPPORT_SLIPUART == FALSE)
+  /* Is debugging channel is available? As currently only debugging SLIPUART share the same UART channel */
+  static USART_TypeDef *p_uartDebug = EFM32_DEBUG_UART;
   USART_InitAsync_TypeDef uartInit = USART_INITASYNC_DEFAULT;
+
+  /* enable UART clock */
+  CMU_ClockEnable(cmuClock_UART0, true);
 
   /* Prepare struct for initializing UART in asynchronous mode*/
   uartInit.enable       = usartDisable;           /* Don't enable UART upon initialization */
@@ -930,8 +939,8 @@ int8_t hal_debugInit( void )
   USART_InitAsync(p_uartDebug, &uartInit);
 
   /* Configure GPIO pins */
-  GPIO_PinModeSet(gpioPortE, 13, gpioModePushPull, 1);
-  GPIO_PinModeSet(gpioPortE, 12, gpioModeInput, 0);
+  GPIO_PinModeSet(EFM32_DEBUG_UART_PORT_USART_TX, EFM32_DEBUG_UART_PIN_USART_TX, gpioModePushPull, 1);
+  GPIO_PinModeSet(EFM32_DEBUG_UART_PORT_USART_RX, EFM32_DEBUG_UART_PIN_USART_RX, gpioModeInput, 0);
 
   /* Prepare UART Rx and Tx interrupts */
   USART_IntClear(p_uartDebug, _USART_IFC_MASK);
@@ -948,8 +957,10 @@ int8_t hal_debugInit( void )
 
   /* set external UART instance */
   uartStdio = p_uartDebug;
+
   /* disable STDIO buffer */
   setvbuf(stdout , NULL , _IONBF , 0);
 
+#endif /* #if (LOGGER_LEVEL > 0) && (HAL_SUPPORT_SLIPUART == FALSE) */
   return 0;
 } /* hal_debugInit() */

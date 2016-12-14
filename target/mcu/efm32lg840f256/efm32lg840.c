@@ -1062,8 +1062,56 @@ int8_t hal_periphIRQRegister( en_hal_periphirq_t irq, pf_hal_irqCb_t pf_cb,
 */
 int8_t hal_debugInit( void )
 {
-  /* initialize the debug UART */
-  _hal_uartDbgInit();
+  /* #1:  check if debugging utility is enabled (i.e., LOGGER_LEVEL > 0) ?
+   * #2:  check if debugging channel is available (i.e., UART or Trace) ?
+   * #3:  initialize debugging utility if #1 and #2 conditions are met
+   */
+#if (LOGGER_LEVEL > 0) && (HAL_SUPPORT_SLIPUART == FALSE)
+  /* Is debugging channel is available? As currently only debugging SLIPUART share the same UART channel */
+  static USART_TypeDef *p_uartDebug = EFM32_DEBUG_UART;
+  USART_InitAsync_TypeDef uartInit = USART_INITASYNC_DEFAULT;
+
+  /* enable UART clock */
+  CMU_ClockEnable(cmuClock_USART0, true);
+
+  /* Prepare struct for initializing UART in asynchronous mode*/
+  uartInit.enable       = usartDisable;           /* Don't enable UART upon initialization */
+  uartInit.refFreq      = 0;                      /* Provide information on reference frequency. When set to 0, the reference frequency is */
+  uartInit.baudrate     = EFM32_DEBUG_UART_BAUD;  /* Baud rate */
+  uartInit.oversampling = usartOVS16;             /* Oversampling. Range is 4x, 6x, 8x or 16x */
+  uartInit.databits     = usartDatabits8;         /* Number of data bits. Range is 4 to 10 */
+  uartInit.parity       = usartNoParity;          /* Parity mode */
+  uartInit.stopbits     = usartStopbits1;         /* Number of stop bits. Range is 0 to 2 */
+  uartInit.mvdis        = false;                  /* Disable majority voting */
+  uartInit.prsRxEnable  = false;                  /* Enable USART Rx via Peripheral Reflex System */
+  uartInit.prsRxCh      = usartPrsRxCh0;          /* Select PRS channel if enabled */
+
+  /* Initialize USART with uartInit struct */
+  USART_InitAsync(p_uartDebug, &uartInit);
+
+  /* Configure GPIO pins */
+  GPIO_PinModeSet(EFM32_DEBUG_UART_PORT_USART_TX, EFM32_DEBUG_UART_PIN_USART_TX, gpioModePushPull, 1);
+  GPIO_PinModeSet(EFM32_DEBUG_UART_PORT_USART_RX, EFM32_DEBUG_UART_PIN_USART_RX, gpioModeInput, 0);
+
+  /* Prepare UART Rx and Tx interrupts */
+  USART_IntClear(p_uartDebug, _USART_IFC_MASK);
+  USART_IntEnable(p_uartDebug, USART_IEN_RXDATAV);
+  NVIC_ClearPendingIRQ(USART0_RX_IRQn);
+  NVIC_ClearPendingIRQ(USART0_TX_IRQn);
+  NVIC_EnableIRQ(USART0_RX_IRQn);
+
+  /* Enable I/O pins at UART1 location #3 */
+  p_uartDebug->ROUTE = USART_ROUTE_RXPEN | USART_ROUTE_TXPEN | EFM32_DEBUG_UART_LOC;
+
+  /* Enable UART */
+  USART_Enable(p_uartDebug, usartEnable);
+
+  /* set external UART instance */
+  uartStdio = p_uartDebug;
+  /* disable STDIO buffer */
+  setvbuf(stdout , NULL , _IONBF , 0);
+
+#endif /* #if (LOGGER_LEVEL > 0) && (HAL_SUPPORT_SLIPUART == FALSE) */
   return 0;
 }
 

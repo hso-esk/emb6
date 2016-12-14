@@ -89,9 +89,10 @@
 #include <spi.h>
 #endif /* #if defined(HAL_SUPPORT_RFSPI) */
 
-#if defined(HAL_SUPPORT_UART)
+#if defined(HAL_SUPPORT_UART) || (LOGGER_LEVEL > 0)
 // From module: SERCOM USART - Serial Communications (Polled APIs)
 #include <usart.h>
+#include "stdio_serial.h"
 #endif /* #if defined(HAL_SUPPORT_UART) */
 
 // From module: SYSTEM - Clock Management
@@ -824,5 +825,38 @@ int8_t hal_periphIRQRegister( en_hal_periphirq_t irq, pf_hal_irqCb_t pf_cb,
 */
 int8_t hal_debugInit( void )
 {
-  return -1;
+  /* #1:  check if debugging utility is enabled (i.e., LOGGER_LEVEL > 0) ?
+   * #2:  check if debugging channel is available (i.e., UART or Trace) ?
+   * #3:  initialize debugging utility if #1 and #2 conditions are met
+   */
+#if (LOGGER_LEVEL > 0) && (HAL_SUPPORT_SLIPUART == FALSE)
+  /* Is debugging channel is available? As currently only debugging SLIPUART share the same UART channel */
+  struct usart_config s_usartConfig;
+  static struct usart_module s_hal_debugUart;
+
+  /* set configuration to default */
+  usart_get_config_defaults( &s_usartConfig );
+
+  /* configure UART */
+  s_usartConfig.baudrate = SAMD20_DEBUG_UART_BAUDRATE;
+  s_usartConfig.mux_setting = SAMD20_DEBUG_UART_SERCOM_MUX_SETTING;
+  s_usartConfig.pinmux_pad0 = SAMD20_DEBUG_UART_SERCOM_PMUX0;
+  s_usartConfig.pinmux_pad1 = SAMD20_DEBUG_UART_SERCOM_PMUX1;
+  s_usartConfig.pinmux_pad2 = SAMD20_DEBUG_UART_SERCOM_PMUX2;
+  s_usartConfig.pinmux_pad3 = SAMD20_DEBUG_UART_SERCOM_PMUX3;
+
+  /* initialize UART */
+  while( STATUS_OK != usart_init( &s_hal_debugUart, SAMD20_DEBUG_UART_SERCOM, &s_usartConfig ) )
+  {
+    /* do nothing */
+  }
+
+  /* enable UART */
+  usart_enable( &s_hal_debugUart );
+
+  /* initialize Serial Interface using Stdio Library */
+  stdio_serial_init( &s_hal_debugUart, SAMD20_DEBUG_UART_SERCOM, &s_usartConfig );
+
+#endif /* #if (LOGGER_LEVEL > 0) && (HAL_SUPPORT_SLIPUART == FALSE) */
+  return 0;
 } /* hal_debugInit() */

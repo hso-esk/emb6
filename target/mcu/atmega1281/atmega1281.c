@@ -988,8 +988,11 @@ int8_t hal_periphIRQRegister( en_hal_periphirq_t irq, pf_hal_irqCb_t pf_cb,
 */
 int8_t hal_debugInit( void )
 {
-#if !defined (HAL_SUPPORT_SLIPUART)
-
+  /* #1:  check if debugging utility is enabled (i.e., LOGGER_LEVEL > 0) ?
+   * #2:  check if debugging channel is available (i.e., UART or Trace) ?
+   * #3:  initialize debugging utility if #1 and #2 conditions are met
+   */
+#if (LOGGER_LEVEL > 0) && (HAL_SUPPORT_SLIPUART == FALSE)
   /* Initialize the pins */
   //EMB6_ASSERT_RET( hal_pinInit( EN_HAL_PIN_DEBUGUARTTX) != NULL, -1 );
   //EMB6_ASSERT_RET( hal_pinInit( EN_HAL_PIN_DEBUGUARTRX) != NULL, -1 );
@@ -1001,9 +1004,8 @@ int8_t hal_debugInit( void )
       (1 << RXEN(ATM1281_UART_DEBUG_INST));
   UCSR(ATM1281_UART_DEBUG_INST,C)= ((1 << UCSZ(ATM1281_UART_DEBUG_INST,1)) |
       (1 << UCSZ(ATM1281_UART_DEBUG_INST,0)));
-
   stdout = &st_usartStdout;
-#endif /* #if !defined (HAL_SUPPORT_SLIPUART) */
+#endif /* #if (LOGGER_LEVEL > 0) && (HAL_SUPPORT_SLIPUART == FALSE) */
   return 0;
 }
 
