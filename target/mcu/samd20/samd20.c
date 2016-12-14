@@ -334,7 +334,7 @@ static void _hal_wdtInit( void )
 static void _hal_tcInit( void )
 {
   struct rtc_count_config config_rtc_count;
-  struct rtc_module rtc_instance;
+  static struct rtc_module rtc_instance;
 
   /* set to default */
   rtc_count_get_config_defaults( &config_rtc_count );
