@@ -506,8 +506,6 @@ struct netstack_framer
 
     int8_t (* create)(void);
 
-    int8_t (* create_and_secure)(s_ns_t* p_ns);
-
     int8_t (* parse)(void);
 };
 

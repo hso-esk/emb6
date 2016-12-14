@@ -25,6 +25,7 @@ emb6 = {
 		'sock/*',
 	],
 	'ipv6' : [
+	    'net/*',
 		'net/ipv6/*',
 	],
 	'ipv6mc' : [

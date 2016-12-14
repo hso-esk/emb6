@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, Swedish Institute of Computer Science.
+ * Copyright (c) 2011, Loughborough University - Computer Science
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,56 +26,58 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ * This file is part of the Contiki operating system.
  */
 
 /**
  * \file
- *         A set of debugging tools for the IP stack
+ *         Header file for the Enhanced Stateless Multicast RPL Forwarding (ESMRF)
+ *
  * \author
- *         Nicolas Tsiftes <nvt@sics.se>
- *         Niclas Finne <nfi@sics.se>
- *         Joakim Eriksson <joakime@sics.se>
+ *         Khaled Qorany	kqorany2@gmail.com
  */
 
-#include "uip-debug.h"
+#ifndef ESMRF_H_
+#define ESMRF_H_
 
+#include "emb6_conf.h"
+
+#include <stdint.h>
 /*---------------------------------------------------------------------------*/
-void
-uip_debug_ipaddr_print(const uip_ipaddr_t *addr)
-{
-#if UIP_CONF_IPV6
-  uint16_t a;
-  unsigned int i;
-  int f;
-  for(i = 0, f = 0; i < sizeof(uip_ipaddr_t); i += 2) {
-    a = (addr->u8[i] << 8) + addr->u8[i + 1];
-    if(a == 0 && f >= 0) {
-      if(f++ == 0) {
-        PRINTA("::");
-      }
-    } else {
-      if(f > 0) {
-        f = -1;
-      } else if(i > 0) {
-        PRINTA(":");
-      }
-      PRINTA("%x", a);
-    }
-  }
-#else /* UIP_CONF_IPV6 */
-  PRINTA("%u.%u.%u.%u", addr->u8[0], addr->u8[1], addr->u8[2], addr->u8[3]);
-#endif /* UIP_CONF_IPV6 */
-}
+/* Protocol Constants */
 /*---------------------------------------------------------------------------*/
-void
-uip_debug_lladdr_print(const uip_lladdr_t *addr)
-{
-  unsigned int i;
-  for(i = 0; i < sizeof(uip_lladdr_t); i++) {
-    if(i > 0) {
-      PRINTA(":");
-    }
-    PRINTA("%02x", addr->addr[i]);
-  }
-}
+#define ESMRF_ICMP_CODE              0   /* ICMPv6 code field */
+#define ESMRF_IP_HOP_LIMIT        0xFF   /* Hop limit for ICMP messages */
 /*---------------------------------------------------------------------------*/
+/* Configuration */
+/*---------------------------------------------------------------------------*/
+/* Fmin */
+#ifdef ESMRF_CONF_MIN_FWD_DELAY
+#define ESMRF_MIN_FWD_DELAY ESMRF_CONF_MIN_FWD_DELAY
+#else
+#define ESMRF_MIN_FWD_DELAY 4
+#endif
+
+/* Max Spread */
+#ifdef ESMRF_CONF_MAX_SPREAD
+#define ESMRF_MAX_SPREAD ESMRF_CONF_MAX_SPREAD
+#else
+#define ESMRF_MAX_SPREAD 4
+#endif
+/*---------------------------------------------------------------------------*/
+/* Stats datatype */
+/*---------------------------------------------------------------------------*/
+struct esmrf_stats {
+  uint16_t mcast_in_unique;
+  uint16_t mcast_in_all;        /* At layer 3 */
+  uint16_t mcast_in_ours;       /* Unique and we are a group member */
+  uint16_t mcast_fwd;           /* Forwarded by us but we are not the seed */
+  uint16_t mcast_out;           /* We are the seed */
+  uint16_t mcast_bad;
+  uint16_t mcast_dropped;
+  uint16_t icmp_out;
+  uint16_t icmp_in;
+  uint16_t icmp_bad;
+};
+
+#endif /* ESMRF_H_ */

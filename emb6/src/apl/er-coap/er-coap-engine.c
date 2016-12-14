@@ -38,6 +38,7 @@
  *
  */
 
+#include "cc.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -113,7 +114,7 @@ coap_receive(void)
               coap_new_transaction(message->mid, &UIP_IP_BUF->srcipaddr,
                                    UIP_UDP_BUF->srcport))) {
           uint32_t block_num = 0;
-          uint16_t block_size = REST_MAX_CHUNK_SIZE;
+          uint16_t block_size = COAP_MAX_BLOCK_SIZE;
           uint32_t block_offset = 0;
           int32_t new_offset = 0;
 
@@ -134,8 +135,8 @@ coap_receive(void)
           if(coap_get_header_block2
                (message, &block_num, NULL, &block_size, &block_offset)) {
             PRINTF("\rBlockwise: block request %lu (%u/%u) @ %lu bytes\n\r",
-                   block_num, block_size, REST_MAX_CHUNK_SIZE, block_offset);
-            block_size = MIN(block_size, REST_MAX_CHUNK_SIZE);
+                   block_num, block_size, COAP_MAX_BLOCK_SIZE, block_offset);
+            block_size = MIN(block_size, COAP_MAX_BLOCK_SIZE);
             new_offset = block_offset;
           }
 
@@ -263,6 +264,16 @@ coap_receive(void)
         }
         /* if(ACKed transaction) */
         transaction = NULL;
+
+#if COAP_OBSERVE_CLIENT
+        /* if observe notification */
+        if((message->type == COAP_TYPE_CON || message->type == COAP_TYPE_NON)
+        		&& IS_OPTION(message, COAP_OPTION_OBSERVE)) {
+        	PRINTF("Observe [%u]\n", message->observe);
+        	coap_handle_notification(&UIP_IP_BUF->srcipaddr, UIP_UDP_BUF->srcport,
+        			message);
+        }
+#endif /* COAP_OBSERVE_CLIENT */
       } /* request or response */
     } /* parsed correctly */
 

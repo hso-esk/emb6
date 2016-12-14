@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, Swedish Institute of Computer Science.
+ * Copyright (c) 2016, Inria.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,31 +27,46 @@
  * SUCH DAMAGE.
  *
  * This file is part of the Contiki operating system.
- *
  */
+
 /**
  * \file
- *         A set of debugging macros for the IP stack
+ *         RPL non-storing mode specific functions. Includes support for
+ *         source routing.
  *
- * \author Nicolas Tsiftes <nvt@sics.se>
- *         Niclas Finne <nfi@sics.se>
- *         Joakim Eriksson <joakime@sics.se>
- *         Simon Duquennoy <simon.duquennoy@inria.fr>
+ * \author Simon Duquennoy <simon.duquennoy@inria.fr>
  */
 
-#ifndef UIP_DEBUG_H
-#define UIP_DEBUG_H
 
-#include "net-debug.h"
-#include "uip.h"
-#include <stdio.h>
+#ifndef RPL_NS_H
+#define RPL_NS_H
 
-void uip_debug_ipaddr_print(const uip_ipaddr_t *addr);
+#include "emb6_conf.h"
 
-#if (DEBUG) & DEBUG_PRINT
-#define PRINT6ADDR(addr) uip_debug_ipaddr_print(addr)
-#else
-#define PRINT6ADDR(addr)
-#endif /* (DEBUG) & DEBUG_PRINT */
+#ifdef RPL_NS_CONF_LINK_NUM
+#define RPL_NS_LINK_NUM RPL_NS_CONF_LINK_NUM
+#else /* RPL_NS_CONF_LINK_NUM */
+#define RPL_NS_LINK_NUM 32
+#endif /* RPL_NS_CONF_LINK_NUM */
 
-#endif /* UIP_DEBUG_H */
+typedef struct rpl_ns_node {
+  struct rpl_ns_node *next;
+  uint32_t lifetime;
+  rpl_dag_t *dag;
+  /* Store only IPv6 link identifiers as all nodes in the DAG share the same prefix */
+  unsigned char link_identifier[8];
+  struct rpl_ns_node *parent;
+} rpl_ns_node_t;
+
+int rpl_ns_num_nodes(void);
+void rpl_ns_expire_parent(rpl_dag_t *dag, const uip_ipaddr_t *child, const uip_ipaddr_t *parent);
+rpl_ns_node_t *rpl_ns_update_node(rpl_dag_t *dag, const uip_ipaddr_t *child, const uip_ipaddr_t *parent, uint32_t lifetime);
+void rpl_ns_init(void);
+rpl_ns_node_t *rpl_ns_node_head(void);
+rpl_ns_node_t *rpl_ns_node_next(rpl_ns_node_t *item);
+rpl_ns_node_t *rpl_ns_get_node(const rpl_dag_t *dag, const uip_ipaddr_t *addr);
+int rpl_ns_is_node_reachable(const rpl_dag_t *dag, const uip_ipaddr_t *addr);
+void rpl_ns_get_node_global_addr(uip_ipaddr_t *addr, rpl_ns_node_t *node);
+void rpl_ns_periodic(void);
+
+#endif /* RPL_NS_H */

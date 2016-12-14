@@ -71,6 +71,5 @@ const s_nsFramer_t framer_nullframer = {
   init,
   hdr_length,
   create,
-  framer_canonical_create_and_secure,
   parse
 };
