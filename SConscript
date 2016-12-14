@@ -118,15 +118,16 @@ def prepareOS( osSel ):
     osModules = genv.SConscript(osPath + 'SConscript')
 
     # Add basic OS files and merge flags
-    addIncludePath(osPath)
-    addIncludePath(osPath + '*.h')
-    addSources(osPath + '*.c')
-    for module in osModules['base']:
-        addIncludePath(osPath + module)
-        addSources(osPath + module + '.c')
+    #addIncludePath(osPath)
+    #addIncludePath(osPath + '*.h')
+    #addSources(osPath + '*.c')
+    for module in osModules['base']['src']:
+        addSources( osPath + module )
+    for module in osModules['base']['inc']:
+        addIncludePath( osPath + module )
 
     # Merge Flags for OS Configuration
-    genv.MergeFlags( osModules )
+    genv.MergeFlags( osModules['flags'] )
 
 
 
@@ -194,15 +195,17 @@ def prepareEmb6( demoConf ):
         # configuration and add the paths and sources.
         for module in demoConf['emb6']:
             if module in emb6Modules:
-                for path in emb6Modules[module]:
+                for path in emb6Modules[module]['src']:
+                    addSources( emb6Path + 'src/' + path )
+                for path in emb6Modules[module]['inc']:
                     addIncludePath( emb6Path + 'inc/' + path )
-                    addSources( emb6Path + 'src/' + path +'.c' )
 
 
     # Include the network configuration
-    for sources in netModules[net]['sources']:
-        addIncludePath( emb6Path + 'inc/' + sources )
-        addSources( emb6Path + 'src/' + sources +'.c' )
+    for path in netModules[net]['src']:
+        addSources( emb6Path + 'src/' + path )
+    for path in netModules[net]['inc']:
+        addIncludePath( emb6Path + 'inc/' + path )
 
     # Merge Flags for Net Configuration
     genv.MergeFlags( netModules[net] )
@@ -411,13 +414,13 @@ def prepareArch( targetConf, targetPath, osSel ):
             addSources( vendorPath + '/' + source + '/*.c')
 
     for module in osConf['source']:
-        for source in osModules[module]:
-            addIncludePath(osPath + source)
-            addSources(osPath + source + '.c')
+        for path in osModules[module]['src']:
+            addSources( osPath + path )
+        for path in osModules[module]['inc']:
+            addIncludePath( osPath + path )
 
     # Merge Flags for OS Configuration
     genv.MergeFlags( osConf )
-
 
 
 # Prepare the board for the build configuration.
@@ -437,9 +440,8 @@ def prepareBoard():
     targetPath = prjPath + 'target/'
     boardConf = genv.SConscript( targetPath + 'bsp/' + bsp['id'] + '/SConscript' )
 
-    # Add common source files and headers
+    # Add common headers
     addIncludePath( targetPath )
-    addSources( targetPath + '*.c' )
 
     # Prepare bsp, hal interface and arch
     prepareBsp( targetPath )

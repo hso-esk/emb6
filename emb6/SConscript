@@ -48,99 +48,194 @@ emb6 = {
 
    # Common source files that are mainly used from all of
    # the differernt applications.
-    'common' : [
-        '*',
-    ],
+    'common' : {
+        'src' : [
+            './*.c',
+        ],
+
+        'inc' : [
+            './',
+        ]
+    },
 
     # CoAP specific source files. Those files should be used when
     # creating an application that makes either use of CoAP directly or
     # that uses CoAP as an underlying application protocol.
-    'coap' : [
-        'apl/er-coap/*',
-        'apl/rest-engine/*',
-    ],
+    'coap' : {
+        'src' : [
+            'apl/er-coap/*.c',
+            'apl/rest-engine/*.c',
+        ],
+
+        'inc' : [
+            'apl/er-coap/',
+            'apl/rest-engine/',
+        ]
+    },
 
     # LWM2M specific sources that shall be included when using LWM2M
     # as the application layer.
-    'lwm2m' : [
-        'apl/oma-lwm2m/*',
-    ],
+    'lwm2m' : {
+        'src' : [
+            'apl/oma-lwm2m/*.c',
+        ],
+
+        'inc' : [
+            'apl/oma-lwm2m/',
+        ]
+    },
 
     # DTLS sources that shall be included when secured connections
     # shall be used.
-    'dtls' : [
-        'net/dtls/*',
-        'net/dtls/aes/*',
-        'net/dtls/ecc/*',
-        'net/dtls/sha2/*',
-    ],
+    'dtls' : {
+        'src' : [
+            'net/dtls/*.c',
+            'net/dtls/aes/*.c',
+            'net/dtls/ecc/*.c',
+            'net/dtls/sha2/*.c',
+        ],
+
+        'inc' : [
+            'net/dtls/',
+            'net/dtls/aes/',
+            'net/dtls/ecc/',
+            'net/dtls/sha2/',
+        ]
+    },
 
     # MDNS sources that shall be included when the mDNS service
   # shall be used.
-    'mdns' : [
-        'apl/dns/*',
-    ],
+    'mdns' : {
+        'src' : [
+            'apl/dns/*.c',
+        ],
+
+        'inc' : [
+            'apl/dns/',
+        ]
+    },
 
     # Includes the sources for the simplieifed Berkley Sockets alike
     # socket interface.
-    'sock' : [
-        'sock/*',
-    ],
+    'sock' : {
+        'src' : [
+            'sock/*.c',
+        ],
+
+        'inc' : [
+            'sock/',
+        ]
+    },
 
     # Required if IPv6 protocol shall be used. Since this is a core part
     # of emb::6 it is active for almost all applications.
-    'ipv6' : [
-        'net/ipv6/*',
-    ],
+    'ipv6' : {
+        'src' : [
+            'net/ipv6/*.c',
+        ],
+
+        'inc' : [
+            'net/ipv6/',
+        ]
+    },
 
     # Muticast extension to IPv6. Shall only be active if multicast is
     # required.
-    'ipv6mc' : [
-        'net/ipv6/multicast/*',
-    ],
+    'ipv6mc' : {
+        'src' : [
+            'net/ipv6/multicast/*.c',
+        ],
+
+        'inc' : [
+            'net/ipv6/multicast/',
+        ]
+    },
 
     # Sources of the 6LoWPAN frame handling such as the compression,
     # fragmentation etc.
-    'sicslowpan':  [
-        'net/sicslowpan/*',
-    ],
+    'sicslowpan' : {
+        'src' : [
+            'net/sicslowpan/*.c',
+        ],
+
+        'inc' : [
+            'net/sicslowpan/',
+        ]
+    },
 
     # The Serial Line IP Protocol is mainly used to interact with a border
     # router (e.g. Cetic 6LBR) to make the device act as a radio interface
     # to connect the IP and the WSN world.
-    'slip' : [
-        'net/slip/*',
-    ],
+    'slip' : {
+        'src' : [
+             'net/slip/*.c',
+        ],
+
+        'inc' : [
+             'net/slip/',
+        ]
+    },
 
     #
-    'dllsec' : [
-        'dll/dllsec/*',
-    ],
+    'dllsec' : {
+        'src' : [
+             'dll/dllsec/*.c',
+        ],
+
+        'inc' : [
+             'dll/dllsec/',
+        ]
+    },
 
     # Sources of the Data-Link (Control) Layer which handles the logical
     # part of the Layer-2. This includes e.g. frame parsing and filtering.
-    'dllc' : [
-        'dll/dllc/*',
-    ],
+    'dllc' : {
+        'src' : [
+             'dll/dllc/*.c',
+        ],
+
+        'inc' : [
+             'dll/dllc/',
+        ]
+    },
 
     # The MAC layer handles the medium access e.g. CSMA-CA, Auto-Acknowledge
     # and retransmissions. Since this is a software bases implementation there
     # might be timing issues and should not be used for devices aiming
     # to be conforming to the standard completely.
-    'mac' : [
-        'dll/mac/*',
-    ],
+    'mac' : {
+        'src' : [
+             'dll/mac/*.c',
+        ],
+
+        'inc' : [
+             'dll/mac/',
+        ]
+    },
 
     # The framer include the layout of the single frames on different layers.
-    'framer' : [
-        'dll/framer/*',
-    ],
+    'framer' : {
+        'src' : [
+             'dll/framer/*.c',
+        ],
+
+        'inc' : [
+             'dll/framer/',
+        ]
+    },
 
     # Some of the standards require a specific frame format already on the
     # PHY layer. The handling of such frames is included here.
-    'phy' : [
-        'phy/*',
-    ],
+    'phy' : {
+        'src' : [
+             'phy/*.c',
+        ],
+
+        'inc' : [
+             'phy/',
+        ]
+    },
+
 
     # C global defines
     'CPPDEFINES' : [
@@ -159,8 +254,12 @@ net = {
     'rpl-dagroot' : {
         # Adds the sources for the Routing over Low Power and Lossy Networks
         # protocol (RPL).
-        'sources' : [
-            'net/rpl/*',
+        'src' : [
+            'net/rpl/*.c',
+        ],
+
+        'inc' : [
+            'net/rpl/',
         ],
 
         # C global defines
@@ -177,8 +276,12 @@ net = {
     'rpl-router' : {
         # Adds the sources for the Routing over Low Power and Lossy Networks
         # protocol (RPL).
-        'sources' : [
-            'net/rpl/*',
+        'src' : [
+            'net/rpl/*.c',
+        ],
+
+        'inc' : [
+            'net/rpl/',
         ],
 
         # C global defines

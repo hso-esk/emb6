@@ -38,26 +38,45 @@
 #
 ##
 
+# This file holds the sources for freeRTOS. The sources are splitted into
+# basic sources and target dependent sources.
 freertos = {
 
-    'base' : [
-        'FreeRTOSV8.2.3/FreeRTOS/Source/*',
-        'FreeRTOSV8.2.3/FreeRTOS/Source/include/*',
-    ],
+    # Basic source files needded always when building emb::6 with
+    # freeRTOS support.
+    'base' : {
+        'src' : [
+            'FreeRTOSV8.2.3/FreeRTOS/Source/*.c',
+        ],
 
-    'portableCM3' : [
-        'FreeRTOSV8.2.3/FreeRTOS/Source/portable/GCC/ARM_CM3/*',
-        'FreeRTOSV8.2.3/FreeRTOS/Source/portable/MemMang/heap_1',
-    ],
+        'inc' : [
+            'FreeRTOSV8.2.3/FreeRTOS/Source/include/',
+        ]
+    },
 
-    # C global defines
-    'CPPDEFINES' : [
-        ('USE_FREERTOS', 1),
-    ],
+    # Source files needed for CM3 architectures.
+    'portableCM3' : {
+        'src' : [
+            'FreeRTOSV8.2.3/FreeRTOS/Source/portable/GCC/ARM_CM3/*.c',
+            'FreeRTOSV8.2.3/FreeRTOS/Source/portable/MemMang/heap_1.c',
+        ],
 
-    # GCC flags
-    'CFLAGS' : [
-    ]
+        'inc' : [
+            'FreeRTOSV8.2.3/FreeRTOS/Source/portable/GCC/ARM_CM3/',
+        ]
+    },
+
+    # Common flags required when building emb::6 with freeRTOS support.
+    'flags' : {
+        # C global defines
+        'CPPDEFINES' : [
+            ('USE_FREERTOS', 1),
+        ],
+
+        # GCC flags
+        'CFLAGS' : [
+        ]
+    }
 }
 
 Return('freertos')
