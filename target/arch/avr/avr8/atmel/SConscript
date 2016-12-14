@@ -40,8 +40,14 @@
 
 arch = {
 
-    'extra' : [
-    ],
+    'extra' : {
+
+        'src' : [
+        ],
+
+        'inc' : [
+        ]
+    },
 
     # C global defines
     'CPPDEFINES' : [

@@ -40,16 +40,22 @@
 
 arch = {
 
-	'extra' : [
-	],
+    'extra' : {
+
+        'src' : [
+        ],
+
+        'inc' : [
+        ]
+    },
 
   # C global defines
-	'CPPDEFINES' : [
-	],
+    'CPPDEFINES' : [
+    ],
 
   # GCC flags
-	'CFLAGS' : [
-	]
+    'CFLAGS' : [
+    ]
 }
 
 Return('arch')

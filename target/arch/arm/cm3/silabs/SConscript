@@ -42,11 +42,20 @@
 # required for a build of the specific architecture.
 arch = {
 
-    'extra' : [
-        'CMSIS',
-        'utils',
-        'device/common',
-    ],
+    'extra' : {
+
+        'src' : [
+            'CMSIS/*.c',
+            'device/common/src/*.c',
+            'device/utils/src/*.c',
+        ],
+
+        'inc' : [
+            'CMSIS/inc/',
+            'device/common/inc/',
+            'device/utils/inc/',
+        ]
+    },
 
     # C global defines
     'CPPDEFINES' : [

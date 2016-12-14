@@ -40,15 +40,28 @@
 
 arch = {
 
-    'extra' : [
-        'device/cc13xx',
-        'device/cc13xx/sf',
-        'device/cc13xx/ti',
-        'device/cc13xx/ti/bsp/srf06eb_cc26xx/drivers/source',
-        'device/cc13xx/ti/rflib',
-        'device/cc13xx/ti/tirtos',
-        'device/cc13xx/ti/tirtos/driverlib',
-    ],
+    'extra' : {
+
+        'src' : [
+            'device/cc13xx/*.c',
+            'device/cc13xx/sf/*.c',
+            'device/cc13xx/ti/*.c',
+            'device/cc13xx/ti/bsp/srf06eb_cc26xx/drivers/source/*.c',
+            'device/cc13xx/ti/rflib/*.c',
+            'device/cc13xx/ti/tirtos/*.c',
+            'device/cc13xx/ti/tirtos/driverlib/*.c',
+        ],
+
+        'inc' : [
+            'device/cc13xx/',
+            'device/cc13xx/sf/',
+            'device/cc13xx/ti/',
+            'device/cc13xx/ti/bsp/srf06eb_cc26xx/drivers/source/',
+            'device/cc13xx/ti/rflib/',
+            'device/cc13xx/ti/tirtos/',
+            'device/cc13xx/ti/tirtos/driverlib/',
+        ]
+    },
 
     # C global defines
     'CPPDEFINES' : [

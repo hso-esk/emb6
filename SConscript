@@ -351,11 +351,10 @@ def prepareArch( targetConf, targetPath, osSel ):
     # Add all include folder and sources which are common for a
     # selected architecture.
     if 'extra' in archConf:
-        for extraPath in archConf['extra']:
-            addIncludePath( vendorPath + '/' + extraPath + '/' )
-            addIncludePath( vendorPath + '/' + extraPath + '/inc/' )
-            addSources( vendorPath + '/' + extraPath + '/*.c' )
-            addSources( vendorPath + '/' + extraPath + '/src/*.c' )
+        for extraPath in archConf['extra']['src']:
+            addSources( vendorPath + '/' + extraPath )
+        for extraPath in archConf['extra']['inc']:
+            addIncludePath( vendorPath + '/' + extraPath )
 
     # Add all include folder and sources for a selected device
     addIncludePath( vendorPath + '/device/' + targetConf['cpu'] + '/' )

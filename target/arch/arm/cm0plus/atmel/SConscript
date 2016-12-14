@@ -40,12 +40,21 @@
 
 arch = {
 
-    'extra' : [
-        'CMSIS',
-        'preprocessor',
-        'device/common',
-        'device/utils',
-    ],
+    'extra' : {
+
+        'src' : [
+            'preprocessor/src/*.c',
+            'device/common/src/*.c',
+            'device/utils/src/*.c',
+        ],
+
+        'inc' : [
+            'CMSIS/inc/',
+            'preprocessor/inc/',
+            'device/common/inc/',
+            'device/utils/inc/',
+        ]
+    },
 
     # C global defines
     'CPPDEFINES' : [
