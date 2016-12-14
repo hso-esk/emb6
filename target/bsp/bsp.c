@@ -93,9 +93,6 @@ typedef struct S_BSP_LED_T
   /** Pin of the LED */
   void* p_pin;
 
-  /** Inverted flag. */
-  uint8_t inv;
-
   /** Blink timer */
   struct etimer blinkTmr;
 
@@ -415,14 +412,18 @@ int8_t bsp_pinGet( void* p_pin )
 int8_t bsp_led( uint8_t led, en_bsp_led_op_t op )
 {
 #if defined(HAL_SUPPORT_LED)
+#if defined(HAL_LED_INVERTED)
+  int inv = 1;
+#else
+  int inv = 0;
+#endif /* #if defined(HAL_LED_INVERTED)*/
   int i;
-  EMB6_ASSERT_RET( bsp_leds[led].p_pin != NULL, -1 );
 
   uint8_t ledMsk = led;
 
   for( i = 0; i < HAL_SUPPORT_LEDNUM; i++ )
   {
-    uint8_t ledVal = ledMsk & 1;
+    uint8_t ledVal = ledMsk & 1;  /* least significant bit 0b0101 */
     if( (ledVal == 0) && (op != EN_BSP_LED_OP_SET) )
       /* LED not selected */
       continue;
@@ -430,15 +431,15 @@ int8_t bsp_led( uint8_t led, en_bsp_led_op_t op )
     switch( op )
     {
       case EN_BSP_LED_OP_ON:
-        hal_pinSet( bsp_leds[i].p_pin, bsp_leds[i].inv ? FALSE : TRUE );
+        hal_pinSet( bsp_leds[i].p_pin, inv ? FALSE : TRUE );
         break;
 
       case EN_BSP_LED_OP_OFF:
-        hal_pinSet( bsp_leds[i].p_pin, bsp_leds[i].inv ? TRUE : FALSE );
+        hal_pinSet( bsp_leds[i].p_pin, inv ? TRUE : FALSE );
         break;
 
       case EN_BSP_LED_OP_SET:
-        hal_pinSet( bsp_leds[i].p_pin, bsp_leds[i].inv ? !ledVal : ledVal );
+        hal_pinSet( bsp_leds[i].p_pin, inv ? !ledVal : ledVal );
         break;
 
       case EN_BSP_LED_OP_TOGGLE:

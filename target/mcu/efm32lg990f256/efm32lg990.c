@@ -85,15 +85,11 @@
 #define EFM32_TICK_SECONDS              ( 1000u )
 #endif /* #ifndef EFM32_TICK_SECONDS */
 
-#ifndef EFM32_PIN_ACTIVE_LOW
-#define EFM32_PIN_ACTIVE_LOW            FALSE
-#endif /* #ifndef EFM32_LED_ACTIVE_HIGH */
-
-#if EFM32_PIN_ACTIVE_LOW
-#define EFM32_LED_OUT_VAL               1
-#else
+#if defined(EFM32_LED_ACTIVE_LOW)
 #define EFM32_LED_OUT_VAL               0
-#endif /* #if EFM32_PIN_ACTIVE_LOW */
+#else
+#define EFM32_LED_OUT_VAL               1
+#endif /* #if EFM32_LED_ACTIVE_LOW */
 
 /*
  * --- Type Definitions -----------------------------------------------------*
@@ -114,8 +110,6 @@ typedef struct
   GPIO_Mode_TypeDef mode;
   /** Value */
   uint8_t val;
-  /** Inverted flag */
-  uint8_t inv;
   /** IRQ callback */
   pf_hal_irqCb_t pf_cb;
 
@@ -190,44 +184,44 @@ USART_TypeDef *uartStdio = NULL;
 static s_hal_gpio_pin_t s_hal_gpio[EN_HAL_PIN_MAX] = {
 
 #if defined(HAL_SUPPORT_LED0)
-  {EFM32_IO_PORT_LED0, EFM32_IO_PIN_LED0, gpioModePushPull, EFM32_LED_OUT_VAL, EFM32_PIN_ACTIVE_LOW, NULL}, /* LED0 */
+  {EFM32_IO_PORT_LED0, EFM32_IO_PIN_LED0, gpioModePushPull, EFM32_LED_OUT_VAL, NULL}, /* LED0 */
 #endif /* #if defined(HAL_SUPPORT_LED0) */
 #if defined(HAL_SUPPORT_LED1)
-  {EFM32_IO_PORT_LED1, EFM32_IO_PIN_LED1, gpioModePushPull, EFM32_LED_OUT_VAL, EFM32_PIN_ACTIVE_LOW, NULL}, /* LED1 */
+  {EFM32_IO_PORT_LED1, EFM32_IO_PIN_LED1, gpioModePushPull, EFM32_LED_OUT_VAL, NULL}, /* LED1 */
 #endif /* #if defined(HAL_SUPPORT_LED1) */
 #if defined(HAL_SUPPORT_LED2)
-  {EFM32_IO_PORT_LED2, EFM32_IO_PIN_LED2, gpioModePushPull, EFM32_LED_OUT_VAL, EFM32_PIN_ACTIVE_LOW, NULL}, /* LED2 */
+  {EFM32_IO_PORT_LED2, EFM32_IO_PIN_LED2, gpioModePushPull, EFM32_LED_OUT_VAL, NULL}, /* LED2 */
 #endif /* #if defined(HAL_SUPPORT_LED2) */
 #if defined(HAL_SUPPORT_LED3)
-  {EFM32_IO_PORT_LED3, EFM32_IO_PIN_LED3, gpioModePushPull, EFM32_LED_OUT_VAL, EFM32_PIN_ACTIVE_LOW, NULL}, /* LED3 */
+  {EFM32_IO_PORT_LED3, EFM32_IO_PIN_LED3, gpioModePushPull, EFM32_LED_OUT_VAL, NULL}, /* LED3 */
 #endif /* #if defined(HAL_SUPPORT_LED3) */
 #if defined(HAL_SUPPORT_LED4)
-  {EFM32_IO_PORT_LED4, EFM32_IO_PIN_LED4, gpioModePushPull, EFM32_LED_OUT_VAL, EFM32_PIN_ACTIVE_LOW, NULL}, /* LED4 */
+  {EFM32_IO_PORT_LED4, EFM32_IO_PIN_LED4, gpioModePushPull, EFM32_LED_OUT_VAL, NULL}, /* LED4 */
 #endif /* #if defined(HAL_SUPPORT_LED4) */
 
 #if defined(HAL_SUPPORT_RFSPI)
-  {EFM32_IO_PORT_USART_CLK, EFM32_IO_PIN_USART_CLK, gpioModePushPull, 0, FALSE, NULL}, /* RF SPI CLK */
-  {EFM32_IO_PORT_USART_TX, EFM32_IO_PIN_USART_TX, gpioModePushPull, 0, FALSE, NULL}, /* RF SPI TX */
-  {EFM32_IO_PORT_USART_RX, EFM32_IO_PIN_USART_RX, gpioModeInputPull, 0, FALSE, NULL}, /* RF SPI RX */
-  {EFM32_IO_PORT_USART_CS, EFM32_IO_PIN_USART_CS, gpioModePushPull, 0, FALSE, NULL}, /* RF SPI CS */
+  {EFM32_IO_PORT_USART_CLK, EFM32_IO_PIN_USART_CLK, gpioModePushPull, 0, NULL}, /* RF SPI CLK */
+  {EFM32_IO_PORT_USART_TX, EFM32_IO_PIN_USART_TX, gpioModePushPull, 0, NULL}, /* RF SPI TX */
+  {EFM32_IO_PORT_USART_RX, EFM32_IO_PIN_USART_RX, gpioModeInputPull, 0, NULL}, /* RF SPI RX */
+  {EFM32_IO_PORT_USART_CS, EFM32_IO_PIN_USART_CS, gpioModePushPull, 0, NULL}, /* RF SPI CS */
 #endif /* #if defined(HAL_SUPPORT_RFSPI) */
 
 #if defined(HAL_SUPPORT_RFCTRL0)
-  {EFM32_IO_PORT_RF_CTRL_0, EFM32_IO_PIN_RF_CTRL_0, EFM32_IO_PINMODE_RF_CTRL_0, FALSE, 0, NULL}, /* RF CTRL 0 */
+  {EFM32_IO_PORT_RF_CTRL_0, EFM32_IO_PIN_RF_CTRL_0, EFM32_IO_PINMODE_RF_CTRL_0, 0, NULL}, /* RF CTRL 0 */
 #endif /* #if defined(HAL_SUPPORT_RFCTRL0) */
 #if defined(HAL_SUPPORT_RFCTRL1)
-  {EFM32_IO_PORT_RF_CTRL_1, EFM32_IO_PIN_RF_CTRL_1, EFM32_IO_PINMODE_RF_CTRL_1, FALSE, 1, NULL}, /* RF CTRL 1 */
+  {EFM32_IO_PORT_RF_CTRL_1, EFM32_IO_PIN_RF_CTRL_1, EFM32_IO_PINMODE_RF_CTRL_1, 1, NULL}, /* RF CTRL 1 */
 #endif /* #if defined(HAL_SUPPORT_RFCTRL1) */
 #if defined(HAL_SUPPORT_RFCTRL2)
-  {EFM32_IO_PORT_RF_CTRL_2, EFM32_IO_PIN_RF_CTRL_2, EFM32_IO_PINMODE_RF_CTRL_2, FALSE, 0, NULL}, /* RF CTRL 2 */
+  {EFM32_IO_PORT_RF_CTRL_2, EFM32_IO_PIN_RF_CTRL_2, EFM32_IO_PINMODE_RF_CTRL_2, 0, NULL}, /* RF CTRL 2 */
 #endif /* #if defined(HAL_SUPPORT_RFCTRL2) */
 #if defined(HAL_SUPPORT_RFCTRL3) || defined(HAL_SUPPORT_RFCTRL4) || defined(HAL_SUPPORT_RFCTRL5)
 #error "RFCTRL configuration is not supported."
 #endif /* #if defined(HAL_SUPPORT_RFCTRL3) || defined(HAL_SUPPORT_RFCTRL4) || defined(HAL_SUPPORT_RFCTRL5) */
 
 #if defined(HAL_SUPPORT_SLIPUART)
-  {EFM32_SLIP_UART_PORT_USART_TX, EFM32_SLIP_UART_PIN_USART_TX, gpioModePushPull, 0, FALSE, NULL}, /* RF SPI CLK */
-  {EFM32_SLIP_UART_PORT_USART_RX, EFM32_SLIP_UART_PIN_USART_RX, gpioModeInputPull, 0, FALSE, NULL}, /* RF SPI CLK */
+  {EFM32_SLIP_UART_PORT_USART_TX, EFM32_SLIP_UART_PIN_USART_TX, gpioModePushPull, 0, NULL}, /* UART_TX */
+  {EFM32_SLIP_UART_PORT_USART_RX, EFM32_SLIP_UART_PIN_USART_RX, gpioModeInputPull, 0, NULL}, /* UART_RX */
 #endif /* #if defined(HAL_SUPPORT_SLIPUART) */
 
 };
@@ -637,19 +631,11 @@ int8_t hal_pinSet( void* p_pin, uint8_t val )
     p_gpioPin->val = val ? 1 : 0;
     if( p_gpioPin->val )
     {
-#if (EFM32_PIN_ACTIVE_LOW == FALSE)
       GPIO_PinOutSet(p_gpioPin->port, p_gpioPin->pin);
-#else
-      GPIO_PinOutClear(p_gpioPin->port, p_gpioPin->pin);
-#endif
     }
     else
     {
-#if (EFM32_PIN_ACTIVE_LOW == FALSE)
       GPIO_PinOutClear(p_gpioPin->port, p_gpioPin->pin);
-#else
-      GPIO_PinOutSet(p_gpioPin->port, p_gpioPin->pin);
-#endif
     }
     return p_gpioPin->val;
   }
