@@ -359,7 +359,11 @@ void emb6_errorHandler(e_nsErr_t *p_err)
 /*==============================================================================
  main()
 ==============================================================================*/
+#if defined(MAIN_WITH_ARGS)
 int main(int argc, char **argv)
+#else
+int main(void)
+#endif /* #if defined(MAIN_WITH_ARGS) */
 {
   char *pc_mac_addr = NULL;
   uint16_t mac_addr_word;
@@ -371,10 +375,12 @@ int main(int argc, char **argv)
   err = NETSTK_ERR_NONE;
   memset(&st_netstack, 0, sizeof(st_netstack));
 
+#if defined(MAIN_WITH_ARGS)
   if (argc > 1) {
     pc_mac_addr = malloc(strlen(argv[1])+1);
     strcpy(pc_mac_addr, argv[1]);
   }
+#endif /* #if defined(MAIN_WITH_ARGS) */
   mac_addr_word = loc_parseMac(pc_mac_addr, MAC_ADDR_WORD);
   free(pc_mac_addr);
 
