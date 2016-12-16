@@ -192,8 +192,11 @@ static void _bsp_ledCallback( c_event_t event, p_data_t p_data )
 */
 int8_t bsp_init (s_ns_t * ps_ns)
 {
+  /* Pointer to netstack must not be NULL */
+  EMB6_ASSERT_RET( ps_ns != NULL, -1 );
+
 #if (HAL_SUPPORT_LEDNUM > 0)
-  int i;
+  en_hal_pin_t i;
 #endif /* #if (HAL_SUPPORT_LEDNUM > 0) */
 
   /* Initialize internal structures */
@@ -205,21 +208,21 @@ int8_t bsp_init (s_ns_t * ps_ns)
   memset( bsp_spis, 0, sizeof(bsp_spis) );
 #endif /* #if defined(HAL_SUPPORT_SPI) */
 
+  /* Initialize hardware */
+  EMB6_ASSERT_RET( hal_init() == 0, -2 );
+  EMB6_ASSERT_RET( hal_debugInit() == 0, -2 );
+
 #if (HAL_SUPPORT_LEDNUM > 0)
   /* get all the LEDs */
-  for( i = 0; i < HAL_SUPPORT_LEDNUM; i++ )
+  for( i = EN_HAL_PIN_LED0; i < HAL_SUPPORT_LEDNUM; i++ )
   {
     /* initialize according led pin */
     bsp_leds[i].p_pin = bsp_pinInit( i );
   }
 #endif /* #if (HAL_SUPPORT_LEDNUM > 0) */
 
-  /* Initialize hardware */
-  EMB6_ASSERT_RET( hal_init() == 0, -2 );
-  EMB6_ASSERT_RET( hal_debugInit() == 0, -2 );
-
-  /* Check netstack */
-  EMB6_ASSERT_RET( ps_ns != NULL, -1 );
+  /* force to turn LED off */
+  bsp_led( HAL_LED0 | HAL_LED1 | HAL_LED2 | HAL_LED3, EN_BSP_LED_OP_OFF );
 
   /* Configure board */
   EMB6_ASSERT_RET( board_conf( ps_ns ) == 0, -3 );
