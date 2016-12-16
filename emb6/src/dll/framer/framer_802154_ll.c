@@ -261,14 +261,14 @@ uint8_t framer802154ll_crcFilter(framer802154ll_attr_t *p_frame, uint32_t actCRC
 
   if (p_frame->crc_len == 2) {
     /* 16-bit CRC */
-    expCRC = (p_expCRC[0] << 8) |
-             (p_expCRC[1]);
+    expCRC = ((p_expCRC[0] << 8) & 0xFF00) |
+             ((p_expCRC[1]     ) & 0x00FF);
   } else {
     /* 32-bit CRC */
-    expCRC = ((uint32_t)p_expCRC[0] << 24) |
-             ((uint32_t)p_expCRC[1] << 16) |
-             ((uint32_t)p_expCRC[2] <<  8) |
-             ((uint32_t)p_expCRC[3]);
+    expCRC = (((uint32_t)p_expCRC[0] << 24) & 0xFF000000) |
+             (((uint32_t)p_expCRC[1] << 16) & 0x00FF0000) |
+             (((uint32_t)p_expCRC[2] <<  8) & 0x0000FF00) |
+             (((uint32_t)p_expCRC[3]      ) & 0x000000FF);
   }
 
   is_matched = (expCRC == actCRC);
