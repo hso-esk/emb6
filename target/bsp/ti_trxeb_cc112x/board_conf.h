@@ -144,11 +144,28 @@
 #define MSP430_SLIP_UART_BAUD               115200
 #endif /* #if defined(HAL_SUPPORT_SLIPUART) */
 
+/* add platform-specific debug configuration */
+/** UART used for DEBUG interface */
+#define MSP430_DEBUG_UART                     E_UART_SEL_UART1
+/** Baudrate of DEBUG UART */
+#define MSP430_DEBUG_UART_BAUD                115200
+
+#define MSP430_DEBUG_UART_RX_PORT             E_IO_PORT_P5
+#define MSP430_DEBUG_UART_RX_PIN              7
+#define MSP430_DEBUG_UART_RX_MSK              (1 << MSP430_DEBUG_UART_RX_PIN)
+
+#define MSP430_DEBUG_UART_TX_PORT             E_IO_PORT_P5
+#define MSP430_DEBUG_UART_TX_PIN              6
+#define MSP430_DEBUG_UART_TX_MSK              (1 << MSP430_DEBUG_UART_TX_PIN)
+
+
 /* add platform-specific LEDs configuration */
 /** Number of supported LEDs */
 #ifndef HAL_SUPPORT_LEDNUM
 #define HAL_SUPPORT_LEDNUM                  ( 4 )
 #endif /* #ifndef HAL_SUPPORT_LEDNUM */
+
+#define HAL_LED_INVERTED                    TRUE
 
 /** Enable LED0 */
 #ifndef HAL_SUPPORT_LED0
