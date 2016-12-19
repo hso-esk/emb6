@@ -1,4 +1,7 @@
 /*
+ * --- License --------------------------------------------------------------*
+ */
+/*
  * emb6 is licensed under the 3-clause BSD license. This license gives everyone
  * the right to use and distribute the code, either in binary or source code
  * format, as long as the copyright license is retained in the source code.
@@ -37,40 +40,59 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-/*============================================================================*/
 
-
+/*
+ * --- Module Description ---------------------------------------------------*
+ */
+/**
+ *  \file       demo_udp_socket.h
+ *  \author     Institute of reliable Embedded Systems
+ *              and Communication Electronics
+ *  \date       $Date$
+ *  \version    $Version$
+ *
+ *  \brief      Demo to show how to use the UDP socket interface.
+ *
+ *              This Demo shows how to use the UDP socket interface. Therefore
+ *              the demo is divided into a server and a client application. The
+ *              client transmits data periodically to the server including a
+ *              fixed payload and a sequence counter. The server replies with
+ *              a fixed pattern and the same sequence number. The size of the
+ *              packet transmitted by the client is increased per message until
+ *              a given maximum was reached.
+ *              The server is defined as the DAG-Root within the network and
+ *              its IP address is retrieved automatically. The Server just
+ *              replies to the node it got the packet from.
+ *              This demo is mainly used to show how to use the UDP socket
+ *              interface and to show basic connectivity.
+ */
 #ifndef __DEMO_UDP_SOCKET_H__
 #define __DEMO_UDP_SOCKET_H__
 
 
 /*
-********************************************************************************
-*                                   INCLUDES
-********************************************************************************
-*/
+ * --- Includes -------------------------------------------------------------*
+ */
 #include "emb6.h"
 
 
 /*
-********************************************************************************
-*                           API FUNCTION DECLARATIONS
-********************************************************************************
-*/
+ *  --- Global Functions Definition ------------------------------------------*
+ */
 /**
- * \brief   Initializes UDP demo application
+ * \brief   Initializes the UDP demo application.
  *
- * \return  0 when success, otherwise -1
+ * \return  0 on success, otherwise -1
  */
 int8_t demo_udpSocketInit(void);
 
 
 /**
- * \brief   Configures UDP demo application
+ * \brief   Configures the UDP demo application
  *
- * \param   p_netStack  Pointer to NET stack
+ * \param   p_netStack  Pointer to the network stack
  *
- * \return  0 when success, otherwise -1
+ * \return  0 on success, otherwise -1
  */
 int8_t demo_udpSocketCfg(s_ns_t *p_netStack);
 
