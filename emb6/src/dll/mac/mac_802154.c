@@ -522,8 +522,10 @@ void mac_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 #endif
 
   int hdrlen;
+#if (NETSTK_CFG_MAC_SW_AUTOACK_EN == TRUE)
   uint8_t exp_seq;
   uint8_t is_acked;
+#endif /* #if (NETSTK_CFG_MAC_SW_AUTOACK_EN == TRUE) */
   frame802154_t frame;
 
   /* set returned error code to default */
