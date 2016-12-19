@@ -44,6 +44,28 @@ project file within the doc folder.
 If you want to launch an LCM based lightweight virtualisation with various routing topologies
 you are invited to visit a [dedicated](https://github.com/hso-esk/emb6/wiki/Running-a-virtual-emb6) Wiki page
 
+### Building `emb::6`
+The `emb::6` build system is based on scons. Therefore several options are available to
+configure the build accordingly. For detailed instructions please visit the according
+[Wiki-Page](https://xxx.de).
+For an initial build with a simple demo you can run the following comands to build to executables
+for the native Linux target (keep in mind that the LCM libraries have to be installed in advance.)
+```
+scons --demos=UDPSrv --bsp=native --net=rpl-dagroot --os=none --mac=0x00AA --logger=3 --ccflags=LOGGER_DEMO_UDP_SOCKET=TRUE
+```
+```
+scons --demos=UDPCli --bsp=native --net=rpl-router --os=none --mac=0x00BB --logger=3 --ccflags=LOGGER_DEMO_UDP_SOCKET=TRUE
+```
+
+Afterwards you can run the both executables using the following commands in two separate terminals. Then you should be able to see the according debug output.
+```
+./bin/./bin/UDPSrv-rpl-dagroot-native-none_0x00AA.elf
+```
+./bin/UDPCli-rpl-router-native-none_0x00BB.elf
+```
+scons --demos=UDPCli --bsp=native --net=rpl-router --os=none --mac=0x00BB --logger=3 --ccflags=LOGGER_DEMO_UDP_SOCKET=TRUE
+```
+
 Features
 ---------
 
@@ -55,7 +77,7 @@ making it a unique offering. The main features and concepts of the stack are the
 following:
 
 * **Event Driven Operation** - Very small RAM overhead, one memory stack for the
-whole system.      
+whole system.
 * **Scalable Buffer Handling** - A common buffer module is used across layer and
 module boundaries. This decreases memory usage and furthermore provides
 scalability for usage on different hardware configurations and limitations.
@@ -98,19 +120,9 @@ significantly.
 `emb::6` is very platform independent since it has no requirements to an OS and
 hardware access is abstracted in a simple "single-file-based" hardware
 abstraction layer. That makes it quite easy to port `emb::6` to other platforms.
-However `emb::6` comes with support of several platforms by default:
-
-
-Target | MCU | TRANSCEIVER
--------|-----| ------------
-**atany900** | atmega1281 | at86rf212
-**atany900pro3** | samd21g18a | at86rf212b
-**atany900pro5** | samd20g18 | at86rf212b
-**atany900basic** | samd20g18 | at86rf212b
-**xpro_212** | samd20j18 | at86rf212
-**xpro_212b** | samd20j18 | at86rf212b
-**stk3600** | efm32lg990f256 | at86rf212b
-**native**  | "linux" | [LCM](https://lcm-proj.github.io/)
+However `emb::6` comes with support of several platforms e.g. based on ATMega,
+Cortex-M0/M3, or MSP430. Furthermore a native build i supported to run emb::6 on
+Linux based machines.
 
 
 Contact
