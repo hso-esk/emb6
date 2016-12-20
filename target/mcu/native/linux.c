@@ -338,7 +338,7 @@ int8_t hal_delayUs( uint32_t delay )
 */
 void* hal_pinInit( en_hal_pin_t pin )
 {
-  return -1;
+  return NULL;
 } /* hal_pinInit() */
 
 /*---------------------------------------------------------------------------*/
