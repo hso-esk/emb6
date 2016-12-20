@@ -67,7 +67,7 @@
 #define  LOGGER_ENABLE        LOGGER_RADIO
 #include "logger.h"
 
-#if (NETSTK_CFG_RF_CRC_EN != FALSE)
+#if (NETSTK_CFG_RF_CRC_EN != FALSE) && (NETSTK_CFG_IEEE_802154G_EN != TRUE)
 #error "missing or wrong radio checksum setting in board_conf.h"
 #endif
 
