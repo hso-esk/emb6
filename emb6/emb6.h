@@ -82,7 +82,6 @@
 #undef  TRUE
 #define FALSE                               0 /* do not change                */
 #define TRUE                                1 /* do not change                */
-typedef void                                (*pfn_intCallb_t)(void *);
 
 /* use only Exact-width integer types, linked with TMR_OVRFLOW_VAL 			  */
 typedef uint32_t                            clock_time_t;
@@ -93,6 +92,7 @@ typedef uint32_t                            clock_time_t;
 /*=============================================================================
                                 CONFIGURATIONS
 ==============================================================================*/
+#include "assert.h"
 #include "emb6_conf.h"
 
 
@@ -505,8 +505,6 @@ struct netstack_framer
     int8_t (* length)(void);
 
     int8_t (* create)(void);
-
-    int8_t (* create_and_secure)(s_ns_t* p_ns);
 
     int8_t (* parse)(void);
 };

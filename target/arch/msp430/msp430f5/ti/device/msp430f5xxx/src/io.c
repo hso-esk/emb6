@@ -522,6 +522,7 @@ void io_init (void)
   /* Initialization of MCU IOs */
   _io_mcu_init();
 
+#if 0 // peripherals should be initialized individually
   /* Initialization of LEDs */
   _io_led_init();
 
@@ -552,6 +553,7 @@ void io_init (void)
   /* initialization of RF */
   _io_rf_init();
 #endif /* #if( TARGET_CONFIG_RF == TRUE ) */
+#endif /* #if 0 */
 
 }/* io_init() */
 

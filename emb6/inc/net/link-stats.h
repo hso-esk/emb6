@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Fraunhofer Heinrich-Hertz-Institut.
+ * Copyright (c) 2015, SICS Swedish ICT.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,25 +26,40 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ *
+ * Authors: Simon Duquennoy <simonduq@sics.se>
  */
 
-#include "emb6.h"
-#include "framer.h"
-#include "packetbuf.h"
+#ifndef LINK_STATS_H_
+#define LINK_STATS_H_
 
-/*---------------------------------------------------------------------------*/
-int8_t
-framer_canonical_create_and_secure(s_ns_t* p_ns)
-{
-  int hdr_len;
-  
-  hdr_len = p_ns->frame->create();
-  if(hdr_len >= 0) {
-    packetbuf_compact();
-    if(!p_ns->dllsec->on_frame_created()) {
-      return FRAMER_FAILED;
-    }
-  }
-  return hdr_len;
-}
-/*---------------------------------------------------------------------------*/
+#include "linkaddr.h"
+
+/* ETX fixed point divisor. 128 is the value used by RPL (RFC 6551 and RFC 6719) */
+#ifdef LINK_STATS_CONF_ETX_DIVISOR
+#define LINK_STATS_ETX_DIVISOR              LINK_STATS_CONF_ETX_DIVISOR
+#else /* LINK_STATS_CONF_ETX_DIVISOR */
+#define LINK_STATS_ETX_DIVISOR              128
+#endif /* LINK_STATS_CONF_ETX_DIVISOR */
+
+/* All statistics of a given link */
+struct link_stats {
+  uint16_t etx;               /* ETX using ETX_DIVISOR as fixed point divisor */
+  int16_t rssi;               /* RSSI (received signal strength) */
+  uint8_t freshness;          /* Freshness of the statistics */
+  clock_time_t last_tx_time;  /* Last Tx timestamp */
+};
+
+/* Returns the neighbor's link statistics */
+const struct link_stats *link_stats_from_lladdr(const linkaddr_t *lladdr);
+/* Are the statistics fresh? */
+int link_stats_is_fresh(const struct link_stats *stats);
+
+/* Initializes link-stats module */
+void link_stats_init(void);
+/* Packet sent callback. Updates statistics for transmissions on a given link */
+void link_stats_packet_sent(const linkaddr_t *lladdr, int status, int numtx);
+/* Packet input callback. Updates statistics for receptions on a given link */
+void link_stats_input_callback(const linkaddr_t *lladdr);
+
+#endif /* LINK_STATS_H_ */

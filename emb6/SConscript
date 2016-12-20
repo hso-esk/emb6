@@ -131,10 +131,12 @@ emb6 = {
     # of emb::6 it is active for almost all applications.
     'ipv6' : {
         'src' : [
+            'net/*.c',
             'net/ipv6/*.c',
         ],
 
         'inc' : [
+            'net/',
             'net/ipv6/',
         ]
     },

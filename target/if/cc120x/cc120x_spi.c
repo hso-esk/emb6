@@ -68,8 +68,8 @@
 #define RADIO_READ_ACCESS       (uint8_t)( 0x80 )
 #define RADIO_WRITE_ACCESS      (uint8_t)( 0x00 )
 
-#define CC120X_SPI_ON()         do {bsp_spiSlaveSel(cc120x_spiHandle, TRUE );} while(0)
-#define CC120X_SPI_OFF()        do {bsp_spiSlaveSel(cc120x_spiHandle, FALSE);} while(0)
+#define CC120X_SPI_ON()         do {bsp_spiSlaveSel(cc120x_spiHandle, cc120x_spiCsIoHandle, TRUE, TRUE);} while(0)
+#define CC120X_SPI_OFF()        do {bsp_spiSlaveSel(cc120x_spiHandle, cc120x_spiCsIoHandle, FALSE, TRUE);} while(0)
 
 
 
@@ -79,7 +79,7 @@
 ********************************************************************************
 */
 static void *cc120x_spiHandle;
-
+static void* cc120x_spiCsIoHandle;
 
 /*
 ********************************************************************************
@@ -120,20 +120,20 @@ static uint8_t cc120x_spi8bitRegAccess(uint8_t     access,
     {
         /* Transmit access command */
         data = access | addr;
-        bsp_spiTxRx(&data, &chip_status, 1);
+        bsp_spiTRx(cc120x_spiHandle, &data, &chip_status, 1);
 
         /* Read/Write data */
         if (data & RADIO_READ_ACCESS) {
             if (data & RADIO_BURST_ACCESS) {        /* Burst  Read Access   */
-                bsp_spiRead(p_data, len);
+                bsp_spiRx(cc120x_spiHandle, p_data, len);
             } else {                                /* Single Read Access   */
-                bsp_spiRead(p_data, 1);
+                bsp_spiRx(cc120x_spiHandle, p_data, 1);
             }
         } else {
             if (data & RADIO_BURST_ACCESS) {        /* Burst Write Access   */
-                bsp_spiWrite(p_data, len);
+                bsp_spiTx(cc120x_spiHandle, p_data, len);
             } else {                                /* Single Write Access  */
-                bsp_spiWrite(p_data, 1);
+                bsp_spiTx(cc120x_spiHandle, p_data, 1);
             }
         }
     }
@@ -166,21 +166,21 @@ static uint8_t cc120x_spi16BitRegAccess(uint8_t    access,
     {
         /* Transmit access command */
         data = access | ext_addr;
-        bsp_spiTxRx(&data, &chip_status, 1);
-        bsp_spiTxRx(&reg_addr, &chip_status, 1);
+        bsp_spiTRx(cc120x_spiHandle, &data, &chip_status, 1);
+        bsp_spiTRx(cc120x_spiHandle, &reg_addr, &chip_status, 1);
 
         /* Read/Write data */
         if (data & RADIO_READ_ACCESS) {
             if (data & RADIO_BURST_ACCESS) {        /* Burst  Read Access   */
-                bsp_spiRead(p_data, len);
+                bsp_spiRx(cc120x_spiHandle, p_data, len);
             } else {                                /* Single Read Access   */
-                bsp_spiRead(p_data, 1);
+                bsp_spiRx(cc120x_spiHandle, p_data, 1);
             }
         } else {
             if (data & RADIO_BURST_ACCESS) {        /* Burst Write Access   */
-                bsp_spiWrite(p_data, len);
+                bsp_spiTx(cc120x_spiHandle, p_data, len);
             } else {                                /* Single Write Access  */
-                bsp_spiWrite(p_data, 1);
+                bsp_spiTx(cc120x_spiHandle, p_data, 1);
             }
         }
     }
@@ -282,7 +282,8 @@ rf_status_t cc120x_statusRxGet(void)
 
 void cc120x_spiInit(void)
 {
-    cc120x_spiHandle = bsp_spiInit();
+    cc120x_spiCsIoHandle = bsp_pinInit( EN_HAL_PIN_RFSPICS );
+    cc120x_spiHandle = bsp_spiInit(EN_HAL_SPI_RF);
 }
 
 
@@ -296,7 +297,7 @@ rf_status_t cc120x_spiCmdStrobe(uint8_t cmd)
     rf_status_t chip_status;
 
     CC120X_SPI_ON();
-    bsp_spiTxRx(&cmd, &chip_status, 1);
+    bsp_spiTRx(cc120x_spiHandle, &cmd, &chip_status, 1);
     CC120X_SPI_OFF();
 
     return chip_status;

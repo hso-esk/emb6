@@ -59,6 +59,7 @@ std_conf = {
     # C code global defined symbols
     'CPPDEFINES' : [
         ('LCM_NETWORK_CONF','\\"lcmnetwork.conf\\"'),
+        ('MAIN_WITH_ARGS', '1'),
     ],
 
     # GCC flags

@@ -382,7 +382,7 @@ int8_t demo_udpSocketInit(void)
 
   /* set UDP event timer interval */
   interval  = DEMO_UDP_SEND_INTERVAL;
-  interval *= bsp_get(E_BSP_GET_TRES)/1000;
+  interval *= bsp_getTRes()/1000;
 
   /* Set event timer for periodic data process */
   etimer_set(&udp_socket_etimer, interval, &udp_socket_eventHandler);

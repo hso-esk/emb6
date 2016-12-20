@@ -46,8 +46,8 @@
  * Modulo mask (thus +1) for a random number to get the tick number for the random
  * retransmission time between COAP_RESPONSE_TIMEOUT and COAP_RESPONSE_TIMEOUT*COAP_RESPONSE_RANDOM_FACTOR.
  */
-#define COAP_RESPONSE_TIMEOUT_TICKS         (bsp_get(E_BSP_GET_TRES) * COAP_RESPONSE_TIMEOUT)
-#define COAP_RESPONSE_TIMEOUT_BACKOFF_MASK  (long)((bsp_get(E_BSP_GET_TRES) * COAP_RESPONSE_TIMEOUT * ((float)COAP_RESPONSE_RANDOM_FACTOR - 1.0)) + 0.5) + 1
+#define COAP_RESPONSE_TIMEOUT_TICKS         (bsp_getTRes() * COAP_RESPONSE_TIMEOUT)
+#define COAP_RESPONSE_TIMEOUT_BACKOFF_MASK  (long)((bsp_getTRes() * COAP_RESPONSE_TIMEOUT * ((float)COAP_RESPONSE_RANDOM_FACTOR - 1.0)) + 0.5) + 1
 
 /* container for transactions with message buffer and retransmission info */
 typedef struct coap_transaction {
@@ -68,7 +68,7 @@ typedef struct coap_transaction {
                                                  * Use snprintf(buf, len+1, "", ...) to completely fill payload */
 } coap_transaction_t;
 
-/* void coap_register_as_transaction_handler(); */    /* not needed */
+/* void coap_register_as_transaction_handler(void); */    /* not needed */
 
 coap_transaction_t *coap_new_transaction(uint16_t mid, uip_ipaddr_t *addr,
                                          uint16_t port);
@@ -76,6 +76,6 @@ void coap_send_transaction(coap_transaction_t *t);
 void coap_clear_transaction(coap_transaction_t *t);
 coap_transaction_t *coap_get_transaction_by_mid(uint16_t mid);
 
-void coap_check_transactions();
+void coap_check_transactions(void);
 
 #endif /* COAP_TRANSACTIONS_H_ */

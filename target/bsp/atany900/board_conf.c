@@ -37,57 +37,55 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-/**  \addtogroup emb6
- *      @{
- *      \addtogroup bsp Board Support Package
- *   @{
- *   \addtogroup board
- *   @{
- *      \addtogroup atany900 Board AT-ANY-900 specific configuration
- *   @{
- */
-/*! \file   atany900/board_conf.c
-
-    \author Artem Yushev, 
-
-    \brief  Board Configuration for AT-ANY-900
-
-    \version 0.0.1
-*/
 
 /*
-********************************************************************************
-*                                   INCLUDES
-********************************************************************************
-*/
+ * --- Module Description ---------------------------------------------------*
+ */
+/**
+ *  \file       board_conf.c
+ *  \author     Institute of reliable Embedded Systems
+ *              and Communication Electronics
+ *  \date       $Date$
+ *  \version    $Version$
+ *
+ *  \brief      Definition of the Board Configuration.
+ *
+ *              The Board Configuration configures the underlying MCU and
+ *              transceiver.
+ */
+
+/*
+ *  --- Includes -------------------------------------------------------------*
+ */
 #include "emb6.h"
+#include "assert.h"
 #include "board_conf.h"
-#include "logger.h"
-#include "bsp.h"
 
+/*
+ * --- Macro Definitions --------------------------------------------------- *
+ */
 /** Enable or disable logging */
-#define        LOGGER_ENABLE          LOGGER_BSP
+#define LOGGER_ENABLE             LOGGER_BSP
+#include "logger.h"
 
-uint8_t board_conf(s_ns_t* ps_nStack)
+
+/*
+ *  --- Global Functions Definition ------------------------------------------*
+ */
+
+/*---------------------------------------------------------------------------*/
+/*
+* board_conf()
+*/
+int8_t board_conf( s_ns_t* p_ns )
 {
-    uint8_t c_ret = 1;
+  EMB6_ASSERT_RET( p_ns != NULL, -1 );
 
+  p_ns->dllc = &dllc_driver_802154;
+  p_ns->mac  = &mac_driver_null;
+  p_ns->phy  = &phy_driver_null;
+  p_ns->rf   = &rf_driver_at212;
 
-    if (ps_nStack != NULL) {
-        ps_nStack->dllc = &dllc_driver_802154;
-        ps_nStack->mac  = &mac_driver_null;
-        ps_nStack->phy  = &phy_driver_null;
-        ps_nStack->rf   = &rf_driver_at212;
-    }
-    else {
-        LOG_ERR("Network stack pointer is NULL");
-        c_ret = 0;
-    }
+  return 0;
+} /* board_conf */
 
-    return c_ret;
-}
-
-/** @} */
-/** @} */
-/** @} */
-/** @} */

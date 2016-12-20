@@ -53,6 +53,8 @@
  ********************************************************************************
  */
 #include "emb6.h"
+#include "bsp.h"
+#include "board_conf.h"
 #include "cc120x.h"
 #include "cc120x_cfg.h"
 #include "cc120x_spi.h"
@@ -64,6 +66,10 @@
 
 #define  LOGGER_ENABLE        LOGGER_RADIO
 #include "logger.h"
+
+#if (NETSTK_CFG_RF_CRC_EN != FALSE) && (NETSTK_CFG_IEEE_802154G_EN != TRUE)
+#error "missing or wrong radio checksum setting in board_conf.h"
+#endif
 
 /* enable SW auto-acknowledgment feature by default */
 #ifndef NETSTK_CFG_RF_SW_AUTOACK_EN
@@ -189,17 +195,17 @@
 #define RF_STATE_MASK                   ( 0xF0u )
 
 /*!< Radio interrupt configuration macros */
-#define RF_INT_PKT_BEGIN                E_TARGET_EXT_INT_1  //GPIO2
-#define RF_INT_RXFIFO_THR               E_TARGET_EXT_INT_0  //GPIO0
-#define RF_INT_TXFIFO_THR               E_TARGET_EXT_INT_0  //GPIO0
-#define RF_INT_PQT_REACHED              E_TARGET_EXT_INT_0  //GPIO0
-#define RF_INT_PKT_END                  E_TARGET_EXT_INT_2  //GPIO3
+#define RF_INT_PKT_BEGIN                rf_ctx.p_exti1Pin  //GPIO2
+#define RF_INT_RXFIFO_THR               rf_ctx.p_exti0Pin  //GPIO0
+#define RF_INT_TXFIFO_THR               rf_ctx.p_exti0Pin  //GPIO0
+#define RF_INT_PQT_REACHED              rf_ctx.p_exti0Pin  //GPIO0
+#define RF_INT_PKT_END                  rf_ctx.p_exti2Pin  //GPIO3
 
-#define RF_INT_EDGE_PKT_BEGIN           E_TARGET_INT_EDGE_RISING
-#define RF_INT_EDGE_RXFIFO_THR          E_TARGET_INT_EDGE_RISING
-#define RF_INT_EDGE_TXFIFO_THR          E_TARGET_INT_EDGE_FALLING
-#define RF_INT_EDGE_PQT_REACHED         E_TARGET_INT_EDGE_RISING
-#define RF_INT_EDGE_PKT_END             E_TARGET_INT_EDGE_FALLING
+#define RF_INT_EDGE_PKT_BEGIN           EN_HAL_IRQEDGE_RISING
+#define RF_INT_EDGE_RXFIFO_THR          EN_HAL_IRQEDGE_RISING
+#define RF_INT_EDGE_TXFIFO_THR          EN_HAL_IRQEDGE_FALLING
+#define RF_INT_EDGE_PQT_REACHED         EN_HAL_IRQEDGE_RISING
+#define RF_INT_EDGE_PKT_END             EN_HAL_IRQEDGE_FALLING
 
 #define RF_IOCFG_PKT_BEGIN              0u
 #define RF_IOCFG_RXFIFO_THR             1u
@@ -210,27 +216,33 @@
 
 #define RF_INT_CONFIG()  \
   do {    \
-    bsp_extIntRegister(RF_INT_PKT_BEGIN, RF_INT_EDGE_PKT_BEGIN, rf_pktRxTxBeginISR);      \
-    bsp_extIntRegister(RF_INT_RXFIFO_THR, RF_INT_EDGE_RXFIFO_THR, rf_rxFifoThresholdISR); \
-    bsp_extIntRegister(RF_INT_PKT_END, RF_INT_EDGE_PKT_END, rf_pktRxTxEndISR);            \
+    bsp_pinIRQRegister(RF_INT_PKT_BEGIN, RF_INT_EDGE_PKT_BEGIN, rf_pktRxTxBeginISR);      \
+    bsp_pinIRQRegister(RF_INT_RXFIFO_THR, RF_INT_EDGE_RXFIFO_THR, rf_rxFifoThresholdISR); \
+    bsp_pinIRQRegister(RF_INT_PKT_END, RF_INT_EDGE_PKT_END, rf_pktRxTxEndISR);            \
   } while(0)
 
 #define RF_INT_ENABLED() \
   do {    \
-      bsp_extIntClear(RF_INT_PKT_BEGIN);    \
-      bsp_extIntClear(RF_INT_RXFIFO_THR);   \
-      bsp_extIntClear(RF_INT_PKT_END);      \
-      bsp_extIntEnable(RF_INT_PKT_BEGIN);   \
-      bsp_extIntEnable(RF_INT_RXFIFO_THR);  \
-      bsp_extIntEnable(RF_INT_PKT_END);     \
+      bsp_pinIRQClear(RF_INT_PKT_BEGIN);    \
+      bsp_pinIRQClear(RF_INT_RXFIFO_THR);   \
+      bsp_pinIRQClear(RF_INT_PKT_END);      \
+      bsp_pinIRQEnable(RF_INT_PKT_BEGIN);   \
+      bsp_pinIRQEnable(RF_INT_RXFIFO_THR);  \
+      bsp_pinIRQEnable(RF_INT_PKT_END);     \
   } while(0)
 
 #define RF_INT_DISABLED() \
   do {    \
-      bsp_extIntDisable(RF_INT_PKT_BEGIN);  \
-      bsp_extIntDisable(RF_INT_RXFIFO_THR); \
-      bsp_extIntDisable(RF_INT_PKT_END);    \
+      bsp_pinIRQDisable(RF_INT_PKT_BEGIN);  \
+      bsp_pinIRQDisable(RF_INT_RXFIFO_THR); \
+      bsp_pinIRQDisable(RF_INT_PKT_END);    \
   } while(0)
+
+
+#define CC120X_LED_RX_ON()                  (void)0
+#define CC120X_LED_RX_OFF()                 (void)0
+#define CC120X_LED_TX_ON()                  (void)0
+#define CC120X_LED_TX_OFF()                 (void)0
 
 
 /*
@@ -306,6 +318,9 @@ struct s_rf_ctx {
   uint8_t txStatus;
   e_nsErr_t txErr;
 
+  void* p_exti0Pin;
+  void* p_exti1Pin;
+  void* p_exti2Pin;
 };
 
 
@@ -337,7 +352,7 @@ static void rf_pktRxTxEndISR(void *p_arg);
 static void rf_readRxStatus(struct s_rf_ctx *p_ctx);
 static uint8_t rf_readRxFifo(struct s_rf_ctx *p_ctx, uint8_t numBytes);
 static void rf_writeTxFifo(struct s_rf_ctx *p_ctx, uint8_t totNumBytes, e_nsErr_t *p_err);
-static void rf_intConfig(uint8_t iocfg, en_targetExtInt_t e_extInt, en_targetIntEdge_t e_edge, pfn_intCallb_t cbfnct);
+static void rf_intConfig(uint8_t iocfg, void* p_pin, en_hal_irqedge_t e_edge, pf_hal_irqCb_t cbfnct);
 
 #if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
 static void rf_setPktLen(uint8_t mode, uint16_t len);
@@ -434,6 +449,11 @@ static void rf_init(void *p_netstk, e_nsErr_t *p_err)
 
   /* initialize SPI handle */
   cc120x_spiInit();
+
+  /* initialize GPIOs for interrupts */
+  p_ctx->p_exti0Pin = bsp_pinInit( EN_HAL_PIN_RFCTRL0 );
+  p_ctx->p_exti1Pin = bsp_pinInit( EN_HAL_PIN_RFCTRL1 );
+  p_ctx->p_exti2Pin = bsp_pinInit( EN_HAL_PIN_RFCTRL2 );
 
   /* reset the transceiver. Afterwards the chip will be in IDLE state */
   rf_reset();
@@ -602,7 +622,7 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
   txTimeout = packetbuf_attr(PACKETBUF_ATTR_PHY_TXTIMEOUT);
 
   /* give radio enough time to perform TXONCCA */
-  bsp_delay_us(100);
+  bsp_delayUs(100);
   if (RF_READ_CHIP_STATE() != RF_STATE_TX) {
     /* TXONCCA failed */
     p_ctx->txErr = NETSTK_ERR_TX_COLLISION;
@@ -662,7 +682,7 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
     if (p_ctx->cfgWOREnabled == TRUE) {
       waitForAckTimeout += 300; // compromise ackWaitDuration
     }
-    bsp_delay_us(waitForAckTimeout);
+    bsp_delayUs(waitForAckTimeout);
   }
 #endif /* NETSTK_CFG_RF_CC112X_AUTOACK_EN */
   else {
@@ -1083,7 +1103,7 @@ static void rf_rxFifoThresholdISR(void *p_arg) {
 
     /* disable RXFIFO_THR interrupt once number of remaining bytes is less than FIFO_THR */
     if (p_ctx->rxNumRemBytes <= RF_CFG_FIFO_THR) {
-      bsp_extIntDisable(RF_INT_RXFIFO_THR);
+      bsp_pinIRQDisable(RF_INT_RXFIFO_THR);
     }
 #endif /* NETSTK_CFG_IEEE_802154G_EN */
   }
@@ -1328,7 +1348,7 @@ static void rf_rx_entry(struct s_rf_ctx *p_ctx) {
 static void rf_rx_sync(struct s_rf_ctx *p_ctx) {
 
   p_ctx->state = RF_STATE_RX_SYNC;
-  LED_RX_ON();
+  CC120X_LED_RX_ON();
 
   /* configure RF interrupt */
   rf_intConfig(RF_IOCFG_RXFIFO_THR, RF_INT_RXFIFO_THR, RF_INT_EDGE_RXFIFO_THR, rf_rxFifoThresholdISR);
@@ -1471,7 +1491,7 @@ static void rf_rx_term(struct s_rf_ctx *p_ctx) {
  */
 static void rf_rx_exit(struct s_rf_ctx *p_ctx) {
 
-  LED_RX_OFF();
+  CC120X_LED_RX_OFF();
 
   /* configure RF interrupt */
   RF_WR_REGS(&cc120x_cfg_iocfgOff[RF_IOCFG_RXFIFO_THR]);
@@ -1488,7 +1508,7 @@ static void rf_rx_exit(struct s_rf_ctx *p_ctx) {
  * @param p_ctx   point to variable holding radio context structure
  */
 static void rf_tx_entry(struct s_rf_ctx *p_ctx) {
-  LED_TX_ON();
+  CC120X_LED_TX_ON();
   p_ctx->txErr = NETSTK_ERR_NONE;
   p_ctx->txStatus = RF_TX_STATUS_NONE;
   p_ctx->txReqAck = packetbuf_attr(PACKETBUF_ATTR_MAC_ACK);
@@ -1646,7 +1666,7 @@ static void rf_tx_term(struct s_rf_ctx *p_ctx) {
  * @param p_ctx   point to variable holding radio context structure
  */
 static void rf_tx_exit(struct s_rf_ctx *p_ctx) {
-  LED_TX_OFF();
+  CC120X_LED_TX_OFF();
 
   /* no need to change RF settings as ACK is missing because the radio is already put to RX_IDLE */
   if (p_ctx->txErr != NETSTK_ERR_TX_NOACK) {
@@ -1741,7 +1761,7 @@ static uint8_t rf_gotoIdle(struct s_rf_ctx *p_ctx) {
         break;
     }
     if (chipState != RF_STATE_IDLE) {
-      bsp_delay_us(10);
+      bsp_delayUs(10);
     }
   } while (chipState != RF_STATE_IDLE);
 
@@ -1966,13 +1986,13 @@ static void rf_writeTxFifo(struct s_rf_ctx *p_ctx, uint8_t totNumBytes, e_nsErr_
  * @param e_edge    interrupt edge to detect
  * @param cbfnct    callback function
  */
-static void rf_intConfig(uint8_t iocfg, en_targetExtInt_t e_extInt, en_targetIntEdge_t e_edge,
-    pfn_intCallb_t cbfnct) {
+static void rf_intConfig(uint8_t iocfg, void* p_pin, en_hal_irqedge_t e_edge,
+    pf_hal_irqCb_t cbfnct) {
 
   RF_WR_REGS(&cc120x_cfg_iocfgOn[iocfg]);
-  bsp_extIntRegister(e_extInt, e_edge, cbfnct);
-  bsp_extIntClear(e_extInt);
-  bsp_extIntEnable(e_extInt);
+  bsp_pinIRQRegister(p_pin, e_edge, cbfnct);
+  bsp_pinIRQClear(p_pin);
+  bsp_pinIRQEnable(p_pin);
 }
 
 

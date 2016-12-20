@@ -168,7 +168,17 @@ void etimer_set(struct etimer *pst_et, clock_time_t l_interval, pfn_callback_t p
     LOG_INFO("add new timer %p\n\r",pst_et);
 //    etimer_print_list();
 }/* etimer_set() */
-
+/*============================================================================*/
+/*  etimer_reset_with_new_interval()                                              */
+/*============================================================================*/
+void etimer_reset_with_new_interval(struct etimer *pst_et, clock_time_t l_interval, pfn_callback_t pfn_callback)
+{
+  timer_reset(&pst_et->timer);
+  pst_et->timer.interval = l_interval;
+  // add_timer(et);
+  _etimer_addTimer(pst_et);
+  evproc_regCallback(EVENT_TYPE_TIMER_EXP, pfn_callback);
+} /* etimer_reset_with_new_interval() */
 /*============================================================================*/
 /*  etimer_reset()                                                                 */
 /*============================================================================*/

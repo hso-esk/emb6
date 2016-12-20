@@ -310,7 +310,7 @@ void emb6_process(int32_t us_delay)
     {
         evproc_nextEvent();
         etimer_request_poll();
-        bsp_delay_us(delay);
+        bsp_delayUs(delay);
     }while(runLoop);
 }
 

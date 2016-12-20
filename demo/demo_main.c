@@ -432,7 +432,7 @@ if (!demo_lwm2mInit()) {
 void emb6_errorHandler(e_nsErr_t *p_err)
 {
     /* turns LEDs on to indicate error */
-    bsp_led(E_BSP_LED_0, E_BSP_LED_ON);
+    bsp_led(HAL_LED0, EN_BSP_LED_OP_ON);
     LOG_ERR("Program failed");
 
     /* TODO missing error handling */
@@ -475,9 +475,9 @@ static void emb6_task( void* p_params )
     }
 
     /* Show that stack has been launched */
-    bsp_led(E_BSP_LED_0, E_BSP_LED_ON);
-    bsp_delay_us(2000000);
-    bsp_led(E_BSP_LED_0, E_BSP_LED_OFF);
+    bsp_led(HAL_LED0, EN_BSP_LED_OP_ON);
+    bsp_delayUs(2000000);
+    bsp_led(HAL_LED0, EN_BSP_LED_OP_OFF);
 
     /* Initialize applications */
     ret = loc_demoAppsInit();
@@ -510,8 +510,8 @@ static void vLEDTask( void *pvParameters )
     {
         if( p_params->en )
         {
-            bsp_led( E_BSP_LED_0, E_BSP_LED_TOGGLE );
-            bsp_led( E_BSP_LED_1, E_BSP_LED_TOGGLE );
+            bsp_led( HAL_LED0, EN_BSP_LED_OP_TOGGLE );
+            bsp_led( HAL_LED1, EN_BSP_LED_OP_TOGGLE );
         }
 
         vTaskDelay( p_params->delay / portTICK_PERIOD_MS );
@@ -529,6 +529,7 @@ void vApplicationIdleHook( void )
 /*-----------------------------------------------------------*/
 void vApplicationStackOverflowHook( TaskHandle_t pxTask, char *pcTaskName )
 {
+
     /* This function will be called if a task overflows its stack, if
     configCHECK_FOR_STACK_OVERFLOW != 0.  It might be that the function
     parameters have been corrupted, depending on the severity of the stack
@@ -553,17 +554,35 @@ static void prvLowPowerMode1( void )
 /*==============================================================================
  main()
 ==============================================================================*/
-int main(int argc, char* argv[])
+#if defined(MAIN_WITH_ARGS)
+int main(int argc, char **argv)
+#else
+int main(void)
+#endif /* #if defined(MAIN_WITH_ARGS) */
 {
-    char *pc_mac_addr = NULL;
-    memset(&emb6_startupParams, 0, sizeof(emb6_startupParams));
+  s_ns_t st_netstack;
+  uint8_t ret;
+  e_nsErr_t err;
 
-    if (argc > 1) {
-      pc_mac_addr = malloc(strlen(argv[1])+1);
-      strcpy(pc_mac_addr, argv[1]);
-    }
-    emb6_startupParams.ui_macAddr = loc_parseMac(pc_mac_addr, MAC_ADDR_WORD);
-    free(pc_mac_addr);
+  memset(&emb6_startupParams, 0, sizeof(emb6_startupParams));
+
+  /* Initialize variables */
+  err = NETSTK_ERR_NONE;
+  memset(&st_netstack, 0, sizeof(st_netstack));
+
+#if defined(MAIN_WITH_ARGS)
+  if (argc > 1) {
+    mb6_startupParams.ui_macAddr = loc_parseMac(argv[1], MAC_ADDR_WORD);
+  }
+#endif /* #if defined(MAIN_WITH_ARGS) */
+  emb6_startupParams.ui_macAddr = loc_parseMac(NULL, MAC_ADDR_WORD);
+
+  /* Initialize BSP */
+  ret = bsp_init(&st_netstack);
+  if (ret != 0) {
+    err = NETSTK_ERR_INIT;
+    emb6_errorHandler(&err);
+  }
 
 #if USE_FREERTOS
     ledTaskParams.en = 1;
@@ -574,6 +593,7 @@ int main(int argc, char* argv[])
 
     /* Create EMB6 task. */
     xTaskCreate( emb6_task, "EMB6Task", 2048, &emb6_startupParams, mainEMB6_TASK_PRIORITY, NULL );
+
 
     /* Create LED task. */
     xTaskCreate( vLEDTask, "LEDTask", configMINIMAL_STACK_SIZE, &ledTaskParams, mainLED_TASK_PRIORITY, NULL );
