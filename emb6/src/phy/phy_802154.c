@@ -80,10 +80,13 @@ static void phy_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
 static void phy_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
 static void phy_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
 
-static void     phy_insertCrc(uint8_t *p_data, uint16_t len);
-static uint8_t *phy_insertHdr(uint8_t *p_data, uint16_t len);
+#if (NETSTK_CFG_RF_SW_AUTOACK_EN != TRUE)
+static void phy_insertCrc(uint8_t *p_data, uint16_t len);
 static uint16_t phy_crc16(uint8_t *p_data, uint16_t len);
 static uint32_t phy_crc32(uint8_t *p_data, uint16_t len);
+#endif /* #if (NETSTK_CFG_RF_SW_AUTOACK_EN != TRUE) */
+static uint8_t *phy_insertHdr(uint8_t *p_data, uint16_t len);
+
 
 
 /*
@@ -441,6 +444,68 @@ static void phy_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
 
 
 /**
+ * @brief   Insert PHY header
+ */
+static uint8_t * phy_insertHdr(uint8_t *p_data, uint16_t len)
+{
+  uint8_t *p_hdr;
+  uint16_t hdr;
+
+  /* get pointer to PHY header field */
+  p_hdr = p_data - PHY_HEADER_LEN;
+
+  /* compute header fields */
+  hdr = len;
+
+#if NETSTK_CFG_IEEE_802154G_EN
+  uint8_t chksumLen;
+  chksumLen = packetbuf_attr(PACKETBUF_ATTR_MAC_FCS_LEN);
+  if (chksumLen == 2) {
+    hdr |= 0x1000u;
+  }
+
+  /* write PHY header */
+  p_hdr[0] = (hdr & 0xFF00u) >> 8;
+  p_hdr[1] = (hdr & 0x00FFu);
+
+#else
+  /* write the header */
+  p_hdr[0] = hdr & 0x7F;
+#endif
+
+  return p_hdr;
+}
+
+
+#if (NETSTK_CFG_RF_SW_AUTOACK_EN != TRUE)
+
+/**
+ * @brief   Insert PHY checksum
+ */
+static void phy_insertCrc(uint8_t *p_data, uint16_t len)
+{
+  uint8_t *p_crc;
+  uint32_t crc = 0;
+  packetbuf_attr_t fcs_len;
+
+  /* get pointer to checksum field */
+  p_crc = p_data + len;
+
+  fcs_len = packetbuf_attr(PACKETBUF_ATTR_MAC_FCS_LEN);
+  if (fcs_len == 4) {
+    crc = phy_crc32(p_data, len);
+    p_crc[0] = (crc & 0xFF000000u) >> 24;
+    p_crc[1] = (crc & 0x00FF0000u) >> 16;
+    p_crc[2] = (crc & 0x0000FF00u) >> 8;
+    p_crc[3] = (crc & 0x000000FFu);
+  } else {
+    crc = phy_crc16(p_data, len);
+    p_crc[0] = (crc & 0xFF00u) >> 8;
+    p_crc[1] = (crc & 0x00FFu);
+  }
+}
+
+/**
  * @brief   Compute CRC-16 over a byte stream
  * @param   p_data  Point to first byte of the stream
  * @param   len     Length of the stream
@@ -487,67 +552,7 @@ static uint32_t phy_crc32(uint8_t *p_data, uint16_t len)
 
   return crc_res;
 }
-
-
-/**
- * @brief   Insert PHY header
- */
-static uint8_t * phy_insertHdr(uint8_t *p_data, uint16_t len)
-{
-  uint8_t *p_hdr;
-  uint16_t hdr;
-
-  /* get pointer to PHY header field */
-  p_hdr = p_data - PHY_HEADER_LEN;
-
-  /* compute header fields */
-  hdr = len;
-
-#if NETSTK_CFG_IEEE_802154G_EN
-  uint8_t chksumLen;
-  chksumLen = packetbuf_attr(PACKETBUF_ATTR_MAC_FCS_LEN);
-  if (chksumLen == 2) {
-    hdr |= 0x1000u;
-  }
-
-  /* write PHY header */
-  p_hdr[0] = (hdr & 0xFF00u) >> 8;
-  p_hdr[1] = (hdr & 0x00FFu);
-
-#else
-  /* write the header */
-  p_hdr[0] = hdr & 0x7F;
-#endif
-
-  return p_hdr;
-}
-
-
-/**
- * @brief   Insert PHY checksum
- */
-static void phy_insertCrc(uint8_t *p_data, uint16_t len)
-{
-  uint8_t *p_crc;
-  uint32_t crc = 0;
-  packetbuf_attr_t fcs_len;
-
-  /* get pointer to checksum field */
-  p_crc = p_data + len;
-
-  fcs_len = packetbuf_attr(PACKETBUF_ATTR_MAC_FCS_LEN);
-  if (fcs_len == 4) {
-    crc = phy_crc32(p_data, len);
-    p_crc[0] = (crc & 0xFF000000u) >> 24;
-    p_crc[1] = (crc & 0x00FF0000u) >> 16;
-    p_crc[2] = (crc & 0x0000FF00u) >> 8;
-    p_crc[3] = (crc & 0x000000FFu);
-  } else {
-    crc = phy_crc16(p_data, len);
-    p_crc[0] = (crc & 0xFF00u) >> 8;
-    p_crc[1] = (crc & 0x00FFu);
-  }
-}
+#endif /* #if (NETSTK_CFG_RF_SW_AUTOACK_EN != TRUE) */
 
 
 /*
