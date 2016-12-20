@@ -53,6 +53,8 @@
  ********************************************************************************
  */
 #include "emb6.h"
+#include "bsp.h"
+#include "board_conf.h"
 #include "cc120x.h"
 #include "cc120x_cfg.h"
 #include "cc120x_spi.h"
@@ -64,6 +66,10 @@
 
 #define  LOGGER_ENABLE        LOGGER_RADIO
 #include "logger.h"
+
+#if (NETSTK_CFG_RF_CRC_EN != FALSE)
+#error "missing or wrong radio checksum setting in board_conf.h"
+#endif
 
 /* enable SW auto-acknowledgment feature by default */
 #ifndef NETSTK_CFG_RF_SW_AUTOACK_EN
