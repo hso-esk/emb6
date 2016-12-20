@@ -618,7 +618,7 @@ void* hal_spiInit( en_hal_spi_t spi )
 int32_t hal_spiTRx( void* p_spi, uint8_t* p_tx, uint8_t* p_rx, uint16_t len )
 {
   EMB6_ASSERT_RET( p_spi != NULL, -1 );
-  EMB6_ASSERT_RET( p_spi != &s_hal_spi_t, -1 );
+  EMB6_ASSERT_RET( p_spi == &s_hal_spi, -1 );
 
   spi_rfTxRx(p_tx, p_rx, len);
   return len;
@@ -631,7 +631,7 @@ int32_t hal_spiTRx( void* p_spi, uint8_t* p_tx, uint8_t* p_rx, uint16_t len )
 int32_t hal_spiRx( void* p_spi, uint8_t * p_rx, uint16_t len )
 {
   EMB6_ASSERT_RET( p_spi != NULL, -1 );
-  EMB6_ASSERT_RET( p_spi != &s_hal_spi_t, -1 );
+  EMB6_ASSERT_RET( p_spi == &s_hal_spi, -1 );
 
   return spi_rfRead(p_rx, len);
 } /* hal_spiRx() */
@@ -643,7 +643,7 @@ int32_t hal_spiRx( void* p_spi, uint8_t * p_rx, uint16_t len )
 int32_t hal_spiTx( void* p_spi, uint8_t* p_tx, uint16_t len )
 {
   EMB6_ASSERT_RET( p_spi != NULL, -1 );
-  EMB6_ASSERT_RET( p_spi != &s_hal_spi_t, -1 );
+  EMB6_ASSERT_RET( p_spi == &s_hal_spi, -1 );
 
   spi_rfWrite(p_tx, len);
   return len;
@@ -668,7 +668,7 @@ void* hal_uartInit( en_hal_uart_t uart )
 */
 int32_t hal_uartRx( void* p_uart, uint8_t * p_rx, uint16_t len )
 {
-  EMB6_ASSERT_RET( p_uart != &s_hal_uart, -1 );
+  EMB6_ASSERT_RET( p_uart == &s_hal_uart, -1 );
 
   /* not supported */
   return -1;
@@ -680,7 +680,7 @@ int32_t hal_uartRx( void* p_uart, uint8_t * p_rx, uint16_t len )
 */
 int32_t hal_uartTx( void* p_uart, uint8_t* p_tx, uint16_t len )
 {
-  EMB6_ASSERT_RET( p_uart != &s_hal_uart, -1 );
+  EMB6_ASSERT_RET( p_uart == &s_hal_uart, -1 );
 
   return uart_send(MSP430_SLIP_UART, p_tx, len);
 } /* hal_uartTx() */
