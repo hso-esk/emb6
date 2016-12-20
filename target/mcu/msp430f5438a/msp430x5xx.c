@@ -236,8 +236,9 @@ static s_hal_uart_t s_hal_uart = {
 
 
 /** Definition of the peripheral callback functions */
+#if (HAL_SUPPORT_UART == TRUE)
 static s_hal_irq s_hal_irqs[EN_HAL_PERIPHIRQ_MAX];
-
+#endif
 
 /*
  *  --- Local Function Prototypes ------------------------------------------ *
@@ -692,9 +693,11 @@ int32_t hal_uartTx( void* p_uart, uint8_t* p_tx, uint16_t len )
 int8_t hal_periphIRQRegister( en_hal_periphirq_t irq, pf_hal_irqCb_t pf_cb,
     void* p_data )
 {
+#if (HAL_SUPPORT_UART == TRUE)
   /* set the callback and data pointer */
   s_hal_irqs[irq].pf_cb = pf_cb;
   s_hal_irqs[irq].p_data = p_data;
+#endif
 
   return 0;
 } /* hal_periphIRQRegister() */
