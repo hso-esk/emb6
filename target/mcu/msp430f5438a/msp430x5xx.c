@@ -442,20 +442,11 @@ clock_time_t hal_getTRes( void )
 */
 int8_t hal_delayUs( uint32_t delay )
 {
-  /*
-   * Note(s)
-   *
-   * hal_delay_us() is only called by emb6.c to make a delay multiple of 500us,
-   * which is equivalent to 1 systick
-   */
-  uint32_t tick_stop;
+  uint32_t j;
 
-  hal_enterCritical();
-  tick_stop  = l_hal_tick;
-  tick_stop += delay * MSP430_TICK_SCALER / MSP430_TICK_SECONDS;
-  hal_exitCritical();
-  while (tick_stop > l_hal_tick) {
-    /* do nothing */
+  /* FIXME current delay_us implementation is not precise! */
+  for (uint32_t i = 0; i < (delay / 10); i++) {
+    j++;
   }
 
   return 0;
