@@ -80,7 +80,7 @@ def createInfoPrints( env ):
 
     compileStr = '%sCompiling %s==> %s$SOURCE%s' % \
       (colors['blue'], colors['purple'], colors['yellow'], colors['end'])
-    
+
     linkStr = '%sLinking Program %s==> %s$TARGET%s' % \
       (colors['red'], colors['purple'], colors['yellow'], colors['end'])
 
@@ -127,7 +127,7 @@ def createOptions():
 
     AddOption('--output',
               dest='outputName', type='string',
-              nargs=1, action='store', 
+              nargs=1, action='store',
               metavar='<out.elf>',
               help='Name of the output file')
 
@@ -455,5 +455,5 @@ if not genv.GetOption('help'):
             print '>                               ' + demo['id'] + ' [' + demo['demo'][0] + ']'
         else:
             print '>                               ' + demo['id'] + ' [' + demo['demo'][0] + ',' + demo['demo'][1] + ']'
-    print '> Board Name:                   ' + bsp['id']
-    print '===================================================================='
+    print '> BSP Name:                     ' + bsp['id']
+    print '--------------------------------------------------------------------'

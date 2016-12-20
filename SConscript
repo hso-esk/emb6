@@ -400,7 +400,7 @@ def prepareArch( targetConf, targetPath, osSel ):
 
     # Get the OS configuration for the current
     # selected architecture.
-    osConf = archConf['os'][osSel]       
+    osConf = archConf['os'][osSel]
 
     # Get the modules from the OS specific SConsfile
     osPath = prjPath + osSel +'/'
@@ -474,7 +474,8 @@ def prepareCFlags():
 # Add root path to includes
 addIncludePath( prjPath )
 
-
+print ''
+print ''
 for demoConf in demos:
     demo = demoConf['demo'][0]
     conf = demoConf['demo'][1]
