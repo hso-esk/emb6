@@ -63,6 +63,7 @@
 #include "mcu.h"
 #include "io.h"
 
+#include "uart.h"
 
 /*
  *  --- Macros ------------------------------------------------------------- *
@@ -291,6 +292,22 @@ static void _hal_uartRxCb( uint8_t c )
 } /* _hal_uartRxCb() */
 #endif /* #if defined(HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX) */
 #endif /* #if defined(HAL_SUPPORT_UART) */
+
+
+#if (LOGGER_LEVEL > 0) && (HAL_SUPPORT_SLIPUART == FALSE)
+/*---------------------------------------------------------------------------*/
+/*
+* putchar()
+*/
+#if !defined(GCC_COMPILER)
+int putchar(int c)
+{
+    uart_send(MSP430_DEBUG_UART, (char *)&c, 1);
+    return c;
+}
+#endif /*#if !defined(GCC_COMPILER) */
+#endif /* #if (LOGGER_LEVEL > 0) && (HAL_SUPPORT_SLIPUART == FALSE) */
+
 
 /*
  * --- Global Function Definitions ----------------------------------------- *
@@ -645,5 +662,29 @@ int8_t hal_periphIRQRegister( en_hal_periphirq_t irq, pf_hal_irqCb_t pf_cb,
 */
 int8_t hal_debugInit( void )
 {
-  return -1;
+  /* #1:  check if debugging utility is enabled (i.e., LOGGER_LEVEL > 0) ?
+   * #2:  check if debugging channel is available (i.e., UART or Trace) ?
+   * #3:  initialize debugging utility if #1 and #2 conditions are met
+   */
+#if (LOGGER_LEVEL > 0) && (HAL_SUPPORT_SLIPUART == FALSE)
+  s_io_pin_desc_t s_pin_rx = {
+    &gps_io_port[MSP430_DEBUG_UART_RX_PORT], MSP430_DEBUG_UART_RX_PIN, MSP430_DEBUG_UART_RX_MSK,
+  };
+  s_io_pin_desc_t s_pin_tx = {
+    &gps_io_port[MSP430_DEBUG_UART_TX_PORT], MSP430_DEBUG_UART_TX_PIN, MSP430_DEBUG_UART_TX_MSK,
+  };
+
+  /* Set Rx Pin as alternate function and input*/
+  *s_pin_rx.PORT->PSEL |= s_pin_rx.MSK;
+  *s_pin_rx.PORT->PDIR &= ~s_pin_rx.MSK;
+
+   /* Set Tx Pin as alternate function and output*/
+  *s_pin_tx.PORT->PSEL |= s_pin_tx.MSK;
+  *s_pin_tx.PORT->PDIR |= s_pin_tx.MSK;
+
+  /* initialize UART */
+  uart_init();
+  uart_config(MSP430_DEBUG_UART, MSP430_DEBUG_UART_BAUD, NULL);
+#endif /* #if (LOGGER_LEVEL > 0) && (HAL_SUPPORT_SLIPUART == FALSE) */
+  return 0;
 } /* hal_debugInit() */
