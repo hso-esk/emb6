@@ -82,6 +82,10 @@
 /** Enable/Disable high logic */
 #define MSP430_IO_HIGH_LOGIC            FALSE
 
+/** Pin direction */
+#define MSP430_IO_PIN_DIR_INPUT         0
+#define MSP430_IO_PIN_DIR_OUTPUT        1
+
 /*
  * --- Type Definitions -----------------------------------------------------*
  */
@@ -94,12 +98,14 @@
  */
 typedef struct
 {
-  /** Port  */
+  /** Port */
   s_io_port_desc_t* PORT;
-  /** PIN */
+  /** Pin */
   uint8_t PIN;
-    /** PIN */
+  /** Mask */
   uint8_t MSK;
+  /** Direction */
+  uint8_t DIR;
   /** IRQ callback */
   pf_hal_irqCb_t pf_cb;
 
@@ -167,38 +173,38 @@ static clock_time_t volatile l_hal_sec;
 static s_hal_gpio_pin_t s_hal_gpio[EN_HAL_PIN_MAX] = {
   /* TODO missing LEDs definition */
 #if defined(HAL_SUPPORT_LED0)
-  {&gps_io_port[MSP430_IO_PORT_LED0], MSP430_IO_PIN_LED0, MSP430_IO_MASK_LED0},
+  {&gps_io_port[MSP430_IO_PORT_LED0], MSP430_IO_PIN_LED0, MSP430_IO_MASK_LED0, MSP430_IO_PIN_DIR_OUTPUT, NULL},
 #endif /* #if defined(HAL_SUPPORT_LED0) */
 #if defined(HAL_SUPPORT_LED1)
-  {&gps_io_port[MSP430_IO_PORT_LED1], MSP430_IO_PIN_LED1, MSP430_IO_MASK_LED1},
+  {&gps_io_port[MSP430_IO_PORT_LED1], MSP430_IO_PIN_LED1, MSP430_IO_MASK_LED1, MSP430_IO_PIN_DIR_OUTPUT, NULL},
 #endif /* #if defined(HAL_SUPPORT_LED1) */
 #if defined(HAL_SUPPORT_LED2)
-  {&gps_io_port[MSP430_IO_PORT_LED2], MSP430_IO_PIN_LED2, MSP430_IO_MASK_LED2},
+  {&gps_io_port[MSP430_IO_PORT_LED2], MSP430_IO_PIN_LED2, MSP430_IO_MASK_LED2, MSP430_IO_PIN_DIR_OUTPUT, NULL},
 #endif /* #if defined(HAL_SUPPORT_LED2) */
 #if defined(HAL_SUPPORT_LED3)
-  {&gps_io_port[MSP430_IO_PORT_LED3], MSP430_IO_PIN_LED3, MSP430_IO_MASK_LED3},
+  {&gps_io_port[MSP430_IO_PORT_LED3], MSP430_IO_PIN_LED3, MSP430_IO_MASK_LED3, MSP430_IO_PIN_DIR_OUTPUT, NULL},
 #endif /* #if defined(HAL_SUPPORT_LED3) */
 
   /* TODO missing RF_SPI definition */
 #if defined(HAL_SUPPORT_RFSPI)
-  {&gps_io_port[MSP430_IO_PORT_SPI_CLK], MSP430_IO_PIN_SPI_CLK, MSP430_IO_MASK_SPI_CLK},
-  {&gps_io_port[MSP430_IO_PORT_SPI_MOSI], MSP430_IO_PIN_SPI_MOSI, MSP430_IO_MASK_SPI_MOSI},
-  {&gps_io_port[MSP430_IO_PORT_SPI_MISO], MSP430_IO_PIN_SPI_MISO, MSP430_IO_MASK_SPI_MISO},
-  {&gps_io_port[MSP430_IO_PORT_SPI_CS], MSP430_IO_PIN_SPI_CS, MSP430_IO_MASK_SPI_CS},
+  {&gps_io_port[MSP430_IO_PORT_SPI_CLK], MSP430_IO_PIN_SPI_CLK, MSP430_IO_MASK_SPI_CLK, MSP430_IO_PIN_DIR_OUTPUT, NULL},
+  {&gps_io_port[MSP430_IO_PORT_SPI_MOSI], MSP430_IO_PIN_SPI_MOSI, MSP430_IO_MASK_SPI_MOSI, MSP430_IO_PIN_DIR_OUTPUT, NULL},
+  {&gps_io_port[MSP430_IO_PORT_SPI_MISO], MSP430_IO_PIN_SPI_MISO, MSP430_IO_MASK_SPI_MISO, MSP430_IO_PIN_DIR_INPUT, NULL},
+  {&gps_io_port[MSP430_IO_PORT_SPI_CS], MSP430_IO_PIN_SPI_CS, MSP430_IO_MASK_SPI_CS, MSP430_IO_PIN_DIR_OUTPUT, NULL},
 #endif /* #if defined(HAL_SUPPORT_RFSPI) */
 
 #if defined(HAL_SUPPORT_RFCTRL0)
-  {&gps_io_port[MSP430_IO_PORT_RF_CTRL0], MSP430_IO_PIN_RF_CTRL0, MSP430_IO_MASK_RF_CTRL0},
+  {&gps_io_port[MSP430_IO_PORT_RF_CTRL0], MSP430_IO_PIN_RF_CTRL0, MSP430_IO_MASK_RF_CTRL0, MSP430_IO_PIN_DIR_INPUT, NULL},
 #endif /* #if defined(HAL_SUPPORT_RFCTRL0) */
 #if defined(HAL_SUPPORT_RFCTRL1)
-  {&gps_io_port[MSP430_IO_PORT_RF_CTRL1], MSP430_IO_PIN_RF_CTRL1, MSP430_IO_MASK_RF_CTRL1},
+  {&gps_io_port[MSP430_IO_PORT_RF_CTRL1], MSP430_IO_PIN_RF_CTRL1, MSP430_IO_MASK_RF_CTRL1, MSP430_IO_PIN_DIR_INPUT, NULL},
 #endif /* #if defined(HAL_SUPPORT_RFCTRL1) */
 #if defined(HAL_SUPPORT_RFCTRL2)
-  {&gps_io_port[MSP430_IO_PORT_RF_CTRL2], MSP430_IO_PIN_RF_CTRL2, MSP430_IO_MASK_RF_CTRL2},
+  {&gps_io_port[MSP430_IO_PORT_RF_CTRL2], MSP430_IO_PIN_RF_CTRL2, MSP430_IO_MASK_RF_CTRL2, MSP430_IO_PIN_DIR_INPUT, NULL},
 #endif /* #if defined(HAL_SUPPORT_RFCTRL2) */
 
 #if defined(HAL_SUPPORT_SLIPUART)
-  {NULL, NULL, NULL},
+  {NULL, NULL, NULL, MSP430_IO_PIN_DIR_INPUT, NULL},
 #endif /* #if defined(HAL_SUPPORT_SLIPUART) */
 
 };
@@ -323,6 +329,9 @@ int putchar(int c)
 */
 int8_t hal_init( void )
 {
+  /* initialize IO */
+  io_init();
+
   /* initialize system clock */
   mcu_sysClockInit( MCU_SYSCLK_25MHZ );
 
@@ -459,16 +468,14 @@ void* hal_pinInit( en_hal_pin_t pin )
   s_hal_gpio_pin_t* p_pin = NULL;
   p_pin = &s_hal_gpio[pin];
 
-  /* configure the pin as output */
-  *p_pin[pin].PORT->PSEL &= ~p_pin[pin].MSK;
-  /* set as output */
-  *p_pin[pin].PORT->PDIR |= p_pin[pin].MSK;
-  /* disable */
-#if (MSP430_IO_HIGH_LOGIC == TRUE)
-  *p_pin[pin].PORT->POUT &= ~p_pin[pin].MSK;
-#else
-  *p_pin[pin].PORT->POUT |= p_pin[pin].MSK;
-#endif /* #if (MSP430_IO_HIGH_LOGIC == TRUE) */
+  /* configure pin as GPIO */
+  *p_pin->PORT->PSEL &= ~p_pin->MSK;
+
+  /* configure pin direction */
+  if( p_pin->DIR == MSP430_IO_PIN_DIR_OUTPUT )
+    *p_pin->PORT->PDIR |= p_pin->MSK;
+  else
+    *p_pin->PORT->PDIR &= ~p_pin->MSK;
 
   return p_pin;
 } /* hal_pinInit() */
@@ -479,12 +486,19 @@ void* hal_pinInit( en_hal_pin_t pin )
 */
 int8_t hal_pinSet( void* p_pin, uint8_t val )
 {
-  s_hal_gpio_pin_t* p_gpioPin = (s_hal_gpio_pin_t *)p_pin;
+  s_io_pin_desc_t* p_gpioPin = (s_io_pin_desc_t *)p_pin;
 
   EMB6_ASSERT_RET( p_gpioPin != NULL, -1 );
 
-  io_set(p_gpioPin->PORT);
-  return -1;
+  if( val )
+  {
+    io_set(p_gpioPin);
+  }
+  else
+  {
+    io_clear(p_gpioPin);
+  }
+  return 0;
 } /* hal_pinSet() */
 
 /*---------------------------------------------------------------------------*/
@@ -493,11 +507,11 @@ int8_t hal_pinSet( void* p_pin, uint8_t val )
 */
 int8_t hal_pinGet( void* p_pin )
 {
-  s_hal_gpio_pin_t* p_gpioPin = (s_hal_gpio_pin_t *)p_pin;
+  s_io_pin_desc_t* p_gpioPin = (s_io_pin_desc_t *)p_pin;
 
   EMB6_ASSERT_RET( p_gpioPin != NULL, -1 );
 
-  return io_get(p_gpioPin->PORT);
+  return io_get(p_gpioPin);
 } /* hal_pinGet() */
 
 /*---------------------------------------------------------------------------*/
@@ -507,7 +521,7 @@ int8_t hal_pinGet( void* p_pin )
 int8_t hal_pinIRQRegister( void* p_pin, en_hal_irqedge_t edge,
     pf_hal_irqCb_t pf_cb )
 {
-  s_hal_gpio_pin_t* p_gpioPin = (s_hal_gpio_pin_t *)p_pin;
+  s_io_pin_desc_t* p_gpioPin = (s_io_pin_desc_t *)p_pin;
 
   EMB6_ASSERT_RET( p_gpioPin != NULL, -1 );
 
@@ -524,7 +538,7 @@ int8_t hal_pinIRQRegister( void* p_pin, en_hal_irqedge_t edge,
 */
 int8_t hal_pinIRQEnable( void* p_pin )
 {
-  s_hal_gpio_pin_t* p_gpioPin = (s_hal_gpio_pin_t *)p_pin;
+  s_io_pin_desc_t* p_gpioPin = (s_io_pin_desc_t *)p_pin;
 
   EMB6_ASSERT_RET( p_gpioPin != NULL, -1 );
 
@@ -538,7 +552,7 @@ int8_t hal_pinIRQEnable( void* p_pin )
 */
 int8_t hal_pinIRQDisable( void* p_pin )
 {
-  s_hal_gpio_pin_t* p_gpioPin = (s_hal_gpio_pin_t *)p_pin;
+  s_io_pin_desc_t* p_gpioPin = (s_io_pin_desc_t *)p_pin;
 
   EMB6_ASSERT_RET( p_gpioPin != NULL, -1 );
 
@@ -552,7 +566,7 @@ int8_t hal_pinIRQDisable( void* p_pin )
 */
 int8_t hal_pinIRQClear( void* p_pin )
 {
-  s_hal_gpio_pin_t* p_gpioPin = (s_hal_gpio_pin_t *)p_pin;
+  s_io_pin_desc_t* p_gpioPin = (s_io_pin_desc_t *)p_pin;
 
   EMB6_ASSERT_RET( p_gpioPin != NULL, -1 );
 
