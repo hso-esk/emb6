@@ -62,8 +62,9 @@
 
 #include "mcu.h"
 #include "io.h"
-
+#include "tmr.h"
 #include "uart.h"
+#include "rt_tmr.h"
 
 /*
  *  --- Macros ------------------------------------------------------------- *
@@ -76,7 +77,7 @@
 #define MSP430_TICK_SECONDS             ( 1000u )
 
 /** Tick pre-scaler */
-#define MSP430_TICK_SCALER              ( 2u )
+#define MSP430_TICK_SCALER              ( 1u )
 
 /** Enable/Disable high logic */
 #define MSP430_IO_HIGH_LOGIC            FALSE
@@ -250,6 +251,9 @@ static void _hal_tcInit( void )
 {
   uint16_t period;
 
+  /* initialize timer */
+  tmr_init();
+
   period = (uint16_t)(MSP430_TICK_SECONDS / MSP430_TICK_SCALER);
   tmr_config(MSP430_SYSTICK_TMR, period);
   tmr_start(MSP430_SYSTICK_TMR, _hal_tcCb );
@@ -322,11 +326,11 @@ int8_t hal_init( void )
   /* initialize system clock */
   mcu_sysClockInit( MCU_SYSCLK_25MHZ );
 
-  /* initialize timer counter */
-  _hal_tcInit();
-
   /* initialize external interrupts */
   int_init();
+
+  /* initialize timer counter */
+  _hal_tcInit();
 
   /* Enable global interrupt */
   _BIS_SR(GIE);
