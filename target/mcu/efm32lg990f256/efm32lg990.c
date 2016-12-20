@@ -259,7 +259,7 @@ static s_hal_irq s_hal_irqs[EN_HAL_PERIPHIRQ_MAX];
 static void _hal_clksInit( void );
 static void _hal_wdcInit( void );
 #if defined(HAL_SUPPORT_UART)
-static void _hal_uartInit( void );
+static void _hal_uartInit( s_hal_uart_t* p_uart );
 #endif /* #if defined(HAL_SUPPORT_UART) */
 static void _hal_tcInit( void );
 static void _hal_tcCb( void );
