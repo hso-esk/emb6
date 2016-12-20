@@ -53,7 +53,7 @@
 /* Maximum value for the freshness counter */
 #define FRESHNESS_MAX                   16
 /* Statistics with no update in FRESHNESS_EXPIRATION_TIMEOUT is not fresh */
-#define FRESHNESS_EXPIRATION_TIME       (10 * 60 * (clock_time_t)bsp_get(E_BSP_GET_TRES))
+#define FRESHNESS_EXPIRATION_TIME       (10 * 60 * bsp_getTRes())
 
 /* EWMA (exponential moving average) used to maintain statistics over time */
 #define EWMA_SCALE            100
@@ -208,6 +208,6 @@ void
 link_stats_init(void)
 {
   nbr_table_register(link_stats, NULL);
-  ctimer_set(&periodic_timer, 60 * (clock_time_t)bsp_get(E_BSP_GET_TRES) * FRESHNESS_HALF_LIFE,
+  ctimer_set(&periodic_timer, 60 * bsp_getTRes() * FRESHNESS_HALF_LIFE,
       periodic, NULL);
 }

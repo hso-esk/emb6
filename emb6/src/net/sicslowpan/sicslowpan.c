@@ -391,7 +391,7 @@ add_fragment(uint16_t tag, uint16_t frag_size, uint8_t offset)
     frag_info[found].tag = tag;
     linkaddr_copy(&frag_info[found].sender,
                   packetbuf_addr(PACKETBUF_ADDR_SENDER));
-    timer_set(&frag_info[found].reass_timer, SICSLOWPAN_REASS_MAXAGE * bsp_get(E_BSP_GET_TRES) / 16);
+    timer_set(&frag_info[found].reass_timer, SICSLOWPAN_REASS_MAXAGE * bsp_getTRes() / 16);
     /* first fragment can not be stored immediately but is moved into
        the buffer while uncompressing */
     return found;

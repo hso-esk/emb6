@@ -99,7 +99,7 @@ update_nbr(void)
 #if DEBUG == DEBUG_FULL
   if(!timer_init) {
     timer_init = 1;
-    ctimer_set(&periodic_timer, 60 * bsp_get(E_BSP_GET_TRES),
+    ctimer_set(&periodic_timer, 60 * bsp_getTRes(),
                &handle_periodic_timer, NULL);
   }
 #endif /* DEBUG == DEBUG_FULL */

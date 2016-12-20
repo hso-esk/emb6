@@ -111,7 +111,7 @@ rpl_print_neighbor_list(void)
           stats != NULL ? stats->freshness : 0,
           link_stats_is_fresh(stats) ? 'f' : ' ',
           p == default_instance->current_dag->preferred_parent ? 'p' : ' ',
-          (unsigned)((clock_now - stats->last_tx_time) / (60 * bsp_get(E_BSP_GET_TRES)))
+          (unsigned)((clock_now - stats->last_tx_time) / (60 * bsp_getTRes()))
       );
       p = nbr_table_next(rpl_parents, p);
     }

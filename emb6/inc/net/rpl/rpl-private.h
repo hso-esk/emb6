@@ -122,7 +122,7 @@
 #ifdef RPL_CONF_DAO_DELAY
 #define RPL_DAO_DELAY                 RPL_CONF_DAO_DELAY
 #else /* RPL_CONF_DAO_DELAY */
-#define RPL_DAO_DELAY                 (bsp_get(E_BSP_GET_TRES) * 4)
+#define RPL_DAO_DELAY                 (bsp_getTRes() * 4)
 #endif /* RPL_CONF_DAO_DELAY */
 
 /* Delay between reception of a no-path DAO and actual route removal */
@@ -141,7 +141,7 @@
 #ifdef RPL_CONF_DAO_RETRANSMISSION_TIMEOUT
 #define RPL_DAO_RETRANSMISSION_TIMEOUT RPL_CONF_DAO_RETRANSMISSION_TIMEOUT
 #else
-#define RPL_DAO_RETRANSMISSION_TIMEOUT  (5 * bsp_get(E_BSP_GET_TRES))
+#define RPL_DAO_RETRANSMISSION_TIMEOUT  (5 * bsp_getTRes())
 #endif /* RPL_CONF_DAO_RETRANSMISSION_TIMEOUT */
 
 /* Special value indicating immediate removal. */

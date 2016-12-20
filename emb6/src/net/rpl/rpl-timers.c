@@ -385,7 +385,7 @@ get_probing_delay(rpl_dag_t *dag)
   if(dag != NULL && dag->instance != NULL
       && dag->instance->urgent_probing_target != NULL) {
     /* Urgent probing needed (to find out if a neighbor may become preferred parent) */
-    return random_rand() % (bsp_get(E_BSP_GET_TRES) * 10);
+    return random_rand() % (bsp_getTRes() * 10);
   } else {
     /* Else, use normal probing interval */
     return ((RPL_PROBING_INTERVAL) / 2) + random_rand() % (RPL_PROBING_INTERVAL);
@@ -474,7 +474,7 @@ handle_probing_timer(void *ptr)
     	rpl_get_parent_lladdr(probing_target)->u8[7],
         instance->urgent_probing_target != NULL ? "(urgent)" : "",
         probing_target != NULL ?
-        (unsigned)((clock_time() - stats->last_tx_time) / (60 * bsp_get(E_BSP_GET_TRES))) : 0
+        (unsigned)((clock_time() - stats->last_tx_time) / (60 * bsp_getTRes())) : 0
         );
     /* Send probe, e.g. unicast DIO or DIS */
     RPL_PROBING_SEND_FUNC(instance, target_ipaddr);
