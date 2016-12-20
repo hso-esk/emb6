@@ -63,6 +63,7 @@
 #include "mcu.h"
 #include "io.h"
 #include "tmr.h"
+#include "spi.h"
 #include "uart.h"
 #include "rt_tmr.h"
 
@@ -581,8 +582,32 @@ int8_t hal_pinIRQClear( void* p_pin )
 */
 void* hal_spiInit( en_hal_spi_t spi )
 {
-  spi_trxInit(4);
-  return s_hal_spi_t;
+  /* Initialize SCLK as alternate function and as output */
+  *s_hal_spi.p_clkPin->PORT->PSEL |= s_hal_spi.p_clkPin->MSK;
+  *s_hal_spi.p_clkPin->PORT->PDIR |= s_hal_spi.p_clkPin->MSK;
+
+  /* Initialize MOSI as alternate function and as output */
+  *s_hal_spi.p_txPin->PORT->PSEL |= s_hal_spi.p_txPin->MSK;
+  *s_hal_spi.p_txPin->PORT->PDIR |= s_hal_spi.p_txPin->MSK;
+
+  /* Initialize MISO as alternate function and as input with pullup */
+  *s_hal_spi.p_rxPin->PORT->PSEL |= s_hal_spi.p_rxPin->MSK;
+  *s_hal_spi.p_rxPin->PORT->PDIR &= ~s_hal_spi.p_rxPin->MSK;
+  *s_hal_spi.p_rxPin->PORT->POUT |= s_hal_spi.p_rxPin->MSK;
+
+  /* configure SPI clock at 2MHz */
+  UCB0CTL1 |= UCSWRST;
+  UCB0CTL0 = UCMST + UCSYNC + UCMODE_0 + UCMSB + UCCKPH;
+  UCB0CTL1 |= UCSSEL_2;
+
+  /* Set the clock divider */
+  UCB0BR1 = 0x00;
+  UCB0BR0 = 4;
+
+  /* Release for operation */
+  UCB0CTL1 &= ~UCSWRST;
+
+  return &s_hal_spi;
 } /* hal_spiInit() */
 
 /*---------------------------------------------------------------------------*/
