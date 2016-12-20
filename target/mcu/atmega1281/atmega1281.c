@@ -1,4 +1,7 @@
 /*
+ * --- License --------------------------------------------------------------*
+ */
+/*
  * emb6 is licensed under the 3-clause BSD license. This license gives everyone
  * the right to use and distribute the code, either in binary or source code
  * format, as long as the copyright license is retained in the source code.
@@ -9,12 +12,7 @@
  * more adaptivity during run-time.
  *
  * The license text is:
- *
- * Copyright (c) 2015,
- * Hochschule Offenburg, University of Applied Sciences
- * Laboratory Embedded Systems and Communications Electronics.
- * All rights reserved.
- *
+
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  * 1. Redistributions of source code must retain the above copyright notice,
@@ -36,107 +34,234 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
+ * Copyright (c) 2016,
+ * Hochschule Offenburg, University of Applied Sciences
+ * Institute of reliable Embedded Systems and Communications Electronics.
+ * All rights reserved.
  */
-/*============================================================================*/
+
+/*
+ * --- Module Description ---------------------------------------------------*
+ */
 /**
- * \addtogroup bsp
- * @{
- * \addtogroup mcu MCU HAL library
- * @{
- * \addtogroup atmega1281
- * @{
+ *  \file       efm32lg840.c
+ *  \author     Institute of reliable Embedded Systems
+ *              and Communication Electronics
+ *  \date       $Date$
+ *  \version    $Version$
+ *
+ *  \brief      HAL implementation for the EFM32LG840 micro controller.
+ *
+ *              This HAL implementation provides the according functions to
+ *              make emb::6 run on an EFM32LG840 micro controller.
  */
-/*! \file   atmega1281/atmega1281.c
 
- \author Artem Yushev 
-
- \brief  Hardware dependent initialization
-
- \version 0.0.1
+/*
+ *  --- Includes -------------------------------------------------------------*
  */
-/*============================================================================*/
-
-/*==============================================================================
- INCLUDE FILES
- ==============================================================================*/
 #include "emb6.h"
-#include "board_conf.h"
-#include "avr/wdt.h"
-#include "math.h"
-#include "target.h"
-#include "hwinit.h"
-#include "bsp.h"
-/*==============================================================================
- MACROS
- ==============================================================================*/
+#include "hal.h"
+#include "assert.h"
 
-#define SPI_TRAN_OPEN()            hal_enterCritical(); \
-        PORT( SSPORT ) &= ~( 1 << SSPIN );
-#define SPI_TRAN_CLOSE()        PORT( SSPORT ) |= ( 1 << SSPIN ); \
-        hal_exitCritical();
-#define SPI_TRAN_WAIT()            while ((SPSR & (1 << SPIF)) == 0) {;}
-#define SPI_TRAN_READ()            (SPDR)
-#define SPI_TRAN_WRITE(c_value)    SPDR = (c_value);
+#include <avr/io.h>
+#include <avr/interrupt.h>
+#include <avr/wdt.h>
 
-/*==============================================================================
- ENUMS
- ==============================================================================*/
 
-/*==============================================================================
- STRUCTURES AND OTHER TYPEDEFS
- ==============================================================================*/
-// Spi discriptor typedef
-typedef uint8_t spiDesc_t;
-// Externa interrupt typedef
-typedef uint8_t extInt_t;
-// For port pin assignment
+/*
+ * --- Macro Definitions --------------------------------------------------- *
+ */
+
+/* Concatenate macro*/
+#define CONCAT(x, y)                      x##y
+#define CONCAT2(x, y, z)                  x##y##z
+
+#define UCSR(num, let)                    CONCAT2(UCSR,num,let)
+#define RXEN(x)                           CONCAT(RXEN,x)
+#define TXEN(x)                           CONCAT(TXEN,x)
+#define RXCIE(x)                          CONCAT(RXCIE,x)
+#define UCSZ(x,y)                         CONCAT2(UCSZ,x,y)
+#define UBRR(x,y)                         CONCAT2(UBRR,x,y)
+#define UDRE(x)                           CONCAT(UDRE,x)
+#define UDRIE(x)                          CONCAT(UDRIE,x)
+#define UDR(x)                            CONCAT(UDR,x)
+#define RXVECT(x)                         CONCAT2(USART,x,_RX_vect)
+
+#define LOGGER_ENABLE                     LOGGER_HAL
+#include "logger.h"
+
+/** CPU frequency */
+#define ATM1281_CPU_FREQ                  8000000UL
+/** Number of ticks per second */
+#define ATM1281_TICK_SECONDS              125
+/* Prescaler for timer 0  */
+#define ATM1281_TMR0_PRESC                256
+
+/** Wait for an SPI transaction to be finished */
+#define ATM1281_SPI_TRAN_WAIT()           while ((SPSR & (1 << SPIF)) == 0) {;}
+/** Read from SPI */
+#define ATM1281_SPI_TRAN_READ()           (SPDR)
+/** Write to SPI */
+#define ATM1281_SPI_TRAN_WRITE(c_value)   SPDR = (c_value);
+
+
+/** Port output direction */
+#define ATM1281_DIR_OUT                   1
+/** Port input direction */
+#define ATM1281_DIR_IN                    0
+
+/*
+ *  --- Type Definitions -----------------------------------------------------*
+ */
+/** Port pin assignment */
 typedef uint8_t regType_t;
 
-typedef struct pinDesc_t
+/** Pin description */
+typedef struct
 {
-    volatile regType_t *pc_ddr;
-    volatile regType_t *pc_port;
-    uint8_t c_pin;
-} pinDesc_t;
+  /** Port register*/
+  volatile regType_t *p_port;
+  /** Direction register */
+  volatile regType_t *p_ddr;
+  /** Pin */
+  uint8_t pin;
+  /** Direction */
+  uint8_t dir;
+  /** Initial value */
+  uint8_t init;
+  /** IRQNum */
+  uint8_t irqNum;
+  /** IRQ callback */
+  pf_hal_irqCb_t pf_cb;
 
-/*==============================================================================
- LOCAL FUNCTION PROTOTYPES
- ==============================================================================*/
+} s_hal_gpio_pin_t;
 
-/* Init peripheral functions */
+
+/** SPI descriptor */
+typedef struct
+{
+  /** clk select pin */
+  s_hal_gpio_pin_t* p_clkPin;
+  /** tx  pin */
+  s_hal_gpio_pin_t* p_txPin;
+  /** rx pin */
+  s_hal_gpio_pin_t* p_rxPin;
+  /** chip select pin */
+  s_hal_gpio_pin_t* p_csPin;
+
+} s_hal_spi_t;
+
+
+typedef struct
+{
+  /** callback function */
+  pf_hal_irqCb_t pf_cb;
+  /** data pointer */
+  void* p_data;
+
+} s_hal_irq;
+
+/*
+ *  --- Local Function Prototypes ------------------------------------------ *
+ */
+
+/* Initialization of the timer */
 static void _hal_tim0Init( void );
-static void _hal_ledsInit( void );
-//        static void     _hal_tim1Init(void);
-static void _hal_usartInit( void );
-int _hal_uart1PutChar( char c, FILE * stream );
-inline static void _hal_delay_loop( uint16_t __count ) __attribute__((always_inline));
-/*==============================================================================
- VARIABLE DECLARATIONS
- ==============================================================================*/
+
+#if !defined (HAL_SUPPORT_SLIPUART)
+/** Ouput function to wire a character to UART */
+static int _hal_debugPutChar( char c, FILE * stream );
+#endif /* #if !defined (HAL_SUPPORT_SLIPUART) */
+
+/** Delay loop */
+inline static void _hal_delayLoop( uint16_t __count ) __attribute__((always_inline));
+
+/* Common callback for external interrupts */
+static void _hal_extiCb( uint8_t pin );
+
+
+/*
+ *  --- Local Variables ---------------------------------------------------- *
+ */
+
+/** Ticks since startup */
 clock_time_t volatile l_tick;
+/** Seconds since startup */
 clock_time_t volatile l_sec;
+
 static uint8_t volatile c_sreg;
 static int8_t c_nested = 0;
-static FILE st_usartStdout = FDEV_SETUP_STREAM( _hal_uart1PutChar, NULL,
+
+/** Definition of the IOs */
+static s_hal_gpio_pin_t s_hal_gpio[EN_HAL_PIN_MAX] = {
+
+#if defined(HAL_SUPPORT_LED0)
+  {&(ATM1281_LED0_PORT), &(ATM1281_LED0_DDR), ATM1281_LED0_PIN, ATM1281_DIR_OUT, 0, 0xFF, NULL}, /* LED0 */
+#endif /* #if defined(HAL_SUPPORT_LED0) */
+#if defined(HAL_SUPPORT_LED1)
+  {&(ATM1281_LED1_PORT), &(ATM1281_LED1_DDR), ATM1281_LED1_PIN, ATM1281_DIR_OUT, 0, 0xFF, NULL}, /* LED1 */
+#endif /* #if defined(HAL_SUPPORT_LED1) */
+#if defined(HAL_SUPPORT_LED2)
+  {&(ATM1281_LED2_PORT), &(ATM1281_LED2_DDR), ATM1281_LED2_PIN, ATM1281_DIR_OUT, 0, 0xFF, NULL}, /* LED2 */
+#endif /* #if defined(HAL_SUPPORT_LED2) */
+#if defined(HAL_SUPPORT_LED3)
+  {&(ATM1281_LED3_PORT), &(ATM1281_LED3_DDR), ATM1281_LED3_PIN, ATM1281_DIR_OUT, 0, 0xFF, NULL}, /* LED3 */
+#endif /* #if defined(HAL_SUPPORT_LED3) */
+#if defined(HAL_SUPPORT_LED4)
+  {&(ATM1281_LED4_PORT), &(ATM1281_LED4_DDR), ATM1281_LED4_PIN, ATM1281_DIR_OUT, 0, 0xFF, NULL}, /* LED4 */
+#endif /* #if defined(HAL_SUPPORT_LED4) */
+
+#if defined(HAL_SUPPORT_RFSPI)
+  {&(ATM1281_RFSPI_CLK_PORT), &(ATM1281_RFSPI_CLK_DDR), ATM1281_RFSPI_CLK_PIN, ATM1281_DIR_OUT, 0, 0xFF, NULL}, /* RF SPI CLK */
+  {&(ATM1281_RFSPI_TX_PORT), &(ATM1281_RFSPI_TX_DDR), ATM1281_RFSPI_TX_PIN, ATM1281_DIR_OUT, 0, 0xFF, NULL}, /* RF SPI TX */
+  {&(ATM1281_RFSPI_RX_PORT), &(ATM1281_RFSPI_RX_DDR), ATM1281_RFSPI_RX_PIN, ATM1281_DIR_IN, 0, 0xFF, NULL}, /* RF SPI RX */
+  {&(ATM1281_RFSPI_CS_PORT), &(ATM1281_RFSPI_CS_DDR), ATM1281_RFSPI_CS_PIN, ATM1281_DIR_OUT, 1, 0xFF, NULL}, /* RF SPI CS */
+#endif /* #if defined(HAL_SUPPORT_RFSPI) */
+
+#if defined(HAL_SUPPORT_RFCTRL0)
+  {&(ATM1281_RESET_PORT), &(ATM1281_RESET_DDR), ATM1281_RESET_PIN, ATM1281_DIR_OUT, 0, 0xFF, NULL}, /* RF CTRL 0 = RESET */
+#endif /* #if defined(HAL_SUPPORT_RFCTRL1) */
+#if defined(HAL_SUPPORT_RFCTRL1)
+  {&(ATM1281_SLP_TR_PORT), &(ATM1281_SLP_TR_DDR), ATM1281_SLP_TR_PIN, ATM1281_DIR_OUT, 1, 0xFF, NULL}, /* RF CTRL 1 = SLEEP */
+#endif /* #if defined(HAL_SUPPORT_RFCTRL1) */
+#if defined(HAL_SUPPORT_RFCTRL2)
+  {&(ATM1281_RFIRQ_PORT), &(ATM1281_RFIRQ_DDR), ATM1281_RFIRQ_PIN, ATM1281_DIR_IN, 0, ATM1281_RFIRQ_IRQNUM, NULL}, /* RF CTRL 2 = IRQ */
+#endif /* #if defined(HAL_SUPPORT_RFCTRL2) */
+};
+
+
+#if defined(HAL_SUPPORT_RFSPI)
+/** Definition of the SPI interface */
+static s_hal_spi_t s_hal_spi = {
+  .p_clkPin = &s_hal_gpio[EN_HAL_PIN_RFSPICLK],
+  .p_txPin  = &s_hal_gpio[EN_HAL_PIN_RFSPITX],
+  .p_rxPin  = &s_hal_gpio[EN_HAL_PIN_RFSPIRX],
+  .p_csPin  = &s_hal_gpio[EN_HAL_PIN_RFSPICS]
+};
+#endif /* #if defined(HAL_SUPPORT_RFSPI) */
+
+
+/** Definition of the peripheral callback functions */
+static s_hal_irq s_hal_irqs[EN_HAL_PERIPHIRQ_MAX];
+
+
+#if !defined (HAL_SUPPORT_SLIPUART)
+/** Redirection of stdout to UART */
+static FILE st_usartStdout = FDEV_SETUP_STREAM( _hal_debugPutChar, NULL,
         _FDEV_SETUP_WRITE );
-pfn_intCallb_t isr_radioCallb = NULL;
-pfn_intCallb_t isr_rxCallb = NULL;
+#endif /* #if !defined (HAL_SUPPORT_SLIPUART) */
 
-//const     uint8_t mac_address[8] = {RADIO_MAC_ADDR};
-/*==============================================================================
- LOCAL CONSTANTS
- ==============================================================================*/
 
-/*==============================================================================
- LOCAL FUNCTIONS
- ==============================================================================*/
-/*----------------------------------------------------------------------------*/
-/** \brief  This function configure timer0 of the atmega1281 MCU
- *  \param         none
- *
- *  \return        none
+/*
+ *  --- Local Functions ---------------------------------------------------- *
  */
-/*---------------------------------------------------------------------------*/
+
+/**
+ * \brief   Initialization of the timer.
+ *
+ *          This function initializes the timer. Therefore it sets the
+ *          according timeouts but disableds the watchdog per default.
+ */
 static void _hal_tim0Init( void )
 {
     /* Select internal clock */
@@ -147,11 +272,11 @@ static void _hal_tim0Init( void )
 
     /*
      * Set comparison register:
-     * Crystal freq. is F_CPU, prescale is CONF_TMR0_PRESCALE,
-     * We want CONF_TICK_SEC ticks / sec:
-     * F_CPU = CONF_TMR0_PRESCALE * CONF_TICK_SEC * OCR0A, less 1 for CTC mode
+     * Crystal freq. is ATM1281_CPU_FREQ, prescale is ATM1281_TMR0_PRESC,
+     * We want ATM1281_TICK_SECONDS ticks / sec:
+     * ATM1281_CPU_FREQ = CONF_TMR0_PRESCALE * CONF_TICK_SEC * OCR0A, less 1 for CTC mode
      */
-    OCR0A = F_CPU / CONF_TMR0_PRESCALE / CONF_TICK_SEC - 1;
+    OCR0A = ATM1281_CPU_FREQ / ATM1281_TMR0_PRESC / ATM1281_TICK_SECONDS - 1;
 
     /*
      * Set timer control register:
@@ -172,90 +297,29 @@ static void _hal_tim0Init( void )
 
 } /* _hal_tim0Init() */
 
+
+#if !defined (HAL_SUPPORT_SLIPUART)
 /*----------------------------------------------------------------------------*/
-/** \brief  This function configure timer1 of the atmega1281 MCU
- *  \param         none
+/**
+ * \brief   Output character using the debug interface.
  *
- *  \return        none
- */
-/*---------------------------------------------------------------------------*/
-//static void _hal_tim1Init(void)
-//{
-//    /*TIMER1 Specific Initialization.*/
-//    TCCR1B                 =     ( 1 << ICES1 ) | ( 1 << CS11 ) | ( 1 << CS10 );       /* Set clock prescaler */
-//    TIFR1                 |=     ( 1 << ICF1  );             /* Clear Input Capture Flag. */
-//    TIMSK1                 |=     ( 1 << TOIE1 );             /* Enable Timer1 overflow interrupt. */
-//
-//} /* _hal_tim1Init() */
-static void _hal_ledsInit( void )
-{
-#if defined BOARD_BLUEBEAN
-    PORTB &= ~(1 << PB5);
-    DDRB |= (1 << DDB5);
-
-    PORTB &= ~(1 << PB6);
-    DDRB |= (1 << DDB6);
-
-    PORTB &= ~(1 << PB7);
-    DDRB |= (1 << DDB7);
-#endif
-
-#if defined BOARD_ATANY_900
-    PORTB |= (1 << PB5);
-    DDRB |= (1 << DDB5);
-
-    PORTB |= (1 << PB6);
-    DDRB |= (1 << DDB6);
-
-    PORTB |= (1 << PB7);
-    DDRB |= (1 << DDB7);
-#endif
-}
-
-/*----------------------------------------------------------------------------*/
-/** \brief  This function configure UART1 of the atmega1281 MCU
- *  \param         none
+ *          This function writes a single charachter to the debug interface
+ *          once it is ready.
  *
- *  \return        none
- */
-/*---------------------------------------------------------------------------*/
-static void _hal_usartInit( void )
-{
-    /* USART configured as follow:
-     - BaudRate = 115200 baud
-     - Word Length = 8 Bits
-     - ONE Stop Bit
-     - NO parity
-     - Hardware flow control disabled (RTS and CTS signals)
-     - Receive and transmit enabled
-     */
-    UBRR(USART,H) = (uint8_t)( USART_BAUD_38400 >> 8 );
-    UBRR(USART,L) = (uint8_t)USART_BAUD_38400;
-    UCSR(USART,B) = ( 1 << RXCIE( USART ) ) | ( 1 << TXEN( USART ) )
-            | ( 1 << RXEN( USART ) );
-    UCSR(USART,C) =
-            ( ( 1 << UCSZ( USART, 1 ) ) | ( 1 << UCSZ( USART, 0 ) ) );
-
-    stdout = &st_usartStdout;
-} /* _hal_usartInit() */
-
-/*----------------------------------------------------------------------------*/
-/** \brief  This function outputs character using USART1.
+ * \param   c         Charachter to write.
+ * \param   stream    Stream to write the data to.
  *
- *  \param  c        character for output
- *  \param    stream    file stream
- *  \retval None
+ * \return  Always returns 0.
  */
-/*----------------------------------------------------------------------------*/
-int _hal_uart1PutChar( char c, FILE * stream )
+static int _hal_debugPutChar( char c, FILE * stream )
 {
-    // Do nothing until data have been received and is read to be read from UDR
-    while( ( UCSR1A & ( 1 << UDRE1 ) ) == 0 )
-    {
-    };
-    UDR1 = c;
-    return 0;
+  /* Do nothing until data have been received and is read to be read from UDR */
+  while( ( UCSR(ATM1281_UART_DEBUG_INST,A) &
+      ( 1 << UDRE(ATM1281_UART_DEBUG_INST) ) ) == 0 );
+  UDR(ATM1281_UART_DEBUG_INST) = c;
+  return 0;
 } /* hal_uart_putchar() */
+#endif /* #if !defined (HAL_SUPPORT_SLIPUART) */
 
 /*----------------------------------------------------------------------------*/
 /** \brief  This function implements a low level delay as builin AVR delay
@@ -265,71 +329,161 @@ int _hal_uart1PutChar( char c, FILE * stream )
  *  \retval None
  */
 /*----------------------------------------------------------------------------*/
-void _hal_delay_loop( uint16_t __count )
+
+/*----------------------------------------------------------------------------*/
+/**
+ * \brief   Loop to generate a specific delay..
+ *
+ *          This function implements a low level delay as builin AVR delay
+ *          function operates only with constant parameter.
+ *
+ * \param   count     Ticks to delay.
+ *
+ */
+static void _hal_delayLoop( uint16_t count )
 {
     __asm__ volatile (
             "1: sbiw %0,1" "\n\t"
             "brne 1b"
-            : "=w" (__count)
-            : "0" (__count)
+            : "=w" (count)
+            : "0" (count)
     );
 }
 
-///*******************************************************************************
-//* Function Name  : ISR(D_USART1_RX_vect)
-//* Description    : This function handles USART1 global interrupt request.
-//* Input          : None
-//* Output         : None
-//* Return         : None
-//*******************************************************************************/
-//ISR(USART1_RX_vect)
-//{
-//    uint8_t c;
-//    /* Receive char*/
-//    c = UDR1;
-//    if (gpst_sciUart1)
-//    {
-//        /* Call handler*/
-//        sci_receive(gpst_sciUart1, c);
-//    }
-//} /* ISR(D_USART1_RX_vect) */
+/**
+ * \brief   External interrupt handler.
+ *
+ *          The external interrupt handler function is used to trigger
+ *          the registered callbacks once an external interrupt occurred.
+ *
+ * \param   pin   Pin that triggered the interrupt.
+ * \param   pin   Edge of the interrupt.
+ */
+static void _hal_extiCb( uint8_t pin )
+{
+  int i;
+  for( i = 0; i < EN_HAL_PIN_MAX; i++ )
+  {
+    if( s_hal_gpio[i].pin == pin )
+    {
+      /*find the correct interrupt occurred */
+      if( s_hal_gpio[i].pf_cb)
+      {
 
-/*******************************************************************************
- * Function Name  : TIMER0_COMPA_vect
- * Description    : This function handles TIM1 overflow and update interrupt
- *                  request.
- * Input          : None
- * Output         : None
- * Return         : None
- *******************************************************************************/
+        /* call the according callback function */
+        s_hal_gpio[i].pf_cb( NULL );
+      }
+    }
+  }
+}
+
+
 ISR( TIMER0_COMPA_vect )
 {
     /* Indicate timer update to the emb6 timer */
-    if( l_tick % CONF_TICK_SEC == 0 )
+    if( l_tick % ATM1281_TICK_SECONDS == 0 )
         l_sec++;
     l_tick++;
 } /* AVR_OUTPUT_COMPARE_INT() */
 
-ISR( INT5_vect )
+ISR( INT0_vect )
 {
-    if( isr_radioCallb != NULL )
-        isr_radioCallb( NULL );
+   /* forward to the common callback function with the
+   * pin index as parameter */
+  _hal_extiCb( INT0 );
 }
 
-ISR( USART1_RX_vect )
+ISR( INT1_vect )
+{
+  /* forward to the common callback function with the
+   * pin index and edge as parameter */
+  _hal_extiCb( INT1 );
+}
+
+ISR( INT2_vect )
+{
+  /* forward to the common callback function with the
+   * pin index as parameter */
+  _hal_extiCb( INT2 );
+}
+
+ISR( INT3_vect )
+{
+  /* forward to the common callback function with the
+   * pin index as parameter */
+  _hal_extiCb( INT3 );
+}
+ISR( INT4_vect )
+{
+  /* forward to the common callback function with the
+   * pin index as parameter */
+  _hal_extiCb( INT4 );
+}
+
+ISR( INT5_vect )
+{
+  /* forward to the common callback function with the
+   * pin index as parameter */
+  _hal_extiCb( INT5 );
+}
+
+ISR( INT6_vect )
+{
+  /* forward to the common callback function with the
+   * pin index as parameter */
+  _hal_extiCb( INT6 );
+}
+
+ISR( INT7_vect )
+{
+  /* forward to the common callback function with the
+   * pin index as parameter */
+  _hal_extiCb( INT7 );
+}
+
+#if !defined (HAL_SUPPORT_SLIPUART)
+ISR( RXVECT(ATM1281_UART_DEBUG_INST) )
+{
+  /* Do nothing */
+}
+#else
+ISR( RXVECT(ATM1281_UART_SLIP_INST) )
 {
     char c_rxbyte;
-    c_rxbyte = UDR1; // Fetch the received byte value into the variable "ByteReceived"
-    if( isr_rxCallb != NULL )
-        isr_rxCallb( &c_rxbyte );
+    c_rxbyte = UDR(ATM1281_UART_SLIP_INST);
+    if( s_hal_irqs[EN_HAL_PERIPHIRQ_SLIPUART_RX].pf_cb != NULL )
+      s_hal_irqs[EN_HAL_PERIPHIRQ_SLIPUART_RX].pf_cb ( &c_rxbyte );
 }
-/*==============================================================================
- API FUNCTIONS
- ==============================================================================*/
-/*==============================================================================
- hal_enterCritical()
- ==============================================================================*/
-void hal_enterCritical( void )
+#endif /* #if !defined (HAL_SUPPORT_SLIPUART) */
+
+
+/*
+* --- Global Functions ---------------------------------------------------- *
+*/
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_init()
+*/
+int8_t hal_init( void )
+{
+    hal_enterCritical();
+
+    /* Init timer*/
+    _hal_tim0Init();
+
+    MCUSR = 0;
+
+    hal_exitCritical();
+    return 0;
+}/* hal_init() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_enterCritical()
+*/
+int8_t hal_enterCritical( void )
 {
     if( !c_nested )
     {
@@ -339,12 +493,16 @@ void hal_enterCritical( void )
     }
     else
         c_nested++;
+
+    return 0;
 } /* hal_enterCritical() */
 
-/*==============================================================================
- hal_exitCritical()
- ==============================================================================*/
-void hal_exitCritical( void )
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_exitCritical()
+*/
+int8_t hal_exitCritical( void )
 {
     if( c_nested == 1 )
     {
@@ -354,40 +512,51 @@ void hal_exitCritical( void )
     }
     else
         c_nested--;
+
+    return 0;
 }/* hal_exitCritical() */
 
-/*==============================================================================
- hwinit_init()
- ==============================================================================*/
-int8_t hal_init( void )
-{
-    hal_enterCritical();
-    /* Init USART*/
-    _hal_usartInit();
-    /* Init timer*/
-    _hal_tim0Init();
-    /* Init leds */
-#if    LEDS_ON_BOARD == TRUE
-    _hal_ledsInit();
-#endif /* LEDS_ON_BOARD == TRUE */
-    //    _hal_tim1Init();
-    //    LOG_INFO("%s\n\r","Checking MCUSR...");
-    //    if(MCUSR & (1<<PORF )) LOG_INFO("%s\n\r","Power-on reset.");
-    //    if(MCUSR & (1<<EXTRF)) LOG_INFO("%s\n\r","External reset!");
-    //    if(MCUSR & (1<<BORF )) LOG_INFO("%s\n\r","Brownout reset!");
-    //    if(MCUSR & (1<<WDRF )) LOG_INFO("%s\n\r","Watchdog reset!");
-    //    if(MCUSR & (1<<JTRF )) LOG_INFO("%s\n\r","JTAG reset!\n");
-    MCUSR = 0;
-    hal_exitCritical();
-    return 1;
-}/* hal_init() */
 
-/*==============================================================================
- hal_getrand()
- ==============================================================================*/
-uint8_t hal_getrand( void )
+/*---------------------------------------------------------------------------*/
+/*
+* hal_watchdogStart()
+*/
+int8_t hal_watchdogStart( void )
 {
-    uint8_t ret = 0;
+    wdt_enable(WDTO_2S);
+    return 0;
+} /* hal_watchdogStart() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_watchdogReset()
+*/
+int8_t hal_watchdogReset( void )
+{
+    wdt_reset();
+    return 0;
+} /* hal_watchdogReset() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_watchdogStop()
+*/
+int8_t hal_watchdogStop( void )
+{
+    wdt_disable();
+    return 0;
+} /* hal_watchdogStop() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_getrand()
+*/
+uint32_t hal_getrand( void )
+{
+  uint32_t ret = 0;
 
     ADMUX = 0x1E; //Select AREF as reference, measure 1.1 volt bandgap reference.
     ADCSRA = 1 << ADEN; //Enable ADC, not free running, interrupt disabled, fastest clock
@@ -399,393 +568,444 @@ uint8_t hal_getrand( void )
     return ret;
 }/* hal_getrand() */
 
-void hal_ledOn( uint16_t ui_led )
-{
-#if    LEDS_ON_BOARD == TRUE
-    hal_enterCritical();
-    switch (ui_led)
-    {
-        case E_BSP_LED_0:
-        PORT(HAL_LED_RED_PORT) HAL_LED_SET ( 1 << PIN(HAL_LED_RED_PIN));
-        break;
-        case E_BSP_LED_1:
-        PORT(HAL_LED_YELLOW_PORT) HAL_LED_SET ( 1 << PIN(HAL_LED_YELLOW_PIN));
-        break;
-        case E_BSP_LED_2:
-        PORT(HAL_LED_GREEN_PORT) HAL_LED_SET ( 1 << PIN(HAL_LED_GREEN_PIN));
-        break;
-        default:
-        break;
-    }
-    hal_exitCritical();
-#endif  /* LEDS_ON_BOARD == TRUE */
-}
 
-void hal_ledOff( uint16_t ui_led )
-{
-#if    LEDS_ON_BOARD == TRUE
-    hal_enterCritical();
-    switch (ui_led)
-    {
-        case E_BSP_LED_0:
-        PORT(HAL_LED_RED_PORT) HAL_LED_CLR ( 1 << PIN(HAL_LED_RED_PIN));
-        break;
-        case E_BSP_LED_1:
-        PORT(HAL_LED_YELLOW_PORT) HAL_LED_CLR ( 1 << PIN(HAL_LED_YELLOW_PIN));
-        break;
-        case E_BSP_LED_2:
-        PORT(HAL_LED_GREEN_PORT) HAL_LED_CLR ( 1 << PIN(HAL_LED_GREEN_PIN));
-        break;
-        default:
-        break;
-    }
-    hal_exitCritical();
-#endif  /* LEDS_ON_BOARD == TRUE */
-}
-
-/*==============================================================================
- hal_extiRegister()
- =============================================================================*/
-void hal_extiRegister( en_targetExtInt_t e_extInt, en_targetIntEdge_t e_edge,
-        pfn_intCallb_t pfn_intCallback )
-{
-    hal_enterCritical();
-
-    if( pfn_intCallback == NULL )
-    {
-        //        LOG_ERR("You are tying to initialise NULL pointer function.");
-        return;
-    }
-
-    switch( e_extInt )
-    {
-        case E_TARGET_RADIO_INT:
-            EIMSK |= ( 1 << INT5 );
-            EICRB |= ( ( 1 << ISC51 ) | ( 1 << ISC50 ) );
-            PORTE &= ~( 1 << PE5 );
-            DDRE &= ~( 1 << DDE5 );
-            isr_radioCallb = pfn_intCallback;
-
-            hal_extiDisable(e_extInt);
-            break;
-        case E_TARGET_USART_INT:
-            isr_rxCallb = pfn_intCallback;
-            break;
-        default:
-            break;
-    }
-    hal_exitCritical();
-    return;
-
-} /* hal_extIntInit() */
-
-
-
-/*==============================================================================
-  hal_extiClear()
- =============================================================================*/
-void hal_extiClear(en_targetExtInt_t e_extInt)
-{
-    hal_enterCritical();
-    switch( e_extInt )
-    {
-        case E_TARGET_RADIO_INT:
-            EIFR |= ( 1 << INT5 );
-            break;
-        default:
-            break;
-    }
-    hal_exitCritical();
-    return;
-} /* hal_extiClear() */
-
-
-/*==============================================================================
-  hal_extiEnable()
- =============================================================================*/
-void hal_extiEnable(en_targetExtInt_t e_extInt)
-{
-    hal_enterCritical();
-    switch( e_extInt )
-    {
-        case E_TARGET_RADIO_INT:
-            EIMSK |= ( 1 << INT5 );
-            break;
-        default:
-            break;
-    }
-    hal_exitCritical();
-    return;
-} /* hal_extiEnable() */
-
-/*==============================================================================
-  hal_extiDisable()
- =============================================================================*/
-void hal_extiDisable(en_targetExtInt_t e_extInt)
-{
-    hal_enterCritical();
-    switch( e_extInt )
-    {
-        case E_TARGET_RADIO_INT:
-            EIMSK &= ~( 1 << INT5 );
-            break;
-        default:
-            break;
-    }
-    hal_exitCritical();
-    return;
-} /* hal_extiDisable() */
-
-
-/*==============================================================================
- hal_delay_us()
- =============================================================================*/
-void hal_delay_us( uint32_t i_delay )
-{
-    if( i_delay < 4 )
-        return;
-    i_delay -= 3;
-    _hal_delay_loop( ( i_delay * 4 ) / 2 );
-} /* hal_delay_us() */
-
-/*==============================================================================
- hal_ctrlPinInit()
- =============================================================================*/
-void * hal_ctrlPinInit( en_targetExtPin_t e_pinType )
-{
-    pinDesc_t * p_pin = (pinDesc_t *)malloc( sizeof(pinDesc_t) );
-
-    if( p_pin != NULL )
-    {
-        switch( e_pinType )
-        {
-            case E_TARGET_RADIO_RST:
-                p_pin->pc_ddr = RESET_DDR;
-                p_pin->pc_port = RESET_PORT;
-                p_pin->c_pin = RESET_PIN;
-
-                ( *( p_pin->pc_port ) ) &= ~( 1 << p_pin->c_pin );
-                ( *( p_pin->pc_ddr ) ) |= ( 1 << p_pin->c_pin );
-
-                break;
-            case E_TARGET_RADIO_SLPTR:
-                p_pin->pc_ddr = SLP_TR_DDR;
-                p_pin->pc_port = SLP_TR_PORT;
-                p_pin->c_pin = SLP_TR_PIN;
-
-                ( *( p_pin->pc_port ) ) &= ~( 1 << p_pin->c_pin );
-                ( *( p_pin->pc_ddr ) ) |= ( 1 << p_pin->c_pin );
-
-                break;
-            default:
-                break;
-        }
-    }
-    return (void *)p_pin;
-} /* hal_ctrlPinInit */
-
-/*==============================================================================
- hal_pinInit()
- =============================================================================*/
-void * hal_pinInit( en_targetExtPin_t e_pinType )
-{
-    pinDesc_t * p_pin = (pinDesc_t *)malloc( sizeof(pinDesc_t) );
-
-    if( p_pin != NULL )
-    {
-        switch( e_pinType )
-        {
-            case E_TARGET_RADIO_RST:
-                p_pin->pc_ddr = RESET_DDR;
-                p_pin->pc_port = RESET_PORT;
-                p_pin->c_pin = RESET_PIN;
-
-                ( *( p_pin->pc_port ) ) &= ~( 1 << p_pin->c_pin );
-                ( *( p_pin->pc_ddr ) ) |= ( 1 << p_pin->c_pin );
-
-                break;
-            case E_TARGET_RADIO_SLPTR:
-                p_pin->pc_ddr = SLP_TR_DDR;
-                p_pin->pc_port = SLP_TR_PORT;
-                p_pin->c_pin = SLP_TR_PIN;
-
-                ( *( p_pin->pc_port ) ) &= ~( 1 << p_pin->c_pin );
-                ( *( p_pin->pc_ddr ) ) |= ( 1 << p_pin->c_pin );
-
-                break;
-            default:
-                break;
-        }
-    }
-    return (void *)p_pin;
-}
-/*==============================================================================
- hal_pinSet()
- =============================================================================*/
-void hal_pinSet( void * p_pin )
-{
-    pinDesc_t * st_pin = (pinDesc_t *)p_pin;
-    if( p_pin == NULL )
-        return;
-    hal_enterCritical();
-    ( *( st_pin->pc_port ) ) |= ( 1 << st_pin->c_pin );
-    hal_exitCritical();
-} /* hal_pinSet() */
-
-/*==============================================================================
- hal_pinClr()
- =============================================================================*/
-void hal_pinClr( void * p_pin )
-{
-    pinDesc_t * st_pin = (pinDesc_t *)p_pin;
-    if( p_pin == NULL )
-        return;
-    hal_enterCritical();
-    ( *( st_pin->pc_port ) ) &= ~( 1 << st_pin->c_pin );
-    hal_exitCritical();
-} /* hal_pinClr() */
-
-/*==============================================================================
- hal_pinGet()
- =============================================================================*/
-uint8_t hal_pinGet( void * p_pin )
-{
-    pinDesc_t * st_pin = (pinDesc_t *)p_pin;
-    if( p_pin == NULL )
-        return 0xFF;
-    // (PORTX & (1 << PINX)) >> PINX
-    return ( ( *( st_pin->pc_port ) ) & ( 1 << st_pin->c_pin ) );
-} /* hal_pinGet() */
-
-/*==============================================================================
- hal_spiInit()
- =============================================================================*/
-void * hal_spiInit( void )
-{
-    // Atmega1281 has only one spi interface.
-    spiDesc_t * p_spi = (spiDesc_t *)malloc( sizeof(spiDesc_t) );
-
-    if( p_spi != NULL )
-    {
-        memset( p_spi, 1, sizeof(spiDesc_t) );
-        hal_enterCritical();
-        /*SPI Specific Initialization.*/
-        /* Set SS, CLK and MOSI as output. */
-        /* To avoid a SPI glitch, the port register shall be set before the DDR register */
-        PORT( SPIPORT ) |= ( 1 << SSPIN ) | ( 1 << SCKPIN ); /* Set SS and CLK high */
-        DDR( SPIPORT ) |= ( 1 << SSPIN ) | ( 1 << SCKPIN )
-                | ( 1 << MOSIPIN );
-        DDR( SPIPORT ) &= ~( 1 << MISOPIN ); /* MISO input */
-
-        /* Run SPI at max speed */
-        SPCR = ( 1 << SPE ) | ( 1 << MSTR ); /* Enable SPI module and master operation. */
-        SPSR = ( 1 << SPI2X ); /* Enable doubled SPI speed in master mode. */
-        hal_exitCritical();
-        *p_spi = 1;
-    }
-    return p_spi;
-} /* hal_spiInit() */
-
-/*==============================================================================
- hal_spiSlaveSel()
- =============================================================================*/
-//!  [hal_spiSlaveSel]
-uint8_t hal_spiSlaveSel( void * p_spi, bool action )
-{
-    if( p_spi == 0 )
-    {
-        //        LOG_ERR("%s\n\r","SPI was not initialized!");
-        return 0;
-    }
-    if( action )
-    {
-        //! [select_slave]
-        SPI_TRAN_OPEN()
-        ;
-        //! [select_slave]
-    }
-    else
-    {
-        //! [deselect_slave]
-        SPI_TRAN_CLOSE()
-        ;
-        //! [deselect_slave]
-    }
-    return 1;
-} //!  [hal_spiSlaveSel]
-
-/*==============================================================================
- hal_spiRead()
- =============================================================================*/
-uint8_t hal_spiRead( uint8_t * p_reg, uint16_t i_length )
-{
-    while( i_length-- )
-    {
-        SPI_TRAN_WRITE( 0 );
-        SPI_TRAN_WAIT();
-        *p_reg++ = SPI_TRAN_READ();
-    }
-    return *p_reg;
-} /* hal_spiRead() */
-
-/*==============================================================================
- hal_spiWrite()
- =============================================================================*/
-void hal_spiWrite( uint8_t * c_value, uint16_t i_length )
-{
-    while( i_length-- )
-    {
-        /*Send Register address and write register content.*/
-        SPI_TRAN_WRITE( *c_value++ );
-        SPI_TRAN_WAIT();
-    }
-} /* hal_spiWrite() */
-
-/*==============================================================================
- hal_spiTranRead()
- =============================================================================*/
-void hal_watchdogReset( void )
-{
-    //    wdt_reset();
-} /* hal_watchdogReset() */
-
-/*==============================================================================
- hal_spiTranRead()
- =============================================================================*/
-void hal_watchdogStart( void )
-{
-    //wdt_enable(WDTO_2S);
-} /* hal_watchdogStart() */
-
-/*==============================================================================
- hal_spiTranRead()
- =============================================================================*/
-void hal_watchdogStop( void )
-{
-    //    wdt_disable();
-} /* hal_watchdogStop() */
-
-/*==============================================================================
- hal_getTick()
- =============================================================================*/
+/*---------------------------------------------------------------------------*/
+/*
+* hal_getTick()
+*/
 clock_time_t hal_getTick( void )
 {
     return l_tick;
 } /* hal_getTick() */
 
-/*==============================================================================
- hal_getSec()
- =============================================================================*/
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_getSec()
+*/
 clock_time_t hal_getSec( void )
 {
-    return l_sec;
+  return l_sec;
 } /* hal_getSec() */
 
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_getTRes()
+*/
 clock_time_t hal_getTRes( void )
 {
-    return CLOCK_SECOND;
+  return ATM1281_TICK_SECONDS;
 }
 
-/** @} */
-/** @} */
-/** @} */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_delayUs()
+*/
+int8_t hal_delayUs( uint32_t delay )
+{
+    if( delay < 4 )
+        return 0;
+    delay -= 3;
+    _hal_delayLoop( ( delay * 4 ) / 2 );
+
+    return 0;
+} /* hal_delayUs() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_pinInit()
+*/
+void* hal_pinInit( en_hal_pin_t pin )
+{
+  s_hal_gpio_pin_t* p_pin = NULL;
+  p_pin = &s_hal_gpio[pin];
+
+  /* Configure the Pin */
+  (*( p_pin->p_port )) &= ~(1 << p_pin->pin);
+  if( p_pin->dir == ATM1281_DIR_IN )
+    (*( p_pin->p_ddr )) &= ~(1 << p_pin->pin);
+  else
+  {
+    (*(p_pin->p_ddr)) |= (1 << p_pin->pin);
+    if( p_pin->init )
+      (*( p_pin->p_port )) |= (1 << p_pin->pin);
+    else
+      (*( p_pin->p_port )) &= ~(1 << p_pin->pin);
+  }
+
+  return (void *)p_pin;
+} /* hal_pinInit() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_pinSet()
+*/
+int8_t hal_pinSet( void* p_pin, uint8_t val )
+{
+  s_hal_gpio_pin_t* p_gpioPin;
+  p_gpioPin = (s_hal_gpio_pin_t *)p_pin;
+
+  EMB6_ASSERT_RET(p_gpioPin != NULL, -1);
+  EMB6_ASSERT_RET(p_gpioPin->dir == ATM1281_DIR_OUT, -1);
+
+  if( val )
+    (*( p_gpioPin->p_port )) |= (1 << p_gpioPin->pin);
+  else
+    (*( p_gpioPin->p_port )) &= ~(1 << p_gpioPin->pin);
+
+  return (val ? 1 : 0);
+
+} /* hal_pinSet() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_pinGet()
+*/
+int8_t hal_pinGet(void *p_pin)
+{
+  s_hal_gpio_pin_t* p_gpioPin;
+  p_gpioPin = (s_hal_gpio_pin_t *)p_pin;
+
+  EMB6_ASSERT_RET(p_gpioPin != NULL, -1);
+  return (((*( p_gpioPin->p_port )) >> p_gpioPin->pin) & 1);
+
+} /* hal_pinGet() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_pinIRQRegister()
+*/
+int8_t hal_pinIRQRegister( void* p_pin, en_hal_irqedge_t edge,
+    pf_hal_irqCb_t pf_cb )
+{
+  uint8_t iscx = 0;
+
+  s_hal_gpio_pin_t* p_gpioPin;
+  p_gpioPin = (s_hal_gpio_pin_t*)p_pin;
+
+  EMB6_ASSERT_RET(p_gpioPin != NULL, -1);
+  hal_enterCritical();
+
+  /* we expect a valid IRQ */
+  EMB6_ASSERT_RET(p_gpioPin->irqNum != 0xFF, -1);
+
+  /* we expect that the pin is configured as input */
+  EMB6_ASSERT_RET(p_gpioPin->dir == ATM1281_DIR_IN, -1);
+
+  /* enable IRQ */
+  EIMSK |= ( 1 << p_gpioPin->irqNum );
+
+  switch( edge )
+  {
+    case EN_HAL_IRQEDGE_EITHER:
+      iscx = 0x01;
+      break;
+
+    case EN_HAL_IRQEDGE_RISING:
+      iscx = 0x03;
+      break;
+
+    case EN_HAL_IRQEDGE_FALLING:
+      iscx = 0x02;
+      break;
+
+    default:
+      iscx = 0x01;
+  }
+
+  /* Enable rising and falling edge detection */
+  if( p_gpioPin->irqNum <= 3  )
+  {
+    EICRA &= ~(0x03  << ( p_gpioPin->pin << 1 ));
+    EICRA |= (iscx  << ( p_gpioPin->pin << 1 ));
+  }
+  else
+  {
+    EICRB &= ~(0x03  << ( p_gpioPin->pin << 1 ));
+    EICRB |= (iscx  << ( p_gpioPin->pin << 1 ));
+  }
+
+  /* set the callback and edge*/
+  p_gpioPin->pf_cb = pf_cb;
+
+  hal_exitCritical();
+  return 0;
+
+} /* hal_extiRegister() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_pinIRQEnable()
+*/
+int8_t hal_pinIRQEnable( void* p_pin )
+{
+  s_hal_gpio_pin_t* p_gpioPin;
+  p_gpioPin = (s_hal_gpio_pin_t*)p_pin;
+
+  EMB6_ASSERT_RET(p_gpioPin != NULL, -1);
+  hal_enterCritical();
+
+  EIMSK |= ( 1 << p_gpioPin->irqNum );
+
+  hal_exitCritical();
+  return 0;
+
+} /* hal_pinIRQEnable() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_pinIRQDisable()
+*/
+int8_t hal_pinIRQDisable( void* p_pin )
+{
+  s_hal_gpio_pin_t* p_gpioPin;
+  p_gpioPin = (s_hal_gpio_pin_t*)p_pin;
+
+  EMB6_ASSERT_RET(p_gpioPin != NULL, -1);
+  hal_enterCritical();
+
+  EIMSK &= ~ ( 1 << p_gpioPin->irqNum );
+
+  hal_exitCritical();
+  return 0;
+} /* hal_pinIRQDisable() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_pinIRQClear()
+*/
+int8_t hal_pinIRQClear( void* p_pin )
+{
+  s_hal_gpio_pin_t* p_gpioPin;
+  p_gpioPin = (s_hal_gpio_pin_t*)p_pin;
+
+  EMB6_ASSERT_RET(p_gpioPin != NULL, -1);
+  hal_enterCritical();
+
+  EIFR |= ( 1 << p_gpioPin->irqNum );
+
+  hal_exitCritical();
+  return 0;
+} /* hal_pinIRQClear() */
+
+
+#if defined(HAL_SUPPORT_SPI) && defined(HAL_SUPPORT_RFSPI)
+/*---------------------------------------------------------------------------*/
+/*
+* hal_spiInit()
+*/
+void* hal_spiInit( en_hal_spi_t spi )
+{
+  /* RF SPI is supported omly */
+  EMB6_ASSERT_RET(spi == EN_HAL_SPI_RF, NULL);
+
+   /* initialize the according pins */
+  s_hal_spi.p_clkPin = hal_pinInit( EN_HAL_PIN_RFSPICLK );
+  EMB6_ASSERT_RET(s_hal_spi.p_clkPin != NULL, NULL);
+  s_hal_spi.p_txPin = hal_pinInit( EN_HAL_PIN_RFSPITX );
+  EMB6_ASSERT_RET(s_hal_spi.p_txPin != NULL, NULL);
+  s_hal_spi.p_rxPin = hal_pinInit( EN_HAL_PIN_RFSPIRX );
+  EMB6_ASSERT_RET(s_hal_spi.p_rxPin != NULL, NULL);
+  s_hal_spi.p_csPin = hal_pinInit( EN_HAL_PIN_RFSPICS );
+  EMB6_ASSERT_RET(s_hal_spi.p_csPin != NULL, NULL);
+
+  hal_enterCritical();
+  /* Run SPI at max speed */
+  SPCR = ( 1 << SPE ) | ( 1 << MSTR ); /* Enable SPI module and master operation. */
+  SPSR = ( 1 << SPI2X ); /* Enable doubled SPI speed in master mode. */
+  hal_exitCritical();
+
+  return &s_hal_spi;
+} /* hal_spiInit() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_spiTRx()
+*/
+int32_t hal_spiTRx( void* p_spi, uint8_t* p_tx, uint8_t* p_rx, uint16_t len )
+{
+  uint16_t lenTmp = len;
+  EMB6_ASSERT_RET( p_spi != NULL, -1);
+  EMB6_ASSERT_RET( p_rx != NULL, -1);
+  EMB6_ASSERT_RET( p_tx != NULL, -1);
+  EMB6_ASSERT_RET( p_spi == &s_hal_spi, -1);
+
+  while( lenTmp-- )
+  {
+    /*Send Register address and write register content.*/
+    ATM1281_SPI_TRAN_WRITE( *p_tx++ );
+    ATM1281_SPI_TRAN_WAIT();
+    *p_rx++ = ATM1281_SPI_TRAN_READ();
+  }
+
+  return len;
+
+} /* hal_spiTRx() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_spiRx()
+*/
+int32_t hal_spiRx( void* p_spi, uint8_t * p_rx, uint16_t len )
+{
+  uint16_t lenTmp = len;
+  EMB6_ASSERT_RET( p_spi != NULL, -1);
+  EMB6_ASSERT_RET( p_rx != NULL, -1);
+  EMB6_ASSERT_RET( p_spi == &s_hal_spi, -1);
+
+  while( lenTmp-- )
+  {
+    ATM1281_SPI_TRAN_WRITE( 0 );
+    ATM1281_SPI_TRAN_WAIT();
+    *p_rx++ = ATM1281_SPI_TRAN_READ();
+  }
+  return len;
+
+} /* hal_spiRx() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_spiTx()
+*/
+int32_t hal_spiTx( void* p_spi, uint8_t* p_tx, uint16_t len )
+{
+  uint16_t lenTmp = len;
+  EMB6_ASSERT_RET( p_spi != NULL, -1);
+  EMB6_ASSERT_RET( p_tx != NULL, -1);
+  EMB6_ASSERT_RET( p_spi == &s_hal_spi, -1);
+
+  while( lenTmp-- )
+  {
+      /*Send Register address and write register content.*/
+    ATM1281_SPI_TRAN_WRITE( *p_tx++ );
+    ATM1281_SPI_TRAN_WAIT();
+  }
+
+  return len;
+} /* hal_spiTx() */
+#endif /* #if defined(HAL_SUPPORT_SPI) && defined(HAL_SUPPORT_RFSPI) */
+
+
+#if defined(HAL_SUPPORT_UART)
+/*---------------------------------------------------------------------------*/
+/*
+* hal_uartInit()
+*/
+void* hal_uartInit( en_hal_uart_t uart )
+{
+  EMB6_ASSERT_RET( uart < EN_HAL_UART_MAX, NULL );
+
+  /* Initialize the pins */
+  //EMB6_ASSERT_RET( hal_pinInit( EN_HAL_PIN_SLIPUARTTX) != NULL, NULL );
+  //EMB6_ASSERT_RET( hal_pinInit( EN_HAL_PIN_SLIPUARTRX) != NULL, NULL );
+
+  /* Configure UART */
+  UBRR(ATM1281_UART_SLIP_INST,H) = (uint8_t)(ATM1281_UART_SLIP_BAUD >> 8);
+  UBRR(ATM1281_UART_SLIP_INST,L)= (uint8_t)ATM1281_UART_SLIP_BAUD;
+  UCSR(ATM1281_UART_SLIP_INST,B) = (1 << RXCIE(ATM1281_UART_SLIP_INST)) |
+      (1 << TXEN(ATM1281_UART_SLIP_INST)) |
+      (1 << RXEN(ATM1281_UART_SLIP_INST));
+  UCSR(ATM1281_UART_SLIP_INST,C)= ((1 << UCSZ(ATM1281_UART_SLIP_INST,1)) |
+      (1 << UCSZ(ATM1281_UART_SLIP_INST,0)));
+
+  return NULL;
+
+}/* bsp_uartInit() */
+
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_uartRx()
+*/
+int32_t hal_uartRx( void* p_uart, uint8_t * p_rx, uint16_t len )
+{
+  EMB6_ASSERT_RET( p_uart != NULL, -1 );
+  EMB6_ASSERT_RET( p_rx != NULL, -1 );
+
+  if( len == 0 )
+    return 0;
+
+  *p_rx = UDR(ATM1281_UART_SLIP_INST);
+  return 1;
+}/* hal_uartRx() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_uartTx()
+*/
+int32_t hal_uartTx( void* p_uart, uint8_t* p_tx, uint16_t len )
+{
+  uint16_t lenTmp = len;
+  EMB6_ASSERT_RET( p_uart != NULL, -1 );
+  EMB6_ASSERT_RET( p_tx != NULL, -1 );
+
+  if( len == 0 )
+    return 0;
+
+  while( lenTmp--)
+  {
+    while( ( UCSR(ATM1281_UART_SLIP_INST,A) &
+        ( 1 << UDRE(ATM1281_UART_SLIP_INST) ) ) == 0 );
+    UDR(ATM1281_UART_SLIP_INST) = *p_tx++;
+  }
+  return len;
+}/* hal_uartTx() */
+#endif /* #if defined(HAL_SUPPORT_UART) */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_periphIRQRegister()
+*/
+int8_t hal_periphIRQRegister( en_hal_periphirq_t irq, pf_hal_irqCb_t pf_cb,
+    void* p_data )
+{
+  /* set the callback and data pointer */
+  s_hal_irqs[irq].pf_cb = pf_cb;
+  s_hal_irqs[irq].p_data = p_data;
+
+  return 0;
+} /* hal_periphIRQRegister() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_debugInit()
+*/
+int8_t hal_debugInit( void )
+{
+  /* #1:  check if debugging utility is enabled (i.e., LOGGER_LEVEL > 0) ?
+   * #2:  check if debugging channel is available (i.e., UART or Trace) ?
+   * #3:  initialize debugging utility if #1 and #2 conditions are met
+   */
+#if (LOGGER_LEVEL > 0) && (HAL_SUPPORT_SLIPUART == FALSE)
+  /* Initialize the pins */
+  //EMB6_ASSERT_RET( hal_pinInit( EN_HAL_PIN_DEBUGUARTTX) != NULL, -1 );
+  //EMB6_ASSERT_RET( hal_pinInit( EN_HAL_PIN_DEBUGUARTRX) != NULL, -1 );
+  /* Configure UART */
+  UBRR(ATM1281_UART_DEBUG_INST,H) = (uint8_t)(ATM1281_UART_DEBUG_BAUD >> 8);
+  UBRR(ATM1281_UART_DEBUG_INST,L)= (uint8_t)ATM1281_UART_DEBUG_BAUD;
+  UCSR(ATM1281_UART_DEBUG_INST,B) = (1 << RXCIE(ATM1281_UART_DEBUG_INST)) |
+      (1 << TXEN(ATM1281_UART_DEBUG_INST)) |
+      (1 << RXEN(ATM1281_UART_DEBUG_INST));
+  UCSR(ATM1281_UART_DEBUG_INST,C)= ((1 << UCSZ(ATM1281_UART_DEBUG_INST,1)) |
+      (1 << UCSZ(ATM1281_UART_DEBUG_INST,0)));
+  stdout = &st_usartStdout;
+#endif /* #if (LOGGER_LEVEL > 0) && (HAL_SUPPORT_SLIPUART == FALSE) */
+  return 0;
+}
+

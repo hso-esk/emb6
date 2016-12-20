@@ -1,19 +1,24 @@
-hardware_config = {
+brd_conf = {
 # Micro Controller Unit description (HEAD/arch/<arch>/<mcu_fam>/<vendor> folder)
-	'mcu_arch' 		: 	'arm',
-	'mcu_family' 	: 	'cm0plus',
-	'mcu_vendor' 	: 	'atmel',
-	'mcu_cpu' 		: 	'samd21',
-	'mcu_toolchain' : 	'GCC',
+	'arch'         : 	'arm',
+	'family' 	   : 	'cm0plus',
+	'vendor'       : 	'atmel',
+	'cpu' 		   : 	'samd21',
+	'toolchain'    : 	'GCC',
 	
 # Device driver description (HEAD/target/mcu folder)
-	'mcu'			:	'samd21',
+	'mcu'          :	'samd21',
 
 # Transceiver source description (HEAD/target/if folder)
-	'if'			:	'at86rf212b',
+	'if'           :	'at86rf212b',
 	
+    'startupfile'   : 'GCC/startup_samd21.c',
+    'scriptfile'    : 'GCC/samd21g18a_flash.ld'
+}
+
+std_conf = {
 # C code global defined symbols
-	'defines' : [
+	'CPPDEFINES' : [
 		'EXTINT_CALLBACK_MODE=true',
 		'RTC_COUNT_ASYNC=true',
 		'CYCLE_MODE=true',
@@ -23,14 +28,14 @@ hardware_config = {
 	],
 	
 # GCC flags
-	'cflags' : [
+	'CFLAGS' : [
 	],
 	
 # LINKER flags
-	'ldflags' : [
+	'LINKFLAGS' : [
 	],
-	'startupfile' : 'GCC/startup_samd21.c',
-	'scriptfile' : 'GCC/samd21g18a_flash.ld'
 }
 
-Return('hardware_config')
+board_conf = {'brd' : brd_conf, 'std' : std_conf}
+
+Return('board_conf')

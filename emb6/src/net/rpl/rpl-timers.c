@@ -117,7 +117,7 @@ new_dio_interval(rpl_instance_t *instance)
   time = 1UL << instance->dio_intcurrent;
 
   /* Convert from milliseconds to CLOCK_TICKS. */
-  ticks = (time * bsp_get(E_BSP_GET_TRES)) / 1000;
+  ticks = (time * bsp_getTRes()) / 1000;
   instance->dio_next_delay = ticks;
 
   /* random number between I/2 and I */
@@ -169,7 +169,7 @@ handle_dio_timer(void *ptr)
       dio_send_ok = 1;
     } else {
       PRINTF("RPL: Postponing DIO transmission since link local address is not ok\n\r");
-      ctimer_set(&instance->dio_timer, bsp_get(E_BSP_GET_TRES), handle_dio_timer, instance);
+      ctimer_set(&instance->dio_timer, bsp_getTRes(), handle_dio_timer, instance);
       return;
     }
   }
@@ -211,7 +211,7 @@ rpl_reset_periodic_timer(void)
   next_dis = RPL_DIS_INTERVAL / 2 +
     ((uint32_t)RPL_DIS_INTERVAL * (uint32_t)random_rand()) / RANDOM_RAND_MAX -
     RPL_DIS_START_DELAY;
-  ctimer_set(&periodic_timer, bsp_get(E_BSP_GET_TRES), handle_periodic_timer, NULL);
+  ctimer_set(&periodic_timer, bsp_getTRes(), handle_periodic_timer, NULL);
 }
 /*---------------------------------------------------------------------------*/
 /* Resets the DIO timer in the instance to its minimal interval. */
@@ -246,8 +246,8 @@ set_dao_lifetime_timer(rpl_instance_t *instance)
     clock_time_t expiration_time;
     expiration_time = (clock_time_t)instance->default_lifetime *
       (clock_time_t)instance->lifetime_unit *
-      bsp_get(E_BSP_GET_TRES) / 2;
-    /* make the time for the re registration be betwen 1/2 - 3/4 of lifetime */
+    bsp_getTRes() / 2;
+    /* make the time for the re registration be between 1/2 - 3/4 of lifetime */
     expiration_time = expiration_time + (random_rand() % (expiration_time / 2));
     PRINTF("RPL: Scheduling DAO lifetime timer %u ticks in the future\n",
            (unsigned)expiration_time);
@@ -268,7 +268,7 @@ handle_dao_timer(void *ptr)
 
   if(!dio_send_ok && uip_ds6_get_link_local(ADDR_PREFERRED) == NULL) {
     PRINTF("RPL: Postpone DAO transmission\n\r");
-    ctimer_set(&instance->dao_timer, bsp_get(E_BSP_GET_TRES), handle_dao_timer, instance);
+    ctimer_set(&instance->dao_timer, bsp_getTRes(), handle_dao_timer, instance);
     return;
   }
 

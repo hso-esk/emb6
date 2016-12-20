@@ -810,7 +810,7 @@ void tcpip_init(void)
    evproc_regCallback(EVENT_TYPE_ICMP6,eventhandler);
    // it is neede to register callback
 #endif /* UIP_CONF_ICMP6 */
-  etimer_set(&periodic, bsp_get(E_BSP_GET_TRES) / 2, eventhandler);
+  etimer_set(&periodic, bsp_getTRes() / 2, eventhandler);
   uip_init();
 #ifdef UIP_FALLBACK_INTERFACE
   UIP_FALLBACK_INTERFACE.init();

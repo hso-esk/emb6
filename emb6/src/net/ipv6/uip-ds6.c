@@ -140,7 +140,7 @@ uip_ds6_init(void)
 #else /* UIP_CONF_ROUTER */
   etimer_set(&uip_ds6_timer_rs,
              random_rand() % (UIP_ND6_MAX_RTR_SOLICITATION_DELAY *
-                     bsp_get(E_BSP_GET_TRES)), tcpip_gethandler());
+                 bsp_getTRes()), tcpip_gethandler());
 #endif /* UIP_CONF_ROUTER */
   etimer_set(&uip_ds6_timer_periodic, UIP_DS6_PERIOD, (pfn_callback_t) tcpip_gethandler());
 
@@ -350,7 +350,7 @@ uip_ds6_addr_add(uip_ipaddr_t *ipaddr, unsigned long vlifetime, uint8_t type)
     locaddr->state = ADDR_TENTATIVE;
     timer_set(&locaddr->dadtimer,
               random_rand() % (UIP_ND6_MAX_RTR_SOLICITATION_DELAY *
-                      bsp_get(E_BSP_GET_TRES)));
+                  bsp_getTRes()));
     locaddr->dadnscount = 0;
 #else /* UIP_ND6_DEF_MAXDADNS > 0 */
     locaddr->state = ADDR_PREFERRED;
@@ -601,7 +601,7 @@ uip_ds6_dad(uip_ds6_addr_t *addr)
     uip_nd6_ns_output(NULL, NULL, &addr->ipaddr);
     addr->dadnscount++;
     timer_set(&addr->dadtimer,
-              uip_ds6_if.retrans_timer / 1000 * bsp_get(E_BSP_GET_TRES));
+              uip_ds6_if.retrans_timer / 1000 * bsp_getTRes());
     return;
   }
   /*
@@ -697,7 +697,7 @@ uip_ds6_send_rs(void)
     uip_nd6_rs_output();
     rscount++;
     etimer_set(&uip_ds6_timer_rs,
-               UIP_ND6_RTR_SOLICITATION_INTERVAL * bsp_get(E_BSP_GET_TRES), tcpip_gethandler());
+               UIP_ND6_RTR_SOLICITATION_INTERVAL * bsp_getTRes(), tcpip_gethandler());
   } else {
     PRINTF("Router found ? (boolean): %u\n\r",
            (uip_ds6_defrt_choose() != NULL));

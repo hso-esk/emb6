@@ -347,7 +347,7 @@ static uint8_t loc_demoAppsInit(void)
 void emb6_errorHandler(e_nsErr_t *p_err)
 {
   /* turns LEDs on to indicate error */
-  bsp_led(E_BSP_LED_0, E_BSP_LED_ON);
+  bsp_led(HAL_LED0, EN_BSP_LED_OP_ON);
   LOG_ERR("Program failed");
 
   /* error handling */
@@ -386,7 +386,7 @@ int main(void)
 
   /* Initialize BSP */
   ret = bsp_init(&st_netstack);
-  if (ret != 1) {
+  if (ret != 0) {
     err = NETSTK_ERR_INIT;
     emb6_errorHandler(&err);
   }
@@ -405,9 +405,9 @@ int main(void)
   }
 
   /* Show that stack has been launched */
-  bsp_led(E_BSP_LED_0, E_BSP_LED_ON);
-  bsp_delay_us(2000000);
-  bsp_led(E_BSP_LED_0, E_BSP_LED_OFF);
+  bsp_led(HAL_LED0, EN_BSP_LED_OP_ON);
+  bsp_delayUs(2000000);
+  bsp_led(HAL_LED0, EN_BSP_LED_OP_OFF);
 
   /* Initialize applications */
   ret = loc_demoAppsInit();

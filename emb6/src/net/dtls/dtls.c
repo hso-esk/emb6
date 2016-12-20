@@ -1403,9 +1403,9 @@ static int dtls_send_multi(dtls_context_t *ctx, dtls_peer_t *peer,
 		if (n) {
 			dtls_tick_t now;
 			dtls_ticks(&now);
-			n->t = now + 2 * bsp_get(E_BSP_GET_TRES);
+			n->t = now + 2 * bsp_getTRes();
 			n->retransmit_cnt = 0;
-			n->timeout = 2 * bsp_get(E_BSP_GET_TRES);
+			n->timeout = 2 * bsp_getTRes();
 			n->peer = peer;
 			n->epoch = (security) ? security->epoch : 0;
 			n->type = type;
@@ -1709,7 +1709,7 @@ static int dtls_send_server_hello(dtls_context_t *ctx, dtls_peer_t *peer) {
 	 * followed by 28 bytes of generate random data. */
 	dtls_ticks(&now);
 	dtls_int_to_uint32(handshake->tmp.random.server,
-			now / bsp_get(E_BSP_GET_TRES));
+			now / bsp_getTRes());
 	dtls_prng(handshake->tmp.random.server + 4, 28);
 
 	memcpy(p, handshake->tmp.random.server, DTLS_RANDOM_LENGTH);
@@ -2271,7 +2271,7 @@ static int dtls_send_client_hello(dtls_context_t *ctx, dtls_peer_t *peer,
 		 * followed by 28 bytes of generate random data. */
 		dtls_ticks(&now);
 		dtls_int_to_uint32(handshake->tmp.random.client,
-				now / bsp_get(E_BSP_GET_TRES));
+				now / bsp_getTRes());
 		dtls_prng(handshake->tmp.random.client + sizeof(uint32),
 		DTLS_RANDOM_LENGTH - sizeof(uint32));
 	}

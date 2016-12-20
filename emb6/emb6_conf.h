@@ -194,8 +194,7 @@
 
 /** Set to 1 to enable RPL statistics */
 #define    RPL_CONF_STATS                   FALSE
-
-#define    RPL_CONF_DAO_LATENCY             bsp_get(E_BSP_GET_TRES)
+#define    RPL_CONF_DAO_LATENCY             bsp_getTRes()
 #define    RPL_CONF_DAG_MC                  RPL_DAG_MC_ETX
 /*
  * The objective function (OF) used by a RPL root is configurable through

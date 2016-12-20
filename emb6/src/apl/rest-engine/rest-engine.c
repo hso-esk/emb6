@@ -131,7 +131,7 @@ rest_activate_resource(resource_t *resource, char *path)
       PRINTF("Periodic: Set timer for /%s to %lu\n\r",
              periodic_resource->resource->url, periodic_resource->period);
       etimer_set(&periodic_resource->periodic_timer,
-                 periodic_resource->period * bsp_get(E_BSP_GET_TRES), _rest_et_callback);
+                 periodic_resource->period * bsp_getTRes(), _rest_et_callback);
     }
   }
 }

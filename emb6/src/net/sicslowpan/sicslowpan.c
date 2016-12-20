@@ -1279,7 +1279,7 @@ send_packet(linkaddr_t *dest)
 
   /* If we are sending multiple packets in a row, we need to let the
      watchdog know that we are still alive. */
-  bsp_wdt(E_BSP_WDT_RESET);
+    bsp_watchdog( EN_BSP_WD_RESET );
 
 }
 /*--------------------------------------------------------------------*/

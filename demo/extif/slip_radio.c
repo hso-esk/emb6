@@ -57,7 +57,6 @@ void slip_send_packet(const uint8_t *ptr, int len);
  /* max 16 packets at the same time??? */
 uint8_t packet_ids[16];
 int packet_pos;
-
 static int slip_radio_cmd_handler(const uint8_t *data, int len);
 
 
@@ -135,7 +134,7 @@ slip_radio_cmd_handler(const uint8_t *data, int len)
       return 1;
     } else if(data[1] == 'R' && len == 2) {
       PRINTF("Rebooting\n");
-      bsp_wdt(E_BSP_WDT_RESET);
+      bsp_watchdog(EN_BSP_WD_RESET);
       return 1;
     }
   } else if(uip_buf[0] == '?') {
@@ -171,9 +170,7 @@ slip_input_callback(void)
 /*---------------------------------------------------------------------------*/
 int8_t demo_extifInit(void)
 {
-    bsp_extIntRegister(E_TARGET_USART_INT, E_TARGET_INT_EDGE_RISING, slip_input_byte);
-    bsp_extIntEnable(E_TARGET_USART_INT);
-
+    bsp_periphIRQRegister( EN_HAL_PERIPHIRQ_SLIPUART_RX, slip_input_byte, NULL );
     slip_set_input_callback(slip_input_callback);
     packet_pos = 0;
     slip_init();

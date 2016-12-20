@@ -37,120 +37,183 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-/**  \addtogroup emb6
- *      @{
- *      \addtogroup bsp Board Support Package
- *   @{
- *   \addtogroup board
- *   @{
- *      \addtogroup efm32stk3600_rf212b Board EFM32 Leopard Gecko Starter Kit specific configuration
- *   @{
- */
-/*! \file   efm32stk3600_rf212b/board_conf.h
 
-    \author Artem Yushev,
-
-    \brief  Board Configuration for EFM32 Leopard Gecko Starter Kit
-
-    \version 0.0.1
-*/
-
-#ifndef BOARD_CONF_H_
-#define BOARD_CONF_H_
-
-
-
-#include "emb6.h"
-
-/*==============================================================================
-                                     MACROS
-==============================================================================*/
 /*
- * RF SPI pins
+ * --- Module Description ---------------------------------------------------*
  */
-#define EFM32_USART                         SPIDRV_MASTER_USART1
-#define EFM32_USART_LOC                     _USART_ROUTE_LOCATION_LOC1
+/**
+ *  \file       board_conf.h
+ *  \author     Institute of reliable Embedded Systems
+ *              and Communication Electronics
+ *  \date       $Date$
+ *  \version    $Version$
+ *
+ *  \brief      Definition of the Board Configuration.
+ *
+ *              The Board Configuration configures the underlying MCU and
+ *              transceiver.
+ */
+#ifndef __BOARD_CONF_H__
+#define __BOARD_CONF_H__
 
+/*
+ * --- Includes -------------------------------------------------------------*
+ */
+
+
+/*
+ * --- Macro Definitions --------------------------------------------------- *
+ */
+/** Enable RF SPI */
+#ifndef HAL_SUPPORT_RFSPI
+#define HAL_SUPPORT_RFSPI                   TRUE
+#endif /* #ifndef HAL_SUPPORT_RFSPI */
+
+/* add platform-specific SPIx configurations */
+/** USART used for RF SPI */
+#define EFM32_RFSPI_USART                   SPIDRV_MASTER_USART1
+/** Routing for the RF SPI pins */
+#define EFM32_RFSPI_USART_LOC               _USART_ROUTE_LOCATION_LOC1
+/** Port of the RF SPI clock pin */
 #define EFM32_IO_PORT_USART_CLK             gpioPortD
+/** Pin index of the RF SPI clock pin */
 #define EFM32_IO_PIN_USART_CLK              2
-
+/** Port of the RF SPI tx pin */
 #define EFM32_IO_PORT_USART_TX              gpioPortD
+/** Pin index of the RF SPI tx pin */
 #define EFM32_IO_PIN_USART_TX               0
-
+/** Port of the RF SPI rx pin */
 #define EFM32_IO_PORT_USART_RX              gpioPortD
+/** Pin index of the RF SPI rx pin */
 #define EFM32_IO_PIN_USART_RX               1
-
+/** Port of the RF SPI cs pin */
 #define EFM32_IO_PORT_USART_CS              gpioPortD
+/** Pin index of the RF SPI cs pin */
 #define EFM32_IO_PIN_USART_CS               3
 
+/* add platform-specific RF_GPIOx configuration */
+/** Enable RF control 0 as RST */
+#ifndef HAL_SUPPORT_RFCTRL0
+#define HAL_SUPPORT_RFCTRL0                 TRUE
+#endif /* #ifndef HAL_SUPPORT_RFSPI */
+/** Port of the RF control pin0 */
+#define EFM32_IO_PORT_RF_CTRL_0             gpioPortD
+/** Pin index of the RF control pin0 */
+#define EFM32_IO_PIN_RF_CTRL_0              4
+/** Pin mode */
+#define EFM32_IO_PINMODE_RF_CTRL_0          gpioModePushPull
 
+/** Enable RF control 1 as SLP */
+#ifndef HAL_SUPPORT_RFCTRL1
+#define HAL_SUPPORT_RFCTRL1                 TRUE
+#endif /* #ifndef HAL_SUPPORT_RFSPI */
+/** Port of the RF control pin1 */
+#define EFM32_IO_PORT_RF_CTRL_1             gpioPortD
+/** Pin index of the RF control pin1 */
+#define EFM32_IO_PIN_RF_CTRL_1              6
+/** Pin mode */
+#define EFM32_IO_PINMODE_RF_CTRL_1          gpioModePushPull
 
-#define EFM32_IO_PORT_RF_RST                gpioPortD
-#define EFM32_IO_PIN_RF_RST                 4
+/** Enable RF control 2 as IRQ */
+#ifndef HAL_SUPPORT_RFCTRL2
+#define HAL_SUPPORT_RFCTRL2                 TRUE
+#endif /* #ifndef HAL_SUPPORT_RFSPI */
+/** Port of the RF control pin2 */
+#define EFM32_IO_PORT_RF_CTRL_2             gpioPortD
+/** Pin index of the RF control pin2 */
+#define EFM32_IO_PIN_RF_CTRL_2              5
+/** Pin mode */
+#define EFM32_IO_PINMODE_RF_CTRL_2          gpioModeInputPull
 
-#define EFM32_IO_PORT_RF_IRQ                gpioPortD
-#define EFM32_IO_PIN_RF_IRQ                 5
+/* add platform-specific SLIPUART configuration */
+#if defined(HAL_SUPPORT_SLIPUART)
+/** USART used for SLIP interface */
+#define EFM32_SLIP_UART                     UART0
+/** Routing for the SLIP UART pins */
+#define EFM32_SLIP_UART_LOC                 UART_ROUTE_LOCATION_LOC1
+/** Port of the SLIP UART TX pin */
+#define EFM32_SLIP_UART_PORT_USART_TX       gpioPortE
+/** Pin index of the SLIP UART TX pin */
+#define EFM32_SLIP_UART_PIN_USART_TX        0
+/** Port of the SLIP UART RX pin */
+#define EFM32_SLIP_UART_PORT_USART_RX       gpioPortE
+/** Pin index of the SLIP UART RX pin */
+#define EFM32_SLIP_UART_PIN_USART_RX        1
+/** Baudrate of SLIP UART */
+#define EFM32_SLIP_UART_BAUD                115200
+/** RX interrupt handler for SLIP UART */
+#define EFM32_SLIP_UART_RXIRQHNDL           UART0_RX_IRQHandler
+#endif /* #if defined(HAL_SUPPORT_SLIPUART) */
 
-#define EFM32_IO_PORT_RF_SLP                gpioPortD
-#define EFM32_IO_PIN_RF_SLP                 6
+/* add debugging channel configuration */
+/** USART used for DEBUG interface */
+#define EFM32_DEBUG_UART                    UART0
+/** Routing for the DEBUG UART pins */
+#define EFM32_DEBUG_UART_LOC                UART_ROUTE_LOCATION_LOC1
+/** Port of the DEBUG UART TX pin */
+#define EFM32_DEBUG_UART_PORT_USART_TX      gpioPortE
+/** Pin index of the DEBUG UART TX pin */
+#define EFM32_DEBUG_UART_PIN_USART_TX       0
+/** Port of the DEBUG UART RX pin */
+#define EFM32_DEBUG_UART_PORT_USART_RX      gpioPortE
+/** Pin index of the DEBUG UART RX pin */
+#define EFM32_DEBUG_UART_PIN_USART_RX       1
+/** Baudrate of DEBUG UART */
+#define EFM32_DEBUG_UART_BAUD               115200
 
+/* add platform-specific LEDs configuration */
+/** Number of supported LEDs */
+#ifndef HAL_SUPPORT_LEDNUM
+#define HAL_SUPPORT_LEDNUM                  ( 2 )
+#endif /* #ifndef HAL_SUPPORT_LEDNUM */
 
-/*
- * TI transceiver CC112x/CC120x pins
- */
-#define EFM32_IO_PORT_RF_IRQ_0              gpioPortC
-#define EFM32_IO_PIN_RF_IRQ_0               3
-
-#define EFM32_IO_PORT_RF_IRQ_2              gpioPortC
-#define EFM32_IO_PIN_RF_IRQ_2               4
-
-#define EFM32_IO_PORT_RF_IRQ_3              gpioPortC
-#define EFM32_IO_PIN_RF_IRQ_3               5
-
-
-/*
- * UART
- */
-#define EFM32_UART                          UART0
-#define EFM32_UART_LOC                      UART_ROUTE_LOCATION_LOC1
-
-#define EFM32_UART_PORT_USART_TX            gpioPortE
-#define EFM32_UART_PIN_USART_TX             0
-
-#define EFM32_UART_PORT_USART_RX            gpioPortE
-#define EFM32_UART_PIN_USART_RX             1
-
-/*
- * LED Ports
- */
-
+/** Enable LED0 */
+#ifndef HAL_SUPPORT_LED0
+#define HAL_SUPPORT_LED0                    TRUE
+#endif /* #ifndef HAL_SUPPORT_LED0 */
+/** LED0 port */
 #define EFM32_IO_PORT_LED0                  gpioPortE
+/** LED0 pin index */
 #define EFM32_IO_PIN_LED0                   2
 
+/** Enable LED1 */
+#ifndef HAL_SUPPORT_LED1
+#define HAL_SUPPORT_LED1                    TRUE
+#endif /* #ifndef HAL_SUPPORT_LED1 */
+/** LED1 port */
 #define EFM32_IO_PORT_LED1                  gpioPortE
+/** LED1 pin index */
 #define EFM32_IO_PIN_LED1                   3
 
 
-/** transceiver supports standard-specific checksum algorithm */
+/*
+ * --- Stack Macro Definitions ---------------------------------------------- *
+ */
+/** additional delay between consecutive iteration of emb6 process */
+#define EMB6_PROC_DELAY                     ( 0 )
+
+/** transceiver supports standard-specific checksum */
 #define NETSTK_CFG_RF_CRC_EN                TRUE
 
 
-/*============================================================================*/
-/*!
-\brief    emb6 board configuration fuction
+/*
+ *  --- Global Functions Definition ------------------------------------------*
+ */
 
-        This function chooses the transceiver driver for the specific board.
+/**
+ * board_conf()
+ *
+ * \brief   Configure board.
+ *
+ *          This function is used to configure the specific board for usage
+ *          with emb::6. Therefore e.g. the transceiver and the according
+ *          layers will be selected.
+ *
+ * \param   p_ns  Pointer to global netstack struct.
+ *
+ * \return  0 on success or negative value on error.
+ */
+int8_t board_conf( s_ns_t* p_ns );
 
-\param    ps_nStack pointer to global netstack struct
+#endif /* __BOARD_CONF_H__ */
 
-\return  success 1, failure 0
-
-*/
-/*============================================================================*/
-uint8_t board_conf(s_ns_t* ps_nStack);
-
-#endif /* BOARD_CONF_H_ */
-/** @} */
-/** @} */
-/** @} */
-/** @} */

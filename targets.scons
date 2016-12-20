@@ -89,6 +89,13 @@ trg += [{
     'bsp'       : get_descr(bsp, 'atany900_pro5')
 }]
 
+trg += [{
+    'id'        : 'ds_atany900pro3',
+    'apps_conf' : [ dtls_srv ],
+    'bsp'       : get_descr(bsp, 'atany900_pro3')
+}]
+
+
 #ATANY900_BASIC based ++++++++++++++++++++++++++++++++++++#
 trg += [{
     'id'        : 'if_atany900basic',

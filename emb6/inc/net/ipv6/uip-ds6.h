@@ -166,7 +166,7 @@
 /** \brief General DS6 definitions */
 /** Period for uip-ds6 periodic task*/
 #ifndef UIP_DS6_CONF_PERIOD
-#define UIP_DS6_PERIOD   (bsp_get(E_BSP_GET_TRES)/10)
+#define UIP_DS6_PERIOD   (bsp_getTRes()/10)
 #else
 #define UIP_DS6_PERIOD UIP_DS6_CONF_PERIOD
 #endif

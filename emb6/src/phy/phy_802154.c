@@ -177,7 +177,7 @@ static void phy_init(void *p_netstk, e_nsErr_t *p_err)
     packetbuf_set_attr(PACKETBUF_ATTR_PHY_SHR_DURATION, shr_duration);
 
     /* set TX timeout in ticks */
-    tx_timeout = (shr_duration + PHY_PSDU_MAX * symbol_per_octet * symbol_period) / bsp_get(E_BSP_GET_TRES);
+    tx_timeout = (shr_duration + PHY_PSDU_MAX * symbol_per_octet * symbol_period) / bsp_getTRes();
     packetbuf_set_attr(PACKETBUF_ATTR_PHY_TXTIMEOUT, tx_timeout);
 
     /* set returned error */

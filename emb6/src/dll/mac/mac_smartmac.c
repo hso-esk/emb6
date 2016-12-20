@@ -502,7 +502,7 @@ static void mac_txBroadcast(struct s_smartmac *p_ctx, uint8_t *p_data, uint16_t 
       }
       else {
         /* otherwise wait for a certain amount of time after transmission */
-        bsp_delay_us(timeGap);
+        bsp_delayUs(timeGap);
 
         /* is the strobe the last one? */
         if (counter == 0) {
