@@ -260,6 +260,9 @@ def getBSPs():
     # Run through all BSP folders and get the configuration from the according
     # Scons file located in it.
     for bsp in bspDirs:
+        if bsp == 'template':
+            continue
+
         bspConf = SConscript( 'target/bsp/' + bsp + '/SConscript' )
         bsps += [{
             'id'  : bsp,
