@@ -52,11 +52,11 @@ For an initial build with a simple demo you can run the following comands to bui
 for the native Linux target (keep in mind that the LCM libraries have to be installed in advance.)
 
 ```
-scons --demos=UDPSrv --bsp=native --net=rpl-dagroot --os=none --mac=0x00AA --logger=3 --ccflags=MODULATION=MODULATION,2FSK50,LOGGER_DEMO_UDP_SOCKET=TRUE
+scons --demos=UDPSrv --bsp=native --net=rpl-dagroot --os=none --mac=0x00AA --logger=3 --ccflags=MODULATION=MODULATION_2FSK50,LOGGER_DEMO_UDP_SOCKET=TRUE
 ```
 
 ```
-scons --demos=UDPCli --bsp=native --net=rpl-router --os=none --mac=0x00BB --logger=3 --ccflags=MODULATION=MODULATION,2FSK50,LOGGER_DEMO_UDP_SOCKET=TRUE
+scons --demos=UDPCli --bsp=native --net=rpl-router --os=none --mac=0x00BB --logger=3 --ccflags=MODULATION=MODULATION_2FSK50,LOGGER_DEMO_UDP_SOCKET=TRUE
 ```
 
 Afterwards you can run the both executables using the following commands in two separate terminals. Then you should be able to see the according debug output.
