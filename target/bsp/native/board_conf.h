@@ -77,6 +77,11 @@
  * --- Stack Macro Definitions ---------------------------------------------- *
  */
 
+/** Default modulation scheme */
+#if !defined(MODULATION)
+#define MODULATION                            MODULATION_2FSK50
+#endif /* #if !defined(MODULATION) */
+
 /** transceiver supports standard-specific checksum algorithm */
 #define NETSTK_CFG_RF_CRC_EN                  TRUE
 

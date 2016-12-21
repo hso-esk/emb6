@@ -192,6 +192,11 @@
 /** additional delay between consecutive iteration of emb6 process */
 #define EMB6_PROC_DELAY                     ( 0 )
 
+/** Default modulation scheme */
+#if !defined(MODULATION)
+#define MODULATION                          MODULATION_BPSK20
+#endif /* #if !defined(MODULATION) */
+
 /** transceiver supports standard-specific checksum */
 #define NETSTK_CFG_RF_CRC_EN                TRUE
 
