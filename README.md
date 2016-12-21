@@ -50,21 +50,25 @@ configure the build accordingly. For detailed instructions please visit the acco
 [Wiki-Page](https://xxx.de).
 For an initial build with a simple demo you can run the following comands to build to executables
 for the native Linux target (keep in mind that the LCM libraries have to be installed in advance.)
+
 ```
-scons --demos=UDPSrv --bsp=native --net=rpl-dagroot --os=none --mac=0x00AA --logger=3 --ccflags=LOGGER_DEMO_UDP_SOCKET=TRUE
+scons --demos=UDPSrv --bsp=native --net=rpl-dagroot --os=none --mac=0x00AA --logger=3 --ccflags=MODULATION=MODULATION,2FSK50,LOGGER_DEMO_UDP_SOCKET=TRUE
 ```
+
 ```
-scons --demos=UDPCli --bsp=native --net=rpl-router --os=none --mac=0x00BB --logger=3 --ccflags=LOGGER_DEMO_UDP_SOCKET=TRUE
+scons --demos=UDPCli --bsp=native --net=rpl-router --os=none --mac=0x00BB --logger=3 --ccflags=MODULATION=MODULATION,2FSK50,LOGGER_DEMO_UDP_SOCKET=TRUE
 ```
 
 Afterwards you can run the both executables using the following commands in two separate terminals. Then you should be able to see the according debug output.
+
 ```
 ./bin/./bin/UDPSrv-rpl-dagroot-native-none_0x00AA.elf
 ```
+
+```
 ./bin/UDPCli-rpl-router-native-none_0x00BB.elf
 ```
-scons --demos=UDPCli --bsp=native --net=rpl-router --os=none --mac=0x00BB --logger=3 --ccflags=LOGGER_DEMO_UDP_SOCKET=TRUE
-```
+
 
 Features
 ---------
