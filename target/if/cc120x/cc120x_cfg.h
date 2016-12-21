@@ -49,6 +49,27 @@
 #ifndef CC120X_CFG_PRESENT
 #define CC120X_CFG_PRESENT
 
+#include "emb6_conf.h"
+#include "board_conf.h"
+
+/* disable built-in 802154g support by default */
+#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
+  #ifndef NETSTK_CFG_RF_BUILTIN_802154G_EN
+  #define NETSTK_CFG_RF_BUILTIN_802154G_EN      FALSE
+  #endif
+
+  #ifndef NETSTK_CFG_RF_CRC_EN
+  #define NETSTK_CFG_RF_CRC_EN                  FALSE
+  #endif
+#endif
+
+/*!< enable SW Auto-ACK by default if stack Auto-ACK is disabled */
+#if (NETSTK_CFG_MAC_SW_AUTOACK_EN == FALSE)
+  #ifndef NETSTK_CFG_RF_SW_AUTOACK_EN
+  #define NETSTK_CFG_RF_SW_AUTOACK_EN           TRUE
+  #endif
+#endif
+
 
 /*
  * Value of channel frequency register is calculated using following equation:
@@ -66,72 +87,28 @@
 #define CC120X_OPMODE3_DELTA_FREQ           0x000A3Eu   /*!<   0.400 MHz */
 #define CC120X_OPMODE3_CHAN_CENTER_FREQ     0x56528Fu   /*!< 863.225 MHz */
 
+#define CC120X_PKT_LEN_MODE_INFINITE      (uint8_t)( 0x40 )
+#define CC120X_PKT_LEN_MODE_VARIABLE      (uint8_t)( 0x20 )
+#define CC120X_PKT_LEN_MODE_FIXED         (uint8_t)( 0x00 )
 
-/**
- * @brief   GPIOs configuration for CCA operation
- */
-static const s_regSettings_t cc120x_cfg_cca[] = {
-    {CC120X_IOCFG3,             0x0F},  /* CCA_DONE, rising */
+static const s_regSettings_t cc120x_cfg_iocfgOn[] = {
+    {CC120X_IOCFG2,             0x06},  /* PKT_BEGIN, unchanged at runtime */
+    {CC120X_IOCFG0,             0x00},  /* RXFIFO_THR,  changed at runtime */
+    {CC120X_IOCFG3,             0x06},  /* PKT_END,   unchanged at runtime */
+
+    {CC120X_IOCFG0,             0x02},  /* TXFIFO_THR,  changed at runtime */
+    {CC120X_IOCFG0,             0x0B},  /* PQT_REACHED, changed at runtime */
 };
 
 
-/**
- * @brief   GPIOs configuration for transmission operation
- */
-static const s_regSettings_t cc120x_cfg_tx[] = {
-    /*
-     * Note 1:
-     *
-     * TX_FIFO_THR, asserted when TX FIFO is filled Above or Equal to
-     * (127-FIFO_CFG.FIGO_THR) or the end of packet is reached
-     * De-asserted when the TX FIFO is drained below the same threshold.
-     * This signal is also available in the MODEM_STATUS0 register.
-     *
-     * If byte_lefts is equal or above the threshold, an amount of byte equal to
-     * threshold is written into TX FIFO for transmission. This then causes
-     * TX_FIFO_THR interrupt. Here FIFO is configured to infinite packet length
-     * If the byte left is below the threshold, FIFO shall be configured to
-     * fixed packet length. Afterwards remaining bytes are written into TX FIFO
-     * for transmission. At the end of the transmission PKT_SYCN_RXTX is de-
-     * asserted.
-     */
-    {CC120X_IOCFG0,             0x02},  /* TX_FIFO_THR, rising */
-    {CC120X_IOCFG2,             0x06},  /* PKT_SYNC_RXTX, rising */
+static const s_regSettings_t cc120x_cfg_iocfgOff[] = {
+    {CC120X_IOCFG2,             0xB0},  /* PKT_BEGIN, Impedance */
+    {CC120X_IOCFG0,             0xB0},  /* RXFIFO_THR, Impedance */
+    {CC120X_IOCFG3,             0xB0},  /* PKT_END, Impedance */
 
-    /*
-     * 0x00: fixed packet length mode
-     * 0x20: variable packet length mode. Packet length is configured by the
-     * first byte received after sync word;
-     * 0x40: infinite packet length mode
-     * By default the transceiver is configured to be infinite packet length
-     * mode (0x40). Upon number of remaining bytes regardless in transmission or
-     * reception, the packet length mode is configured accordingly (see note 1).
-     */
-    {CC120X_PKT_CFG0,           0x40},
-    {CC120X_FIFO_CFG,           0x78},  /* FIFO_THR = 120 */
-    /*
-     * Packet length
-     * In fixed length mode, this field indicates the packet length, and a value
-     * of 0 indicates the length to be 256 bytes.
-     * In variable packet length mode, this value indicates the maximum allowed
-     * packet lengths.
-     */
-    {CC120X_PKT_LEN,            0xFF},
+    {CC120X_IOCFG0,             0xB0},  /* TXFIFO_THR, Impedance */
+    {CC120X_IOCFG0,             0xB0},  /* PQT_REACHED, Impedance */
 };
-
-/**
- * @brief   GPIOs configuration for reception operation with eWOR enabled
- */
-static const s_regSettings_t cc120x_cfg_rx_wor[] = {
-    {CC120X_IOCFG0,             0x00},  /* RXFIFO_THR, rising */
-    {CC120X_IOCFG2,             0x06},  /* PKT_SYNC_RXTX, rising */
-    {CC120X_IOCFG3,             0x06},  /* PKT_SYNC_RXTX, falling */
-
-    {CC120X_PKT_CFG0,           0x40},  /* packet length mode */
-    {CC120X_FIFO_CFG,           0x78},  /* FIFO_THR = 120 */
-    {CC120X_PKT_LEN,            0xFF},  /* packet length of 255 bytes */
-};
-
 
 /**
  * @brief   Default register settings for IEEE-802.15.4g
@@ -146,21 +123,18 @@ static const s_regSettings_t cc120x_cfg_rx_wor[] = {
  *          Modulation format:  2-FSK
  *          Deviation:          25kHz
  *          TX power:           15dBm - maximum
- *          Preamble length:    4bytes with WOR-disabled OR 24 byte with WOR-enabled
+ *          Preamble length:    4bytes with WOR-disabled
  *          RX termination:     Carrier Sense with threshold of -90dBm
  */
 static const s_regSettings_t cc120x_cfg_ieee802154g_default[] =
 {
-    {CC120X_IOCFG3,             0x0F},  /* CCA_STATUS */
-    {CC120X_IOCFG2,             0x13},  /* PKT_CRC_OK       RX_STARTED  */
-    {CC120X_IOCFG1,             0xB0},
-    {CC120X_IOCFG0,             0x06},  /* PKT_SYNC_RXTX    TX_FINISH   */
+    {CC120X_IOCFG1,             0xB0},	/* Impedance */
 
     {CC120X_SYNC3,              0x90},  /* SFD[15-8] FEC not supported and phyMRFSKSFD = 0 -> SFD = 0x7209 */
     {CC120X_SYNC2,              0x4E},  /* SFD[ 7-0] ... */
     {CC120X_SYNC1,              0x51},  /* don't care */
     {CC120X_SYNC0,              0xDE},  /* don't care */
-    {CC120X_SYNC_CFG1,          0xC8},  /* 16H bits SYCN3-SYNC2 */
+    {CC120X_SYNC_CFG1,          0xC7},  /* 16H bits SYCN3-SYNC2 */
     {CC120X_SYNC_CFG0,          0x23},  /* AUTO_CLEAR = 1, enabled; RX_CONFIG_LIMITATION = 0 */
 
     {CC120X_DEVIATION_M,        0x48},  /* Deviation 25kHz */
@@ -179,11 +153,11 @@ static const s_regSettings_t cc120x_cfg_ieee802154g_default[] =
     {CC120X_SYMBOL_RATE1,       0x7A},
     {CC120X_SYMBOL_RATE0,       0xE1},
 
-    {CC120X_AGC_REF,            0x27},  /* */
-    {CC120X_AGC_CS_THR,         0xFF},
-    {CC120X_AGC_CFG1,           0x00},
-    {CC120X_AGC_CFG0,           0x80},
-    {CC120X_FIFO_CFG,           0x80},  /* Automatically flushes when CRC error occurred */
+    {CC120X_AGC_REF,            0x27},
+    {CC120X_AGC_CS_THR,         0xF1},
+    {CC120X_AGC_CFG1,           0x11},
+    {CC120X_AGC_CFG0,           0x90},
+    {CC120X_FIFO_CFG,           0x00},
     {CC120X_SETTLING_CFG,       0x03},
     {CC120X_FS_CFG,             0x12},
 
@@ -192,12 +166,10 @@ static const s_regSettings_t cc120x_cfg_ieee802154g_default[] =
     {CC120X_WOR_EVENT0_LSB,     0x96},  /* t_sleep = 3.102ms */
 
     {CC120X_PKT_CFG2,           0x00},
-    {CC120X_PKT_CFG1,           0x00},    /* CRC_CFG = 00; CRC16 is disabled, APPEND_STATUS is disabled */
+    {CC120X_PKT_CFG1,           0x01},
     {CC120X_PKT_CFG0,           0x20},
 
-    {CC120X_RFEND_CFG0,         0x09},
-
-    {CC120X_PA_CFG0,            0x53},  /* Power Amplifier */
+    {CC120X_RFEND_CFG0,         0x00},
     {CC120X_PKT_LEN,            0xFF},  /* 128 bytes */
 
     {CC120X_IF_MIX_CFG,         0x1C},

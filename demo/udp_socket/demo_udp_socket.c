@@ -81,23 +81,25 @@
 /** second port used by the socket demo */
 #define DEMO_UDP_SOCKET_PORTB           4233UL
 
-#ifdef  DEMO_UDP_SOCKET_ROLE_SERVER
+#if (DEMO_UDP_SOCKET_ROLE_SERVER == TRUE)
 /** assign device port */
 #define DEMO_UDP_DEVPORT                DEMO_UDP_SOCKET_PORTA
-/* assign remote port */
+/** assign remote port */
 #define DEMO_UDP_REMPORT                DEMO_UDP_SOCKET_PORTB
-#endif
-
-#ifdef  DEMO_UDP_SOCKET_ROLE_CLIENT
+#else
 /** assign device port */
 #define DEMO_UDP_DEVPORT                DEMO_UDP_SOCKET_PORTB
-/* assign remote port */
+/** assign remote port */
 #define DEMO_UDP_REMPORT                DEMO_UDP_SOCKET_PORTA
 /** specifies the interval to send periodic data */
 #define DEMO_UDP_SEND_INTERVAL          (clock_time_t)( 200u )
 #endif
 
 #define UIP_IP_BUF                      ((struct uip_ip_hdr *)&uip_buf[UIP_LLH_LEN])
+
+/** minimum packet length is equal to size of sequence number (4 bytes) */
+#define DEMO_UDP_PKT_LEN_MIN            (  4u )
+#define DEMO_UDP_PKT_LEN_MAX            ( 40u )
 
 /*
 ********************************************************************************
@@ -106,12 +108,15 @@
 */
 static struct uip_udp_conn *pudp_socket_conn = (struct uip_udp_conn *) 0;
 
-#ifdef  DEMO_UDP_SOCKET_ROLE_CLIENT
 static uint32_t udp_socket_currSeqTx;
+
+#if (DEMO_UDP_SOCKET_ROLE_SERVER == TRUE)
+#else
+static uint8_t packetLength;
 static uint32_t udp_socket_lastSeqRx;
 static uint32_t udp_socket_lostPktQty;
 static struct etimer udp_socket_etimer;
-#endif /* DEMO_UDP_SOCKET_ROLE_CLIENT */
+#endif
 
 
 /*
@@ -120,11 +125,9 @@ static struct etimer udp_socket_etimer;
 ********************************************************************************
 */
 
-#ifdef DEMO_UDP_SOCKET_ROLE_SERVER
 /* Get the demo sequence number from a packet.
    For further details see the function definition */
 static uint32_t udp_socket_getSeq(uint8_t *p_data, uint16_t len);
-#endif /* #ifdef DEMO_UDP_SOCKET_ROLE_SERVER */
 
 /* Event handler that is called for every IP packet received.
    For further details see the function definition */
@@ -138,7 +141,6 @@ static void udp_socket_tx(uint32_t seq);
 ********************************************************************************
 */
 
-#ifdef DEMO_UDP_SOCKET_ROLE_SERVER
 /**
  * \brief   Achieve sequence number from an an UDP message.
  */
@@ -154,7 +156,6 @@ static uint32_t udp_socket_getSeq(uint8_t *p_data, uint16_t len)
 
   return ret;
 }
-#endif /* #ifdef DEMO_UDP_SOCKET_ROLE_SERVER */
 
 /**
  * \brief   UDP event handler function
@@ -165,30 +166,22 @@ static uint32_t udp_socket_getSeq(uint8_t *p_data, uint16_t len)
  */
 static void udp_socket_eventHandler(c_event_t c_event, p_data_t p_data)
 {
-#ifdef DEMO_UDP_SOCKET_ROLE_SERVER
   uint32_t seq;
-#endif /* #ifdef DEMO_UDP_SOCKET_ROLE_SERVER */
-
-#if (defined(DEMO_UDP_SOCKET_ROLE_SERVER) || (LOGGER_ENABLE == TRUE))
   uint16_t len;
   uint8_t  has_data;
   uint8_t  *p_dataptr;
-#endif /* #if (defined(DEMO_UDP_SOCKET_ROLE_SERVER) || (LOGGER_ENABLE == TRUE)) */
 
   /*
    * process input TCPIP packet
    */
   if (c_event == EVENT_TYPE_TCPIP) {
-#if (defined(DEMO_UDP_SOCKET_ROLE_SERVER) || (LOGGER_ENABLE == TRUE))
     has_data = uip_newdata();
     if (has_data != 0u) {
       p_dataptr = (uint8_t *) uip_appdata;
       len = (uint16_t) uip_datalen();
 
-#ifdef DEMO_UDP_SOCKET_ROLE_SERVER
       /* Obtain sequence number of the received message */
       seq = udp_socket_getSeq(p_dataptr, len);
-#endif /* #ifdef DEMO_UDP_SOCKET_ROLE_SERVER */
 
 #if LOGGER_ENABLE
       /* Logging */
@@ -199,18 +192,25 @@ static void udp_socket_eventHandler(c_event_t c_event, p_data_t p_data)
       LOG_RAW("\r\n");
 #endif
 
-#ifdef DEMO_UDP_SOCKET_ROLE_SERVER
-      udp_socket_tx(seq);
+#if (DEMO_UDP_SOCKET_ROLE_SERVER == TRUE)
+      udp_socket_currSeqTx = seq;
+      evproc_putEvent(E_EVPROC_HEAD, NETSTK_APP_EVENT_TX, NULL);
 #else
-      /* TODO compare sequence number */
-#endif /* DEMO_UDP_SOCKET_ROLE_SERVER */
+      udp_socket_lastSeqRx = seq;
+      if (udp_socket_currSeqTx != (udp_socket_lastSeqRx + 1)) {
+        TRACE_LOG_ERR("<UDP> missed response txSeq=%08x, rxSeq=%08x", udp_socket_currSeqTx, udp_socket_lastSeqRx);
+        udp_socket_lostPktQty++;
+      }
+#endif
     }
-#endif /* #if (defined(DEMO_UDP_SOCKET_ROLE_SERVER) || (LOGGER_ENABLE == TRUE)) */
   }
-#ifdef DEMO_UDP_SOCKET_ROLE_CLIENT
   else {
+#if (DEMO_UDP_SOCKET_ROLE_SERVER == TRUE)
+    if (c_event == NETSTK_APP_EVENT_TX) {
+      udp_socket_tx(udp_socket_currSeqTx);
+    }
+#else
     int err = 0;
-
     err = etimer_expired(&udp_socket_etimer);
     if (err != 0) {
       /* restart event timer */
@@ -224,8 +224,8 @@ static void udp_socket_eventHandler(c_event_t c_event, p_data_t p_data)
         udp_socket_currSeqTx = 0;
       }
     }
-  }
 #endif
+  }
 }
 
 
@@ -236,16 +236,40 @@ static void udp_socket_eventHandler(c_event_t c_event, p_data_t p_data)
  */
 static void udp_socket_tx(uint32_t seq)
 {
-  uint8_t seq_size = sizeof(seq);
+#if (DEMO_UDP_SOCKET_ROLE_SERVER == TRUE)
   uint8_t payload[] = { 0, 0, 0, 0, 0x50, 0x51, 0x52, 0x53, 0x54 };
   uint16_t payload_len = sizeof(payload);
+  uint8_t seq_size = sizeof(seq);
 
   /*
    * create packet to send
    */
   memcpy(payload, &seq, seq_size);
 
-#ifdef DEMO_UDP_SOCKET_ROLE_CLIENT
+  uip_ipaddr_copy(&pudp_socket_conn->ripaddr, &UIP_IP_BUF->srcipaddr);
+  uip_udp_packet_send(pudp_socket_conn, payload, payload_len);
+  uip_create_unspecified(&pudp_socket_conn->ripaddr);
+
+#else
+  uint16_t payload_len;
+  uint8_t seq_size = sizeof(seq);
+  uint8_t payload[DEMO_UDP_PKT_LEN_MAX];
+
+  /*
+   * create packet to send
+   */
+  memset(payload, 0, sizeof(payload));
+
+  memcpy(payload, &seq, seq_size);
+  memset(&payload[seq_size], 0xab, packetLength - seq_size);
+  payload_len = packetLength;
+
+
+  packetLength++;
+  if (packetLength > DEMO_UDP_PKT_LEN_MAX) {
+    packetLength = DEMO_UDP_PKT_LEN_MIN;
+  }
+
   uip_ds6_addr_t *ps_src_addr;
   rpl_dag_t *ps_dag_desc;
 
@@ -267,13 +291,6 @@ static void udp_socket_tx(uint32_t seq)
     }
   }
 #endif
-
-
-#ifdef DEMO_UDP_SOCKET_ROLE_SERVER
-  uip_ipaddr_copy(&pudp_socket_conn->ripaddr, &UIP_IP_BUF->srcipaddr);
-  uip_udp_packet_send(pudp_socket_conn, payload, payload_len);
-  uip_create_unspecified(&pudp_socket_conn->ripaddr);
-#endif /* DEMO_UDP_SOCKET_ROLE_SERVER */
 
   /*
    * Logging
@@ -308,13 +325,15 @@ int8_t demo_udpSocketInit(void)
 
   /* set callback for event process */
   evproc_regCallback(EVENT_TYPE_TCPIP, udp_socket_eventHandler);
+  evproc_regCallback(NETSTK_APP_EVENT_TX, udp_socket_eventHandler);
 
 #ifdef DEMO_UDP_SOCKET_ROLE_CLIENT
   clock_time_t interval = 0;
+  packetLength = DEMO_UDP_PKT_LEN_MIN;
 
   /* set UDP event timer interval */
   interval  = DEMO_UDP_SEND_INTERVAL;
-  interval *= bsp_get(E_BSP_GET_TRES)/1000;
+  interval *= bsp_getTRes()/1000;
 
   /* Set event timer for periodic data process */
   etimer_set(&udp_socket_etimer, interval, &udp_socket_eventHandler);

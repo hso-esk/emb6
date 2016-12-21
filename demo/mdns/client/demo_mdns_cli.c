@@ -99,7 +99,7 @@ static resolv_status_t set_connection_address(uip_ipaddr_t *ipaddr);
                                 LOCAL CONSTANTS
  =============================================================================*/
 
-#define SEND_INTERVAL		15 * bsp_get(E_BSP_GET_TRES)
+#define SEND_INTERVAL		15 * bsp_getTRes()
 #define MAX_PAYLOAD_LEN		40
 
 static char buf[MAX_PAYLOAD_LEN];

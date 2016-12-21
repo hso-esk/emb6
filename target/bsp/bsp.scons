@@ -10,6 +10,11 @@ bsp += [{
 }]
 
 bsp += [{
+    'id'        : 'atany900_pro3',        'mac_addr' : '0x13A6',
+    'txrx'      : ['-11','-60'],          'mode'     : qpsk100
+}]
+
+bsp += [{
     'id'        : 'atany900_pro5',        'mac_addr' : '0x16A6',
     'txrx'      : ['-11','-60'],          'mode'     : qpsk100
 }]
@@ -36,7 +41,7 @@ bsp += [{
 
 bsp += [{
     'id'        : 'efm32stk3600_cc112x',  'mac_addr' : '0x20C0',
-    'txrx'      : ['11','-100'],          'mode'     : qpsk100
+    'txrx'      : ['11','-100'],          'mode'     : fsk50
 }]
 
 bsp += [{
@@ -51,27 +56,27 @@ bsp += [{
 
 bsp += [{
     'id'        : 'efm32stk3600_cc120x',  'mac_addr' : '0x20C0',
-    'txrx'      : ['11','-100'],          'mode'     : qpsk100
+    'txrx'      : ['11','-100'],          'mode'     : fsk50
 }]
 
 bsp += [{
     'id'        : 'ti_trxeb_cc112x',      'mac_addr' : '0x3010',
-    'txrx'      : ['0','0'],              'mode'     : qpsk100
+    'txrx'      : ['0','0'],              'mode'     : fsk50
 }]
 
 bsp += [{
     'id'        : 'ti_trxeb_cc112x_ule',  'mac_addr' : '0x3020',
-    'txrx'      : ['0','0'],              'mode'     : qpsk100
+    'txrx'      : ['0','0'],              'mode'     : fsk50
 }]
 
 bsp += [{
     'id'        : 'ti_trxeb_cc120x',      'mac_addr' : '0x3110',
-    'txrx'      : ['0','0'],              'mode'     : qpsk100
+    'txrx'      : ['0','0'],              'mode'     : fsk50
 }]
 
 bsp += [{
     'id'        : 'ti_trxeb_cc120x_ule',  'mac_addr' : '0x3120',
-    'txrx'      : ['0','0'],              'mode'     : qpsk100
+    'txrx'      : ['0','0'],              'mode'     : fsk50
 }]
 
 bsp += [{

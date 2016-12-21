@@ -42,7 +42,7 @@
  * --- Module Description ---------------------------------------------------*
  */
 /**
- *  \file       board_conf.c
+ *  \file       board_conf.h
  *  \author     Institute of reliable Embedded Systems
  *              and Communication Electronics
  *  \date       $Date$
@@ -53,40 +53,96 @@
  *              The Board Configuration configures the underlying MCU and
  *              transceiver.
  */
+#ifndef __BOARD_CONF_H__
+#define __BOARD_CONF_H__
 
 /*
- *  --- Includes -------------------------------------------------------------*
+ * --- Includes -------------------------------------------------------------*
  */
-#include "emb6.h"
-#include "assert.h"
-#include "board_conf.h"
 
 
 /*
  * --- Macro Definitions --------------------------------------------------- *
  */
-/** Enable or disable logging */
-#define LOGGER_ENABLE             LOGGER_BSP
-#include "logger.h"
+/** Enable RF SPI */
+#ifndef HAL_SUPPORT_RFSPI
+#define HAL_SUPPORT_RFSPI                   FALSE
+#endif /* #ifndef HAL_SUPPORT_RFSPI */
+
+/* TODO add platform-specific SPIx configurations */
+
+/* TODO add platform-specific RF_GPIOx configuration */
+
+/** Dissable/Enable RF control 0 */
+#ifndef HAL_SUPPORT_RFCTRL0
+#define HAL_SUPPORT_RFCTRL0                 FALSE
+#endif /* #ifndef HAL_SUPPORT_RFSPI */
+
+/** Dissable/Enable RF control 1 */
+#ifndef HAL_SUPPORT_RFCTRL1
+#define HAL_SUPPORT_RFCTRL1                 FALSE
+#endif /* #ifndef HAL_SUPPORT_RFSPI */
+
+/** Dissable/Enable RF control 2 */
+#ifndef HAL_SUPPORT_RFCTRL2
+#define HAL_SUPPORT_RFCTRL2                 FALSE
+#endif /* #ifndef HAL_SUPPORT_RFSPI */
+
+/* TODO add platform-specific SLIPUART configuration */
+#if defined(HAL_SUPPORT_SLIPUART)
+
+#endif /* #if defined(HAL_SUPPORT_SLIPUART) */
+
+/* TODO add number of platform-specific LEDs */
+
+/** Number of supported LEDs */
+#ifndef HAL_SUPPORT_LEDNUM
+#define HAL_SUPPORT_LEDNUM                  ( 0 )
+#endif /* #ifndef HAL_SUPPORT_LEDNUM */
+
+/* TODO add platform-specific LEDs configuration */
+
+/** Disable/Enable LED0 */
+#ifndef HAL_SUPPORT_LED0
+#define HAL_SUPPORT_LED0                    FALSE
+#endif /* #ifndef HAL_SUPPORT_LED0 */
+
+/** Disable/Enable LED1 */
+#ifndef HAL_SUPPORT_LED1
+#define HAL_SUPPORT_LED1                    FALSE
+#endif /* #ifndef HAL_SUPPORT_LED1 */
+
+/** Disable/Enable LED2 */
+#ifndef HAL_SUPPORT_LED2
+#define HAL_SUPPORT_LED2                    FALSE
+#endif /* #ifndef HAL_SUPPORT_LED2 */
+
+
+/*
+ * --- Stack Macro Definitions ---------------------------------------------- *
+ */
+/** additional delay between consecutive iteration of emb6 process */
+#define EMB6_PROC_DELAY                     ( 0 )
 
 
 /*
  *  --- Global Functions Definition ------------------------------------------*
  */
 
-/*---------------------------------------------------------------------------*/
-/*
-* board_conf()
-*/
-int8_t board_conf( s_ns_t* p_ns )
-{
-  EMB6_ASSERT_RET( p_ns != NULL, -1 );
+/**
+ * board_conf()
+ *
+ * \brief   Configure board.
+ *
+ *          This function is used to configure the specific board for usage
+ *          with emb::6. Therefore e.g. the transceiver and the according
+ *          layers will be selected.
+ *
+ * \param   p_ns  Pointer to global netstack struct.
+ *
+ * \return  0 on success or negative value on error.
+ */
+int8_t board_conf( s_ns_t* p_ns );
 
-  p_ns->dllc = &dllc_driver_802154;
-  p_ns->mac = &mac_driver_null;
-  p_ns->phy = &phy_driver_null;
-  p_ns->rf = &rf_driver_at212b;
-
-  return 0;
-} /* board_conf */
+#endif /* __BOARD_CONF_H__ */
 

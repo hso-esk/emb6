@@ -110,11 +110,11 @@ coap_send_transaction(coap_transaction_t *t)
                                          (clock_time_t)
                                          COAP_RESPONSE_TIMEOUT_BACKOFF_MASK);
         PRINTF("Initial interval %d seconds\n\r",
-               (int)t->retrans_timer.timer.interval / bsp_get(E_BSP_GET_TRES));
+               (int)t->retrans_timer.timer.interval / bsp_getTRes());
       } else {
         t->retrans_timer.timer.interval <<= 1;  /* double */
         PRINTF("Doubled (%d) interval %d seconds\n\r", t->retrans_counter,
-               (int)t->retrans_timer.timer.interval / bsp_get(E_BSP_GET_TRES));
+               (int)t->retrans_timer.timer.interval / bsp_getTRes());
       }
 
       etimer_set(&t->retrans_timer, t->retrans_timer.timer.interval, coap_engine_callback);

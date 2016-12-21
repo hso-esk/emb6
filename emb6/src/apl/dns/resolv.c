@@ -499,7 +499,7 @@ start_name_collision_check(clock_time_t after)
 	 * probing to be in compliance with the MDNS spec. */
 	/* Wait extra time if specified in data */
 	etimer_set(&probe,
-			(bsp_get(E_BSP_GET_TRES) * (random_rand() & 0xFF) / 1024) + after,
+			(bsp_getTRes() * (random_rand() & 0xFF) / 1024) + after,
 			mdns_probe_process);
 }
 /*---------------------------------------------------------------------------*/
@@ -692,7 +692,7 @@ check_entries(const uint8_t *data)
 
 #if RESOLV_SUPPORTS_RECORD_EXPIRATION
               /* Keep the "not found" error valid for 30 seconds */
-              namemapptr->expiration = bsp_get(E_BSP_GET_SEC) + 30;
+              namemapptr->expiration = bsp_getSec() + 30;
 #endif /* RESOLV_SUPPORTS_RECORD_EXPIRATION */
 
               resolv_found(namemapptr->name, NULL);
@@ -902,7 +902,7 @@ newdata(const uip_ipaddr_t *source_addr,
          * but this should eventually converge to something reasonable.
          */
         if(nauthrr) {
-          start_name_collision_check(bsp_get(E_BSP_GET_TRES));
+          start_name_collision_check(bsp_getTRes());
         }
       }
     }
@@ -949,7 +949,7 @@ newdata(const uip_ipaddr_t *source_addr,
 
 #if RESOLV_SUPPORTS_RECORD_EXPIRATION
     /* If we remain in the error state, keep it cached for 30 seconds. */
-    namemapptr->expiration = bsp_get(E_BSP_GET_SEC) + 30;
+    namemapptr->expiration = bsp_getSec() + 30;
 #endif /* RESOLV_SUPPORTS_RECORD_EXPIRATION */
 
     /* Check for error. If so, call callback to inform. */
@@ -1012,7 +1012,7 @@ newdata(const uip_ipaddr_t *source_addr,
         }
         if((namemapptr->state == STATE_UNUSED)
 #if RESOLV_SUPPORTS_RECORD_EXPIRATION
-          || (namemapptr->state == STATE_DONE && bsp_get(E_BSP_GET_SEC) > namemapptr->expiration)
+          || (namemapptr->state == STATE_DONE && bsp_getSec() > namemapptr->expiration)
 #endif /* RESOLV_SUPPORTS_RECORD_EXPIRATION */
         ) {
           available_i = i;
@@ -1062,7 +1062,7 @@ newdata(const uip_ipaddr_t *source_addr,
     namemapptr->state = STATE_DONE;
 #if RESOLV_SUPPORTS_RECORD_EXPIRATION
     namemapptr->expiration = ans->ttl[1] + (ans->ttl[0] << 8);
-    namemapptr->expiration += bsp_get(E_BSP_GET_SEC);
+    namemapptr->expiration += bsp_getSec();
 #endif /* RESOLV_SUPPORTS_RECORD_EXPIRATION */
 
     uip_ipaddr_copy(&namemapptr->ipaddr, (uip_ipaddr_t *) ans->ipaddr);
@@ -1276,7 +1276,7 @@ resolv_query(const char *name)
 		}
 		if((nameptr->state == STATE_UNUSED)
 #if RESOLV_SUPPORTS_RECORD_EXPIRATION
-				|| (nameptr->state == STATE_DONE && bsp_get(E_BSP_GET_SEC) > nameptr->expiration)
+				|| (nameptr->state == STATE_DONE && bsp_getSec() > nameptr->expiration)
 #endif /* RESOLV_SUPPORTS_RECORD_EXPIRATION */
 		) {
 			lseqi = i;
@@ -1372,7 +1372,7 @@ resolv_lookup(const char *name, uip_ipaddr_t ** ipaddr)
       case STATE_DONE:
         ret = RESOLV_STATUS_CACHED;
 #if RESOLV_SUPPORTS_RECORD_EXPIRATION
-        if(bsp_get(E_BSP_GET_SEC) > nameptr->expiration) {
+        if(bsp_getSec() > nameptr->expiration) {
           ret = RESOLV_STATUS_EXPIRED;
         }
 #endif /* RESOLV_SUPPORTS_RECORD_EXPIRATION */
@@ -1385,7 +1385,7 @@ resolv_lookup(const char *name, uip_ipaddr_t ** ipaddr)
       case STATE_ERROR:
         ret = RESOLV_STATUS_NOT_FOUND;
 #if RESOLV_SUPPORTS_RECORD_EXPIRATION
-        if(bsp_get(E_BSP_GET_SEC) > nameptr->expiration) {
+        if(bsp_getSec() > nameptr->expiration) {
           ret = RESOLV_STATUS_UNCACHED;
         }
 #endif /* RESOLV_SUPPORTS_RECORD_EXPIRATION */
@@ -1471,7 +1471,7 @@ resolv_found(char *name, uip_ipaddr_t * ipaddr)
       /* Re-add the .local suffix */
       strncat(resolv_hostname, ".local", RESOLV_CONF_MAX_DOMAIN_NAME_SIZE);
 
-      start_name_collision_check(bsp_get(E_BSP_GET_TRES) * 5);
+      start_name_collision_check(bsp_getTRes() * 5);
     } else if(mdns_state == MDNS_STATE_READY) {
       /* We found a collision after we had already asserted
        * that we owned this name. We need to immediately

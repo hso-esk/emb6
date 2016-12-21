@@ -369,7 +369,7 @@ int8_t demo_dtlsInit(void)
 	if (!connected)
 		connected = dtls_connect(dtls_context, &dst) >= 0;
 
-	etimer_set(&et, 20 * bsp_get(E_BSP_GET_TRES), try_send);
+	etimer_set(&et, 20 * bsp_getTRes(), try_send);
 
 	return 1;
 }

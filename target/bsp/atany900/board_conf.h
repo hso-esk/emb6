@@ -37,73 +37,195 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-/**  \addtogroup emb6
- *      @{
- *      \addtogroup bsp Board Support Package
- *   @{
- *   \defgroup board Board specific configurations
- *
- *   Configurations for multiple development boards
- *   @{
- *
- *      \addtogroup atany900 Board AT-ANY-900 specific configuration
- *   @{
+
+/*
+ * --- Module Description ---------------------------------------------------*
  */
-/*! \file   atany900/board_conf.h
+/**
+ *  \file       board_conf.h
+ *  \author     Institute of reliable Embedded Systems
+ *              and Communication Electronics
+ *  \date       $Date$
+ *  \version    $Version$
+ *
+ *  \brief      Definition of the Board Configuration.
+ *
+ *              The Board Configuration configures the underlying MCU and
+ *              transceiver.
+ */
+#ifndef __BOARD_CONF_H__
+#define __BOARD_CONF_H__
 
-    \author Artem Yushev, 
-
-    \brief  Board Configuration for AT-ANY-900
-
-    \version 0.0.1
-*/
-#ifndef BOARD_CONF_H_
-#define BOARD_CONF_H_
-
-
-#include "emb6.h"
-#include "avr/io.h"
-#include "avr/interrupt.h"
-
-
-#define RESET_DDR                               &(PORTA)
-#define RESET_PORT                              &(PORTA)
-#define RESET_PIN                               0x07
-#define SLP_TR_DDR                              &(DDRB)
-#define SLP_TR_PORT                             &(PORTB)
-#define SLP_TR_PIN                              0x04
-#define RADIO_INT_SOURCE                        0x05
-
-#define HAL_LED_RED_PORT                        B
-#define HAL_LED_YELLOW_PORT                     B
-#define HAL_LED_GREEN_PORT                      B
-
-#define HAL_LED_RED_PIN                         5
-#define HAL_LED_YELLOW_PIN                      6
-#define HAL_LED_GREEN_PIN                       7
-
-#define HAL_LED_SET                             &= ~
-#define HAL_LED_CLR                             |=
+/*
+ * --- Includes -------------------------------------------------------------*
+ */
 
 
-/*============================================================================*/
-/*!
-\brief    emb6 board configuration fuction
+/*
+ * --- Macro Definitions --------------------------------------------------- *
+ */
+/* Enable RF SPI */
+#ifndef HAL_SUPPORT_RFSPI
+#define HAL_SUPPORT_RFSPI                   TRUE
+#endif /* #ifndef HAL_SUPPORT_RFSPI */
 
-        This function chooses the transceiver driver for the specific board.
+/* add platform-specific SPIx configurations */
+/** RF SPI CLK data port */
+#define ATM1281_RFSPI_CLK_PORT              PORTB
+/** RF SPI CLK data direction */
+#define ATM1281_RFSPI_CLK_DDR               DDRB
+/** RF SPI CLK pin */
+#define ATM1281_RFSPI_CLK_PIN               0x01
 
-\param    pointer to global netstack struct
+/** RF SPI TX data port */
+#define ATM1281_RFSPI_TX_PORT               PORTB
+/** RF SPI TX data direction */
+#define ATM1281_RFSPI_TX_DDR                DDRB
+/** RF SPI TX pin */
+#define ATM1281_RFSPI_TX_PIN                0x02
 
-\return  success 1, failure 0
+/** RF SPI RX data port */
+#define ATM1281_RFSPI_RX_PORT               PORTB
+/** RF SPI RX data direction */
+#define ATM1281_RFSPI_RX_DDR                DDRB
+/** RF SPI RX pin */
+#define ATM1281_RFSPI_RX_PIN                0x03
 
-*/
-/*============================================================================*/
-uint8_t board_conf(s_ns_t* ps_nStack);
+/** RF SPI CS data port */
+#define ATM1281_RFSPI_CS_PORT               PORTB
+/** RF SPI CS data direction */
+#define ATM1281_RFSPI_CS_DDR                DDRB
+/** RF SPI CS pin */
+#define ATM1281_RFSPI_CS_PIN                0x00
+
+/* add platform-specific RF_GPIOx configuration */
+/** Enable RF control 0 */
+#ifndef HAL_SUPPORT_RFCTRL0
+#define HAL_SUPPORT_RFCTRL0                 TRUE
+#endif /* #ifndef HAL_SUPPORT_RFSPI */
+/** RF Reset data port */
+#define ATM1281_RESET_PORT                  PORTA
+/** RF Reset data direction */
+#define ATM1281_RESET_DDR                   DDRA
+/** RF Reset pin */
+#define ATM1281_RESET_PIN                   0x07
+
+/** Enable RF control 1 */
+#ifndef HAL_SUPPORT_RFCTRL1
+#define HAL_SUPPORT_RFCTRL1                 TRUE
+#endif /* #ifndef HAL_SUPPORT_RFSPI */
+/** RF Sleep data port */
+#define ATM1281_SLP_TR_PORT                 PORTB
+/** RF Sleep data direction */
+#define ATM1281_SLP_TR_DDR                  DDRB
+/** RF Sleep pin */
+#define ATM1281_SLP_TR_PIN                  0x04
+
+/** Enable RF control 2 */
+#ifndef HAL_SUPPORT_RFCTRL2
+#define HAL_SUPPORT_RFCTRL2                 TRUE
+#endif /* #ifndef HAL_SUPPORT_RFSPI */
+/** RF IRQ data port */
+#define ATM1281_RFIRQ_PORT                  PORTE
+/** RF IRQ data direction */
+#define ATM1281_RFIRQ_DDR                   DDRE
+/** RF IRQ pin */
+#define ATM1281_RFIRQ_PIN                   0x05
+/** RF IRQ num */
+#define ATM1281_RFIRQ_IRQNUM                INT5
+
+/** Different UART baudrates available */
+#define ATM1281_USART_BAUD_2400             207
+#define ATM1281_USART_BAUD_4800             103
+#define ATM1281_USART_BAUD_9600             51
+#define ATM1281_USART_BAUD_14400            34
+#define ATM1281_USART_BAUD_19200            25
+#define ATM1281_USART_BAUD_28800            16
+#define ATM1281_USART_BAUD_38400            12
+#define ATM1281_USART_BAUD_57600            8
+#define ATM1281_USART_BAUD_76800            6
+#define ATM1281_USART_BAUD_115200           3
+#define ATM1281_USART_BAUD_230400           1
+#define ATM1281_USART_BAUD_250000           1
+#define ATM1281_USART_BAUD_500000           0
+
+/* add platform-specific SLIPUART configuration */
+#if defined (HAL_SUPPORT_SLIPUART)
+#define ATM1281_UART_SLIP_INST              1
+#define ATM1281_UART_SLIP_BAUD              ATM1281_USART_BAUD_38400
+#endif /* #if defined (HAL_SUPPORT_SLIP_UART) */
+
+/* add debugging channel configuration */
+#define ATM1281_UART_DEBUG_INST             1
+#define ATM1281_UART_DEBUG_BAUD             ATM1281_USART_BAUD_38400
+
+/* add platform-specific LEDs configuration */
+/** Number of supported LEDs */
+#ifndef HAL_SUPPORT_LEDNUM
+#define HAL_SUPPORT_LEDNUM                  3
+#endif /* #ifndef HAL_SUPPORT_LEDNUM */
+
+/** Enable LED0 */
+#ifndef HAL_SUPPORT_LED0
+#define HAL_SUPPORT_LED0                    TRUE
+#endif /* #ifndef HAL_SUPPORT_LED0 */
+/** RF LED RED data port */
+#define ATM1281_LED0_PORT                   PORTB
+/** RF LED RED data direction */
+#define ATM1281_LED0_DDR                    DDRB
+/** RF LED RED pin */
+#define ATM1281_LED0_PIN                    0x05
+
+/** Enable LED1 */
+#ifndef HAL_SUPPORT_LED1
+#define HAL_SUPPORT_LED1                    TRUE
+#endif /* #ifndef HAL_SUPPORT_LED2 */
+/** RF LED YELLOW data port */
+#define ATM1281_LED1_PORT                   PORTB
+/** RF LED YELLOW data direction */
+#define ATM1281_LED1_DDR                    DDRB
+/** RF LED YELLOW pin */
+#define ATM1281_LED1_PIN                    0x06
+
+/** Enable LED2 */
+#ifndef HAL_SUPPORT_LED2
+#define HAL_SUPPORT_LED2                    TRUE
+#endif /* #ifndef HAL_SUPPORT_LED2 */
+/** RF LED GREEN data port */
+#define ATM1281_LED2_PORT                   PORTB
+/** RF LED GREEN data direction */
+#define ATM1281_LED2_DDR                    DDRB
+/** RF LED GREEN pin */
+#define ATM1281_LED2_PIN                    0x07
 
 
-#endif /* BOARD_CONF_H_ */
+/*
+ * --- Stack Macro Definitions ---------------------------------------------- *
+ */
 
-/** @} */
-/** @} */
-/** @} */
-/** @} */
+/** transceiver supports standard-specific checksum algorithm */
+#define NETSTK_CFG_RF_CRC_EN                TRUE
+
+
+/*
+ *  --- Global Functions Definition ------------------------------------------*
+ */
+
+/**
+ * board_conf()
+ *
+ * \brief   Configure board.
+ *
+ *          This function is used to configure the specific board for usage
+ *          with emb::6. Therefore e.g. the transceiver and the according
+ *          layers will be selected.
+ *
+ * \param   p_ns  Pointer to global netstack struct.
+ *
+ * \return  0 on success or negative value on error.
+ */
+int8_t board_conf( s_ns_t* p_ns );
+
+
+#endif /* __BOARD_CONF_H__ */
+

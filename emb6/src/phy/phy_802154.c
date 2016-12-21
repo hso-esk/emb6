@@ -152,10 +152,14 @@ static void phy_init(void *p_netstk, e_nsErr_t *p_err)
   pphy_netstk->rf->ioctrl(NETSTK_CMD_RF_WOR_EN, &wor_en, p_err);
 #endif
 
+  /* set transmission power */
+  pphy_netstk->rf->ioctrl(NETSTK_CMD_RF_TXPOWER_SET, &mac_phy_config.init_power, p_err);
+
   /* initialize PHY PIB attributes */
   packetbuf_attr_t symbol_period;
   packetbuf_attr_t symbol_per_octet;
   packetbuf_attr_t shr_duration;
+  packetbuf_attr_t tx_timeout;
 
   if (mac_phy_config.modulation == MODULATION_2FSK50) {
     /* 2FSK, 50kbps => symbol period = 20us */
@@ -171,6 +175,10 @@ static void phy_init(void *p_netstk, e_nsErr_t *p_err)
     /* SHR = preamble + 2-byte-SYNC */
     shr_duration = (mac_phy_config.preamble_len + 2) * symbol_per_octet * symbol_period;
     packetbuf_set_attr(PACKETBUF_ATTR_PHY_SHR_DURATION, shr_duration);
+
+    /* set TX timeout in ticks */
+    tx_timeout = (shr_duration + PHY_PSDU_MAX * symbol_per_octet * symbol_period) / bsp_getTRes();
+    packetbuf_set_attr(PACKETBUF_ATTR_PHY_TXTIMEOUT, tx_timeout);
 
     /* set returned error */
     *p_err = NETSTK_ERR_NONE;
@@ -307,7 +315,7 @@ static void phy_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
   fcs_len = packetbuf_attr(PACKETBUF_ATTR_MAC_FCS_LEN);
 
 #if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
-  uint8_t psdu_len;
+  uint16_t psdu_len;
   p_data += PHY_HEADER_LEN;
   psdu_len = (len - PHY_HEADER_LEN) - fcs_len;
 

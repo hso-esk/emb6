@@ -194,9 +194,14 @@ void mac_init(void *p_netstk, e_nsErr_t *p_err)
   macUnitBackoffPeriod = 20 * phySymbolPeriod;
   packetbuf_set_attr(PACKETBUF_ATTR_MAC_UNIT_BACKOFF_PERIOD, macUnitBackoffPeriod);
 
-  /* compute and set macAckWaitDuration attribute */
-  macAckWaitDuration = macUnitBackoffPeriod + phyTurnaroundTime +
-      phySHRDuration + 6 * phySymbolsPerOctet * phySymbolPeriod;
+  /* compute and set macAckWaitDuration attribute, see IEEE Std. 802.15.4(g) */
+  macAckWaitDuration = macUnitBackoffPeriod + phyTurnaroundTime + phySHRDuration;
+#if (NETSTK_CFG_MR_FSK_PHY_EN == TRUE)
+  macAckWaitDuration += 9 * phySymbolsPerOctet * phySymbolPeriod;
+#else
+  macAckWaitDuration += 6 * phySymbolsPerOctet * phySymbolPeriod;
+#endif /* NETSTK_CFG_MR_FSK_PHY_EN */
+
   packetbuf_set_attr(PACKETBUF_ATTR_MAC_ACK_WAIT_DURATION, macAckWaitDuration);
 
   /* set returned error */
@@ -271,13 +276,69 @@ void mac_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 
 #if (EMB6_TEST_CFG_CONT_TX_EN == TRUE)
   uint16_t ix;
-  packetbuf_attr_t waitForAckTimeout;
 
+  packetbuf_attr_t waitForAckTimeout;
   waitForAckTimeout = packetbuf_attr(PACKETBUF_ATTR_MAC_ACK_WAIT_DURATION);
+
+#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
+#include "crc.h"
+#define MINLEN        12u
+#define MAXLEN      2049u
+
+  uint8_t fcs_len = packetbuf_attr(PACKETBUF_ATTR_MAC_FCS_LEN);
+
+  uint8_t dummyData[2 + MAXLEN];  // maximum length
+  uint16_t payloadLen;
+  uint16_t checksumDataLen;
+  uint16_t txPktCount = 0;
+  uint8_t *p_mhr = &dummyData[2];
+  uint32_t fcs;
+  uint8_t *p_fcs;
+
+  uint8_t dummyMhr[] = {0x41, 0xd8, 0x00,
+                        0xcd, 0xab, 0xff, 0xff,
+                        0xfe, 0xca}; //len = 9
+
+  for (payloadLen = MINLEN; payloadLen <= MAXLEN; payloadLen++) {
+    /* create data */
+    memset(p_mhr, 0xab, sizeof(dummyData));
+    memcpy(p_mhr, dummyMhr, sizeof(dummyMhr));
+
+    /* allocate for CRC */
+    checksumDataLen = payloadLen - fcs_len;
+
+    /* added CRC */
+    p_fcs = p_mhr + checksumDataLen;
+    if (fcs_len == 4) {
+      /* 32-bit CRC */
+      fcs = crc_32_calc(p_mhr, checksumDataLen);
+      p_fcs[0] = (fcs & 0xFF000000u) >> 24;
+      p_fcs[1] = (fcs & 0x00FF0000u) >> 16;
+      p_fcs[2] = (fcs & 0x0000FF00u) >> 8;
+      p_fcs[3] = (fcs & 0x000000FFu);
+    }
+    else {
+      /* 16-bit CRC */
+      fcs = crc_16_calc(p_mhr, checksumDataLen);
+      p_fcs[0] = (fcs & 0xFF00u) >> 8;
+      p_fcs[1] = (fcs & 0x00FFu);
+    }
+
+    /* issue TX request */
+    pmac_netstk->phy->send(p_mhr, payloadLen, p_err);
+    bsp_delay_us(waitForAckTimeout);
+
+    if (*p_err == NETSTK_ERR_NONE) {
+      txPktCount++;
+    }
+  }
+
+#else
   for (ix = 0; ix < 5000; ix++) {
     pmac_netstk->phy->send(p_data, len, p_err);
-    bsp_delay_us(waitForAckTimeout);
+    bsp_delayUs(waitForAckTimeout);
   }
+#endif
 
   while (1);
 
@@ -644,9 +705,9 @@ static void mac_csma(e_nsErr_t *p_err)
   while (nb <= NETSTK_CFG_CSMA_MAX_BACKOFF) {
     /* delay for random (2^BE - 1) unit backoff periods */
     max_random = (1 << be) - 1;
-    delay  = bsp_getrand(max_random);
+    delay  = bsp_getrand(0, max_random);
     delay *= NETSTK_CFG_CSMA_UNIT_BACKOFF_US;
-    bsp_delay_us(delay);
+    bsp_delayUs(delay);
 
     /* perform CCA */
     pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_CCA_GET, 0, p_err);

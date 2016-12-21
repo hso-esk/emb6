@@ -634,7 +634,7 @@ handle_timer(void *ptr)
           UIP_MCAST6_STATS_ADD(mcast_fwd);
           tcpip_output(NULL);
           MCAST_PACKET_SEND_CLR(locmpptr);
-          bsp_wdt(E_BSP_WDT_PERIODIC);
+          bsp_watchdog(EN_BSP_WD_PERIODIC);
         }
       }
     }

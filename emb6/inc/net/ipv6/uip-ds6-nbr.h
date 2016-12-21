@@ -76,7 +76,7 @@ typedef struct uip_ds6_nbr {
   uint16_t link_metric;
 #if UIP_CONF_IPV6_QUEUE_PKT
   struct uip_packetqueue_handle packethandle;
-#define UIP_DS6_NBR_PACKET_LIFETIME bsp_get(E_BSP_GET_TRES) * 4
+#define UIP_DS6_NBR_PACKET_LIFETIME bsp_getTRes() * 4
 #endif                          /*UIP_CONF_QUEUE_PKT */
 } uip_ds6_nbr_t;
 

@@ -329,7 +329,7 @@ int8_t demo_udpAliveInit(void)
     pst_udp_socket = &st_udp_socket;
 
     /* set periodic timer */
-    etimer_set( &e_udpAliveTmr,SEND_INTERVAL * bsp_get(E_BSP_GET_TRES),
+    etimer_set( &e_udpAliveTmr,SEND_INTERVAL * bsp_getTRes(),
                 _udpAlive_callback);
 
     LOG2_INFO( "Leave demo_udpAliveInit() function" );

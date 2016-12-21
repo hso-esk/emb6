@@ -141,11 +141,11 @@ void int_irqPort1Handler( void )
 
   if( uc_flags )
   {
-    if (gpf_int_irq_table[E_INT_IRQ_SRC_P1] != NULL)
-      gpf_int_irq_table[E_INT_IRQ_SRC_P1]( &uc_flags );
-
     /* clear interrupt mask for port */
     *ps_portDesc->PIFG &= ~uc_flags;
+
+    if (gpf_int_irq_table[E_INT_IRQ_SRC_P1] != NULL)
+      gpf_int_irq_table[E_INT_IRQ_SRC_P1]( &uc_flags );
   }
 
   if( uc_flags & TARGET_CONFIG_LPM_EXIT_IOP1 )

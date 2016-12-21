@@ -85,8 +85,8 @@ static inline size_t
 print_timestamp(char *s, size_t len, clock_time_t t) {
 #if HAVE_SNPRINTF == 1
   return snprintf(s, len, "%u.%03u",
-		  (unsigned int)(t / bsp_get(E_BSP_GET_TRES)),
-		  (unsigned int)(t % bsp_get(E_BSP_GET_TRES)));
+		  (unsigned int)(t / bsp_getTRes()),
+		  (unsigned int)(t % bsp_getTRes()));
 #else /* HAVE_SNPRINTF */
   /* @todo do manual conversion of timestamp */
   return 0;
@@ -305,7 +305,7 @@ dtls_dsrv_hexdump_log(log_t level, const char *name, const unsigned char *buf, s
     fprintf(log_fd, "%s ", loglevels[level]);
 
   if (extend) {
-    fprintf(log_fd, "%s: (%zu bytes):\n", name, length);
+    fprintf(log_fd, "%s: (%u bytes):\n", name, length);
 
     while (length--) {
       if (n % 16 == 0)
@@ -322,7 +322,7 @@ dtls_dsrv_hexdump_log(log_t level, const char *name, const unsigned char *buf, s
       }
     }
   } else {
-    fprintf(log_fd, "%s: (%zu bytes): ", name, length);
+    fprintf(log_fd, "%s: (%u bytes): ", name, length);
     while (length--)
       fprintf(log_fd, "%02X", *buf++);
   }
@@ -346,7 +346,7 @@ dtls_dsrv_hexdump_log(log_t level, const char *name, const unsigned char *buf, s
     PRINTF("%s ", loglevels[level]);
 
   if (extend) {
-    PRINTF("%s: (%zu bytes):\n", name, length);
+    PRINTF("%s: (%u bytes):\n", name, length);
 
     while (length--) {
       if (n % 16 == 0)
@@ -363,7 +363,7 @@ dtls_dsrv_hexdump_log(log_t level, const char *name, const unsigned char *buf, s
       }
     }
   } else {
-    PRINTF("%s: (%zu bytes): ", name, length);
+    PRINTF("%s: (%u bytes): ", name, length);
     while (length--)
       PRINTF("%02X", *buf++);
   }

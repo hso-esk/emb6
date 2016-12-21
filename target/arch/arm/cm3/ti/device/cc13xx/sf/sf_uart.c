@@ -48,11 +48,14 @@
 #error Please use different pins for rx and tx opperation
 #endif /* UART_IOID_RXD == UART_IOID_TXD */
 
+#ifndef UART_TX_BLOCKING
+#define UART_TX_BLOCKING              1
+#endif /* #ifndef UART_TX_BLOCKING */
 
 /*! Sets the length of the Rx ringbuffer. */
-#define UART_BUFFER_RX_LEN            40U
+#define UART_BUFFER_RX_LEN            128U
 /*! Sets the length of the Tx ringbuffer. */
-#define UART_BUFFER_TX_LEN            40U
+#define UART_BUFFER_TX_LEN            128U
 /*! Default baudrate used for the uart */
 #define UART_DEFAULT_BAUD             115200U
 /*==============================================================================
@@ -263,6 +266,11 @@ uint16_t sf_uart_write(uint8_t *pc_data, uint16_t i_len)
     loc_writeUartTxFifo() this function will also be called in the isr! */
   UARTIntDisable(UART0_BASE, UART_INT_TX);
 
+#ifdef UART_TX_BLOCKING
+  for( i = 0; i < i_len; i++)
+	  UARTCharPut(UART0_BASE, pc_data[i]);
+#else
+
   /*! Verify length-value. */
   if((0U == i_len) || (UART_BUFFER_TX_LEN <= gi_uart_bufferTxLen))
   {
@@ -287,6 +295,7 @@ uint16_t sf_uart_write(uint8_t *pc_data, uint16_t i_len)
   }/* if...else */
 
   loc_writeUartTxFifo();
+#endif /* #ifdef UART_TX_BLOCKING */
   /* Enable TX interrupt of UART module */
   UARTIntEnable(UART0_BASE, UART_INT_TX);
 

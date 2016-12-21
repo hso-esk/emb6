@@ -106,10 +106,10 @@ static void res_post_handler(void *request, void *response, uint8_t *buffer,
     if(REST.get_post_variable(request, "led", &ledVal) == 0) {
 
         /* No POST variable. Toggle all LEDs */
-        bsp_led(E_BSP_LED_0,E_BSP_LED_TOGGLE);
-        bsp_led(E_BSP_LED_1,E_BSP_LED_TOGGLE);
-        bsp_led(E_BSP_LED_2,E_BSP_LED_TOGGLE);
-        bsp_led(E_BSP_LED_3,E_BSP_LED_TOGGLE);
+        bsp_led(HAL_LED0,EN_BSP_LED_OP_TOGGLE);
+        bsp_led(HAL_LED1,EN_BSP_LED_OP_TOGGLE);
+        bsp_led(HAL_LED2,EN_BSP_LED_OP_TOGGLE);
+        bsp_led(HAL_LED3,EN_BSP_LED_OP_TOGGLE);
 
     } else {
 
@@ -117,18 +117,18 @@ static void res_post_handler(void *request, void *response, uint8_t *buffer,
 
         /* LED mask is available. Check which LEDs to toggle. */
         if( ledMsk & (1<<0) )
-            bsp_led(E_BSP_LED_0,E_BSP_LED_TOGGLE);
+            bsp_led(HAL_LED0,EN_BSP_LED_OP_TOGGLE);
         else if( ledMsk & (1<<1) )
-            bsp_led(E_BSP_LED_1,E_BSP_LED_TOGGLE);
+            bsp_led(HAL_LED1,EN_BSP_LED_OP_TOGGLE);
         else if( ledMsk & (1<<2) )
-            bsp_led(E_BSP_LED_2,E_BSP_LED_TOGGLE);
+            bsp_led(HAL_LED2,EN_BSP_LED_OP_TOGGLE);
         else if( ledMsk & (1<<3) )
-            bsp_led(E_BSP_LED_3,E_BSP_LED_TOGGLE);
+            bsp_led(HAL_LED3,EN_BSP_LED_OP_TOGGLE);
         else {
-            bsp_led(E_BSP_LED_0,E_BSP_LED_TOGGLE);
-            bsp_led(E_BSP_LED_1,E_BSP_LED_TOGGLE);
-            bsp_led(E_BSP_LED_2,E_BSP_LED_TOGGLE);
-            bsp_led(E_BSP_LED_3,E_BSP_LED_TOGGLE);
+            bsp_led(HAL_LED0,EN_BSP_LED_OP_TOGGLE);
+            bsp_led(HAL_LED1,EN_BSP_LED_OP_TOGGLE);
+            bsp_led(HAL_LED2,EN_BSP_LED_OP_TOGGLE);
+            bsp_led(HAL_LED3,EN_BSP_LED_OP_TOGGLE);
         }
     }
 }

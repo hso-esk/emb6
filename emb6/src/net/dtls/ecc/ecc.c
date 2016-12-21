@@ -160,7 +160,7 @@ static int fieldMult(const uint32_t *x, const uint32_t *y, uint32_t *result, uin
 #ifdef IAR_COMPILER
     uint32_t temp[10 * 2];      /* length is always smaller than 10 */
 #else
-    uint32_t temp[length * 2];
+    uint32_t temp[10 * 2];
 #endif
 	setZero(temp, length * 2);
 	setZero(result, length * 2);

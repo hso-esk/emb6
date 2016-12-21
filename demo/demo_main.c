@@ -347,7 +347,7 @@ static uint8_t loc_demoAppsInit(void)
 void emb6_errorHandler(e_nsErr_t *p_err)
 {
   /* turns LEDs on to indicate error */
-  bsp_led(E_BSP_LED_0, E_BSP_LED_ON);
+  bsp_led(HAL_LED0, EN_BSP_LED_OP_ON);
   LOG_ERR("Program failed");
 
   /* error handling */
@@ -359,7 +359,11 @@ void emb6_errorHandler(e_nsErr_t *p_err)
 /*==============================================================================
  main()
 ==============================================================================*/
+#if defined(MAIN_WITH_ARGS)
 int main(int argc, char **argv)
+#else
+int main(void)
+#endif /* #if defined(MAIN_WITH_ARGS) */
 {
   char *pc_mac_addr = NULL;
   uint16_t mac_addr_word;
@@ -371,16 +375,18 @@ int main(int argc, char **argv)
   err = NETSTK_ERR_NONE;
   memset(&st_netstack, 0, sizeof(st_netstack));
 
+#if defined(MAIN_WITH_ARGS)
   if (argc > 1) {
     pc_mac_addr = malloc(strlen(argv[1])+1);
     strcpy(pc_mac_addr, argv[1]);
   }
+#endif /* #if defined(MAIN_WITH_ARGS) */
   mac_addr_word = loc_parseMac(pc_mac_addr, MAC_ADDR_WORD);
   free(pc_mac_addr);
 
   /* Initialize BSP */
   ret = bsp_init(&st_netstack);
-  if (ret != 1) {
+  if (ret != 0) {
     err = NETSTK_ERR_INIT;
     emb6_errorHandler(&err);
   }
@@ -399,9 +405,9 @@ int main(int argc, char **argv)
   }
 
   /* Show that stack has been launched */
-  bsp_led(E_BSP_LED_0, E_BSP_LED_ON);
-  bsp_delay_us(2000000);
-  bsp_led(E_BSP_LED_0, E_BSP_LED_OFF);
+  bsp_led(HAL_LED0, EN_BSP_LED_OP_ON);
+  bsp_delayUs(2000000);
+  bsp_led(HAL_LED0, EN_BSP_LED_OP_OFF);
 
   /* Initialize applications */
   ret = loc_demoAppsInit();

@@ -82,7 +82,6 @@
 #undef  TRUE
 #define FALSE                               0 /* do not change                */
 #define TRUE                                1 /* do not change                */
-typedef void                                (*pfn_intCallb_t)(void *);
 
 /* use only Exact-width integer types, linked with TMR_OVRFLOW_VAL 			  */
 typedef uint32_t                            clock_time_t;
@@ -93,6 +92,7 @@ typedef uint32_t                            clock_time_t;
 /*=============================================================================
                                 CONFIGURATIONS
 ==============================================================================*/
+#include "assert.h"
 #include "emb6_conf.h"
 
 
@@ -611,8 +611,7 @@ extern  const s_nsDLLC_t        dllc_driver_802154;
 */
 extern  const s_nsMAC_t         mac_driver_null;
 extern  const s_nsMAC_t         mac_driver_802154;
-extern  const s_nsMAC_t         mac_driver_ule;
-extern  const s_nsMAC_t         mac_driver_smartMAC;
+extern  const s_nsMAC_t         mac_driver_smartmac;
 
 /*
 ********************************************************************************

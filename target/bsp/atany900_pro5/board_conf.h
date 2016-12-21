@@ -37,97 +37,168 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-/**  \addtogroup emb6
- *      @{
- *      \addtogroup bsp Board Support Package
- *   @{
- *   \addtogroup board
- *   @{
- *      \addtogroup atany900_pro5 Board AT-ANY-900-PRO5-BRICK specific configuration
- *   @{
+
+/*
+ * --- Module Description ---------------------------------------------------*
  */
-/*! \file   atany900_pro5/board_conf.h
+/**
+ *  \file       board_conf.h
+ *  \author     Institute of reliable Embedded Systems
+ *              and Communication Electronics
+ *  \date       $Date$
+ *  \version    $Version$
+ *
+ *  \brief      Definition of the Board Configuration.
+ *
+ *              The Board Configuration configures the underlying MCU and
+ *              transceiver.
+ */
+#ifndef __BOARD_CONF_H__
+#define __BOARD_CONF_H__
 
-    \author Artem Yushev, 
-
-    \brief  Board Configuration for AT-ANY-900-PRO5-BRICK
-
-    \version 0.0.1
-*/
-
-#ifndef BOARD_CONF_H_
-#define BOARD_CONF_H_
-
-#include "emb6.h"
-
-/*==============================================================================
-                                     MACROS
-==============================================================================*/
-
-
-
-#define SAMD20_SPI0_SERCOM                          SERCOM0
-#define SAMD20_SPI0_SERCOM_MUX_SETTING              SPI_SIGNAL_MUX_SETTING_E
-#define SAMD20_SPI0_SERCOM_PMUX0                    PINMUX_PA04D_SERCOM0_PAD0
-#define SAMD20_SPI0_SERCOM_PMUX1                    PINMUX_PA05D_SERCOM0_PAD1
-#define SAMD20_SPI0_SERCOM_PMUX2                    PINMUX_PA06D_SERCOM0_PAD2
-#define SAMD20_SPI0_SERCOM_PMUX3                    PINMUX_PA07D_SERCOM0_PAD3
-#define SAMD20_SPI0_MOSI_PIN                        PIN_PA06
-#define SAMD20_SPI0_MISO_PIN                        PIN_PA04
-#define SAMD20_SPI0_SCK_PIN                         PIN_PA07
-#define SAMD20_SPI0_CS_PIN                          PIN_PA05
-#define SAMD20_SPI0_RST_PIN                         PIN_PA20
-#define SAMD20_SPI0_SLP_PIN                         PIN_PB08
-#define SAMD20_RADIO_IRQ_PIN                        PIN_PB09
-#define SAMD20_RADIO_IRQ_PINMUX                     PINMUX_PB09A_EIC_EXTINT9
-#define SAMD20_RADIO_IRQ_INPUT                      9
+/*
+ * --- Includes -------------------------------------------------------------*
+ */
 
 
-#define SAMD20_USART0_SERCOM                        SERCOM4
-#define SAMD20_USART0_BAUDRATE                      38400
-#define SAMD20_USART0_SERCOM_MUX_SETTING            USART_RX_3_TX_2_XCK_3
-#define SAMD20_USART0_SERCOM_PMUX0                  PINMUX_UNUSED
-#define SAMD20_USART0_SERCOM_PMUX1                  PINMUX_UNUSED
-#define SAMD20_USART0_SERCOM_PMUX2                  PINMUX_PB10D_SERCOM4_PAD2
-#define SAMD20_USART0_SERCOM_PMUX3                  PINMUX_PB11D_SERCOM4_PAD3
+/*
+ * --- Macro Definitions --------------------------------------------------- *
+ */
+/** Enable RF SPI */
+#ifndef HAL_SUPPORT_RFSPI
+#define HAL_SUPPORT_RFSPI                     TRUE
+#endif /* #ifndef HAL_SUPPORT_RFSPI */
+
+/* add platform-specific SPIx configurations */
+#define SAMD20_RFSPI_SERCOM                   SERCOM0
+#define SAMD20_RFSPI_SERCOM_MUX_SETTING       SPI_SIGNAL_MUX_SETTING_E
+#define SAMD20_RFSPI_SERCOM_PMUX0             PINMUX_PA04D_SERCOM0_PAD0
+#define SAMD20_RFSPI_SERCOM_PMUX1             PINMUX_UNUSED
+#define SAMD20_RFSPI_SERCOM_PMUX2             PINMUX_PA06D_SERCOM0_PAD2
+#define SAMD20_RFSPI_SERCOM_PMUX3             PINMUX_PA07D_SERCOM0_PAD3
+
+/* add platform-specific SPIx configurations */
+/** RF SPI clock pin */
+#define SAMD20_IO_PIN_SPI_CLK                 PIN_PA07
+/** RF SPI MOSI pin */
+#define SAMD20_IO_PIN_SPI_TX                  PIN_PA06
+/** RF SPI MISO pin */
+#define SAMD20_IO_PIN_SPI_RX                  PIN_PA04
+/** RF SPI chip select pin */
+#define SAMD20_IO_PIN_SPI_CS                  PIN_PA05
+
+/* add platform-specific RF_GPIOx configuration */
+/** Enable RF control 0 */
+#ifndef HAL_SUPPORT_RFCTRL0
+#define HAL_SUPPORT_RFCTRL0                   TRUE
+#endif /* #ifndef HAL_SUPPORT_RFSPI */
+/** RF control 0 pin (reset) */
+#define SAMD20_IO_PIN_RF_CTRL0                PIN_PA20
+#define SAMD20_IO_PIN_RF_RST                  SAMD20_IO_PIN_RF_CTRL0
+
+/** Enable RF control 1 */
+#ifndef HAL_SUPPORT_RFCTRL1
+#define HAL_SUPPORT_RFCTRL1                   TRUE
+#endif /* #ifndef HAL_SUPPORT_RFSPI */
+/** RF control 1 pin (sleep) */
+#define SAMD20_IO_PIN_RF_CTRL1                PIN_PB08
+#define SAMD20_IO_PIN_RF_SLP                  SAMD20_IO_PIN_RF_CTRL1
+
+/** Enable RF control 2 */
+#ifndef HAL_SUPPORT_RFCTRL2
+#define HAL_SUPPORT_RFCTRL2                   TRUE
+#endif /* #ifndef HAL_SUPPORT_RFSPI */
+/** RF control 2 pin (interrupt) */
+#define SAMD20_IO_PIN_RF_CTRL2                PIN_PB09
+#define SAMD20_IO_PIN_RF_IRQ                  SAMD20_IO_PIN_RF_CTRL2
+#define SAMD20_IO_PIN_RF_IRQ_PINMUX           PINMUX_PB09A_EIC_EXTINT9
+#define SAMD20_IO_PIN_RF_IRQ_CHANNEL          9
+
+/* add platform-specific SLIPUART configuration */
+#if defined(HAL_SUPPORT_SLIPUART)
+#define SAMD20_SLIP_UART_SERCOM               SERCOM4
+#define SAMD20_SLIP_UART_BAUDRATE             38400
+#define SAMD20_SLIP_UART_SERCOM_MUX_SETTING   USART_RX_3_TX_2_XCK_3
+#define SAMD20_SLIP_UART_SERCOM_PMUX0         PINMUX_UNUSED
+#define SAMD20_SLIP_UART_SERCOM_PMUX1         PINMUX_UNUSED
+#define SAMD20_SLIP_UART_SERCOM_PMUX2         PINMUX_PB10D_SERCOM4_PAD2
+#define SAMD20_SLIP_UART_SERCOM_PMUX3         PINMUX_PB11D_SERCOM4_PAD3
+#define SAMD20_SLIP_UART_PIN_TX               PIN_PB10
+#define SAMD20_SLIP_UART_PIN_RX               PIN_PB11
+#endif /* #if defined(HAL_SUPPORT_SLIPUART) */
+
+/* FIXME unknown pin configurations */
+#define SAMD20_FEM_PD_PIN                     PIN_PA10
+#define SAMD20_FEM_LNA_PIN                    PIN_PA11
+#define SAMD20_TXRX_SEL                       PIN_PA19
+
+/* add debugging channel configuration */
+#define SAMD20_DEBUG_UART_SERCOM              SERCOM4
+#define SAMD20_DEBUG_UART_BAUDRATE            38400
+#define SAMD20_DEBUG_UART_SERCOM_MUX_SETTING  USART_RX_3_TX_2_XCK_3
+#define SAMD20_DEBUG_UART_SERCOM_PMUX0        PINMUX_UNUSED
+#define SAMD20_DEBUG_UART_SERCOM_PMUX1        PINMUX_UNUSED
+#define SAMD20_DEBUG_UART_SERCOM_PMUX2        PINMUX_PB10D_SERCOM4_PAD2
+#define SAMD20_DEBUG_UART_SERCOM_PMUX3        PINMUX_PB11D_SERCOM4_PAD3
+#define SAMD20_DEBUG_UART_PIN_TX              PIN_PB10
+#define SAMD20_DEBUG_UART_PIN_RX              PIN_PB11
+
+/* add platform-specific LEDs configuration */
+/** Number of supported LEDs */
+#ifndef HAL_SUPPORT_LEDNUM
+#define HAL_SUPPORT_LEDNUM                    ( 3 )
+#endif /* #ifndef HAL_SUPPORT_LEDNUM */
+
+/** Enable LED0 */
+#ifndef HAL_SUPPORT_LED0
+#define HAL_SUPPORT_LED0                      TRUE
+#endif /* #ifndef HAL_SUPPORT_LED0 */
+/** LED0 (red) port */
+#define SAMD20_IO_PIN_LED0                    PIN_PA23
+
+/** Enable LED1 */
+#ifndef HAL_SUPPORT_LED1
+#define HAL_SUPPORT_LED1                      TRUE
+#endif /* #ifndef HAL_SUPPORT_LED1 */
+/** LED1 (yellow) port */
+#define SAMD20_IO_PIN_LED1                    PIN_PB23
+
+/** Enable LED2 */
+#ifndef HAL_SUPPORT_LED2
+#define HAL_SUPPORT_LED2                      TRUE
+#endif /* #ifndef HAL_SUPPORT_LED2 */
+/** LED2 (green) port */
+#define SAMD20_IO_PIN_LED2                    PIN_PA22
 
 
-#define SAMD20_FEM_PD_PIN                           PIN_PA10
-#define SAMD20_FEM_LNA_PIN                          PIN_PA11
-#define SAMD20_TXRX_SEL                             PIN_PA19
+/*
+ * --- Stack Macro Definitions ---------------------------------------------- *
+ */
+/** additional delay between consecutive iteration of emb6 process */
+#define EMB6_PROC_DELAY                       ( 1 )
+
+/** transceiver supports standard-specific checksum algorithm */
+#define NETSTK_CFG_RF_CRC_EN                  TRUE
 
 
-#define LED_1_NAME                                  "YELLOW"
-#define LED_1_PIN                                   PIN_PB23
-#define LED_1_ACTIVE                                false
-#define LED_1_INACTIVE                              !LED_0_ACTIVE
+/*
+ *  --- Global Functions Definition ------------------------------------------*
+ */
 
-#define LED_0_NAME                                  "RED"
-#define LED_0_PIN                                   PIN_PA23
-#define LED_0_ACTIVE                                false
-#define LED_0_INACTIVE                              !LED_1_ACTIVE
+/**
+ * board_conf()
+ *
+ * \brief   Configure board.
+ *
+ *          This function is used to configure the specific board for usage
+ *          with emb::6. Therefore e.g. the transceiver and the according
+ *          layers will be selected.
+ *
+ * \param   p_ns  Pointer to global netstack struct.
+ *
+ * \return  0 on success or negative value on error.
+ */
+int8_t board_conf( s_ns_t* p_ns );
 
-#define LED_2_NAME                                  "GREEN"
-#define LED_2_PIN                                   PIN_PA22
-#define LED_2_ACTIVE                                false
-#define LED_2_INACTIVE                              !LED_2_ACTIVE
+#endif /* __BOARD_CONF_H__ */
 
-/*============================================================================*/
-/*!
-\brief    emb6 board configuration fuction
-
-        This function chooses the transceiver driver for the specific board.
-
-\param    ps_nStack pointer to global netstack struct
-
-\return  success 1, failure 0
-
-*/
-/*============================================================================*/
-uint8_t board_conf(s_ns_t* ps_nStack);
-
-#endif /* BOARD_CONF_H_ */
-/** @} */
-/** @} */
-/** @} */
-/** @} */
