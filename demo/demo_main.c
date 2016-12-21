@@ -572,7 +572,7 @@ int main(void)
 
 #if defined(MAIN_WITH_ARGS)
   if (argc > 1) {
-    mb6_startupParams.ui_macAddr = loc_parseMac(argv[1], MAC_ADDR_WORD);
+    emb6_startupParams.ui_macAddr = loc_parseMac(argv[1], MAC_ADDR_WORD);
   }
 #endif /* #if defined(MAIN_WITH_ARGS) */
   emb6_startupParams.ui_macAddr = loc_parseMac(NULL, MAC_ADDR_WORD);
