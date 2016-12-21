@@ -605,12 +605,12 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
     cc1310.rx.LenLastPkt = *(uint8_t*)(&cc1310.rx.p_currentDataEntry->data) + 1;
     cc1310.rx.p_lastPkt = (uint8_t*)(&cc1310.rx.p_currentDataEntry->data) ;
     /* parse the received packet to check whether it requires ACK or not */
-    llframe_parse(&frame, cc1310.rx.p_lastPkt , cc1310.rx.LenLastPkt );
+    framer802154ll_parse(&frame, cc1310.rx.p_lastPkt , cc1310.rx.LenLastPkt );
 
    if(frame.is_ack_required)
    {
     /* create the ACK  */
-    ack_length=llframe_createAck(&frame,ack, sizeof(ack));
+    ack_length=framer802154ll_createAck(&frame,ack, sizeof(ack));
     /* configure ACK length and ptr */
     cc1310.tx.p_cmdPropTxAdv->pktLen = ack_length-2  ;
     cc1310.tx.p_cmdPropTxAdv->pPkt = ack;

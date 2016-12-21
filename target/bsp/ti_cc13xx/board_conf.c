@@ -30,7 +30,7 @@
 /*============================================================================*/
 int8_t board_conf(s_ns_t *p_netstk)
 {
-    uint8_t c_ret = 1;
+    uint8_t c_ret = 0;
 
       if (p_netstk != NULL) {
         p_netstk->dllc = &dllc_driver_802154;
@@ -39,7 +39,7 @@ int8_t board_conf(s_ns_t *p_netstk)
         p_netstk->rf   = &rf_driver_ticc13xx;
       } else {
         LOG_ERR("Network stack pointer is NULL");
-        c_ret = 0;
+        c_ret = -1;
       }
 
       return c_ret;

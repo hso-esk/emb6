@@ -249,7 +249,7 @@ int8_t hal_init(void)
   lcdSendBuffer( lcdBuf );
 #endif /* #if CC13XX_LCD_ENABLE */
 
-  return c_retStatus;
+  return (!c_retStatus);
 }/* hal_init() */
 
 /*!
@@ -533,3 +533,57 @@ void hal_extiRegister(en_hal_irqedge_t e_edge, pf_hal_irqCb_t pf_cbFnct)
 } /* hal_extiRegister() */
 
 /*! @} 6lowpan_mcu */
+
+
+int8_t hal_debugInit( void )
+{
+  return 0;
+} /* hal_debugInit() */
+
+int8_t hal_periphIRQRegister( en_hal_periphirq_t irq, pf_hal_irqCb_t pf_cb,
+    void* p_data )
+{
+  /* set the callback and data pointer */
+/*  s_hal_irqs[irq].pf_cb = pf_cb;
+  s_hal_irqs[irq].p_data = p_data;
+*/
+  return 0;
+} /* hal_periphIRQRegister() */
+
+void* hal_pinInit( en_hal_pin_t pin )
+{
+  return -1;
+} /* hal_pinInit() */
+
+
+int8_t hal_pinIRQEnable( void* p_pin )
+{
+  /* Not implemented */
+  return -1;
+} /* hal_pinIRQEnable() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_pinIRQDisable()
+*/
+int8_t hal_pinIRQDisable( void* p_pin )
+{
+  /* Not implemented */
+  return -1;
+} /* hal_pinIRQDisable() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_pinIRQClear()
+*/
+int8_t hal_pinIRQClear( void* p_pin )
+{
+  return -1;
+} /* hal_pinIRQClear() */
+
+int8_t hal_pinIRQRegister( void* p_pin, en_hal_irqedge_t edge,
+    pf_hal_irqCb_t pf_cb )
+{
+  /* Not implemented */
+  return -1;
+} /* hal_pinIRQRegister() */
