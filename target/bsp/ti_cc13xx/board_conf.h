@@ -63,7 +63,7 @@
  * @param   p_netstk Pointer to net stack structure.
  * @return  1 if success; otherwise 0.
  */
-uint8_t board_conf(s_ns_t* p_netstk);
+int8_t board_conf(s_ns_t* p_netstk);
 
 #endif /* _BOARD_CONF_H_ */
 

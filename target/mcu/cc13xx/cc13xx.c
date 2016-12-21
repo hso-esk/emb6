@@ -27,7 +27,7 @@
 
 #include "emb6.h"
 #include "hwinit.h"
-#include "target.h"
+#include "hal.h"
 #include "bsp.h"
 #include "board_conf.h"
 
@@ -184,20 +184,22 @@ static bool _hal_systick(void)
  * This function disables all interrupts when the
  * program enters critical sections.
  */
-void hal_enterCritical(void)
+int8_t hal_enterCritical(void)
 {
   /* Disable the interrutps */
   sf_mcu_interruptDisable();
+  return 0;
 } /* hal_enterCritical() */
 
 /*!
  * @brief Enables all interrupts.
  *
  */
-void hal_exitCritical(void)
+int8_t hal_exitCritical(void)
 {
   /* Enbale the interrupts */
   sf_mcu_interruptEnable();
+  return 0;
 }/* hal_exitCritical() */
 
 /*!
@@ -257,7 +259,7 @@ int8_t hal_init(void)
  *
  * @return Always 1U.
  */
-uint8_t hal_getrand(void)
+uint32_t hal_getrand( void )
 {
   return 1;
 }/* hal_getrand() */
@@ -269,24 +271,24 @@ uint8_t hal_getrand(void)
  */
 void hal_ledOff(uint16_t ui_led)
 {
-	switch( ui_led )
-	{
-	    case E_BSP_LED_0:
+    switch( ui_led )
+    {
+        case HAL_LED0:
             bspLedClear( BSP_LED_1 );
             break;
 
-	    case E_BSP_LED_1:
+        case HAL_LED1:
             bspLedClear( BSP_LED_2 );
             break;
 
-	    case E_BSP_LED_2:
+        case HAL_LED2:
             bspLedClear( BSP_LED_3 );
             break;
 
-	    case E_BSP_LED_3:
+        case HAL_LED3:
             bspLedClear( BSP_LED_4 );
             break;
-	}
+    }
 }/* hal_ledOff() */
 
 /*!
@@ -297,24 +299,24 @@ void hal_ledOff(uint16_t ui_led)
  */
 void hal_ledOn(uint16_t ui_led)
 {
-	switch( ui_led )
-	{
-        case E_BSP_LED_0:
+    switch( ui_led )
+    {
+        case HAL_LED0:
             bspLedSet( BSP_LED_1 );
             break;
 
-	    case E_BSP_LED_1:
+        case HAL_LED1:
             bspLedSet( BSP_LED_2 );
             break;
 
-	    case E_BSP_LED_2:
+        case HAL_LED2:
             bspLedSet( BSP_LED_3 );
             break;
 
-	    case E_BSP_LED_3:
+        case HAL_LED3:
             bspLedSet( BSP_LED_4 );
             break;
-	}
+    }
 }/* hal_ledOn() */
 
 /*!
@@ -324,7 +326,7 @@ void hal_ledOn(uint16_t ui_led)
  *
  * @param i_delay Delay in micro seconds.
  */
-void hal_delay_us(uint32_t i_delay)
+int8_t hal_delayUs(uint32_t i_delay)
 {
   /*
    * Note(s)
@@ -342,19 +344,9 @@ void hal_delay_us(uint32_t i_delay)
   {
     /* do nothing */
   }
+  return 0;
 } /* hal_delay_us() */
 
-/*!
- * @brief This function initializes the given control pin.
- *
- * @param  e_pinType Type of a pin.
- * @return Pointer to a pin. Always NULL, because of integrated transceiver.
- */
-void* hal_ctrlPinInit(en_targetExtPin_t e_pinType)
-{
-  /* Not needed because of integrated IF */
-  return NULL;
-} /* hal_ctrlPinInit() */
 
 /*!
  * @brief This function sets a particular pin.
@@ -363,10 +355,12 @@ void* hal_ctrlPinInit(en_targetExtPin_t e_pinType)
  *
  * @param p_pin Pointer to a pin.
  */
-void hal_pinSet(void * p_pin)
+int8_t hal_pinSet( void* p_pin, uint8_t val )
 {
   /* Not needed because of integrated IF */
+return 0;
 } /* hal_pinSet() */
+
 
 /*!
  * @brief This function clears a particular pin.
@@ -388,7 +382,7 @@ void hal_pinClr(void * p_pin)
  * @param p_pin Pointer to a pin.
  * @return Status of the pin.
  */
-uint8_t hal_pinGet(void * p_pin)
+int8_t hal_pinGet(void * p_pin)
 {
   /* Not needed because of integrated IF */
   return 0U;
@@ -469,9 +463,10 @@ void hal_spiTxRx(uint8_t *p_tx, uint8_t *p_rx, uint16_t len)
  *
  * Function is not used by the stack and thus not implemented.
  */
-void hal_watchdogReset(void)
+int8_t hal_watchdogReset(void)
 {
   /* Not needed because the stack will not use this function */
+    return 0;
 } /* hal_watchdogReset() */
 
 /*!
@@ -479,9 +474,10 @@ void hal_watchdogReset(void)
  *
  * Function is not used by the stack and thus not implemented.
  */
-void hal_watchdogStart(void)
+int8_t hal_watchdogStart(void)
 {
   /* Not needed because the stack will not use this function */
+    return 0;
 } /* hal_watchdogStart() */
 
 /*!
@@ -489,9 +485,10 @@ void hal_watchdogStart(void)
  *
  * Function is not used by the stack and thus not implemented.
  */
-void hal_watchdogStop(void)
+int8_t hal_watchdogStop(void)
 {
   /* Not needed because the stack will not use this function */
+    return 0 ;
 } /* hal_watchdogStop() */
 
 /*!
@@ -530,21 +527,9 @@ clock_time_t hal_getTRes(void)
 } /* hal_getSec() */
 
 
-void hal_extiRegister(en_targetExtInt_t e_extInt, en_targetIntEdge_t e_edge, pfn_intCallb_t pf_cbFnct)
+void hal_extiRegister(en_hal_irqedge_t e_edge, pf_hal_irqCb_t pf_cbFnct)
 {
     /* Not used */
 } /* hal_extiRegister() */
-void hal_extiClear(en_targetExtInt_t e_extInt)
-{
-    /* Not used */
-} /* hal_extiClear() */
-void hal_extiEnable(en_targetExtInt_t e_extInt)
-{
-    /* Not used */
-} /* hal_extiEnable() */
-void hal_extiDisable(en_targetExtInt_t e_extInt)
-{
-    /* Not used */
-} /* hal_extiDisable() */
 
 /*! @} 6lowpan_mcu */

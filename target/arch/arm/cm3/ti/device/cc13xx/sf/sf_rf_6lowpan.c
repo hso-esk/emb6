@@ -43,7 +43,7 @@ extern "C" {
 #include "rflib/rf_dbell.h"
 #include "driverlib/rf_mailbox.h"
 #include "bsp.h"
-#include "llframer.h"
+#include "framer_802154_ll.h"
 
 
 /*==============================================================================
@@ -69,7 +69,7 @@ static s_ns_t *ps_rf_netstk;
 
 st_cc1310_t cc1310;
 uint8_t RxBuff[RX_BUFF_SIZE];
-llframe_attr_t frame;
+framer802154ll_attr_t frame;
 uint8_t ack[10];
 uint8_t ack_length;
 
@@ -142,20 +142,20 @@ uint8_t sf_rf_6lowpan_sendBlocking(uint8_t *pc_data, uint16_t  i_len)
   /* init tx cmd */
   if (!sf_rf_init_tx(pc_data,i_len))
   {
-    bsp_led( E_BSP_LED_3, E_BSP_LED_ON );
+    bsp_led( HAL_LED3, EN_BSP_LED_OP_ON );
     return 0;
   }
   /* call the routine with tx state to send the packet*/
   status = sf_rf_switchState(RF_STATUS_TX);
   if(status != ROUTINE_DONE && status != ROUTINE_ERROR_TX_NOACK )
   {
-      bsp_led( E_BSP_LED_3, E_BSP_LED_ON );
+      bsp_led( HAL_LED3, EN_BSP_LED_OP_ON );
       return 0;
   }
   else
   {
         #if CC13XX_TX_LED_ENABLED
-          bsp_led( E_BSP_LED_2, E_BSP_LED_TOGGLE );
+          bsp_led( HAL_LED2, EN_BSP_LED_OP_TOGGLE );
         #endif
         /* Set the transceiver in rx mode */
           sf_rf_switchState(RF_STATUS_RX_LISTEN);
@@ -405,17 +405,17 @@ static void rx_call_back(uint32_t l_flag)
       }
       /* set RX mode again */
       sf_rf_switchState(RF_STATUS_RX_LISTEN);
-      bsp_led( E_BSP_LED_1, E_BSP_LED_OFF );
-      bsp_led( E_BSP_LED_0, E_BSP_LED_ON );
-      bsp_led( E_BSP_LED_3, E_BSP_LED_TOGGLE );
+      bsp_led( HAL_LED1, EN_BSP_LED_OP_OFF );
+      bsp_led( HAL_LED0, EN_BSP_LED_OP_ON );
+      bsp_led( HAL_LED3, EN_BSP_LED_OP_TOGGLE );
   }
   else if(IRQ_RX_NOK == (l_flag & IRQ_RX_NOK))
   {
     /* set RX mode again */
     sf_rf_switchState(RF_STATUS_RX_LISTEN);
-    bsp_led( E_BSP_LED_1, E_BSP_LED_ON );
-    bsp_led( E_BSP_LED_0, E_BSP_LED_OFF );
-    bsp_led( E_BSP_LED_3, E_BSP_LED_TOGGLE );
+    bsp_led( HAL_LED1, EN_BSP_LED_OP_ON );
+    bsp_led( HAL_LED0, EN_BSP_LED_OP_OFF );
+    bsp_led( HAL_LED3, EN_BSP_LED_OP_TOGGLE );
   }
   else if(IRQ_INTERNAL_ERROR == (l_flag & IRQ_INTERNAL_ERROR))
   {
@@ -425,16 +425,16 @@ static void rx_call_back(uint32_t l_flag)
       /* Send RX command to the radio */
       if(sf_rf_switchState(RF_STATUS_RX_LISTEN)!= ROUTINE_DONE)
           sf_rf_switchState(RF_STATUS_ERROR);
-    bsp_led( E_BSP_LED_1, E_BSP_LED_ON );
-    bsp_led( E_BSP_LED_0, E_BSP_LED_ON );
+    bsp_led( HAL_LED1, EN_BSP_LED_OP_ON );
+    bsp_led( HAL_LED0, EN_BSP_LED_OP_ON );
   }
   else if((IRQ_RX_BUF_FULL == (l_flag & IRQ_RX_BUF_FULL)) || (IRQ_RX_IGNORED == (l_flag & IRQ_RX_IGNORED))
           || (IRQ_RX_ABORTED == (l_flag & IRQ_RX_ABORTED)) )
   {
     /* set RX mode again */
     sf_rf_switchState(RF_STATUS_RX_LISTEN);
-    bsp_led( E_BSP_LED_1, E_BSP_LED_ON );
-    bsp_led( E_BSP_LED_0, E_BSP_LED_ON );
+    bsp_led( HAL_LED1, EN_BSP_LED_OP_ON );
+    bsp_led( HAL_LED0, EN_BSP_LED_OP_ON );
   }
 }
 
@@ -479,13 +479,13 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
       if(RFQueue_defineQueue(&cc1310.rx.dataQueue, RxBuff, RX_BUFF_SIZE , 2 , 150 + 3 ) != 0x00U)
       {
         /* Failed to allocate space for all data entries */
-        bsp_led( E_BSP_LED_3, E_BSP_LED_ON );
+        bsp_led( HAL_LED3, EN_BSP_LED_OP_ON );
         return ROUTINE_ERROR_INIT_QUEUE ;
       }
 
       if (RFC_enableRadio() != RFC_OK)
       {
-        bsp_led( E_BSP_LED_3, E_BSP_LED_ON );
+        bsp_led( HAL_LED3, EN_BSP_LED_OP_ON );
         return ROUTINE_ERROR_ENABLE_RADIO;
       }
 
@@ -497,7 +497,7 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
         cmdStatus = RFC_sendRadioOp(cc1310.conf.ps_cmdFs);
         if(cmdStatus != RFC_CMDSTATUS_DONE)
         {
-          bsp_led( E_BSP_LED_3, E_BSP_LED_ON );
+          bsp_led( HAL_LED3, EN_BSP_LED_OP_ON );
           return ROUTINE_ERROR_FS_CMD ;
         }
       }
@@ -523,7 +523,7 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
     }
     else
     {
-      bsp_led( E_BSP_LED_3, E_BSP_LED_ON );
+      bsp_led( HAL_LED3, EN_BSP_LED_OP_ON );
       return ROUTINE_ERROR_INIT_RF ;
     }
 
@@ -557,7 +557,7 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
       /* Since we sent a blocking cmd then we check the state */
       if(cmdStatus != RFC_CMDSTATUS_DONE)
       {
-        bsp_led( E_BSP_LED_3, E_BSP_LED_ON );
+        bsp_led( HAL_LED3, EN_BSP_LED_OP_ON );
         return ROUTINE_ERROR_TX_CMD ;
       }
       else
@@ -594,7 +594,7 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
     cmdStatus=RFC_sendRadioOp_nb((rfc_radioOp_t*)cc1310.rx.p_cmdPropRxAdv , NULL);
     if(cmdStatus != RFC_CMDSTATUS_DONE)
     {
-      bsp_led( E_BSP_LED_3, E_BSP_LED_ON );
+      bsp_led( HAL_LED3, EN_BSP_LED_OP_ON );
       return ROUTINE_ERROR_RX_CMD ;
     }
     return ROUTINE_DONE ;
@@ -793,7 +793,7 @@ static bool sf_rf_update_run_frequency(uint16_t frequency, uint16_t fractFreq)
     /* Send CMD_FS command to RF Core */
     if(RFC_sendRadioOp(cc1310.conf.ps_cmdFs) != RFC_CMDSTATUS_DONE)
     {
-      bsp_led( E_BSP_LED_3, E_BSP_LED_ON );
+      bsp_led( HAL_LED3, EN_BSP_LED_OP_ON );
       return false ;
     }
 
