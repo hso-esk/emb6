@@ -48,6 +48,29 @@ import atexit
 import shutil
 from collections import defaultdict
 
+# workaround to fix 'command line is too long in Windows'
+class ourSpawn:
+    def ourspawn(self, sh, escape, cmd, args, env):
+        newargs = ' '.join(args[1:])
+        cmdline = cmd + " " + newargs
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        proc = subprocess.Popen(cmdline, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE, startupinfo=startupinfo, shell = False, env = env)
+        data, err = proc.communicate()
+        rv = proc.wait()
+        if rv:
+            print "====="
+            print err
+            print "====="
+        return rv
+
+def setupSpawn( env ):
+    if sys.platform == 'win32':
+        buf = ourSpawn()
+        buf.ourenv = env
+        env['SPAWN'] = buf.ourspawn
+
 
 ## set the current working directory as the project path
 prjPath = './'
@@ -361,6 +384,10 @@ CacheDir( cacheDir )
 createOptions()
 
 if not genv.GetOption('help'):
+
+    # workaround to fix 'command line is too long in Windows'
+    # FIXME program size is removed when the fix is applied
+    setupSpawn(genv)
 
     # Check if all targets shall be cleaned
     if genv.GetOption('cleanAll'):
