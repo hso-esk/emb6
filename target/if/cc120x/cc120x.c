@@ -67,7 +67,7 @@
 #define  LOGGER_ENABLE        LOGGER_RADIO
 #include "logger.h"
 
-#if (NETSTK_CFG_RF_CRC_EN != FALSE) && (NETSTK_CFG_IEEE_802154G_EN != TRUE)
+#if defined(NETSTK_SUPPORT_HW_CRC) && (NETSTK_CFG_IEEE_802154G_EN != TRUE)
 #error "missing or wrong radio checksum setting in board_conf.h"
 #endif
 
@@ -990,7 +990,7 @@ static void rf_rxFifoThresholdISR(void *p_arg) {
   uint8_t isRxOk = TRUE;
   uint8_t numRxBytes = 0;
   struct s_rf_ctx *p_ctx = &rf_ctx;
-#if (NETSTK_CFG_RF_CRC_EN == FALSE)
+#if !defined(NETSTK_SUPPORT_HW_CRC)
   uint8_t numChksumBytes = 0;
 #endif
 
@@ -1022,14 +1022,14 @@ static void rf_rxFifoThresholdISR(void *p_arg) {
         p_ctx->rxNumRemBytes -= numRxBytes;
 
         /* compute number of checksum bytes */
-#if (NETSTK_CFG_RF_CRC_EN == FALSE)
+#if !defined(NETSTK_SUPPORT_HW_CRC)
         if (p_ctx->rxNumRemBytes < p_ctx->rxFrame.crc_len) {
           numChksumBytes = numRxBytes - (p_ctx->rxFrame.crc_len - p_ctx->rxNumRemBytes);
         }
         else {
           numChksumBytes = numRxBytes;
         }
-#endif
+#endif /* #if !defined(NETSTK_SUPPORT_HW_CRC) */
 
 #if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
         /* is address not yet checked and number of received bytes sufficient for
@@ -1050,10 +1050,9 @@ static void rf_rxFifoThresholdISR(void *p_arg) {
           /* set total number of received bytes */
           p_ctx->rxBytesCounter = p_ctx->rxFrame.tot_len;
 
-#if (NETSTK_CFG_RF_CRC_EN == FALSE)
-#else
+#if defined(NETSTK_SUPPORT_HW_CRC)
           p_ctx->rxNumRemBytes -= (p_ctx->rxFrame.crc_len - 2);
-#endif
+#endif /* #if defined(NETSTK_SUPPORT_HW_CRC) */
 
 #if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
           /* switch to fixed packet length mode if total of remaining bytes is less than RF_MAX_FIFO_LEN */
@@ -1063,14 +1062,14 @@ static void rf_rxFifoThresholdISR(void *p_arg) {
           }
 #endif
 
-#if (NETSTK_CFG_RF_CRC_EN == FALSE)
+#if !defined(NETSTK_SUPPORT_HW_CRC)
           /* initialize checksum */
           p_ctx->rxChksum = framer802154ll_crcInit(&p_ctx->rxFrame);
           p_ctx->rxLastChksumPtr = p_ctx->rxFrame.crc_offset;
 
           /* compute number of checksum bytes */
           numChksumBytes = p_ctx->rxLastDataPtr - p_ctx->rxLastChksumPtr;
-#endif
+#endif /* #if !defined(NETSTK_SUPPORT_HW_CRC) */
 
 #if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
           /* filter unwanted ACKs */
@@ -1088,11 +1087,11 @@ static void rf_rxFifoThresholdISR(void *p_arg) {
     rf_rx_term(p_ctx);
   }
   else {
-#if (NETSTK_CFG_RF_CRC_EN == FALSE)
+#if !defined(NETSTK_SUPPORT_HW_CRC)
     /* otherwise update checksum if there is no error during RX process */
     p_ctx->rxChksum = framer802154ll_crcUpdate(&p_ctx->rxFrame, &p_ctx->rxBuf[p_ctx->rxLastChksumPtr], numChksumBytes, p_ctx->rxChksum);
     p_ctx->rxLastChksumPtr += numChksumBytes;
-#endif
+#endif /* #if !defined(NETSTK_SUPPORT_HW_CRC) */
 
 #if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
     /* switch to fixed packet length mode if number of remaining bytes is less than FIFO_SIZE */
@@ -1362,9 +1361,9 @@ static void rf_rx_sync(struct s_rf_ctx *p_ctx) {
 static void rf_rx_chksum(struct s_rf_ctx *p_ctx) {
 
   uint8_t isChecksumOK;
-#if (NETSTK_CFG_RF_CRC_EN == FALSE)
+#if !defined(NETSTK_SUPPORT_HW_CRC)
   uint8_t numChksumBytes;
-#endif
+#endif /* #if !defined(NETSTK_SUPPORT_HW_CRC) */
 
   /* read remaining bytes from RX FIFO */
   if (p_ctx->rxNumRemBytes) {
@@ -1373,7 +1372,7 @@ static void rf_rx_chksum(struct s_rf_ctx *p_ctx) {
   }
 
 #if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
-#if (NETSTK_CFG_RF_CRC_EN == FALSE)
+#if !defined(NETSTK_SUPPORT_HW_CRC)
   /* update checksum */
   if (p_ctx->rxLastDataPtr > (p_ctx->rxFrame.crc_len + p_ctx->rxLastChksumPtr)) {
     numChksumBytes = p_ctx->rxLastDataPtr - (p_ctx->rxLastChksumPtr + p_ctx->rxFrame.crc_len);
@@ -1391,7 +1390,7 @@ static void rf_rx_chksum(struct s_rf_ctx *p_ctx) {
   p_ctx->rxRSSI = (int8_t)(p_ctx->rxBuf[p_ctx->rxLastDataPtr - 2]) - RF_RSSI_OFFSET;
   p_ctx->rxLQI = p_ctx->rxBuf[p_ctx->rxLastDataPtr - 1] & 0x7F;
   isChecksumOK = (p_ctx->rxBuf[p_ctx->rxLastDataPtr - 1] & 0x80) >> 7;
-#endif
+#endif /* #if !defined(NETSTK_SUPPORT_HW_CRC) */
 
 #else
   /* checksum verification is handled by upper layer */
@@ -1407,10 +1406,10 @@ static void rf_rx_chksum(struct s_rf_ctx *p_ctx) {
     }
 #endif
 
-#if (NETSTK_CFG_RF_CRC_EN == FALSE)
+#if !defined(NETSTK_SUPPORT_HW_CRC)
     /* read status bytes */
     rf_readRxStatus(p_ctx);
-#endif
+#endif /* #if !defined(NETSTK_SUPPORT_HW_CRC) */
 
     p_ctx->state = RF_STATE_RX_FINI;
     if (p_ctx->rxReqAck == FALSE) {
@@ -1579,9 +1578,9 @@ static void rf_tx_rxAckFini(struct s_rf_ctx *p_ctx) {
 
   uint8_t isChecksumOK;
   packetbuf_attr_t expSeqNo;
-#if (NETSTK_CFG_RF_CRC_EN == FALSE)
+#if !defined(NETSTK_SUPPORT_HW_CRC)
   uint8_t numChksumBytes;
-#endif
+#endif /* #if !defined(NETSTK_SUPPORT_HW_CRC) */
 
   /* read remaining bytes from RX FIFO */
   if (p_ctx->rxNumRemBytes) {
@@ -1589,7 +1588,7 @@ static void rf_tx_rxAckFini(struct s_rf_ctx *p_ctx) {
     p_ctx->rxNumRemBytes = 0;
   }
 
-#if (NETSTK_CFG_RF_CRC_EN == FALSE)
+#if !defined(NETSTK_SUPPORT_HW_CRC)
   /* update checksum */
   if (p_ctx->rxLastDataPtr > (p_ctx->rxFrame.crc_len + p_ctx->rxLastChksumPtr)) {
     numChksumBytes = p_ctx->rxLastDataPtr - (p_ctx->rxLastChksumPtr + p_ctx->rxFrame.crc_len);
@@ -1607,14 +1606,14 @@ static void rf_tx_rxAckFini(struct s_rf_ctx *p_ctx) {
   p_ctx->rxRSSI = (int8_t)(p_ctx->rxBuf[p_ctx->rxLastDataPtr - 2]) - RF_RSSI_OFFSET;
   p_ctx->rxLQI = p_ctx->rxBuf[p_ctx->rxLastDataPtr - 1] & 0x7F;
   isChecksumOK = (p_ctx->rxBuf[p_ctx->rxLastDataPtr - 1] & 0x80) >> 7;
-#endif
+#endif /* #if !defined(NETSTK_SUPPORT_HW_CRC) */
 
   /* is checksum valid? */
   if (isChecksumOK == TRUE) {
-#if (NETSTK_CFG_RF_CRC_EN == FALSE)
+#if !defined(NETSTK_SUPPORT_HW_CRC)
     /* read status bytes */
     rf_readRxStatus(p_ctx);
-#endif
+#endif /* #if !defined(NETSTK_SUPPORT_HW_CRC) */
 
     /* FIXME remove "spaghetti code" */
     expSeqNo = packetbuf_attr(PACKETBUF_ATTR_MAC_SEQNO);
@@ -1882,7 +1881,7 @@ static void rf_configureRegs(const s_regSettings_t *p_regs, uint8_t len) {
   }
 }
 
-#if (NETSTK_CFG_RF_CRC_EN == FALSE)
+#if !defined(NETSTK_SUPPORT_HW_CRC)
 /**
  * @brief read appended status of the most recently received frame
  * @param p_ctx point to variable holding radio context structure
@@ -1894,7 +1893,7 @@ static void rf_readRxStatus(struct s_rf_ctx *p_ctx) {
   p_ctx->rxRSSI = (int8_t)(rxStatus[0]) - RF_RSSI_OFFSET;
   p_ctx->rxLQI = rxStatus[1] & 0x7F;
 }
-#endif
+#endif /* #if !defined(NETSTK_SUPPORT_HW_CRC) */
 
 /**
  * @brief read bytes from RX FIFO
@@ -2041,10 +2040,10 @@ static uint8_t rf_filterAddr(struct s_rf_ctx *p_ctx) {
     if (p_ctx->rxReqAck == TRUE) {
       /* write the ACK to send into TX FIFO */
       ack_len = framer802154ll_createAck(&p_ctx->rxFrame, ack, sizeof(ack));
-#if (NETSTK_CFG_RF_CRC_EN == FALSE)
-#else
+#if defined(NETSTK_SUPPORT_HW_CRC)
       ack_len -= p_ctx->rxFrame.crc_len;
-#endif
+#endif /* #if defined(NETSTK_SUPPORT_HW_CRC) */
+
       cc120x_spiTxFifoWrite(ack, ack_len);
 
 #if (NETSTK_CFG_IEEE_802154G_EN == TRUE)

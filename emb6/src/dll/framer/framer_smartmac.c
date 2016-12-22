@@ -51,7 +51,7 @@ uint16_t framer_smartmac_create(frame_smartmac_st *p_frame, uint8_t *p_buf)
   /* compute frame length */
   len = p - p_buf;
 
-#if (NETSTK_CFG_RF_CRC_EN == FALSE)
+#if !defined(NETSTK_SUPPORT_HW_CRC)
   uint8_t *p_mfr;
   uint32_t fcs;
   packetbuf_attr_t fcs_len;
@@ -73,7 +73,7 @@ uint16_t framer_smartmac_create(frame_smartmac_st *p_frame, uint8_t *p_buf)
     p_mfr[1] = (fcs & 0x00FFu);
   }
   len += fcs_len;
-#endif /* NETSTK_CFG_RF_CRC_EN */
+#endif /* #if !defined(NETSTK_SUPPORT_HW_CRC) */
 
   return len;
 }

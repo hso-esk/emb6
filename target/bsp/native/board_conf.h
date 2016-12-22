@@ -83,7 +83,7 @@
 #endif /* #if !defined(MODULATION) */
 
 /** transceiver supports standard-specific checksum algorithm */
-#define NETSTK_CFG_RF_CRC_EN                  TRUE
+#define NETSTK_SUPPORT_HW_CRC                 TRUE
 
 
 /*

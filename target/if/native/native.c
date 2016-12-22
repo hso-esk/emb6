@@ -69,7 +69,7 @@
 /*==============================================================================
                                     MACROS
  ==============================================================================*/
-#if (NETSTK_CFG_RF_CRC_EN != TRUE)
+#if !defined(NETSTK_SUPPORT_HW_CRC)
 #error "missing or wrong radio checksum setting in board_conf.h"
 #endif
 
