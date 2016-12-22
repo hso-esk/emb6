@@ -223,8 +223,10 @@
 #define MODULATION                          MODULATION_2FSK50
 #endif /* #if !defined(MODULATION) */
 
-/** enable auto-acknowledgment of radio driver */
-#define NETSTK_CFG_RF_SW_AUTOACK_EN         TRUE
+/** transceiver supports auto-acknowledgment on software */
+#if (NETSTK_SUPPORT_SW_MAC_AUTOACK == FALSE)
+#define NETSTK_SUPPORT_SW_RF_AUTOACK        TRUE
+#endif /* #if (NETSTK_SUPPORT_SW_MAC_AUTOACK == FALSE) */
 
 
 /*

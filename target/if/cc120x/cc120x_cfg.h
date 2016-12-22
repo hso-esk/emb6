@@ -63,13 +63,6 @@
   #endif
 #endif
 
-/*!< enable SW Auto-ACK by default if stack Auto-ACK is disabled */
-#if (NETSTK_CFG_MAC_SW_AUTOACK_EN == FALSE)
-  #ifndef NETSTK_CFG_RF_SW_AUTOACK_EN
-  #define NETSTK_CFG_RF_SW_AUTOACK_EN           TRUE
-  #endif
-#endif
-
 
 /*
  * Value of channel frequency register is calculated using following equation:

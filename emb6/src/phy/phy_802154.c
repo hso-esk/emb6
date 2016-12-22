@@ -80,11 +80,11 @@ static void phy_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
 static void phy_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
 static void phy_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
 
-#if (NETSTK_CFG_RF_SW_AUTOACK_EN != TRUE)
+#if (NETSTK_SUPPORT_SW_MAC_AUTOACK == TRUE)
 static void phy_insertCrc(uint8_t *p_data, uint16_t len);
 static uint16_t phy_crc16(uint8_t *p_data, uint16_t len);
 static uint32_t phy_crc32(uint8_t *p_data, uint16_t len);
-#endif /* #if (NETSTK_CFG_RF_SW_AUTOACK_EN != TRUE) */
+#endif /* #if (NETSTK_SUPPORT_SW_MAC_AUTOACK == TRUE) */
 static uint8_t *phy_insertHdr(uint8_t *p_data, uint16_t len);
 
 
@@ -261,13 +261,13 @@ static void phy_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
   uint8_t *p_pkt;
   uint16_t pkt_len;
 
-#if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
-  pkt_len = len;
-#else
+#if (NETSTK_SUPPORT_SW_MAC_AUTOACK == TRUE)
   /* insert MAC checksum */
   phy_insertCrc(p_data, len);
   pkt_len = len + mac_phy_config.fcs_len;
-#endif
+#else
+  pkt_len = len;
+#endif /* #if (NETSTK_SUPPORT_SW_MAC_AUTOACK == TRUE) */
 
   /* insert PHY header */
   p_pkt = phy_insertHdr(p_data, pkt_len);
@@ -317,13 +317,12 @@ static void phy_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
   packetbuf_attr_t fcs_len;
   fcs_len = packetbuf_attr(PACKETBUF_ATTR_MAC_FCS_LEN);
 
-#if (NETSTK_CFG_RF_SW_AUTOACK_EN == TRUE)
+#if (NETSTK_SUPPORT_SW_MAC_AUTOACK == FALSE)
   uint16_t psdu_len;
   p_data += PHY_HEADER_LEN;
   psdu_len = (len - PHY_HEADER_LEN) - fcs_len;
-
-#else
-#if NETSTK_CFG_IEEE_802154G_EN
+#else /* #if (NETSTK_SUPPORT_SW_MAC_AUTOACK == FALSE) */
+#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
   uint8_t crc_size;
   uint16_t phr, psdu_len;
   uint32_t crc_exp, crc_act;
@@ -416,8 +415,8 @@ static void phy_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     *p_err = NETSTK_ERR_CRC;
     return;
   }
-#endif
-#endif
+#endif /* #if (NETSTK_CFG_IEEE_802154G_EN == TRUE) */
+#endif /* #if (NETSTK_SUPPORT_SW_MAC_AUTOACK == FALSE) */
 
   /* Inform the next higher layer */
   pphy_netstk->mac->recv(p_data, psdu_len, p_err);
@@ -477,7 +476,7 @@ static uint8_t * phy_insertHdr(uint8_t *p_data, uint16_t len)
 }
 
 
-#if (NETSTK_CFG_RF_SW_AUTOACK_EN != TRUE)
+#if (NETSTK_SUPPORT_SW_MAC_AUTOACK == TRUE)
 
 /**
  * @brief   Insert PHY checksum
@@ -552,7 +551,7 @@ static uint32_t phy_crc32(uint8_t *p_data, uint16_t len)
 
   return crc_res;
 }
-#endif /* #if (NETSTK_CFG_RF_SW_AUTOACK_EN != TRUE) */
+#endif /* #if (NETSTK_SUPPORT_SW_MAC_AUTOACK == TRUE) */
 
 
 /*

@@ -164,6 +164,11 @@
 /** transceiver supports standard-specific checksum algorithm */
 #define NETSTK_SUPPORT_HW_CRC                 TRUE
 
+/** transceiver supports auto-acknowledgment on hardware */
+#if (NETSTK_SUPPORT_SW_MAC_AUTOACK == FALSE)
+#define NETSTK_SUPPORT_HW_AUTOACK             TRUE
+#endif /* #if (NETSTK_SUPPORT_SW_MAC_AUTOACK == FALSE) */
+
 
 /*
  *  --- Global Functions Definition ------------------------------------------*

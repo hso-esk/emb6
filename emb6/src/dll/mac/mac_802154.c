@@ -69,13 +69,14 @@
 *                               LOCAL MACROS
 ********************************************************************************
 */
-#if (NETSTK_CFG_MAC_SW_AUTOACK_EN == TRUE)
+#if (NETSTK_SUPPORT_SW_MAC_AUTOACK == TRUE)
   #if (NETSTK_CFG_WOR_EN == TRUE)
     #define MAC_CFG_TMR_WFA_IN_MS               (uint32_t )( 12 )
   #else
     #define MAC_CFG_TMR_WFA_IN_MS               (uint32_t )(  5 )
   #endif
-#endif
+#endif /* #if (NETSTK_SUPPORT_SW_MAC_AUTOACK == TRUE) */
+
 
 /*
 ********************************************************************************
@@ -89,10 +90,10 @@ static void mac_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
 static void mac_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
 static void mac_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
 
-#if (NETSTK_CFG_MAC_SW_AUTOACK_EN == TRUE)
+#if (NETSTK_SUPPORT_SW_MAC_AUTOACK == TRUE)
 static void mac_txAck(uint8_t seq, e_nsErr_t *p_err);
 static void mac_rxBufTimeout(s_rt_tmr_t *p_tmr, e_nsErr_t *p_err);
-#endif /* NETSTK_CFG_MAC_SW_AUTOACK_EN */
+#endif /* #if (NETSTK_SUPPORT_SW_MAC_AUTOACK == TRUE) */
 
 static void mac_csma(e_nsErr_t *p_err);
 
@@ -113,9 +114,9 @@ static nsTxCbFnct_t     mac_cbTxFnct;
 static e_nsErr_t        mac_txErr;
 static uint8_t          mac_hasData;
 
-#if (NETSTK_CFG_MAC_SW_AUTOACK_EN == TRUE)
+#if (NETSTK_SUPPORT_SW_MAC_AUTOACK == TRUE)
 static s_rt_tmr_t       mac_tmrWfa;
-#endif
+#endif /* #if (NETSTK_SUPPORT_SW_MAC_AUTOACK == TRUE) */
 
 /*
 ********************************************************************************
@@ -168,9 +169,9 @@ void mac_init(void *p_netstk, e_nsErr_t *p_err)
   mac_isAckReq = 0;
   mac_txErr = NETSTK_ERR_NONE;
 
-#if (NETSTK_CFG_MAC_SW_AUTOACK_EN == TRUE)
+#if (NETSTK_SUPPORT_SW_MAC_AUTOACK == TRUE)
   rt_tmr_create(&mac_tmrWfa, E_RT_TMR_TYPE_ONE_SHOT, MAC_CFG_TMR_WFA_IN_MS, 0, NULL);
-#endif
+#endif /* #if (NETSTK_SUPPORT_SW_MAC_AUTOACK == TRUE) */
 
   /*
    * Configure stack address
@@ -385,7 +386,7 @@ void mac_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
   if (mac_isAckReq == TRUE) {
 
   /* is software Auto-ACK feature of MAC disabled? */
-#if (NETSTK_CFG_MAC_SW_AUTOACK_EN == FALSE)
+#if (NETSTK_SUPPORT_SW_MAC_AUTOACK == FALSE)
     {
       /* has the frame not been acknowledged? */
       if (*p_err == NETSTK_ERR_TX_NOACK) {
@@ -479,7 +480,7 @@ void mac_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
         } while (is_tx_done == FALSE);
       }
     }
-    #endif
+#endif /* #if (NETSTK_SUPPORT_SW_MAC_AUTOACK == FALSE) */
   }
   /* is ACK not required? */
   else {
@@ -522,10 +523,10 @@ void mac_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 #endif
 
   int hdrlen;
-#if (NETSTK_CFG_MAC_SW_AUTOACK_EN == TRUE)
+#if (NETSTK_SUPPORT_SW_MAC_AUTOACK == TRUE)
   uint8_t exp_seq;
   uint8_t is_acked;
-#endif /* #if (NETSTK_CFG_MAC_SW_AUTOACK_EN == TRUE) */
+#endif /* #if (NETSTK_SUPPORT_SW_MAC_AUTOACK == TRUE) */
   frame802154_t frame;
 
   /* set returned error code to default */
@@ -554,7 +555,7 @@ void mac_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 
   /* was MAC waiting for ACK? */
   if (mac_isAckReq) {
-#if (NETSTK_CFG_MAC_SW_AUTOACK_EN == TRUE)
+#if (NETSTK_SUPPORT_SW_MAC_AUTOACK == TRUE)
     /* then frames other than ACK shall be discarded silently */
 
     /* check if this is expected ACK */
@@ -569,13 +570,13 @@ void mac_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
       mac_txErr = NETSTK_ERR_TX_COLLISION;
       TRACE_LOG_ERR("MAC_TX: collided");
     }
-#endif
+#endif /* #if (NETSTK_SUPPORT_SW_MAC_AUTOACK == TRUE) */
   }
   else {
     switch (frame.fcf.frame_type) {
       case FRAME802154_DATAFRAME:
       case FRAME802154_CMDFRAME:
-#if (NETSTK_CFG_MAC_SW_AUTOACK_EN == TRUE)
+#if (NETSTK_SUPPORT_SW_MAC_AUTOACK == TRUE)
         /* perform Auto-ACK */
         if ((frame.fcf.ack_required == 1) &&
             (frame.dest_pid == mac_phy_config.pan_id) &&
@@ -583,7 +584,7 @@ void mac_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
             (linkaddr_cmp((linkaddr_t *) frame.dest_addr, &linkaddr_node_addr)) == 1) {
           mac_txAck(frame.seq, p_err);
         }
-#endif /* NETSTK_CFG_MAC_SW_AUTOACK_EN */
+#endif /* #if (NETSTK_SUPPORT_SW_MAC_AUTOACK == TRUE) */
 
         /* signal upper layer of the received packet */
         pmac_netstk->dllc->recv(p_data, len, p_err);
@@ -638,7 +639,7 @@ void mac_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
   }
 }
 
-#if (NETSTK_CFG_MAC_SW_AUTOACK_EN == TRUE)
+#if (NETSTK_SUPPORT_SW_MAC_AUTOACK == TRUE)
 /**
  * @brief   ACK transmission
  *
@@ -683,7 +684,7 @@ static void mac_txAck(uint8_t seq, e_nsErr_t *p_err)
   pmac_netstk->phy->send(p_ack, ack_len, p_err);
   LOG_INFO("MAC_TX: ACK %d.", frame.seq);
 }
-#endif /* NETSTK_CFG_MAC_SW_AUTOACK_EN */
+#endif /* #if (NETSTK_SUPPORT_SW_MAC_AUTOACK == TRUE) */
 
 
 /**
@@ -734,7 +735,7 @@ static void mac_csma(e_nsErr_t *p_err)
   LOG_INFO("MAC_TX: NB %d.", nb);
 }
 
-#if (NETSTK_CFG_MAC_SW_AUTOACK_EN == TRUE)
+#if (NETSTK_SUPPORT_SW_MAC_AUTOACK == TRUE)
 /**
  * @brief Polling for data until either the data is available or timeout is over
  * @param p_tmr
@@ -777,7 +778,7 @@ static void mac_rxBufTimeout(s_rt_tmr_t *p_tmr, e_nsErr_t *p_err)
     *p_err = NETSTK_ERR_NONE;
   }
 }
-#endif /* NETSTK_CFG_MAC_SW_AUTOACK_EN */
+#endif /* #if (NETSTK_SUPPORT_SW_MAC_AUTOACK == TRUE) */
 
 
 /*

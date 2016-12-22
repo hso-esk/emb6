@@ -1105,9 +1105,9 @@ void uip_log(char *msg);
   #endif
 #endif
 
-/*!< Enable/Disable auto-acknowledgment on MAC */
-#ifndef NETSTK_CFG_MAC_SW_AUTOACK_EN
-#define NETSTK_CFG_MAC_SW_AUTOACK_EN                        FALSE
+/*!< Turn SW auto-ACK support on MAC by default */
+#ifndef NETSTK_SUPPORT_SW_MAC_AUTOACK
+#define NETSTK_SUPPORT_SW_MAC_AUTOACK                       FALSE
 #endif
 
 /*!< Enable/Disable automatic on/off to netstack
