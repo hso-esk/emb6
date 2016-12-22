@@ -1072,7 +1072,7 @@ static void rf_rxFifoThresholdISR(void *p_arg) {
 
     /* disable RXFIFO_THR interrupt once number of remaining bytes is less than FIFO_THR */
     if (p_ctx->rxNumRemBytes <= RF_CFG_FIFO_THR) {
-      bsp_extIntDisable(RF_INT_RXFIFO_THR);
+      bsp_pinIRQDisable(RF_INT_RXFIFO_THR);
     }
 #endif /* NETSTK_CFG_IEEE_802154G_EN */
   }
