@@ -602,16 +602,6 @@ frame802154_parse(uint8_t *data, int len, frame802154_t *pf)
     fcf.frame_pending = (p[0] >> 4) & 1;
     fcf.ack_required = (p[0] >> 5) & 1;
     fcf.panid_compression = (p[0] >> 6) & 1;
-
-#if NETSTK_CFG_IEEE_802154G_EN
-    /* todo missing implementation for fully-supported IEEE802154g frame format
-     * at the moment the frame is formated as following:
-     * - Sequence Number Suppression is ignored.
-     * - IE List Present is ignored
-     **/
-    fcf.seq_suppression = (p[1] & 0x01);
-    fcf.ie_list_present = (p[1] >> 1) & 0x01 ;
-#endif
     fcf.sequence_number_suppression = p[1] & 1;
     fcf.ie_list_present = (p[1] >> 1) & 1;
     fcf.dest_addr_mode = (p[1] >> 2) & 3;

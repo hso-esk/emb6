@@ -148,11 +148,6 @@ typedef struct {
   uint8_t frame_pending;     /**< 1 bit. True if sender has more data to send */
   uint8_t ack_required;      /**< 1 bit. Is an ack frame required? */
   uint8_t panid_compression; /**< 1 bit. Is this a compressed header? */
-#if NETSTK_CFG_IEEE_802154G_EN
-  /* 1 bit is reserved */
-  uint8_t seq_suppression;
-  uint8_t ie_list_present;
-#endif
   uint8_t sequence_number_suppression; /**< 1 bit. Does the header omit sequence number?, see 802.15.4e */
   uint8_t ie_list_present;   /**< 1 bit. Does the header contain Information Elements?, see 802.15.4e */
   uint8_t dest_addr_mode;    /**< 2 bit. Destination address mode, see 802.15.4 */
