@@ -85,6 +85,51 @@ static void _hal_isrSysTick(uint32_t l_count);
 /*! Hal tick counter */
 static clock_time_t volatile hal_ticks;
 
+/*
+ * --- Type Definitions -----------------------------------------------------*
+ */
+/**
+ * \brief   Description of a single Pin.
+ *
+ *          A pin consists of several attributes such as its port
+ *          and pin numbers and the output mode and IRQ callbacks.
+ */
+typedef struct
+{
+  /** Pin */
+  uint8_t pin;
+  /** Value */
+  uint8_t val;
+  /** IRQ callback */
+  pf_hal_irqCb_t pf_cb;
+
+} s_hal_gpio_pin_t;
+
+
+/** Definition of the IOs */
+static s_hal_gpio_pin_t s_hal_gpio[EN_HAL_PIN_MAX] = {
+
+#if defined(HAL_SUPPORT_LED0)
+  {CC1310_LED0, 0, NULL}, /* LED0 */
+#endif /* #if defined(HAL_SUPPORT_LED0) */
+#if defined(HAL_SUPPORT_LED1)
+  {CC1310_LED1, 0, NULL}, /* LED1 */
+#endif /* #if defined(HAL_SUPPORT_LED1) */
+#if defined(HAL_SUPPORT_LED2)
+  {CC1310_LED2, 0, NULL}, /* LED2 */
+#endif /* #if defined(HAL_SUPPORT_LED2) */
+#if defined(HAL_SUPPORT_LED3)
+  {CC1310_LED3, 0, NULL}, /* LED3 */
+#endif /* #if defined(HAL_SUPPORT_LED3) */
+
+
+#if  0
+  defined(HAL_SUPPORT_SLIPUART)
+  {EFM32_SLIP_UART_PORT_USART_TX, EFM32_SLIP_UART_PIN_USART_TX, gpioModePushPull, 0, NULL}, /* UART_TX */
+  {EFM32_SLIP_UART_PORT_USART_RX, EFM32_SLIP_UART_PIN_USART_RX, gpioModeInputPull, 0, NULL}, /* UART_RX */
+#endif
+
+};
 /*============================================================================*/
 /*                           LOCAL FUNCTIONS                                  */
 /*============================================================================*/
@@ -273,19 +318,19 @@ void hal_ledOff(uint16_t ui_led)
 {
     switch( ui_led )
     {
-        case HAL_LED0:
+        case CC1310_LED0:
             bspLedClear( BSP_LED_1 );
             break;
 
-        case HAL_LED1:
+        case CC1310_LED1:
             bspLedClear( BSP_LED_2 );
             break;
 
-        case HAL_LED2:
+        case CC1310_LED2:
             bspLedClear( BSP_LED_3 );
             break;
 
-        case HAL_LED3:
+        case CC1310_LED3:
             bspLedClear( BSP_LED_4 );
             break;
     }
@@ -301,19 +346,19 @@ void hal_ledOn(uint16_t ui_led)
 {
     switch( ui_led )
     {
-        case HAL_LED0:
+        case CC1310_LED0:  /* LED mask */
             bspLedSet( BSP_LED_1 );
             break;
 
-        case HAL_LED1:
+        case CC1310_LED1:
             bspLedSet( BSP_LED_2 );
             break;
 
-        case HAL_LED2:
+        case CC1310_LED2:
             bspLedSet( BSP_LED_3 );
             break;
 
-        case HAL_LED3:
+        case CC1310_LED3:
             bspLedSet( BSP_LED_4 );
             break;
     }
@@ -357,7 +402,18 @@ int8_t hal_delayUs(uint32_t i_delay)
  */
 int8_t hal_pinSet( void* p_pin, uint8_t val )
 {
-  /* Not needed because of integrated IF */
+    s_hal_gpio_pin_t* p_gpioPin;
+    p_gpioPin = (s_hal_gpio_pin_t *)p_pin;
+    if(val)
+    {
+        hal_ledOn(p_gpioPin->pin);
+        p_gpioPin->val=1;
+    }
+    else
+    {
+        hal_ledOff(p_gpioPin->pin);
+        p_gpioPin->val=0;
+    }
 return 0;
 } /* hal_pinSet() */
 
@@ -371,7 +427,11 @@ return 0;
  */
 void hal_pinClr(void * p_pin)
 {
-  /* Not needed because of integrated IF */
+    s_hal_gpio_pin_t* p_gpioPin;
+    p_gpioPin = (s_hal_gpio_pin_t *)p_pin;
+
+        hal_ledOff(p_gpioPin->pin);
+        p_gpioPin->val=0;
 } /* hal_pinClr() */
 
 /*!
@@ -384,8 +444,10 @@ void hal_pinClr(void * p_pin)
  */
 int8_t hal_pinGet(void * p_pin)
 {
-  /* Not needed because of integrated IF */
-  return 0U;
+    s_hal_gpio_pin_t* p_gpioPin;
+    p_gpioPin = (s_hal_gpio_pin_t *)p_pin;
+
+  return p_gpioPin->val;
 } /* hal_pinGet() */
 
 /*!
@@ -552,7 +614,13 @@ int8_t hal_periphIRQRegister( en_hal_periphirq_t irq, pf_hal_irqCb_t pf_cb,
 
 void* hal_pinInit( en_hal_pin_t pin )
 {
-  return -1;
+    s_hal_gpio_pin_t* p_pin = NULL;
+    p_pin = &s_hal_gpio[pin];
+    //p_pin->pin=(uint8_t)pin;
+    p_pin->val=1;
+    hal_ledOn(p_pin->pin);
+
+  return p_pin ;
 } /* hal_pinInit() */
 
 

@@ -155,7 +155,7 @@ uint8_t sf_rf_6lowpan_sendBlocking(uint8_t *pc_data, uint16_t  i_len)
   else
   {
         #if CC13XX_TX_LED_ENABLED
-          bsp_led( HAL_LED2, EN_BSP_LED_OP_TOGGLE );
+          bsp_led( HAL_LED2, EN_BSP_LED_OP_BLINK );
         #endif
         /* Set the transceiver in rx mode */
           sf_rf_switchState(RF_STATUS_RX_LISTEN);
@@ -407,7 +407,7 @@ static void rx_call_back(uint32_t l_flag)
       sf_rf_switchState(RF_STATUS_RX_LISTEN);
       bsp_led( HAL_LED1, EN_BSP_LED_OP_OFF );
       bsp_led( HAL_LED0, EN_BSP_LED_OP_ON );
-      bsp_led( HAL_LED3, EN_BSP_LED_OP_TOGGLE );
+      bsp_led( HAL_LED3, EN_BSP_LED_OP_BLINK );
   }
   else if(IRQ_RX_NOK == (l_flag & IRQ_RX_NOK))
   {
@@ -415,7 +415,7 @@ static void rx_call_back(uint32_t l_flag)
     sf_rf_switchState(RF_STATUS_RX_LISTEN);
     bsp_led( HAL_LED1, EN_BSP_LED_OP_ON );
     bsp_led( HAL_LED0, EN_BSP_LED_OP_OFF );
-    bsp_led( HAL_LED3, EN_BSP_LED_OP_TOGGLE );
+    bsp_led( HAL_LED3, EN_BSP_LED_OP_BLINK );
   }
   else if(IRQ_INTERNAL_ERROR == (l_flag & IRQ_INTERNAL_ERROR))
   {
@@ -577,9 +577,9 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
           /* stop waiting for ACK */
           cc1310.tx.Tx_waiting_Ack=0;
           if(cc1310.tx.Ack_received)
-              return ROUTINE_DONE ;
+              return ROUTINE_DONE;
           else
-              return ROUTINE_ERROR_TX_NOACK ;
+              return ROUTINE_ERROR_TX_NOACK;
       }
 
   case RF_STATUS_RX_LISTEN :

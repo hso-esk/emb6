@@ -77,6 +77,12 @@
 /*! Platform interfaces: Definition of TX pin. */
 #define UART_IOID_TXD                IOID_3
 
+#define CC1310_LED0                     0
+#define CC1310_LED1                     1
+#define CC1310_LED2                     2
+#define CC1310_LED3                     3
+
+
 /*==============================================================================
                                      ENUMS
 ==============================================================================*/
