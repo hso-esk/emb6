@@ -56,8 +56,8 @@
                                  INCLUDE FILES
  ==============================================================================*/
 #include "emb6.h"
-#include "emb6_conf.h"
 #include "bsp.h"
+#include "board_conf.h"
 #include "packetbuf.h"
 #include "tcpip.h"
 #include "etimer.h"
@@ -69,6 +69,10 @@
 /*==============================================================================
                                     MACROS
  ==============================================================================*/
+#if !defined(NETSTK_SUPPORT_HW_CRC)
+#error "missing or wrong radio checksum setting in board_conf.h"
+#endif
+
 #define     LOGGER_ENABLE                 LOGGER_RADIO
 #include    "logger.h"
 #define     __ADDRLEN__                   2

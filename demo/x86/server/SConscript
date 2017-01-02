@@ -1,8 +1,0 @@
-x86 = {
-# C global defines
-	'CPPDEFINES' : [
-		('EMB6_INIT_ROOT',1),
-	],
-}
-
-Return('x86')

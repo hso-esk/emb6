@@ -168,10 +168,10 @@ typedef struct
 /* Initialization of the timer */
 static void _hal_tim0Init( void );
 
-#if !defined (HAL_SUPPORT_SLIPUART)
+#if (LOGGER_LEVEL > 0) && (!defined (HAL_SUPPORT_SLIPUART))
 /** Ouput function to wire a character to UART */
 static int _hal_debugPutChar( char c, FILE * stream );
-#endif /* #if !defined (HAL_SUPPORT_SLIPUART) */
+#endif /* #if (LOGGER_LEVEL > 0) && (!defined (HAL_SUPPORT_SLIPUART)) */
 
 /** Delay loop */
 inline static void _hal_delayLoop( uint16_t __count ) __attribute__((always_inline));
@@ -245,11 +245,11 @@ static s_hal_spi_t s_hal_spi = {
 static s_hal_irq s_hal_irqs[EN_HAL_PERIPHIRQ_MAX];
 
 
-#if !defined (HAL_SUPPORT_SLIPUART)
+#if (LOGGER_LEVEL > 0) && (!defined (HAL_SUPPORT_SLIPUART))
 /** Redirection of stdout to UART */
 static FILE st_usartStdout = FDEV_SETUP_STREAM( _hal_debugPutChar, NULL,
         _FDEV_SETUP_WRITE );
-#endif /* #if !defined (HAL_SUPPORT_SLIPUART) */
+#endif /* #if (LOGGER_LEVEL > 0) && (!defined (HAL_SUPPORT_SLIPUART)) */
 
 
 /*
@@ -298,7 +298,7 @@ static void _hal_tim0Init( void )
 } /* _hal_tim0Init() */
 
 
-#if !defined (HAL_SUPPORT_SLIPUART)
+#if (LOGGER_LEVEL > 0) && (!defined (HAL_SUPPORT_SLIPUART))
 /*----------------------------------------------------------------------------*/
 /**
  * \brief   Output character using the debug interface.
@@ -319,7 +319,7 @@ static int _hal_debugPutChar( char c, FILE * stream )
   UDR(ATM1281_UART_DEBUG_INST) = c;
   return 0;
 } /* hal_uart_putchar() */
-#endif /* #if !defined (HAL_SUPPORT_SLIPUART) */
+#endif /* #if (LOGGER_LEVEL > 0) && (!defined (HAL_SUPPORT_SLIPUART)) */
 
 /*----------------------------------------------------------------------------*/
 /** \brief  This function implements a low level delay as builin AVR delay

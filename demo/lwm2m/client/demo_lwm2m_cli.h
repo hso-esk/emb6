@@ -37,56 +37,38 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+/*============================================================================*/
 
-/*
- * --- Module Description ---------------------------------------------------*
- */
-/**
- *  \file       board_conf.c
- *  \author     Institute of reliable Embedded Systems
- *              and Communication Electronics
- *  \date       $Date$
- *  \version    $Version$
- *
- *  \brief      Definition of the Board Configuration.
- *
- *              The Board Configuration configures the underlying MCU and
- *              transceiver.
- */
+/*! \file   demo_coap_cli.h
 
-/*
- *  --- Includes -------------------------------------------------------------*
- */
-#include "emb6.h"
-#include "assert.h"
-#include "board_conf.h"
+    \brief  This is the header file of the demo CoAP client application
 
-
-/*
- * --- Macro Definitions --------------------------------------------------- *
- */
-/** Enable or disable logging */
-#define LOGGER_ENABLE             LOGGER_BSP
-#include "logger.h"
-
-
-/*
- *  --- Global Functions Definition ------------------------------------------*
- */
-
-/*---------------------------------------------------------------------------*/
-/*
-* board_conf()
 */
-int8_t board_conf( s_ns_t* p_ns )
-{
-  EMB6_ASSERT_RET( p_ns != NULL, -1 );
+#ifndef DEMO_LWM2M_CLI_H_
+#define DEMO_LWM2M_CLI_H_
 
-  p_ns->dllc = &dllc_driver_802154;
-  p_ns->mac = &mac_driver_null;
-  p_ns->phy = &phy_driver_null;
-  p_ns->rf = &rf_driver_at212b;
+/*==============================================================================
+                         FUNCTION PROTOTYPES OF THE API
+==============================================================================*/
+/*============================================================================*/
+/*!
+   \brief Initialization of the LWM2M client application.
 
-  return 0;
-} /* board_conf */
+*/
+/*============================================================================*/
+int8_t demo_lwm2mInit(void);
 
+/*============================================================================*/
+/*!
+    \brief Configuration of the LWM2M client application.
+
+    \return 0 - error, 1 - success
+*/
+/*============================================================================*/
+uint8_t demo_lwm2mConf(s_ns_t* pst_netStack);
+
+#endif /* DEMO_LWM2M_CLI_H_ */
+/** @} */
+/** @} */
+/** @} */
+/** @} */

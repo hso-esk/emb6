@@ -54,7 +54,6 @@
 /*! \file   demo_main.c
 
     \author Artem Yushev,
-            Phuong Nguyen
 
     \brief  Main function.
 
@@ -82,8 +81,16 @@
 #include "demo_udp_socket.h"
 #endif
 
+
 #if DEMO_USE_UDP_SOCKET_SIMPLE
 #include "demo_udp_socket_simple.h"
+#endif
+
+#if DEMO_USE_LWM2M
+#if CONF_USE_SERVER
+#else
+#include "demo_lwm2m_cli.h"
+#endif
 #endif
 
 #if DEMO_USE_COAP
@@ -139,6 +146,15 @@
 #include "rpl.h"
 #endif
 
+#if USE_FREERTOS
+ /* Scheduler includes. */
+#include "FreeRTOS.h"
+#include "croutine.h"
+#include "task.h"
+#include "queue.h"
+#include "semphr.h"
+#endif /* #ifndef EMB6_PROC_DELAY */
+
 /*==============================================================================
                                      MACROS
  =============================================================================*/
@@ -147,16 +163,53 @@
 #define EMB6_PROC_DELAY                     500
 #endif /* #ifndef EMB6_PROC_DELAY */
 
+#if USE_FREERTOS
+/* Task priorities. */
+#define mainEMB6_TASK_PRIORITY          ( tskIDLE_PRIORITY + 1 )
+#define mainLED_TASK_PRIORITY           ( tskIDLE_PRIORITY + 2 )
+#endif /* #if USE_FREERTOS */
+
+/*==============================================================================
+                                     STRUCTS
+ =============================================================================*/
+
+/**
+ * emb6 task parameters
+ */
+typedef struct
+{
+  /** MAC address */
+  uint16_t ui_macAddr;
+
+}s_emb6_startup_params_t;
+
+#if USE_FREERTOS
+/**
+ * LED task parameters
+ */
+typedef struct
+{
+    int en;
+    int delay;
+
+}s_led_task_param_t;
+#endif /* #if USE_FREERTOS */
+
 /*==============================================================================
                                      ENUMS
  =============================================================================*/
 
 /*==============================================================================
-                          LOCAL VARIABLE DECLARATIONS
+                                    VARIABLES
  =============================================================================*/
-/*==============================================================================
-                                LOCAL CONSTANTS
- =============================================================================*/
+
+/** parameters for emb6 startup */
+s_emb6_startup_params_t emb6_startupParams;
+
+#if USE_FREERTOS
+/** parameters for the LED Taks */
+ s_led_task_param_t ledTaskParams;
+#endif /* #if USE_FREERTOS */
 
 /*==============================================================================
                            LOCAL FUNCTION PROTOTYPES
@@ -164,6 +217,30 @@
 static void loc_stackConf(uint16_t mac_addr_word);
 static void loc_demoAppsConf(s_ns_t* pst_netStack, e_nsErr_t *p_err);
 static uint8_t loc_demoAppsInit(void);
+
+
+/**
+ * emb6 task.
+ */
+static void emb6_task( void* p_params );
+
+#if USE_FREERTOS
+
+/**
+ * LED task.
+ */
+static void vLEDTask( void *pvParameters );
+
+/*
+ * Configure the hardware as required by the demo.
+ */
+static void prvSetupHardware( void );
+
+/*
+ * Put the CPU into the least low power low power mode.
+ */
+static void prvLowPowerMode1( void );
+#endif /* #if USE_FREERTOS */
 
 /*==============================================================================
                                 LOCAL FUNCTIONS
@@ -200,106 +277,115 @@ static uint16_t loc_parseMac(const char* mac, uint16_t defaultMac)
 static void loc_demoAppsConf(s_ns_t* pst_netStack, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
-  if (p_err == NULL) {
-      emb6_errorHandler(p_err);
-  }
+    if (p_err == NULL) {
+        emb6_errorHandler(p_err);
+    }
 
-  if (pst_netStack == NULL) {
-      *p_err = NETSTK_ERR_INVALID_ARGUMENT;
-      return;
-  }
+    if (pst_netStack == NULL) {
+        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+        return;
+    }
 #endif
 
-  #if DEMO_USE_EXTIF
-  demo_extifConf(pst_netStack);
-  #endif
+    #if DEMO_USE_EXTIF
+    demo_extifConf(pst_netStack);
+    #endif
 
-  #if DEMO_USE_COAP
-  demo_coapConf(pst_netStack);
-  #endif
+#if DEMO_USE_LWM2M
+  demo_lwm2mConf(pst_netStack);
+#endif
 
-  #if DEMO_USE_MDNS
-  demo_mdnsConf(pst_netStack);
-  #endif
+    #if DEMO_USE_COAP
+    demo_coapConf(pst_netStack);
+    #endif
 
-  #if DEMO_USE_SNIFFER
-  demo_sniffConf(pst_netStack);
-  #endif
+    #if DEMO_USE_MDNS
+    demo_mdnsConf(pst_netStack);
+    #endif
 
-  #if DEMO_USE_UDPALIVE
-  demo_udpAliveConf(pst_netStack);
-  #endif
+    #if DEMO_USE_SNIFFER
+    demo_sniffConf(pst_netStack);
+    #endif
 
-  #if DEMO_USE_UDP_SOCKET
-  demo_udpSocketCfg(pst_netStack);
-  #endif
+    #if DEMO_USE_UDPALIVE
+    demo_udpAliveConf(pst_netStack);
+    #endif
+
+    #if DEMO_USE_UDP_SOCKET
+    demo_udpSocketCfg(pst_netStack);
+    #endif
 
   #if DEMO_USE_UDP_SOCKET_SIMPLE
   demo_udpSocketSimpleCfg(pst_netStack);
   #endif
 
-  #if DEMO_USE_APTB
-  demo_aptbConf(pst_netStack);
-  #endif
+    #if DEMO_USE_APTB
+    demo_aptbConf(pst_netStack);
+    #endif
 
-  #if DEMO_USE_UDP
-  demo_udpSockConf(pst_netStack);
-  #endif
+    #if DEMO_USE_UDP
+    demo_udpSockConf(pst_netStack);
+    #endif
 
-  #if DEMO_USE_MQTT
-  demo_mqttConf(pst_netStack);
-  #endif
+    #if DEMO_USE_MQTT
+    demo_mqttConf(pst_netStack);
+    #endif
 
-  #if DEMO_USE_TESTSUITE
-  demo_testsuiteConf(pst_netStack);
-  #endif
+    #if DEMO_USE_TESTSUITE
+    demo_testsuiteConf(pst_netStack);
+    #endif
 
-  #if DEMO_USE_DTLS
-  demo_dtlsConf(pst_netStack);
-  #endif
+    #if DEMO_USE_DTLS
+    demo_dtlsConf(pst_netStack);
+    #endif
 
-  /* set returned error code */
-  *p_err = NETSTK_ERR_NONE;
+    /* set returned error code */
+    *p_err = NETSTK_ERR_NONE;
 }
 
 static uint8_t loc_demoAppsInit(void)
 {
+    #if DEMO_USE_EXTIF
+    if (!demo_extifInit()) {
+        return 0;
+    }
+    #endif
 
-  #if DEMO_USE_EXTIF
-  if (!demo_extifInit()) {
-      return 0;
-  }
-  #endif
+    #if DEMO_USE_COAP
+    if (!demo_coapInit()) {
+        return 0;
+    }
+    #endif
 
-  #if DEMO_USE_COAP
-  if (!demo_coapInit()) {
-      return 0;
-  }
-  #endif
-
-  #if DEMO_USE_MDNS
-  if (!demo_mdnsInit()) {
+#if DEMO_USE_LWM2M
+if (!demo_lwm2mInit()) {
     return 0;
-  }
-  #endif
+}
+#endif
 
-  #if DEMO_USE_SNIFFER
-  if (!demo_sniffInit()) {
-      return 0;
-  }
-  #endif
+    #if DEMO_USE_MDNS
+    if (!demo_mdnsInit()) {
+    	return 0;
+    }
+    #endif
 
-  #if DEMO_USE_UDPALIVE
-  if (!demo_udpAliveInit()) {
-      return 0;
-  }
-  #endif
+    #if DEMO_USE_SNIFFER
+    if (!demo_sniffInit()) {
+        return 0;
+    }
+    #endif
 
-  #if DEMO_USE_UDP_SOCKET
-  if (!demo_udpSocketInit()) {
-      return 0;
-  }
-  #endif
+    #if DEMO_USE_UDPALIVE
+    if (!demo_udpAliveInit()) {
+        return 0;
+    }
+    #endif
+
+    #if DEMO_USE_UDP_SOCKET
+    if (!demo_udpSocketInit()) {
+        return 0;
+    }
+    #endif
 
   #if DEMO_USE_UDP_SOCKET_SIMPLE
   if (!demo_udpSocketSimpleInit()) {
@@ -307,54 +393,163 @@ static uint8_t loc_demoAppsInit(void)
   }
   #endif
 
-  #if DEMO_USE_APTB
-  if (!demo_aptbInit()) {
-      return 0;
-  }
-  #endif
+    #if DEMO_USE_APTB
+    if (!demo_aptbInit()) {
+        return 0;
+    }
+    #endif
 
-  #if DEMO_USE_UDP
-  if (!demo_udpSockInit()) {
-      return 0;
-  }
-  #endif
+    #if DEMO_USE_UDP
+    if (!demo_udpSockInit()) {
+        return 0;
+    }
+    #endif
 
-  #if DEMO_USE_MQTT
-  if (!mqtt_init()) {
-      return 0;
-  }
-  #endif
+    #if DEMO_USE_MQTT
+    if (!mqtt_init()) {
+        return 0;
+    }
+    #endif
 
-  #if DEMO_USE_TESTSUITE
-  if (!demo_testsuiteInit()) {
-      return 0;
-  }
-  #endif
+    #if DEMO_USE_TESTSUITE
+    if (!demo_testsuiteInit()) {
+        return 0;
+    }
+    #endif
 
-  #if DEMO_USE_DTLS
-  if (!demo_dtlsInit()) {
-    return 0;
-  }
-  #endif
+    #if DEMO_USE_DTLS
+    if (!demo_dtlsInit()) {
+	    return 0;
+    }
+    #endif
 
-  return 1;
+    return 1;
 }
-
 
 /*==============================================================================
  emb6_errorHandler()
 ==============================================================================*/
 void emb6_errorHandler(e_nsErr_t *p_err)
 {
-  /* turns LEDs on to indicate error */
-  bsp_led(HAL_LED0, EN_BSP_LED_OP_ON);
-  LOG_ERR("Program failed");
+    /* turns LEDs on to indicate error */
+    bsp_led(HAL_LED0, EN_BSP_LED_OP_ON);
+    LOG_ERR("Program failed");
 
-  /* error handling */
-  while (1) {
-  }
+    /* TODO missing error handling */
+    while (1) {
+    }
 }
 
+/*==============================================================================
+ emb6_task()
+==============================================================================*/
+static void emb6_task( void* p_params )
+{
+    s_ns_t st_netstack;
+    s_emb6_startup_params_t* ps_params = p_params;
+    uint8_t ret;
+    e_nsErr_t err;
+
+    /* Initialize variables */
+    err = NETSTK_ERR_NONE;
+    memset(&st_netstack, 0, sizeof(st_netstack));
+
+    /* Initialize BSP */
+    ret = bsp_init(&st_netstack);
+    if (ret != 0) {
+        err = NETSTK_ERR_INIT;
+        emb6_errorHandler(&err);
+    }
+
+    /* Configure applications */
+    loc_demoAppsConf(&st_netstack, &err);
+    if (err != NETSTK_ERR_NONE) {
+        emb6_errorHandler(&err);
+    }
+
+    /* Initialize stack */
+    loc_stackConf(ps_params->ui_macAddr);
+    emb6_init(&st_netstack, &err);
+    if (err != NETSTK_ERR_NONE) {
+        emb6_errorHandler(&err);
+    }
+
+    /* Show that stack has been launched */
+    bsp_led(HAL_LED0, EN_BSP_LED_OP_ON);
+    bsp_delayUs(2000000);
+    bsp_led(HAL_LED0, EN_BSP_LED_OP_OFF);
+
+    /* Initialize applications */
+    ret = loc_demoAppsInit();
+    if(ret == 0) {
+        LOG_ERR("Demo APP failed to initialize");
+        err = NETSTK_ERR_INIT;
+        emb6_errorHandler(&err);
+    }
+
+    while(1)
+    {
+        /* run the emb6 stack */
+#if USE_FREERTOS
+        emb6_process(-1);
+#else
+        emb6_process(EMB6_PROC_DELAY);
+#endif /* #if USE_FREERTOS */
+    }
+
+    /* the program should never come here */
+    return;
+}
+
+#if USE_FREERTOS
+/*-----------------------------------------------------------*/
+static void vLEDTask( void *pvParameters )
+{
+    s_led_task_param_t* p_params = (s_led_task_param_t*)pvParameters;
+    while(1)
+    {
+        if( p_params->en )
+        {
+            bsp_led( HAL_LED0, EN_BSP_LED_OP_TOGGLE );
+            bsp_led( HAL_LED1, EN_BSP_LED_OP_TOGGLE );
+        }
+
+        vTaskDelay( p_params->delay / portTICK_PERIOD_MS );
+    }
+}
+
+/*-----------------------------------------------------------*/
+void vApplicationIdleHook( void )
+{
+    /* Use the idle task to place the CPU into a low power mode.  Greater power
+    saving could be achieved by not including any demo tasks that never block. */
+    prvLowPowerMode1();
+}
+
+/*-----------------------------------------------------------*/
+void vApplicationStackOverflowHook( TaskHandle_t pxTask, char *pcTaskName )
+{
+
+    /* This function will be called if a task overflows its stack, if
+    configCHECK_FOR_STACK_OVERFLOW != 0.  It might be that the function
+    parameters have been corrupted, depending on the severity of the stack
+    overflow.  When this is the case pxCurrentTCB can be inspected in the
+    debugger to find the offending task. */
+    for( ;; );
+}
+
+/*-----------------------------------------------------------*/
+static void prvSetupHardware( void )
+{
+    /* Nothing to do */
+}
+
+/*-----------------------------------------------------------*/
+static void prvLowPowerMode1( void )
+{
+    /* not implemented */
+}
+#endif /* #if USE_FREERTOS */
 
 /*==============================================================================
  main()
@@ -365,11 +560,11 @@ int main(int argc, char **argv)
 int main(void)
 #endif /* #if defined(MAIN_WITH_ARGS) */
 {
-  char *pc_mac_addr = NULL;
-  uint16_t mac_addr_word;
   s_ns_t st_netstack;
   uint8_t ret;
   e_nsErr_t err;
+
+  memset(&emb6_startupParams, 0, sizeof(emb6_startupParams));
 
   /* Initialize variables */
   err = NETSTK_ERR_NONE;
@@ -377,12 +572,10 @@ int main(void)
 
 #if defined(MAIN_WITH_ARGS)
   if (argc > 1) {
-    pc_mac_addr = malloc(strlen(argv[1])+1);
-    strcpy(pc_mac_addr, argv[1]);
+    emb6_startupParams.ui_macAddr = loc_parseMac(argv[1], MAC_ADDR_WORD);
   }
 #endif /* #if defined(MAIN_WITH_ARGS) */
-  mac_addr_word = loc_parseMac(pc_mac_addr, MAC_ADDR_WORD);
-  free(pc_mac_addr);
+  emb6_startupParams.ui_macAddr = loc_parseMac(NULL, MAC_ADDR_WORD);
 
   /* Initialize BSP */
   ret = bsp_init(&st_netstack);
@@ -391,37 +584,32 @@ int main(void)
     emb6_errorHandler(&err);
   }
 
-  /* Configure applications */
-  loc_demoAppsConf(&st_netstack, &err);
-  if (err != NETSTK_ERR_NONE) {
-    emb6_errorHandler(&err);
-  }
+#if USE_FREERTOS
+    ledTaskParams.en = 1;
+    ledTaskParams.delay = 1000;
 
-  /* Initialize stack */
-  loc_stackConf(mac_addr_word);
-  emb6_init(&st_netstack, &err);
-  if (err != NETSTK_ERR_NONE) {
-    emb6_errorHandler(&err);
-  }
+    /* Perform the necessary hardware configuration. */
+    prvSetupHardware();
 
-  /* Show that stack has been launched */
-  bsp_led(HAL_LED0, EN_BSP_LED_OP_ON);
-  bsp_delayUs(2000000);
-  bsp_led(HAL_LED0, EN_BSP_LED_OP_OFF);
+    /* Create EMB6 task. */
+    xTaskCreate( emb6_task, "EMB6Task", 2048, &emb6_startupParams, mainEMB6_TASK_PRIORITY, NULL );
 
-  /* Initialize applications */
-  ret = loc_demoAppsInit();
-  if (ret == 0) {
-    LOG_ERR("Demo APP failed to initialize");
-    err = NETSTK_ERR_INIT;
-    emb6_errorHandler(&err);
-  }
 
-  /* Start the emb6 stack */
-  emb6_process(EMB6_PROC_DELAY);
+    /* Create LED task. */
+    xTaskCreate( vLEDTask, "LEDTask", configMINIMAL_STACK_SIZE, &ledTaskParams, mainLED_TASK_PRIORITY, NULL );
 
-  /* the program should never come here */
-  return -1;
+    /* Start the scheduler. */
+    vTaskStartScheduler();
+
+    /* The scheduler should now be running the tasks so the following code should
+    never be reached.  If it is reached then there was insufficient heap space
+    for the idle task to be created.  In this case the heap size is set by
+    configTOTAL_HEAP_SIZE in FreeRTOSConfig.h. */
+    for( ;; );
+#else
+    emb6_task( &emb6_startupParams );
+#endif /* #if USE_FREERTOS */
 }
+
 /** @} */
 /** @} */

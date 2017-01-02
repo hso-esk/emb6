@@ -1,4 +1,7 @@
 /*
+ * --- License --------------------------------------------------------------*
+ */
+/*
  * emb6 is licensed under the 3-clause BSD license. This license gives everyone
  * the right to use and distribute the code, either in binary or source code
  * format, as long as the copyright license is retained in the source code.
@@ -37,81 +40,118 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-/*============================================================================*/
 
 /*
-********************************************************************************
-*                                   INCLUDES
-********************************************************************************
-*/
-#include "demo_udp_socket_simple.h"
+ * --- Module Description ---------------------------------------------------*
+ */
+/**
+ *  \file       demo_udp_socket_simple.c
+ *  \author     Institute of reliable Embedded Systems
+ *              and Communication Electronics
+ *  \date       $Date$
+ *  \version    $Version$
+ *
+ *  \brief      Demo to show how to use the simple UDP socket interface.
+ *
+ *              This Demo shows how to use the simple UDP socket interface. Therefore
+ *              the demo is divided into a server and a client application. The
+ *              client transmits data periodically to the server including a
+ *              fixed payload and a sequence counter. The server replies with
+ *              the same sequence number.
+ *              The demo makes use of the simplified Berkley Sockets alike interface
+ *              to transmit and receive the data.
+ *              The server is defined as the DAG-Root within the network and
+ *              its IP address is retrieved automatically. The Server just
+ *              replies to the node it got the packet from.
+ *              This demo is mainly used to show how to use the UDP socket
+ *              interface and to show basic connectivity.
+ */
+
+/*
+ * --- Includes -------------------------------------------------------------*
+ */
 #include "emb6.h"
+#include "demo_udp_socket_simple.h"
 #include "udp-socket.h"
 #include "etimer.h"
 #include "rpl.h"
 
 
-#define     LOGGER_ENABLE       LOGGER_DEMO_UDP_SOCKET_SIMPLE
-#if         LOGGER_ENABLE   ==  TRUE
-#define     LOGGER_SUBSYSTEM    "UDP Socket Simple"
-#endif
-#include    "logger.h"
-
-
 /*
-********************************************************************************
-*                                 LOCAL MACROS
-********************************************************************************
-*/
+ *  --- Macros ------------------------------------------------------------- *
+ */
+#define LOGGER_ENABLE               LOGGER_DEMO_UDP_SOCKET_SIMPLE
+#if LOGGER_ENABLE == TRUE
+#define LOGGER_SUBSYSTEM            "UDP Socket Simple"
+#endif /* #if LOGGER_ENABLE == TRUE */
+#include "logger.h"
+
+#ifndef DEMO_UDP_SIMPLE_PORT
 /** Port to use for the demo */
 #define DEMO_UDP_SIMPLE_PORT                        45287
+#endif /* DEMO_UDP_SIMPLE_PORT */
 
+#ifndef DEMO_UDP_SOCKET_SIMPLE_SEND_INTERVAL
 /** interval to send data in ms */
 #define DEMO_UDP_SOCKET_SIMPLE_SEND_INTERVAL        1000u
+#endif /* DEMO_UDP_SOCKET_SIMPLE_SEND_INTERVAL */
 
 /*
-********************************************************************************
-*                               LOCAL VARIABLES
-********************************************************************************
-*/
+ *  --- Local Variables ---------------------------------------------------- *
+ */
 
-/** The UDP socket to send and receive data from */
+
+/** The UDP socket to send and receive data to/from */
 static struct udp_socket s_soc;
 
-#ifdef  DEMO_UDP_SOCKET_SIMPLE_ROLE_CLIENT
+#if (DEMO_UDP_SOCKET_SIMPLE_ROLE_CLIENT == TRUE)
+ /** current sequence number counter */
 static uint32_t udp_socket_currSeqTx;
+
+/** Sequence number of the last received packet */
 static uint32_t udp_socket_lastSeqRx;
+
+/** Number of lost packets. */
 static uint32_t udp_socket_lostPktQty;
+
+/** Timer used for the next tx packet */
 static struct etimer udp_socket_etimer;
-#endif /* DEMO_UDP_SOCKET_SIMPLE_ROLE_CLIENT */
+#endif /* #if (DEMO_UDP_SOCKET_SIMPLE_ROLE_CLIENT == TRUE) */
 
 /*
-********************************************************************************
-*                          LOCAL FUNCTION DECLARATIONS
-********************************************************************************
-*/
+ *  --- Local Function Prototypes ------------------------------------------ *
+ */
+
 /* Data input callback. For further information see the function definition. */
 static void _rx_cb(struct udp_socket *c, void *ptr,
     const uip_ipaddr_t *source_addr, uint16_t source_port,
     const uip_ipaddr_t *dest_addr, uint16_t dest_port,
     const uint8_t *data, uint16_t datalen);
 
-#ifdef  DEMO_UDP_SOCKET_SIMPLE_ROLE_CLIENT
+#if (DEMO_UDP_SOCKET_SIMPLE_ROLE_CLIENT == TRUE)
 /* Event handler that is called for every TX timeout.
    For further details see the function definition */
 static void _tx_eventHandler(c_event_t c_event, p_data_t p_data);
-#endif /* #ifdef  DEMO_UDP_SOCKET_SIMPLE_ROLE_CLIENT */
+#endif /* #if (DEMO_UDP_SOCKET_SIMPLE_ROLE_CLIENT == TRUE) */
+
 
 /*
-********************************************************************************
-*                          LOCAL FUNCTION DEFINITIONS
-********************************************************************************
-*/
+ *  --- Local Functions ---------------------------------------------------- *
+ */
 
 /**
  * \brief   Data Input callback.
  *
  *          This function is called whenever new data was received.
+ *
+ * \param   c             Socket the data was received from.
+ * \param   ptr
+ * \param   source_addr   Source address
+ * \param   source_port   Source port
+ * \param   dest_addr     Destination address
+ * \param   dest_port     Destination port
+ * \param   data          Received data
+ * \param   datalen       Length of the received data
  */
 static void _rx_cb(struct udp_socket *c, void *ptr,
     const uip_ipaddr_t *source_addr, uint16_t source_port,
@@ -126,14 +166,14 @@ static void _rx_cb(struct udp_socket *c, void *ptr,
     seqNr = data[0];
     LOG1_INFO("UDP Rx Seq.-Nr.: %d", seqNr);
 
-#ifdef  DEMO_UDP_SOCKET_SIMPLE_ROLE_SERVER
+#if (DEMO_UDP_SOCKET_SIMPLE_ROLE_SERVER == TRUE)
     /* reply with the same packet to the seource address and port */
     udp_socket_sendto(&s_soc, &seqNr, 1, source_addr ,source_port);
-#endif /* #ifdef  DEMO_UDP_SOCKET_SIMPLE_ROLE_SERVER */
+#endif /* #if (DEMO_UDP_SOCKET_SIMPLE_ROLE_SERVER == TRUE) */
   }
 }
 
-#ifdef  DEMO_UDP_SOCKET_SIMPLE_ROLE_CLIENT
+#if (DEMO_UDP_SOCKET_SIMPLE_ROLE_CLIENT == TRUE)
 /**
  * \brief   TX timeout event handler.
  *
@@ -166,17 +206,16 @@ static void _tx_eventHandler(c_event_t c_event, p_data_t p_data)
     }
   }
 }
-#endif /* #ifdef  DEMO_UDP_SOCKET_SIMPLE_ROLE_CLIENT */
+#endif /* #if (DEMO_UDP_SOCKET_SIMPLE_ROLE_CLIENT == TRUE) */
 
 /*
-********************************************************************************
-*                           API FUNCTION DEFINITIONS
-********************************************************************************
-*/
-
-/**
- * \brief   Initialize UDP Socket demo application
+ * --- Global Function Definitions ----------------------------------------- *
  */
+
+/*---------------------------------------------------------------------------*/
+/*
+* demo_udpSocketSimpleInit()
+*/
 int8_t demo_udpSocketSimpleInit(void)
 {
   /* register a new port */
@@ -186,7 +225,7 @@ int8_t demo_udpSocketSimpleInit(void)
   /* connect the socket */
   udp_socket_connect( &s_soc, NULL, DEMO_UDP_SIMPLE_PORT );
 
-#ifdef DEMO_UDP_SOCKET_SIMPLE_ROLE_CLIENT
+#if (DEMO_UDP_SOCKET_SIMPLE_ROLE_CLIENT == TRUE)
   clock_time_t interval = 0;
 
   /* set UDP event timer interval */
@@ -200,18 +239,17 @@ int8_t demo_udpSocketSimpleInit(void)
   udp_socket_currSeqTx = 0u;
   udp_socket_lastSeqRx = 0u;
   udp_socket_lostPktQty = 0u;
-#endif /* #ifdef DEMO_UDP_SOCKET_SIMPLE_ROLE_CLIENT */
+#endif /* if (DEMO_UDP_SOCKET_SIMPLE_ROLE_CLIENT == TRUE) */
 
   /* Always success */
   return 1;
-}
+} /* demo_udpSocketSimpleInit() */
 
 
-/**
- * \brief   Configure UDP socket demo application
- *
- * \param   p_netstk    Pointer to net stack structure
- */
+/*---------------------------------------------------------------------------*/
+/*
+* demo_udpSocketSimpleCfg()
+*/
 int8_t demo_udpSocketSimpleCfg(s_ns_t *p_netstk)
 {
   int8_t i_ret = -1;
@@ -234,4 +272,4 @@ int8_t demo_udpSocketSimpleCfg(s_ns_t *p_netstk)
     }
   }
   return i_ret;
-}
+} /* demo_udpSocketSimpleCfg() */

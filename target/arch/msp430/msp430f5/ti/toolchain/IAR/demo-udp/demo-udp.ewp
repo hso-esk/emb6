@@ -172,13 +172,12 @@
         <debug>1</debug>
         <option>
           <name>CCDefines</name>
-          <state>MAC_ADDR_WORD=0x1200</state>
+          <state>MAC_ADDR_WORD=0xcafe</state>
           <state>LOGGER_LEVEL=3</state>
-          <state>LOGGER_DEMO_UDP_SOCKET=1</state>
-          <state>EMB6_INIT_ROOT=1</state>
           <state>NET_USE_RPL=1</state>
+          <state>EMB6_INIT_ROOT=1</state>
           <state>DEMO_USE_UDP_SOCKET=1</state>
-          <state>DEMO_UDP_SOCKET_ROLE_SERVER</state>
+          <state>DEMO_UDP_SOCKET_ROLE_SERVER=1</state>
           <state>IAR_COMPILER</state>
         </option>
         <option>
@@ -332,26 +331,26 @@
         </option>
         <option>
           <name>newCCIncludePaths</name>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\demo\udp_socket</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\target</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\target\arch\msp430\msp430f5\ti\device\msp430f5xxx\inc</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\target\bsp\ti_trxeb_cc120x</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\target\if\cc120x</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\target\mcu\msp430x5xx</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\net\ipv6</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\net\ipv6\multicast</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\net\rpl</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\net\sicslowpan</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\tport</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\dllsec</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\dllc</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\mac</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\framer</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\phy</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\utils\inc</state>
+          <state>$EMB6_ROOT$\demo\udp_socket</state>
+          <state>$EMB6_ROOT$\target</state>
+          <state>$EMB6_ROOT$\target\arch\msp430\msp430f5\ti\device\msp430f5xxx\inc</state>
+          <state>$EMB6_ROOT$\target\bsp\ti_trxeb_cc120x</state>
+          <state>$EMB6_ROOT$\target\if\cc120x</state>
+          <state>$EMB6_ROOT$\target\mcu\msp430f5438a</state>
+          <state>$EMB6_ROOT$\utils\inc</state>
+          <state>$EMB6_ROOT$\emb6</state>
+          <state>$EMB6_ROOT$\emb6\inc</state>
+          <state>$EMB6_ROOT$\emb6\inc\net</state>
+          <state>$EMB6_ROOT$\emb6\inc\net\ipv6</state>
+          <state>$EMB6_ROOT$\emb6\inc\net\ipv6\multicast</state>
+          <state>$EMB6_ROOT$\emb6\inc\net\rpl</state>
+          <state>$EMB6_ROOT$\emb6\inc\net\sicslowpan</state>
+          <state>$EMB6_ROOT$\emb6\inc\sock</state>
+          <state>$EMB6_ROOT$\emb6\inc\dll\dllsec</state>
+          <state>$EMB6_ROOT$\emb6\inc\dll\dllc</state>
+          <state>$EMB6_ROOT$\emb6\inc\dll\mac</state>
+          <state>$EMB6_ROOT$\emb6\inc\dll\framer</state>
+          <state>$EMB6_ROOT$\emb6\inc\phy</state>
         </option>
         <option>
           <name>CCStdIncCheck</name>
@@ -1365,26 +1364,26 @@
         </option>
         <option>
           <name>newCCIncludePaths</name>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\demo\udp_socket</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\target</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\target\arch\msp430\msp430f5\ti\device\msp430f5xxx\inc</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\target\bsp\ti_trxeb_cc120x</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\target\if\cc120x</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\target\mcu\msp430x5xx</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\net\ipv6</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\net\ipv6\multicast</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\net\rpl</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\net\sicslowpan</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\tport</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\dllsec</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\dllc</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\mac</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\framer</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\phy</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\utils\inc</state>
+          <state>$EMB6_ROOT$\demo\udp_socket</state>
+          <state>$EMB6_ROOT$\target</state>
+          <state>$EMB6_ROOT$\target\arch\msp430\msp430f5\ti\device\msp430f5xxx\inc</state>
+          <state>$EMB6_ROOT$\target\bsp\ti_trxeb_cc120x</state>
+          <state>$EMB6_ROOT$\target\if\cc120x</state>
+          <state>$EMB6_ROOT$\target\mcu\msp430f5438a</state>
+          <state>$EMB6_ROOT$\utils\inc</state>
+          <state>$EMB6_ROOT$\emb6</state>
+          <state>$EMB6_ROOT$\emb6\inc</state>
+          <state>$EMB6_ROOT$\emb6\inc\net</state>
+          <state>$EMB6_ROOT$\emb6\inc\net\ipv6</state>
+          <state>$EMB6_ROOT$\emb6\inc\net\ipv6\multicast</state>
+          <state>$EMB6_ROOT$\emb6\inc\net\rpl</state>
+          <state>$EMB6_ROOT$\emb6\inc\net\sicslowpan</state>
+          <state>$EMB6_ROOT$\emb6\inc\sock</state>
+          <state>$EMB6_ROOT$\emb6\inc\dll\dllsec</state>
+          <state>$EMB6_ROOT$\emb6\inc\dll\dllc</state>
+          <state>$EMB6_ROOT$\emb6\inc\dll\mac</state>
+          <state>$EMB6_ROOT$\emb6\inc\dll\framer</state>
+          <state>$EMB6_ROOT$\emb6\inc\phy</state>
         </option>
         <option>
           <name>CCStdIncCheck</name>
@@ -2239,13 +2238,12 @@
         <debug>1</debug>
         <option>
           <name>CCDefines</name>
-          <state>MAC_ADDR_WORD=0x1120</state>
-          <state>LOGGER_LEVEL=1</state>
-          <state>LOGGER_DEMO_UDP_SOCKET=1</state>
-          <state>EMB6_INIT_ROOT=1</state>
+          <state>MAC_ADDR_WORD=0xcafe</state>
+          <state>LOGGER_LEVEL=3</state>
           <state>NET_USE_RPL=1</state>
+          <state>EMB6_INIT_ROOT=1</state>
           <state>DEMO_USE_UDP_SOCKET=1</state>
-          <state>DEMO_UDP_SOCKET_ROLE_SERVER</state>
+          <state>DEMO_UDP_SOCKET_ROLE_SERVER=1</state>
           <state>IAR_COMPILER</state>
         </option>
         <option>
@@ -2399,26 +2397,26 @@
         </option>
         <option>
           <name>newCCIncludePaths</name>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\demo\udp_socket</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\target</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\target\arch\msp430\msp430f5\ti\device\msp430f5xxx\inc</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\target\bsp\ti_trxeb_cc112x</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\target\if\cc112x</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\target\mcu\msp430x5xx</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\net\ipv6</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\net\ipv6\multicast</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\net\rpl</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\net\sicslowpan</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\tport</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\dllsec</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\dllc</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\mac</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\framer</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\phy</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\utils\inc</state>
+          <state>$EMB6_ROOT$\demo\udp_socket</state>
+          <state>$EMB6_ROOT$\target</state>
+          <state>$EMB6_ROOT$\target\arch\msp430\msp430f5\ti\device\msp430f5xxx\inc</state>
+          <state>$EMB6_ROOT$\target\bsp\ti_trxeb_cc112x</state>
+          <state>$EMB6_ROOT$\target\if\cc112x</state>
+          <state>$EMB6_ROOT$\target\mcu\msp430f5438a</state>
+          <state>$EMB6_ROOT$\utils\inc</state>
+          <state>$EMB6_ROOT$\emb6</state>
+          <state>$EMB6_ROOT$\emb6\inc</state>
+          <state>$EMB6_ROOT$\emb6\inc\net</state>
+          <state>$EMB6_ROOT$\emb6\inc\net\ipv6</state>
+          <state>$EMB6_ROOT$\emb6\inc\net\ipv6\multicast</state>
+          <state>$EMB6_ROOT$\emb6\inc\net\rpl</state>
+          <state>$EMB6_ROOT$\emb6\inc\net\sicslowpan</state>
+          <state>$EMB6_ROOT$\emb6\inc\sock</state>
+          <state>$EMB6_ROOT$\emb6\inc\dll\dllsec</state>
+          <state>$EMB6_ROOT$\emb6\inc\dll\dllc</state>
+          <state>$EMB6_ROOT$\emb6\inc\dll\mac</state>
+          <state>$EMB6_ROOT$\emb6\inc\dll\framer</state>
+          <state>$EMB6_ROOT$\emb6\inc\phy</state>
         </option>
         <option>
           <name>CCStdIncCheck</name>
@@ -3274,8 +3272,7 @@
         <option>
           <name>CCDefines</name>
           <state>MAC_ADDR_WORD=0x112c</state>
-          <state>LOGGER_LEVEL=1</state>
-          <state>LOGGER_DEMO_UDP_SOCKET=1</state>
+          <state>LOGGER_LEVEL=0</state>
           <state>NET_USE_RPL=1</state>
           <state>DEMO_USE_UDP_SOCKET=1</state>
           <state>DEMO_UDP_SOCKET_ROLE_CLIENT</state>
@@ -3432,26 +3429,26 @@
         </option>
         <option>
           <name>newCCIncludePaths</name>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\demo\udp_socket</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\target</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\target\arch\msp430\msp430f5\ti\device\msp430f5xxx\inc</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\target\bsp\ti_trxeb_cc112x</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\target\if\cc112x</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\target\mcu\msp430x5xx</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\net\ipv6</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\net\ipv6\multicast</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\net\rpl</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\net\sicslowpan</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\tport</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\dllsec</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\dllc</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\mac</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\dll\framer</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\emb6\inc\phy</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\emb6\utils\inc</state>
+          <state>$EMB6_ROOT$\demo\udp_socket</state>
+          <state>$EMB6_ROOT$\target</state>
+          <state>$EMB6_ROOT$\target\arch\msp430\msp430f5\ti\device\msp430f5xxx\inc</state>
+          <state>$EMB6_ROOT$\target\bsp\ti_trxeb_cc112x</state>
+          <state>$EMB6_ROOT$\target\if\cc112x</state>
+          <state>$EMB6_ROOT$\target\mcu\msp430f5438a</state>
+          <state>$EMB6_ROOT$\utils\inc</state>
+          <state>$EMB6_ROOT$\emb6</state>
+          <state>$EMB6_ROOT$\emb6\inc</state>
+          <state>$EMB6_ROOT$\emb6\inc\net</state>
+          <state>$EMB6_ROOT$\emb6\inc\net\ipv6</state>
+          <state>$EMB6_ROOT$\emb6\inc\net\ipv6\multicast</state>
+          <state>$EMB6_ROOT$\emb6\inc\net\rpl</state>
+          <state>$EMB6_ROOT$\emb6\inc\net\sicslowpan</state>
+          <state>$EMB6_ROOT$\emb6\inc\sock</state>
+          <state>$EMB6_ROOT$\emb6\inc\dll\dllsec</state>
+          <state>$EMB6_ROOT$\emb6\inc\dll\dllc</state>
+          <state>$EMB6_ROOT$\emb6\inc\dll\mac</state>
+          <state>$EMB6_ROOT$\emb6\inc\dll\framer</state>
+          <state>$EMB6_ROOT$\emb6\inc\phy</state>
         </option>
         <option>
           <name>CCStdIncCheck</name>
@@ -5229,7 +5226,7 @@
               <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\dll\framer\framer_802154.c</name>
             </file>
             <file>
-              <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\dll\framer\llframer.c</name>
+              <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\dll\framer\framer_802154_ll.c</name>
             </file>
           </group>
           <group>
@@ -5322,6 +5319,15 @@
               <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\net\rpl\rpl-mrhof.c</name>
             </file>
             <file>
+              <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\net\rpl\rpl-nbr-policy.c</name>
+            </file>
+            <file>
+              <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\net\rpl\rpl-ns.c</name>
+            </file>
+            <file>
+              <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\net\rpl\rpl-of0.c</name>
+            </file>
+            <file>
               <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\net\rpl\rpl-timers.c</name>
             </file>
             <file>
@@ -5334,12 +5340,15 @@
               <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\net\sicslowpan\framer-802154.c</name>
             </file>
             <file>
-              <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\net\sicslowpan\framer.c</name>
-            </file>
-            <file>
               <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\net\sicslowpan\sicslowpan.c</name>
             </file>
           </group>
+          <file>
+            <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\net\link-stats.c</name>
+          </file>
+          <file>
+            <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\net\net-debug.c</name>
+          </file>
         </group>
         <group>
           <name>phy</name>
@@ -5354,12 +5363,12 @@
           </file>
         </group>
         <group>
-          <name>tport</name>
+          <name>sock</name>
           <file>
-            <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\tport\tcp-socket.c</name>
+            <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\sock\tcp-socket.c</name>
           </file>
           <file>
-            <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\tport\udp-socket.c</name>
+            <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\sock\udp-socket.c</name>
           </file>
         </group>
       </group>

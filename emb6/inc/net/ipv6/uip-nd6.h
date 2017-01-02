@@ -62,9 +62,12 @@
 
 /** \name RFC 4861 Host constant */
 /** @{ */
+/** \brief Maximum router solicitation delay */
 #define UIP_ND6_MAX_RTR_SOLICITATION_DELAY 1
+/** \brief Router solicitation interval */
 #define UIP_ND6_RTR_SOLICITATION_INTERVAL  4
-#define UIP_ND6_MAX_RTR_SOLICITATIONS       3
+/** \brief Maximum router solicitations */
+#define UIP_ND6_MAX_RTR_SOLICITATIONS      3
 /** @} */
 
 
@@ -138,6 +141,13 @@
 #define UIP_ND6_RA_RDNSS                UIP_CONF_ND6_RA_RDNSS
 #endif
 
+/** \brief Number of DNS to hold on the node */
+#if UIP_ND6_RA_RDNSS
+#define UIP_ND6_RDNSS_POOL_SIZE         2
+#else
+#define UIP_ND6_RDNSS_POOL_SIZE         0
+#endif
+
 #ifndef UIP_CONF_ND6_RA_DNSSL
 #define UIP_ND6_RA_DNSSL                0
 #else
@@ -163,6 +173,8 @@
 #define UIP_ND6_OPT_TYPE_OFFSET         0
 #define UIP_ND6_OPT_LEN_OFFSET          1
 #define UIP_ND6_OPT_DATA_OFFSET         2
+#define UIP_ND6_OPT_RDNSS_LEN          1
+#define UIP_ND6_OPT_DNSSL_LEN          1
 
 /** \name ND6 message length (excluding options) */
 /** @{ */

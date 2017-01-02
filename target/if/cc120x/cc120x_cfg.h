@@ -58,15 +58,8 @@
   #define NETSTK_CFG_RF_BUILTIN_802154G_EN      FALSE
   #endif
 
-  #ifndef NETSTK_CFG_RF_CRC_EN
-  #define NETSTK_CFG_RF_CRC_EN                  FALSE
-  #endif
-#endif
-
-/*!< enable SW Auto-ACK by default if stack Auto-ACK is disabled */
-#if (NETSTK_CFG_MAC_SW_AUTOACK_EN == FALSE)
-  #ifndef NETSTK_CFG_RF_SW_AUTOACK_EN
-  #define NETSTK_CFG_RF_SW_AUTOACK_EN           TRUE
+  #ifndef NETSTK_SUPPORT_HW_CRC
+  #define NETSTK_SUPPORT_HW_CRC                 FALSE
   #endif
 #endif
 

@@ -116,20 +116,16 @@ char *service_urls[NUMBER_OF_URLS] =
 /* This function is will be passed to coap_nonblocking_request() to handle responses. */
 void _client_chunk_handler(void *response)
 {
-    const uint8_t *chunk;
+
     if(!response) {
         LOG_INFO("%s\n\r","Restart Timer (no response)");
     } else {
         LOG_INFO("%s\n\r","response payload:");
-//        int len = coap_get_payload(response, &chunk);
-//        printf("%d|%s", len, (char *)chunk);
-//        printf("\n\r");
-//        printf("\n\r");
     }
     /* Restart Timer after response or timeout */
     etimer_restart(&et);
 }
-//uint8_t i=0;
+
 
 void _demo_coapCl_callback (c_event_t c_event, p_data_t p_data)
 {

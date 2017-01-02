@@ -1,4 +1,7 @@
 /*
+ * --- License --------------------------------------------------------------*
+ */
+/*
  * emb6 is licensed under the 3-clause BSD license. This license gives everyone
  * the right to use and distribute the code, either in binary or source code
  * format, as long as the copyright license is retained in the source code.
@@ -37,49 +40,66 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-/*============================================================================*/
 
 /*
-********************************************************************************
-*                                   INCLUDES
-********************************************************************************
-*/
-#include "emb6.h"
+ * --- Module Description ---------------------------------------------------*
+ */
+/**
+ *  \file       demo_udp_socket.c
+ *  \author     Institute of reliable Embedded Systems
+ *              and Communication Electronics
+ *  \date       $Date$
+ *  \version    $Version$
+ *
+ *  \brief      Demo to show how to use the UDP socket interface.
+ *
+ *              This Demo shows how to use the UDP socket interface. Therefore
+ *              the demo is divided into a server and a client application. The
+ *              client transmits data periodically to the server including a
+ *              fixed payload and a sequence counter. The server replies with
+ *              a fixed pattern and the same sequence number. The size of the
+ *              packet transmitted by the client is increased per message until
+ *              a given maximum was reached.
+ *              The server is defined as the DAG-Root within the network and
+ *              its IP address is retrieved automatically. The Server just
+ *              replies to the node it got the packet from.
+ *              This demo is mainly used to show how to use the UDP socket
+ *              interface and to show basic connectivity.
+ */
 
+/*
+ * --- Includes -------------------------------------------------------------*
+ */
+#include "emb6.h"
 #include "bsp.h"
+#include "demo_udp_socket.h"
 #include "etimer.h"
 #include "evproc.h"
-
 #include "tcpip.h"
-#include "uip.h"
-#include "uiplib.h"
-#include "uip-debug.h"
 #include "uip-udp-packet.h"
-#include "uip-ds6.h"
 #include "rpl.h"
 
-#include "demo_udp_socket.h"
 
-#define     LOGGER_ENABLE       LOGGER_DEMO_UDP_SOCKET
-#if         LOGGER_ENABLE   ==  TRUE
-#define     LOGGER_SUBSYSTEM    "UDP Socket"
-#endif
+/*
+ *  --- Macros ------------------------------------------------------------- *
+ */
+#define LOGGER_ENABLE           LOGGER_DEMO_UDP_SOCKET
+#if LOGGER_ENABLE == TRUE
+#define LOGGER_SUBSYSTEM        "UDP Socket"
+#endif /* #if LOGGER_ENABLE == TRUE */
 #include    "logger.h"
 
 
-/*
-********************************************************************************
-*                               LOCAL MACROS
-********************************************************************************
-*/
-
-/** Maximum length of the UDP payload */
-#define DEF_UDP_MAX_PAYLOAD_LEN         40U
 
 /** first port used by the socket demo */
+#ifndef DEMO_UDP_SOCKET_PORTA
 #define DEMO_UDP_SOCKET_PORTA           4211UL
+#endif /* #ifndef DEMO_UDP_SOCKET_PORTA */
+
+#ifndef DEMO_UDP_SOCKET_PORTB
 /** second port used by the socket demo */
 #define DEMO_UDP_SOCKET_PORTB           4233UL
+#endif /* #ifndef DEMO_UDP_SOCKET_PORTB */
 
 #if (DEMO_UDP_SOCKET_ROLE_SERVER == TRUE)
 /** assign device port */
@@ -91,39 +111,56 @@
 #define DEMO_UDP_DEVPORT                DEMO_UDP_SOCKET_PORTB
 /** assign remote port */
 #define DEMO_UDP_REMPORT                DEMO_UDP_SOCKET_PORTA
+
+#ifndef DEMO_UDP_SEND_INTERVAL
 /** specifies the interval to send periodic data */
 #define DEMO_UDP_SEND_INTERVAL          (clock_time_t)( 200u )
-#endif
+#endif /* #ifndef DEMO_UDP_SEND_INTERVAL */
+#endif /* #if (DEMO_UDP_SOCKET_ROLE_SERVER == TRUE) */
 
-#define UIP_IP_BUF                      ((struct uip_ip_hdr *)&uip_buf[UIP_LLH_LEN])
+
 
 /** minimum packet length is equal to size of sequence number (4 bytes) */
 #define DEMO_UDP_PKT_LEN_MIN            (  4u )
+
+#ifndef DEMO_UDP_PKT_LEN_MAX
+/** maximum packet length */
 #define DEMO_UDP_PKT_LEN_MAX            ( 40u )
+#endif /* #ifndef DEMO_UDP_PKT_LEN_MAX */
+
+
+/** pointer to the UIP buffer structure */
+#define UIP_IP_BUF                      ((struct uip_ip_hdr *)&uip_buf[UIP_LLH_LEN])
 
 /*
-********************************************************************************
-*                               LOCAL VARIABLES
-********************************************************************************
-*/
+ *  --- Local Variables ---------------------------------------------------- *
+ */
+
+/** UDP connection */
 static struct uip_udp_conn *pudp_socket_conn = (struct uip_udp_conn *) 0;
 
+/** current sequence number counter */
 static uint32_t udp_socket_currSeqTx;
 
-#if (DEMO_UDP_SOCKET_ROLE_SERVER == TRUE)
-#else
+#if (DEMO_UDP_SOCKET_ROLE_CLIENT == TRUE)
+
+/* packet length */
 static uint8_t packetLength;
+
+/** Sequence number of the last received packet */
 static uint32_t udp_socket_lastSeqRx;
+
+/** Number of lost packets. */
 static uint32_t udp_socket_lostPktQty;
+
+/** Timer used for the next tx packet */
 static struct etimer udp_socket_etimer;
-#endif
+#endif /* #if (DEMO_UDP_SOCKET_ROLE_SERVER != TRUE) */
 
 
 /*
-********************************************************************************
-*                          LOCAL FUNCTION DECLARATIONS
-********************************************************************************
-*/
+ *  --- Local Function Prototypes ------------------------------------------ *
+ */
 
 /* Get the demo sequence number from a packet.
    For further details see the function definition */
@@ -135,14 +172,22 @@ static void udp_socket_eventHandler(c_event_t c_event, p_data_t p_data);
 
 /* transmit a sample packet. For further details see the function definition */
 static void udp_socket_tx(uint32_t seq);
+
+
 /*
-********************************************************************************
-*                          LOCAL FUNCTION DEFINITIONS
-********************************************************************************
-*/
+ *  --- Local Functions ---------------------------------------------------- *
+ */
 
 /**
- * \brief   Achieve sequence number from an an UDP message.
+ * \brief   Get sequence number from an an UDP message.
+ *
+ *          This functions retrieves the sequence number from a
+ *          received UDP message.
+ *
+ * \param   p_data    The UDP message to get the sequence number from.
+ * \param   len       Length of the message.
+ *
+ * \return  The sequence number within the UDP packet.
  */
 static uint32_t udp_socket_getSeq(uint8_t *p_data, uint16_t len)
 {
@@ -150,10 +195,10 @@ static uint32_t udp_socket_getSeq(uint8_t *p_data, uint16_t len)
   uint8_t is_valid = FALSE;
 
   is_valid = (p_data != NULL) && (len > 0);
-  if (is_valid == TRUE) {
+  if (is_valid == TRUE)
+  {
     memcpy(&ret, p_data, sizeof(ret));
   }
-
   return ret;
 }
 
@@ -168,15 +213,17 @@ static void udp_socket_eventHandler(c_event_t c_event, p_data_t p_data)
 {
   uint32_t seq;
   uint16_t len;
-  uint8_t  has_data;
-  uint8_t  *p_dataptr;
+  uint8_t has_data;
+  uint8_t *p_dataptr;
 
   /*
    * process input TCPIP packet
    */
-  if (c_event == EVENT_TYPE_TCPIP) {
+  if (c_event == EVENT_TYPE_TCPIP)
+  {
     has_data = uip_newdata();
-    if (has_data != 0u) {
+    if (has_data != 0u)
+    {
       p_dataptr = (uint8_t *) uip_appdata;
       len = (uint16_t) uip_datalen();
 
@@ -277,9 +324,11 @@ static void udp_socket_tx(uint32_t seq)
    * Get Server IP address
    */
   ps_src_addr = uip_ds6_get_global(ADDR_PREFERRED);
-  if (ps_src_addr) {
+  if (ps_src_addr)
+  {
     ps_dag_desc = rpl_get_any_dag();
-    if (ps_dag_desc) {
+    if (ps_dag_desc)
+    {
       /*
        * Issue transmission request
        */
@@ -307,14 +356,14 @@ static void udp_socket_tx(uint32_t seq)
 }
 
 /*
-********************************************************************************
-*                           API FUNCTION DEFINITIONS
-********************************************************************************
-*/
-
-/**
- * \brief   Initialize UDP Socket demo application
+ * --- Global Function Definitions ----------------------------------------- *
  */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* demo_udpSocketInit()
+*/
 int8_t demo_udpSocketInit(void)
 {
   /*Create a new UDP connection */
@@ -346,14 +395,13 @@ int8_t demo_udpSocketInit(void)
 
   /* Always success */
   return 1;
-}
+} /* demo_udpSocketInit() */
 
 
-/**
- * \brief   Configure UDP socket demo application
- *
- * \param   p_netstk    Pointer to net stack structure
- */
+/*---------------------------------------------------------------------------*/
+/*
+* demo_udpSocketCfg()
+*/
 int8_t demo_udpSocketCfg(s_ns_t *p_netstk)
 {
   int8_t i_ret = -1;
@@ -376,4 +424,4 @@ int8_t demo_udpSocketCfg(s_ns_t *p_netstk)
     }
   }
   return i_ret;
-}
+} /* demo_udpSocketCfg() */

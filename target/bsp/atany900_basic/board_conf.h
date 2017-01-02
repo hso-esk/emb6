@@ -171,8 +171,19 @@
 /** additional delay between consecutive iteration of emb6 process */
 #define EMB6_PROC_DELAY                       ( 1 )
 
+/** Default modulation scheme */
+#if !defined(MODULATION)
+#define MODULATION                            MODULATION_BPSK20
+#endif /* #if !defined(MODULATION) */
+
 /** transceiver supports standard-specific checksum algorithm */
-#define NETSTK_CFG_RF_CRC_EN                  TRUE
+#define NETSTK_SUPPORT_HW_CRC                 TRUE
+
+/** transceiver supports auto-acknowledgment on hardware */
+#if (NETSTK_SUPPORT_SW_MAC_AUTOACK == FALSE)
+#define NETSTK_SUPPORT_HW_AUTOACK             TRUE
+#endif /* #if (NETSTK_SUPPORT_SW_MAC_AUTOACK == FALSE) */
+
 
 /*
  *  --- Global Functions Definition ------------------------------------------*

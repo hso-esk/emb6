@@ -1,67 +1,302 @@
-emb6 = {
-	'common' : [
-		'*',
-	],
-	'coap' : [
-		'apl/er-coap/*',
-		'apl/rest-engine/*',
-	],
-	'lwm2m' : [
-		'apl/lwm2m-core/*',
-	],
-	'mqtt' : [
-		'apl/mqtt/*',
-	],
-	'dtls' : [
-		'net/dtls/*',
-		'net/dtls/aes/*',
-		'net/dtls/ecc/*',
-		'net/dtls/sha2/*',
-	],
-	'mdns' : [
-		'apl/dns/*',
-	],
-	'sock' : [
-		'sock/*',
-	],
-	'ipv6' : [
-		'net/ipv6/*',
-	],
-	'ipv6mc' : [
-		'net/ipv6/multicast/*',
-	],
-	'rpl' : [
-		'net/rpl/*',
-	],
-	'sicslowpan':  [
-		'net/sicslowpan/*',
-	],
-	'slip' : [
-		'net/slip/*',
-	],
-# new netstack drivers
-	'dllsec' : [
-		'dll/dllsec/*',
-	],
-	'dllc' : [
-		'dll/dllc/*',
-	],
-	'mac' : [
-		'dll/mac/*',
-	],
-	'framer' : [
-		'dll/framer/*',
-	],
-	'phy' : [
-		'phy/*',
-	],
+##
+# emb6 is licensed under the 3-clause BSD license. This license gives everyone
+# the right to use and distribute the code, either in binary or source code
+# format, as long as the copyright license is retained in the source code.
+#
+# The emb6 is derived from the Contiki OS platform with the explicit approval
+# from Adam Dunkels. However, emb6 is made independent from the OS through the
+# removal of protothreads. In addition, APIs are made more flexible to gain
+# more adaptivity during run-time.
+#
+# The license text is:
+#
+# Copyright (c) 2015,
+# Hochschule Offenburg, University of Applied Sciences
+# Laboratory Embedded Systems and Communications Electronics.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 1. Redistributions of source code must retain the above copyright notice,
+# this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+# 3. The name of the author may not be used to endorse or promote products
+#    derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+# WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO
+# EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+# OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+# OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+# ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+##
 
-# C global defines
-	'defines' : [
-	],
-# GCC flags
-	'cflags' : [
-	]	
+
+# This file creates the common core modules of emb::6 for compilation. It
+# groups the different layers and application for further usage within the
+# SCons build system.
+
+# This holds the modules for the emb::6 core.
+emb6 = {
+
+   # Common source files that are mainly used from all of
+   # the differernt applications.
+    'common' : {
+        'src' : [
+            './*.c',
+        ],
+
+        'inc' : [
+            './',
+        ]
+    },
+
+    # CoAP specific source files. Those files should be used when
+    # creating an application that makes either use of CoAP directly or
+    # that uses CoAP as an underlying application protocol.
+    'coap' : {
+        'src' : [
+            'apl/er-coap/*.c',
+            'apl/rest-engine/*.c',
+        ],
+
+        'inc' : [
+            'apl/er-coap/',
+            'apl/rest-engine/',
+        ]
+    },
+
+    # LWM2M specific sources that shall be included when using LWM2M
+    # as the application layer.
+    'lwm2m' : {
+        'src' : [
+            'apl/oma-lwm2m/*.c',
+        ],
+
+        'inc' : [
+            'apl/oma-lwm2m/',
+        ]
+    },
+
+    # DTLS sources that shall be included when secured connections
+    # shall be used.
+    'dtls' : {
+        'src' : [
+            'net/dtls/*.c',
+            'net/dtls/aes/*.c',
+            'net/dtls/ecc/*.c',
+            'net/dtls/sha2/*.c',
+        ],
+
+        'inc' : [
+            'net/dtls/',
+            'net/dtls/aes/',
+            'net/dtls/ecc/',
+            'net/dtls/sha2/',
+        ]
+    },
+
+    # MDNS sources that shall be included when the mDNS service
+  # shall be used.
+    'mdns' : {
+        'src' : [
+            'apl/dns/*.c',
+        ],
+
+        'inc' : [
+            'apl/dns/',
+        ]
+    },
+
+    # Includes the sources for the simplieifed Berkley Sockets alike
+    # socket interface.
+    'sock' : {
+        'src' : [
+            'sock/*.c',
+        ],
+
+        'inc' : [
+            'sock/',
+        ]
+    },
+
+    # Required if IPv6 protocol shall be used. Since this is a core part
+    # of emb::6 it is active for almost all applications.
+    'ipv6' : {
+        'src' : [
+            'net/*.c',
+            'net/ipv6/*.c',
+        ],
+
+        'inc' : [
+            'net/',
+            'net/ipv6/',
+        ]
+    },
+
+    # Muticast extension to IPv6. Shall only be active if multicast is
+    # required.
+    'ipv6mc' : {
+        'src' : [
+            'net/ipv6/multicast/*.c',
+        ],
+
+        'inc' : [
+            'net/ipv6/multicast/',
+        ]
+    },
+
+    # Sources of the 6LoWPAN frame handling such as the compression,
+    # fragmentation etc.
+    'sicslowpan' : {
+        'src' : [
+            'net/sicslowpan/*.c',
+        ],
+
+        'inc' : [
+            'net/sicslowpan/',
+        ]
+    },
+
+    # The Serial Line IP Protocol is mainly used to interact with a border
+    # router (e.g. Cetic 6LBR) to make the device act as a radio interface
+    # to connect the IP and the WSN world.
+    'slip' : {
+        'src' : [
+             'net/slip/*.c',
+        ],
+
+        'inc' : [
+             'net/slip/',
+        ]
+    },
+
+    #
+    'dllsec' : {
+        'src' : [
+             'dll/dllsec/*.c',
+        ],
+
+        'inc' : [
+             'dll/dllsec/',
+        ]
+    },
+
+    # Sources of the Data-Link (Control) Layer which handles the logical
+    # part of the Layer-2. This includes e.g. frame parsing and filtering.
+    'dllc' : {
+        'src' : [
+             'dll/dllc/*.c',
+        ],
+
+        'inc' : [
+             'dll/dllc/',
+        ]
+    },
+
+    # The MAC layer handles the medium access e.g. CSMA-CA, Auto-Acknowledge
+    # and retransmissions. Since this is a software bases implementation there
+    # might be timing issues and should not be used for devices aiming
+    # to be conforming to the standard completely.
+    'mac' : {
+        'src' : [
+             'dll/mac/*.c',
+        ],
+
+        'inc' : [
+             'dll/mac/',
+        ]
+    },
+
+    # The framer include the layout of the single frames on different layers.
+    'framer' : {
+        'src' : [
+             'dll/framer/*.c',
+        ],
+
+        'inc' : [
+             'dll/framer/',
+        ]
+    },
+
+    # Some of the standards require a specific frame format already on the
+    # PHY layer. The handling of such frames is included here.
+    'phy' : {
+        'src' : [
+             'phy/*.c',
+        ],
+
+        'inc' : [
+             'phy/',
+        ]
+    },
+
+
+    # C global defines
+    'CPPDEFINES' : [
+    ],
+
+    # GCC flags
+    'CFLAGS' : [
+    ]
 }
 
-Return('emb6')
+
+# This holds the modules for the emb::6 network functionality. Here all
+# the available network roles can be selected.
+net = {
+
+    'rpl-dagroot' : {
+        # Adds the sources for the Routing over Low Power and Lossy Networks
+        # protocol (RPL).
+        'src' : [
+            'net/rpl/*.c',
+        ],
+
+        'inc' : [
+            'net/rpl/',
+        ],
+
+        # C global defines
+        'CPPDEFINES' : [
+            ('NET_USE_RPL',1),
+            ('EMB6_INIT_ROOT',1),
+        ],
+
+        # GCC flags
+        'CFLAGS' : [
+        ]
+    },
+
+    'rpl-router' : {
+        # Adds the sources for the Routing over Low Power and Lossy Networks
+        # protocol (RPL).
+        'src' : [
+            'net/rpl/*.c',
+        ],
+
+        'inc' : [
+            'net/rpl/',
+        ],
+
+        # C global defines
+        'CPPDEFINES' : [
+            ('NET_USE_RPL',1),
+        ],
+
+        # GCC flags
+        'CFLAGS' : [
+        ]
+    }
+}
+
+
+Return('emb6', 'net')
+

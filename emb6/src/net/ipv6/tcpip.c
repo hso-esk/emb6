@@ -55,10 +55,15 @@
 #include "uip-ds6.h"
 #endif
 
+#if UIP_CONF_IPV6_RPL
+#include "rpl.h"
+#include "rpl-private.h"
+#endif
+
 #include <string.h>
 #include "evproc.h"
 #define DEBUG DEBUG_NONE
-#include "uip-debug.h"
+#include "net-debug.h"
 
 
 #if UIP_LOGGING
@@ -161,8 +166,8 @@ unsigned char tcpip_is_forwarding; /* Forwarding right now? */
 
 //PROCESS(tcpip_process, "TCP/IP stack");
 
-#if UIP_TCP
 /*---------------------------------------------------------------------------*/
+#if UIP_TCP || UIP_CONF_IP_FORWARD
 static void
 start_periodic_tcp_timer(void)
 {
@@ -170,7 +175,7 @@ start_periodic_tcp_timer(void)
     etimer_restart(&periodic);
   }
 }
-#endif /* UIP_TCP */
+#endif /* UIP_TCP || UIP_CONF_IP_FORWARD */
 /*---------------------------------------------------------------------------*/
 static void
 check_for_tcp_syn(void)
@@ -192,30 +197,17 @@ check_for_tcp_syn(void)
 static void
 packet_input(void)
 {
-#if UIP_CONF_IP_FORWARD
   if(uip_len > 0) {
+#if UIP_CONF_IP_FORWARD
     tcpip_is_forwarding = 1;
-    if(uip_fw_forward() == UIP_FW_LOCAL) {
+    if(uip_fw_forward() != UIP_FW_LOCAL) {
       tcpip_is_forwarding = 0;
-      check_for_tcp_syn();
-      uip_input();
-      if(uip_len > 0) {
-#if UIP_CONF_TCP_SPLIT
-        uip_split_output();
-#else /* UIP_CONF_TCP_SPLIT */
-#if NETSTACK_CONF_WITH_IPV6
-        tcpip_ipv6_output();
-#else
-    PRINTF("tcpip packet_input forward output len %d\n\r", uip_len);
-        tcpip_output();
-#endif
-#endif /* UIP_CONF_TCP_SPLIT */
-      }
+      return;
     }
     tcpip_is_forwarding = 0;
   }
-#else /* UIP_CONF_IP_FORWARD */
-  if(uip_len > 0) {
+#endif /* UIP_CONF_IP_FORWARD */
+
     check_for_tcp_syn();
     uip_input();
     if(uip_len > 0) {
@@ -224,14 +216,13 @@ packet_input(void)
 #else /* UIP_CONF_TCP_SPLIT */
 #if NETSTACK_CONF_WITH_IPV6
       tcpip_ipv6_output();
-#else
+#else /* NETSTACK_CONF_WITH_IPV6 */
       PRINTF("tcpip packet_input output len %d\n\r", uip_len);
       tcpip_output();
-#endif
+#endif /* NETSTACK_CONF_WITH_IPV6 */
 #endif /* UIP_CONF_TCP_SPLIT */
     }
   }
-#endif /* UIP_CONF_IP_FORWARD */
 }
 /*---------------------------------------------------------------------------*/
 #if UIP_TCP
@@ -258,7 +249,7 @@ tcp_connect(const uip_ipaddr_t *ripaddr, uint16_t port, void *appstate)
 void
 tcp_unlisten(uint16_t port,uint8_t conn_id)
 {
-  static unsigned char i;
+  unsigned char i;
   struct listenport *l;
 
   l = s.listenports;
@@ -276,7 +267,7 @@ tcp_unlisten(uint16_t port,uint8_t conn_id)
 void
 tcp_listen(uint16_t port, uint8_t conn_id)
 {
-  static unsigned char i;
+  unsigned char i;
   struct listenport *l;
 
   l = s.listenports;
@@ -384,7 +375,7 @@ static void
 eventhandler(c_event_t ev, p_data_t data)
 {
 #if UIP_TCP
-  static unsigned char i;
+  unsigned char i;
 //  register struct listenport *l;
 #endif /*UIP_TCP*/
 
@@ -500,10 +491,7 @@ tcpip_input(void)
     evproc_putEvent(E_EVPROC_EXEC,EVENT_TYPE_PCK_INPUT,NULL);
 //    evproc_pushEvent(EVENT_TYPE_PCK_INPUT, NULL);
   //process_post_synch(&tcpip_process, PACKET_INPUT, NULL);
-  uip_len = 0;
-#if NETSTACK_CONF_WITH_IPV6
-  uip_ext_len = 0;
-#endif /*NETSTACK_CONF_WITH_IPV6*/
+    uip_clear_buf();
 }
 /*---------------------------------------------------------------------------*/
 #if NETSTACK_CONF_WITH_IPV6
@@ -511,7 +499,7 @@ void
 tcpip_ipv6_output(void)
 {
   uip_ds6_nbr_t *nbr = NULL;
-  uip_ipaddr_t *nexthop;
+  uip_ipaddr_t *nexthop = NULL;
 
   if(uip_len == 0) {
     return;
@@ -519,26 +507,46 @@ tcpip_ipv6_output(void)
 
   if(uip_len > UIP_LINK_MTU) {
     UIP_LOG("tcpip_ipv6_output: Packet to big");
-    uip_len = 0;
+    uip_clear_buf();
     return;
   }
 
   if(uip_is_addr_unspecified(&UIP_IP_BUF->destipaddr)){
     UIP_LOG("tcpip_ipv6_output: Destination address unspecified");
-    uip_len = 0;
+    uip_clear_buf();
     return;
   }
 
+#if UIP_CONF_IPV6_RPL
+  if(!rpl_update_header()) {
+    /* Packet can not be forwarded */
+    PRINTF("tcpip_ipv6_output: RPL header update error\n");
+    uip_clear_buf();
+    return;
+  }
+#endif /* UIP_CONF_IPV6_RPL */
+
   if(!uip_is_addr_mcast(&UIP_IP_BUF->destipaddr)) {
     /* Next hop determination */
+
+#if UIP_CONF_IPV6_RPL && RPL_WITH_NON_STORING
+    uip_ipaddr_t ipaddr;
+    /* Look for a RPL Source Route */
+    if(rpl_srh_get_next_hop(&ipaddr)) {
+      nexthop = &ipaddr;
+    }
+#endif /* UIP_CONF_IPV6_RPL && RPL_WITH_NON_STORING */
+
     nbr = NULL;
 
     /* We first check if the destination address is on our immediate
        link. If so, we simply use the destination address as our
        nexthop address. */
-    if(uip_ds6_is_addr_onlink(&UIP_IP_BUF->destipaddr)){
+    if(nexthop == NULL && uip_ds6_is_addr_onlink(&UIP_IP_BUF->destipaddr)){
       nexthop = &UIP_IP_BUF->destipaddr;
-    } else {
+    }
+
+    if(nexthop == NULL) {
       uip_ds6_route_t *route;
       /* Check if we have a route to the destination address. */
       route = uip_ds6_route_lookup(&UIP_IP_BUF->destipaddr);
@@ -558,11 +566,20 @@ tcpip_ipv6_output(void)
         /* This should be copied from the ext header... */
         UIP_IP_BUF->proto = proto;
       }
-      UIP_FALLBACK_INTERFACE.output();
+	  /* Inform the other end that the destination is not reachable. If it's
+	   * not informed routes might get lost unexpectedly until there's a need
+	   * to send a new packet to the peer */
+	  if(UIP_FALLBACK_INTERFACE.output() < 0) {
+	    PRINTF("FALLBACK: output error. Reporting DST UNREACH\n");
+	    uip_icmp6_error_output(ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADDR, 0);
+	    uip_flags = 0;
+	    tcpip_ipv6_output();
+	    return;
+	  }
 #else
           PRINTF("tcpip_ipv6_output: Destination off-link but no route\n\r");
 #endif /* !UIP_FALLBACK_INTERFACE */
-          uip_len = 0;
+          uip_clear_buf();
           return;
         }
 
@@ -612,18 +629,13 @@ tcpip_ipv6_output(void)
 
     /* End of next hop determination */
 
-#if UIP_CONF_IPV6_RPL
-    if(rpl_update_header_final(nexthop)) {
-      uip_len = 0;
-      return;
-    }
-#endif /* UIP_CONF_IPV6_RPL */
     nbr = uip_ds6_nbr_lookup(nexthop);
     if(nbr == NULL) {
 #if UIP_ND6_SEND_NA
-      if((nbr = uip_ds6_nbr_add(nexthop, NULL, 0, NBR_INCOMPLETE)) == NULL) {
-        uip_len = 0;
-        return;
+    	if((nbr = uip_ds6_nbr_add(nexthop, NULL, 0, NBR_INCOMPLETE, NBR_TABLE_REASON_IPV6_ND, NULL)) == NULL) {
+    	  uip_clear_buf();
+    	  PRINTF("tcpip_ipv6_output: failed to add neighbor to cache\n\r");
+          return;
       } else {
 #if UIP_CONF_IPV6_QUEUE_PKT
         /* Copy outgoing pkt in the queuing buffer for later transmit. */
@@ -646,7 +658,12 @@ tcpip_ipv6_output(void)
 
         stimer_set(&nbr->sendns, uip_ds6_if.retrans_timer / 1000);
         nbr->nscount = 1;
+        /* Send the first NS try from here (multicast destination IP address). */
       }
+#else /* UIP_ND6_SEND_NA */
+      PRINTF("tcpip_ipv6_output: neighbor not in cache\n");
+      uip_len = 0;
+      return;
 #endif /* UIP_ND6_SEND_NA */
     } else {
 #if UIP_ND6_SEND_NA
@@ -660,7 +677,7 @@ tcpip_ipv6_output(void)
           uip_packetqueue_set_buflen(&nbr->packethandle, uip_len);
         }
 #endif /*UIP_CONF_IPV6_QUEUE_PKT*/
-        uip_len = 0;
+        uip_clear_buf();
         return;
       }
       /* Send in parallel if we are running NUD (nbc state is either STALE,
@@ -690,15 +707,13 @@ tcpip_ipv6_output(void)
       }
 #endif /*UIP_CONF_IPV6_QUEUE_PKT*/
 
-      uip_len = 0;
+      uip_clear_buf();
       return;
     }
-    return;
   }
   /* Multicast IP destination address. */
   tcpip_output(NULL);
-  uip_len = 0;
-  uip_ext_len = 0;
+  uip_clear_buf();
 }
 #endif /* NETSTACK_CONF_WITH_IPV6 */
 /*---------------------------------------------------------------------------*/
@@ -738,7 +753,7 @@ tcpip_uipcall(void)
 
 #if UIP_TCP
  {
-   static unsigned char i;
+   unsigned char i;
    register struct listenport *l;
    
    /* If this is a connection request for a listening port, we must
@@ -781,7 +796,7 @@ void tcpip_init(void)
 {
 #if UIP_TCP
  {
-   static unsigned char i;
+   unsigned char i;
 
    for(i = 0; i < UIP_LISTENPORTS; ++i) {
      s.listenports[i].port = 0;

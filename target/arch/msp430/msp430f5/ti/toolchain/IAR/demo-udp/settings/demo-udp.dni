@@ -76,9 +76,9 @@ LoggingEnabled=_ 0
 LogFile=_ ""
 [Breakpoints]
 Bp0=_ "STD_CODE" "{$PROJ_DIR$\..\..\..\..\..\..\..\..\demo\demo_main.c}.328.1" 1 0 0 0 "" 0 ""
-Bp1=_ "STD_CODE" "{$PROJ_DIR$\..\..\..\..\..\..\..\if\cc120x\cc120x.c}.565.9" 0 0 0 0 "" 0 ""
+Bp1=_ "STD_CODE" "{$PROJ_DIR$\..\..\..\..\..\..\..\if\cc120x\cc120x.c}.565.2" 0 0 0 0 "" 0 ""
 Bp2=_ "STD_CODE" "{$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\dll\dllc\dllc_802154.c}.357.3" 0 0 0 0 "" 0 ""
-Bp3=_ "STD_CODE" "{$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\dll\dllsec\dllsec_null.c}.123.3" 0 0 0 0 "" 0 ""
+Bp3=_ "STD_CODE" "{$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\dll\dllsec\dllsec_null.c}.123.1" 0 0 0 0 "" 0 ""
 Count=4
 [FET]
 Clock mode=14
