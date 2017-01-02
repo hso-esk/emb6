@@ -161,6 +161,12 @@ static void _bsp_ledCallback(c_event_t c_event, p_data_t p_data);
  */
 static void _bsp_ledCallback( c_event_t event, p_data_t p_data )
 {
+#if defined(HAL_LED_INVERTED)
+  int inv = 1;
+#else
+  int inv = 0;
+#endif
+
   uint8_t j;
   for( j = 0; j < HAL_NUM_LEDS; j++ )
   {
@@ -173,7 +179,8 @@ static void _bsp_ledCallback( c_event_t event, p_data_t p_data )
 
         /* toggle the according pin value */
         if( bsp_leds[j].p_pin != NULL )
-          hal_pinSet( bsp_leds[j].p_pin, !hal_pinGet( bsp_leds[j].p_pin) );
+         // hal_pinSet( bsp_leds[j].p_pin, !hal_pinGet( bsp_leds[j].p_pin) );
+         hal_pinSet( bsp_leds[j].p_pin, inv ? TRUE : FALSE );
         break;
       }
     }
@@ -427,6 +434,10 @@ int8_t bsp_led( uint8_t led, en_bsp_led_op_t op )
   for( i = 0; i < HAL_SUPPORT_LEDNUM; i++ )
   {
     uint8_t ledVal = ledMsk & 1;  /* least significant bit 0b0101 */
+
+    /* next LED */
+    ledMsk = (ledMsk >> 1);
+
     if( (ledVal == 0) && (op != EN_BSP_LED_OP_SET) )
       /* LED not selected */
       continue;
@@ -450,16 +461,14 @@ int8_t bsp_led( uint8_t led, en_bsp_led_op_t op )
         break;
 
       case EN_BSP_LED_OP_BLINK:
-        hal_pinSet( bsp_leds[i].p_pin, !hal_pinGet(bsp_leds[i].p_pin) );
+        hal_pinSet( bsp_leds[i].p_pin, inv ? FALSE : TRUE );
+        //hal_pinSet( bsp_leds[i].p_pin, !hal_pinGet(bsp_leds[i].p_pin) );
         etimer_set(&bsp_leds[i].blinkTmr, 20, _bsp_ledCallback);
         break;
 
       default:
         return -2;
     }
-
-    /* next LED */
-    ledMsk = (led >> 1);
   }
 #endif /* #if defined(HAL_SUPPORT_LED) */
   return 0;
