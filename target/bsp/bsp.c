@@ -427,6 +427,10 @@ int8_t bsp_led( uint8_t led, en_bsp_led_op_t op )
   for( i = 0; i < HAL_SUPPORT_LEDNUM; i++ )
   {
     uint8_t ledVal = ledMsk & 1;  /* least significant bit 0b0101 */
+
+    /* next LED */
+    ledMsk = (ledMsk >> 1);
+
     if( (ledVal == 0) && (op != EN_BSP_LED_OP_SET) )
       /* LED not selected */
       continue;
@@ -457,9 +461,6 @@ int8_t bsp_led( uint8_t led, en_bsp_led_op_t op )
       default:
         return -2;
     }
-
-    /* next LED */
-    ledMsk = (led >> 1);
   }
 #endif /* #if defined(HAL_SUPPORT_LED) */
   return 0;
