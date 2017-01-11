@@ -42,6 +42,9 @@
 #define NETSTK_CFG_RF_SW_AUTOACK_EN         TRUE
 #endif
 
+/** transceiver supports standard-specific checksum algorithm */
+#define NETSTK_SUPPORT_HW_CRC               TRUE
+
 /* radio transceiver does not support standard-specified checksum */
 #ifndef NETSTK_CFG_RF_CRC_EN
 #define NETSTK_CFG_RF_CRC_EN                TRUE
@@ -56,6 +59,17 @@
 #ifndef HAL_SUPPORT_LEDNUM
 #define HAL_SUPPORT_LEDNUM                  4
 #endif /* #ifndef HAL_SUPPORT_LEDNUM */
+
+/** Enable SUPPORT SLIPUART */
+#ifndef HAL_SUPPORT_SLIPUART
+#define HAL_SUPPORT_SLIPUART                TRUE
+#endif /* #ifndef HAL_SUPPORT_SLIPUART */
+
+
+/** Enable  HAL SUPPORT SLIPUART_RX */
+#ifndef HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX
+#define HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX                TRUE
+#endif /* #ifndef HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX */
 
 /** Enable LED0 */
 #ifndef HAL_SUPPORT_LED0

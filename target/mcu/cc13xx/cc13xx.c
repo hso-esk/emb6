@@ -85,6 +85,7 @@ static void _hal_isrSysTick(uint32_t l_count);
 /*! Hal tick counter */
 static clock_time_t volatile hal_ticks;
 
+
 /*
  * --- Type Definitions -----------------------------------------------------*
  */
@@ -104,6 +105,13 @@ typedef struct
   pf_hal_irqCb_t pf_cb;
 
 } s_hal_gpio_pin_t;
+
+/**
+ * \brief   Description of an interrupt.
+ *
+ *          An interrupt consists of the according callback function
+ *          and a data pointer.
+ */
 
 
 /** Definition of the IOs */
@@ -130,11 +138,22 @@ static s_hal_gpio_pin_t s_hal_gpio[EN_HAL_PIN_MAX] = {
 #endif
 
 };
+
+/** Definition of the peripheral callback functions */
+s_hal_irq s_hal_irqs[EN_HAL_PERIPHIRQ_MAX];
+
+
 /*============================================================================*/
 /*                           LOCAL FUNCTIONS                                  */
 /*============================================================================*/
+/*
+int putchar(int _c)
+{
+  sf_uart_write((uint8_t*)&_c, 0x01U);
+  return (unsigned char)_c;
+}*/
 
-#ifdef __TI_ARM__
+#ifdef 0 // __TI_ARM__
 /* The functions fputc and fputs are used to redirect stdout to
  * the UART interface.
  *
@@ -520,6 +539,55 @@ void hal_spiTxRx(uint8_t *p_tx, uint8_t *p_rx, uint16_t len)
   /* Not needed because of integrated IF */
 }
 
+
+
+
+#if defined(HAL_SUPPORT_UART)
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_uartInit()
+*/
+void* hal_uartInit( en_hal_uart_t uart )
+{
+    sf_uart_init();
+}/* hal_uartInit() */
+
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_uartRx()
+*/
+int32_t hal_uartRx( void* p_uart, uint8_t * p_rx, uint16_t len )
+{
+    EMB6_ASSERT_RET( p_rx != NULL, -1 );
+
+    if( len == 0 )
+      return 0;
+
+    sf_uart_read(p_rx, len);
+    return len;
+}/* hal_uartRx() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_uartTx()
+*/
+int32_t hal_uartTx( void* p_uart, uint8_t* p_tx, uint16_t len )
+{
+    EMB6_ASSERT_RET( p_tx != NULL, -1 );
+
+    if( len == 0 )
+      return 0;
+
+    sf_uart_write(p_tx, len);
+    return len;
+}/* hal_uartTx() */
+#endif /* #if defined(HAL_SUPPORT_UART) */
+
+
 /*!
  * @brief This function resets the watchdog timer.
  *
@@ -606,9 +674,8 @@ int8_t hal_periphIRQRegister( en_hal_periphirq_t irq, pf_hal_irqCb_t pf_cb,
     void* p_data )
 {
   /* set the callback and data pointer */
-/*  s_hal_irqs[irq].pf_cb = pf_cb;
+  s_hal_irqs[irq].pf_cb = pf_cb;
   s_hal_irqs[irq].p_data = p_data;
-*/
   return 0;
 } /* hal_periphIRQRegister() */
 

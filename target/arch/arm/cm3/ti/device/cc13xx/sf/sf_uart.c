@@ -33,6 +33,8 @@
 #include "driverlib/ioc.h"
 /* bsp includes */
 #include "bsp/srf06eb_cc26xx/drivers/source/bsp.h"
+
+#include "hal.h"
 /*==============================================================================
                             CONFIGURATION
 ==============================================================================*/
@@ -131,8 +133,12 @@ void loc_writeUartTxFifo(void)
  * @brief Reads from the rx fifo of the CC13xx
  */
 /*============================================================================*/
+extern s_hal_irq s_hal_irqs[EN_HAL_PERIPHIRQ_MAX];
+
 void loc_readUartRxFifo(void)
 {
+
+#ifdef 0
   /*! If the Rx-ringbuffer is full, disable the Rx-interrupt. */
   if(UART_BUFFER_RX_LEN <= gi_uart_bufferRxLen)
   {
@@ -141,7 +147,12 @@ void loc_readUartRxFifo(void)
     /* Clear the rx fifo. */
     while(UARTCharsAvail(UART0_BASE) == true)
     {
-      UARTCharGet(UART0_BASE);
+      /* Copy data into RX Buffer && clear buffer at the same time  */
+      uint8_t rxData = UARTCharGet(UART0_BASE);
+      if( s_hal_irqs[EN_HAL_PERIPHIRQ_SLIPUART_RX].pf_cb != NULL )
+      {
+        s_hal_irqs[EN_HAL_PERIPHIRQ_SLIPUART_RX].pf_cb( &rxData );
+      }
     }/* while */
   }
   else
@@ -151,6 +162,10 @@ void loc_readUartRxFifo(void)
     {
       /*! Read the next byte into the Rx-ringbuffer. */
       *gpc_uart_bufferRxWrite = (uint8_t) UARTCharGet(UART0_BASE);
+      if( s_hal_irqs[EN_HAL_PERIPHIRQ_SLIPUART_RX].pf_cb != NULL )
+      {
+        s_hal_irqs[EN_HAL_PERIPHIRQ_SLIPUART_RX].pf_cb( &gpc_uart_bufferRxWrite );
+      }
       gpc_uart_bufferRxWrite++;
       /*! Increase the number of bytes in Rx-ringbuffer. */
       gi_uart_bufferRxLen++;
@@ -162,6 +177,17 @@ void loc_readUartRxFifo(void)
       } /* if */
     }/* while() */
   }/* if...else */
+#endif
+
+  while(UARTCharsAvail(UART0_BASE) == true)
+  {
+    uint8_t rxData = UARTCharGet(UART0_BASE);
+    if( s_hal_irqs[EN_HAL_PERIPHIRQ_SLIPUART_RX].pf_cb != NULL )
+    {
+      s_hal_irqs[EN_HAL_PERIPHIRQ_SLIPUART_RX].pf_cb( &rxData );
+    }
+  }
+
 }/* loc_readUartRxFifo() */
 /*******************************************************************************
 
@@ -184,7 +210,7 @@ void UART0IntHandler(void)
 
   if((l_intStatus & UART_INT_RX) == UART_INT_RX)
   {
-    /* Fill the tx fifo */
+    /* Fill the rx fifo */
     loc_readUartRxFifo();
 
     /* Clear the UART interrupt flag. */
