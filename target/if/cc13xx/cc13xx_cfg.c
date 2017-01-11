@@ -43,6 +43,13 @@
 // Overrides for CMD_PROP_RADIO_DIV_SETUP
 uint32_t pOverrides[] =
 {
+    HW32_ARRAY_OVERRIDE(0x2004, 1), // configure new CRC16 poly (=0x40012005 in pure hex)
+    0x10210000, // new CRC16 poly: CRC-16-CCITT normal form, 0x1021 is x^16 + x^15 + x^5 + 1
+    0xC0040051, // CRC initialization (address)
+    0x00000000, // CRC initialization (value)
+   //0xC0040061, // override to set the “crcXor” setting (4-byte value)
+   //0xFFFFFFFF, // new “crcXor” value to use (default is 0x00000000)
+
 // override_synth.xml
     ADI_HALFREG_OVERRIDE(0,61,0xF,0xD),
     HW32_ARRAY_OVERRIDE(0x4038,1),
