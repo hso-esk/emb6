@@ -54,6 +54,11 @@
 #define UART_TX_BLOCKING              1
 #endif /* #ifndef UART_TX_BLOCKING */
 
+
+#ifndef USE_FIFO
+#define USE_FIFO              TRUE
+#endif /* #ifndef UART_TX_BLOCKING */
+
 /*! Sets the length of the Rx ringbuffer. */
 #define UART_BUFFER_RX_LEN            128U
 /*! Sets the length of the Tx ringbuffer. */
@@ -138,11 +143,11 @@ extern s_hal_irq s_hal_irqs[EN_HAL_PERIPHIRQ_MAX];
 void loc_readUartRxFifo(void)
 {
 
-#ifdef 0
+#ifdef USE_FIFO
   /*! If the Rx-ringbuffer is full, disable the Rx-interrupt. */
   if(UART_BUFFER_RX_LEN <= gi_uart_bufferRxLen)
   {
-    UARTIntDisable(UART0_BASE, UART_INT_RX);
+    //UARTIntDisable(UART0_BASE, UART_INT_RX);
     gb_uart_bufferRxOverflow = true;
     /* Clear the rx fifo. */
     while(UARTCharsAvail(UART0_BASE) == true)
@@ -177,7 +182,7 @@ void loc_readUartRxFifo(void)
       } /* if */
     }/* while() */
   }/* if...else */
-#endif
+#else
 
   while(UARTCharsAvail(UART0_BASE) == true)
   {
@@ -187,7 +192,7 @@ void loc_readUartRxFifo(void)
       s_hal_irqs[EN_HAL_PERIPHIRQ_SLIPUART_RX].pf_cb( &rxData );
     }
   }
-
+#endif
 }/* loc_readUartRxFifo() */
 /*******************************************************************************
 
