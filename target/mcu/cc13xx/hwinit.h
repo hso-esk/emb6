@@ -27,7 +27,7 @@
 ==============================================================================*/
 #include "driverlib/ioc.h"
 #include "inc/hw_memmap.h"
-
+#include "hal.h"
 /* Stack specific include */
 #include "phy_framer_802154.h"
 /*==============================================================================
@@ -77,6 +77,12 @@
 /*! Platform interfaces: Definition of TX pin. */
 #define UART_IOID_TXD                IOID_3
 
+#define CC1310_LED0                     0
+#define CC1310_LED1                     1
+#define CC1310_LED2                     2
+#define CC1310_LED3                     3
+
+
 /*==============================================================================
                                      ENUMS
 ==============================================================================*/
@@ -84,6 +90,16 @@
 /*==============================================================================
                          STRUCTURES AND OTHER TYPEDEFS
 ==============================================================================*/
+
+typedef struct
+{
+  /** callback function */
+  pf_hal_irqCb_t pf_cb;
+  /** data pointer */
+  void* p_data;
+
+} s_hal_irq;
+
 
 /*==============================================================================
                           GLOBAL VARIABLE DECLARATIONS

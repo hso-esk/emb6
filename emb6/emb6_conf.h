@@ -75,8 +75,7 @@
 /** Define a network prefix for dag root */
 #define NETWORK_PREFIX_DODAG                   0xaaaa, 0x0000, 0x0000, 0x0000
 
-/** Define default network prefix for ipv6 address */
-#define UIP_CONF_DS6_DEFAULT_PREFIX            0xaaaa
+#define UIP_CONF_DS6_DEFAULT_PREFIX             0xaaaa
 
 /*=============================================================================
                                 TRANSPORT LAYER SECTION

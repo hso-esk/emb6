@@ -209,13 +209,7 @@ static void loc_cc13xx_cca(e_nsErr_t *p_err)
       *p_err = NETSTK_ERR_BUSY;
       break;
   }/* switch */
-}/* loc_cc13xx_cca() */
-
-/*
-********************************************************************************
-*                           API FUNCTION DEFINITIONS
-********************************************************************************
-*/
+}
 
 /*============================================================================*/
 /*                           API FUNCTION DEFINITIONS                         */
@@ -268,7 +262,8 @@ static void cc13xx_On (e_nsErr_t *p_err)
   #endif
 
   *p_err = NETSTK_ERR_NONE;
-  sf_rf_6lowpan_startRx();
+  if(!sf_rf_wake())
+    *p_err = NETSTK_ERR_INIT;
 }
 
 
@@ -302,6 +297,7 @@ static void cc13xx_Send (uint8_t      *p_data,
                          uint16_t     len,
                          e_nsErr_t    *p_err)
 {
+    uint8_t retVal;
   #if NETSTK_CFG_ARG_CHK_EN
   if (p_err == NULL)
   {
@@ -322,10 +318,14 @@ static void cc13xx_Send (uint8_t      *p_data,
     *p_err = NETSTK_ERR_INVALID_ARGUMENT;
     return;
   }
-
-  if(sf_rf_6lowpan_sendBlocking(p_data, len))
+  retVal=sf_rf_6lowpan_sendBlocking(p_data, len);
+  if(retVal==1)
   {
     *p_err = NETSTK_ERR_NONE;
+  }
+  else if(retVal==2)
+  {
+    *p_err = NETSTK_ERR_TX_NOACK;
   }
   else
   {
@@ -406,7 +406,12 @@ static void cc13xx_Ioctl (e_nsIocCmd_t    cmd,
     case NETSTK_CMD_RF_SENS_SET:
     case NETSTK_CMD_RF_SENS_GET:
     case NETSTK_CMD_RF_IS_RX_BUSY:
-    case NETSTK_CMD_RF_802154G_EU_CHAN:
+    case NETSTK_CMD_RF_CHAN_NUM_SET:
+        /* set the desired channel */
+        if(sf_rf_6lowpan_chanNumSet(*(uint8_t*)p_val))
+            *p_err = NETSTK_ERR_NONE;
+        else
+            *p_err = NETSTK_ERR_INVALID_ARGUMENT;
     case NETSTK_CMD_RF_WOR_EN:
     default:
       /* unsupported commands are treated in same way */

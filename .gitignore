@@ -60,3 +60,9 @@ target/arch/msp430/msp430f5/ti/toolchain/IAR/demo-coap/CC112x_SRV/*/*
 doc/html/
 doc/latex/
 /coap-server/
+/lwm2m_client/
+/dtls_client/
+/dtls_server/
+/udp_client/
+/udp_server/
+/udp socket server/
