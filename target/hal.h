@@ -290,6 +290,27 @@ typedef enum EN_HAL_UART_T
 } en_hal_uart_t;
 
 /**
+ * \brief   Describes real-time clock.
+ *
+ */
+typedef struct EN_HAL_RTC_T
+{
+  /** Year */
+  uint8_t ui_year;
+  /** Month */
+  uint8_t uc_mon;
+  /** Day */
+  uint8_t uc_day;
+  /** Hour */
+  uint8_t uc_hour;
+  /** Minute */
+  uint8_t uc_min;
+  /** Seconds */
+  uint8_t uc_sec;
+
+} en_hal_rtc_t;
+
+/**
  * \brief   Function prototype for an interrupt callback.
  *
  *          The HAL allows to register specific interrupts to callback
@@ -745,5 +766,35 @@ int8_t hal_periphIRQRegister( en_hal_periphirq_t irq, pf_hal_irqCb_t pf_cb,
  * \return  0 on success or negative value on error.
  */
 int8_t hal_debugInit( void );
+
+
+#if defined(HAL_SUPPORT_RTC)
+/**
+ * hal_rtcSetTime()
+ *
+ * \brief   Set current Real-Time clock data
+ *
+ *			XXX
+ *
+ * \param   p_rtc  	Pointer to RTC struct holding data to set.
+ *
+ * \return  0 on success or negative value on error.
+ */
+int8_t hal_rtcSetTime( en_hal_rtc_t *p_rtc );
+
+
+/**
+ * hal_rtcGetTime()
+ *
+ * \brief   Get current Real-Time clock data.
+ *
+ *			XXX
+ *
+ * \param   p_rtc  	Pointer to RTC struct holding data to read.
+ *
+ * \return  0 on success or negative value on error.
+ */
+int8_t hal_rtcGetTime( en_hal_rtc_t *p_rtc );
+#endif /* #if defined(HAL_SUPPORT_RTC) */
 
 #endif /* __HAL_H__ */

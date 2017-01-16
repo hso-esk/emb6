@@ -568,5 +568,36 @@ int8_t bsp_periphIRQRegister( en_hal_periphirq_t irq, pf_hal_irqCb_t pf_cb,
  * \return  character on success or negative value on error.
  */
 int bsp_getChar( void );
+
+
+#if defined(HAL_SUPPORT_RTC)
+/**
+ * bsp_rtcSetTime()
+ *
+ * \brief   Set current Real-Time clock data
+ *
+ *			XXX
+ *
+ * \param   p_rtc  	Pointer to RTC struct holding data to set.
+ *
+ * \return  0 on success or negative value on error.
+ */
+int8_t bsp_rtcSetTime( en_hal_rtc_t *p_rtc );
+
+
+/**
+ * bsp_rtcGetTime()
+ *
+ * \brief   Get current Real-Time clock data.
+ *
+ *			XXX
+ *
+ * \param   p_rtc  	Pointer to RTC struct holding data to read.
+ *
+ * \return  0 on success or negative value on error.
+ */
+int8_t bsp_rtcGetTime( en_hal_rtc_t *p_rtc );
+#endif /* #if defined(HAL_SUPPORT_RTC) */
+
 #endif /* __BSP_H__ */
 
