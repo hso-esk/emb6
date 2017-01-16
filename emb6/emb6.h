@@ -520,6 +520,8 @@ struct netstack_framer
 */
 typedef struct mac_phy_configuration
 {
+    /** Indicates if the configuration is already saved i.e., in EEPROM */
+    uint8_t is_saved;
     /** MAC address, default value: { 0x00,0x50,0xc2,0xff,0xfe,0xa8,0xdd,0xdd}*/
     uint8_t mac_address[8];
     /** PAN ID, default value: 0xABCD */

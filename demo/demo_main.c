@@ -461,6 +461,9 @@ static void emb6_task( void* p_params )
         emb6_errorHandler(&err);
     }
 
+    /* Configure stack parameters */
+    loc_stackConf(ps_params->ui_macAddr);
+
     /* Configure applications */
     loc_demoAppsConf(&st_netstack, &err);
     if (err != NETSTK_ERR_NONE) {
@@ -468,7 +471,6 @@ static void emb6_task( void* p_params )
     }
 
     /* Initialize stack */
-    loc_stackConf(ps_params->ui_macAddr);
     emb6_init(&st_netstack, &err);
     if (err != NETSTK_ERR_NONE) {
         emb6_errorHandler(&err);
