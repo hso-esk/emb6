@@ -725,3 +725,42 @@ int8_t hal_debugInit( void )
 #endif /* #if (LOGGER_LEVEL > 0) && (HAL_SUPPORT_SLIPUART == FALSE) */
   return 0;
 } /* hal_debugInit() */
+
+
+#if (HAL_SUPPORT_MCU_SLEEP == TRUE)
+/*---------------------------------------------------------------------------*/
+/*
+* hal_sleepDuration()
+*/
+clock_time_t hal_sleepDuration( void )
+{
+  return tmr_getCount(MSP430_WAKEUP_TMR);
+} /* hal_sleepDuration() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_sleepEnter()
+*/
+int8_t hal_sleepEnter( uint32_t duration )
+{
+  /* configure and start the wake-up timer */
+  tmr_config( MSP430_WAKEUP_TMR, duration );
+  tmr_start( MSP430_WAKEUP_TMR, NULL );
+
+  /* enter sleep */
+  mcu_enterPm( MSP430_MCU_SLEEP_MODE );
+  return 0;
+} /* hal_sleepEnter() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_adjustTick()
+*/
+int8_t hal_adjustTick( uint32_t ticks )
+{
+  l_hal_tick += ticks;
+  return 0;
+} /* hal_adjustTick() */
+#endif /* #if (HAL_SUPPORT_MCU_SLEEP == TRUE) */

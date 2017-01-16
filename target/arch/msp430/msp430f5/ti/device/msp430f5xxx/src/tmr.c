@@ -193,15 +193,15 @@ int8_t tmr_stop( e_tmr_t e_tmr )
 
 
 /*=============================================================================
- *  tmr_getT1Count()
+ *  tmr_getCount()
  *============================================================================*/
-uint16_t tmr_getT1Count( void )
+uint16_t tmr_getCount( e_tmr_t e_tmr )
 {
   int16_t i_ret = 0;
-  e_tmr_t e_tmr = E_TMR_1;
 
   /* get counter value */
-  i_ret = *gps_tmr[e_tmr].R;
+  if (e_tmr == E_TMR_1)
+    i_ret = *gps_tmr[e_tmr].R;
 
   return i_ret;
 }/* tmr_getT1Count() */

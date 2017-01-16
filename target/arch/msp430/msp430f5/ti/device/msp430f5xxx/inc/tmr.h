@@ -126,15 +126,14 @@ int8_t tmr_stop( e_tmr_t e_tmr );
 
 /*============================================================================*/
 /**
- * @brief    Retrieve the current timer value of timer 1.
+ * @brief    Retrieve the current timer value of timer.
  *
  *           This function can be used to retrieve the current value of
  *           a timers counter in ms. This function can only be used for
  *           Timer 1.
  *
- * @return  The current caounter value as ms.
+ * @return  The current counter value as ms.
  */
 /*============================================================================*/
-uint16_t tmr_getT1Count( void );
-
+uint16_t tmr_getCount( e_tmr_t e_tmr );
 #endif /* #ifndef __TMR_H__ */
