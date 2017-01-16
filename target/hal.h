@@ -746,4 +746,37 @@ int8_t hal_periphIRQRegister( en_hal_periphirq_t irq, pf_hal_irqCb_t pf_cb,
  */
 int8_t hal_debugInit( void );
 
+
+#if (HAL_SUPPORT_MCU_SLEEP == TRUE)
+/**
+ * hal_lpSleepDuration()
+ *
+ * \brief   Obtain total sleep time in practice
+ *
+ * \return  Remaining time.
+ */
+clock_time_t hal_sleepDuration( void );
+
+
+/**
+ * hal_lpSleepEnter()
+ *
+ * \brief   Enter low-power mode
+ *
+ * \return  0 on success, otherwise -1.
+ */
+int8_t hal_sleepEnter( uint32_t duration );
+
+
+/**
+ * hal_lpAdjustTick()
+ *
+ * \brief   Adjust system tick counter
+ *
+ * \return  0 on success, otherwise -1.
+ */
+int8_t hal_adjustTick( uint32_t ticks );
+#endif /* #if (HAL_SUPPORT_MCU_SLEEP == TRUE) */
+
+
 #endif /* __HAL_H__ */

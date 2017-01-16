@@ -670,3 +670,34 @@ int bsp_getChar(void)
   return 0;
 } /* bsp_getChar() */
 
+
+#if (HAL_SUPPORT_MCU_SLEEP == TRUE)
+/*---------------------------------------------------------------------------*/
+/*
+* bsp_lpSleepDuration()
+*/
+clock_time_t bsp_sleepDuration( void )
+{
+    return hal_sleepDuration();
+} /* bsp_lpSleepDuration() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* bsp_lpSleepEnter()
+*/
+int8_t bsp_sleepEnter( uint32_t duration )
+{
+    return hal_sleepEnter(duration);
+} /* bsp_lpSleepEnter() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* bsp_lpAdjustTick()
+*/
+int8_t bsp_adjustTick( clock_time_t ticks )
+{
+    return hal_adjustTick(ticks);
+}
+#endif /* #if (HAL_SUPPORT_MCU_SLEEP == TRUE) */

@@ -74,6 +74,10 @@
 #include "rpl.h"
 #endif
 
+#if (NETSTK_CFG_LPM_ENABLED == TRUE)
+#include "lpm.h"
+#endif
+
 #define     LOGGER_ENABLE        LOGGER_CORE
 #include    "logger.h"
 
@@ -85,6 +89,10 @@ uint8_t loc_emb6NetstackInit(s_ns_t * ps_netstack);
 
 #ifdef EMB6_INIT_DROOT
 static int8_t   loc_emb6DagRootInit(void);
+#endif
+
+#if (NETSTK_CFG_LPM_ENABLED == TRUE)
+static int32_t loc_emb6IsIdle(void);
 #endif
 
 /*==============================================================================
@@ -255,6 +263,44 @@ uint8_t loc_emb6NetstackInit(s_ns_t * ps_ns)
     return (c_err);
 }
 
+#if (NETSTK_CFG_LPM_ENABLED == TRUE)
+static int32_t loc_emb6IsIdle(void)
+{
+    e_nsErr_t err;
+    uint8_t isStackBusy = FALSE;
+    uint8_t isNetstkBusy = FALSE;
+    en_evprocResCode_t evprocState = E_QUEUE_EMPTY;
+    clock_time_t nextTimerEvent = 0;
+    int32_t ret = LPM_MOD_BUSY;
+
+    /* check if the netstack is busy
+     * the netstack submodule should first check if it is busy.
+     * If yes, the submodule should declare the stack is busy.
+     * If not, the submodule shall forward the command to the next lower layer. */
+    ps_emb6Stack->dllc->ioctrl(NETSTK_CMD_IS_BUSY, &isNetstkBusy, &err);
+
+    /* check if there is any pending event to be processed */
+    evprocState = evproc_nextEvent();
+
+    /* check if the stack is busy */
+    isStackBusy = (isNetstkBusy == TRUE) ||
+                  (evprocState != E_QUEUE_EMPTY );
+
+    /* enter sleep if the stack is not busy */
+    if (isStackBusy == FALSE) {
+        /* obtain next timer event to determine sleep duration */
+        nextTimerEvent = etimer_nextEvent();
+        if (nextTimerEvent == TMR_NOT_ACTIVE) {
+            ret = LPM_MOD_IDLE;
+        }
+        else {
+            ret = nextTimerEvent;
+        }
+    }
+    return ret;
+}
+#endif /* #if (NETSTK_CFG_LPM_ENABLED == TRUE) */
+
 /*==============================================================================
                                  API FUNCTIONS
  =============================================================================*/
@@ -285,12 +331,18 @@ void emb6_init(s_ns_t* ps_ns, e_nsErr_t *p_err)
         ps_emb6Stack = ps_ns;
     }
 
-    e_nsErr_t   err;
+#if (NETSTK_CFG_LPM_ENABLED == TRUE)
+    /* initialize Low-Power-Management */
+    lpm_init();
+
+    /* register low-power management callback for the stack */
+    lpm_register(loc_emb6IsIdle);
+#endif /* #if (NETSTK_CFG_LPM_ENABLED == TRUE) */
 
     /* turn the netstack on */
-    ps_emb6Stack->dllc->on(&err);
-    if (err != NETSTK_ERR_NONE) {
-        emb6_errorHandler(&err);
+    ps_emb6Stack->dllc->on(p_err);
+    if (*p_err != NETSTK_ERR_NONE) {
+        emb6_errorHandler(p_err);
     }
 }
 
@@ -311,6 +363,16 @@ void emb6_process(int32_t us_delay)
         evproc_nextEvent();
         etimer_request_poll();
         bsp_delayUs(delay);
+
+#if (NETSTK_CFG_LPM_ENABLED == TRUE)
+        /* low power manager handler entry */
+        int32_t l_sleep = lpm_entry();
+
+        /* adjust tick counter */
+        if (l_sleep != LPM_MOD_BUSY) {
+            bsp_adjustTick(l_sleep);
+        }
+#endif /* #if (NETSTK_CFG_LPM_ENABLED == TRUE) */
     }while(runLoop);
 }
 

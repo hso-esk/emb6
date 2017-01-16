@@ -283,6 +283,7 @@ typedef enum netstk_ioc_cmd
     NETSTK_CMD_TX_CBARG_SET,        /*!< Set TX Callback argument       */
     NETSTK_CMD_RX_CBFNT_SET,        /*!< Set RX Callback function       */
     NETSTK_CMD_RX_BUF_READ,
+    NETSTK_CMD_IS_BUSY,
 
     /*
      * DLLC command codes

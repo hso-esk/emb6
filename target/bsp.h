@@ -568,5 +568,39 @@ int8_t bsp_periphIRQRegister( en_hal_periphirq_t irq, pf_hal_irqCb_t pf_cb,
  * \return  character on success or negative value on error.
  */
 int bsp_getChar( void );
+
+
+#if (HAL_SUPPORT_MCU_SLEEP == TRUE)
+/**
+ * bsp_sleepDuration()
+ *
+ * \brief   Obtain remaining time of the low-power timer in ticks
+ *
+ * \return  Remaining time.
+ */
+clock_time_t bsp_sleepDuration( void );
+
+
+/**
+ * bsp_sleepEnter()
+ *
+ * \brief   Enter low-power mode
+ *
+ * \return  0 on success, otherwise -1.
+ */
+int8_t bsp_sleepEnter( uint32_t duration );
+
+
+/**
+ * bsp_adjustTick()
+ *
+ * \brief   Adjust system tick counter
+ *
+ * \return  0 on success, otherwise -1.
+ */
+int8_t bsp_adjustTick( clock_time_t ticks );
+#endif /* #if (HAL_SUPPORT_MCU_SLEEP == TRUE) */
+
+
 #endif /* __BSP_H__ */
 
