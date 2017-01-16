@@ -757,6 +757,7 @@ static void rf_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err) {
       rf_cca(p_ctx, p_err);
       break;
 
+    case NETSTK_CMD_IS_BUSY:
     case NETSTK_CMD_RF_IS_RX_BUSY:
       if (p_val == NULL) {
         *p_err = NETSTK_ERR_INVALID_ARGUMENT;
