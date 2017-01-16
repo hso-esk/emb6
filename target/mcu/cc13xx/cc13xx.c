@@ -26,7 +26,6 @@
 #include <string.h>
 
 #include "emb6.h"
-#include "hwinit.h"
 #include "hal.h"
 #include "bsp.h"
 #include "board_conf.h"
@@ -106,13 +105,6 @@ typedef struct
 
 } s_hal_gpio_pin_t;
 
-/**
- * \brief   Description of an interrupt.
- *
- *          An interrupt consists of the according callback function
- *          and a data pointer.
- */
-
 
 /** Definition of the IOs */
 static s_hal_gpio_pin_t s_hal_gpio[EN_HAL_PIN_MAX] = {
@@ -130,13 +122,6 @@ static s_hal_gpio_pin_t s_hal_gpio[EN_HAL_PIN_MAX] = {
   {CC1310_LED3, 0, NULL}, /* LED3 */
 #endif /* #if defined(HAL_SUPPORT_LED3) */
 
-
-#if  0
-  defined(HAL_SUPPORT_SLIPUART)
-  {EFM32_SLIP_UART_PORT_USART_TX, EFM32_SLIP_UART_PIN_USART_TX, gpioModePushPull, 0, NULL}, /* UART_TX */
-  {EFM32_SLIP_UART_PORT_USART_RX, EFM32_SLIP_UART_PIN_USART_RX, gpioModeInputPull, 0, NULL}, /* UART_RX */
-#endif
-
 };
 
 /** Definition of the peripheral callback functions */
@@ -153,7 +138,7 @@ int putchar(int _c)
   return (unsigned char)_c;
 }*/
 
-#ifdef 0 // __TI_ARM__
+#ifdef __TI_ARM__
 /* The functions fputc and fputs are used to redirect stdout to
  * the UART interface.
  *
@@ -181,7 +166,7 @@ int fputs(const char *_ptr, register FILE *_fp)
  *
  * @return true for success, false if initialization failed.
  */
-bool _hal_uart_init()
+static bool _hal_uart_init()
 {
   bool b_return = false;
   uint8_t p_data[] = { "\r\n\r\n========== BEGIN ===========\r\n\r\n" };
@@ -238,33 +223,67 @@ static bool _hal_systick(void)
   return b_success;
 }
 
+
+
+/*!
+ * @brief This function turns a led off.
+ *
+ * @param ui_led Descriptor of a led.
+ */
+static void hal_ledOff(uint16_t ui_led)
+{
+    switch( ui_led )
+    {
+        case CC1310_LED0:
+            bspLedClear( BSP_LED_1 );
+            break;
+
+        case CC1310_LED1:
+            bspLedClear( BSP_LED_2 );
+            break;
+
+        case CC1310_LED2:
+            bspLedClear( BSP_LED_3 );
+            break;
+
+        case CC1310_LED3:
+            bspLedClear( BSP_LED_4 );
+            break;
+    }
+}/* hal_ledOff() */
+
+/*!
+ * @brief This function turns a led on.
+ *
+ *
+ * @param ui_led Descriptor of a led.
+ */
+static void hal_ledOn(uint16_t ui_led)
+{
+    switch( ui_led )
+    {
+        case CC1310_LED0:  /* LED mask */
+            bspLedSet( BSP_LED_1 );
+            break;
+
+        case CC1310_LED1:
+            bspLedSet( BSP_LED_2 );
+            break;
+
+        case CC1310_LED2:
+            bspLedSet( BSP_LED_3 );
+            break;
+
+        case CC1310_LED3:
+            bspLedSet( BSP_LED_4 );
+            break;
+    }
+}/* hal_ledOn() */
+
+
 /*==============================================================================
                              API FUNCTIONS
  ==============================================================================*/
-
-/*!
- * @brief Disables all interrupts.
- *
- * This function disables all interrupts when the
- * program enters critical sections.
- */
-int8_t hal_enterCritical(void)
-{
-  /* Disable the interrutps */
-  sf_mcu_interruptDisable();
-  return 0;
-} /* hal_enterCritical() */
-
-/*!
- * @brief Enables all interrupts.
- *
- */
-int8_t hal_exitCritical(void)
-{
-  /* Enbale the interrupts */
-  sf_mcu_interruptEnable();
-  return 0;
-}/* hal_exitCritical() */
 
 /*!
  * @brief This function initializes all of the MCU peripherals.
@@ -317,6 +336,65 @@ int8_t hal_init(void)
 }/* hal_init() */
 
 /*!
+ * @brief Disables all interrupts.
+ *
+ * This function disables all interrupts when the
+ * program enters critical sections.
+ */
+int8_t hal_enterCritical(void)
+{
+  /* Disable the interrutps */
+  sf_mcu_interruptDisable();
+  return 0;
+} /* hal_enterCritical() */
+
+/*!
+ * @brief Enables all interrupts.
+ *
+ */
+int8_t hal_exitCritical(void)
+{
+  /* Enbale the interrupts */
+  sf_mcu_interruptEnable();
+  return 0;
+}/* hal_exitCritical() */
+
+
+/*!
+ * @brief This function starts the watchdog timer.
+ *
+ * Function is not used by the stack and thus not implemented.
+ */
+int8_t hal_watchdogStart(void)
+{
+  /* Not needed because the stack will not use this function */
+    return 0;
+} /* hal_watchdogStart() */
+
+/*!
+ * @brief This function resets the watchdog timer.
+ *
+ * Function is not used by the stack and thus not implemented.
+ */
+int8_t hal_watchdogReset(void)
+{
+  /* Not needed because the stack will not use this function */
+    return 0;
+} /* hal_watchdogReset() */
+
+/*!
+ * @brief This function stops the watchdog timer.
+ *
+ * Function is not used by the stack and thus not implemented.
+ */
+int8_t hal_watchdogStop(void)
+{
+  /* Not needed because the stack will not use this function */
+    return 0 ;
+} /* hal_watchdogStop() */
+
+
+/*!
  * @brief This function calculates a random number.
  *
  * Function is not used by the stack and thus not implemented.
@@ -328,60 +406,45 @@ uint32_t hal_getrand( void )
   return 1;
 }/* hal_getrand() */
 
-/*!
- * @brief This function turns a led off.
- *
- * @param ui_led Descriptor of a led.
- */
-void hal_ledOff(uint16_t ui_led)
-{
-    switch( ui_led )
-    {
-        case CC1310_LED0:
-            bspLedClear( BSP_LED_1 );
-            break;
 
-        case CC1310_LED1:
-            bspLedClear( BSP_LED_2 );
-            break;
-
-        case CC1310_LED2:
-            bspLedClear( BSP_LED_3 );
-            break;
-
-        case CC1310_LED3:
-            bspLedClear( BSP_LED_4 );
-            break;
-    }
-}/* hal_ledOff() */
 
 /*!
- * @brief This function turns a led on.
+ * @brief This function returns the system ticks.
  *
- *
- * @param ui_led Descriptor of a led.
+ * @return Current system tick.
  */
-void hal_ledOn(uint16_t ui_led)
+clock_time_t hal_getTick(void)
 {
-    switch( ui_led )
-    {
-        case CC1310_LED0:  /* LED mask */
-            bspLedSet( BSP_LED_1 );
-            break;
+  return TmrCurTick;
+} /* hal_getTick() */
 
-        case CC1310_LED1:
-            bspLedSet( BSP_LED_2 );
-            break;
 
-        case CC1310_LED2:
-            bspLedSet( BSP_LED_3 );
-            break;
 
-        case CC1310_LED3:
-            bspLedSet( BSP_LED_4 );
-            break;
-    }
-}/* hal_ledOn() */
+/*!
+ * @brief This function returns seconds.
+ *
+ * @return Seconds.
+ */
+clock_time_t hal_getSec(void)
+{
+  clock_time_t secs = 0;
+
+  /* Calculate the seconds */
+  secs = TmrCurTick / TARGET_CFG_SYSTICK_RESOLUTION;
+
+  return secs;
+} /* hal_getSec() */
+
+/*!
+ * @brief This function returns the time resolution.
+ *
+ * @return Resolution in ms.
+ */
+clock_time_t hal_getTRes(void)
+{
+  return TARGET_CFG_SYSTICK_RESOLUTION ;
+} /* hal_getSec() */
+
 
 /*!
  * @brief This function makes a delay.
@@ -411,6 +474,30 @@ int8_t hal_delayUs(uint32_t i_delay)
   return 0;
 } /* hal_delay_us() */
 
+/**
+ * hal_pinInit()
+ *
+ * \brief   Initializes a specific Pin.
+ *
+ *          This function is used to initialize a specific pin. The initialization
+ *          is implemented in the according HAL together with the board config
+ *          to create a valid mapping of the pin.
+ *
+ * \param   pin   The pin to initialize.
+ *
+ * \return  NULL on failure (e.g. not implemented) or a pointer to the hardware
+ *          dependent pin structure used for further operations.
+ */
+void* hal_pinInit( en_hal_pin_t pin )
+{
+    s_hal_gpio_pin_t* p_pin = NULL;
+    p_pin = &s_hal_gpio[pin];
+    p_pin->val=1;
+    hal_ledOn(p_pin->pin);
+
+  return p_pin ;
+} /* hal_pinInit() */
+
 
 /*!
  * @brief This function sets a particular pin.
@@ -438,22 +525,6 @@ return 0;
 
 
 /*!
- * @brief This function clears a particular pin.
- *
- * Not implemented, because of integrated transceiver.
- *
- * @param p_pin Pointer to a pin.
- */
-void hal_pinClr(void * p_pin)
-{
-    s_hal_gpio_pin_t* p_gpioPin;
-    p_gpioPin = (s_hal_gpio_pin_t *)p_pin;
-
-        hal_ledOff(p_gpioPin->pin);
-        p_gpioPin->val=0;
-} /* hal_pinClr() */
-
-/*!
  * @brief This function returns the pin status.
  *
  * Not implemented, because of integrated transceiver.
@@ -468,6 +539,41 @@ int8_t hal_pinGet(void * p_pin)
 
   return p_gpioPin->val;
 } /* hal_pinGet() */
+
+
+
+int8_t hal_pinIRQRegister( void* p_pin, en_hal_irqedge_t edge,
+    pf_hal_irqCb_t pf_cb )
+{
+  /* Not implemented */
+  return -1;
+} /* hal_pinIRQRegister() */
+
+int8_t hal_pinIRQEnable( void* p_pin )
+{
+  /* Not implemented */
+  return -1;
+} /* hal_pinIRQEnable() */
+
+/*
+* hal_pinIRQDisable()
+*/
+int8_t hal_pinIRQDisable( void* p_pin )
+{
+  /* Not implemented */
+  return -1;
+} /* hal_pinIRQDisable() */
+
+
+/*
+* hal_pinIRQClear()
+*/
+int8_t hal_pinIRQClear( void* p_pin )
+{
+  return -1;
+} /* hal_pinIRQClear() */
+
+#if defined(HAL_SUPPORT_SPI)
 
 /*!
  * @brief This function initializes the SPI interface.
@@ -538,9 +644,7 @@ void hal_spiTxRx(uint8_t *p_tx, uint8_t *p_rx, uint16_t len)
 {
   /* Not needed because of integrated IF */
 }
-
-
-
+#endif
 
 #if defined(HAL_SUPPORT_UART)
 
@@ -551,6 +655,7 @@ void hal_spiTxRx(uint8_t *p_tx, uint8_t *p_rx, uint16_t len)
 void* hal_uartInit( en_hal_uart_t uart )
 {
     sf_uart_init();
+    return NULL;
 }/* hal_uartInit() */
 
 
@@ -588,88 +693,6 @@ int32_t hal_uartTx( void* p_uart, uint8_t* p_tx, uint16_t len )
 #endif /* #if defined(HAL_SUPPORT_UART) */
 
 
-/*!
- * @brief This function resets the watchdog timer.
- *
- * Function is not used by the stack and thus not implemented.
- */
-int8_t hal_watchdogReset(void)
-{
-  /* Not needed because the stack will not use this function */
-    return 0;
-} /* hal_watchdogReset() */
-
-/*!
- * @brief This function starts the watchdog timer.
- *
- * Function is not used by the stack and thus not implemented.
- */
-int8_t hal_watchdogStart(void)
-{
-  /* Not needed because the stack will not use this function */
-    return 0;
-} /* hal_watchdogStart() */
-
-/*!
- * @brief This function stops the watchdog timer.
- *
- * Function is not used by the stack and thus not implemented.
- */
-int8_t hal_watchdogStop(void)
-{
-  /* Not needed because the stack will not use this function */
-    return 0 ;
-} /* hal_watchdogStop() */
-
-/*!
- * @brief This function returns the system ticks.
- *
- * @return Current system tick.
- */
-clock_time_t hal_getTick(void)
-{
-  return TmrCurTick;
-} /* hal_getTick() */
-
-/*!
- * @brief This function returns seconds.
- *
- * @return Seconds.
- */
-clock_time_t hal_getSec(void)
-{
-  clock_time_t secs = 0;
-
-  /* Calculate the seconds */
-  secs = TmrCurTick / TARGET_CFG_SYSTICK_RESOLUTION;
-
-  return secs;
-} /* hal_getSec() */
-
-/*!
- * @brief This function returns the time resolution.
- *
- * @return Resolution in ms.
- */
-clock_time_t hal_getTRes(void)
-{
-  return TARGET_CFG_SYSTICK_RESOLUTION ;
-} /* hal_getSec() */
-
-
-void hal_extiRegister(en_hal_irqedge_t e_edge, pf_hal_irqCb_t pf_cbFnct)
-{
-    /* Not used */
-} /* hal_extiRegister() */
-
-/*! @} 6lowpan_mcu */
-
-
-int8_t hal_debugInit( void )
-{
-  return 0;
-} /* hal_debugInit() */
-
 int8_t hal_periphIRQRegister( en_hal_periphirq_t irq, pf_hal_irqCb_t pf_cb,
     void* p_data )
 {
@@ -679,46 +702,10 @@ int8_t hal_periphIRQRegister( en_hal_periphirq_t irq, pf_hal_irqCb_t pf_cb,
   return 0;
 } /* hal_periphIRQRegister() */
 
-void* hal_pinInit( en_hal_pin_t pin )
+
+int8_t hal_debugInit( void )
 {
-    s_hal_gpio_pin_t* p_pin = NULL;
-    p_pin = &s_hal_gpio[pin];
-    //p_pin->pin=(uint8_t)pin;
-    p_pin->val=1;
-    hal_ledOn(p_pin->pin);
-
-  return p_pin ;
-} /* hal_pinInit() */
+  return 0;
+} /* hal_debugInit() */
 
 
-int8_t hal_pinIRQEnable( void* p_pin )
-{
-  /* Not implemented */
-  return -1;
-} /* hal_pinIRQEnable() */
-
-/*---------------------------------------------------------------------------*/
-/*
-* hal_pinIRQDisable()
-*/
-int8_t hal_pinIRQDisable( void* p_pin )
-{
-  /* Not implemented */
-  return -1;
-} /* hal_pinIRQDisable() */
-
-/*---------------------------------------------------------------------------*/
-/*
-* hal_pinIRQClear()
-*/
-int8_t hal_pinIRQClear( void* p_pin )
-{
-  return -1;
-} /* hal_pinIRQClear() */
-
-int8_t hal_pinIRQRegister( void* p_pin, en_hal_irqedge_t edge,
-    pf_hal_irqCb_t pf_cb )
-{
-  /* Not implemented */
-  return -1;
-} /* hal_pinIRQRegister() */

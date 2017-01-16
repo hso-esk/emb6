@@ -91,6 +91,12 @@
                          STRUCTURES AND OTHER TYPEDEFS
 ==============================================================================*/
 
+/**
+ * \brief   Description of an interrupt.
+ *
+ *          An interrupt consists of the according callback function
+ *          and a data pointer.
+ */
 typedef struct
 {
   /** callback function */
