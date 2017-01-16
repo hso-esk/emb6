@@ -560,15 +560,8 @@ int main(int argc, char **argv)
 int main(void)
 #endif /* #if defined(MAIN_WITH_ARGS) */
 {
-  s_ns_t st_netstack;
-  uint8_t ret;
-  e_nsErr_t err;
-
+  /* set startup parameter to zero */
   memset(&emb6_startupParams, 0, sizeof(emb6_startupParams));
-
-  /* Initialize variables */
-  err = NETSTK_ERR_NONE;
-  memset(&st_netstack, 0, sizeof(st_netstack));
 
 #if defined(MAIN_WITH_ARGS)
   if (argc > 1) {
@@ -576,13 +569,6 @@ int main(void)
   }
 #endif /* #if defined(MAIN_WITH_ARGS) */
   emb6_startupParams.ui_macAddr = loc_parseMac(NULL, MAC_ADDR_WORD);
-
-  /* Initialize BSP */
-  ret = bsp_init(&st_netstack);
-  if (ret != 0) {
-    err = NETSTK_ERR_INIT;
-    emb6_errorHandler(&err);
-  }
 
 #if USE_FREERTOS
     ledTaskParams.en = 1;
