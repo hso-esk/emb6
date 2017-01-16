@@ -95,10 +95,10 @@ void rtc_setTime( s_rtc_time_t* ps_time );
  *
  *           This function retrieves the current time from the Real-Time Clock.
  *
- * @return   The current time.
+ * @param    ps_time    Pointer to variable holding time to get.
  */
 /*============================================================================*/
-s_rtc_time_t rtc_getTime( void );
+void rtc_getTime( s_rtc_time_t* ps_time );
 
 
 #endif /* #ifndef __RTC_H__ */
