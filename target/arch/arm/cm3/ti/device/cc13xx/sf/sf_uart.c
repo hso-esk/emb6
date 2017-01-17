@@ -18,7 +18,6 @@
 /*==============================================================================
                             INCLUDE FILES
 ==============================================================================*/
-#include "hwinit.h"
 
 /* Standart libraries */
 #include <stdint.h>
@@ -138,12 +137,12 @@ void loc_writeUartTxFifo(void)
  * @brief Reads from the rx fifo of the CC13xx
  */
 /*============================================================================*/
-extern s_hal_irq s_hal_irqs[EN_HAL_PERIPHIRQ_MAX];
+sf_uart_slip_cb  cb;
 
 void loc_readUartRxFifo(void)
 {
 
-#ifdef USE_FIFO
+#if USE_FIFO
   /*! If the Rx-ringbuffer is full, disable the Rx-interrupt. */
   if(UART_BUFFER_RX_LEN <= gi_uart_bufferRxLen)
   {
@@ -154,10 +153,8 @@ void loc_readUartRxFifo(void)
     {
       /* Copy data into RX Buffer && clear buffer at the same time  */
       uint8_t rxData = UARTCharGet(UART0_BASE);
-      if( s_hal_irqs[EN_HAL_PERIPHIRQ_SLIPUART_RX].pf_cb != NULL )
-      {
-        s_hal_irqs[EN_HAL_PERIPHIRQ_SLIPUART_RX].pf_cb( &rxData );
-      }
+      if(cb != NULL)
+        cb(rxData);
     }/* while */
   }
   else
@@ -167,10 +164,9 @@ void loc_readUartRxFifo(void)
     {
       /*! Read the next byte into the Rx-ringbuffer. */
       *gpc_uart_bufferRxWrite = (uint8_t) UARTCharGet(UART0_BASE);
-      if( s_hal_irqs[EN_HAL_PERIPHIRQ_SLIPUART_RX].pf_cb != NULL )
-      {
-        s_hal_irqs[EN_HAL_PERIPHIRQ_SLIPUART_RX].pf_cb( &gpc_uart_bufferRxWrite );
-      }
+      if(cb != NULL)
+        cb(*gpc_uart_bufferRxWrite);
+
       gpc_uart_bufferRxWrite++;
       /*! Increase the number of bytes in Rx-ringbuffer. */
       gi_uart_bufferRxLen++;
@@ -187,10 +183,8 @@ void loc_readUartRxFifo(void)
   while(UARTCharsAvail(UART0_BASE) == true)
   {
     uint8_t rxData = UARTCharGet(UART0_BASE);
-    if( s_hal_irqs[EN_HAL_PERIPHIRQ_SLIPUART_RX].pf_cb != NULL )
-    {
-      s_hal_irqs[EN_HAL_PERIPHIRQ_SLIPUART_RX].pf_cb( &rxData );
-    }
+    if(cb != NULL)
+      cb(rxData);
   }
 #endif
 }/* loc_readUartRxFifo() */
@@ -388,3 +382,9 @@ bool sf_uart_isRxOverflow(void)
   gb_uart_bufferRxOverflow = false;
   return b_return;
 } /* sf_uart_isRxOverflow() */
+
+
+void set_Slip_cb(sf_uart_slip_cb  slip_cb)
+{
+  cb = slip_cb;
+}

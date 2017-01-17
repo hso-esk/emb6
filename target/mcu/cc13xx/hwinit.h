@@ -91,22 +91,6 @@
                          STRUCTURES AND OTHER TYPEDEFS
 ==============================================================================*/
 
-/**
- * \brief   Description of an interrupt.
- *
- *          An interrupt consists of the according callback function
- *          and a data pointer.
- */
-typedef struct
-{
-  /** callback function */
-  pf_hal_irqCb_t pf_cb;
-  /** data pointer */
-  void* p_data;
-
-} s_hal_irq;
-
-
 /*==============================================================================
                           GLOBAL VARIABLE DECLARATIONS
 ==============================================================================*/
