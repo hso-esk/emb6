@@ -75,6 +75,7 @@
 #include "hal.h"
 #include "bsp.h"
 #include "board_conf.h"
+#include "target_conf.h"
 
 #include "sf_mcu.h"
 #include "sf_mcu_timer.h"
@@ -578,7 +579,7 @@ int32_t hal_spiTx( void* p_spi, uint8_t* p_tx, uint16_t len )
 void* hal_uartInit( en_hal_uart_t uart )
 {
     sf_uart_init();
-    set_Slip_cb( _hal_uartRxCb );
+    sf_set_Slip_cb( _hal_uartRxCb );
     return NULL;
 }/* hal_uartInit() */
 

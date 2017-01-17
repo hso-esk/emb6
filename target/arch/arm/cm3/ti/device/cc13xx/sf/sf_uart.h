@@ -90,7 +90,12 @@ uint16_t sf_uart_cntTxBytes(void);
 /*============================================================================*/
 bool sf_uart_isRxOverflow(void);
 
-void set_Slip_cb(sf_uart_slip_cb  slip_cb);
+/*============================================================================*/
+/*!
+ * @brief set the call back function to use with slip demo
+ */
+/*============================================================================*/
+void sf_set_Slip_cb(sf_uart_slip_cb  slip_cb);
 
 /*! @} sf_mcu_uart */
 #endif /* __SF_UART_H__ */

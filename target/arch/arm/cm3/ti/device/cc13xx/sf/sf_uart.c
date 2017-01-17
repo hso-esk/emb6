@@ -22,6 +22,7 @@
 /* Standart libraries */
 #include <stdint.h>
 #include <stdbool.h>
+#include "target_conf.h"
 
 #include "sf_mcu.h"
 #include "sf_uart.h"
@@ -384,7 +385,7 @@ bool sf_uart_isRxOverflow(void)
 } /* sf_uart_isRxOverflow() */
 
 
-void set_Slip_cb(sf_uart_slip_cb  slip_cb)
+void sf_set_Slip_cb(sf_uart_slip_cb  slip_cb)
 {
   cb = slip_cb;
 }
