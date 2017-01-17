@@ -188,7 +188,7 @@ s_hal_irq s_hal_irqs[EN_HAL_PERIPHIRQ_MAX];
  *  --- Local Functions  ---------------------------------------------------- *
  */
 
-#ifdef 0//__TI_ARM__
+#ifdef __TI_ARM__
 /* The functions fputc and fputs are used to redirect stdout to
  * the UART interface.
  *
