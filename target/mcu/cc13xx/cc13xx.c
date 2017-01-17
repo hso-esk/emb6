@@ -103,7 +103,7 @@
 #define TARGET_CFG_SYSTICK_SCALER               (clock_time_t)(    2u )
 
 /*! Defines the mcu ticks per second. */
-#define MCU_TICKS_PER_SECOND                   500U //1000U
+#define MCU_TICKS_PER_SECOND                    500U
 /*! Status for succeeded init functions. */
 #define MCU_INIT_STATUS_OK                      0x01U
 /*! Compares X with @ref MCU_INIT_STATUS_OK. */
@@ -145,6 +145,21 @@ typedef struct
   pf_hal_irqCb_t pf_cb;
 
 } s_hal_gpio_pin_t;
+
+/**
+ * \brief   Description of an interrupt.
+ *
+ *          An interrupt consists of the according callback function
+ *          and a data pointer.
+ */
+typedef struct
+{
+  /** callback function */
+  pf_hal_irqCb_t pf_cb;
+  /** data pointer */
+  void* p_data;
+
+} s_hal_irq;
 
 
 /** Definition of the IOs */
@@ -315,6 +330,13 @@ static void hal_ledOn(uint16_t ui_led)
     }
 }/* hal_ledOn() */
 
+static void _hal_uartRxCb( uint8_t c )
+{
+  if( s_hal_irqs[EN_HAL_PERIPHIRQ_SLIPUART_RX].pf_cb != NULL )
+  {
+    s_hal_irqs[EN_HAL_PERIPHIRQ_SLIPUART_RX].pf_cb( &c );
+  }
+} /* _hal_uartRxCb() */
 
 /*
  * --- Global Function Definitions ----------------------------------------- *
@@ -556,7 +578,7 @@ int32_t hal_spiTx( void* p_spi, uint8_t* p_tx, uint16_t len )
 void* hal_uartInit( en_hal_uart_t uart )
 {
     sf_uart_init();
-    set_Slip_cb( (void (*)(void *)) &s_hal_irqs[EN_HAL_PERIPHIRQ_SLIPUART_RX].pf_cb);
+    set_Slip_cb( _hal_uartRxCb );
     return NULL;
 }/* hal_uartInit() */
 
