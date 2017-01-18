@@ -109,61 +109,7 @@ slip_set_input_callback(void (*c)(void))
  * was used in slip-bridge.c
  */
 //#if WITH_UIP
-uint8_t
-slip_send(void)
-{
-  uint16_t i;
-  uint8_t *ptr;
-  uint8_t c;
 
-  putchar(SLIP_END);
-
-  ptr = &uip_buf[UIP_LLH_LEN];
-  for(i = 0; i < uip_len; ++i) {
-    if(i == UIP_TCPIP_HLEN) {
-        ptr = (uint8_t *)uip_appdata;
-    }
-    c = *ptr++;
-    if(c == SLIP_END) {
-        putchar(SLIP_ESC);
-        c = SLIP_ESC_END;
-    } else if(c == SLIP_ESC) {
-        putchar(SLIP_ESC);
-        c = SLIP_ESC_ESC;
-    }
-    putchar(c);
-  }
-  putchar(SLIP_END);
-
-  //return UIP_FW_OK;
-  return 0;
-}
-//#endif /* WITH_UIP */
-/*---------------------------------------------------------------------------*/
-uint8_t
-slip_write(const void *_ptr, int len)
-{
-  const uint8_t *ptr = _ptr;
-  uint16_t i;
-  uint8_t c;
-
-  putchar(SLIP_END);
-
-  for(i = 0; i < len; ++i) {
-    c = *ptr++;
-    if(c == SLIP_END) {
-        putchar(SLIP_ESC);
-        c = SLIP_ESC_END;
-    } else if(c == SLIP_ESC) {
-        putchar(SLIP_ESC);
-        c = SLIP_ESC_ESC;
-    }
-    putchar(c);
-  }
-  putchar(SLIP_END);
-
-  return len;
-}
 /*---------------------------------------------------------------------------*/
 static void
 rxbuf_init(void)
