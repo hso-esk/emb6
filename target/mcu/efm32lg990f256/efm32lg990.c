@@ -434,6 +434,27 @@ void TIMER1_IRQHandler( void )
 
 } /* TIMER1_IRQHandler() */
 
+#if defined(HAL_SUPPORT_SLIPUART)
+#if defined(HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX)
+/**
+ * \brief   USART0 interrupt handler.
+ */
+void EFM32_SLIP_UART_RXIRQHNDL(void)
+{
+  /* Check for RX data valid interrupt */
+  if( s_hal_uart.p_hndl->IF & USART_IF_RXDATAV )
+  {
+    /* Copy data into RX Buffer */
+    uint8_t rxData = USART_Rx( s_hal_uart.p_hndl );
+    if( s_hal_irqs[EN_HAL_PERIPHIRQ_SLIPUART_RX].pf_cb != NULL )
+    {
+      s_hal_irqs[EN_HAL_PERIPHIRQ_SLIPUART_RX].pf_cb( &rxData );
+    }
+  }
+}
+#endif /* #if defined(HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX) */
+#endif /* #if defined(HAL_SUPPORT_SLIPUART) */
+
 
 /*
  * --- Global Function Definitions ----------------------------------------- *
