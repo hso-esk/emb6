@@ -355,7 +355,7 @@ int8_t hal_init(void)
   lcdSendBuffer( lcdBuf );
 #endif /* #if CC13XX_LCD_ENABLE */
 
-  return (!c_retStatus);
+  return 0;
 }/* hal_init() */
 
 
