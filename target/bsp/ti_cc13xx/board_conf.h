@@ -51,7 +51,7 @@
 #endif
 
 #ifndef CC13XX_LCD_ENABLE
-#define CC13XX_LCD_ENABLE           		1
+#define CC13XX_LCD_ENABLE           		FALSE
 #endif
 
 
