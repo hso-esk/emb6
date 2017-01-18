@@ -579,7 +579,8 @@ int32_t hal_spiTx( void* p_spi, uint8_t* p_tx, uint16_t len )
 void* hal_uartInit( en_hal_uart_t uart )
 {
     sf_uart_init();
-    sf_set_Slip_cb( _hal_uartRxCb );
+    sf_uart_setRxCb( _hal_uartRxCb );
+
     return NULL;
 }/* hal_uartInit() */
 

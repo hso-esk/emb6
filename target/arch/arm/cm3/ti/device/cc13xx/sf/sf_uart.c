@@ -88,6 +88,10 @@ volatile uint8_t *gpc_uart_bufferTxRead;
 /*! Number of bytes in the input buffer. */
 volatile uint16_t gi_uart_bufferTxLen;
 
+
+/*! Callback for UART Rx. */
+sf_uart_rx_cb gf_uart_rx_cb = NULL;
+
 /*==============================================================================
                             FUNCTION PROTOTYPES
 ==============================================================================*/
@@ -138,7 +142,6 @@ void loc_writeUartTxFifo(void)
  * @brief Reads from the rx fifo of the CC13xx
  */
 /*============================================================================*/
-sf_uart_slip_cb  cb;
 
 void loc_readUartRxFifo(void)
 {
@@ -154,8 +157,8 @@ void loc_readUartRxFifo(void)
     {
       /* Copy data into RX Buffer && clear buffer at the same time  */
       uint8_t rxData = UARTCharGet(UART0_BASE);
-      if(cb != NULL)
-        cb(rxData);
+      if(gf_uart_rx_cb != NULL)
+          gf_uart_rx_cb(rxData);
     }/* while */
   }
   else
@@ -165,8 +168,8 @@ void loc_readUartRxFifo(void)
     {
       /*! Read the next byte into the Rx-ringbuffer. */
       *gpc_uart_bufferRxWrite = (uint8_t) UARTCharGet(UART0_BASE);
-      if(cb != NULL)
-        cb(*gpc_uart_bufferRxWrite);
+      if(gf_uart_rx_cb != NULL)
+          gf_uart_rx_cb(*gpc_uart_bufferRxWrite);
 
       gpc_uart_bufferRxWrite++;
       /*! Increase the number of bytes in Rx-ringbuffer. */
@@ -184,8 +187,8 @@ void loc_readUartRxFifo(void)
   while(UARTCharsAvail(UART0_BASE) == true)
   {
     uint8_t rxData = UARTCharGet(UART0_BASE);
-    if(cb != NULL)
-      cb(rxData);
+    if(gf_uart_rx_cb != NULL)
+        gf_uart_rx_cb(rxData);
   }
 #endif
 }/* loc_readUartRxFifo() */
@@ -276,6 +279,9 @@ bool sf_uart_init(void)
 
   /* Enable the UART0 interrupt on the processor (NVIC). */
   UARTIntRegister(UART0_BASE, UART0IntHandler);
+
+  /* reset Rx callback */
+  gf_uart_rx_cb = NULL;
 
   return true;
 } /* sf_uart_init() */
@@ -384,8 +390,10 @@ bool sf_uart_isRxOverflow(void)
   return b_return;
 } /* sf_uart_isRxOverflow() */
 
-
-void sf_set_Slip_cb(sf_uart_slip_cb  slip_cb)
+/*============================================================================*/
+/*! sf_uart_setRxCb() */
+/*============================================================================*/
+void sf_uart_setRxCb(sf_uart_rx_cb  rx_cb)
 {
-  cb = slip_cb;
-}
+  gf_uart_rx_cb = rx_cb;
+} /* sf_uart_setRxCb() */
