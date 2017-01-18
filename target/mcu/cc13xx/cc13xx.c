@@ -306,6 +306,11 @@ static void hal_ledOn(uint16_t ui_led)
     }
 }/* hal_ledOn() */
 
+/*!
+ * @brief  UART RX call back function.
+ *
+ * @param  received char
+ */
 static void _hal_uartRxCb( uint8_t c )
 {
   if( s_hal_irqs[EN_HAL_PERIPHIRQ_SLIPUART_RX].pf_cb != NULL )
@@ -318,6 +323,10 @@ static void _hal_uartRxCb( uint8_t c )
  * --- Global Function Definitions ----------------------------------------- *
  */
 
+/*---------------------------------------------------------------------------*/
+/*
+* hal_init()
+*/
 int8_t hal_init(void)
 {
   uint8_t c_retStatus = 0U;
@@ -359,7 +368,10 @@ int8_t hal_init(void)
 }/* hal_init() */
 
 
-
+/*---------------------------------------------------------------------------*/
+/*
+* hal_enterCritical()
+*/
 int8_t hal_enterCritical(void)
 {
   /* Disable the interrutps */
@@ -367,7 +379,10 @@ int8_t hal_enterCritical(void)
   return 0;
 } /* hal_enterCritical() */
 
-
+/*---------------------------------------------------------------------------*/
+/*
+* hal_exitCritical()
+*/
 int8_t hal_exitCritical(void)
 {
   /* Enbale the interrupts */
@@ -375,41 +390,60 @@ int8_t hal_exitCritical(void)
   return 0;
 }/* hal_exitCritical() */
 
-
+/*---------------------------------------------------------------------------*/
+/*
+* hal_watchdogStart()
+*/
 int8_t hal_watchdogStart(void)
 {
   /* Not needed because the stack will not use this function */
     return 0;
 } /* hal_watchdogStart() */
 
-
+/*---------------------------------------------------------------------------*/
+/*
+* hal_watchdogReset()
+*/
 int8_t hal_watchdogReset(void)
 {
   /* Not needed because the stack will not use this function */
     return 0;
 } /* hal_watchdogReset() */
 
+/*---------------------------------------------------------------------------*/
+/*
+* hal_watchdogStop()
+*/
 int8_t hal_watchdogStop(void)
 {
   /* Not needed because the stack will not use this function */
     return 0 ;
 } /* hal_watchdogStop() */
 
-
+/*---------------------------------------------------------------------------*/
+/*
+* hal_getrand()
+*/
 uint32_t hal_getrand( void )
 {
   return 1;
 }/* hal_getrand() */
 
 
-
+/*---------------------------------------------------------------------------*/
+/*
+* hal_getTick()
+*/
 clock_time_t hal_getTick(void)
 {
   return TmrCurTick;
 } /* hal_getTick() */
 
 
-
+/*---------------------------------------------------------------------------*/
+/*
+* hal_getSec()
+*/
 clock_time_t hal_getSec(void)
 {
   clock_time_t secs = 0;
@@ -420,12 +454,19 @@ clock_time_t hal_getSec(void)
   return secs;
 } /* hal_getSec() */
 
+/*---------------------------------------------------------------------------*/
+/*
+* hal_getTRes()
+*/
 clock_time_t hal_getTRes(void)
 {
     return TARGET_CFG_SYSTICK_RESOLUTION ;
-}
+} /* hal_getTRes() */
 
-
+/*---------------------------------------------------------------------------*/
+/*
+* hal_delayUs()
+*/
 int8_t hal_delayUs(uint32_t i_delay)
 {
   /*
@@ -447,7 +488,10 @@ int8_t hal_delayUs(uint32_t i_delay)
   return 0;
 } /* hal_delay_us() */
 
-
+/*---------------------------------------------------------------------------*/
+/*
+* hal_pinInit()
+*/
 void* hal_pinInit( en_hal_pin_t pin )
 {
     s_hal_gpio_pin_t* p_pin = NULL;
@@ -458,7 +502,10 @@ void* hal_pinInit( en_hal_pin_t pin )
   return p_pin ;
 } /* hal_pinInit() */
 
-
+/*---------------------------------------------------------------------------*/
+/*
+* hal_pinSet()
+*/
 int8_t hal_pinSet( void* p_pin, uint8_t val )
 {
     s_hal_gpio_pin_t* p_gpioPin;
@@ -476,17 +523,23 @@ int8_t hal_pinSet( void* p_pin, uint8_t val )
 return 0;
 } /* hal_pinSet() */
 
-
+/*---------------------------------------------------------------------------*/
+/*
+* hal_pinGet()
+*/
 int8_t hal_pinGet(void * p_pin)
 {
-    s_hal_gpio_pin_t* p_gpioPin;
-    p_gpioPin = (s_hal_gpio_pin_t *)p_pin;
+  s_hal_gpio_pin_t* p_gpioPin;
+  p_gpioPin = (s_hal_gpio_pin_t *)p_pin;
 
   return p_gpioPin->val;
 } /* hal_pinGet() */
 
 
-
+/*---------------------------------------------------------------------------*/
+/*
+* hal_pinIRQRegister()
+*/
 int8_t hal_pinIRQRegister( void* p_pin, en_hal_irqedge_t edge,
     pf_hal_irqCb_t pf_cb )
 {
@@ -494,28 +547,36 @@ int8_t hal_pinIRQRegister( void* p_pin, en_hal_irqedge_t edge,
   return -1;
 } /* hal_pinIRQRegister() */
 
+/*---------------------------------------------------------------------------*/
+/*
+* hal_pinIRQEnable()
+*/
 int8_t hal_pinIRQEnable( void* p_pin )
 {
   /* Not implemented */
   return -1;
 } /* hal_pinIRQEnable() */
 
-
+/*---------------------------------------------------------------------------*/
+/*
+* hal_pinIRQDisable()
+*/
 int8_t hal_pinIRQDisable( void* p_pin )
 {
   /* Not implemented */
   return -1;
 } /* hal_pinIRQDisable() */
 
-
+/*---------------------------------------------------------------------------*/
+/*
+* hal_pinIRQClear()
+*/
 int8_t hal_pinIRQClear( void* p_pin )
 {
   return -1;
 } /* hal_pinIRQClear() */
 
 #if defined(HAL_SUPPORT_SPI)
-
-
 void* hal_spiInit( en_hal_spi_t spi )
 {
   /* Not needed because of integrated IF */
@@ -543,9 +604,11 @@ int32_t hal_spiTx( void* p_spi, uint8_t* p_tx, uint16_t len )
 }
 #endif
 
-
+/*---------------------------------------------------------------------------*/
+/*
+* hal_uartInit()
+*/
 #if defined(HAL_SUPPORT_UART)
-
 void* hal_uartInit( en_hal_uart_t uart )
 {
     sf_uart_init();
@@ -555,7 +618,10 @@ void* hal_uartInit( en_hal_uart_t uart )
 }/* hal_uartInit() */
 
 
-
+/*---------------------------------------------------------------------------*/
+/*
+* hal_uartRx()
+*/
 int32_t hal_uartRx( void* p_uart, uint8_t * p_rx, uint16_t len )
 {
     EMB6_ASSERT_RET( p_rx != NULL, -1 );
@@ -567,7 +633,10 @@ int32_t hal_uartRx( void* p_uart, uint8_t * p_rx, uint16_t len )
     return len;
 }/* hal_uartRx() */
 
-
+/*---------------------------------------------------------------------------*/
+/*
+* hal_uartTx()
+*/
 int32_t hal_uartTx( void* p_uart, uint8_t* p_tx, uint16_t len )
 {
     EMB6_ASSERT_RET( p_tx != NULL, -1 );
@@ -580,7 +649,10 @@ int32_t hal_uartTx( void* p_uart, uint8_t* p_tx, uint16_t len )
 }/* hal_uartTx() */
 #endif /* #if defined(HAL_SUPPORT_UART) */
 
-
+/*---------------------------------------------------------------------------*/
+/*
+* hal_periphIRQRegister()
+*/
 int8_t hal_periphIRQRegister( en_hal_periphirq_t irq, pf_hal_irqCb_t pf_cb,
     void* p_data )
 {
@@ -591,6 +663,10 @@ int8_t hal_periphIRQRegister( en_hal_periphirq_t irq, pf_hal_irqCb_t pf_cb,
 } /* hal_periphIRQRegister() */
 
 
+/*---------------------------------------------------------------------------*/
+/*
+* hal_debugInit()
+*/
 int8_t hal_debugInit( void )
 {
   return 0;

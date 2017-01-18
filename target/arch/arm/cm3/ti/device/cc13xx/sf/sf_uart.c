@@ -51,20 +51,20 @@
 #endif /* UART_IOID_RXD == UART_IOID_TXD */
 
 #ifndef UART_TX_BLOCKING
-#define UART_TX_BLOCKING              1
+#define UART_TX_BLOCKING            1
 #endif /* #ifndef UART_TX_BLOCKING */
 
 
 #ifndef USE_FIFO
-#define USE_FIFO              TRUE
+#define USE_FIFO                    FALSE
 #endif /* #ifndef UART_TX_BLOCKING */
 
 /*! Sets the length of the Rx ringbuffer. */
-#define UART_BUFFER_RX_LEN            128U
+#define UART_BUFFER_RX_LEN          128U
 /*! Sets the length of the Tx ringbuffer. */
-#define UART_BUFFER_TX_LEN            128U
+#define UART_BUFFER_TX_LEN          128U
 /*! Default baudrate used for the uart */
-#define UART_DEFAULT_BAUD             115200U
+#define UART_DEFAULT_BAUD           115200U
 /*==============================================================================
                             VARIABLES
 ==============================================================================*/

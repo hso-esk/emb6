@@ -17,9 +17,6 @@
 #define __DECL_SF_MCU_H__
 
 
-#ifndef USE_TI_RTOS
-#error Please define if TI-RTOS is in use ore not
-#endif /* USE_TI_RTOS */
 /*==============================================================================
                             INCLUDE FILES
 ==============================================================================*/
@@ -37,6 +34,10 @@
 #include "driverlib/vims.h"
 #include "driverlib/sys_ctrl.h"
 #include "driverlib/interrupt.h"
+
+#ifndef USE_TI_RTOS
+#error Please define if TI-RTOS is in use ore not
+#endif /* USE_TI_RTOS */
 
 
 #if !USE_TI_RTOS
