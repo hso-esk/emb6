@@ -1,0 +1,1 @@
+You have to copy those configuration files to your root folder for use with CCS
