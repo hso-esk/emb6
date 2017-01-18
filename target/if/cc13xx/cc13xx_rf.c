@@ -26,7 +26,7 @@ extern "C"
 /*                                INCLUDES                                    */
 /*============================================================================*/
 #include "emb6.h"
-#include "hwinit.h"
+#include "target_conf.h"
 #include "phy_framer_802154.h"
 
 #include "packetbuf.h"

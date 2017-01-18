@@ -16,7 +16,6 @@
 #define __DECL_SF_MCU_API_H__
 #define __DECL_SF_MCU_H__
 
-#include "hwinit.h"
 
 #ifndef USE_TI_RTOS
 #error Please define if TI-RTOS is in use ore not
@@ -31,6 +30,7 @@
 
 /* Stack includes */
 #include "sf_mcu.h"
+#include "target_conf.h"
 /* Chip specific */
 #include "driverlib/pwr_ctrl.h"
 #include "driverlib/flash.h"
