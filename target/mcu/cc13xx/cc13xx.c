@@ -115,7 +115,6 @@
  *  --- Local Function Prototypes ------------------------------------------ *
  */
 
-static bool _hal_uart_init();
 static bool _hal_systick(void);
 static void _hal_isrSysTick(uint32_t l_count);
 /*
@@ -211,30 +210,6 @@ int fputs(const char *_ptr, register FILE *_fp)
   return i_len;
 }
 #endif /* __TI_ARM__ */
-
-/*!
- * @brief This function initializes the UART interface.
- *
- * @return true for success, false if initialization failed.
- */
-static bool _hal_uart_init()
-{
-  bool b_return = false;
-  uint8_t p_data[] = { "\r\n\r\n========== BEGIN ===========\r\n\r\n" };
-  uint16_t i_dataLen = sizeof(p_data);
-
-  /* Initialize UART */
-  b_return = sf_uart_init();
-
-  if (b_return) {
-    if (!(sf_uart_write(p_data, i_dataLen) == i_dataLen))
-    {
-      b_return = false;
-    }
-  }
-
-  return b_return;
-}
 
 /*!
  * @brief This function updates the systicks.
@@ -353,22 +328,17 @@ int8_t hal_init(void)
 
   /* Initialize the mcu */
   c_retStatus = sf_mcu_init();
-  if(MCU_INIT_RET_STATUS_CHECK(c_retStatus))
-  {
-    /* Initialize the timer. MCU_TICKS_PER_SECOND specifies
-     * the tick interval. */
-    c_retStatus = sf_mcu_timer_init(MCU_TICKS_PER_SECOND);
-    if(MCU_INIT_RET_STATUS_CHECK(c_retStatus))
-    {
-      c_retStatus = _hal_uart_init();
-      if(MCU_INIT_RET_STATUS_CHECK(c_retStatus))
-      {
-        c_retStatus = _hal_systick();
-      }
-    }
-  }
+  if(!MCU_INIT_RET_STATUS_CHECK(c_retStatus))
+    return -1;
+
+  /* Initialize the timer. MCU_TICKS_PER_SECOND specifies
+   * the tick interval. */
+  c_retStatus = sf_mcu_timer_init(MCU_TICKS_PER_SECOND);
+  if(!MCU_INIT_RET_STATUS_CHECK(c_retStatus))
+     return -2;
 
   /* Initialize hal_ticks */
+  _hal_systick();
   hal_ticks = 0x00U;
 
   /* initialize LEDs */
