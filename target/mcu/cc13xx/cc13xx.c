@@ -669,6 +669,9 @@ int8_t hal_periphIRQRegister( en_hal_periphirq_t irq, pf_hal_irqCb_t pf_cb,
 */
 int8_t hal_debugInit( void )
 {
+#if (LOGGER_LEVEL > 0) && (HAL_SUPPORT_SLIPUART == FALSE)
+  sf_uart_init();
+#endif
   return 0;
 } /* hal_debugInit() */
 
