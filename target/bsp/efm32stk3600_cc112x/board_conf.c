@@ -58,7 +58,7 @@
  *  --- Includes -------------------------------------------------------------*
  */
 #include "emb6.h"
-#include "assert.h"
+#include "emb6assert.h"
 #include "board_conf.h"
 
 

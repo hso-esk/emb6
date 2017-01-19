@@ -67,6 +67,10 @@
 #include "uart.h"
 #include "rt_tmr.h"
 
+#if defined(HAL_SUPPORT_RTC)
+#include "rtc.h"
+#endif
+
 /*
  *  --- Macros ------------------------------------------------------------- *
  */
@@ -245,7 +249,10 @@ static s_hal_irq s_hal_irqs[EN_HAL_PERIPHIRQ_MAX];
  */
 static void _hal_tcInit( void );
 static void _hal_tcCb( void *arg );
+
+#if (HAL_SUPPORT_UART == TRUE)
 static void _hal_uartRxCb( uint8_t c );
+#endif
 
 /*
  *  --- Local Functions ---------------------------------------------------- *
@@ -342,6 +349,12 @@ int8_t hal_init( void )
 
   /* initialize timer counter */
   _hal_tcInit();
+
+#if (HAL_SUPPORT_RTC == TRUE)
+  /* initialize real-time clock management */
+  rtc_init();
+  rtc_start(0);
+#endif /* #if (HAL_SUPPORT_RTC == TRUE) */
 
   /* Enable global interrupt */
   _BIS_SR(GIE);
@@ -725,3 +738,28 @@ int8_t hal_debugInit( void )
 #endif /* #if (LOGGER_LEVEL > 0) && (HAL_SUPPORT_SLIPUART == FALSE) */
   return 0;
 } /* hal_debugInit() */
+
+
+#if defined(HAL_SUPPORT_RTC)
+/*---------------------------------------------------------------------------*/
+/*
+* hal_rtcSetTime()
+*/
+int8_t hal_rtcSetTime( en_hal_rtc_t *p_rtc )
+{
+    EMB6_ASSERT_RET( p_rtc != NULL, -1 );
+    rtc_setTime((s_rtc_time_t *)p_rtc);
+    return 0;
+}
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_rtcGetTime()
+*/
+int8_t hal_rtcGetTime( en_hal_rtc_t *p_rtc )
+{
+    EMB6_ASSERT_RET( p_rtc != NULL, -1 );
+    rtc_getTime((s_rtc_time_t *)p_rtc);
+    return 0;
+}
+#endif /* #if defined(HAL_SUPPORT_RTC) */

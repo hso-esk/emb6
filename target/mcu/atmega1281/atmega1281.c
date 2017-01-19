@@ -61,7 +61,7 @@
  */
 #include "emb6.h"
 #include "hal.h"
-#include "assert.h"
+#include "emb6assert.h"
 
 #include <avr/io.h>
 #include <avr/interrupt.h>

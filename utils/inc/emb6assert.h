@@ -38,8 +38,8 @@
  *
  */
 
-#ifndef ASSERT_H_
-#define ASSERT_H_
+#ifndef __EMB6ASSERT_H__
+#define __EMB6ASSERT_H__
 
 
 /*==============================================================================
@@ -140,4 +140,4 @@ do { \
 #define assert(x)
 #endif /* #if defined(EMB6_ASSERT_CFG) */
 
-#endif /* ASSERT_H_ */
+#endif /* __EMB6ASSERT_H__ */

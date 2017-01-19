@@ -62,7 +62,7 @@
  *  --- Includes -------------------------------------------------------------*
  */
 #include "emb6.h"
-#include "assert.h"
+#include "emb6assert.h"
 #include "bsp.h"
 #include "board_conf.h"
 #include "etimer.h"
@@ -678,3 +678,25 @@ int bsp_getChar(void)
   return 0;
 } /* bsp_getChar() */
 
+
+#if defined(HAL_SUPPORT_RTC)
+/*---------------------------------------------------------------------------*/
+/*
+* bsp_rtcSetTime()
+*/
+int8_t bsp_rtcSetTime( en_hal_rtc_t *p_rtc )
+{
+  EMB6_ASSERT_RET( p_rtc != NULL, -1 );
+  return hal_rtcSetTime(p_rtc);
+}
+
+/*---------------------------------------------------------------------------*/
+/*
+* bsp_rtcGetTime()
+*/
+int8_t bsp_rtcGetTime( en_hal_rtc_t *p_rtc )
+{
+  EMB6_ASSERT_RET( p_rtc != NULL, -1 );
+  return hal_rtcGetTime(p_rtc);
+}
+#endif /* #if defined(HAL_SUPPORT_RTC) */

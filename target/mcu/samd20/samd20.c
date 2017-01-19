@@ -59,7 +59,7 @@
  */
 #include "hal.h"
 #include "rt_tmr.h"
-#include "assert.h"
+#include "emb6assert.h"
 
 #include <compiler.h>
 #include <status_codes.h>
