@@ -311,6 +311,12 @@ static void hal_ledOn(uint16_t ui_led)
  *
  * @param  received char
  */
+#if defined(HAL_SUPPORT_UART)
+#if defined(HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX)
+/*---------------------------------------------------------------------------*/
+/*
+* _hal_uartRxCb()
+*/
 static void _hal_uartRxCb( uint8_t c )
 {
   if( s_hal_irqs[EN_HAL_PERIPHIRQ_SLIPUART_RX].pf_cb != NULL )
@@ -319,6 +325,8 @@ static void _hal_uartRxCb( uint8_t c )
   }
 } /* _hal_uartRxCb() */
 
+#endif /* #if defined(HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX) */
+#endif /* #if defined(HAL_SUPPORT_UART) */
 /*
  * --- Global Function Definitions ----------------------------------------- *
  */
