@@ -137,7 +137,6 @@ inline static void log_ip6addr( const uint8_t* pc_addr)
 /* We need a printable char, so it's not an warning or error
  * "else if( isprint( ( (char*)p_buf )[j] ) )"
  *  */
-#pragma GCC diagnostic ignored "-Wchar-subscripts"
 inline static void log_hexdump(const void* p_buf, uint32_t l_len)
 {
     unsigned int i, j;
@@ -171,7 +170,7 @@ inline static void log_hexdump(const void* p_buf, uint32_t l_len)
                 {
                     putchar( ' ' );
                 }
-                else if( isprint( ( (char*)p_buf )[j] ) ) /* printable char */
+                else if( isprint( (int)( (char*)p_buf )[j] ) ) /* printable char */
                 {
                     putchar( 0xFF & ( (char*)p_buf )[j] );
                 }
