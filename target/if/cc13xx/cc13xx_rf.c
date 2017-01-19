@@ -402,16 +402,27 @@ static void cc13xx_Ioctl (e_nsIocCmd_t    cmd,
 
 
     case NETSTK_CMD_RF_RF_SWITCH_SET:
+        *p_err = NETSTK_ERR_CMD_UNSUPPORTED;
+        break;
     case NETSTK_CMD_RF_ANT_DIV_SET:
+        *p_err = NETSTK_ERR_CMD_UNSUPPORTED;
+        break;
     case NETSTK_CMD_RF_SENS_SET:
+        *p_err = NETSTK_ERR_CMD_UNSUPPORTED;
+        break;
     case NETSTK_CMD_RF_SENS_GET:
+        *p_err = NETSTK_ERR_CMD_UNSUPPORTED;
+        break;
     case NETSTK_CMD_RF_IS_RX_BUSY:
+        *p_err = NETSTK_ERR_CMD_UNSUPPORTED;
+        break;
     case NETSTK_CMD_RF_CHAN_NUM_SET:
         /* set the desired channel */
         if(sf_rf_6lowpan_chanNumSet(*(uint8_t*)p_val))
             *p_err = NETSTK_ERR_NONE;
         else
             *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+        break;
     case NETSTK_CMD_RF_WOR_EN:
     default:
       /* unsupported commands are treated in same way */
