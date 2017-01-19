@@ -61,7 +61,7 @@
  */
 #include "emb6.h"
 #include "hal.h"
-#include "assert.h"
+#include "emb6assert.h"
 
 #include "em_device.h"
 #include "em_chip.h"

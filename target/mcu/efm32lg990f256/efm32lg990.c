@@ -59,7 +59,7 @@
  *  --- Includes -------------------------------------------------------------*
  */
 #include "hal.h"
-#include "assert.h"
+#include "emb6assert.h"
 #include "rt_tmr.h"
 
 #include "em_device.h"

@@ -62,7 +62,7 @@
  *  --- Includes -------------------------------------------------------------*
  */
 #include "emb6.h"
-#include "assert.h"
+#include "emb6assert.h"
 #include "bsp.h"
 #include "board_conf.h"
 #include "etimer.h"
