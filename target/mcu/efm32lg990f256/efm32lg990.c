@@ -281,7 +281,7 @@ static void _hal_clksInit( void )
   CMU_ClockEnable(cmuClock_GPIO, true);
   CMU_ClockEnable(cmuClock_TIMER1, true);
 #if defined(HAL_SUPPORT_RFSPI)
-  CMU_ClockEnable(cmuClock_USART0, true);
+  CMU_ClockEnable(cmuClock_UART0, true);
 #endif /* #if defined(HAL_SUPPORT_RFSPI) */
 
 } /* _hal_clkInit() */
@@ -333,14 +333,14 @@ static void _hal_uartInit( s_hal_uart_t* p_uart )
   GPIO_PinModeSet(p_uart->p_rxPin->port, p_uart->p_rxPin->pin, p_uart->p_rxPin->mode, p_uart->p_rxPin->val);
 
   /* Prepare UART Rx and Tx interrupts */
-  USART_IntClear(p_uart->p_hndl, _USART_IFC_MASK);
-  USART_IntEnable(p_uart->p_hndl, USART_IEN_RXDATAV);
-  NVIC_ClearPendingIRQ(USART0_RX_IRQn);
-  NVIC_ClearPendingIRQ(USART0_TX_IRQn);
-  NVIC_EnableIRQ(USART0_RX_IRQn);
+  USART_IntClear(p_uart->p_hndl, _UART_IFC_MASK);
+  USART_IntEnable(p_uart->p_hndl, UART_IEN_RXDATAV);
+  NVIC_ClearPendingIRQ(UART0_RX_IRQn);
+  NVIC_ClearPendingIRQ(UART0_TX_IRQn);
+  NVIC_EnableIRQ(UART0_RX_IRQn);
 
   /* Enable I/O pins at default location */
-  p_uart->p_hndl->ROUTE = USART_ROUTE_RXPEN | USART_ROUTE_TXPEN | EFM32_SLIP_UART_LOC;
+  p_uart->p_hndl->ROUTE = UART_ROUTE_RXPEN | UART_ROUTE_TXPEN | EFM32_SLIP_UART_LOC;
 
   /* Enable UART */
   USART_Enable(p_uart->p_hndl, usartEnable);

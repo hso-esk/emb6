@@ -142,7 +142,7 @@
 /** Baudrate of SLIP UART */
 #define EFM32_SLIP_UART_BAUD                115200
 /** RX interrupt handler for SLIP UART */
-#define EFM32_SLIP_UART_RXIRQHNDL           USART0_RX_IRQHandler
+#define EFM32_SLIP_UART_RXIRQHNDL           UART0_RX_IRQHandler
 #endif /* #if defined(HAL_SUPPORT_SLIPUART) */
 
 /* add debugging channel configuration */
