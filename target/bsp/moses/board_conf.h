@@ -130,15 +130,15 @@
 /** USART used for SLIP interface */
 #define EFM32_SLIP_UART                     USART0
 /** Routing for the SLIP UART pins */
-#define EFM32_SLIP_UART_LOC                 USART_ROUTE_LOCATION_LOC1
+#define EFM32_SLIP_UART_LOC                 USART_ROUTE_LOCATION_LOC3
 /** Port of the SLIP UART TX pin */
 #define EFM32_SLIP_UART_PORT_USART_TX       gpioPortE
 /** Pin index of the SLIP UART TX pin */
-#define EFM32_SLIP_UART_PIN_USART_TX        0
+#define EFM32_SLIP_UART_PIN_USART_TX        13
 /** Port of the SLIP UART RX pin */
 #define EFM32_SLIP_UART_PORT_USART_RX       gpioPortE
 /** Pin index of the SLIP UART RX pin */
-#define EFM32_SLIP_UART_PIN_USART_RX        1
+#define EFM32_SLIP_UART_PIN_USART_RX        12
 /** Baudrate of SLIP UART */
 #define EFM32_SLIP_UART_BAUD                115200
 /** RX interrupt handler for SLIP UART */
@@ -149,15 +149,15 @@
 /** USART used for DEBUG interface */
 #define EFM32_DEBUG_UART                    USART0
 /** Routing for the DEBUG UART pins */
-#define EFM32_DEBUG_UART_LOC                USART_ROUTE_LOCATION_LOC1
+#define EFM32_DEBUG_UART_LOC                USART_ROUTE_LOCATION_LOC3
 /** Port of the DEBUG UART TX pin */
 #define EFM32_DEBUG_UART_PORT_USART_TX      gpioPortE
 /** Pin index of the DEBUG UART TX pin */
-#define EFM32_DEBUG_UART_PIN_USART_TX       0
+#define EFM32_DEBUG_UART_PIN_USART_TX       13
 /** Port of the DEBUG UART RX pin */
 #define EFM32_DEBUG_UART_PORT_USART_RX      gpioPortE
 /** Pin index of the DEBUG UART RX pin */
-#define EFM32_DEBUG_UART_PIN_USART_RX       1
+#define EFM32_DEBUG_UART_PIN_USART_RX       12
 /** Baudrate of DEBUG UART */
 #define EFM32_DEBUG_UART_BAUD               115200
 
