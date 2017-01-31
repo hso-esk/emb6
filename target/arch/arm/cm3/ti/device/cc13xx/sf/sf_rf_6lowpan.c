@@ -24,7 +24,7 @@ extern "C" {
                             INCLUDE FILES
 ==============================================================================*/
 #include "emb6.h"
-#include "hwinit.h"
+#include "target_conf.h"
 
 /* Stack specific include */
 #include "rt_tmr.h"

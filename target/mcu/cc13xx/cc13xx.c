@@ -7,29 +7,75 @@
  * embedded.connectivity.solutions.==============
  * @endcode
  *
- * @file       cc13xx.c
- * @copyright  STACKFORCE GmbH, Heitersheim, Germany, http://www.stackforce.de
- * @author     STACKFORCE
- * @brief      This is the 6lowpan-stack driver for the cc13xx mcu.
+ */
+/*
+ * --- License --------------------------------------------------------------*
+ */
+/*
+ * emb6 is licensed under the 3-clause BSD license. This license gives everyone
+ * the right to use and distribute the code, either in binary or source code
+ * format, as long as the copyright license is retained in the source code.
+ *
+ * The emb6 is derived from the Contiki OS platform with the explicit approval
+ * from Adam Dunkels. However, emb6 is made independent from the OS through the
+ * removal of protothreads. In addition, APIs are made more flexible to gain
+ * more adaptivity during run-time.
+ *
+ * The license text is:
+
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 1. Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO
+ * EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Copyright (c) 2016,
+ * Hochschule Offenburg, University of Applied Sciences
+ * Institute of reliable Embedded Systems and Communications Electronics.
+ * All rights reserved.
  */
 
-/*! @defgroup emb6_mcu emb6 stack mcu driver
-    This group is the mcu driver for the emb6 stack.
-  @{  */
+/*
+ * --- Module Description ---------------------------------------------------*
+ */
+/**
+ *  \file       cc13xx.c
+ *  \author     Institute of reliable Embedded Systems
+ *              and Communication Electronics
+ *  \date       $Date$
+ *  \version    $Version$
+ *
+ *  \brief      This is the 6lowpan-stack driver for the cc13xx mcu
+ *
+ */
 
-/*============================================================================*/
-/*                                INCLUDES                                    */
-/*============================================================================*/
-
+/*
+ *  --- Includes -------------------------------------------------------------*
+ */
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
 
 #include "emb6.h"
-#include "hwinit.h"
 #include "hal.h"
 #include "bsp.h"
 #include "board_conf.h"
+#include "target_conf.h"
 
 #include "sf_mcu.h"
 #include "sf_mcu_timer.h"
@@ -49,38 +95,31 @@
 #warning stdout is not redirected!
 #endif /* __TI_ARM__ */
 
-/*============================================================================*/
-/*                               MACROS                                       */
-/*============================================================================*/
- /*! Systicks per second. */
+/*
+ *  --- Macros ------------------------------------------------------------- *
+ */
+/*! Systicks per second. */
 #define TARGET_CFG_SYSTICK_RESOLUTION           (clock_time_t)( 1000u )
  /*! Timer scaler to get systicks */
 #define TARGET_CFG_SYSTICK_SCALER               (clock_time_t)(    2u )
 
 /*! Defines the mcu ticks per second. */
-#define MCU_TICKS_PER_SECOND                    2000U
+#define MCU_TICKS_PER_SECOND                    500U
 /*! Status for succeeded init functions. */
 #define MCU_INIT_STATUS_OK                      0x01U
 /*! Compares X with @ref MCU_INIT_STATUS_OK. */
 #define MCU_INIT_RET_STATUS_CHECK(X)            ( X == MCU_INIT_STATUS_OK )
 
-/*============================================================================*/
-/*                                ENUMS                                       */
-/*============================================================================*/
 
-/*============================================================================*/
-/*                  STRUCTURES AND OTHER TYPEDEFS                             */
-/*============================================================================*/
+/*
+ *  --- Local Function Prototypes ------------------------------------------ *
+ */
 
-/*============================================================================*/
-/*                       LOCAL FUNCTION PROTOTYPES                            */
-/*============================================================================*/
-static bool _hal_uart_init();
 static bool _hal_systick(void);
 static void _hal_isrSysTick(uint32_t l_count);
-/*============================================================================*/
-/*                           LOCAL VARIABLES                                  */
-/*============================================================================*/
+/*
+ *  --- Local Variables ---------------------------------------------------- *
+ */
 
 /*! Hal tick counter */
 static clock_time_t volatile hal_ticks;
@@ -89,6 +128,7 @@ static clock_time_t volatile hal_ticks;
 /*
  * --- Type Definitions -----------------------------------------------------*
  */
+
 /**
  * \brief   Description of a single Pin.
  *
@@ -112,6 +152,14 @@ typedef struct
  *          An interrupt consists of the according callback function
  *          and a data pointer.
  */
+typedef struct
+{
+  /** callback function */
+  pf_hal_irqCb_t pf_cb;
+  /** data pointer */
+  void* p_data;
+
+} s_hal_irq;
 
 
 /** Definition of the IOs */
@@ -130,30 +178,17 @@ static s_hal_gpio_pin_t s_hal_gpio[EN_HAL_PIN_MAX] = {
   {CC1310_LED3, 0, NULL}, /* LED3 */
 #endif /* #if defined(HAL_SUPPORT_LED3) */
 
-
-#if  0
-  defined(HAL_SUPPORT_SLIPUART)
-  {EFM32_SLIP_UART_PORT_USART_TX, EFM32_SLIP_UART_PIN_USART_TX, gpioModePushPull, 0, NULL}, /* UART_TX */
-  {EFM32_SLIP_UART_PORT_USART_RX, EFM32_SLIP_UART_PIN_USART_RX, gpioModeInputPull, 0, NULL}, /* UART_RX */
-#endif
-
 };
 
 /** Definition of the peripheral callback functions */
 s_hal_irq s_hal_irqs[EN_HAL_PERIPHIRQ_MAX];
 
 
-/*============================================================================*/
-/*                           LOCAL FUNCTIONS                                  */
-/*============================================================================*/
 /*
-int putchar(int _c)
-{
-  sf_uart_write((uint8_t*)&_c, 0x01U);
-  return (unsigned char)_c;
-}*/
+ *  --- Local Functions  ---------------------------------------------------- *
+ */
 
-#ifdef 0 // __TI_ARM__
+#ifdef __TI_ARM__
 /* The functions fputc and fputs are used to redirect stdout to
  * the UART interface.
  *
@@ -177,30 +212,6 @@ int fputs(const char *_ptr, register FILE *_fp)
 #endif /* __TI_ARM__ */
 
 /*!
- * @brief This function initializes the UART interface.
- *
- * @return true for success, false if initialization failed.
- */
-bool _hal_uart_init()
-{
-  bool b_return = false;
-  uint8_t p_data[] = { "\r\n\r\n========== BEGIN ===========\r\n\r\n" };
-  uint16_t i_dataLen = sizeof(p_data);
-
-  /* Initialize UART */
-  b_return = sf_uart_init();
-
-  if (b_return) {
-    if (!(sf_uart_write(p_data, i_dataLen) == i_dataLen))
-    {
-      b_return = false;
-    }
-  }
-
-  return b_return;
-}
-
-/*!
  * @brief This function updates the systicks.
  *
  * It is used as a callback function for the timer module.
@@ -213,10 +224,10 @@ static void _hal_isrSysTick(uint32_t l_count)
   hal_ticks++;
 
   /* Check if the timer has to be updated */
-  if ((hal_ticks % TARGET_CFG_SYSTICK_SCALER ) == 0)
-  {
-    rt_tmr_update();
-  }
+    if ((hal_ticks % TARGET_CFG_SYSTICK_SCALER ) == 0)
+    {
+      rt_tmr_update();
+    }
 }
 
 /*!
@@ -238,102 +249,14 @@ static bool _hal_systick(void)
   return b_success;
 }
 
-/*==============================================================================
-                             API FUNCTIONS
- ==============================================================================*/
 
-/*!
- * @brief Disables all interrupts.
- *
- * This function disables all interrupts when the
- * program enters critical sections.
- */
-int8_t hal_enterCritical(void)
-{
-  /* Disable the interrutps */
-  sf_mcu_interruptDisable();
-  return 0;
-} /* hal_enterCritical() */
-
-/*!
- * @brief Enables all interrupts.
- *
- */
-int8_t hal_exitCritical(void)
-{
-  /* Enbale the interrupts */
-  sf_mcu_interruptEnable();
-  return 0;
-}/* hal_exitCritical() */
-
-/*!
- * @brief This function initializes all of the MCU peripherals.
- *
- * @return Status code.
- */
-int8_t hal_init(void)
-{
-  uint8_t c_retStatus = 0U;
-
-#if CC13XX_LCD_ENABLE
-  char lcdBuf[LCD_BYTES];
-#endif /* #if CC13XX_LCD_ENABLE */
-
-  /* Initialize the mcu */
-  c_retStatus = sf_mcu_init();
-  if(MCU_INIT_RET_STATUS_CHECK(c_retStatus))
-  {
-    /* Initialize the timer. MCU_TICKS_PER_SECOND specifies
-     * the tick interval. */
-    c_retStatus = sf_mcu_timer_init(MCU_TICKS_PER_SECOND);
-    if(MCU_INIT_RET_STATUS_CHECK(c_retStatus))
-    {
-      c_retStatus = _hal_uart_init();
-      if(MCU_INIT_RET_STATUS_CHECK(c_retStatus))
-      {
-        c_retStatus = _hal_systick();
-      }
-    }
-  }
-
-  /* Initialize hal_ticks */
-  hal_ticks = 0x00U;
-
-  /* initialize LEDs */
-  bspLedInit( BSP_LED_ALL );
-
-#if CC13XX_LCD_ENABLE
-  /* initialize LCD */
-  lcdSpiInit();
-  lcdInit();
-  lcdClear();
-
-  /* Send Simple Message */
-  lcdBufferClear( lcdBuf );
-  lcdSendBuffer( lcdBuf );
-#endif /* #if CC13XX_LCD_ENABLE */
-
-  return (!c_retStatus);
-}/* hal_init() */
-
-/*!
- * @brief This function calculates a random number.
- *
- * Function is not used by the stack and thus not implemented.
- *
- * @return Always 1U.
- */
-uint32_t hal_getrand( void )
-{
-  return 1;
-}/* hal_getrand() */
 
 /*!
  * @brief This function turns a led off.
  *
  * @param ui_led Descriptor of a led.
  */
-void hal_ledOff(uint16_t ui_led)
+static void hal_ledOff(uint16_t ui_led)
 {
     switch( ui_led )
     {
@@ -361,7 +284,7 @@ void hal_ledOff(uint16_t ui_led)
  *
  * @param ui_led Descriptor of a led.
  */
-void hal_ledOn(uint16_t ui_led)
+static void hal_ledOn(uint16_t ui_led)
 {
     switch( ui_led )
     {
@@ -384,12 +307,174 @@ void hal_ledOn(uint16_t ui_led)
 }/* hal_ledOn() */
 
 /*!
- * @brief This function makes a delay.
+ * @brief  UART RX call back function.
  *
- * The delay value should only be a multiple of 500us.
- *
- * @param i_delay Delay in micro seconds.
+ * @param  received char
  */
+#if defined(HAL_SUPPORT_UART)
+#if defined(HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX)
+/*---------------------------------------------------------------------------*/
+/*
+* _hal_uartRxCb()
+*/
+static void _hal_uartRxCb( uint8_t c )
+{
+  if( s_hal_irqs[EN_HAL_PERIPHIRQ_SLIPUART_RX].pf_cb != NULL )
+  {
+    s_hal_irqs[EN_HAL_PERIPHIRQ_SLIPUART_RX].pf_cb( &c );
+  }
+} /* _hal_uartRxCb() */
+
+#endif /* #if defined(HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX) */
+#endif /* #if defined(HAL_SUPPORT_UART) */
+/*
+ * --- Global Function Definitions ----------------------------------------- *
+ */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_init()
+*/
+int8_t hal_init(void)
+{
+  uint8_t c_retStatus = 0U;
+
+#if CC13XX_LCD_ENABLE
+  char lcdBuf[LCD_BYTES];
+#endif /* #if CC13XX_LCD_ENABLE */
+
+  /* Initialize the mcu */
+  c_retStatus = sf_mcu_init();
+  if(!MCU_INIT_RET_STATUS_CHECK(c_retStatus))
+    return -1;
+
+  /* Initialize the timer. MCU_TICKS_PER_SECOND specifies
+   * the tick interval. */
+  c_retStatus = sf_mcu_timer_init(MCU_TICKS_PER_SECOND);
+  if(!MCU_INIT_RET_STATUS_CHECK(c_retStatus))
+     return -2;
+
+  /* Initialize hal_ticks */
+  _hal_systick();
+  hal_ticks = 0x00U;
+
+  /* initialize LEDs */
+  bspLedInit( BSP_LED_ALL );
+
+#if CC13XX_LCD_ENABLE
+  /* initialize LCD */
+  lcdSpiInit();
+  lcdInit();
+  lcdClear();
+
+  /* Send Simple Message */
+  lcdBufferClear( lcdBuf );
+  lcdSendBuffer( lcdBuf );
+#endif /* #if CC13XX_LCD_ENABLE */
+
+  return 0;
+}/* hal_init() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_enterCritical()
+*/
+int8_t hal_enterCritical(void)
+{
+  /* Disable the interrutps */
+  sf_mcu_interruptDisable();
+  return 0;
+} /* hal_enterCritical() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_exitCritical()
+*/
+int8_t hal_exitCritical(void)
+{
+  /* Enbale the interrupts */
+  sf_mcu_interruptEnable();
+  return 0;
+}/* hal_exitCritical() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_watchdogStart()
+*/
+int8_t hal_watchdogStart(void)
+{
+  /* Not needed because the stack will not use this function */
+    return 0;
+} /* hal_watchdogStart() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_watchdogReset()
+*/
+int8_t hal_watchdogReset(void)
+{
+  /* Not needed because the stack will not use this function */
+    return 0;
+} /* hal_watchdogReset() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_watchdogStop()
+*/
+int8_t hal_watchdogStop(void)
+{
+  /* Not needed because the stack will not use this function */
+    return 0 ;
+} /* hal_watchdogStop() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_getrand()
+*/
+uint32_t hal_getrand( void )
+{
+  return 1;
+}/* hal_getrand() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_getTick()
+*/
+clock_time_t hal_getTick(void)
+{
+  return TmrCurTick;
+} /* hal_getTick() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_getSec()
+*/
+clock_time_t hal_getSec(void)
+{
+  clock_time_t secs = 0;
+
+  /* Calculate the seconds */
+  secs = TmrCurTick / TARGET_CFG_SYSTICK_RESOLUTION;
+
+  return secs;
+} /* hal_getSec() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_getTRes()
+*/
+clock_time_t hal_getTRes(void)
+{
+    return TARGET_CFG_SYSTICK_RESOLUTION ;
+} /* hal_getTRes() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_delayUs()
+*/
 int8_t hal_delayUs(uint32_t i_delay)
 {
   /*
@@ -411,14 +496,24 @@ int8_t hal_delayUs(uint32_t i_delay)
   return 0;
 } /* hal_delay_us() */
 
+/*---------------------------------------------------------------------------*/
+/*
+* hal_pinInit()
+*/
+void* hal_pinInit( en_hal_pin_t pin )
+{
+    s_hal_gpio_pin_t* p_pin = NULL;
+    p_pin = &s_hal_gpio[pin];
+    p_pin->val=1;
+    hal_ledOn(p_pin->pin);
 
-/*!
- * @brief This function sets a particular pin.
- *
- * Not implemented, because of integrated transceiver.
- *
- * @param p_pin Pointer to a pin.
- */
+  return p_pin ;
+} /* hal_pinInit() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_pinSet()
+*/
 int8_t hal_pinSet( void* p_pin, uint8_t val )
 {
     s_hal_gpio_pin_t* p_gpioPin;
@@ -436,261 +531,34 @@ int8_t hal_pinSet( void* p_pin, uint8_t val )
 return 0;
 } /* hal_pinSet() */
 
-
-/*!
- * @brief This function clears a particular pin.
- *
- * Not implemented, because of integrated transceiver.
- *
- * @param p_pin Pointer to a pin.
- */
-void hal_pinClr(void * p_pin)
-{
-    s_hal_gpio_pin_t* p_gpioPin;
-    p_gpioPin = (s_hal_gpio_pin_t *)p_pin;
-
-        hal_ledOff(p_gpioPin->pin);
-        p_gpioPin->val=0;
-} /* hal_pinClr() */
-
-/*!
- * @brief This function returns the pin status.
- *
- * Not implemented, because of integrated transceiver.
- *
- * @param p_pin Pointer to a pin.
- * @return Status of the pin.
- */
+/*---------------------------------------------------------------------------*/
+/*
+* hal_pinGet()
+*/
 int8_t hal_pinGet(void * p_pin)
 {
-    s_hal_gpio_pin_t* p_gpioPin;
-    p_gpioPin = (s_hal_gpio_pin_t *)p_pin;
+  s_hal_gpio_pin_t* p_gpioPin;
+  p_gpioPin = (s_hal_gpio_pin_t *)p_pin;
 
   return p_gpioPin->val;
 } /* hal_pinGet() */
 
-/*!
- * @brief This function initializes the SPI interface.
- *
- * Not implemented, because of integrated transceiver.
- *
- * @return Pointer to an allocated memory.
- */
-void* hal_spiInit(void)
-{
-  /* Not needed because of integrated IF */
-  return NULL;
-} /* hal_spiInit() */
-
-/*!
- * @brief This function selects or deselects the SPI slave.
- *
- * Not implemented, because of integrated transceiver.
- *
- * @param p_spi Pointer to a SPI entitiy.
- * @param action true to select, false to deselect an SPI entitiy.
- *
- * @return 1 if action succeeded, else 0.
- */
-uint8_t hal_spiSlaveSel(void * p_spi, bool action)
-{
-  /* Not needed because of integrated IF */
-  return 0U;
-} /* hal_spiSlaveSel() */
-
-/*!
- * @brief This function reads data from the SPI interface.
- *
- * Not implemented, because of integrated transceiver.
- *
- * @param p_reg Pointer to buffer storing the data.
- * @param i_length Length of data to be received.
- */
-uint8_t hal_spiRead(uint8_t * p_reg, uint16_t i_length)
-{
-  /* Not needed because of integrated IF */
-  return 0U;
-} /* hal_spiRead() */
-
-/*!
- * @brief This function writes data to the SPI interface.
- *
- * Not implemented, because of integrated transceiver.
- *
- * @param c_value Pointer to the data to write.
- * @param i_length Length of data to be written.
- */
-void hal_spiWrite(uint8_t * c_value, uint16_t i_length)
-{
-  /* Not needed because of integrated IF */
-} /* hal_spiWrite() */
-
-/*!
- * @brief This function simultaneously reads and writes data.
- *
- * Not implemented, because of integrated transceiver.
- *
- * @param p_tx Pointer to the data to write.
- * @param p_rx Pointer to the buffer storing the received data.
- * @param leh Size of data to send.
- */
-void hal_spiTxRx(uint8_t *p_tx, uint8_t *p_rx, uint16_t len)
-{
-  /* Not needed because of integrated IF */
-}
-
-
-
-
-#if defined(HAL_SUPPORT_UART)
 
 /*---------------------------------------------------------------------------*/
 /*
-* hal_uartInit()
+* hal_pinIRQRegister()
 */
-void* hal_uartInit( en_hal_uart_t uart )
+int8_t hal_pinIRQRegister( void* p_pin, en_hal_irqedge_t edge,
+    pf_hal_irqCb_t pf_cb )
 {
-    sf_uart_init();
-}/* hal_uartInit() */
-
-
+  /* Not implemented */
+  return -1;
+} /* hal_pinIRQRegister() */
 
 /*---------------------------------------------------------------------------*/
 /*
-* hal_uartRx()
+* hal_pinIRQEnable()
 */
-int32_t hal_uartRx( void* p_uart, uint8_t * p_rx, uint16_t len )
-{
-    EMB6_ASSERT_RET( p_rx != NULL, -1 );
-
-    if( len == 0 )
-      return 0;
-
-    sf_uart_read(p_rx, len);
-    return len;
-}/* hal_uartRx() */
-
-
-/*---------------------------------------------------------------------------*/
-/*
-* hal_uartTx()
-*/
-int32_t hal_uartTx( void* p_uart, uint8_t* p_tx, uint16_t len )
-{
-    EMB6_ASSERT_RET( p_tx != NULL, -1 );
-
-    if( len == 0 )
-      return 0;
-
-    sf_uart_write(p_tx, len);
-    return len;
-}/* hal_uartTx() */
-#endif /* #if defined(HAL_SUPPORT_UART) */
-
-
-/*!
- * @brief This function resets the watchdog timer.
- *
- * Function is not used by the stack and thus not implemented.
- */
-int8_t hal_watchdogReset(void)
-{
-  /* Not needed because the stack will not use this function */
-    return 0;
-} /* hal_watchdogReset() */
-
-/*!
- * @brief This function starts the watchdog timer.
- *
- * Function is not used by the stack and thus not implemented.
- */
-int8_t hal_watchdogStart(void)
-{
-  /* Not needed because the stack will not use this function */
-    return 0;
-} /* hal_watchdogStart() */
-
-/*!
- * @brief This function stops the watchdog timer.
- *
- * Function is not used by the stack and thus not implemented.
- */
-int8_t hal_watchdogStop(void)
-{
-  /* Not needed because the stack will not use this function */
-    return 0 ;
-} /* hal_watchdogStop() */
-
-/*!
- * @brief This function returns the system ticks.
- *
- * @return Current system tick.
- */
-clock_time_t hal_getTick(void)
-{
-  return TmrCurTick;
-} /* hal_getTick() */
-
-/*!
- * @brief This function returns seconds.
- *
- * @return Seconds.
- */
-clock_time_t hal_getSec(void)
-{
-  clock_time_t secs = 0;
-
-  /* Calculate the seconds */
-  secs = TmrCurTick / TARGET_CFG_SYSTICK_RESOLUTION;
-
-  return secs;
-} /* hal_getSec() */
-
-/*!
- * @brief This function returns the time resolution.
- *
- * @return Resolution in ms.
- */
-clock_time_t hal_getTRes(void)
-{
-  return TARGET_CFG_SYSTICK_RESOLUTION ;
-} /* hal_getSec() */
-
-
-void hal_extiRegister(en_hal_irqedge_t e_edge, pf_hal_irqCb_t pf_cbFnct)
-{
-    /* Not used */
-} /* hal_extiRegister() */
-
-/*! @} 6lowpan_mcu */
-
-
-int8_t hal_debugInit( void )
-{
-  return 0;
-} /* hal_debugInit() */
-
-int8_t hal_periphIRQRegister( en_hal_periphirq_t irq, pf_hal_irqCb_t pf_cb,
-    void* p_data )
-{
-  /* set the callback and data pointer */
-  s_hal_irqs[irq].pf_cb = pf_cb;
-  s_hal_irqs[irq].p_data = p_data;
-  return 0;
-} /* hal_periphIRQRegister() */
-
-void* hal_pinInit( en_hal_pin_t pin )
-{
-    s_hal_gpio_pin_t* p_pin = NULL;
-    p_pin = &s_hal_gpio[pin];
-    //p_pin->pin=(uint8_t)pin;
-    p_pin->val=1;
-    hal_ledOn(p_pin->pin);
-
-  return p_pin ;
-} /* hal_pinInit() */
-
-
 int8_t hal_pinIRQEnable( void* p_pin )
 {
   /* Not implemented */
@@ -716,9 +584,103 @@ int8_t hal_pinIRQClear( void* p_pin )
   return -1;
 } /* hal_pinIRQClear() */
 
-int8_t hal_pinIRQRegister( void* p_pin, en_hal_irqedge_t edge,
-    pf_hal_irqCb_t pf_cb )
+#if defined(HAL_SUPPORT_SPI)
+void* hal_spiInit( en_hal_spi_t spi )
 {
-  /* Not implemented */
-  return -1;
-} /* hal_pinIRQRegister() */
+  /* Not needed because of integrated IF */
+  return NULL;
+} /* hal_spiInit() */
+
+
+int32_t hal_spiTRx( void* p_spi, uint8_t* p_tx, uint8_t* p_rx, uint16_t len )
+{
+  /* Not needed because of integrated IF */
+  return 0U;
+} /* hal_spiRead() */
+
+
+int32_t hal_spiRx( void* p_spi, uint8_t * p_rx, uint16_t len )
+{
+  /* Not needed because of integrated IF */
+    return 0U;
+}
+
+int32_t hal_spiTx( void* p_spi, uint8_t* p_tx, uint16_t len )
+{
+  /* Not needed because of integrated IF */
+    return 0U;
+}
+#endif
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_uartInit()
+*/
+#if defined(HAL_SUPPORT_UART)
+void* hal_uartInit( en_hal_uart_t uart )
+{
+    sf_uart_init();
+    sf_uart_setRxCb( _hal_uartRxCb );
+
+    return NULL;
+}/* hal_uartInit() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_uartRx()
+*/
+int32_t hal_uartRx( void* p_uart, uint8_t * p_rx, uint16_t len )
+{
+    EMB6_ASSERT_RET( p_rx != NULL, -1 );
+
+    if( len == 0 )
+      return 0;
+
+    sf_uart_read(p_rx, len);
+    return len;
+}/* hal_uartRx() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_uartTx()
+*/
+int32_t hal_uartTx( void* p_uart, uint8_t* p_tx, uint16_t len )
+{
+    EMB6_ASSERT_RET( p_tx != NULL, -1 );
+
+    if( len == 0 )
+      return 0;
+
+    sf_uart_write(p_tx, len);
+    return len;
+}/* hal_uartTx() */
+#endif /* #if defined(HAL_SUPPORT_UART) */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_periphIRQRegister()
+*/
+int8_t hal_periphIRQRegister( en_hal_periphirq_t irq, pf_hal_irqCb_t pf_cb,
+    void* p_data )
+{
+  /* set the callback and data pointer */
+  s_hal_irqs[irq].pf_cb = pf_cb;
+  s_hal_irqs[irq].p_data = p_data;
+  return 0;
+} /* hal_periphIRQRegister() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_debugInit()
+*/
+int8_t hal_debugInit( void )
+{
+#if (LOGGER_LEVEL > 0) && (HAL_SUPPORT_SLIPUART == FALSE)
+  sf_uart_init();
+#endif
+  return 0;
+} /* hal_debugInit() */
+
+

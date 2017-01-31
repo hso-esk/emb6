@@ -26,7 +26,7 @@ extern "C"
 /*                                INCLUDES                                    */
 /*============================================================================*/
 #include "emb6.h"
-#include "hwinit.h"
+#include "target_conf.h"
 #include "phy_framer_802154.h"
 
 #include "packetbuf.h"
@@ -399,19 +399,18 @@ static void cc13xx_Ioctl (e_nsIocCmd_t    cmd,
      */
     cc13xx_eventHandler(NETSTK_RF_EVENT, NULL);
     break;
-
-
-    case NETSTK_CMD_RF_RF_SWITCH_SET:
-    case NETSTK_CMD_RF_ANT_DIV_SET:
-    case NETSTK_CMD_RF_SENS_SET:
-    case NETSTK_CMD_RF_SENS_GET:
-    case NETSTK_CMD_RF_IS_RX_BUSY:
     case NETSTK_CMD_RF_CHAN_NUM_SET:
         /* set the desired channel */
         if(sf_rf_6lowpan_chanNumSet(*(uint8_t*)p_val))
             *p_err = NETSTK_ERR_NONE;
         else
             *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+        break;
+    case NETSTK_CMD_RF_RF_SWITCH_SET:
+    case NETSTK_CMD_RF_ANT_DIV_SET:
+    case NETSTK_CMD_RF_SENS_SET:
+    case NETSTK_CMD_RF_SENS_GET:
+    case NETSTK_CMD_RF_IS_RX_BUSY:
     case NETSTK_CMD_RF_WOR_EN:
     default:
       /* unsupported commands are treated in same way */

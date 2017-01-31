@@ -51,7 +51,7 @@
 #endif
 
 #ifndef CC13XX_LCD_ENABLE
-#define CC13XX_LCD_ENABLE           		1
+#define CC13XX_LCD_ENABLE           		FALSE
 #endif
 
 
@@ -59,12 +59,6 @@
 #ifndef HAL_SUPPORT_LEDNUM
 #define HAL_SUPPORT_LEDNUM                  4
 #endif /* #ifndef HAL_SUPPORT_LEDNUM */
-
-/** Enable SUPPORT SLIPUART */
-#ifndef HAL_SUPPORT_SLIPUART
-#define HAL_SUPPORT_SLIPUART                TRUE
-#endif /* #ifndef HAL_SUPPORT_SLIPUART */
-
 
 /** Enable  HAL SUPPORT SLIPUART_RX */
 #ifndef HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX

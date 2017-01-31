@@ -16,11 +16,7 @@
 #define __DECL_SF_MCU_API_H__
 #define __DECL_SF_MCU_H__
 
-#include "hwinit.h"
 
-#ifndef USE_TI_RTOS
-#error Please define if TI-RTOS is in use ore not
-#endif /* USE_TI_RTOS */
 /*==============================================================================
                             INCLUDE FILES
 ==============================================================================*/
@@ -31,12 +27,17 @@
 
 /* Stack includes */
 #include "sf_mcu.h"
+#include "target_conf.h"
 /* Chip specific */
 #include "driverlib/pwr_ctrl.h"
 #include "driverlib/flash.h"
 #include "driverlib/vims.h"
 #include "driverlib/sys_ctrl.h"
 #include "driverlib/interrupt.h"
+
+#ifndef USE_TI_RTOS
+#error Please define if TI-RTOS is in use ore not
+#endif /* USE_TI_RTOS */
 
 
 #if !USE_TI_RTOS

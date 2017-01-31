@@ -18,11 +18,11 @@
 /*==============================================================================
                             INCLUDE FILES
 ==============================================================================*/
-#include "hwinit.h"
 
 /* Standart libraries */
 #include <stdint.h>
 #include <stdbool.h>
+#include "target_conf.h"
 
 #include "sf_mcu.h"
 #include "sf_uart.h"
@@ -51,20 +51,20 @@
 #endif /* UART_IOID_RXD == UART_IOID_TXD */
 
 #ifndef UART_TX_BLOCKING
-#define UART_TX_BLOCKING              1
+#define UART_TX_BLOCKING            1
 #endif /* #ifndef UART_TX_BLOCKING */
 
 
 #ifndef USE_FIFO
-#define USE_FIFO              TRUE
+#define USE_FIFO                    FALSE
 #endif /* #ifndef UART_TX_BLOCKING */
 
 /*! Sets the length of the Rx ringbuffer. */
-#define UART_BUFFER_RX_LEN            128U
+#define UART_BUFFER_RX_LEN          128U
 /*! Sets the length of the Tx ringbuffer. */
-#define UART_BUFFER_TX_LEN            128U
+#define UART_BUFFER_TX_LEN          128U
 /*! Default baudrate used for the uart */
-#define UART_DEFAULT_BAUD             115200U
+#define UART_DEFAULT_BAUD           115200U
 /*==============================================================================
                             VARIABLES
 ==============================================================================*/
@@ -87,6 +87,10 @@ volatile uint8_t *gpc_uart_bufferTxWrite;
 volatile uint8_t *gpc_uart_bufferTxRead;
 /*! Number of bytes in the input buffer. */
 volatile uint16_t gi_uart_bufferTxLen;
+
+
+/*! Callback for UART Rx. */
+sf_uart_rx_cb gf_uart_rx_cb = NULL;
 
 /*==============================================================================
                             FUNCTION PROTOTYPES
@@ -138,12 +142,11 @@ void loc_writeUartTxFifo(void)
  * @brief Reads from the rx fifo of the CC13xx
  */
 /*============================================================================*/
-extern s_hal_irq s_hal_irqs[EN_HAL_PERIPHIRQ_MAX];
 
 void loc_readUartRxFifo(void)
 {
 
-#ifdef USE_FIFO
+#if USE_FIFO
   /*! If the Rx-ringbuffer is full, disable the Rx-interrupt. */
   if(UART_BUFFER_RX_LEN <= gi_uart_bufferRxLen)
   {
@@ -154,10 +157,8 @@ void loc_readUartRxFifo(void)
     {
       /* Copy data into RX Buffer && clear buffer at the same time  */
       uint8_t rxData = UARTCharGet(UART0_BASE);
-      if( s_hal_irqs[EN_HAL_PERIPHIRQ_SLIPUART_RX].pf_cb != NULL )
-      {
-        s_hal_irqs[EN_HAL_PERIPHIRQ_SLIPUART_RX].pf_cb( &rxData );
-      }
+      if(gf_uart_rx_cb != NULL)
+          gf_uart_rx_cb(rxData);
     }/* while */
   }
   else
@@ -167,10 +168,9 @@ void loc_readUartRxFifo(void)
     {
       /*! Read the next byte into the Rx-ringbuffer. */
       *gpc_uart_bufferRxWrite = (uint8_t) UARTCharGet(UART0_BASE);
-      if( s_hal_irqs[EN_HAL_PERIPHIRQ_SLIPUART_RX].pf_cb != NULL )
-      {
-        s_hal_irqs[EN_HAL_PERIPHIRQ_SLIPUART_RX].pf_cb( &gpc_uart_bufferRxWrite );
-      }
+      if(gf_uart_rx_cb != NULL)
+          gf_uart_rx_cb(*gpc_uart_bufferRxWrite);
+
       gpc_uart_bufferRxWrite++;
       /*! Increase the number of bytes in Rx-ringbuffer. */
       gi_uart_bufferRxLen++;
@@ -187,10 +187,8 @@ void loc_readUartRxFifo(void)
   while(UARTCharsAvail(UART0_BASE) == true)
   {
     uint8_t rxData = UARTCharGet(UART0_BASE);
-    if( s_hal_irqs[EN_HAL_PERIPHIRQ_SLIPUART_RX].pf_cb != NULL )
-    {
-      s_hal_irqs[EN_HAL_PERIPHIRQ_SLIPUART_RX].pf_cb( &rxData );
-    }
+    if(gf_uart_rx_cb != NULL)
+        gf_uart_rx_cb(rxData);
   }
 #endif
 }/* loc_readUartRxFifo() */
@@ -281,6 +279,9 @@ bool sf_uart_init(void)
 
   /* Enable the UART0 interrupt on the processor (NVIC). */
   UARTIntRegister(UART0_BASE, UART0IntHandler);
+
+  /* reset Rx callback */
+  gf_uart_rx_cb = NULL;
 
   return true;
 } /* sf_uart_init() */
@@ -388,3 +389,11 @@ bool sf_uart_isRxOverflow(void)
   gb_uart_bufferRxOverflow = false;
   return b_return;
 } /* sf_uart_isRxOverflow() */
+
+/*============================================================================*/
+/*! sf_uart_setRxCb() */
+/*============================================================================*/
+void sf_uart_setRxCb(sf_uart_rx_cb  rx_cb)
+{
+  gf_uart_rx_cb = rx_cb;
+} /* sf_uart_setRxCb() */

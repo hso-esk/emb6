@@ -7,7 +7,7 @@
  * embedded.connectivity.solutions.==============
  * @endcode
  *
- * @file       hwinit.h
+ * @file       target_conf.h
  * @copyright  STACKFORCE GmbH, Heitersheim, Germany, http://www.stackforce.de
  * @author     STACKFORCE
  * @brief      Hardware configuration.
@@ -19,8 +19,8 @@
 
      This sections describes how the hardware is initialized. */
 
-#ifndef HWINIT_H_
-#define HWINIT_H_
+#ifndef TARGET_CONF_H_
+#define TARGET_CONF_H_
 
 /*==============================================================================
                                     INCLUDES
@@ -91,16 +91,6 @@
                          STRUCTURES AND OTHER TYPEDEFS
 ==============================================================================*/
 
-typedef struct
-{
-  /** callback function */
-  pf_hal_irqCb_t pf_cb;
-  /** data pointer */
-  void* p_data;
-
-} s_hal_irq;
-
-
 /*==============================================================================
                           GLOBAL VARIABLE DECLARATIONS
 ==============================================================================*/
@@ -111,4 +101,4 @@ typedef struct
 
 /*! @} 6lowpan_mcu_config */
 
-#endif /* HWINIT_H_ */
+#endif /* TARGET_CONF_H_ */
