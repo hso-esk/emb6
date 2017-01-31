@@ -167,6 +167,11 @@
 #define HAL_SUPPORT_LEDNUM                  2
 #endif /* #ifndef HAL_SUPPORT_LEDNUM */
 
+/** LEDs are inverted */
+#ifndef HAL_LED_INVERTED
+#define HAL_LED_INVERTED                    TRUE
+#endif /* #ifndef HAL_LED_INVERTED */
+
 /** Enable LED0 */
 #ifndef HAL_SUPPORT_LED0
 #define HAL_SUPPORT_LED0                    TRUE
