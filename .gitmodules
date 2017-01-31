@@ -1,0 +1,3 @@
+[submodule "demo/serialapi/serial-interface-mac"]
+	path = demo/serialapi/serial-interface-mac
+	url = https://git.ivesk.hs-offenburg.de/niki4-0/emb6-serial-interface-mac.git
