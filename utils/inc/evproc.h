@@ -188,6 +188,18 @@ typedef void (*pfn_callback_t)( c_event_t c_event, p_data_t p_data );
 
 
 /**
+ * evproc_init()
+ *
+ * \brief   Initialize the evproc module.
+ *
+ *          This function initializes the evproc module. All registered
+ *          callbacks will be cleared and pending events will not be
+ *          executed.
+ */
+void evproc_init( void );
+
+
+/**
  * evproc_regCallback()
  *
  * \brief   Register new callback function for a particular event.
@@ -201,7 +213,7 @@ typedef void (*pfn_callback_t)( c_event_t c_event, p_data_t p_data );
  *
  * \return  Error code from according enumeration.
  */
-en_evprocResCode_t evproc_regCallback(c_event_t c_eventType,
+en_evprocResCode_t evproc_regCallback( c_event_t c_eventType,
     pfn_callback_t pfn_callback );
 
 

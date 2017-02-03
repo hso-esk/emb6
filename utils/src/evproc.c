@@ -268,6 +268,20 @@ uint8_t _evproc_lookupEvent( c_event_t c_eventType, p_data_t p_data )
  * --- Global Function Definitions ----------------------------------------- *
  */
 
+
+/*---------------------------------------------------------------------------*/
+/*
+* evproc_init()
+*/
+void evproc_init( void )
+{
+  /* reset initialization flag */
+  c_isInit = 0;
+
+  /* reinitialize */
+  _evproc_init();
+}
+
 /*---------------------------------------------------------------------------*/
 /*
 * evproc_regCallback()

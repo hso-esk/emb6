@@ -60,6 +60,7 @@
 
 #include "tcpip.h"
 #include "bsp.h"
+#include "evproc.h"
 #include "queuebuf.h"
 #include "linkaddr.h"
 #include "ctimer.h"
@@ -192,6 +193,7 @@ uint8_t loc_emb6NetstackInit(s_ns_t * ps_ns)
   e_nsErr_t err;
 
   /* Initialize stack protocols */
+  evproc_init();
   queuebuf_init();
   ctimer_init();
   rt_tmr_init();
