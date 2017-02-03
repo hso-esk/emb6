@@ -114,17 +114,17 @@ do { \
   if (!(x)) \
   { \
 	  EMB6_ASSERT(x); \
-    return f(); \
+    return f; \
   } \
 } while(0)
 #endif /* EMB6_ASSERT_FN */
 
 #ifndef EMB6_ASSERT_S
-#define EMB6_ASSERT_S(x, a, b) do{(a=b);EMB6_ASSERT(x)} while(0)
+#define EMB6_ASSERT_S(x, a, b) do{(a=b);EMB6_ASSERT(x);} while(0)
 #endif /* EMB6_ASSERT_S */
 
 #ifndef EMB6_ASSERT_RETS
-#define EMB6_ASSERT_RETS(x, r, a, b) do{(a=b);EMB6_ASSERT_RET(x, r)} while(0)
+#define EMB6_ASSERT_RETS(x, r, a, b) do{(a=b);EMB6_ASSERT_RET(x, r);} while(0)
 #endif /* EMB6_ASSERT_RETS */
 
 #ifndef EMB6_ASSERT_RETFN
