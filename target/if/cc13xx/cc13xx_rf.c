@@ -397,7 +397,7 @@ static void cc13xx_Ioctl (e_nsIocCmd_t    cmd,
      * command is issued.
      * Trigger event-process manually
      */
-    cc13xx_eventHandler(NETSTK_RF_EVENT, NULL);
+    cc13xx_eventHandler(EVENT_TYPE_RF, NULL);
     break;
     case NETSTK_CMD_RF_CHAN_NUM_SET:
         /* set the desired channel */

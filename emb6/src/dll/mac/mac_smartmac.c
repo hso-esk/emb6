@@ -253,7 +253,7 @@ static void smartmac_init (void *p_netstk, e_nsErr_t *p_err) {
   ctimer_stop(&p_ctx->tmr1RxPending);
 
   /* register MAC event */
-  evproc_regCallback(NETSTK_MAC_ULE_EVENT, mac_eventHandler);
+  evproc_regCallback(EVENT_TYPE_MAC_ULE, mac_eventHandler);
 
   /* initial transition */
   mac_off_entry(p_ctx);
@@ -349,7 +349,7 @@ static void smartmac_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
           /* state transition to RX_DELAY is handled in mac_eventHandler()
            * As such radio has a chance to perform state transition after RX_FINI */
           p_ctx->event = E_SMARTMAC_EVENT_RX_DELAY;
-          evproc_putEvent(E_EVPROC_HEAD, NETSTK_MAC_ULE_EVENT, &p_ctx->event);
+          evproc_putEvent(E_EVPROC_HEAD, EVENT_TYPE_MAC_ULE, &p_ctx->event);
         }
         else {
           /* is this last strobe? */
@@ -380,7 +380,7 @@ static void smartmac_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
 
       /* after-reception process is handled in asynchronous manner */
       p_ctx->event = E_SMARTMAC_EVENT_RX_EXTEND;
-      evproc_putEvent(E_EVPROC_HEAD, NETSTK_MAC_ULE_EVENT, &p_ctx->event);
+      evproc_putEvent(E_EVPROC_HEAD, EVENT_TYPE_MAC_ULE, &p_ctx->event);
     }
   }
   else if (p_ctx->state == E_SMARTMAC_STATE_RX_PENDING) {
@@ -390,7 +390,7 @@ static void smartmac_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
 
       /* after-reception process is handled in asynchronous manner */
       p_ctx->event = E_SMARTMAC_EVENT_RX_EXTEND;
-      evproc_putEvent(E_EVPROC_HEAD, NETSTK_MAC_ULE_EVENT, &p_ctx->event);
+      evproc_putEvent(E_EVPROC_HEAD, EVENT_TYPE_MAC_ULE, &p_ctx->event);
     }
     else {
       TRACE_LOG_ERR("<SM> RXed multiple strobes");
@@ -795,7 +795,7 @@ static void mac_tmrScanCb(void *p_arg) {
     }
     else {
       p_ctx->event = E_SMARTMAC_EVENT_ASYNC_SCAN_EXIT;
-      evproc_putEvent(E_EVPROC_HEAD, NETSTK_MAC_ULE_EVENT, &p_ctx->event);
+      evproc_putEvent(E_EVPROC_HEAD, EVENT_TYPE_MAC_ULE, &p_ctx->event);
     }
   }
   else {

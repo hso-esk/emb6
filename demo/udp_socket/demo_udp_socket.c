@@ -241,7 +241,7 @@ static void udp_socket_eventHandler(c_event_t c_event, p_data_t p_data)
 
 #if (DEMO_UDP_SOCKET_ROLE_SERVER == TRUE)
       udp_socket_currSeqTx = seq;
-      evproc_putEvent(E_EVPROC_HEAD, NETSTK_APP_EVENT_TX, NULL);
+      evproc_putEvent(E_EVPROC_HEAD, EVENT_TYPE_APP_TX, NULL);
 #else
       udp_socket_lastSeqRx = seq;
       if (udp_socket_currSeqTx != (udp_socket_lastSeqRx + 1)) {
@@ -253,7 +253,7 @@ static void udp_socket_eventHandler(c_event_t c_event, p_data_t p_data)
   }
   else {
 #if (DEMO_UDP_SOCKET_ROLE_SERVER == TRUE)
-    if (c_event == NETSTK_APP_EVENT_TX) {
+    if (c_event == EVENT_TYPE_APP_TX) {
       udp_socket_tx(udp_socket_currSeqTx);
     }
 #else
@@ -374,7 +374,7 @@ int8_t demo_udpSocketInit(void)
 
   /* set callback for event process */
   evproc_regCallback(EVENT_TYPE_TCPIP, udp_socket_eventHandler);
-  evproc_regCallback(NETSTK_APP_EVENT_TX, udp_socket_eventHandler);
+  evproc_regCallback(EVENT_TYPE_APP_TX, udp_socket_eventHandler);
 
 #ifdef DEMO_UDP_SOCKET_ROLE_CLIENT
   clock_time_t interval = 0;

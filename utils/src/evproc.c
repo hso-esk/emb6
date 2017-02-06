@@ -108,7 +108,7 @@ typedef struct
  */
 
 /** Array of functions linked with every defined event */
-static st_funcReg_t pst_regList[EVENT_TYPES_COUNT];
+static st_funcReg_t pst_regList[EVENT_TYPE_MAX];
 
 /** Queue of events linked with a data which is associated with this event */
 static st_eventDisc_t pst_evList[EVPROC_QUEUE_SIZE];
@@ -153,9 +153,6 @@ static void _evproc_init( void )
 {
     uint8_t i,j;
 
-    /* Initialize variable by predefined event types macro */
-    uint8_t pc_eventTypes[EVENT_TYPES_COUNT] = EVENT_TYPES;
-
     /* Nullify event queue */
     for( i = 0; i < EVPROC_QUEUE_SIZE; i++ )
     {
@@ -164,10 +161,10 @@ static void _evproc_init( void )
     }
 
     /* Assign every callback for every event by NULL pointer */
-    for( i=0; i<EVENT_TYPES_COUNT; i++ )
+    for( i = 0; i < EVENT_TYPE_MAX; i++ )
     {
         /* Set "i" event from the list by the one from eventTypes array */
-        pst_regList[i].c_event = pc_eventTypes[i];
+        pst_regList[i].c_event = i;
         for( j=0; j<MAX_CALLBACK_COUNT; j++ )
         {
             /* Assign "j" callback from the list to NULL pointer */
@@ -200,7 +197,7 @@ en_evprocResCode_t _evproc_processEvent(c_event_t c_eventType, p_data_t p_data)
      * Search for a given event type and try to add given function pointer
      * to the end of a registration list
      */
-    for( i = 0; i < EVENT_TYPES_COUNT; i++ )
+    for( i = 0; i < EVENT_TYPE_MAX; i++ )
     {
         /*
          * Find given c_eventType in registered list. If no event matches
@@ -304,7 +301,7 @@ en_evprocResCode_t evproc_regCallback( c_event_t c_eventType,
 
     /* Search for a given event type and try to add given function pointer
      * to the end of a registration list */
-    for( i=0; i<EVENT_TYPES_COUNT; i++ )
+    for( i = 0; i < EVENT_TYPE_MAX; i++ )
     {
         /* Find given c_eventType in registered list. If no event matches
          * then generate error code */
@@ -357,7 +354,7 @@ en_evprocResCode_t evproc_unregCallback(c_event_t c_eventType, pfn_callback_t pf
 
     /* Search for a given event type and try to add given function pointer
      * to the end of a registration list */
-    for( i=0; i<EVENT_TYPES_COUNT; i++ )
+    for( i = 0; i < EVENT_TYPE_MAX; i++ )
     {
         /* Find given c_eventType in registered list. If no event matches
          * then generate error code */

@@ -70,49 +70,11 @@
  * --- Macro Definitions --------------------------------------------------- *
  */
 
-/** Defines all of the event that functions can operate */
-#define EVENT_TYPES {             \
-  EVENT_TYPE_TIMER_EXP,           \
-  EVENT_TYPE_TCP_POLL,            \
-  EVENT_TYPE_UDP_POLL,            \
-  EVENT_TYPE_PCK_INPUT,           \
-  EVENT_TYPE_ICMP6,               \
-  EVENT_TYPE_TCPIP,               \
-  EVENT_TYPE_SLIP_POLL,           \
-  NETSTK_APP_EVENT_TX,            \
-  NETSTK_MAC_ULE_EVENT,           \
-  NETSTK_RF_EVENT,                \
-  EVENT_TYPE_PCK_LL               \
-}
 
-/** No event */
-#define EVENT_TYPE_NONE                     (  0U )
-/** Timer expired event */
-#define EVENT_TYPE_TIMER_EXP                (  1U )
-/** CP poll event */
-#define EVENT_TYPE_TCP_POLL                 (  2U )
-/** UDP poll event */
-#define EVENT_TYPE_UDP_POLL                 (  3U )
-/** New packet in buffer event */
-#define EVENT_TYPE_PCK_INPUT                (  4U )
-/** New icmp6 packet event */
-#define EVENT_TYPE_ICMP6                    (  5U )
-/** New tcpip event */
-#define EVENT_TYPE_TCPIP                    (  6U )
-/**  Process slip handler */
-#define EVENT_TYPE_SLIP_POLL                (  7U )
-
-/*
- * New event defines
- */
-#define NETSTK_APP_EVENT_TX                 (  8U )
-#define NETSTK_MAC_ULE_EVENT                ( 10U )
-#define NETSTK_RF_EVENT                     ( 11U )
-
+/** Invalid or no event */
+#define EVENT_TYPE_NONE                     ( 0xFF )
+/** Obligatory event */
 #define OBLIG_EVENT_PRIOR                   ( 15U )
-#define EVENT_TYPE_PCK_LL                   ( 15U )     ///< New low level packet received
-
-#define EVENT_TYPES_COUNT                   ( 14U )     ///< Counter of events in /ref EVENT_TYPES macro
 
 /** Maximum amount of callbacks allowed */
 #define MAX_CALLBACK_COUNT                  ( 13U )
@@ -125,6 +87,46 @@
 /*
  *  --- Type Definitions -----------------------------------------------------*
  */
+
+typedef enum
+{
+   /** Timer expired event */
+   EVENT_TYPE_TIMER_EXP,
+
+   /** TCP poll event */
+   EVENT_TYPE_TCP_POLL,
+
+   /** UDP poll event */
+   EVENT_TYPE_UDP_POLL,
+
+   /** New packet in buffer event */
+   EVENT_TYPE_PCK_INPUT,
+
+   /** New icmp6 packet event */
+   EVENT_TYPE_ICMP6,
+
+   /** New tcpip event */
+   EVENT_TYPE_TCPIP,
+
+   /**  Process slip handler */
+   EVENT_TYPE_SLIP_POLL,
+
+   /** Application request to send packet */
+   EVENT_TYPE_APP_TX,
+
+   /** ULE event */
+   EVENT_TYPE_MAC_ULE,
+
+   /** Event from RF layer */
+   EVENT_TYPE_RF,
+
+   /** Low-Layer Packet event */
+   EVENT_TYPE_PCK_LL,
+
+   /** MAX identifier */
+   EVENT_TYPE_MAX
+
+} en_evprocEvType_t;
 
 /**
  * \brief Result code for event processing library
