@@ -119,7 +119,7 @@ static void res_get_handler(void *request,   void *response,
     uint8_t sensitivity;
 
     /* get the current stack */
-    s_ns_t* ps_ns = NULL;
+    const s_ns_t* ps_ns = NULL;
     ps_ns = emb6_get();
 
 
@@ -186,7 +186,7 @@ static void res_postput_handler(void *request, void *response,
 
     /* get the current stack */
     e_nsErr_t err = NETSTK_ERR_NONE;
-    s_ns_t* ps_ns = NULL;
+    const s_ns_t* ps_ns = NULL;
     ps_ns = emb6_get();
 
     if( (ps_ns != NULL) && (ps_ns->rf != NULL) &&

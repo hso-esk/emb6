@@ -93,7 +93,7 @@ static int
 slip_radio_cmd_handler(const uint8_t *data, int len)
 {
   int i;
-  s_ns_t * ps_ns = NULL;
+  const s_ns_t * ps_ns = NULL;
 
   if(data[0] == '!') {
     /* should send out stuff to the radio - ignore it as IP */
