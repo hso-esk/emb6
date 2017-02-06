@@ -135,6 +135,7 @@ do { \
 
 /** this macro is required by DTLS */
 #if defined(EMB6_ASSERT_CFG)
+#undef assert
 #define assert(x)                           EMB6_ASSERT(x)
 #else
 #define assert(x)
