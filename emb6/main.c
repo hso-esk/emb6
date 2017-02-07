@@ -104,6 +104,9 @@
 #endif /* #if CONF_USE_SERVER */
 #endif /* #if DEMO_USE_MDNS */
 
+#if DEMO_USE_SERIALAPI
+#include "demo_serialapi.h"
+#endif /* #if DEMO_USE_SERIALAPI */
 
 #if DEMO_USE_UDPALIVE
 #include "demo_udp_alive.h"
@@ -346,6 +349,10 @@ static s_demo_t* loc_demoAppsSet( void )
     EMB6_DEMO_SET( ret, mdns, emb6_demos );
 #endif /* #if DEMO_USE_MDNS */
 
+#if DEMO_USE_SERIALAPI
+    EMB6_DEMO_SET( ret, serialApi, emb6_demos );
+#endif /* #if DEMO_USE_SERIALAPI */
+
 #if DEMO_USE_UDPALIVE
     EMB6_DEMO_SET( ret, udpAlive, emb6_demos );
 #endif /* #if DEMO_USE_UDPALIVE */
@@ -361,7 +368,6 @@ static s_demo_t* loc_demoAppsSet( void )
 #if DEMO_USE_APTB
     EMB6_DEMO_SET( ret, aptb, emb6_demos );
 #endif /* #if DEMO_USE_APTB */
-
 
 #if DEMO_USE_DTLS
     EMB6_DEMO_SET( ret, dtls, emb6_demos );

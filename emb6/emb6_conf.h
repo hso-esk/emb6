@@ -1059,6 +1059,11 @@ void uip_log(char *msg);
 #define LOGGER_DEMO_MDNS                    FALSE
 #endif
 
+ /** DEMO Serial API example                (see demo_serialapi_*.c) */
+ #ifndef LOGGER_DEMO_SERIALAPI
+ #define LOGGER_DEMO_SERIALAPI              FALSE
+ #endif
+
 /** DEMO SNIFFER                            (see demo_sniffer.c) */
 #ifndef LOGGER_DEMO_SNIFFER
 #define LOGGER_DEMO_SNIFFER                 FALSE

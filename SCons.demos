@@ -147,4 +147,12 @@ demos += [{
 }]
 
 
+# The Serial Interface API application allows to control a device using
+# serial commands via the UART interface.
+demos += [{
+    'id'    : 'SerialAPI',
+    'demo'  : ('serialapi',''),
+}]
+
+
 Return('demos')
