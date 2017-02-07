@@ -324,17 +324,25 @@ static int8_t loc_dagRootInit( void )
 void emb6_init( s_ns_t* ps_ns, e_nsErr_t* p_err )
 {
     uint8_t ret;
+    s_ns_t* ps_nsTmp;
 
     EMB6_ASSERT_FN( (p_err != NULL), emb6_errorHandler( p_err ) );
-    EMB6_ASSERT_RETS( (ps_ns != NULL), ,(*p_err), NETSTK_ERR_INVALID_ARGUMENT );
+    EMB6_ASSERT_RETS( ((ps_ns != NULL) || (ps_stack != NULL) ),
+            ,(*p_err), NETSTK_ERR_INVALID_ARGUMENT );
 
     /* set return error code to default */
     *p_err = NETSTK_ERR_NONE;
 
+    if( ps_ns != NULL )
+        ps_nsTmp = ps_ns;
+    else
+        ps_nsTmp = ps_stack;
+
     /* initialize netstack */
-    ret = loc_stackInit( ps_ns );
+    ret = loc_stackInit( ps_nsTmp );
     if( ret == 0 )
     {
+        ps_stack = NULL;
         *p_err = NETSTK_ERR_INIT;
         LOG_ERR("Failed to initialize emb6 stack");
     }
