@@ -349,7 +349,7 @@ void emb6_init( s_ns_t* ps_ns, e_nsErr_t* p_err )
     else
     {
         /* set local netstack pointer */
-        ps_stack = ps_ns;
+        ps_stack = ps_nsTmp;
     }
 
     e_nsErr_t err;
