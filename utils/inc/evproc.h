@@ -123,6 +123,9 @@ typedef enum
    /** Low-Layer Packet event */
    EVENT_TYPE_PCK_LL,
 
+   /** Status changed event */
+   EVENT_TYPE_STATUS_CHANGE,
+
    /** MAX identifier */
    EVENT_TYPE_MAX
 
@@ -181,7 +184,6 @@ typedef void* p_data_t;
 
 /** Type of a callback function */
 typedef void (*pfn_callback_t)( c_event_t c_event, p_data_t p_data );
-
 
 
 /*

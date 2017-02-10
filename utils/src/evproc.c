@@ -277,7 +277,8 @@ void evproc_init( void )
 
   /* reinitialize */
   _evproc_init();
-}
+
+} /* evproc_init() */
 
 /*---------------------------------------------------------------------------*/
 /*
@@ -403,9 +404,10 @@ en_evprocResCode_t evproc_putEvent( en_evprocAction_t e_actType,
                 return E_END_OF_LIST;
             }
 
-            if ((c_eventType < OBLIG_EVENT_PRIOR) && (_evproc_lookupEvent(c_eventType,p_data)))
+            if ((c_eventType < OBLIG_EVENT_PRIOR) &&
+                    (_evproc_lookupEvent(c_eventType,p_data)))
             {
-                // Event has low priority and already in a queue
+                /* Event has low priority and already in a queue */
             }
             else
             {
@@ -423,8 +425,9 @@ en_evprocResCode_t evproc_putEvent( en_evprocAction_t e_actType,
                 bsp_exitCritical();
                 return E_END_OF_LIST;
             }
-            if ((c_eventType < OBLIG_EVENT_PRIOR) && (_evproc_lookupEvent(c_eventType,p_data))) {
-                // Event has low priority and already in a queue
+            if ((c_eventType < OBLIG_EVENT_PRIOR) &&
+                    (_evproc_lookupEvent(c_eventType,p_data))) {
+                /* Event has low priority and already in a queue */
             }
             else {
 
@@ -432,7 +435,6 @@ en_evprocResCode_t evproc_putEvent( en_evprocAction_t e_actType,
                 {
                     pst_evList[i].c_event = pst_evList[i - 1].c_event;
                     pst_evList[i].p_data = pst_evList[i - 1].p_data;
-                    //memcpy((&pst_evList + i),(&pst_evList + (i-1)),sizeof(st_eventDisc_t));
                 }
 
                 LOG_INFO("tail %d : %p\n\r",c_eventType,p_data);

@@ -1,16 +1,6 @@
-#ifndef ALT_ctimer_H_
-#define ALT_ctimer_H_
-/**
- *   \addtogroup utils
- *   @{
-*/
-/**
- *   \defgroup ctimer Callback timer library
- *
- *   This is a set of functions to call particular function after etimer event was
- *   detected.
- *   @{
-*/
+/*
+ * --- License --------------------------------------------------------------*
+ */
 /*
  * emb6 is licensed under the 3-clause BSD license. This license gives everyone
  * the right to use and distribute the code, either in binary or source code
@@ -22,12 +12,7 @@
  * more adaptivity during run-time.
  *
  * The license text is:
- *
- * Copyright (c) 2015,
- * Hochschule Offenburg, University of Applied Sciences
- * Laboratory Embedded Systems and Communications Electronics.
- * All rights reserved.
- *
+
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  * 1. Redistributions of source code must retain the above copyright notice,
@@ -49,122 +34,166 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
+ * Copyright (c) 2016,
+ * Hochschule Offenburg, University of Applied Sciences
+ * Institute of reliable Embedded Systems and Communications Electronics.
+ * All rights reserved.
  */
-/*============================================================================*/
-/*!
-    \file   ctimer.h
 
-    \author Artem Yushev 
+/*
+ *  --- Module Description ---------------------------------------------------*
+ */
+/**
+ *  \file       ctimer.h
+ *  \author     Institute of reliable Embedded Systems
+ *              and Communication Electronics
+ *  \date       $Date$
+ *  \version    $Version$
+ *
+ *  \brief      Callback timer module for emb::6.
+ *
+ *              This module provides so-called callback timer. A callback timer
+ *              can be used to trigger the execution of a callback function
+ *              after a specific period.
+ */
+#ifndef __CTIMER_H__
+#define __CTIMER_H__
 
-    \brief  Functions to manage Contiki timers
-            Contiki has two main type of timers callback timers (ctimer) and
-            event timer (etimer)
-            The first one push callbacks after timer expires and the second one
-            push event when timer expires.
 
-  \version  0.1
-*/
-/*============================================================================*/
-/*=============================================================================
-                                 INCLUDES
- =============================================================================*/
+/*
+ *  --- Includes -------------------------------------------------------------*
+ */
+#include <stdint.h>
 #include "etimer.h"
 
-/*=============================================================================
-                        STRUCTURES AND OTHER TYPEDEFS
- =============================================================================*/
-struct ctimer {
-  struct     ctimer         *next;
-  struct     etimer         etimer;
-              void             (*f)(void *);
-              void             *ptr;
+
+/*
+ *  --- Type Definitions -----------------------------------------------------*
+ */
+
+/** definition of a ctimer callback function */
+typedef void (*fn_ctimer_cb_t)(void*);
+
+/**
+ * \brief   Structure of a ctimer.
+ *
+ *          The ctimer structure is used e.g. to access a specific callback
+ *          timer e.g. to stop or to reset.
+ */
+struct ctimer
+{
+    /** Pointer to the next timer structure in the timer list */
+    struct ctimer *next;
+
+    /** An event timer that is used for the callback timer */
+    struct etimer etimer;
+
+    /** Callback function registered for the callback timer. */
+    fn_ctimer_cb_t f;
+
+    /** Additional data used as parameter for the registered callback */
+    void* ptr;
 };
 
-/*==============================================================================
-                          FUNCTION PROTOTYPES
-==============================================================================*/
-/**
- * \brief      Reset a callback timer with the same interval as was
- *             previously set.
- * \param c    A pointer to the callback timer.
- *
- *             This function resets the callback timer with the same
- *             interval that was given to the callback timer with the
- *             ctimer_set() function. The start point of the interval
- *             is the exact time that the callback timer last
- *             expired. Therefore, this function will cause the timer
- *             to be stable over time, unlike the ctimer_restart()
- *             function.
- *
- * \sa ctimer_restart()
+
+/*
+ *  --- Global Functions Definition ------------------------------------------*
  */
-void ctimer_reset(struct ctimer *c);
+
 
 /**
- * \brief      Restart a callback timer from the current point in time
- * \param c    A pointer to the callback timer.
+ * ctimer_init()
  *
- *             This function restarts the callback timer with the same
- *             interval that was given to the ctimer_set()
- *             function. The callback timer will start at the current
- *             time.
+ * \brief   Initialize the callback timer library.
  *
- *             \note A periodic timer will drift if this function is
- *             used to reset it. For periodic timers, use the
- *             ctimer_reset() function instead.
- *
- * \sa ctimer_reset()
+ *          This function initializes the callback timer library and
+ *          should be called from the system boot up code.
  */
-void ctimer_restart(struct ctimer *c);
+void ctimer_init( void );
+
 
 /**
- * \brief      Set a callback timer.
- * \param c    A pointer to the callback timer.
- * \param t    The interval before the timer expires.
- * \param f    A function to be called when the timer expires.
- * \param ptr  An opaque pointer that will be supplied as an argument to the callback function.
+ * \brief   Set a callback timer.
  *
- *             This function is used to set a callback timer for a time
- *             sometime in the future. When the callback timer expires,
- *             the callback function f will be called with ptr as argument.
+ *          This function is used to set a callback timer for a time
+ *          sometime in the future. When the callback timer expires,
+ *          the callback function will be called with its argument.
  *
- */
-void ctimer_set(struct ctimer *c, clock_time_t t,
-        void (*f)(void *), void *ptr);
-
-/**
- * \brief      Stop a pending callback timer.
- * \param c    A pointer to the pending callback timer.
+ * \param   c    Pointer to the callback timer to set.
+ * \param   t    The interval before the timer expires.
+ * \param   f    Function to be called when the timer expires.
+ * \param   ptr  Opaque pointer that will be supplied as an argument to the callback function.
  *
- *             This function stops a callback timer that has previously
- *             been set with ctimer_set(), ctimer_reset(), or ctimer_restart().
- *             After this function has been called, the callback timer will be
- *             expired and will not call the callback function.
  *
  */
-void ctimer_stop(struct ctimer *c);
+void ctimer_set( struct ctimer* c, clock_time_t t,
+        fn_ctimer_cb_t f, void* ptr );
+
 
 /**
- * \brief      Check if a callback timer has expired.
- * \param c    A pointer to the callback timer
- * \return     Non-zero if the timer has expired, zero otherwise.
+ * \brief   Stop a pending callback timer.
  *
- *             This function tests if a callback timer has expired and
+ *          This function stops a callback timer that has previously
+ *          been started. After this function has been called, the callback
+ *          timer will be expired and will not call the callback function.
+ *
+ * \param   c    Pointer to the pending callback timer.
+ *
+ */
+void ctimer_stop( struct ctimer* c );
+
+
+/**
+ * ctimer_reset()
+ *
+ * \brief   Reset a callback timer with its initial interval.
+ *
+ *          This function resets the callback timer with the same
+ *          interval that was given to the callback timer with the
+ *          ctimer_set() function. The start point of the interval
+ *          is the exact time that the callback timer last
+ *          expired. Therefore, this function will cause the timer
+ *          to be stable over time, unlike the ctimer_restart()
+ *          function.
+ *
+ * \param   c    Pointer to the callback timer to reset.
+ *
+ */
+void ctimer_reset( struct ctimer *c );
+
+
+/**
+ * ctimer_restart()
+ *
+ * \brief   Restart a callback timer from the current point in time.
+ *
+ *          This function restarts the callback timer with the same
+ *          interval that was given to the ctimer_set()
+ *          function. The callback timer will start at the current
+ *          time.
+ *          The periodic timer will drift if this function is
+ *          used to reset it. For periodic timers, use the
+ *          ctimer_reset() function instead.
+ *
+ * \param   c    Pointer to the callback timer to restart.
+ *
+ */
+void ctimer_restart( struct ctimer *c );
+
+
+/**
+ * \brief   Check if a callback timer has expired.
+ *
+ *          This function tests if a callback timer has expired and
  *             returns true or false depending on its status.
- */
-int ctimer_expired(struct ctimer *c);
-
-/**
- * \brief      Initialize the callback timer library.
  *
- *             This function initializes the callback timer library and
- *             should be called from the system boot up code.
+ * \param   c    Pointer to the callback timer
+ *
+ * \return  Non-zero if the timer has expired, zero otherwise.
+ *
  */
-void ctimer_init(void);
+int ctimer_expired( struct ctimer* c);
 
 
+#endif /* __CTIMER_H__ */
 
-
-#endif /* ALT_ctimer_H_ */
- /** @} */
-/** @} */

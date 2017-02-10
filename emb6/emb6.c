@@ -210,6 +210,9 @@ static uint8_t loc_stackInit( s_ns_t * ps_ns )
   /* Initialize stack protocols */
   evproc_init();
   queuebuf_init();
+
+  /* initialize timer */
+  etimer_init();
   ctimer_init();
   rt_tmr_init();
 
