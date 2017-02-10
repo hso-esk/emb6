@@ -180,11 +180,11 @@ s_mac_phy_conf_t mac_phy_config = {
  * the function definition. */
 static uint8_t loc_stackInit( s_ns_t* ps_netstack );
 
-#ifdef EMB6_INIT_DROOT
+#if EMB6_INIT_ROOT == TRUE
 /* Initialize the DAGROOT. For further information refer to
  * the function definition. */
 static int8_t loc_dagRootInit( void );
-#endif /* #ifdef EMB6_INIT_DROOT */
+#endif /* #if EMB6_INIT_ROOT == TRUE */
 
 /*
  *  --- Local Functions ---------------------------------------------------- *
@@ -265,11 +265,11 @@ static uint8_t loc_stackInit( s_ns_t * ps_ns )
   }
 
 
-#if EMB6_INIT_ROOT==TRUE
+#if EMB6_INIT_ROOT == TRUE
     if (!c_err || !loc_dagRootInit()) {
         c_err = 1;
     }
-#endif /* DEMO_USE_DAG_ROOT */
+#endif /* #if EMB6_INIT_ROOT == TRUE */
 
     return c_err;
 }
