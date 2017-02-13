@@ -67,191 +67,6 @@
 #include <stdint.h>
 #include "emb6.h"
 
-/*
- *  --- Macros ------------------------------------------------------------- *
- */
-
-
-
-/*
- *  --- Enumerations --------------------------------------------------------*
- */
-
-
-/**
- * \brief   Serial API types.
- */
-typedef enum
-{
-  /** General response to acknowledge a command. A device/host shall issue
-    * this response for every command, in case no specific response exists.
-    * This is required to see if the command was received and accepted. */
-  e_serial_api_type_ret,
-
-  /** A host can use this device to check the availability of a device
-   * and vice versa. */
-  e_serial_api_type_ping = 0x10,
-
-  /** Set a configuration parameter. */
-  e_serial_api_type_cfg_set = 0x20,
-
-  /** Get a configuration parameter. */
-  e_serial_api_type_cfg_get,
-
-  /** return a configuration parameter. */
-  e_serial_api_type_cfg_rsp,
-
-  /** Initialize communication module. A host has to issue this command
-    * at the beginning of the communication or to reset the device. */
-  e_serial_api_type_device_init = 0x31,
-
-  /** Start the communication module. The communication module tries to
-    * access and connect to the network. */
-  e_serial_api_type_device_start,
-
-  /** Stop the communication module. Stops the operation of the
-    * communication module. */
-  e_serial_api_type_device_stop,
-
-  /**
-    * Get the Status of the communication module. This is required
-    * for the sensor module to know when the communication is ready
-    * or if an error occurred. */
-  e_serial_api_type_status_get = 0x40,
-
-  /** Returns the status of the communication module. The device
-    * creates this response either when requested using the
-    * STATUS_GET command or automatically if the status of the
-    * communication module has changed. */
-  e_serial_api_type_status_ret,
-
-  /** Obtain the last error of the communication module. */
-  e_serial_api_type_error_get = 0x50,
-
-  /** Returns the latest error of the communication module. */
-  e_serial_api_type_error_ret,
-
-  e_serial_api_type_max
-
-} e_serial_api_type_t;
-
-
-/**
- * \brief   Return and status codes.
- */
-typedef enum
-{
-  /** Describes a positive return value e.g. after
-    * a command was issued. */
-  e_serial_api_ret_ok = 0x00,
-
-  /** A general error occurred during the operation
-    * (e.g. CRC error). */
-  e_serial_api_ret_error,
-
-  /** The command is not valid or supported. */
-  e_serial_api_ret_error_cmd,
-
-  /** The parameters are invalid or not supported. */
-  e_serial_api_ret_error_param,
-
-  /** The device is in an undefined state. Usually a device enters this
-    * state after power-up. The host shall initialize a device that resides
-    * in this state. */
-  e_serial_api_status_undef = 0x20,
-
-  /** The initialization of a device finished properly. It is ready to start
-    * its operation. */
-  e_serial_api_status_init,
-
-  /** The device started its operation. In this state, the device is usually
-    * trying to access and connect to the wireless network. */
-  e_serial_api_status_started,
-
-  /** The device stopped its operation. */
-  e_serial_api_status_stopped,
-
-  /** The device has access to the network and is capable to communicate. All
-    * the commands directed to higher layer shall fail if the device is not
-    * within this state. */
-  e_serial_api_status_network,
-
-  /** The device is in an error state. */
-  e_serial_api_status_error,
-
-} e_serial_api_ret_t;
-
-
-/**
- * \brief   Specific error codes.
- *
- *          The ERROR_GET command allows retaining a more specific error code
- *          in case a device retains in its error state STATE_ERROR.
- */
-typedef enum
-{
-  /** No error */
-  e_serial_api_error_no,
-
-  /** Unknown error */
-  e_serial_api_error_unknown,
-
-  /** Fatal error */
-  e_serial_api_error_fatal,
-
-} e_serial_api_error_t;
-
-
-/**
- * \brief   Specific configuration IDs.
- *
- *          The CFG_GET/SET command allow setting or reading the actual
- *          configuration. Therefore specific identifiers are required.
- */
-typedef enum
-{
-  /** MAC address */
-  e_serial_api_cfgid_macaddr,
-
-  /** PAN ID */
-  e_serial_api_cfgid_panid,
-
-  /** Operation mode */
-  e_serial_api_cfgid_opmode,
-
-  /** Radio channel */
-  e_serial_api_cfgid_rfch,
-
-} e_serial_api_cfgid_t;
-
-
-/*
- *  --- Type Definitions -----------------------------------------------------*
- */
-
-/** frameID */
-typedef uint8_t serialapi_frameID_t;
-
-/** MAC address configuration*/
-typedef uint8_t serialapi_cfg_macaddr_t[UIP_802154_LONGADDR_LEN];
-
-/** PAN ID configuration */
-typedef uint16_t serialapi_cfg_panid_t;
-
-/** Operation Mode configuration */
-typedef uint8_t serialapi_cfg_opmode_t;
-
-/** Radio Channel configuration */
-typedef uint8_t serialapi_cfg_rfch_t;
-
-/** Format of a general RET response. */
-typedef uint8_t serialapi_ret_t;
-
-/** Format of a CFG GET/SET request. */
-typedef uint8_t serialapi_cfg_getset_t;
-
-/** Format of a STATUS GET response. */
-typedef uint8_t serialapi_status_ret_t;
 
 
 /*
@@ -261,9 +76,36 @@ typedef uint8_t serialapi_status_ret_t;
 /**
  * \brief   Initializes the serial API.
  *
+ *          This function is used to initialize the serial API. The
+ *          initialization also provides pointers to the Tx buffer
+ *          and the Tx function. This is required in case a reply
+ *          needs to be generated or an unsolicited message has to
+ *          be sent.
+ *
+ * \param   p_txBuf     Pointer to the Tx buffer.
+ * \param   txBufLen    Lenth of the Tx buffer.
+ * \patam   fn_tx       Tx function.
+ * \param   p_txParam   Parameter used for Tx function.
+ *
  * \return  0 on success, otherwise -1
  */
-int8_t serialApiInit( void );
+int8_t serialApiInit( uint8_t* p_txBuf, uint16_t txBufLen,
+        void(*fn_tx)(uint16_t len, void* p_param), void* p_txParam );
+
+/**
+ * \brief   Provide input to the serial API.
+ *
+ *          This function can be used in case a frame was received
+ *          that was directed to the serial API.
+ *
+ * \param   p_data      Payload of the frame.
+ * \param   len         Length of the frame.
+ * \param   valid       Defines if a payload is valid or not (e.g. CRC error)
+ *
+ * \return  0 in case the frame was processed succesfully or a negative value
+ *          in case of an error.
+ */
+int8_t serialApiInput( uint8_t* p_data, uint16_t len, uint8_t valid );
 
 
 #endif /* __SERIALAPI_H__ */

@@ -69,23 +69,186 @@
 #include "serialapi.h"
 #include "sf_serialmac.h"
 
+/*
+ *  --- Enumerations --------------------------------------------------------*
+ */
+
+
+/**
+ * \brief   Serial API types.
+ */
+typedef enum
+{
+  /** General response to acknowledge a command. A device/host shall issue
+    * this response for every command, in case no specific response exists.
+    * This is required to see if the command was received and accepted. */
+  e_serial_api_type_ret,
+
+  /** A host can use this device to check the availability of a device
+   * and vice versa. */
+  e_serial_api_type_ping = 0x10,
+
+  /** Set a configuration parameter. */
+  e_serial_api_type_cfg_set = 0x20,
+
+  /** Get a configuration parameter. */
+  e_serial_api_type_cfg_get,
+
+  /** return a configuration parameter. */
+  e_serial_api_type_cfg_rsp,
+
+  /** Initialize communication module. A host has to issue this command
+    * at the beginning of the communication or to reset the device. */
+  e_serial_api_type_device_init = 0x31,
+
+  /** Start the communication module. The communication module tries to
+    * access and connect to the network. */
+  e_serial_api_type_device_start,
+
+  /** Stop the communication module. Stops the operation of the
+    * communication module. */
+  e_serial_api_type_device_stop,
+
+  /**
+    * Get the Status of the communication module. This is required
+    * for the sensor module to know when the communication is ready
+    * or if an error occurred. */
+  e_serial_api_type_status_get = 0x40,
+
+  /** Returns the status of the communication module. The device
+    * creates this response either when requested using the
+    * STATUS_GET command or automatically if the status of the
+    * communication module has changed. */
+  e_serial_api_type_status_ret,
+
+  /** Obtain the last error of the communication module. */
+  e_serial_api_type_error_get = 0x50,
+
+  /** Returns the latest error of the communication module. */
+  e_serial_api_type_error_ret,
+
+  e_serial_api_type_max
+
+} e_serial_api_type_t;
+
+
+/**
+ * \brief   Return and status codes.
+ */
+typedef enum
+{
+  /** Describes a positive return value e.g. after
+    * a command was issued. */
+  e_serial_api_ret_ok = 0x00,
+
+  /** A general error occurred during the operation
+    * (e.g. CRC error). */
+  e_serial_api_ret_error,
+
+  /** The command is not valid or supported. */
+  e_serial_api_ret_error_cmd,
+
+  /** The parameters are invalid or not supported. */
+  e_serial_api_ret_error_param,
+
+  /** The device is in an undefined state. Usually a device enters this
+    * state after power-up. The host shall initialize a device that resides
+    * in this state. */
+  e_serial_api_status_undef = 0x20,
+
+  /** The initialization of a device finished properly. It is ready to start
+    * its operation. */
+  e_serial_api_status_init,
+
+  /** The device started its operation. In this state, the device is usually
+    * trying to access and connect to the wireless network. */
+  e_serial_api_status_started,
+
+  /** The device stopped its operation. */
+  e_serial_api_status_stopped,
+
+  /** The device has access to the network and is capable to communicate. All
+    * the commands directed to higher layer shall fail if the device is not
+    * within this state. */
+  e_serial_api_status_network,
+
+  /** The device is in an error state. */
+  e_serial_api_status_error,
+
+} e_serial_api_ret_t;
+
+
+/**
+ * \brief   Specific error codes.
+ *
+ *          The ERROR_GET command allows retaining a more specific error code
+ *          in case a device retains in its error state STATE_ERROR.
+ */
+typedef enum
+{
+  /** No error */
+  e_serial_api_error_no,
+
+  /** Unknown error */
+  e_serial_api_error_unknown,
+
+  /** Fatal error */
+  e_serial_api_error_fatal,
+
+} e_serial_api_error_t;
+
+
+/**
+ * \brief   Specific configuration IDs.
+ *
+ *          The CFG_GET/SET command allow setting or reading the actual
+ *          configuration. Therefore specific identifiers are required.
+ */
+typedef enum
+{
+  /** MAC address */
+  e_serial_api_cfgid_macaddr,
+
+  /** PAN ID */
+  e_serial_api_cfgid_panid,
+
+  /** Operation mode */
+  e_serial_api_cfgid_opmode,
+
+  /** Radio channel */
+  e_serial_api_cfgid_rfch,
+
+} e_serial_api_cfgid_t;
 
 
 /*
- *  --- Macros ------------------------------------------------------------- *
+ *  --- Type Definitions -----------------------------------------------------*
  */
 
-/** Maximum length of a serial API frame */
-#define SERIALAPI_FRAMEBUF_MAX              255
+/** frameID */
+typedef uint8_t serialapi_frameID_t;
 
-/** Length of the input buffer */
-#define SERIALAPI_RX_BUF_LEN                128
-/** Length of the output buffer */
-#define SERIALAPI_TX_BUF_LEN                128
+/** MAC address configuration*/
+typedef uint8_t serialapi_cfg_macaddr_t[UIP_802154_LONGADDR_LEN];
 
-/*
- *  --- Type Definitions ----------------------------------------------------*
- */
+/** PAN ID configuration */
+typedef uint16_t serialapi_cfg_panid_t;
+
+/** Operation Mode configuration */
+typedef uint8_t serialapi_cfg_opmode_t;
+
+/** Radio Channel configuration */
+typedef uint8_t serialapi_cfg_rfch_t;
+
+/** Format of a general RET response. */
+typedef uint8_t serialapi_ret_t;
+
+/** Format of a CFG GET/SET request. */
+typedef uint8_t serialapi_cfg_getset_t;
+
+/** Format of a STATUS GET response. */
+typedef uint8_t serialapi_status_ret_t;
+
 
 /**
  * \brief   Definition of a callback function for commands received.
@@ -103,69 +266,10 @@
 typedef uint16_t (*fn_serialApiHndl_t)( uint8_t* p_cmd, uint16_t cmdLen,
     uint8_t* p_rpl, uint16_t rplLen );
 
-/**
- * Definition of a serial API command.
- */
-typedef struct
-{
-  /** ID of the command */
-  uint8_t id;
-
-  /** callback for the command */
-  fn_serialApiHndl_t cb;
-
-} s_serialApiCmd_t;
-
-/**
- * Context of the serial API.
- */
-typedef struct
-{
-  /* The context has a context for each command */
-  s_serialApiCmd_t cmds[e_serial_api_type_max];
-
-} s_serialApiCtx_t;
-
 
 /*
  *  --- Local Function Prototypes ------------------------------------------ *
  */
-
-/* Callback when receiving data from lower interface */
-static void _rxDataCb( void* p_data );
-
-/* Read data from rx buffer */
-static uint16_t _readRxBuf( uint8_t *p_data, uint16_t len );
-
-/*Read function to be used by the MAC for RX. */
-static size_t _serialMacRead( void *port_handle, char *frame_buffer,
-    size_t frame_buffer_length );
-
-/* Function which returns the number of bytes waiting on  input to be
- * used by the MAC for RX. */
-static size_t _serialMacReadWait( void *port_handle );
-
-/* Write function to be used by the MAC for TX. */
-static size_t _serialMacWrite( void *port_handle, char *frame_buffer,
-    size_t frame_buffer_length );
-
-/**
- * Function called by the serial MAC in case an RX frame event occurred.
- * For further details have a look at the function definitions. */
-static void _serialmac_rxframe_evt( void* mac_context, char* frame_buffer,
-    size_t frame_buffer_length );
-
-/**
- * Function called by the serial MAC in case an RX buffer is requested.
- * For further details have a look at the function definitions. */
-static void _serialmac_rxbuf_evt( void* mac_context, char* frame_buffer,
-    size_t frame_buffer_length );
-
-/**
- * Function used to ignore incoming events from the serial MAC.
- * For further details have a look at the function definitions. */
-static void _serialmac_ignore_evt( void* mac_context, char* frame_buffer,
-    size_t frame_buffer_length );
 
 /** Called by the stack in case new data was available from the RX interface.
  * For further details have a look at the function definitions. */
@@ -217,138 +321,65 @@ static uint16_t _hndl_errGet( uint8_t* p_cmd, uint16_t cmdLen,
  */
 
 /** Serial MAC context */
-static struct sf_serialmac_ctx* p_macCtx;
+static void(*_fn_tx)(uint16_t len, void* p_param) = NULL;
 
-/** Output frame buffer */
-static uint8_t a_frameBufTx[SERIALAPI_FRAMEBUF_MAX];
-/** Pointer to the output frame buffer */
-static uint8_t* p_frameBufTx;
-/** Input frame buffer */
-static uint8_t a_frameBufRx[SERIALAPI_FRAMEBUF_MAX];
-/** Pointer to the input frame buffer */
-static uint8_t* p_frameBufRx;
+/** Pointer to the Tx buffer */
+static uint8_t* _p_txBuf = NULL;
+/** Length of the Tx buffer */
+static uint16_t _txBufLen = 0;
+/** Tx parameter */
+static void* _p_txParam = NULL;
 
-/** Pointer to the UART instance used for the serial MAC protocol */
-static void* p_uart;
-
-/** Input ring buffer. */
-volatile uint8_t bufferRx[SERIALAPI_RX_BUF_LEN];
-/** Pointer to the Rx ring buffer's current write position */
-volatile uint8_t *bufferRxWrite;
-/** Pointer to the Rx ring buffer's current read position */
-volatile uint8_t *bufferRxRead;
-/** Number of bytes in the input buffer. */
-volatile uint16_t bufferRxLen;
-/** Set if there was a Rx buffer overflow. */
-volatile bool bufferRxOverflow;
 /*
  *  --- Local Functions ---------------------------------------------------- *
  */
 
-
 /**
- * \brief   Callback if new data is available on the interface.
+ * \brief   Callback function of the stack for new data on the RX interface.
  *
- *          This function shall be called if new data is available on the
- *          underlying interface. It puts the data into a local buffer
- *          used for later processing of the data.
+ *          This function is called by the stack everytime new data is
+ *          available on the RX interface. This is required to separate
+ *          Interrupts from regular operations.
  *
- * \param   p_data    Data received.
+ * \param   ev    The type of the event.
+ * \param   data  Extra data.
  */
-static void _rxDataCb( void* p_data )
+void _event_callback( c_event_t ev, p_data_t data )
 {
-  EMB6_ASSERT_RET( (p_data != NULL), );
-
-  /* get actual byte */
-  uint8_t data = *((uint8_t*)p_data);
-
-  /** Check for space in the buffer */
-  if(SERIALAPI_RX_BUF_LEN > bufferRxLen)
+  if( ev == EVENT_TYPE_STATUS_CHANGE )
   {
-    /* write data and increase length and write pointer */
-    *bufferRxWrite = data;
-    bufferRxWrite++;
-    bufferRxLen++;
+    uint8_t* p_txBuf = _p_txBuf;
 
-    /** Check for an overflow of the read pointer and adjust if required. */
-    if(bufferRxWrite == &bufferRx[SERIALAPI_RX_BUF_LEN])
+   /* set the according RET ID */
+    *((serialapi_frameID_t*)p_txBuf) = e_serial_api_type_status_ret;
+    p_txBuf += sizeof(serialapi_frameID_t);
+
+    /* set OK return value to indicate ping response */
+    serialapi_ret_t* p_ret = (serialapi_ret_t*)p_txBuf;
+    p_txBuf += sizeof(serialapi_ret_t);
+
+    switch( emb6_getStatus() )
     {
-      bufferRxWrite = bufferRx;
+      case STACK_STATUS_IDLE:
+        *p_ret = e_serial_api_status_stopped;
+        break;
+
+      case STACK_STATUS_ACTIVE:
+        *p_ret = e_serial_api_status_started;
+        break;
+
+      default:
+        *p_ret = e_serial_api_status_undef;
+        break;
     }
+
+    EMB6_ASSERT_RET( _fn_tx != NULL, );
+    /* Call the associated Tx function with the according
+     * parameter. */
+    if( p_txBuf - _p_txBuf )
+        /* transmit response */
+        _fn_tx( (p_txBuf - _p_txBuf), _p_txParam );
   }
-  else
-  {
-    /* indicate overflow */
-    bufferRxOverflow = true;
-  }
-
-  /* put event to the queue */
-  evproc_putEvent(E_EVPROC_HEAD, EVENT_TYPE_SLIP_POLL, NULL);
-
-}/* _rxDataCb() */
-
-
-/**
- * \brief   Read data from Rx buffer.
- *
- *          This function reads data from the RX buffer if it was filled
- *          from the interface RX callback before..
- *
- * \param   p_data    Buffer to store the data.
- * \param   len       Length of the buffer.
- *
- * \return  The number of read bytes.
- */
-static uint16_t _readRxBuf( uint8_t *p_data, uint16_t len )
-{
-  uint16_t i;
-
-  EMB6_ASSERT_RET( (p_data != NULL), 0 );
-  EMB6_ASSERT_RET( (len > 0), 0 );
-
-  /** Read from Rx-buffer until len or size of the buffer is reached. */
-  for( i = 0; (i < len) && (0 < bufferRxLen); i++)
-  {
-    bsp_enterCritical();
-
-    /** Write to the specified data pointer and increase the read pointer. */
-    p_data[i] = *bufferRxRead++;
-    /** Decrease the number of bytes in buffer. */
-    bufferRxLen--;
-    /** Check for an overflow of the read pointer and adjust if required. */
-    if(bufferRxRead == &bufferRx[SERIALAPI_RX_BUF_LEN])
-    {
-      bufferRxRead = bufferRx;
-    } /* if */
-
-    bsp_exitCritical();
-  }/* for */
-
-  return i;
-} /* _readRxBuf() */
-
-
-static size_t _serialMacRead( void *port_handle, char *frame_buffer,
-    size_t frame_buffer_length )
-{
-  /* read data from buffer */
-  return _readRxBuf( (uint8_t*)frame_buffer, frame_buffer_length );
-}
-
-/* Function which returns the number of bytes waiting on  input to be
- * used by the MAC for RX. */
-static size_t _serialMacReadWait( void *port_handle )
-{
-  /* return number of bytes in the buffer */
-  return bufferRxLen;
-}
-
-/* Write function to be used by the MAC for TX. */
-static size_t _serialMacWrite( void *port_handle, char *frame_buffer,
-    size_t frame_buffer_length )
-{
-  /* write data to UART */
-  return bsp_uartTx( port_handle, (uint8_t*)frame_buffer, frame_buffer_length );
 }
 
 
@@ -358,34 +389,29 @@ static size_t _serialMacWrite( void *port_handle, char *frame_buffer,
  *          Everytime a full and valid frame was received by the serial
  *          MAC it raises such an event.
  *
- * \param   mac_contect           Context the event comes from.
- * \param   frame_buffer          Buffer holding the received frame.
- * \param   frame_buffer_length   Length of the frame.
+ * \param   p_data      Payload of the frame.
+ * \param   len         Length of the frame.
  */
-static void _serialmac_rxframe_evt( void* mac_context, char* frame_buffer,
-    size_t frame_buffer_length )
+static int8_t _rx_data( uint8_t* p_data, uint16_t len )
 {
   serialapi_frameID_t id;
-  size_t bufLeft = frame_buffer_length;
-  uint8_t* p_data = (uint8_t*)frame_buffer;
+  size_t bufLeft = len;
+  uint8_t* p_dataPtr = (uint8_t*)p_data;
 
   fn_serialApiHndl_t f_hndl = NULL;
   uint16_t hndlRet = 0;
 
   /* A frame has been received */
   /* check parameters */
-  EMB6_ASSERT_RET( (mac_context != NULL),  );
-  EMB6_ASSERT_RET( (bufLeft >= sizeof(serialapi_frameID_t)),  );
-
-  /* Reset frame buffer pointer */
-  p_frameBufTx = a_frameBufTx;
+  EMB6_ASSERT_RET( (p_dataPtr != NULL), -1 );
+  EMB6_ASSERT_RET( (bufLeft >= sizeof(serialapi_frameID_t)), -1 );
 
   /* get ID */
-  id = *p_data;
-  p_data += sizeof(serialapi_frameID_t);
+  id = *p_dataPtr;
+  p_dataPtr += sizeof(serialapi_frameID_t);
   bufLeft -= sizeof(serialapi_frameID_t);
 
-  EMB6_ASSERT_RET( id < e_serial_api_type_max,  );
+  EMB6_ASSERT_RET( id < e_serial_api_type_max, -1 );
 
   switch( id )
   {
@@ -441,66 +467,19 @@ static void _serialmac_rxframe_evt( void* mac_context, char* frame_buffer,
 
   /* call the according handler */
   if( f_hndl != NULL )
-    hndlRet = f_hndl( p_data, bufLeft, p_frameBufTx, SERIALAPI_FRAMEBUF_MAX );
+    hndlRet = f_hndl( p_dataPtr, bufLeft, _p_txBuf, _txBufLen );
 
   if( hndlRet )
   {
-    /* send reply */
-    sf_serialmac_tx_frame ( mac_context, hndlRet,
-        (const char *)p_frameBufTx, hndlRet );
-
-    sf_serialmac_hal_tx_callback( p_macCtx );
+      EMB6_ASSERT_RET( _fn_tx != NULL, -1 );
+      /* Call the associated Tx function with the according
+       * parameter. */
+      _fn_tx( hndlRet, _p_txParam );
+      return 0;
   }
 
-}
+  return -1;
 
-/**
- * \brief   Called whenever a frame header was received.
- *
- *          If a frame header was received by the serial MAC it uses this
- *          function to signal the need for buffer to store the payload
- *          of the frame.
- */
-static void _serialmac_rxbuf_evt( void* mac_context, char* frame_buffer,
-    size_t frame_buffer_length )
-{
-  /* Start the receive procedure and provide a buffer for the
-   * payload of the frame. */
-  sf_serialmac_rx_frame( mac_context, (char*)p_frameBufRx,
-      SERIALAPI_FRAMEBUF_MAX );
-}
-
-/**
- * \brief   Common function to ignore incoming events.
- *
- *          Some of the events are not required within this
- *          implementation. Therefore they can be ignored by registering
- *          this function.
- */
-static void _serialmac_ignore_evt( void* mac_context, char* frame_buffer,
-    size_t frame_buffer_length )
-{
-  /* not required */
-}
-
-
-/**
- * \brief   Callback function of the stack for new data on the RX interface.
- *
- *          This function is called by the stack everytime new data is
- *          available on the RX interface. This is required to separate
- *          Interrupts from regular operations.
- *
- * \param   ev    The type of the event.
- * \param   data  Extra data.
- */
-void _event_callback( c_event_t ev, p_data_t data )
-{
-  if( ev == EVENT_TYPE_SLIP_POLL )
-  {
-    /* Call RX handler from serial MAC*/
-    sf_serialmac_hal_rx_callback( p_macCtx );
-  }
 }
 
 
@@ -830,7 +809,7 @@ static uint16_t _hndl_devInit( uint8_t* p_cmd, uint16_t cmdLen,
   e_nsErr_t err;
 
   /* set the according id */
-  *((serialapi_frameID_t*)p_frameBufTx) = e_serial_api_type_ret;
+  *((serialapi_frameID_t*)p_txBuf) = e_serial_api_type_ret;
   p_txBuf += sizeof(serialapi_frameID_t);
 
   /* prepare return value */
@@ -839,8 +818,9 @@ static uint16_t _hndl_devInit( uint8_t* p_cmd, uint16_t cmdLen,
 
   /* (Re-)Initialize the stack */
   emb6_init( NULL, &err );
+
   /* the event must be re-registered */
-  evproc_regCallback( EVENT_TYPE_SLIP_POLL, _event_callback );
+  evproc_regCallback( EVENT_TYPE_STATUS_CHANGE, _event_callback );
 
   if(err == NETSTK_ERR_NONE )
     *p_ret = e_serial_api_ret_ok;
@@ -938,7 +918,7 @@ static uint16_t _hndl_devStop( uint8_t* p_cmd, uint16_t cmdLen,
     *p_ret = e_serial_api_ret_error;
 
   /* the event must be re-registered */
-  evproc_regCallback( EVENT_TYPE_SLIP_POLL, _event_callback );
+  evproc_regCallback( EVENT_TYPE_STATUS_CHANGE, _event_callback );
 
   return p_txBuf - p_rpl;
 }
@@ -1042,35 +1022,43 @@ static uint16_t _hndl_errGet( uint8_t* p_cmd, uint16_t cmdLen,
 /*
 * serialApiInit()
 */
-int8_t serialApiInit( void )
+int8_t serialApiInit( uint8_t* p_txBuf, uint16_t txBufLen,
+        void(*fn_tx)(uint16_t len, void* p_param), void* p_txParam )
+
 {
-  int8_t ret = -1;
-  p_macCtx = &_macCtx;
+    int8_t ret = 0;
 
-  /* Init the Rx-buffer variables. */
-  bufferRxWrite = bufferRx;
-  bufferRxRead = bufferRx;
-  bufferRxLen = 0U;
-  bufferRxOverflow = false;
+    /* set buffer description */
+    _p_txBuf = p_txBuf;
+    _txBufLen = txBufLen;
+    _p_txParam = p_txParam;
 
-  /* set rx frame buffer pointer */
-  p_frameBufRx = a_frameBufRx;
+    /* set Tx function */
+    _fn_tx = fn_tx;
 
-  /* get the according UART from the BSP */
-  p_uart = bsp_uartInit( EN_HAL_UART_SLIP );
-  EMB6_ASSERT( p_uart != NULL );
+    /* register events */
+    evproc_regCallback( EVENT_TYPE_STATUS_CHANGE, _event_callback );
 
-  /* register callback for RX */
-  bsp_periphIRQRegister( EN_HAL_PERIPHIRQ_SLIPUART_RX, _rxDataCb, NULL );
-
-  /* Initialize the serial MAC */
-  sf_serialmac_init( p_macCtx, p_uart, _serialMacRead, _serialMacReadWait,
-      _serialMacWrite, _serialmac_rxframe_evt, _serialmac_rxbuf_evt,
-      _serialmac_ignore_evt, _serialmac_ignore_evt );
-
-  /* register event */
-  evproc_regCallback( EVENT_TYPE_SLIP_POLL, _event_callback );
-
-  return ret;
+    return ret;
 } /* serialApiInit() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* serialApiInput()
+*/
+int8_t serialApiInput( uint8_t* p_data, uint16_t len, uint8_t valid )
+{
+    int ret = -1;
+
+    if( valid )
+    {
+        /* process the frame */
+        ret = _rx_data( p_data, len );
+    }
+
+
+    return ret;
+
+} /* serialApiInput() */
 
