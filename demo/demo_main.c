@@ -155,6 +155,27 @@
 #include "semphr.h"
 #endif /* #ifndef EMB6_PROC_DELAY */
 
+#ifdef USE_TI_RTOS
+/* XDCtools Header files */
+#include <stdlib.h>
+#include <xdc/std.h>
+#include <xdc/cfg/global.h>
+#include <xdc/runtime/System.h>
+#include <xdc/runtime/Error.h>
+
+/* BIOS Header files */
+#include <ti/sysbios/BIOS.h>
+#include <ti/sysbios/knl/Task.h>
+#include <ti/drivers/UART.h>
+
+/* Example/Board Header files */
+#include "ti_rtos_src/Board.h"
+#include "ti_rtos_src/sf_mcu_timerRtos.h"
+
+#include "wmbus_task.h"
+#include "wmbus_semaphore.h"
+
+#endif
 /*==============================================================================
                                      MACROS
  =============================================================================*/
@@ -169,6 +190,10 @@
 #define mainLED_TASK_PRIORITY           ( tskIDLE_PRIORITY + 2 )
 #endif /* #if USE_FREERTOS */
 
+
+#if USE_FREERTOS & USE_TI_RTOS
+#error Please choose only one RTOS
+#endif
 /*==============================================================================
                                      STRUCTS
  =============================================================================*/
@@ -217,12 +242,14 @@ s_emb6_startup_params_t emb6_startupParams;
 static void loc_stackConf(uint16_t mac_addr_word);
 static void loc_demoAppsConf(s_ns_t* pst_netStack, e_nsErr_t *p_err);
 static uint8_t loc_demoAppsInit(void);
-
-
 /**
  * emb6 task.
  */
+#ifdef USE_TI_RTOS
+static void loc_embTask(int argc, char **argv);
+#else
 static void emb6_task( void* p_params );
+#endif
 
 #if USE_FREERTOS
 
@@ -443,6 +470,64 @@ void emb6_errorHandler(e_nsErr_t *p_err)
 /*==============================================================================
  emb6_task()
 ==============================================================================*/
+#ifdef USE_TI_RTOS
+
+static void loc_embTask(int argc, char **argv)
+{
+    char *pc_mac_addr = NULL;
+      uint16_t mac_addr_word;
+      s_ns_t st_netstack;
+      uint8_t ret;
+      e_nsErr_t err;
+
+      /* Initialize variables */
+      err = NETSTK_ERR_NONE;
+      memset(&st_netstack, 0, sizeof(st_netstack));
+
+      if (argc > 1) {
+        pc_mac_addr = malloc(strlen(argv[1])+1);
+        strcpy(pc_mac_addr, argv[1]);
+      }
+      mac_addr_word = loc_parseMac(pc_mac_addr, MAC_ADDR_WORD);
+      free(pc_mac_addr);
+
+      /* Initialize BSP */
+      ret = bsp_init(&st_netstack);
+      if (ret != 0) {
+        err = NETSTK_ERR_INIT;
+        emb6_errorHandler(&err);
+      }
+
+      /* Configure applications */
+      loc_demoAppsConf(&st_netstack,&err);
+
+      /* Initialize stack */
+      loc_stackConf(mac_addr_word);
+      emb6_init(&st_netstack, &err);
+      if (err != NETSTK_ERR_NONE) {
+        emb6_errorHandler(&err);
+      }
+
+      /* Show that stack has been launched */
+      bsp_led(HAL_LED0, EN_BSP_LED_OP_ON);
+      bsp_delayUs(2000000);
+      bsp_led(HAL_LED0, EN_BSP_LED_OP_OFF);
+
+      /* Initialize applications */
+      ret = loc_demoAppsInit();
+      if (ret == 0) {
+        LOG_ERR("Demo APP failed to initialize");
+        err = NETSTK_ERR_INIT;
+        emb6_errorHandler(&err);
+      }
+
+      /* Start the emb6 stack */
+      emb6_process(EMB6_PROC_DELAY);
+
+      /* the program should never come here */
+      return;
+}/* loc_embTask() */
+#else
 static void emb6_task( void* p_params )
 {
     s_ns_t st_netstack;
@@ -502,6 +587,8 @@ static void emb6_task( void* p_params )
     /* the program should never come here */
     return;
 }
+#endif
+
 
 #if USE_FREERTOS
 /*-----------------------------------------------------------*/
@@ -595,7 +682,28 @@ int main(void)
     configTOTAL_HEAP_SIZE in FreeRTOSConfig.h. */
     for( ;; );
 #else
+ #ifdef USE_TI_RTOS
+    Error_Block eb;
+
+    /* Call board init functions */
+    Board_initGeneral();
+    Board_initUART();
+
+    /* Initialize error parameters */
+    Error_init(&eb);
+
+    /* Initialize serial task */
+    task_init(&loc_embTask, &eb);
+    /* Initialize semaphore to pend task */
+    semaphore_init(&eb);
+    /* Initialize the periodical clock source of the wmbus stack */
+    sf_mcu_timerRtos_init(2000U, &eb);
+
+    /* Start BIOS */
+    BIOS_start();
+ #else
     emb6_task( &emb6_startupParams );
+ #endif
 #endif /* #if USE_FREERTOS */
 }
 
