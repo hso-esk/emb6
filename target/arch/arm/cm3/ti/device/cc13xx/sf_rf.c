@@ -1,3 +1,4 @@
+
 /**
 * @code
 *  ___ _____ _   ___ _  _____ ___  ___  ___ ___
@@ -43,7 +44,7 @@ extern "C" {
 #include "rfLib/patch/rf_patch_mce_wmbus_ctmode.h"
 #include <rf_patches/rf_patch_cpe_genfsk.h>
 #include <rf_patches/rf_patch_rfe_genfsk.h>
-#include "wmbus_semaphore.h"
+#include "emb6_semaphore.h"
 #include "sf_mcu_sleep.h"
 #else
 /* BoardSupportPacket */

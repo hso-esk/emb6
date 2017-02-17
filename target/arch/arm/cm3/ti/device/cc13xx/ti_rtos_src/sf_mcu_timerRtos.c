@@ -1,3 +1,4 @@
+
 /*============================================================================*/
 /*!
  * @file    sf_mcu_timerRtos.c
@@ -25,7 +26,7 @@
 #include "sf_mcu_sleep.h"
 #include "sf_mcu_timerRtos.h"
 
-#include "wmbus_semaphore.h"
+#include "emb6_semaphore.h"
 
 /*==============================================================================
                             VARIABLES

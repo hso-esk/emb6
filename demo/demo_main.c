@@ -172,8 +172,8 @@
 #include "ti_rtos_src/Board.h"
 #include "ti_rtos_src/sf_mcu_timerRtos.h"
 
-#include "wmbus_task.h"
-#include "wmbus_semaphore.h"
+#include "emb6_task.h"
+#include "emb6_semaphore.h"
 
 #endif
 /*==============================================================================
@@ -693,7 +693,7 @@ int main(void)
     Error_init(&eb);
 
     /* Initialize serial task */
-    task_init(&loc_embTask, &eb);
+    emb6_task_init(&loc_embTask, &eb);
     /* Initialize semaphore to pend task */
     semaphore_init(&eb);
     /* Initialize the periodical clock source of the wmbus stack */

@@ -1,3 +1,4 @@
+
 /**
 * @code
 *  ___ _____ _   ___ _  _____ ___  ___  ___ ___
@@ -32,7 +33,7 @@ extern "C" {
 #include "driverlib/vims.h"
 #include "driverlib/sys_ctrl.h"
 
-#include "wmbus_semaphore.h"
+#include "emb6_semaphore.h"
 
 #include "sf_mcu_sleep.h"
 #include "sf_mcu.h"

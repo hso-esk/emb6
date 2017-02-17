@@ -26,7 +26,7 @@
 /* Example/Board Header files */
 #include "Board.h"
 
-#include "wmbus_semaphore.h"
+#include "emb6_semaphore.h"
 #include "sf_uart.h"
 #include "sf_mcu_sleep.h"
 /*==============================================================================
