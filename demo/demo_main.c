@@ -246,7 +246,7 @@ static uint8_t loc_demoAppsInit(void);
  * emb6 task.
  */
 #ifdef USE_TI_RTOS
-static void loc_embTask(int argc, char **argv);
+static void emb6_task(int argc, char **argv);
 #else
 static void emb6_task( void* p_params );
 #endif
@@ -471,8 +471,7 @@ void emb6_errorHandler(e_nsErr_t *p_err)
  emb6_task()
 ==============================================================================*/
 #ifdef USE_TI_RTOS
-
-static void loc_embTask(int argc, char **argv)
+static void emb6_task(int argc, char **argv)
 {
     char *pc_mac_addr = NULL;
       uint16_t mac_addr_word;
@@ -491,6 +490,25 @@ static void loc_embTask(int argc, char **argv)
       mac_addr_word = loc_parseMac(pc_mac_addr, MAC_ADDR_WORD);
       free(pc_mac_addr);
 
+      /* Configure stack parameters */
+      loc_stackConf(mac_addr_word);
+
+#else
+static void emb6_task( void* p_params )
+{
+     s_ns_t st_netstack;
+     s_emb6_startup_params_t* ps_params = p_params;
+     uint8_t ret;
+     e_nsErr_t err;
+
+     /* Initialize variables */
+     err = NETSTK_ERR_NONE;
+     memset(&st_netstack, 0, sizeof(st_netstack));
+
+     /* Configure stack parameters */
+     loc_stackConf(ps_params->ui_macAddr);
+#endif
+
       /* Initialize BSP */
       ret = bsp_init(&st_netstack);
       if (ret != 0) {
@@ -500,9 +518,11 @@ static void loc_embTask(int argc, char **argv)
 
       /* Configure applications */
       loc_demoAppsConf(&st_netstack,&err);
+      if (err != NETSTK_ERR_NONE) {
+          emb6_errorHandler(&err);
+      }
 
       /* Initialize stack */
-      loc_stackConf(mac_addr_word);
       emb6_init(&st_netstack, &err);
       if (err != NETSTK_ERR_NONE) {
         emb6_errorHandler(&err);
@@ -521,59 +541,6 @@ static void loc_embTask(int argc, char **argv)
         emb6_errorHandler(&err);
       }
 
-      /* Start the emb6 stack */
-      emb6_process(EMB6_PROC_DELAY);
-
-      /* the program should never come here */
-      return;
-}/* loc_embTask() */
-#else
-static void emb6_task( void* p_params )
-{
-    s_ns_t st_netstack;
-    s_emb6_startup_params_t* ps_params = p_params;
-    uint8_t ret;
-    e_nsErr_t err;
-
-    /* Initialize variables */
-    err = NETSTK_ERR_NONE;
-    memset(&st_netstack, 0, sizeof(st_netstack));
-
-    /* Initialize BSP */
-    ret = bsp_init(&st_netstack);
-    if (ret != 0) {
-        err = NETSTK_ERR_INIT;
-        emb6_errorHandler(&err);
-    }
-
-    /* Configure stack parameters */
-    loc_stackConf(ps_params->ui_macAddr);
-
-    /* Configure applications */
-    loc_demoAppsConf(&st_netstack, &err);
-    if (err != NETSTK_ERR_NONE) {
-        emb6_errorHandler(&err);
-    }
-
-    /* Initialize stack */
-    emb6_init(&st_netstack, &err);
-    if (err != NETSTK_ERR_NONE) {
-        emb6_errorHandler(&err);
-    }
-
-    /* Show that stack has been launched */
-    bsp_led(HAL_LED0, EN_BSP_LED_OP_ON);
-    bsp_delayUs(2000000);
-    bsp_led(HAL_LED0, EN_BSP_LED_OP_OFF);
-
-    /* Initialize applications */
-    ret = loc_demoAppsInit();
-    if(ret == 0) {
-        LOG_ERR("Demo APP failed to initialize");
-        err = NETSTK_ERR_INIT;
-        emb6_errorHandler(&err);
-    }
-
     while(1)
     {
         /* run the emb6 stack */
@@ -583,11 +550,7 @@ static void emb6_task( void* p_params )
         emb6_process(EMB6_PROC_DELAY);
 #endif /* #if USE_FREERTOS */
     }
-
-    /* the program should never come here */
-    return;
 }
-#endif
 
 
 #if USE_FREERTOS
@@ -691,9 +654,8 @@ int main(void)
 
     /* Initialize error parameters */
     Error_init(&eb);
-
     /* Initialize serial task */
-    emb6_task_init(&loc_embTask, &eb);
+    emb6_task_init( (ti_sysbios_knl_Task_FuncPtr) &emb6_task, &eb);
     /* Initialize semaphore to pend task */
     semaphore_init(&eb);
     /* Initialize the periodical clock source of the wmbus stack */
