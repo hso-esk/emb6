@@ -95,7 +95,7 @@ static void loc_uartReadCallback(UART_Handle handle, void *buf, size_t count)
   {
     case E_MCU_SLEEP_MODE_SLEEP:
     case E_MCU_SLEEP_MODE_DEEPSLEEP:
-      wmbus_semaphore_post();
+      semaphore_post();
       break;
     case E_MCU_SLEEP_MODE_NONE:
     default:

@@ -54,7 +54,7 @@ void semaphore_init(Error_Block* ps_eb)
 /*============================================================================*/
 /*! wmbus_semaphore_pend() */
 /*============================================================================*/
-void wmbus_semaphore_pend(void)
+void semaphore_pend(void)
 {
   /* Ensure that the stack task will be blocked here */
   while(Semaphore_getCount(gs_wmbusSemaphore) > 0x00U)
@@ -69,7 +69,7 @@ void wmbus_semaphore_pend(void)
 /*============================================================================*/
 /*! wmbus_semaphore_post() */
 /*============================================================================*/
-void wmbus_semaphore_post(void)
+void semaphore_post(void)
 {
   Semaphore_post(gs_wmbusSemaphore);
 }/* wmbus_semaphore_post */

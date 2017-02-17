@@ -69,7 +69,7 @@ void sf_mcu_sleep(E_MCU_SLEEP_MODE_t e_sleepMode)
     ge_sleepMode = e_sleepMode;
 
     /* Block the wmbus task until the next opperation is needed */
-    wmbus_semaphore_pend();
+    semaphore_pend();
 
     /* At this point the task is not longer blocked device will wake up */
     sf_mcu_sleep_wakeUp();

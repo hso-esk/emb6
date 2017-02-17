@@ -40,7 +40,7 @@ void semaphore_init(Error_Block* ps_eb);
  *
  */
 /*============================================================================*/
-void wmbus_semaphore_pend(void);
+void semaphore_pend(void);
 
 /*============================================================================*/
 /*!
@@ -48,6 +48,6 @@ void wmbus_semaphore_pend(void);
  *
  */
 /*============================================================================*/
-void wmbus_semaphore_post(void);
+void semaphore_post(void);
 
 #endif /* __WMBUS_SEMAPHORE_H__ */

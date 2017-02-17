@@ -125,7 +125,7 @@ void loc_timerIsr(UArg arg0)
       {
         case E_MCU_SLEEP_MODE_SLEEP:
         case E_MCU_SLEEP_MODE_DEEPSLEEP:
-          wmbus_semaphore_post();
+          semaphore_post();
           break;
         case E_MCU_SLEEP_MODE_NONE:
         default:

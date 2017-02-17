@@ -646,7 +646,7 @@ void loc_rxIsr(uint32_t l_flag)
     {
       case E_MCU_SLEEP_MODE_SLEEP:
       case E_MCU_SLEEP_MODE_DEEPSLEEP:
-        wmbus_semaphore_post();
+        semaphore_post();
         break;
       case E_MCU_SLEEP_MODE_NONE:
       default:
@@ -672,7 +672,7 @@ void loc_rxIsr(uint32_t l_flag)
     {
       case E_MCU_SLEEP_MODE_SLEEP:
       case E_MCU_SLEEP_MODE_DEEPSLEEP:
-        wmbus_semaphore_post();
+        semaphore_post();
         break;
       case E_MCU_SLEEP_MODE_NONE:
       default:
