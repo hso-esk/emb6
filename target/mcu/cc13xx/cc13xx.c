@@ -24,9 +24,9 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <target_conf.h>
 
 #include "emb6.h"
-#include "hwinit.h"
 #include "hal.h"
 #include "bsp.h"
 #include "board_conf.h"
