@@ -648,8 +648,6 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
       cc1310.tx.waitForAckTimeout = (uint16_t) packetbuf_attr(PACKETBUF_ATTR_MAC_ACK_WAIT_DURATION);
       }
 #if USE_TI_RTOS
-      /* TODO to fix this */
-      cc1310.tx.Tx_waiting_Ack=0;
 
       /* Stop last cmd (usually it is Rx cmd ) */
       RF_cancelCmd(gps_rfHandle, gps_rf_cmdHandle, 1);
@@ -659,7 +657,31 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
       {
         return ROUTINE_ERROR_TX_CMD;
       }
-      return ROUTINE_DONE;
+      else
+      {
+        /* if the packet doesn't require ACK then we finish with success once the packet is send */
+         if(cc1310.tx.Tx_waiting_Ack==0)
+           return ROUTINE_DONE ;
+
+         /* Stop last cmd (usually it is Rx cmd ) */
+        // RF_cancelCmd(gps_rfHandle, gps_rf_cmdHandle, 1);
+
+         cc1310.rx.p_currentDataEntry=(rfc_dataEntryGeneral_t*)cc1310.rx.dataQueue.pCurrEntry;
+         cc1310.rx.p_currentDataEntry->status=DATA_ENTRY_PENDING;
+
+         /* Post CMD_PROP_RX command to RF Core (non-blocking function )*/
+         gps_rf_cmdHandle = RF_postCmd(gps_rfHandle, (RF_Op*)cc1310.rx.p_cmdPropRxAdv, RF_PriorityHighest, &Rtos_callback, RF_RTOS_EVENT_MASK);
+
+         /* FIXME wait for ACK */
+         //bsp_delay_us(cc1310.tx.waitForAckTimeout);
+         for(i; i<0x2FFD;i++);
+         /* stop waiting for ACK */
+         cc1310.tx.Tx_waiting_Ack=0;
+         if(cc1310.tx.Ack_received)
+           return ROUTINE_DONE;
+         else
+           return ROUTINE_ERROR_TX_NOACK;
+      }
 #else
       /* Stop last cmd (usually it is Rx cmd ) */
       RFC_sendDirectCmd(CMDR_DIR_CMD(CMD_ABORT));
@@ -739,12 +761,13 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
     /* create the ACK  */
     ack_length=framer802154ll_createAck(&frame,ack, sizeof(ack));
     /* configure ACK length and ptr */
-    cc1310.tx.p_cmdPropTxAdv->pktLen = ack_length-2  ;
+    cc1310.tx.p_cmdPropTxAdv->pktLen = ack_length-2   ;
     cc1310.tx.p_cmdPropTxAdv->pPkt = ack;
 #if USE_TI_RTOS
 
-
-
+    /* Send tx command  */
+    gps_rf_cmdHandle = RF_postCmd(gps_rfHandle, (RF_Op*)cc1310.tx.p_cmdPropTxAdv, RF_PriorityHighest, NULL, 0);
+    RF_pendCmd(gps_rfHandle, gps_rf_cmdHandle, (RF_EventLastCmdDone | RF_EventCmdError));
 
 #else
     /* Send Tx command to send the ACK */
@@ -755,7 +778,6 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
     {
       wdog--;
     }
-
 #endif
     }
    /* Get RSSI value from the queue : The RSSI is given on signed form in dBm.
@@ -769,9 +791,27 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
     return ROUTINE_DONE ;
 
   case RF_STATUS_CCA :
-
 #if USE_TI_RTOS
-	  return ROUTINE_CCA_RESULT_IDLE;
+	    /* Stop last cmd (usually it is Rx cmd ) */
+	    RF_cancelCmd(gps_rfHandle, gps_rf_cmdHandle, 1);
+	    /* update command */
+	       cc1310.cca.s_cmdCS.numRssiBusy =cc1310.cca.c_numOfRssiMeas;
+	       cc1310.cca.s_cmdCS.numRssiIdle =cc1310.cca.c_numOfRssiMeas;
+	    /* Start carrier sense */
+	       gps_rf_cmdHandle = RF_postCmd(gps_rfHandle, (RF_Op*)&cc1310.cca.s_cmdCS, RF_PriorityHighest, NULL, 0);
+	       result = RF_pendCmd(gps_rfHandle, gps_rf_cmdHandle, (RF_EventLastCmdDone | RF_EventCmdError));
+
+	       if(result & RF_EventLastCmdDone)
+	       {
+	         /* Check the status of the CS command */
+	         if(cc1310.cca.s_cmdCS.status == PROP_DONE_IDLE)
+	         {
+	           return ROUTINE_CCA_RESULT_IDLE;
+	         }
+	         else
+	           return ROUTINE_CCA_RESULT_BUSY;
+	       }
+	       return ROUTINE_CCA_ERROR_STATE;
 #else
     /* Stop last cmd (usually it is Rx cmd ) */
     RFC_sendDirectCmd(CMDR_DIR_CMD(CMD_ABORT));
