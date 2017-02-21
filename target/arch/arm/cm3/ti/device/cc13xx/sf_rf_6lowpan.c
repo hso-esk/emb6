@@ -109,11 +109,14 @@ static uint16_t sf_rf_get_LenLastPkt(void);
 static bool sf_rf_set_numOfRssiMeas(uint8_t num);
 static bool sf_rf_update_run_frequency(uint16_t frequency, uint16_t fractFreq);
 static bool sf_rf_update_frequency(uint16_t frequency, uint16_t fractFreq);
+static void rx_call_back(uint32_t l_flag);
+
 static void sf_rf_init_cca_cmd(void);
 #if USE_TI_RTOS
+static void Rtos_callback(RF_Handle h, RF_CmdHandle ch, RF_EventMask e);
+#else
 static void loc_switchToHfXtalOsc(void);
 #endif
-
 
 
 /*==============================================================================
@@ -286,7 +289,7 @@ bool sf_rf_6lowpan_setTxPower(uint8_t c_txPower)
       }
       cc1310.tx.signalStrength = c_txPower;
     }
-#if 0
+#if !USE_TI_RTOS
       /* Transmit the tx power setting to the rf-core */
       MB_SendCommand((uint32_t) &s_cmdTxPower);
 #endif
@@ -383,6 +386,7 @@ return retVal;
  static RF_Params gs_rfParams;
  static RF_Object gs_rfObject;
  static RF_Handle gps_rfHandle;
+ static RF_CmdHandle gps_rf_cmdHandle;
  /* TI-RTOS RF Mode Object */
  RF_Mode RF_prop =
  {
@@ -392,39 +396,12 @@ return retVal;
      .rfePatchFxn = &rf_patch_rfe_genfsk,
  };
 
-/*
-#define RF_RTOS_EVENT_MASK    ( RF_EventLastCmdDone | \
-		RF_EventCmdError  | RF_EventCmdAborted | RF_EventCmdStopped | \
-        RF_EventRxAborted | RF_EventCmdCancelled | RF_EventNDataWritten)
-*/
-
-#define RF_RTOS_EVENT_MASK    ( RF_EventRxOk | \
+#define RF_RTOS_EVENT_MASK    ( RF_EventLastCmdDone | RF_EventRxOk | \
 		RF_EventRxNOk | \
 		RF_EventInternalError | \
 		RF_EventRxBufFull | RF_EventRxIgnored | RF_EventRxAborted )
 
-
- /*******************************************************************************
-  * @brief   Send a command to the rf module
-  *
-  *  @param pOp   Pointer to the #RF_Op. Must normally be in persistent and writeable memory
-  *  @param ePri  Priority of this RF command (used for arbitration in multi-client systems)
-  *  @param pCb   Callback function called upon command completion (and some other events).
-  *               If RF_postCmd() fails no callback is made
-  *  @return      A handle to the RF command. Negative value indicates an error
- *******************************************************************************/
- static RF_CmdHandle loc_rfPostCmd(RF_Op* pOp, RF_Priority ePri, RF_Callback pCb)
- {
-   RF_CmdHandle cmdHandle = -5;
-   if (NULL != gps_rfHandle)
-   {
-       cmdHandle = RF_postCmd(gps_rfHandle, pOp, ePri, pCb, RF_RTOS_EVENT_MASK);
-   }
-   return cmdHandle;
- }/* loc_rfPostCmd() */
-
-
- #endif /* USE_TI_RTOS */
+#endif /* USE_TI_RTOS */
 
 
 static bool rf_driver_init(void)
@@ -432,7 +409,8 @@ static bool rf_driver_init(void)
 #if USE_TI_RTOS
 
   RF_Params_init(&gs_rfParams);
-  gps_rfHandle = RF_open(&gs_rfObject, &RF_prop, (RF_RadioSetup*) &RF_802_15_4_cmdPropRadioDivSetup , &gs_rfParams);
+  if(gps_rfHandle == NULL)
+    gps_rfHandle = RF_open(&gs_rfObject, &RF_prop, (RF_RadioSetup*) &RF_802_15_4_cmdPropRadioDivSetup , &gs_rfParams);
   if(gps_rfHandle != NULL)
     return true;
   else
@@ -455,6 +433,27 @@ static bool rf_driver_init(void)
   }
   return false;
 #endif
+}
+
+
+static void Rtos_callback(RF_Handle h, RF_CmdHandle ch, RF_EventMask e)
+{
+    if (e & RF_EventRxOk)
+    {
+      rx_call_back(IRQ_RX_OK );
+    }
+    else if (e & RF_EventRxNOk)
+	{
+      rx_call_back(IRQ_RX_NOK );
+    }
+    else if (e & RF_EventInternalError)
+    {
+      rx_call_back(IRQ_INTERNAL_ERROR);
+    }
+    else if (e & (RF_EventRxBufFull | RF_EventRxIgnored | RF_EventRxAborted))
+   {
+      rx_call_back(IRQ_RX_BUF_FULL);
+   }
 }
 
 static void rx_call_back(uint32_t l_flag)
@@ -522,21 +521,25 @@ static void rx_call_back(uint32_t l_flag)
 
 static uint8_t sf_rf_switchState(e_rf_status_t state)
 {
+#if USE_TI_RTOS
+	RF_EventMask result ;
+#else
   /* Return value of lib functions */
   static rfc_returnValue_t returnValue;
   /* State of the receiver */
   static rfc_cmdStatus_t cmdStatus;
+#endif
   volatile uint16_t i = 0x00U;
   e_nsErr_t err;
+
 
   /* check wheter we have to update the state or not */
   if(state!=RF_STATUS_NONE)
     cc1310.state=state;
-#if !USE_TI_RTOS
+
   switch(cc1310.state)
   {
   case RF_STATUS_INIT :
-
     if(rf_driver_init())
     {
       /* initiate command pointer */
@@ -549,27 +552,26 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
       sf_rf_set_numOfRssiMeas(CC13xx_NUM_OFF_RSSI_CHECKS_DEFAULT);
       sf_rf_init_cca_cmd();
 
-
+#if USE_TI_RTOS
+      /* Set the frequency */
+      gps_rf_cmdHandle = RF_postCmd(gps_rfHandle, (RF_Op*)cc1310.conf.ps_cmdFs, RF_PriorityNormal, NULL, 0);
+      if(gps_rf_cmdHandle < 0 )
+       {
+          bsp_led( HAL_LED3, EN_BSP_LED_OP_ON );
+          return ROUTINE_ERROR_FS_CMD ;
+       }
+#else
       /* disable  interrupt  */
       RFC_registerCpe0Isr(NULL);
       RFC_registerCpe1Isr(NULL);
       RFC_sendDirectCmd(CMDR_DIR_CMD(CMD_ABORT));
 
-
-      /* initialize RX queue */
-      if(RFQueue_defineQueue(&cc1310.rx.dataQueue, RxBuff, RX_BUFF_SIZE , 2 , 150 + 3 ) != 0x00U)
-      {
-        /* Failed to allocate space for all data entries */
-        bsp_led( HAL_LED3, EN_BSP_LED_OP_ON );
-        return ROUTINE_ERROR_INIT_QUEUE ;
-      }
-
+      /* enable radio again */
       if (RFC_enableRadio() != RFC_OK)
       {
         bsp_led( HAL_LED3, EN_BSP_LED_OP_ON );
         return ROUTINE_ERROR_ENABLE_RADIO;
       }
-
 
       returnValue = RFC_setupRadio(cc1310.conf.ps_cmdPropRadioDivSetup);
       if(returnValue == RFC_OK)
@@ -595,13 +597,21 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
       RFC_enableCpe0Interrupt(IRQ_RX_BUF_FULL);
       RFC_enableCpe0Interrupt(IRQ_RX_IGNORED);
 
+#endif
+
+      /* initialize RX queue */
+      if(RFQueue_defineQueue(&cc1310.rx.dataQueue, RxBuff, RX_BUFF_SIZE , 2 , 150 + 3 ) != 0x00U)
+      {
+        /* Failed to allocate space for all data entries */
+        bsp_led( HAL_LED3, EN_BSP_LED_OP_ON );
+        return ROUTINE_ERROR_INIT_QUEUE ;
+      }
 
       /* reset the waiting for ACK flag */
       cc1310.tx.Tx_waiting_Ack=0;
       /* Initialize global variable. Set the lowest RSSI value as default -255dBm */
       cc1310.rx.c_rssiValue=0xFFU;
-
-      /**/
+      /* set the default TX power */
       cc1310.tx.signalStrength=RF_DEFAULT_TX_POWER;
       return ROUTINE_DONE ;
     }
@@ -610,11 +620,12 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
       bsp_led( HAL_LED3, EN_BSP_LED_OP_ON );
       return ROUTINE_ERROR_INIT_RF ;
     }
-
   case RF_STATUS_IDLE :
     break;
   case RF_STATUS_SLEEP :
-
+#if USE_TI_RTOS
+	  return ROUTINE_DONE;
+#else
       /* disable  interrupt  */
       RFC_registerCpe0Isr(NULL);
 
@@ -624,6 +635,7 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
           return ROUTINE_ERROR_DISABLE_RADIO;
       }
       return ROUTINE_DONE;
+#endif
   case RF_STATUS_TX :
       /* find out if ACK is required */
       cc1310.tx.Tx_waiting_Ack = packetbuf_attr(PACKETBUF_ATTR_MAC_ACK);
@@ -635,11 +647,25 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
       /* Get the ACK wait from buffer */
       cc1310.tx.waitForAckTimeout = (uint16_t) packetbuf_attr(PACKETBUF_ATTR_MAC_ACK_WAIT_DURATION);
       }
+#if USE_TI_RTOS
+      /* TODO to fix this */
+      cc1310.tx.Tx_waiting_Ack=0;
 
+      /* Stop last cmd (usually it is Rx cmd ) */
+      RF_cancelCmd(gps_rfHandle, gps_rf_cmdHandle, 1);
+      /* Send tx command  */
+      result = RF_runCmd(gps_rfHandle, (RF_Op*)cc1310.tx.p_cmdPropTxAdv, RF_PriorityNormal, NULL, 0);
+      if (!(result & RF_EventLastCmdDone))
+      {
+        return ROUTINE_ERROR_TX_CMD;
+      }
+      return ROUTINE_DONE;
+#else
       /* Stop last cmd (usually it is Rx cmd ) */
       RFC_sendDirectCmd(CMDR_DIR_CMD(CMD_ABORT));
       /* Send tx command  */
       cmdStatus = RFC_sendRadioOp((rfc_radioOp_t*)cc1310.tx.p_cmdPropTxAdv);
+
       /* Since we sent a blocking cmd then we check the state */
       if(cmdStatus != RFC_CMDSTATUS_DONE)
       {
@@ -667,15 +693,29 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
           else
               return ROUTINE_ERROR_TX_NOACK;
       }
-
+#endif
   case RF_STATUS_RX_LISTEN :
-    /* Stop last command */
-    RFC_sendDirectCmd(CMDR_DIR_CMD(CMD_ABORT));
     cc1310.rx.p_currentDataEntry=(rfc_dataEntryGeneral_t*)cc1310.rx.dataQueue.pCurrEntry;
     /* Set the Data Entity queue for received data */
     cc1310.rx.p_cmdPropRxAdv->pQueue = &cc1310.rx.dataQueue;
     /* Set rx statistics output struct */
     cc1310.rx.p_cmdPropRxAdv->pOutput= (uint8_t*)&cc1310.rx.rxStatistics;
+
+#if USE_TI_RTOS
+    /* Stop last cmd (usually it is Rx cmd ) */
+    RF_cancelCmd(gps_rfHandle, gps_rf_cmdHandle, 1);
+    /* Post CMD_PROP_RX command to RF Core (non-blocking function )*/
+    gps_rf_cmdHandle = RF_postCmd(gps_rfHandle, (RF_Op*)cc1310.rx.p_cmdPropRxAdv, RF_PriorityNormal, &Rtos_callback, RF_RTOS_EVENT_MASK);
+    /*  check the return value */
+    if(gps_rf_cmdHandle < 0 )
+    {
+      bsp_led( HAL_LED3, EN_BSP_LED_OP_ON );
+      return ROUTINE_ERROR_RX_CMD ;
+    }
+    return ROUTINE_DONE ;
+#else
+    /* Stop last command */
+    RFC_sendDirectCmd(CMDR_DIR_CMD(CMD_ABORT));
     /* Send CMD_PROP_RX command to RF Core */
     cmdStatus=RFC_sendRadioOp_nb((rfc_radioOp_t*)cc1310.rx.p_cmdPropRxAdv , NULL);
     if(cmdStatus != RFC_CMDSTATUS_DONE)
@@ -684,6 +724,7 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
       return ROUTINE_ERROR_RX_CMD ;
     }
     return ROUTINE_DONE ;
+#endif
 
   case RF_STATUS_RX :
 
@@ -700,6 +741,12 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
     /* configure ACK length and ptr */
     cc1310.tx.p_cmdPropTxAdv->pktLen = ack_length-2  ;
     cc1310.tx.p_cmdPropTxAdv->pPkt = ack;
+#if USE_TI_RTOS
+
+
+
+
+#else
     /* Send Tx command to send the ACK */
     RFC_sendRadioOp_nb((rfc_radioOp_t*)cc1310.tx.p_cmdPropTxAdv,NULL);
     /* wait for the command until finish */
@@ -708,8 +755,9 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
     {
       wdog--;
     }
-   }
 
+#endif
+    }
    /* Get RSSI value from the queue : The RSSI is given on signed form in dBm.
     * If no RSSI is available, this is signaled with a special value of the RSSI (-128, or 0x80) */
    cc1310.rx.c_rssiValue=(uint8_t) cc1310.rx.p_lastPkt[cc1310.rx.LenLastPkt];
@@ -721,6 +769,10 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
     return ROUTINE_DONE ;
 
   case RF_STATUS_CCA :
+
+#if USE_TI_RTOS
+	  return ROUTINE_CCA_RESULT_IDLE;
+#else
     /* Stop last cmd (usually it is Rx cmd ) */
     RFC_sendDirectCmd(CMDR_DIR_CMD(CMD_ABORT));
     /* update command */
@@ -740,6 +792,7 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
         return ROUTINE_CCA_RESULT_BUSY;
     }
     return ROUTINE_CCA_ERROR_STATE;
+#endif
 
   case RF_STATUS_ERROR :
       /* Call emb6 error handler */
@@ -747,8 +800,6 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
       emb6_errorHandler(&err);
       return ROUTINE_FATAL_ERROR;
   };
-
-#endif
   return ROUTINE_DONE ;
 }
 
@@ -778,7 +829,11 @@ static uint8_t sf_rf_init_tx(uint8_t *pc_data, uint16_t  i_len)
   {
     cc1310.tx.p_cmdPropTxAdv->pktLen = i_len ;
     cc1310.tx.p_cmdPropTxAdv->pPkt = pc_data;
-    cc1310.tx.p_cmdPropTxAdv->pPkt[0] = i_len - 1 + 2 ;
+#if USE_TI_RTOS
+    cc1310.tx.p_cmdPropTxAdv->pPkt[0] = i_len - 1;
+#else
+    cc1310.tx.p_cmdPropTxAdv->pPkt[0] = i_len - 1  + 2  ;
+#endif
     return 1;
   }
   return 0;
@@ -862,7 +917,7 @@ static bool sf_rf_update_run_frequency(uint16_t frequency, uint16_t fractFreq)
     /* check the struct is already initialized */
     if(cc1310.conf.ps_cmdFs== NULL)
         return false;
-#if 0
+#if !USE_TI_RTOS
     /* Stop the last command : it should be RX command (May be no command in sleepy mode) */
     RFC_sendDirectCmd(CMDR_DIR_CMD(CMD_ABORT));
     /* check if the center frequency is changed then we have to setup the radio again */
@@ -892,7 +947,7 @@ static bool sf_rf_update_run_frequency(uint16_t frequency, uint16_t fractFreq)
 
 static bool sf_rf_update_frequency(uint16_t frequency, uint16_t fractFreq)
 {
-#if 0
+
    /* check the struct is already initialized */
   if(cc1310.conf.ps_cmdFs == NULL || cc1310.conf.ps_cmdPropRadioDivSetup == NULL)
     return false;
@@ -901,7 +956,6 @@ static bool sf_rf_update_frequency(uint16_t frequency, uint16_t fractFreq)
   /* update FS command */
   ((rfc_CMD_FS_t*)cc1310.conf.ps_cmdFs)->frequency=frequency;
   ((rfc_CMD_FS_t*)cc1310.conf.ps_cmdFs)->fractFreq=fractFreq;
-#endif
   return true;
 }
 
@@ -916,7 +970,7 @@ static bool sf_rf_update_frequency(uint16_t frequency, uint16_t fractFreq)
  *
  * @return  None
  *******************************************************************************/
-#if 0
+#if !USE_TI_RTOS
 static void loc_switchToHfXtalOsc(void)
 {
   /* Enable OSC DIG interface to change clock sources */
