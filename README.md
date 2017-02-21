@@ -47,7 +47,7 @@ you are invited to visit a [dedicated](https://github.com/hso-esk/emb6/wiki/Runn
 ### Building `emb::6`
 The `emb::6` build system is based on scons. Therefore several options are available to
 configure the build accordingly. For detailed instructions please visit the according
-[Wiki-Page](https://xxx.de).
+[Wiki-Page](https://github.com/hso-esk/emb6/wiki).
 For an initial build with a simple demo you can run the following comands to build to executables
 for the native Linux target (keep in mind that the LCM libraries have to be installed in advance.)
 
