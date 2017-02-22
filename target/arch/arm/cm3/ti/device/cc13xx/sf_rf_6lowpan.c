@@ -650,7 +650,7 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
 #if USE_TI_RTOS
 
       /* Stop last cmd (usually it is Rx cmd ) */
-      RF_cancelCmd(gps_rfHandle, gps_rf_cmdHandle, 1);
+      RF_flushCmd(gps_rfHandle, gps_rf_cmdHandle, 1);
       /* Send tx command  */
       result = RF_runCmd(gps_rfHandle, (RF_Op*)cc1310.tx.p_cmdPropTxAdv, RF_PriorityNormal, NULL, 0);
       if (!(result & RF_EventLastCmdDone))
@@ -725,7 +725,7 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
 
 #if USE_TI_RTOS
     /* Stop last cmd (usually it is Rx cmd ) */
-    RF_cancelCmd(gps_rfHandle, gps_rf_cmdHandle, 1);
+    RF_flushCmd(gps_rfHandle, gps_rf_cmdHandle, 1);
     /* Post CMD_PROP_RX command to RF Core (non-blocking function )*/
     gps_rf_cmdHandle = RF_postCmd(gps_rfHandle, (RF_Op*)cc1310.rx.p_cmdPropRxAdv, RF_PriorityNormal, &Rtos_callback, RF_RTOS_EVENT_MASK);
     /*  check the return value */
@@ -793,7 +793,7 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
   case RF_STATUS_CCA :
 #if USE_TI_RTOS
 	    /* Stop last cmd (usually it is Rx cmd ) */
-	    RF_cancelCmd(gps_rfHandle, gps_rf_cmdHandle, 1);
+	    RF_flushCmd(gps_rfHandle, gps_rf_cmdHandle, 1);
 	    /* update command */
 	       cc1310.cca.s_cmdCS.numRssiBusy =cc1310.cca.c_numOfRssiMeas;
 	       cc1310.cca.s_cmdCS.numRssiIdle =cc1310.cca.c_numOfRssiMeas;

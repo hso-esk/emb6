@@ -39,6 +39,10 @@
 #define CC13XX_TX_ENABLED 1U
 /*! Enable rx. */
 #define CC13XX_RX_ENABLED 1U
+/*! Enable tx LED. */
+#define CC13XX_TX_LED_ENABLED 1U
+/*! Enable rx LED. */
+#define CC13XX_RX_LED_ENABLED 1U
 /*! Enable interrupt based rf handling. */
 #define CC13XX_IS_POLLED_RADIO 0U
 /*! Define the max telegram length */
@@ -58,6 +62,12 @@
 #define UART_IOID_RXD                IOID_2
 /*! Platform interfaces: Definition of TX pin. */
 #define UART_IOID_TXD                IOID_3
+
+#define CC1310_LED0                     0
+#define CC1310_LED1                     1
+#define CC1310_LED2                     2
+#define CC1310_LED3                     3
+
 
 /*==============================================================================
                                      ENUMS
