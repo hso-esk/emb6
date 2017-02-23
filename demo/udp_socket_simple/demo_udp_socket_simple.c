@@ -195,7 +195,7 @@ static void _tx_eventHandler(c_event_t c_event, p_data_t p_data)
     ps_dag_desc = rpl_get_any_dag();
     if (ps_dag_desc) {
 
-      LOG1_INFO("UDP Tx Seq.-Nr.: %d", udp_socket_currSeqTx);
+      LOG1_INFO("UDP Tx Seq.-Nr.: %lu", udp_socket_currSeqTx);
       /*Issue transmission request */
       udp_socket_sendto(&s_soc, &data, 1, &ps_dag_desc->dag_id ,DEMO_UDP_SIMPLE_PORT);
     }
