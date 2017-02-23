@@ -52,7 +52,9 @@
 ==============================================================================*/
 /*============================================================================*/
 /*!
-   \brief Initialization of the LWM2M client application.
+    \brief Initialization of the LWM2M client application.
+
+    \return  0 on success, otherwise -1
 
 */
 /*============================================================================*/
@@ -62,10 +64,10 @@ int8_t demo_lwm2mInit(void);
 /*!
     \brief Configuration of the LWM2M client application.
 
-    \return 0 - error, 1 - success
+    \return  0 on success, otherwise -1
 */
 /*============================================================================*/
-uint8_t demo_lwm2mConf(s_ns_t* pst_netStack);
+int8_t demo_lwm2mConf(s_ns_t* pst_netStack);
 
 #endif /* DEMO_LWM2M_CLI_H_ */
 /** @} */

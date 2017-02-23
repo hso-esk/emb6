@@ -285,7 +285,7 @@ int8_t demo_dtlsInit(void)
 		dtls_emerg("cannot create context\n");
 	}
 
-	return 1;
+	return 0;
 }
 
 static void dtls_udp_callback(void)
@@ -298,9 +298,9 @@ static void dtls_udp_callback(void)
 /*	                 demo_coapConf() 										  */
 /*----------------------------------------------------------------------------*/
 
-uint8_t demo_dtlsConf(s_ns_t* pst_netStack)
+int8_t demo_dtlsConf(s_ns_t* pst_netStack)
 {
-  uint8_t c_ret = 1;
+  int8_t ret = -1;
 
   /*
    * By default stack
@@ -311,17 +311,19 @@ uint8_t demo_dtlsConf(s_ns_t* pst_netStack)
       pst_netStack->dllsec = &dllsec_driver_null;
       pst_netStack->frame = &framer_802154;
       pst_netStack->c_configured = 1;
+      ret = 0;
     } else {
       if ((pst_netStack->hc == &hc_driver_sicslowpan) &&
           (pst_netStack->dllsec == &dllsec_driver_null) &&
           (pst_netStack->frame == &framer_802154)) {
         /* right configuration */
+        ret = 0;
       } else {
-        c_ret = 0;
+        ret = -1;
       }
     }
   }
-  return (c_ret);
+  return ret;
 }
 
 /** @} */

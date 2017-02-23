@@ -290,9 +290,9 @@ static    void _udpAlive_callback(c_event_t c_event, p_data_t p_data) {
 /*---------------------------------------------------------------------------*/
 /*  demo_udpAliveInit()                                                      */
 /*---------------------------------------------------------------------------*/
-uint8_t demo_udpAliveConf(s_ns_t* p_netstk)
+int8_t demo_udpAliveConf(s_ns_t* p_netstk)
 {
-  uint8_t c_ret = 1;
+  int8_t ret = -1;
 
   /*
    * By default stack
@@ -303,19 +303,20 @@ uint8_t demo_udpAliveConf(s_ns_t* p_netstk)
       p_netstk->frame = &framer_802154;
       p_netstk->dllsec = &dllsec_driver_null;
       p_netstk->c_configured = 1;
-
+      ret = 0;
     } else {
       if ((p_netstk->hc == &hc_driver_sicslowpan) &&
           (p_netstk->frame == &framer_802154) &&
           (p_netstk->dllsec == &dllsec_driver_null)) {
+        ret = 0;
       } else {
         p_netstk = NULL;
-        c_ret = 0;
+        ret = -1;
       }
     }
   }
 
-  return (c_ret);
+  return ret;
 }/* demo_udpAliveConf */
 
 /*---------------------------------------------------------------------------*/
@@ -333,7 +334,7 @@ int8_t demo_udpAliveInit(void)
                 _udpAlive_callback);
 
     LOG2_INFO( "Leave demo_udpAliveInit() function" );
-    return 1;
+    return 0;
 }/* demo_udpAliveInit()  */
 /** @} */
 /** @} */

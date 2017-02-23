@@ -105,16 +105,16 @@ int8_t demo_lwm2mInit(void)
     /* Register default LWM2M objects */
     lwm2m_engine_register_default_objects();
 
-    return 1;
+    return 0;
 }
 
 /*==============================================================================
  demo_lwm2mConf()
 ==============================================================================*/
 
-uint8_t demo_lwm2mConf(s_ns_t* p_netstk)
+int8_t demo_lwm2mConf(s_ns_t* p_netstk)
 {
-  uint8_t c_ret = 1;
+  int8_t ret = -1;
 
   /*
    * By default stack
@@ -125,19 +125,20 @@ uint8_t demo_lwm2mConf(s_ns_t* p_netstk)
       p_netstk->frame = &framer_802154;
       p_netstk->dllsec = &dllsec_driver_null;
       p_netstk->c_configured = 1;
-
+      ret = 0;
     } else {
       if ((p_netstk->hc == &hc_driver_sicslowpan) &&
           (p_netstk->frame == &framer_802154) &&
           (p_netstk->dllsec == &dllsec_driver_null)) {
+        ret = 0;
       } else {
         p_netstk = NULL;
-        c_ret = 0;
+        ret = -1;
       }
     }
   }
 
-  return (c_ret);
+  return ret;
 }
 
 /** @} */

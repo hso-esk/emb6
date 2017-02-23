@@ -242,7 +242,7 @@ int8_t demo_udpSocketSimpleInit(void)
 #endif /* if (DEMO_UDP_SOCKET_SIMPLE_ROLE_CLIENT == TRUE) */
 
   /* Always success */
-  return 1;
+  return 0;
 } /* demo_udpSocketSimpleInit() */
 
 
@@ -259,15 +259,15 @@ int8_t demo_udpSocketSimpleConf(s_ns_t *p_netstk)
       p_netstk->hc = &hc_driver_sicslowpan;
       p_netstk->frame = &framer_802154;
       p_netstk->dllsec = &dllsec_driver_null;
-      i_ret = 1;
+      i_ret = 0;
     } else {
       if ((p_netstk->hc == &hc_driver_sicslowpan) &&
           (p_netstk->frame == &framer_802154) &&
           (p_netstk->dllsec == &dllsec_driver_null)) {
-        i_ret = 1;
+        i_ret = 0;
       } else {
         p_netstk = NULL;
-        i_ret = 0;
+        i_ret = -1;
       }
     }
   }

@@ -394,7 +394,7 @@ int8_t demo_udpSocketInit(void)
 #endif
 
   /* Always success */
-  return 1;
+  return 0;
 } /* demo_udpSocketInit() */
 
 
@@ -402,26 +402,26 @@ int8_t demo_udpSocketInit(void)
 /*
 * demo_udpSocketCfg()
 */
-int8_t demo_udpSocketCfg(s_ns_t *p_netstk)
+int8_t demo_udpSocketConf(s_ns_t *p_netstk)
 {
-  int8_t i_ret = -1;
+  int8_t ret = -1;
 
   if (p_netstk != NULL) {
     if (p_netstk->c_configured == FALSE) {
       p_netstk->hc = &hc_driver_sicslowpan;
       p_netstk->frame = &framer_802154;
       p_netstk->dllsec = &dllsec_driver_null;
-      i_ret = 1;
+      ret = 0;
     } else {
       if ((p_netstk->hc == &hc_driver_sicslowpan) &&
           (p_netstk->frame == &framer_802154) &&
           (p_netstk->dllsec == &dllsec_driver_null)) {
-        i_ret = 1;
+        ret = 0;
       } else {
         p_netstk = NULL;
-        i_ret = 0;
+        ret = -1;
       }
     }
   }
-  return i_ret;
+  return ret;
 } /* demo_udpSocketCfg() */

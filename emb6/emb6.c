@@ -184,11 +184,11 @@ static int8_t loc_stackInit( s_ns_t* ps_ns );
 
 /* Configure the stack demos. For further information refer to
  * the function definition. */
-static uint8_t loc_demoConf( s_ns_t* ps_ns, s_demo_t* p_demos );
+static int8_t loc_demoConf( s_ns_t* ps_ns, s_demo_t* p_demos );
 
 /* Initialize the stack demos. For further information refer to
  * the function definition. */
-static uint8_t loc_demoInit( s_demo_t* p_demos );
+static int8_t loc_demoInit( s_demo_t* p_demos );
 
 #if EMB6_INIT_ROOT == TRUE
 /* Initialize the DAGROOT. For further information refer to
@@ -291,9 +291,9 @@ static int8_t loc_stackInit( s_ns_t* ps_ns )
  * \param ps_ns     Stack structure used to configure.
  * \param p_demos   Demos to configure.
  *
- * \return  1 on success or 0 on error.
+ * \return  0 on success or nagative value on error.
  */
-static uint8_t loc_demoConf( s_ns_t* ps_ns, s_demo_t* p_demos )
+static int8_t loc_demoConf( s_ns_t* ps_ns, s_demo_t* p_demos )
 {
   s_demo_t* p_d = p_demos;
 
@@ -307,7 +307,7 @@ static uint8_t loc_demoConf( s_ns_t* ps_ns, s_demo_t* p_demos )
     p_d = p_d->p_next;
   }
 
-  return 1;
+  return 0;
 }
 
 
@@ -321,7 +321,7 @@ static uint8_t loc_demoConf( s_ns_t* ps_ns, s_demo_t* p_demos )
  *
  * \return  0 on success or negative value on error.
  */
-static uint8_t loc_demoInit( s_demo_t* p_demos )
+static int8_t loc_demoInit( s_demo_t* p_demos )
 {
   s_demo_t* p_d = p_demos;
 
@@ -465,6 +465,12 @@ void emb6_init( s_ns_t* ps_ns, s_demo_t* ps_demos, e_nsErr_t* p_err )
 
     /* configure demo applications */
     ret = loc_demoConf( ps_nsTmp, ps_dmsTmp );
+    if( ret != 0 )
+    {
+        *p_err = NETSTK_ERR_INIT;
+        LOG_ERR("Failed to initialize emb6 demos");
+        emb6_errorHandler(&err);
+    }
 
     /* Initialize stack protocols */
     evproc_init();

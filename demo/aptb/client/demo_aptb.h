@@ -90,6 +90,8 @@
 /*!
    \brief Initialization of the simple UDP client application.
 
+    \return  0 on success, otherwise -1
+
 */
 /*============================================================================*/
 int8_t demo_aptbInit(void);
@@ -100,9 +102,11 @@ int8_t demo_aptbInit(void);
 
    \param   ps_netStack Pointer to the network stack
 
+    \return  0 on success, otherwise -1
+
 */
 /*============================================================================*/
-uint8_t demo_aptbConf(s_ns_t* ps_netStack);
+int8_t demo_aptbConf(s_ns_t* ps_netStack);
 
 #endif /* _DEMO_APTB_H_ */
 /** @} */

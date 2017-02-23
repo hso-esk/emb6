@@ -625,7 +625,7 @@ struct s_demo
   int8_t(*pf_init)(void);
 
   /** configuration function */
-  uint8_t(*pf_conf)(s_ns_t* p_ns);
+  int8_t(*pf_conf)(s_ns_t* p_ns);
 
   /** next demo */
   s_demo_t* p_next;
