@@ -250,7 +250,7 @@ int8_t demo_udpSocketSimpleInit(void)
 /*
 * demo_udpSocketSimpleCfg()
 */
-int8_t demo_udpSocketSimpleCfg(s_ns_t *p_netstk)
+int8_t demo_udpSocketSimpleConf(s_ns_t *p_netstk)
 {
   int8_t i_ret = -1;
 
