@@ -142,6 +142,9 @@ typedef enum
     /* stack is active and operating */
     STACK_STATUS_ACTIVE,
 
+    /* stack is connected to a network */
+    STACK_STATUS_NETWORK,
+
     /* stack is an error state */
     STACK_STATUS_ERROR,
 
