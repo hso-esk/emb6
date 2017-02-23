@@ -118,6 +118,15 @@ void  memb_init(struct memb *m);
 void *memb_alloc(struct memb *m);
 
 /**
+ * Allocate multiple memory blocks from a block of memory declared with MEMB().
+ *
+ * \param m A memory block previously declared with MEMB().
+ *
+ * \param n Number of blocks to allocate.
+ */
+void *memb_allocm(struct memb *m, int n);
+
+/**
  * Deallocate a memory block from a memory block previously declared
  * with MEMB().
  *
@@ -129,7 +138,23 @@ void *memb_alloc(struct memb *m);
  * if successfully deallocated) or -1 if the pointer "ptr" did not
  * point to a legal memory block.
  */
-char  memb_free(struct memb *m, void *ptr);
+char memb_free(struct memb *m, void *ptr);
+
+/**
+ * Deallocate multiple memory blocks from a memory block previously declared
+ * with MEMB().
+ *
+ * \param m m A memory block previously declared with MEMB().
+ *
+ * \param ptr A pointer to the memory block that is to be deallocated.
+ *
+ * \param n Number of blocks to allocate.
+ *
+ * \return The new reference count for the memory block (should be 0
+ * if successfully deallocated) or -1 if the pointer "ptr" did not
+ * point to a legal memory block.
+ */
+char memb_freem(struct memb *m, void *ptr, int n);
 
 int memb_inmemb(struct memb *m, void *ptr);
 
