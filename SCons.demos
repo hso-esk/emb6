@@ -147,6 +147,14 @@ demos += [{
 }]
 
 
+# The LWM2M Application initializes the LWM2M Application layer. In case of
+# a client configuration the default objects and resources will be generated.
+demos += [{
+    'id'    : 'LWM2MCli',
+    'demo'  : ('lwm2m','client'),
+}]
+
+
 # The Serial Interface API application allows to control a device using
 # serial commands via the UART interface.
 demos += [{
