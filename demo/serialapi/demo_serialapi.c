@@ -227,7 +227,7 @@ static void _rxDataCb( void* p_data )
  */
 
 /**
- * \brief   allback from higher instance if data shall be transmitted.
+ * \brief   callback from higher instance if data shall be transmitted.
  *
  *          This function is registered as tx functions for higher layers
  *          to transmit the actual data in the Tx buffer..
@@ -361,7 +361,7 @@ static void _serialmac_ignore_evt( void* mac_context, char* frame_buffer,
 /**
  * \brief   Callback function of the stack for new data on the RX interface.
  *
- *          This function is called by the stack everytime new data is
+ *          This function is called by the stack every time new data is
  *          available on the RX interface. This is required to separate
  *          Interrupts from regular operations.
  *
