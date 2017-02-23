@@ -497,6 +497,26 @@ void emb6_process( int32_t us_delay )
           evproc_nextEvent();
           etimer_request_poll();
           bsp_delayUs(delay);
+
+#if EMB6_INIT_ROOT==TRUE
+          if( emb6_getStatus() == STACK_STATUS_ACTIVE )
+            loc_set_status( STACK_STATUS_NETWORK );
+#else
+          /* check if we have a connection to a DAGRoot */
+          if( (emb6_getStatus() == STACK_STATUS_ACTIVE) &&
+              (rpl_get_any_dag() != NULL ) )
+          {
+              loc_set_status( STACK_STATUS_NETWORK );
+          }
+
+          /* check if we have a connection to a DAGRoot */
+          if( (emb6_getStatus() == STACK_STATUS_NETWORK) &&
+              (rpl_get_any_dag() == NULL ) )
+          {
+              loc_set_status( STACK_STATUS_ACTIVE );
+          }
+#endif /* #if EMB6_INIT_ROOT==TRUE */
+
         }
     }while(runLoop);
 
