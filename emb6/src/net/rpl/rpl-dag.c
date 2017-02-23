@@ -139,6 +139,7 @@ nbr_callback(void *ptr)
 void
 rpl_dag_init(void)
 {
+    nbr_table_init();
     nbr_table_register(rpl_parents, (nbr_table_callback *)nbr_callback);
 }
 /*---------------------------------------------------------------------------*/
