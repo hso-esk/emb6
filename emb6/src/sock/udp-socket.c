@@ -55,11 +55,10 @@ static uint8_t buf[UIP_BUFSIZE];
 static void
 init(void)
 {
-  static uint8_t inited = 0;
-  if(!inited) {
-    inited = 1;
-    evproc_regCallback(EVENT_TYPE_TCPIP,_udp_sock_callback);
-  }
+
+  evproc_unregCallback(EVENT_TYPE_TCPIP,_udp_sock_callback);
+  evproc_regCallback(EVENT_TYPE_TCPIP,_udp_sock_callback);
+
 }
 /*---------------------------------------------------------------------------*/
 int
