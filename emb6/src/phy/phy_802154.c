@@ -245,19 +245,6 @@ static void phy_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
   }
 #endif
 
-#if LOGGER_ENABLE
-  /*
-   * Logging
-   */
-  uint16_t data_len = len;
-  uint8_t *p_dataptr = p_data;
-  LOG_RAW("PHY_TX: ");
-  while (data_len--) {
-    LOG_RAW("%02x", *p_dataptr++);
-  }
-  LOG_RAW("\r\n====================\r\n");
-#endif
-
   uint8_t *p_pkt;
   uint16_t pkt_len;
 
@@ -272,6 +259,20 @@ static void phy_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
   /* insert PHY header */
   p_pkt = phy_insertHdr(p_data, pkt_len);
   pkt_len += PHY_HEADER_LEN;
+
+#if LOGGER_ENABLE
+  /*
+   * Logging
+   */
+  uint16_t data_len = pkt_len;
+  uint8_t *p_dataptr = p_pkt;
+  LOG_RAW("PHY_TX: ");
+  while (data_len--) {
+    LOG_RAW("%02x", *p_dataptr++);
+  }
+  LOG_RAW("\r\n====================\r\n");
+#endif
+
 
   /* Issue next lower layer to transmit the prepared frame */
   pphy_netstk->rf->send(p_pkt, pkt_len, p_err);
