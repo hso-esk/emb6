@@ -80,17 +80,9 @@ void _rest_et_callback(c_event_t c_event, p_data_t p_data);
 void
 rest_init_engine(void)
 {
-  /* avoid initializing twice */
-  static uint8_t initialized = 0;
 
-  if(initialized) {
-    PRINTF("REST engine process already running - double initialization?\n");
-    return;
-  }
-  initialized = 1;
-
+  /* initialize list */
   list_init(restful_services);
-
   REST.set_service_callback(rest_invoke_restful_service);
 
   /* Start the RESTful server implementation. */
