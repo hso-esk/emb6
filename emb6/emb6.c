@@ -199,6 +199,11 @@ static int8_t loc_dagRootInit( void );
 /* Set the stack status. For further information refer to
  * the function definition. */
 static void loc_set_status( e_stack_status_t status );
+
+/** Called by the stack in case new data was available from the RX interface.
+ * For further details have a look at the function definitions. */
+static void loc_event_callback( c_event_t ev, p_data_t data );
+
 /*
  *  --- Local Functions ---------------------------------------------------- *
  */
@@ -392,6 +397,45 @@ static void loc_set_status( e_stack_status_t status )
     evproc_putEvent( E_EVPROC_TAIL, EVENT_TYPE_STATUS_CHANGE,
             (void*)&ps_stack->status );
 }
+
+
+/**
+ * \brief   Callback function for receiving events.
+ *
+ *          This function is called every time a new event was generated
+ *          that this module has registered to before.
+ *
+ * \param   ev    The type of the event.
+ * \param   data  Extra data.
+ */
+void loc_event_callback( c_event_t ev, p_data_t data )
+{
+  e_nsErr_t err;
+
+  if( ev == EVENT_TYPE_STATUS_CHANGE )
+  {
+    evproc_regCallback( EVENT_TYPE_REQ_INIT, loc_event_callback );
+    evproc_regCallback( EVENT_TYPE_REQ_START, loc_event_callback );
+    evproc_regCallback( EVENT_TYPE_REQ_STOP, loc_event_callback );
+  }
+  else if( ev == EVENT_TYPE_REQ_INIT )
+  {
+    /* reinitialize the stack */
+    emb6_init( NULL, NULL, &err );
+  }
+  else if( ev == EVENT_TYPE_REQ_STOP )
+  {
+    /* stop the stack */
+    emb6_stop( &err );
+  }
+  else if( ev == EVENT_TYPE_REQ_START )
+  {
+    /* start the stack */
+    emb6_start( &err );
+  }
+
+}
+
 /*
  * --- Global Function Definitions ----------------------------------------- *
  */
@@ -473,6 +517,12 @@ void emb6_init( s_ns_t* ps_ns, s_demo_t* ps_demos, e_nsErr_t* p_err )
       /* error when enabling stack */
       emb6_errorHandler(&err);
     }
+
+    /* register to initialization request events */
+    evproc_regCallback( EVENT_TYPE_STATUS_CHANGE, loc_event_callback );
+    evproc_regCallback( EVENT_TYPE_REQ_INIT, loc_event_callback );
+    evproc_regCallback( EVENT_TYPE_REQ_START, loc_event_callback );
+    evproc_regCallback( EVENT_TYPE_REQ_STOP, loc_event_callback );
 
     /* enable stack per default */
     loc_set_status( STACK_STATUS_ACTIVE );
