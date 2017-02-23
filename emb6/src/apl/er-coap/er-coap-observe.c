@@ -243,7 +243,7 @@ coap_notify_observers_sub(resource_t *resource, const char *subpath)
 
         resource->get_handler(request, notification,
                               transaction->packet + COAP_MAX_HEADER_SIZE,
-                              REST_MAX_CHUNK_SIZE, NULL);
+                              REST_MAX_CHUNK_SIZE, NULL, resource->p_user );
 
         if(notification->code < BAD_REQUEST_4_00) {
           coap_set_header_observe(notification, (obs->obs_counter)++);

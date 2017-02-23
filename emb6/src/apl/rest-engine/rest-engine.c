@@ -174,18 +174,18 @@ rest_invoke_restful_service(void *request, void *response, uint8_t *buffer,
 
       if((method & METHOD_GET) && resource->get_handler != NULL) {
         /* call handler function */
-        resource->get_handler(request, response, buffer, buffer_size, offset);
+        resource->get_handler(request, response, buffer, buffer_size, offset, resource->p_user);
       } else if((method & METHOD_POST) && resource->post_handler != NULL) {
         /* call handler function */
         resource->post_handler(request, response, buffer, buffer_size,
-                               offset);
+                               offset, resource->p_user);
       } else if((method & METHOD_PUT) && resource->put_handler != NULL) {
         /* call handler function */
-        resource->put_handler(request, response, buffer, buffer_size, offset);
+        resource->put_handler(request, response, buffer, buffer_size, offset, resource->p_user);
       } else if((method & METHOD_DELETE) && resource->delete_handler != NULL) {
         /* call handler function */
         resource->delete_handler(request, response, buffer, buffer_size,
-                                 offset);
+                                 offset, resource->p_user);
       } else {
         allowed = 0;
         REST.set_response_status(response, REST.status.METHOD_NOT_ALLOWED);
