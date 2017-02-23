@@ -238,7 +238,7 @@ static int8_t _udpAlive_sendMsg(void)
 
             break;
         case E_UDPALIVE_PREPMSG:
-                i = sprintf(ac_buf, "%u | ", ++l_seqId);
+                i = sprintf(ac_buf, "%lu | ", ++l_seqId);
                 if(ps_dagDesc && ps_dagDesc->instance->def_route) {
                     _udpAlive_addAddr(ac_buf + i,
                                       &ps_dagDesc->instance->def_route->ipaddr);
