@@ -45,11 +45,11 @@
 */
 /* Handler for GET actions. For further details see the function definition */
 static void res_get_handler(void *request, void *response, uint8_t *buffer,
-        uint16_t preferred_size, int32_t *offset);
+        uint16_t preferred_size, int32_t *offset, void* user);
 
 /* Handler for POST actions. For further details see the function definition */
 static void res_post_handler(void *request, void *response, uint8_t *buffer,
-        uint16_t preferred_size, int32_t *offset);
+        uint16_t preferred_size, int32_t *offset, void* user);
 
 /*
 ********************************************************************************
@@ -78,7 +78,7 @@ RESOURCE(res_led,
  *          to get a description of how to control the resource..
  */
 static void res_get_handler(void *request, void *response, uint8_t *buffer,
-        uint16_t preferred_size, int32_t *offset)
+        uint16_t preferred_size, int32_t *offset, void* user)
 {
   /* Some data that has the length up to REST_MAX_CHUNK_SIZE. For more, see the chunk resource. */
   char const *const message = "Use POST to toggle the LEDs using parameters (e.g. POST: led=1)";
@@ -98,7 +98,7 @@ static void res_get_handler(void *request, void *response, uint8_t *buffer,
  *          command: led=<x>.
  */
 static void res_post_handler(void *request, void *response, uint8_t *buffer,
-        uint16_t preferred_size, int32_t *offset)
+        uint16_t preferred_size, int32_t *offset, void* user)
 {
     const char *ledVal = NULL;
 

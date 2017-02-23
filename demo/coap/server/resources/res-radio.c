@@ -62,13 +62,13 @@
 /* Handler for GET actions. For further details see the function definition */
 static void res_get_handler(void *request, void *response,
         uint8_t *buffer, uint16_t preferred_size,
-        int32_t *offset);
+        int32_t *offset, void* user);
 
 
 /* Handler for POST/PUT actions. For further details see the function definition */
 static void res_postput_handler(void *request, void *response,
         uint8_t *buffer, uint16_t preferred_size,
-        int32_t *offset);
+        int32_t *offset, void* user);
 
 /*
 ********************************************************************************
@@ -105,7 +105,7 @@ RESOURCE(res_radio_ctrl,
  *          choose between RSSI(rssi), Tx-Power(pwr) and Rx-Sensivity (rx-sens).
  */
 static void res_get_handler(void *request,   void *response,
-        uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
+        uint8_t *buffer, uint16_t preferred_size, int32_t *offset, void* user)
 {
     int len = 0;
     const char* info = NULL;
@@ -177,7 +177,7 @@ static void res_get_handler(void *request,   void *response,
  *          the query variables ?pwr=<power> and ?sens=<sensivity>.
  */
 static void res_postput_handler(void *request, void *response,
-        uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
+        uint8_t *buffer, uint16_t preferred_size, int32_t *offset, void* user)
 {
     const char* p = NULL;
     int len = 0;

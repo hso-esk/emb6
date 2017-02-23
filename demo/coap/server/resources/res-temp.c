@@ -55,7 +55,7 @@
 
 /* Handler for GET actions. For further details see the function definition */
 static void res_get_handler(void *request, void *response, uint8_t *buffer,
-        uint16_t preferred_size, int32_t *offset);
+        uint16_t preferred_size, int32_t *offset, void* user);
 
 /*
 ********************************************************************************
@@ -84,7 +84,7 @@ RESOURCE(res_temp,
  *          using the query ?unit=celcius for Celcius or ?unit=fahrenheit for Fahrenheit.
  */
 static void res_get_handler(void *request, void *response, uint8_t *buffer,
-        uint16_t preferred_size, int32_t *offset)
+        uint16_t preferred_size, int32_t *offset, void* user)
 {
     size_t len;
     const char* unit = NULL;
