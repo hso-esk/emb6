@@ -123,6 +123,15 @@ typedef enum
    /** Low-Layer Packet event */
    EVENT_TYPE_PCK_LL,
 
+   /** Request (Re-)Initialization */
+   EVENT_TYPE_REQ_INIT,
+
+   /** Request Stop */
+   EVENT_TYPE_REQ_STOP,
+
+   /** Request Start */
+   EVENT_TYPE_REQ_START,
+
    /** Status changed event */
    EVENT_TYPE_STATUS_CHANGE,
 
