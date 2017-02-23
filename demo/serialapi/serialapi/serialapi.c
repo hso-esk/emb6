@@ -97,17 +97,13 @@ typedef enum
   /** return a configuration parameter. */
   e_serial_api_type_cfg_rsp,
 
-  /** Initialize communication module. A host has to issue this command
-    * at the beginning of the communication or to reset the device. */
-  e_serial_api_type_device_init = 0x31,
+  /** Stop the communication module. Stops the operation of the
+    * communication module. */
+  e_serial_api_type_device_stop = 0x30,
 
   /** Start the communication module. The communication module tries to
     * access and connect to the network. */
-  e_serial_api_type_device_start,
-
-  /** Stop the communication module. Stops the operation of the
-    * communication module. */
-  e_serial_api_type_device_stop,
+  e_serial_api_type_device_start = 0x31,
 
   /**
     * Get the Status of the communication module. This is required
@@ -151,21 +147,12 @@ typedef enum
   /** The parameters are invalid or not supported. */
   e_serial_api_ret_error_param,
 
-  /** The device is in an undefined state. Usually a device enters this
-    * state after power-up. The host shall initialize a device that resides
-    * in this state. */
-  e_serial_api_status_undef = 0x20,
-
-  /** The initialization of a device finished properly. It is ready to start
-    * its operation. */
-  e_serial_api_status_init,
+  /** The device stopped its operation. */
+  e_serial_api_status_stopped = 0x30 ,
 
   /** The device started its operation. In this state, the device is usually
     * trying to access and connect to the wireless network. */
   e_serial_api_status_started,
-
-  /** The device stopped its operation. */
-  e_serial_api_status_stopped,
 
   /** The device has access to the network and is capable to communicate. All
     * the commands directed to higher layer shall fail if the device is not
@@ -173,7 +160,13 @@ typedef enum
   e_serial_api_status_network,
 
   /** The device is in an error state. */
-  e_serial_api_status_error,
+  e_serial_api_status_error = 0x3E,
+
+  /** The device is in an undefined state. Usually a device enters this
+    * state after power-up. The host shall initialize a device that resides
+    * in this state. */
+  e_serial_api_status_undef = 0x3F,
+
 
 } e_serial_api_ret_t;
 
@@ -225,9 +218,6 @@ typedef enum
  *  --- Type Definitions -----------------------------------------------------*
  */
 
-/** frameID */
-typedef uint8_t serialapi_frameID_t;
-
 /** MAC address configuration*/
 typedef uint8_t serialapi_cfg_macaddr_t[UIP_802154_LONGADDR_LEN];
 
@@ -251,6 +241,22 @@ typedef uint8_t serialapi_status_ret_t;
 
 
 /**
+ * Serial API protocol context for next higher layer.
+ */
+typedef struct
+{
+  /** frame ID of the protocol */
+  serialapi_frameID_t id;
+
+  /** callback of the protocol initialization*/
+  fn_serial_ApiInit_t p_finit;
+
+  /** callback of the protocol input*/
+  fn_serial_ApiInput_t p_fin;
+
+} s_serialapi_prot_t;
+
+/**
  * \brief   Definition of a callback function for commands received.
  *
  *          This function is used to define a handler used for the reception
@@ -271,9 +277,19 @@ typedef uint16_t (*fn_serialApiHndl_t)( uint8_t* p_cmd, uint16_t cmdLen,
  *  --- Local Function Prototypes ------------------------------------------ *
  */
 
-/** Called by the stack in case new data was available from the RX interface.
+/** Called by the stack in case a registered event occured.
  * For further details have a look at the function definitions. */
 static void _event_callback( c_event_t ev, p_data_t data );
+
+
+/** Transmit data.
+ * For further details have a look at the function definitions. */
+static void _txData( uint16_t len, void* p_param );
+
+/** Receive data.
+ * For further details have a look at the function definitions. */
+static int8_t _rx_data( uint8_t* p_data, uint16_t len );
+
 
 /** Callback function in case a PING command was received. For further
  * details have a look at the function definition.*/
@@ -288,11 +304,6 @@ static uint16_t _hndl_cfgSet( uint8_t* p_cmd, uint16_t cmdLen,
 /** Callback function in case a PING command was received. For further
  * details have a look at the function definition.*/
 static uint16_t _hndl_cfgGet( uint8_t* p_cmd, uint16_t cmdLen,
-    uint8_t* p_rpl, uint16_t rplLen );
-
-/** Callback function in case a DEV_INIT command was received. For further
- * details have a look at the function definition.*/
-static uint16_t _hndl_devInit( uint8_t* p_cmd, uint16_t cmdLen,
     uint8_t* p_rpl, uint16_t rplLen );
 
 /** Callback function in case a DEV_START command was received. For further
@@ -320,7 +331,7 @@ static uint16_t _hndl_errGet( uint8_t* p_cmd, uint16_t cmdLen,
  *  --- Local Variables ---------------------------------------------------- *
  */
 
-/** Serial MAC context */
+/** Pointer to the TX function */
 static void(*_fn_tx)(uint16_t len, void* p_param) = NULL;
 
 /** Pointer to the Tx buffer */
@@ -329,6 +340,8 @@ static uint8_t* _p_txBuf = NULL;
 static uint16_t _txBufLen = 0;
 /** Tx parameter */
 static void* _p_txParam = NULL;
+
+static s_serialapi_prot_t protCtx;
 
 /*
  *  --- Local Functions ---------------------------------------------------- *
@@ -368,6 +381,10 @@ void _event_callback( c_event_t ev, p_data_t data )
         *p_ret = e_serial_api_status_started;
         break;
 
+      case STACK_STATUS_NETWORK:
+        *p_ret = e_serial_api_status_network;
+        break;
+
       default:
         *p_ret = e_serial_api_status_undef;
         break;
@@ -380,6 +397,27 @@ void _event_callback( c_event_t ev, p_data_t data )
         /* transmit response */
         _fn_tx( (p_txBuf - _p_txBuf), _p_txParam );
   }
+}
+
+
+/*
+* \brief   Callback from higher instance if data shall be transmitted.
+*
+*          This function is registered as tx functions for higher layers
+*          to transmit the actual data in the Tx buffer..
+*
+* \param   len         Length to transmit.
+* \param   p_param     Parameter registered during initialization.
+*/
+static void _txData( uint16_t len, void* p_param )
+{
+  /* set the frame ID before sending */
+  serialapi_frameID_t* p_id = (serialapi_frameID_t*) p_param;
+  *_p_txBuf = *p_id;
+
+  /* transmit the frame */
+  _fn_tx( (len + sizeof(serialapi_frameID_t)), NULL );
+
 }
 
 
@@ -396,7 +434,7 @@ static int8_t _rx_data( uint8_t* p_data, uint16_t len )
 {
   serialapi_frameID_t id;
   size_t bufLeft = len;
-  uint8_t* p_dataPtr = (uint8_t*)p_data;
+  uint8_t* p_dataPtr = p_data;
 
   fn_serialApiHndl_t f_hndl = NULL;
   uint16_t hndlRet = 0;
@@ -410,8 +448,6 @@ static int8_t _rx_data( uint8_t* p_data, uint16_t len )
   id = *p_dataPtr;
   p_dataPtr += sizeof(serialapi_frameID_t);
   bufLeft -= sizeof(serialapi_frameID_t);
-
-  EMB6_ASSERT_RET( id < e_serial_api_type_max, -1 );
 
   switch( id )
   {
@@ -431,12 +467,6 @@ static int8_t _rx_data( uint8_t* p_data, uint16_t len )
      * configuration and return its value. */
     case e_serial_api_type_cfg_get:
       f_hndl = _hndl_cfgGet;
-      break;
-
-    /* Device initialization was requested. Reset all the internal
-     * parameters and prepare for operation. */
-    case e_serial_api_type_device_init:
-      f_hndl = _hndl_devInit;
       break;
 
     /* Start of the device was requested. Check the given configuration
@@ -461,21 +491,39 @@ static int8_t _rx_data( uint8_t* p_data, uint16_t len )
       break;
 
     default:
-      /* invalid frame type received or not handled. */
+      /* check if the ID was registered */
+      if( (protCtx.id == id ) && (protCtx.p_fin != NULL) )
+        return protCtx.p_fin( p_dataPtr, bufLeft, TRUE );
       break;
   }
 
   /* call the according handler */
   if( f_hndl != NULL )
-    hndlRet = f_hndl( p_dataPtr, bufLeft, _p_txBuf, _txBufLen );
-
-  if( hndlRet )
   {
-      EMB6_ASSERT_RET( _fn_tx != NULL, -1 );
-      /* Call the associated Tx function with the according
-       * parameter. */
-      _fn_tx( hndlRet, _p_txParam );
-      return 0;
+    hndlRet = f_hndl( (p_dataPtr), bufLeft, _p_txBuf, _txBufLen );
+
+    if( hndlRet )
+    {
+        EMB6_ASSERT_RET( _fn_tx != NULL, -1 );
+        /* Call the associated Tx function with the according
+         * parameter. */
+        _fn_tx( hndlRet, _p_txParam );
+        return 0;
+    }
+  }
+  else
+  {
+    /* The command was not found */
+    uint8_t* p_txBuf = _p_txBuf;
+    *((serialapi_frameID_t*)p_txBuf) = e_serial_api_type_ret;
+    p_txBuf += sizeof(serialapi_frameID_t);
+    serialapi_ret_t* p_ret = (serialapi_ret_t*)p_txBuf;
+    p_txBuf += sizeof(serialapi_ret_t);
+    *p_ret = e_serial_api_ret_error_cmd;
+
+    EMB6_ASSERT_RET( _fn_tx != NULL, -1 );
+    _fn_tx( (p_txBuf - _p_txBuf), _p_txParam );
+    return 0;
   }
 
   return -1;
@@ -796,54 +844,6 @@ static uint16_t _hndl_cfgGet( uint8_t* p_cmd, uint16_t cmdLen,
  * \return  The length of the generated response or 0 if no response
  *          has been generated.
  */
-static uint16_t _hndl_devInit( uint8_t* p_cmd, uint16_t cmdLen,
-    uint8_t* p_rpl, uint16_t rplLen )
-{
-  /* Device initialization was requested. Reset all the internal
-   * parameters and prepare for operation. */
-
-  EMB6_ASSERT_RET( p_cmd != NULL, 0 );
-  EMB6_ASSERT_RET( p_rpl != NULL, 0 );
-
-  uint8_t* p_txBuf = p_rpl;
-  e_nsErr_t err;
-
-  /* set the according id */
-  *((serialapi_frameID_t*)p_txBuf) = e_serial_api_type_ret;
-  p_txBuf += sizeof(serialapi_frameID_t);
-
-  /* prepare return value */
-  serialapi_ret_t* p_ret = (serialapi_ret_t*)p_txBuf;
-  p_txBuf += sizeof(serialapi_ret_t);
-
-  /* (Re-)Initialize the stack */
-  emb6_init( NULL, &err );
-
-  /* the event must be re-registered */
-  evproc_regCallback( EVENT_TYPE_STATUS_CHANGE, _event_callback );
-
-  if(err == NETSTK_ERR_NONE )
-    *p_ret = e_serial_api_ret_ok;
-  else
-    *p_ret = e_serial_api_ret_error;
-
-  return p_txBuf - p_rpl;
-}
-
-
-/**
- * \brief   Callback function for XXX commands.
- *
- *          This function is called whenever a XXX
- *
- * \param   p_cmd   Further data of the command.
- * \param   cmdLen  Length of the command data.
- * \param   p_rpl   Pointer to store the response to.
- * \param   rplLen  Length of the response buffer.
- *
- * \return  The length of the generated response or 0 if no response
- *          has been generated.
- */
 static uint16_t _hndl_devStart( uint8_t* p_cmd, uint16_t cmdLen,
     uint8_t* p_rpl, uint16_t rplLen )
 {
@@ -854,7 +854,6 @@ static uint16_t _hndl_devStart( uint8_t* p_cmd, uint16_t cmdLen,
   EMB6_ASSERT_RET( p_rpl != NULL, 0 );
 
   uint8_t* p_txBuf = p_rpl;
-  e_nsErr_t err;
 
   /* set the according RET ID */
   *((serialapi_frameID_t*)p_txBuf) = e_serial_api_type_ret;
@@ -865,13 +864,8 @@ static uint16_t _hndl_devStart( uint8_t* p_cmd, uint16_t cmdLen,
   p_txBuf += sizeof(serialapi_ret_t);
   *p_ret = e_serial_api_ret_ok;
 
-  /* start the stack */
-  emb6_start( &err );
-  if(err == NETSTK_ERR_NONE )
-    *p_ret = e_serial_api_ret_ok;
-  else
-    *p_ret = e_serial_api_ret_error;
-
+  /* put event to the queue */
+  evproc_putEvent(E_EVPROC_HEAD, EVENT_TYPE_REQ_START, NULL);
   return p_txBuf - p_rpl;
 
 }
@@ -899,7 +893,6 @@ static uint16_t _hndl_devStop( uint8_t* p_cmd, uint16_t cmdLen,
   EMB6_ASSERT_RET( p_rpl != NULL, 0 );
 
   uint8_t* p_txBuf = p_rpl;
-  e_nsErr_t err;
 
   /* set the according RET ID */
   *((serialapi_frameID_t*)p_txBuf) = e_serial_api_type_ret;
@@ -910,16 +903,8 @@ static uint16_t _hndl_devStop( uint8_t* p_cmd, uint16_t cmdLen,
   p_txBuf += sizeof(serialapi_ret_t);
   *p_ret = e_serial_api_ret_ok;
 
-  /* stop the stack */
-  emb6_stop( &err );
-  if(err == NETSTK_ERR_NONE )
-    *p_ret = e_serial_api_ret_ok;
-  else
-    *p_ret = e_serial_api_ret_error;
-
-  /* the event must be re-registered */
-  evproc_regCallback( EVENT_TYPE_STATUS_CHANGE, _event_callback );
-
+  /* put event to the queue */
+  evproc_putEvent(E_EVPROC_HEAD, EVENT_TYPE_REQ_STOP, NULL);
   return p_txBuf - p_rpl;
 }
 
@@ -966,6 +951,10 @@ static uint16_t _hndl_statusGet( uint8_t* p_cmd, uint16_t cmdLen,
 
     case STACK_STATUS_ACTIVE:
       *p_ret = e_serial_api_status_started;
+      break;
+
+    case STACK_STATUS_NETWORK:
+      *p_ret = e_serial_api_status_network;
       break;
 
     default:
@@ -1036,6 +1025,10 @@ int8_t serialApiInit( uint8_t* p_txBuf, uint16_t txBufLen,
     /* set Tx function */
     _fn_tx = fn_tx;
 
+    /* reset protocol index */
+    protCtx.id = 0;
+    protCtx.p_fin = NULL;
+
     /* register events */
     evproc_regCallback( EVENT_TYPE_STATUS_CHANGE, _event_callback );
 
@@ -1057,8 +1050,47 @@ int8_t serialApiInput( uint8_t* p_data, uint16_t len, uint8_t valid )
         ret = _rx_data( p_data, len );
     }
 
+    if( ret != 0 )
+    {
+      /* A general error occurred */
+      uint8_t* p_txBuf = _p_txBuf;
+      *((serialapi_frameID_t*)p_txBuf) = e_serial_api_type_ret;
+      p_txBuf += sizeof(serialapi_frameID_t);
+      serialapi_ret_t* p_ret = (serialapi_ret_t*)p_txBuf;
+      p_txBuf += sizeof(serialapi_ret_t);
+      *p_ret = e_serial_api_ret_error;
+
+      EMB6_ASSERT_RET( _fn_tx != NULL, -1 );
+      _fn_tx( (p_txBuf - _p_txBuf), _p_txParam );
+      ret = 0;
+    }
 
     return ret;
+} /* serialApiInput() */
 
+
+/*---------------------------------------------------------------------------*/
+/*
+* serialApiInput()
+*/
+int8_t serialApiRegister( serialapi_frameID_t id,
+        fn_serial_ApiInit_t pf_init, fn_serial_ApiInput_t pf_in )
+{
+    int ret = -1;
+
+    EMB6_ASSERT_RET( (pf_init != NULL), -1 );
+    EMB6_ASSERT_RET( (pf_in != NULL), -1 );
+
+    /* register protocol handler */
+    protCtx.id = id;
+    protCtx.p_finit = pf_init;
+    protCtx.p_fin = pf_in;
+
+    /* initialize the upper protocol */
+    protCtx.p_finit( (_p_txBuf + sizeof(serialapi_frameID_t)),
+        (_txBufLen - sizeof(serialapi_frameID_t)), _txData, &protCtx.id );
+
+    ret = 0;
+    return ret;
 } /* serialApiInput() */
 

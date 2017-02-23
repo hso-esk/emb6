@@ -68,6 +68,21 @@
 #include "emb6.h"
 
 
+/*
+ *  --- Type Definitions -----------------------------------------------------*
+ */
+
+/** frameID */
+typedef uint8_t serialapi_frameID_t;
+
+/** Serial API Init function */
+typedef int8_t(*fn_serial_ApiInit_t)( uint8_t* p_txBuf, uint16_t txBufLen,
+        void(*fn_tx)(uint16_t len, void* p_param), void* p_txParam );
+
+/** Serial API Input function */
+typedef int8_t(*fn_serial_ApiInput_t)( uint8_t* p_data, uint16_t len,
+        uint8_t valid );
+
 
 /*
  *  --- Global Functions Definition ------------------------------------------*
@@ -106,6 +121,19 @@ int8_t serialApiInit( uint8_t* p_txBuf, uint16_t txBufLen,
  *          in case of an error.
  */
 int8_t serialApiInput( uint8_t* p_data, uint16_t len, uint8_t valid );
+
+
+/**
+ * \brief   Register a handler for a specific type of frame ID.
+ *
+ *          This function can be used to register a separate module to
+ *          handle a specific type of frames.
+ *
+ * \param   id      ID to handle.
+ * \param   pf_in   Handler to register.
+ */
+int8_t serialApiRegister( serialapi_frameID_t id,
+        fn_serial_ApiInit_t pf_init, fn_serial_ApiInput_t pf_in );
 
 
 #endif /* __SERIALAPI_H__ */

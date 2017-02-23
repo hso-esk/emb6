@@ -74,8 +74,9 @@
 #include "bsp.h"
 #include "evproc.h"
 #include "demo_serialapi.h"
-#include "serialapi.h"
 #include "sf_serialmac.h"
+#include "serialapi.h"
+#include "lwm2mapi.h"
 
 /*
  *  --- Macros ------------------------------------------------------------- *
@@ -326,6 +327,7 @@ static void _serialmac_rxframe_evt( void* mac_context, char* frame_buffer,
   /* check parameters and forward frame*/
   EMB6_ASSERT_RET( (mac_context != NULL),  );
   serialApiInput( (uint8_t*)frame_buffer, frame_buffer_length, TRUE );
+
 }
 
 /**
@@ -377,7 +379,9 @@ void _event_callback( c_event_t ev, p_data_t data )
   }
   else if( ev == EVENT_TYPE_STATUS_CHANGE )
   {
-
+    /* register events */
+    evproc_regCallback( EVENT_TYPE_SLIP_POLL, _event_callback );
+    evproc_regCallback( EVENT_TYPE_STATUS_CHANGE, _event_callback );
   }
 }
 
@@ -415,8 +419,9 @@ int8_t demo_serialApiInit( void )
       _serialMacWrite, _serialmac_rxframe_evt, _serialmac_rxbuf_evt,
       _serialmac_ignore_evt, _serialmac_ignore_evt );
 
-  /* initialize serial API */
+  /* initialize serial API and register LWM2M */
   serialApiInit( p_frameBufTx, SERIALAPI_TX_BUF_LEN, _txDataCb, NULL );
+  serialApiRegister( 0xFF, lwm2mApiInit, lwm2mApiInput );
 
   /* register events */
   evproc_regCallback( EVENT_TYPE_SLIP_POLL, _event_callback );
@@ -453,5 +458,5 @@ int8_t demo_serialApiConf( s_ns_t *p_netstk )
       }
     }
   }
-  return i_ret;
+  return ret;
 } /* demo_serialApiCfg() */
