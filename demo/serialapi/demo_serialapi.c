@@ -434,22 +434,22 @@ int8_t demo_serialApiInit( void )
 */
 int8_t demo_serialApiConf( s_ns_t *p_netstk )
 {
-  int8_t i_ret = -1;
+  int8_t ret = -1;
 
   if (p_netstk != NULL) {
     if (p_netstk->c_configured == FALSE) {
       p_netstk->hc = &hc_driver_sicslowpan;
       p_netstk->frame = &framer_802154;
       p_netstk->dllsec = &dllsec_driver_null;
-      i_ret = 1;
+      ret = 0;
     } else {
       if ((p_netstk->hc == &hc_driver_sicslowpan) &&
           (p_netstk->frame == &framer_802154) &&
           (p_netstk->dllsec == &dllsec_driver_null)) {
-        i_ret = 1;
+        ret = 0;
       } else {
         p_netstk = NULL;
-        i_ret = 0;
+        ret = -1;
       }
     }
   }
