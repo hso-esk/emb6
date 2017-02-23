@@ -42,7 +42,6 @@
  */
 
 #include "emb6.h"
-#include "hwinit.h"
 #include "lwm2m-engine.h"
 #include "lwm2m-object.h"
 #include "lwm2m-device.h"
@@ -365,7 +364,7 @@ lwm2m_engine_callback(c_event_t c_event, p_data_t p_data)
             client_chunk_handler);
       }
       /* for now only register once...   registered = 0; */
-      etimer_set(&et, 15 * CLOCK_SECOND, lwm2m_engine_callback);
+      etimer_set(&et, 15 * bsp_getTRes(), lwm2m_engine_callback);
     }
   }
 }
@@ -422,7 +421,7 @@ lwm2m_engine_init(void)
 #endif /* LWM2M_ENGINE_CLIENT_ENDPOINT_NAME */
 
   rest_init_engine();
-  etimer_set(&et, 5 * CLOCK_SECOND, lwm2m_engine_callback);
+  etimer_set(&et, 5 * bsp_getTRes(), lwm2m_engine_callback);
 }
 /*---------------------------------------------------------------------------*/
 void
