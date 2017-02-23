@@ -126,7 +126,7 @@ static uint8_t c_queueSize = 0;
 
 /* Initialize the module. For further information please refer to
  * the function definition. */
-static void _evproc_init( void );
+static void _evproc_init( uint8_t first );
 
 /* Put new event to the queue. For further information please refer to
  * the function definition. */
@@ -149,7 +149,7 @@ static uint8_t _evproc_lookupEvent( c_event_t c_eventType, p_data_t p_data );
  *          This function initialized the event processing module. It resets
  *          the internal queue and the registered callbacks.
  */
-static void _evproc_init( void )
+static void _evproc_init( uint8_t first )
 {
     uint8_t i,j;
 
@@ -163,12 +163,15 @@ static void _evproc_init( void )
     /* Assign every callback for every event by NULL pointer */
     for( i = 0; i < EVENT_TYPE_MAX; i++ )
     {
-        /* Set "i" event from the list by the one from eventTypes array */
-        pst_regList[i].c_event = i;
-        for( j=0; j<MAX_CALLBACK_COUNT; j++ )
+        if( (first != 0) || (i != EVENT_TYPE_STATUS_CHANGE) )
         {
-            /* Assign "j" callback from the list to NULL pointer */
-            pst_regList[i].pfn_callbList[j] = NULL;
+          /* Set "i" event from the list by the one from eventTypes array */
+          pst_regList[i].c_event = i;
+          for( j=0; j<MAX_CALLBACK_COUNT; j++ )
+          {
+              /* Assign "j" callback from the list to NULL pointer */
+              pst_regList[i].pfn_callbList[j] = NULL;
+          }
         }
     }
 
@@ -272,11 +275,8 @@ uint8_t _evproc_lookupEvent( c_event_t c_eventType, p_data_t p_data )
 */
 void evproc_init( void )
 {
-  /* reset initialization flag */
-  c_isInit = 0;
-
   /* reinitialize */
-  _evproc_init();
+  _evproc_init( !c_isInit );
 
 } /* evproc_init() */
 
@@ -291,7 +291,7 @@ en_evprocResCode_t evproc_regCallback( c_event_t c_eventType,
 
     /* If event process wasn't initialized before do it now. */
     if (!c_isInit)
-        _evproc_init();
+        _evproc_init( !c_isInit );
 
     /* If no callback was given return with error code */
     if (pfn_callback == NULL)
