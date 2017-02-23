@@ -186,6 +186,9 @@ static uint8_t loc_stackInit( s_ns_t* ps_netstack );
 static int8_t loc_dagRootInit( void );
 #endif /* #if EMB6_INIT_ROOT == TRUE */
 
+/* Set the stack status. For further information refer to
+ * the function definition. */
+static void loc_set_status( e_stack_status_t status );
 /*
  *  --- Local Functions ---------------------------------------------------- *
  */
@@ -316,6 +319,25 @@ static int8_t loc_dagRootInit( void )
 #endif /* DEMO_USE_DAG_ROOT  */
 
 
+/**
+ * \brief   Set the stack status.
+ *
+ *          This function sets the according status variable and
+ *          puts an according event to the event queue to inform
+ *          othe rmodules.
+ *
+ */
+static void loc_set_status( e_stack_status_t status )
+{
+    EMB6_ASSERT_RET( (ps_stack != NULL), );
+
+    /* set internal status */
+    ps_stack->status = status;
+
+    /* generate according event and execute immediately */
+    evproc_putEvent( E_EVPROC_TAIL, EVENT_TYPE_STATUS_CHANGE,
+            (void*)&ps_stack->status );
+}
 /*
  * --- Global Function Definitions ----------------------------------------- *
  */
@@ -365,7 +387,7 @@ void emb6_init( s_ns_t* ps_ns, e_nsErr_t* p_err )
     }
 
     /* enable stack per default */
-    ps_stack->status = STACK_STATUS_ACTIVE;
+    loc_set_status( STACK_STATUS_ACTIVE );
 
 } /* emb6_init() */
 
@@ -433,8 +455,8 @@ void emb6_start( e_nsErr_t *p_err )
         /* initialize stack */
         loc_stackInit( ps_stack );
 
-        /* enable stack */
-        ps_stack->status = STACK_STATUS_ACTIVE;
+          /* enable stack */
+          loc_set_status( STACK_STATUS_ACTIVE );
     }
 
 } /* emb6_start() */
@@ -452,7 +474,7 @@ void emb6_stop( e_nsErr_t *p_err )
         evproc_init();
 
         /* disable stack */
-        ps_stack->status = STACK_STATUS_IDLE;
+        loc_set_status( STACK_STATUS_IDLE );
     }
 
 } /* emb6_stop() */
@@ -470,7 +492,7 @@ void emb6_errorHandler( e_nsErr_t* p_err )
 
     /* set error status */
     if( ps_stack != NULL )
-        ps_stack->status = STACK_STATUS_ERROR;
+        loc_set_status( STACK_STATUS_ERROR );
 
     /* TODO missing error handling */
     while (1) {
