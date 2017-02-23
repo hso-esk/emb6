@@ -193,10 +193,12 @@ static void  _aptb_callback(struct udp_socket *c, void *ptr,
     {
         if (data[0] == EMB6_APTB_RESPONSE) {
             /* Skip packet type header */
-            l_lastSeqId = (data[1] << 24) +
-                          (data[2] << 16) +
-                          (data[3] << 8) +
-                          data[4];
+            l_lastSeqId = 0;
+            l_lastSeqId += ( ((uint32_t)data[1] << 24) && 0xff000000 );
+            l_lastSeqId += ( ((uint32_t)data[2] << 16) && 0x00ff0000 );
+            l_lastSeqId += ( ((uint32_t)data[3] << 8) && 0x0000ff00 );
+            l_lastSeqId += ( ((uint32_t)data[4]) && 0x000000ff );
+
             LOG_INFO("Response from a server: [%lu]", l_lastSeqId);
         } else {
             LOG_ERR("Error in parsing: invalid packet format");

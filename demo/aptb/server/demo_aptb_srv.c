@@ -125,13 +125,17 @@ static void  _aptb_callback(struct udp_socket *c, void *ptr,
              const uint8_t *data,             uint16_t datalen)
 {
     char        pc_buf[MAX_S_PAYLOAD_LEN];
-    uint64_t    seqID;
+    uint32_t    seqID = 0;
 
     if (data != NULL)
     {
         if (data[0] == EMB6_APTB_REQUEST) {
-            seqID = (data[1] << 24) + (data[2] << 16) +
-                    (data[3] << 8)  + data[4];
+
+              seqID += ( ((uint32_t)data[1] << 24) && 0xff000000 );
+              seqID += ( ((uint32_t)data[2] << 16) && 0x00ff0000 );
+              seqID += ( ((uint32_t)data[3] << 8) && 0x0000ff00 );
+              seqID += ( ((uint32_t)data[4]) && 0x000000ff );
+
             LOG_INFO("Request sequence: [%lu]", seqID);
             seqID++;
 
