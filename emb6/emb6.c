@@ -92,6 +92,8 @@
 
 /** Pointer to the stack structure */
 static s_ns_t* ps_stack;
+/** Pointer to the demo structures */
+static s_demo_t* ps_dms;
 
 
 /*
@@ -178,7 +180,15 @@ s_mac_phy_conf_t mac_phy_config = {
 
 /* Initialize the stack structure. For further information refer to
  * the function definition. */
-static uint8_t loc_stackInit( s_ns_t* ps_netstack );
+static int8_t loc_stackInit( s_ns_t* ps_ns );
+
+/* Configure the stack demos. For further information refer to
+ * the function definition. */
+static uint8_t loc_demoConf( s_ns_t* ps_ns, s_demo_t* p_demos );
+
+/* Initialize the stack demos. For further information refer to
+ * the function definition. */
+static uint8_t loc_demoInit( s_demo_t* p_demos );
 
 #if EMB6_INIT_ROOT == TRUE
 /* Initialize the DAGROOT. For further information refer to
@@ -202,29 +212,13 @@ static void loc_set_status( e_stack_status_t status );
  *
  * \param   ps_ns   Stack structure to initialize.
  *
- * \return  1 on success or 0 on error.
+ * \return  0 on success or nagtive value on error.
  */
-static uint8_t loc_stackInit( s_ns_t * ps_ns )
+static int8_t loc_stackInit( s_ns_t* ps_ns )
 {
-  uint8_t c_err = 0;
+  uint8_t ret = 0;
   uint8_t is_valid;
   e_nsErr_t err;
-
-  /* Initialize stack protocols */
-  evproc_init();
-  queuebuf_init();
-
-  /* initialize timer */
-  etimer_init();
-  ctimer_init();
-  rt_tmr_init();
-
-  /* initialize trace */
-#if (TRACE_CFG_EN == TRUE)
-  trace_init();
-  trace_start();
-  trace_printf("Trace started\n");
-#endif
 
   /*
    * Verify stack submodule drivers
@@ -263,22 +257,82 @@ static uint8_t loc_stackInit( s_ns_t * ps_ns )
     ps_ns->hc->init(ps_ns);
     ps_ns->frame->init(ps_ns);
 
-    /*
-     * Initialize TCP/IP stack
-     */
+    /* Initialize TCP/IP stack */
     tcpip_init();
-    c_err = 1;
+  }
+  else
+  {
+    /* invalid configuration can not be initialized */
+    ret = -1;
   }
 
 
 #if EMB6_INIT_ROOT == TRUE
-    if (!c_err || !loc_dagRootInit()) {
-        c_err = 1;
+    if ( (ret != 0) || !loc_dagRootInit()) {
+        ret = -1;
     }
 #endif /* #if EMB6_INIT_ROOT == TRUE */
 
-    return c_err;
+    return ret;
 }
+
+
+/**
+ * \brief Configure selected demos.
+ *
+ *        This function configures all the demos given in the list of
+ *        selected demos.
+ *
+ * \param ps_ns     Stack structure used to configure.
+ * \param p_demos   Demos to configure.
+ *
+ * \return  1 on success or 0 on error.
+ */
+static uint8_t loc_demoConf( s_ns_t* ps_ns, s_demo_t* p_demos )
+{
+  s_demo_t* p_d = p_demos;
+
+  EMB6_ASSERT_RET( ps_ns != NULL, 0 );
+
+  while( p_d != NULL )
+  {
+    /* configure current demo and switch
+     * to next demo */
+    p_d->pf_conf( ps_ns );
+    p_d = p_d->p_next;
+  }
+
+  return 1;
+}
+
+
+/**
+ * \brief Initialize selected demos.
+ *
+ *        This function initializes all the demos given in the list of
+ *        selected demos.
+ *
+ * \param p_demos   Demos to initialize.
+ *
+ * \return  0 on success or negative value on error.
+ */
+static uint8_t loc_demoInit( s_demo_t* p_demos )
+{
+  s_demo_t* p_d = p_demos;
+
+  EMB6_ASSERT_RET( (p_demos != NULL), -1 );
+
+  while( p_d != NULL )
+  {
+    /* initialize current demo and switch
+     * to next demo */
+    p_d->pf_init();
+    p_d = p_d->p_next;
+  }
+
+  return 0;
+}
+
 
 
 #if EMB6_INIT_ROOT==TRUE
@@ -346,44 +400,78 @@ static void loc_set_status( e_stack_status_t status )
 /*
 * emb6_init()
 */
-void emb6_init( s_ns_t* ps_ns, e_nsErr_t* p_err )
+void emb6_init( s_ns_t* ps_ns, s_demo_t* ps_demos, e_nsErr_t* p_err )
 {
     uint8_t ret;
+    e_nsErr_t err;
     s_ns_t* ps_nsTmp;
+    s_demo_t* ps_dmsTmp;
 
     EMB6_ASSERT_FN( (p_err != NULL), emb6_errorHandler( p_err ) );
     EMB6_ASSERT_RETS( ((ps_ns != NULL) || (ps_stack != NULL) ),
+            ,(*p_err), NETSTK_ERR_INVALID_ARGUMENT );
+    EMB6_ASSERT_RETS( ((ps_demos != NULL) || (ps_dms != NULL) ),
             ,(*p_err), NETSTK_ERR_INVALID_ARGUMENT );
 
     /* set return error code to default */
     *p_err = NETSTK_ERR_NONE;
 
-    if( ps_ns != NULL )
-        ps_nsTmp = ps_ns;
-    else
-        ps_nsTmp = ps_stack;
+    ps_nsTmp = (ps_ns != NULL) ? ps_ns : ps_stack;
+    ps_dmsTmp = (ps_demos != NULL) ? ps_demos : ps_dms;
+
+    /* configure demo applications */
+    ret = loc_demoConf( ps_nsTmp, ps_dmsTmp );
+
+    /* Initialize stack protocols */
+    evproc_init();
+    queuebuf_init();
+
+    /* initialize timer */
+    etimer_init();
+    ctimer_init();
+    rt_tmr_init();
+
+    /* initialize trace */
+#if (TRACE_CFG_EN == TRUE)
+    trace_init();
+    trace_start();
+    trace_printf("Trace started\n");
+#endif
 
     /* initialize netstack */
     ret = loc_stackInit( ps_nsTmp );
-    if( ret == 0 )
+    if( ret != 0 )
     {
-        ps_stack = NULL;
         *p_err = NETSTK_ERR_INIT;
         LOG_ERR("Failed to initialize emb6 stack");
+        emb6_errorHandler(&err);
     }
     else
     {
-        /* set local netstack pointer */
+        /* set local stack pointer */
         ps_stack = ps_nsTmp;
     }
 
-    e_nsErr_t err;
+    /* initialize demo applications */
+    ret = loc_demoInit( ps_dmsTmp );
+    if( ret != 0 )
+    {
+        *p_err = NETSTK_ERR_INIT;
+        LOG_ERR("Failed to initialize emb6 demos");
+        emb6_errorHandler(&err);
+    }
+    else
+    {
+      /* set local demo pointer */
+      ps_dms = ps_dmsTmp;
+    }
 
-    /* turn the netstack on */
+    /* turn the stack on */
     ps_stack->dllc->on(&err);
     if (err != NETSTK_ERR_NONE)
     {
-        emb6_errorHandler(&err);
+      /* error when enabling stack */
+      emb6_errorHandler(&err);
     }
 
     /* enable stack per default */
@@ -449,14 +537,28 @@ e_stack_status_t emb6_getStatus( void )
 */
 void emb6_start( e_nsErr_t *p_err )
 {
+    e_nsErr_t err = NETSTK_ERR_FATAL;
+
     if( (ps_stack != NULL) &&
         (ps_stack->status != STACK_STATUS_ACTIVE) )
     {
-        /* initialize stack */
-        loc_stackInit( ps_stack );
+        /* reinitialize stack with the given
+         * parameters and configurations */
+        emb6_init( NULL, NULL, &err );
 
+        /* turn the stack on */
+        ps_stack->dllc->on( &err );
+        if(err != NETSTK_ERR_NONE)
+        {
+           e_nsErr_t errStop;
+          /* stop stack */
+          emb6_stop( &errStop );
+        }
+        else
+        {
           /* enable stack */
           loc_set_status( STACK_STATUS_ACTIVE );
+        }
     }
 
 } /* emb6_start() */
@@ -470,8 +572,11 @@ void emb6_stop( e_nsErr_t *p_err )
 {
     if( ps_stack != NULL )
     {
-        /* clear events */
+        /* reset all events */
         evproc_init();
+
+        /* disable MAC */
+        ps_stack->dllc->off( p_err );
 
         /* disable stack */
         loc_set_status( STACK_STATUS_IDLE );
