@@ -386,7 +386,7 @@ return retVal;
  static RF_Params gs_rfParams;
  static RF_Object gs_rfObject;
  static RF_Handle gps_rfHandle;
- static RF_CmdHandle gps_rf_cmdHandle;
+ RF_CmdHandle gps_rf_cmdHandle;
  /* TI-RTOS RF Mode Object */
  RF_Mode RF_prop =
  {
@@ -435,7 +435,7 @@ static bool rf_driver_init(void)
 #endif
 }
 
-
+#if USE_TI_RTOS
 static void Rtos_callback(RF_Handle h, RF_CmdHandle ch, RF_EventMask e)
 {
     if (e & RF_EventRxOk)
@@ -455,6 +455,15 @@ static void Rtos_callback(RF_Handle h, RF_CmdHandle ch, RF_EventMask e)
       rx_call_back(IRQ_RX_BUF_FULL);
    }
 }
+
+static uint8_t flag_cca = 0;
+
+static void cca_callback(RF_Handle h, RF_CmdHandle ch, RF_EventMask e)
+{
+	flag_cca = 1 ;
+}
+
+#endif
 
 static void rx_call_back(uint32_t l_flag)
 {
@@ -515,8 +524,6 @@ static void rx_call_back(uint32_t l_flag)
     bsp_led( HAL_LED0, EN_BSP_LED_OP_ON );
   }
 }
-
-
 
 
 static uint8_t sf_rf_switchState(e_rf_status_t state)
@@ -798,20 +805,17 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
 	       cc1310.cca.s_cmdCS.numRssiBusy =cc1310.cca.c_numOfRssiMeas;
 	       cc1310.cca.s_cmdCS.numRssiIdle =cc1310.cca.c_numOfRssiMeas;
 	    /* Start carrier sense */
-	       gps_rf_cmdHandle = RF_postCmd(gps_rfHandle, (RF_Op*)&cc1310.cca.s_cmdCS, RF_PriorityHighest, NULL, 0);
-	       result = RF_pendCmd(gps_rfHandle, gps_rf_cmdHandle, (RF_EventLastCmdDone | RF_EventCmdError));
-
-	       if(result & RF_EventLastCmdDone)
-	       {
-	         /* Check the status of the CS command */
-	         if(cc1310.cca.s_cmdCS.status == PROP_DONE_IDLE)
-	         {
-	           return ROUTINE_CCA_RESULT_IDLE;
-	         }
-	         else
-	           return ROUTINE_CCA_RESULT_BUSY;
-	       }
-	       return ROUTINE_CCA_ERROR_STATE;
+	    gps_rf_cmdHandle = RF_postCmd(gps_rfHandle, (RF_Op*)&cc1310.cca.s_cmdCS, RF_PriorityHighest, &cca_callback , (RF_EventLastCmdDone | RF_EventCmdError) );
+	    /* TODO add watch dog */
+	    while(!flag_cca);
+	    flag_cca = 0 ;
+        /* Check the status of the CS command */
+        if(cc1310.cca.s_cmdCS.status == PROP_DONE_IDLE)
+        {
+          return ROUTINE_CCA_RESULT_IDLE;
+        }
+        else
+          return ROUTINE_CCA_RESULT_BUSY;
 #else
     /* Stop last cmd (usually it is Rx cmd ) */
     RFC_sendDirectCmd(CMDR_DIR_CMD(CMD_ABORT));
