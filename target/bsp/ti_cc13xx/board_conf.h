@@ -37,6 +37,10 @@
 #define MODULATION                  MODULATION_2FSK50
 #endif
 
+/** transceiver supports standard-specific checksum algorithm */
+#define NETSTK_SUPPORT_HW_CRC               TRUE
+
+
 /*============================================================================*/
 /*                       API FUNCTION DECLARATION                             */
 /*============================================================================*/

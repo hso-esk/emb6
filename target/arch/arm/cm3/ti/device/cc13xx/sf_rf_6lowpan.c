@@ -401,6 +401,33 @@ return retVal;
 		RF_EventInternalError | \
 		RF_EventRxBufFull | RF_EventRxIgnored | RF_EventRxAborted )
 
+
+static uint8_t flag_cca = 0;
+
+static void cca_callback(RF_Handle h, RF_CmdHandle ch, RF_EventMask e)
+{
+	flag_cca = 1 ;
+}
+
+static void Rtos_callback(RF_Handle h, RF_CmdHandle ch, RF_EventMask e)
+{
+    if (e & RF_EventRxOk)
+    {
+      rx_call_back(IRQ_RX_OK );
+    }
+    else if (e & RF_EventRxNOk)
+	{
+      rx_call_back(IRQ_RX_NOK );
+    }
+    else if (e & RF_EventInternalError)
+    {
+      rx_call_back(IRQ_INTERNAL_ERROR);
+    }
+    else if (e & (RF_EventRxBufFull | RF_EventRxIgnored | RF_EventRxAborted))
+   {
+      rx_call_back(IRQ_RX_BUF_FULL);
+   }
+}
 #endif /* USE_TI_RTOS */
 
 
@@ -435,35 +462,6 @@ static bool rf_driver_init(void)
 #endif
 }
 
-#if USE_TI_RTOS
-static void Rtos_callback(RF_Handle h, RF_CmdHandle ch, RF_EventMask e)
-{
-    if (e & RF_EventRxOk)
-    {
-      rx_call_back(IRQ_RX_OK );
-    }
-    else if (e & RF_EventRxNOk)
-	{
-      rx_call_back(IRQ_RX_NOK );
-    }
-    else if (e & RF_EventInternalError)
-    {
-      rx_call_back(IRQ_INTERNAL_ERROR);
-    }
-    else if (e & (RF_EventRxBufFull | RF_EventRxIgnored | RF_EventRxAborted))
-   {
-      rx_call_back(IRQ_RX_BUF_FULL);
-   }
-}
-
-static uint8_t flag_cca = 0;
-
-static void cca_callback(RF_Handle h, RF_CmdHandle ch, RF_EventMask e)
-{
-	flag_cca = 1 ;
-}
-
-#endif
 
 static void rx_call_back(uint32_t l_flag)
 {
@@ -485,10 +483,10 @@ static void rx_call_back(uint32_t l_flag)
       }
       else
       {
+        /* signal complete reception interrupt */
+        en_evprocResCode_t err = RF_SEM_POST(NETSTK_RF_EVENT);
         /* handle the received packet */
         sf_rf_switchState(RF_STATUS_RX);
-        /* signal complete reception interrupt */
-        RF_SEM_POST(NETSTK_RF_EVENT);
       }
       /* set RX mode again */
       sf_rf_switchState(RF_STATUS_RX_LISTEN);
@@ -773,8 +771,9 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
 #if USE_TI_RTOS
 
     /* Send tx command  */
-    gps_rf_cmdHandle = RF_postCmd(gps_rfHandle, (RF_Op*)cc1310.tx.p_cmdPropTxAdv, RF_PriorityHighest, NULL, 0);
-    RF_pendCmd(gps_rfHandle, gps_rf_cmdHandle, (RF_EventLastCmdDone | RF_EventCmdError));
+    RF_postCmd(gps_rfHandle, (RF_Op*)cc1310.tx.p_cmdPropTxAdv, RF_PriorityHighest, NULL , 0 );
+    /* wait the command until it finish */
+    for(i; i<0x0FFD;i++);
 
 #else
     /* Send Tx command to send the ACK */
@@ -873,11 +872,7 @@ static uint8_t sf_rf_init_tx(uint8_t *pc_data, uint16_t  i_len)
   {
     cc1310.tx.p_cmdPropTxAdv->pktLen = i_len ;
     cc1310.tx.p_cmdPropTxAdv->pPkt = pc_data;
-#if USE_TI_RTOS
-    cc1310.tx.p_cmdPropTxAdv->pPkt[0] = i_len - 1;
-#else
-    cc1310.tx.p_cmdPropTxAdv->pPkt[0] = i_len - 1  + 2  ;
-#endif
+    cc1310.tx.p_cmdPropTxAdv->pPkt[0] = i_len - 1 + 2 ;
     return 1;
   }
   return 0;
