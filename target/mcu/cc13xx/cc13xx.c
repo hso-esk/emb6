@@ -257,6 +257,29 @@ static int8_t _hal_systick(void)
   return sc_retStatus;
 }
 
+
+/*!
+ * @brief  UART RX call back function.
+ *
+ * @param  received char
+ */
+#if defined(HAL_SUPPORT_UART)
+#if defined(HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX)
+/*---------------------------------------------------------------------------*/
+/*
+* _hal_uartRxCb()
+*/
+static void _hal_uartRxCb( uint8_t c )
+{
+  if( s_hal_irqs[EN_HAL_PERIPHIRQ_SLIPUART_RX].pf_cb != NULL )
+  {
+    s_hal_irqs[EN_HAL_PERIPHIRQ_SLIPUART_RX].pf_cb( &c );
+  }
+} /* _hal_uartRxCb() */
+
+#endif /* #if defined(HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX) */
+#endif /* #if defined(HAL_SUPPORT_UART) */
+
 /*==============================================================================
                              API FUNCTIONS
  ==============================================================================*/
@@ -536,6 +559,81 @@ int8_t hal_delayUs(uint32_t i_delay)
   return 0;
 } /* hal_delay_us() */
 
+
+
+#if defined(HAL_SUPPORT_SPI)
+void* hal_spiInit( en_hal_spi_t spi )
+{
+  /* Not needed because of integrated IF */
+  return NULL;
+} /* hal_spiInit() */
+
+
+int32_t hal_spiTRx( void* p_spi, uint8_t* p_tx, uint8_t* p_rx, uint16_t len )
+{
+  /* Not needed because of integrated IF */
+  return 0U;
+} /* hal_spiRead() */
+
+
+int32_t hal_spiRx( void* p_spi, uint8_t * p_rx, uint16_t len )
+{
+  /* Not needed because of integrated IF */
+    return 0U;
+}
+
+int32_t hal_spiTx( void* p_spi, uint8_t* p_tx, uint16_t len )
+{
+  /* Not needed because of integrated IF */
+    return 0U;
+}
+#endif
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_uartInit()
+*/
+#if defined(HAL_SUPPORT_UART)
+void* hal_uartInit( en_hal_uart_t uart )
+{
+    sf_uart_init();
+    sf_uart_setRxCb( _hal_uartRxCb );
+
+    return NULL;
+}/* hal_uartInit() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_uartRx()
+*/
+int32_t hal_uartRx( void* p_uart, uint8_t * p_rx, uint16_t len )
+{
+    EMB6_ASSERT_RET( p_rx != NULL, -1 );
+
+    if( len == 0 )
+      return 0;
+
+    sf_uart_read(p_rx, len);
+    return len;
+}/* hal_uartRx() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_uartTx()
+*/
+int32_t hal_uartTx( void* p_uart, uint8_t* p_tx, uint16_t len )
+{
+    EMB6_ASSERT_RET( p_tx != NULL, -1 );
+
+    if( len == 0 )
+      return 0;
+
+    sf_uart_write(p_tx, len);
+    return len;
+}/* hal_uartTx() */
+#endif /* #if defined(HAL_SUPPORT_UART) */
+
 /*============================================================================*/
 /* hal_pinIRQClear() */
 /*============================================================================*/
@@ -579,7 +677,10 @@ int8_t hal_pinIRQRegister( void* p_pin, en_hal_irqedge_t edge,
 int8_t hal_periphIRQRegister( en_hal_periphirq_t irq, pf_hal_irqCb_t pf_cb,
     void* p_data )
 {
-  return 0;
+    /* set the callback and data pointer */
+    s_hal_irqs[irq].pf_cb = pf_cb;
+    s_hal_irqs[irq].p_data = p_data;
+    return 0;
 } /* hal_periphIRQRegister() */
 
 /*============================================================================*/
@@ -587,6 +688,11 @@ int8_t hal_periphIRQRegister( en_hal_periphirq_t irq, pf_hal_irqCb_t pf_cb,
 /*============================================================================*/
 int8_t hal_debugInit( void )
 {
+#if !USE_TI_RTOS
+#if (LOGGER_LEVEL > 0) && (HAL_SUPPORT_SLIPUART == FALSE)
+  sf_uart_init();
+#endif
+#endif
   return 0;
 } /* hal_debugInit() */
 

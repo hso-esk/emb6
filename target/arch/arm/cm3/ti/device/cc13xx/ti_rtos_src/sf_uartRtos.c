@@ -50,6 +50,10 @@ volatile uint8_t *gpc_uart_bufferRxWrite;
 volatile uint8_t *gpc_uart_bufferRxRead;
 /* Global value which indictes if rx is active ore not */
 volatile bool gb_readActive;
+
+/*! Callback for UART Rx. */
+sf_uart_rx_cb gf_uart_rx_cb = NULL;
+
 /************************* UART Interface *************************************/
 /* Handle for the uart-interface */
 UART_Handle uartHandle;
@@ -80,8 +84,10 @@ static void loc_uartReadCallback(UART_Handle handle, void *buf, size_t count)
   for( i = 0; i < count; i++)
   {
     *gpc_uart_bufferRxWrite = ((uint8_t*)buf)[i];
+    /* when using SLIP call the cb function */
+    if(gf_uart_rx_cb != NULL)
+        gf_uart_rx_cb(*gpc_uart_bufferRxWrite);
     gpc_uart_bufferRxWrite++;
-
     /*! Check for an overflow of the read pointer and adjust if required. */
     if(gpc_uart_bufferRxWrite >= &gc_uart_bufferRx[UART_BUFFER_RX_LEN])
     {
@@ -264,3 +270,11 @@ bool sf_uart_isRxOverflow(void)
 {
   return false;
 } /* sf_uart_isRxOverflow() */
+
+/*============================================================================*/
+/*! sf_uart_setRxCb() */
+/*============================================================================*/
+void sf_uart_setRxCb(sf_uart_rx_cb  rx_cb)
+{
+  gf_uart_rx_cb = rx_cb;
+} /* sf_uart_setRxCb() */
