@@ -41,6 +41,41 @@
 #define NETSTK_SUPPORT_HW_CRC               TRUE
 
 
+#ifndef CC13XX_LCD_ENABLE
+#define CC13XX_LCD_ENABLE           		FALSE
+#endif
+
+
+/** Number of supported LEDs */
+#ifndef HAL_SUPPORT_LEDNUM
+#define HAL_SUPPORT_LEDNUM                  4
+#endif /* #ifndef HAL_SUPPORT_LEDNUM */
+
+/** Enable  HAL SUPPORT SLIPUART_RX */
+#ifndef HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX
+#define HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX                FALSE
+#endif /* #ifndef HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX */
+
+/** Enable LED0 */
+#ifndef HAL_SUPPORT_LED0
+#define HAL_SUPPORT_LED0                    TRUE
+#endif /* #ifndef HAL_SUPPORT_LED0 */
+
+/** Enable LED1 */
+#ifndef HAL_SUPPORT_LED1
+#define HAL_SUPPORT_LED1                    TRUE
+#endif /* #ifndef HAL_SUPPORT_LED1 */
+
+/** Enable LED2 */
+#ifndef HAL_SUPPORT_LED2
+#define HAL_SUPPORT_LED2                    TRUE
+#endif /* #ifndef HAL_SUPPORT_LED2 */
+
+/** Enable LED3 */
+#ifndef HAL_SUPPORT_LED3
+#define HAL_SUPPORT_LED3                    TRUE
+#endif /* #ifndef HAL_SUPPORT_LED3 */
+
 /*============================================================================*/
 /*                       API FUNCTION DECLARATION                             */
 /*============================================================================*/

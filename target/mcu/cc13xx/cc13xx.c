@@ -34,9 +34,17 @@
 #include "sf_mcu.h"
 #include "sf_mcu_timer.h"
 #include "sf_uart.h"
-#include "bsp/srf06eb_cc26xx/drivers/source/bsp_led.h"
 #include "driverlib/interrupt.h"
 #include "rt_tmr.h"
+
+#if USE_TI_RTOS
+#include <ti/drivers/PIN.h>
+#include <driverlib/ioc.h>
+#include <xdc/runtime/System.h>
+#else
+#include "bsp/srf06eb_cc26xx/drivers/source/bsp_led.h"
+#endif
+
 
 /*! Enable or disable logging. */
 #define     LOGGER_ENABLE        LOGGER_HAL
@@ -81,6 +89,79 @@ static void _hal_isrSysTick(uint32_t l_count);
 
 /*! Hal tick counter */
 static clock_time_t volatile hal_ticks;
+
+
+/**
+ * \brief   Description of a single Pin.
+ *
+ *          A pin consists of several attributes such as its port
+ *          and pin numbers and the output mode and IRQ callbacks.
+ */
+typedef struct
+{
+  /** Pin */
+  uint8_t pin;
+  /** Value */
+  uint8_t val;
+  /** IRQ callback */
+  pf_hal_irqCb_t pf_cb;
+} s_hal_gpio_pin_t;
+/*
+ * \brief   Description of an interrupt.
+ *
+ *          An interrupt consists of the according callback function
+ *          and a data pointer.
+ */
+typedef struct
+{
+  /** callback function */
+  pf_hal_irqCb_t pf_cb;
+  /** data pointer */
+  void* p_data;
+} s_hal_irq;
+
+/** Definition of the IOs */
+static s_hal_gpio_pin_t s_hal_gpio[EN_HAL_PIN_MAX] = {
+#if defined(HAL_SUPPORT_LED0)
+  {CC1310_LED0, 0, NULL}, /* LED0 */
+#endif /* #if defined(HAL_SUPPORT_LED0) */
+#if defined(HAL_SUPPORT_LED1)
+  {CC1310_LED1, 0, NULL}, /* LED1 */
+#endif /* #if defined(HAL_SUPPORT_LED1) */
+#if defined(HAL_SUPPORT_LED2)
+  {CC1310_LED2, 0, NULL}, /* LED2 */
+#endif /* #if defined(HAL_SUPPORT_LED2) */
+#if defined(HAL_SUPPORT_LED3)
+  {CC1310_LED3, 0, NULL}, /* LED3 */
+#endif /* #if defined(HAL_SUPPORT_LED3) */
+};
+/** Definition of the peripheral callback functions */
+s_hal_irq s_hal_irqs[EN_HAL_PERIPHIRQ_MAX];
+
+#if USE_TI_RTOS
+
+#define Board_LED0          IOID_25
+#define Board_LED1          IOID_27
+#define Board_LED2          IOID_7
+#define Board_LED3          IOID_6
+
+/* Pin driver handle */
+static PIN_Handle ledPinHandle;
+static PIN_State ledPinState;
+
+/*
+ * Application LED pin configuration table:
+ *   - All LEDs board LEDs are off.
+ */
+PIN_Config ledPinTable[] = {
+    Board_LED0 | PIN_GPIO_OUTPUT_EN | PIN_GPIO_LOW | PIN_PUSHPULL | PIN_DRVSTR_MAX,
+    Board_LED1 | PIN_GPIO_OUTPUT_EN | PIN_GPIO_LOW | PIN_PUSHPULL | PIN_DRVSTR_MAX,
+    Board_LED2 | PIN_GPIO_OUTPUT_EN | PIN_GPIO_LOW | PIN_PUSHPULL | PIN_DRVSTR_MAX,
+    Board_LED3 | PIN_GPIO_OUTPUT_EN | PIN_GPIO_LOW | PIN_PUSHPULL | PIN_DRVSTR_MAX,
+    PIN_TERMINATE
+};
+
+#endif
 
 /*============================================================================*/
 /*                           LOCAL FUNCTIONS                                  */
@@ -208,6 +289,14 @@ int8_t hal_init(void)
   uint8_t c_retStatus = 0U;
   bool b_functionStatus = true;
 
+#if USE_TI_RTOS
+  /* Open LED pins */
+  ledPinHandle = PIN_open(&ledPinState, ledPinTable);
+  if(!ledPinHandle) {
+      System_abort("Error initializing board LED pins\n");
+  }
+#endif
+
   /* Initialize the mcu */
   b_functionStatus = sf_mcu_init();
   if(b_functionStatus)
@@ -248,6 +337,37 @@ uint32_t hal_getrand(void)
 /*============================================================================*/
 void hal_ledOff(uint16_t ui_led)
 {
+  switch( ui_led )
+  {
+  case CC1310_LED0:
+#if USE_TI_RTOS
+    PIN_setOutputValue(ledPinHandle, Board_LED0, 0);
+#else
+    bspLedClear( BSP_LED_1 );
+#endif
+  break;
+  case CC1310_LED1:
+#if USE_TI_RTOS
+    PIN_setOutputValue(ledPinHandle, Board_LED1, 0);
+#else
+    bspLedClear( BSP_LED_2 );
+#endif
+  break;
+  case CC1310_LED2:
+#if USE_TI_RTOS
+    PIN_setOutputValue(ledPinHandle, Board_LED2, 0);
+#else
+    bspLedClear( BSP_LED_3 );
+#endif
+  break;
+  case CC1310_LED3:
+#if USE_TI_RTOS
+    PIN_setOutputValue(ledPinHandle, Board_LED3, 0);
+#else
+    bspLedClear( BSP_LED_4 );
+#endif
+  break;
+ }
 }/* hal_ledOff() */
 
 /*============================================================================*/
@@ -255,6 +375,37 @@ void hal_ledOff(uint16_t ui_led)
 /*============================================================================*/
 void hal_ledOn(uint16_t ui_led)
 {
+  switch( ui_led )
+  {
+  case CC1310_LED0:
+#if USE_TI_RTOS
+    PIN_setOutputValue(ledPinHandle, Board_LED0, 1);
+#else
+    bspLedClear( BSP_LED_1 );
+#endif
+  break;
+  case CC1310_LED1:
+#if USE_TI_RTOS
+    PIN_setOutputValue(ledPinHandle, Board_LED1, 1);
+#else
+    bspLedClear( BSP_LED_2 );
+#endif
+  break;
+  case CC1310_LED2:
+#if USE_TI_RTOS
+    PIN_setOutputValue(ledPinHandle, Board_LED2, 1);
+#else
+    bspLedClear( BSP_LED_3 );
+#endif
+break;
+  case CC1310_LED3:
+#if USE_TI_RTOS
+    PIN_setOutputValue(ledPinHandle, Board_LED3, 1);
+#else
+    bspLedClear( BSP_LED_4 );
+#endif
+  break;
+}
 }/* hal_ledOn() */
 
 /*============================================================================*/
@@ -262,8 +413,11 @@ void hal_ledOn(uint16_t ui_led)
 /*============================================================================*/
 void* hal_pinInit( en_hal_pin_t pin )
 {
-  /* Not needed because of integrated IF */
-  return NULL;
+    s_hal_gpio_pin_t* p_pin = NULL;
+    p_pin = &s_hal_gpio[pin];
+    p_pin->val=1;
+    hal_ledOn(p_pin->pin);
+  return p_pin ;
 } /* hal_pinInit() */
 
 /*============================================================================*/
@@ -271,8 +425,19 @@ void* hal_pinInit( en_hal_pin_t pin )
 /*============================================================================*/
 int8_t hal_pinSet( void* p_pin, uint8_t val )
 {
-  /* Not needed because of integrated IF */
-  return 0;
+    s_hal_gpio_pin_t* p_gpioPin;
+    p_gpioPin = (s_hal_gpio_pin_t *)p_pin;
+    if(val)
+    {
+        hal_ledOn(p_gpioPin->pin);
+        p_gpioPin->val=1;
+    }
+    else
+    {
+        hal_ledOff(p_gpioPin->pin);
+        p_gpioPin->val=0;
+    }
+return 0;
 } /* hal_pinSet() */
 
 /*============================================================================*/
@@ -288,8 +453,9 @@ void hal_pinClr(void * p_pin)
 /*============================================================================*/
 int8_t hal_pinGet(void * p_pin)
 {
-  /* Not needed because of integrated IF */
-  return 0;
+	  s_hal_gpio_pin_t* p_gpioPin;
+	  p_gpioPin = (s_hal_gpio_pin_t *)p_pin;
+	  return p_gpioPin->val;
 } /* hal_pinGet() */
 
 /*============================================================================*/
@@ -413,7 +579,6 @@ int8_t hal_pinIRQRegister( void* p_pin, en_hal_irqedge_t edge,
 int8_t hal_periphIRQRegister( en_hal_periphirq_t irq, pf_hal_irqCb_t pf_cb,
     void* p_data )
 {
-  /* Not implemented. */
   return 0;
 } /* hal_periphIRQRegister() */
 
