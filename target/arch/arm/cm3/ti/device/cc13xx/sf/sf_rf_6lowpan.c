@@ -44,6 +44,7 @@ extern "C" {
 #include "driverlib/rf_mailbox.h"
 #include "bsp.h"
 #include "framer_802154_ll.h"
+#include "phy_framer_802154.h"
 
 
 /*==============================================================================
@@ -139,7 +140,7 @@ uint8_t sf_rf_6lowpan_sendBlocking(uint8_t *pc_data, uint16_t  i_len)
   /* check if transceiver is not is sleepy mode */
   if( sf_rf_get_Status() == RF_STATUS_SLEEP )
     return 0;
-  /* init tx cmd */
+
   if (!sf_rf_init_tx(pc_data,i_len))
   {
     bsp_led( HAL_LED3, EN_BSP_LED_OP_ON );
@@ -600,10 +601,25 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
     return ROUTINE_DONE ;
 
   case RF_STATUS_RX :
-
+  {
     /* when we receive data */
-    cc1310.rx.LenLastPkt = *(uint8_t*)(&cc1310.rx.p_currentDataEntry->data) + 1;
-    cc1310.rx.p_lastPkt = (uint8_t*)(&cc1310.rx.p_currentDataEntry->data) ;
+#if NETSTK_CFG_IEEE_802154G_EN
+	uint8_t *p_data = (uint8_t*)(&cc1310.rx.p_currentDataEntry->data);
+	uint8_t tempData;
+
+    /* FIXME flip PHR back */
+	tempData = p_data[0];
+	p_data[0] = p_data[1];
+	p_data[1] = tempData;
+
+    cc1310.rx.LenLastPkt = phy_framer802154_getPktLen(p_data, PHY_HEADER_LEN) + PHY_HEADER_LEN;
+    cc1310.rx.p_lastPkt = p_data;
+#else
+     /* FIXME this is not correct if the packet is lager 127 */
+    cc1310.rx.LenLastPkt = *(uint8_t*)(&cc1310.rx.p_currentDataEntry->data) + PHY_HEADER_LEN;
+    cc1310.rx.p_lastPkt = (uint8_t*)(&cc1310.rx.p_currentDataEntry->data);
+#endif
+
     /* parse the received packet to check whether it requires ACK or not */
     framer802154ll_parse(&frame, cc1310.rx.p_lastPkt , cc1310.rx.LenLastPkt );
 
@@ -611,9 +627,21 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
    {
     /* create the ACK  */
     ack_length=framer802154ll_createAck(&frame,ack, sizeof(ack));
+#if !NETSTK_CFG_IEEE_802154G_EN
     /* configure ACK length and ptr */
-    cc1310.tx.p_cmdPropTxAdv->pktLen = ack_length-2  ;
+    cc1310.tx.p_cmdPropTxAdv->pktLen = ack_length - frame.crc_len  ;
     cc1310.tx.p_cmdPropTxAdv->pPkt = ack;
+#else
+    /* configure ACK length and ptr */
+    cc1310.tx.p_cmdPropTxAdv->pPkt = ack;
+    cc1310.tx.p_cmdPropTxAdv->pktLen = ack_length - frame.crc_len  ;
+    /* FIXME overwrite PHR */
+    uint16_t transmitLen = cc1310.tx.p_cmdPropTxAdv->pktLen - PHY_HEADER_LEN;
+    uint16_t totalLen = transmitLen + frame.crc_len;
+    /* FIXME only support CRC-32 */
+	cc1310.tx.p_cmdPropTxAdv->pPkt[0] = totalLen & 0xFF;
+    cc1310.tx.p_cmdPropTxAdv->pPkt[1] = totalLen >> 8;
+#endif
     /* Send Tx command to send the ACK */
     RFC_sendRadioOp_nb((rfc_radioOp_t*)cc1310.tx.p_cmdPropTxAdv,NULL);
     /* wait for the command until finish */
@@ -633,6 +661,7 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
    cc1310.rx.p_currentDataEntry = (rfc_dataEntryGeneral_t*)RFQueue_getDataEntry();
    cc1310.rx.p_currentDataEntry->status=DATA_ENTRY_PENDING;
     return ROUTINE_DONE ;
+  }
 
   case RF_STATUS_CCA :
     /* Stop last cmd (usually it is Rx cmd ) */
@@ -691,7 +720,16 @@ static uint8_t sf_rf_init_tx(uint8_t *pc_data, uint16_t  i_len)
   {
     cc1310.tx.p_cmdPropTxAdv->pktLen = i_len ;
     cc1310.tx.p_cmdPropTxAdv->pPkt = pc_data;
-    cc1310.tx.p_cmdPropTxAdv->pPkt[0] = i_len - 1 + 2 ;
+#if NETSTK_CFG_IEEE_802154G_EN
+    /* FIXME overwrite PHR */
+    uint16_t transmitLen = i_len - PHY_HEADER_LEN;
+    uint16_t totalLen = transmitLen + packetbuf_attr(PACKETBUF_ATTR_MAC_FCS_LEN);
+    /* FIXME only support CRC-32 */
+	cc1310.tx.p_cmdPropTxAdv->pPkt[0] = totalLen & 0xFF;
+    cc1310.tx.p_cmdPropTxAdv->pPkt[1] = totalLen >> 8;
+#else
+    cc1310.tx.p_cmdPropTxAdv->pPkt[0] = i_len - PHY_HEADER_LEN + 2 ;
+#endif
     return 1;
   }
   return 0;
