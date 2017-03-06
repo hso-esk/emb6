@@ -75,6 +75,11 @@ uint32_t pOverrides[] =
     HW_REG_OVERRIDE(0x6088,0x001A),
 // TX power override
     ADI_REG_OVERRIDE(0,12,0xF8),
+#if NETSTK_CFG_IEEE_802154G_EN
+	  /* Overrides for CRC16 functionality */
+	  (uint32_t)0x943,
+	  (uint32_t)0x963,
+#endif
     (uint32_t)0xFFFFFFFF,
 };
 

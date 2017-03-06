@@ -640,7 +640,11 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
     uint16_t totalLen = transmitLen + frame.crc_len;
     /* FIXME only support CRC-32 */
 	cc1310.tx.p_cmdPropTxAdv->pPkt[0] = totalLen & 0xFF;
-    cc1310.tx.p_cmdPropTxAdv->pPkt[1] = totalLen >> 8;
+	/* check whether the 32-bits and 16-bits CRC is used // 0x10: 16-bits CRC and 0x00 : 32-bits CRC */
+	if(frame.crc_len == 2)
+      cc1310.tx.p_cmdPropTxAdv->pPkt[1] = (totalLen >> 8) + 0x10  ;
+	else
+	  cc1310.tx.p_cmdPropTxAdv->pPkt[1] = (totalLen >> 8) + 0x00  ;
 #endif
     /* Send Tx command to send the ACK */
     RFC_sendRadioOp_nb((rfc_radioOp_t*)cc1310.tx.p_cmdPropTxAdv,NULL);
@@ -726,7 +730,12 @@ static uint8_t sf_rf_init_tx(uint8_t *pc_data, uint16_t  i_len)
     uint16_t totalLen = transmitLen + packetbuf_attr(PACKETBUF_ATTR_MAC_FCS_LEN);
     /* FIXME only support CRC-32 */
 	cc1310.tx.p_cmdPropTxAdv->pPkt[0] = totalLen & 0xFF;
-    cc1310.tx.p_cmdPropTxAdv->pPkt[1] = totalLen >> 8;
+	/* check whether the 32-bits and 16-bits CRC is used // 0x10: 16-bits CRC and 0x00 : 32-bits CRC */
+	if(packetbuf_attr(PACKETBUF_ATTR_MAC_FCS_LEN) == 2)
+      cc1310.tx.p_cmdPropTxAdv->pPkt[1] = (totalLen >> 8) + 0x10  ;
+	else
+	  cc1310.tx.p_cmdPropTxAdv->pPkt[1] = (totalLen >> 8) + 0x00  ;
+
 #else
     cc1310.tx.p_cmdPropTxAdv->pPkt[0] = i_len - PHY_HEADER_LEN + 2 ;
 #endif
