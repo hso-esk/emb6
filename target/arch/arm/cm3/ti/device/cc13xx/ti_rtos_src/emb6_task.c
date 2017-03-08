@@ -18,7 +18,7 @@
                             DEFINES
 ==============================================================================*/
 /* Size of the emb6 task */
-#define EMB6_TASK_STACK_SIZE 4096U
+#define EMB6_TASK_STACK_SIZE   2048U //4096U
 /* Priority of the wmbus task */
 #define EMB6_TASK_PRIORITY   3U
 /*==============================================================================

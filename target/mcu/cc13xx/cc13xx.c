@@ -331,14 +331,11 @@ int8_t hal_init(void)
     b_functionStatus = sf_mcu_timer_init(MCU_TICKS_PER_SECOND);
     #endif
 
-    if(b_functionStatus)
-    {
-      c_retStatus = _hal_uart_init();
-      if(MCU_INIT_RET_STATUS_CHECK(c_retStatus))
-      {
-        c_retStatus = _hal_systick();
-      }
-    }
+    if(!b_functionStatus)
+      return -1;
+    c_retStatus = _hal_systick();
+    if(!MCU_INIT_RET_STATUS_CHECK(c_retStatus))
+      return -1;
   }
 
   /* Initialize hal_ticks */
@@ -596,10 +593,9 @@ int32_t hal_spiTx( void* p_spi, uint8_t* p_tx, uint16_t len )
 #if defined(HAL_SUPPORT_UART)
 void* hal_uartInit( en_hal_uart_t uart )
 {
-    sf_uart_init();
+	_hal_uart_init();
     sf_uart_setRxCb( _hal_uartRxCb );
-
-    return NULL;
+    return _hal_uartRxCb;
 }/* hal_uartInit() */
 
 
