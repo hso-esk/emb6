@@ -87,6 +87,13 @@ framer802154ll_attr_t frame;
 uint8_t ack[10];
 uint8_t ack_length;
 
+#if USE_TI_RTOS
+/* RF parameter struct */
+static RF_Params gs_rfParams;
+static RF_Object gs_rfObject;
+static RF_Handle gps_rfHandle;
+RF_CmdHandle gps_rf_cmdHandle;
+#endif
 
 /* Threshold value for the rx process. */
 #define RF_RX_THRESHOLD        0x05U
@@ -216,12 +223,115 @@ uint8_t sf_rf_6lowpan_getTxPower(void)
 }
 
 
-bool sf_rf_6lowpan_setTxPower(uint8_t c_txPower)
+/* TX Power dBm lookup table - values from SmartRF Studio.
+ * copied from the file:
+ * C:\ti\tirtos_cc13xx_cc26xx_2_15_00_17\packages\examples\source\rf\easylink\EasyLink.c */
+typedef struct S_OUTPUT_CONFIG {
+  int8_t sc_dbm;
+  uint16_t i_txPower; /* Value for the PROP_DIV_RADIO_SETUP.txPower field */
+} s_outputConfig_t;
+
+/* TX Power dBm lookup table - values from SmartRF Studio.
+ * copied from the file:
+ * C:\ti\tirtos_cc13xx_cc26xx_2_15_00_17\packages\examples\source\rf\easylink\EasyLink.c */
+#define RF_OUTPUT_POWER_TBL_SIZE   16U
+static const s_outputConfig_t s_outputPower[RF_OUTPUT_POWER_TBL_SIZE] = {
+    {  0, 0x0041 },
+    {  1, 0x10c3 },
+    {  2, 0x1042 },
+    {  3, 0x14c4 },
+    {  4, 0x18c5 },
+    {  5, 0x18c6 },
+    {  6, 0x1cc7 },
+    {  7, 0x20c9 },
+    {  8, 0x24cb },
+    {  9, 0x2ccd },
+    { 10, 0x38d3 },
+    { 11, 0x50da },
+    { 12, 0xb818 },
+    { 13, 0xa73f }, /* 12.5 */
+    { 14, 0xa73f },
+    {-10, 0x08c0 },
+};
+
+
+bool sf_rf_6lowpan_setTxPower(uint8_t c_signal)
 {
     bool b_return = true;
+
+#if USE_TI_RTOS
+#if 0
+    /** Variable to store the PA power during shutdown (only register lost) */
+    static uint8_t gc_txPowerIdx;
+
+    rfc_CMD_SET_TX_POWER_t s_cmdSetPower = {0};
+    rfc_CMD_SCH_IMM_t s_immOpCmd = {0};
+    rfc_CMD_PROP_RADIO_DIV_SETUP_t *ps_divSetup;
+    RF_CmdHandle s_cmd;
+    RF_EventMask e_result;
+
+    s_cmdSetPower.commandNo = CMD_SET_TX_POWER;
+    s_immOpCmd.commandNo = CMD_SCH_IMM;
+    s_immOpCmd.startTrigger.triggerType = TRIG_NOW;
+    s_immOpCmd.startTrigger.pastTrig = 1;
+    s_immOpCmd.startTime = 0;
+
+    /* Convert the input parameter to a index*/
+    if(c_signal < 130U)
+    {
+      gc_txPowerIdx = 15;
+    }
+    else if (c_signal > 144)
+    {
+      gc_txPowerIdx = 14;
+    }
+    else
+    {
+      gc_txPowerIdx = c_signal-130;
+    }
+
+    /* If 14dBm power is requested then the CCFG_FORCE_VDDR_HH must be set in
+     * the ccfg */
+  #if (CCFG_FORCE_VDDR_HH != 0x1)
+    if(gc_txPowerIdx == 14)
+    {
+      /* Decrement to a supported value */
+      gc_txPowerIdx--;
+    }
+  #endif
+
+    ps_divSetup = (rfc_CMD_PROP_RADIO_DIV_SETUP_t*)cc1310.conf.ps_cmdPropRadioDivSetup;
+    /* Set the correct TX power */
+    ps_divSetup->txPower = s_outputPower[gc_txPowerIdx].i_txPower;
+
+    if(sf_rf_get_Status() != RF_STATUS_SLEEP)
+    {
+      /* CMD_SET_TX_POWER txPower is currently a bit filed in a struct, but will
+       * change to a uint16 in future releases. Hence do a memcpy to cater for
+       * both */
+      memcpy(&(s_cmdSetPower.txPower), &(s_outputPower[gc_txPowerIdx].i_txPower),
+              sizeof(uint16_t));
+
+      /* point the Operational Command to the immediate set power command */
+      s_immOpCmd.cmdrVal = (uint32_t) &s_cmdSetPower;
+
+      if(gps_rfHandle != NULL)
+      {
+        /* Send command */
+        s_cmd = RF_postCmd(gps_rfHandle,(RF_Op*)&s_immOpCmd, RF_PriorityNormal, NULL, 0);
+        e_result = RF_pendCmd(gps_rfHandle, s_cmd, (RF_EventLastCmdDone |RF_EventCmdError));
+        if ((e_result & RF_EventLastCmdDone) == false)
+        {
+          b_return = false;
+        }/* if */
+      }/* if */
+    }/* if */
+#endif
+#else
     /** Command for setting the tx power */
     rfc_CMD_SET_TX_POWER_t s_cmdTxPower;
     s_cmdTxPower.commandNo = CMD_SET_TX_POWER;
+
 
     /* check if the radio is in sleepy mode */
     if( sf_rf_get_Status() == RF_STATUS_SLEEP)
@@ -230,19 +340,19 @@ bool sf_rf_6lowpan_setTxPower(uint8_t c_txPower)
     /* Set the minimum */
     if(c_txPower <= 124U) /* -10dbm */
     {
-//      s_cmdTxPower.txPower.IB =        0x00U;
- //     s_cmdTxPower.txPower.GC =        0x03U;
-//      s_cmdTxPower.txPower.boost =     0x00U;
- //     s_cmdTxPower.txPower.tempCoeff = 0x00U;
+      s_cmdTxPower.txPower.IB =        0x00U;
+      s_cmdTxPower.txPower.GC =        0x03U;
+      s_cmdTxPower.txPower.boost =     0x00U;
+      s_cmdTxPower.txPower.tempCoeff = 0x00U;
       cc1310.tx.signalStrength = 120U;
     }
     /* Set the maximum */
     else if(c_txPower >= 144) /*  14dbm */
     {
-//      s_cmdTxPower.txPower.IB =        0x3FU;
-//      s_cmdTxPower.txPower.GC =        0x00U;
-//      s_cmdTxPower.txPower.boost =     0x01U;
-//      s_cmdTxPower.txPower.tempCoeff = 0x00U;
+      s_cmdTxPower.txPower.IB =        0x3FU;
+      s_cmdTxPower.txPower.GC =        0x00U;
+      s_cmdTxPower.txPower.boost =     0x01U;
+      s_cmdTxPower.txPower.tempCoeff = 0x00U;
       cc1310.tx.signalStrength = 144U;
     }
     /* Calculate the register settings */
@@ -252,44 +362,44 @@ bool sf_rf_6lowpan_setTxPower(uint8_t c_txPower)
       switch(c_txPower)
       {
       case 143U:                                                     /* 13dBm */
-//        s_cmdTxPower.txPower.IB =        0x3FU;
-//        s_cmdTxPower.txPower.GC =        0x00U;
-//        s_cmdTxPower.txPower.boost =     0x00U;
-//        s_cmdTxPower.txPower.tempCoeff = 0x00U;
+        s_cmdTxPower.txPower.IB =        0x3FU;
+        s_cmdTxPower.txPower.GC =        0x00U;
+        s_cmdTxPower.txPower.boost =     0x00U;
+        s_cmdTxPower.txPower.tempCoeff = 0x00U;
         break;
 
       case 142U:                                                     /* 12dBm */
-//        s_cmdTxPower.txPower.IB =        0x14U;
-//        s_cmdTxPower.txPower.GC =        0x00U;
-//        s_cmdTxPower.txPower.boost =     0x00U;
-//        s_cmdTxPower.txPower.tempCoeff = 0x00U;
+        s_cmdTxPower.txPower.IB =        0x14U;
+        s_cmdTxPower.txPower.GC =        0x00U;
+        s_cmdTxPower.txPower.boost =     0x00U;
+        s_cmdTxPower.txPower.tempCoeff = 0x00U;
         break;
 
       case 141U: case 140U: case 139U: case 138U:                    /* 10dBm */
-//        s_cmdTxPower.txPower.IB =        0x11U;
- //       s_cmdTxPower.txPower.GC =        0x03U;
-//        s_cmdTxPower.txPower.boost =     0x00U;
-//        s_cmdTxPower.txPower.tempCoeff = 0x00U;
+        s_cmdTxPower.txPower.IB =        0x11U;
+        s_cmdTxPower.txPower.GC =        0x03U;
+        s_cmdTxPower.txPower.boost =     0x00U;
+        s_cmdTxPower.txPower.tempCoeff = 0x00U;
         break;
 
       case 137U: case 136U: case 135U: case 134U: case 133U:         /*  5dBm */
- //       s_cmdTxPower.txPower.IB =        0x05U;
-//        s_cmdTxPower.txPower.GC =        0x03U;
-//        s_cmdTxPower.txPower.boost =     0x00U;
-//        s_cmdTxPower.txPower.tempCoeff = 0x00U;
+        s_cmdTxPower.txPower.IB =        0x05U;
+        s_cmdTxPower.txPower.GC =        0x03U;
+        s_cmdTxPower.txPower.boost =     0x00U;
+        s_cmdTxPower.txPower.tempCoeff = 0x00U;
         break;
 
       case 132U: case 131U: case 130U: case 129U: case 128U: case 127U:
       case 126U: case 125U:                                          /*  0dBm */
-//        s_cmdTxPower.txPower.IB =        0x02U;
-//        s_cmdTxPower.txPower.GC =        0x03U;
-//        s_cmdTxPower.txPower.boost =     0x00U;
-//        s_cmdTxPower.txPower.tempCoeff = 0x00U;
+        s_cmdTxPower.txPower.IB =        0x02U;
+        s_cmdTxPower.txPower.GC =        0x03U;
+        s_cmdTxPower.txPower.boost =     0x00U;
+        s_cmdTxPower.txPower.tempCoeff = 0x00U;
         break;
       }
       cc1310.tx.signalStrength = c_txPower;
     }
-#if !USE_TI_RTOS
+
       /* Transmit the tx power setting to the rf-core */
       MB_SendCommand((uint32_t) &s_cmdTxPower);
 #endif
@@ -382,11 +492,6 @@ return retVal;
 
  /* TI RTOS variables */
  #if USE_TI_RTOS
- /* RF parameter struct */
- static RF_Params gs_rfParams;
- static RF_Object gs_rfObject;
- static RF_Handle gps_rfHandle;
- RF_CmdHandle gps_rf_cmdHandle;
  /* TI-RTOS RF Mode Object */
  RF_Mode RF_prop =
  {
@@ -956,7 +1061,45 @@ static bool sf_rf_update_run_frequency(uint16_t frequency, uint16_t fractFreq)
     /* check the struct is already initialized */
     if(cc1310.conf.ps_cmdFs== NULL)
         return false;
-#if !USE_TI_RTOS
+#if USE_TI_RTOS
+
+    /* Cancel the previous command  */
+    RF_cancelCmd(gps_rfHandle, gps_rf_cmdHandle, 1);
+    /* check if the center frequency is changed then we have to setup the radio again */
+    if(((rfc_CMD_PROP_RADIO_DIV_SETUP_t*)cc1310.conf.ps_cmdPropRadioDivSetup)->centerFreq != frequency)
+    {
+        /* set the new center Frequency */
+        ((rfc_CMD_PROP_RADIO_DIV_SETUP_t*)cc1310.conf.ps_cmdPropRadioDivSetup)->centerFreq=frequency;
+        /* send Setup command again */
+     /*   result = RF_runCmd(gps_rfHandle, (RF_Op*)cc1310.conf.ps_cmdPropRadioDivSetup, RF_PriorityNormal, NULL, 0);
+        if (!(result & RF_EventLastCmdDone))
+        {
+          return false;
+        }
+        */
+        gps_rf_cmdHandle = RF_postCmd(gps_rfHandle, (RF_Op*)cc1310.conf.ps_cmdPropRadioDivSetup, RF_PriorityNormal, NULL, 0);
+        if(gps_rf_cmdHandle < 0 )
+         {
+            return false ;
+         }
+    }
+    /* update FS command */
+    ((rfc_CMD_FS_t*)cc1310.conf.ps_cmdFs)->frequency=frequency;
+    ((rfc_CMD_FS_t*)cc1310.conf.ps_cmdFs)->fractFreq=fractFreq;
+
+    /* Send CMD_FS command to RF Core */
+  /*  result = RF_runCmd(gps_rfHandle, (RF_Op*)cc1310.conf.ps_cmdFs, RF_PriorityNormal, NULL, 0);
+    if (!(result & RF_EventLastCmdDone))
+    {
+      return false;
+    }
+*/
+    gps_rf_cmdHandle = RF_postCmd(gps_rfHandle, (RF_Op*)cc1310.conf.ps_cmdFs , RF_PriorityNormal, NULL, 0);
+    if(gps_rf_cmdHandle < 0 )
+     {
+        return false ;
+     }
+#else
     /* Stop the last command : it should be RX command (May be no command in sleepy mode) */
     RFC_sendDirectCmd(CMDR_DIR_CMD(CMD_ABORT));
     /* check if the center frequency is changed then we have to setup the radio again */
@@ -977,8 +1120,6 @@ static bool sf_rf_update_run_frequency(uint16_t frequency, uint16_t fractFreq)
       bsp_led( HAL_LED3, EN_BSP_LED_OP_ON );
       return false ;
     }
-
-
 #endif
     return true;
 }
@@ -986,7 +1127,6 @@ static bool sf_rf_update_run_frequency(uint16_t frequency, uint16_t fractFreq)
 
 static bool sf_rf_update_frequency(uint16_t frequency, uint16_t fractFreq)
 {
-
    /* check the struct is already initialized */
   if(cc1310.conf.ps_cmdFs == NULL || cc1310.conf.ps_cmdPropRadioDivSetup == NULL)
     return false;
