@@ -43,13 +43,14 @@
 // Overrides for CMD_PROP_RADIO_DIV_SETUP
 uint32_t pOverrides[] =
 {
+#if !NETSTK_CFG_IEEE_802154G_EN
     HW32_ARRAY_OVERRIDE(0x2004, 1), // configure new CRC16 poly (=0x40012005 in pure hex)
     0x10210000, // new CRC16 poly: CRC-16-CCITT normal form, 0x1021 is x^16 + x^15 + x^5 + 1
     0xC0040051, // CRC initialization (address)
     0x00000000, // CRC initialization (value)
    //0xC0040061, // override to set the “crcXor” setting (4-byte value)
    //0xFFFFFFFF, // new “crcXor” value to use (default is 0x00000000)
-
+#endif
 // override_synth.xml
     ADI_HALFREG_OVERRIDE(0,61,0xF,0xD),
     HW32_ARRAY_OVERRIDE(0x4038,1),
@@ -73,6 +74,11 @@ uint32_t pOverrides[] =
     HW_REG_OVERRIDE(0x6088,0x001A),
 // TX power override
     ADI_REG_OVERRIDE(0,12,0xF8),
+#if NETSTK_CFG_IEEE_802154G_EN
+	  /* Overrides for CRC16 functionality */
+	  (uint32_t)0x943,
+	  (uint32_t)0x963,
+#endif
     (uint32_t)0xFFFFFFFF,
 };
 
@@ -101,8 +107,14 @@ rfc_CMD_PROP_RADIO_DIV_SETUP_t RF_802_15_4_cmdPropRadioDivSetup =
     .formatConf.bBitReversal = 0x0,
     .formatConf.bMsbFirst = 0x1,
     .formatConf.fecMode = 0x0,
-    .formatConf.whitenMode = 0x0,
-    .config.frontEndMode = 0x0,
+
+#if NETSTK_CFG_IEEE_802154G_EN
+	.formatConf.whitenMode = 0x6,
+#else
+	.formatConf.whitenMode = 0x0,
+#endif
+
+	.config.frontEndMode = 0x0,
     .config.biasMode = 0x1,
     .config.bNoFsPowerUp = 0x0,
     .txPower = 0xa73f,
@@ -158,18 +170,29 @@ rfc_CMD_PROP_TX_ADV_t RF_802_15_4_cmdPropTxAdv =
     .pktConf.bCrcIncHdr = 0x0,   //!< \brief 0: Do not include header in CRC calculation<br>
                                  //!<        1: Include header in CRC calculation
 
-    .numHdrBits = 0x8,          // Number of bits in header (0ï¿½32)
 
+#if NETSTK_CFG_IEEE_802154G_EN
+    .numHdrBits = 16,          // Number of bits in header (032)
+	.preTrigger.triggerType = TRIG_REL_START, /* Setting needed for 15.4g due to bug. Will do the same as TRIG_NOW */
+	.preTrigger.bEnaCmd = 0,
+	.preTrigger.triggerNo = 0,
+	.preTrigger.pastTrig = 1, /* Setting needed for 15.4g due to bug */
+	.preTime = 0x0, /* Setting needed for 15.4g due to bug */
+#else
+    .numHdrBits = 0x8,
 
-    .pktLen = 0x0000,
-    .startConf.bExtTxTrig = 0x0,
-    .startConf.inputMode = 0x0,
-    .startConf.source = 0x0,
     .preTrigger.triggerType = 0x0,
     .preTrigger.bEnaCmd = 0x0,
     .preTrigger.triggerNo = 0x0,
     .preTrigger.pastTrig = 0x0,
     .preTime = 0x00000000,
+#endif
+
+    .pktLen = 0x0000,
+    .startConf.bExtTxTrig = 0x0,
+    .startConf.inputMode = 0x0,
+    .startConf.source = 0x0,
+
     .syncWord = 0x0000904e,
     .pPkt = 0, // INSERT APPLICABLE POINTER: (uint8_t*)&xxx
 };
@@ -216,15 +239,21 @@ rfc_CMD_PROP_RX_ADV_t RF_802_15_4_cmdPropRxAdv =
     .maxPktLen = 2047,  //for the g version     //!< \brief Packet length for fixed length, maximum packet length for variable length<br>
                                                 //!<        0: Unlimited or unknown length
 
-    .hdrConf.numHdrBits = 0x8,
-    .hdrConf.lenPos = 0x0,
+#if NETSTK_CFG_IEEE_802154G_EN
+	.hdrConf.numHdrBits = 16,          // Number of bits in header (032)
+    .hdrConf.numLenBits = 11,
+	.lenOffset = -4,
+#else
+	.hdrConf.numHdrBits = 0x8,
     .hdrConf.numLenBits = 0x8,
+    .lenOffset = -2,
+#endif
 
+    .hdrConf.lenPos = 0x0,
     .addrConf.addrType = 0x0,
     .addrConf.addrSize = 0x0,
     .addrConf.addrPos = 0x0,
     .addrConf.numAddr = 0x0,
-    .lenOffset = -2,
     .endTrigger.triggerType = 0x0,
     .endTrigger.bEnaCmd = 0x0,
     .endTrigger.triggerNo = 0x0,

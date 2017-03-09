@@ -314,13 +314,24 @@ static void phy_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
   /*
   * Parse PHY header
   */
+  uint8_t *p_PHY = p_data ;
   packetbuf_attr_t fcs_len;
   fcs_len = packetbuf_attr(PACKETBUF_ATTR_MAC_FCS_LEN);
 
 #if (NETSTK_SUPPORT_SW_MAC_AUTOACK == FALSE)
   uint16_t psdu_len;
   p_data += PHY_HEADER_LEN;
+#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
+  uint16_t phr;
+  /* achieve PHY header */
+  phr = (p_PHY[0] << 8) | (p_PHY[1]);
+  if (PHY_PSDU_CRC16(phr))
+  psdu_len = (len - PHY_HEADER_LEN) - 2;
+else
+  psdu_len = (len - PHY_HEADER_LEN) - 4;
+#else
   psdu_len = (len - PHY_HEADER_LEN) - fcs_len;
+#endif
 #else /* #if (NETSTK_SUPPORT_SW_MAC_AUTOACK == FALSE) */
 #if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
   uint8_t crc_size;
