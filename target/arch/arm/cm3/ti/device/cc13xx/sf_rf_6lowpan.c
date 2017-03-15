@@ -84,6 +84,9 @@ static s_ns_t *ps_rf_netstk;
 
 st_cc1310_t cc1310;
 uint8_t RxBuff[RX_BUFF_SIZE];
+#if NETSTK_CFG_IEEE_802154G_EN
+uint8_t temp[129];
+#endif
 framer802154ll_attr_t frame;
 uint8_t ack[10];
 uint8_t ack_length;
@@ -760,10 +763,20 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
       }
 #if USE_TI_RTOS
 
+
+#if NETSTK_CFG_IEEE_802154G_EN
+      memcpy(temp,cc1310.tx.p_cmdPropTxAdv->pPkt,2);
+      /* Stop last cmd (usually it is Rx cmd ) */
+      RF_cancelCmd(gps_rfHandle, gps_rf_cmdHandle, 1);
+      memcpy(cc1310.tx.p_cmdPropTxAdv->pPkt, temp,2);
+      /* Send tx command  */
+      result = RF_runCmd(gps_rfHandle, (RF_Op*)cc1310.tx.p_cmdPropTxAdv, RF_PriorityNormal, NULL, 0);
+#else
       /* Stop last cmd (usually it is Rx cmd ) */
       RF_cancelCmd(gps_rfHandle, gps_rf_cmdHandle, 1);
       /* Send tx command  */
       result = RF_runCmd(gps_rfHandle, (RF_Op*)cc1310.tx.p_cmdPropTxAdv, RF_PriorityNormal, NULL, 0);
+#endif
       if (!(result & RF_EventLastCmdDone))
       {
         return ROUTINE_ERROR_TX_CMD;
@@ -1115,12 +1128,6 @@ static bool sf_rf_update_run_frequency(uint16_t frequency, uint16_t fractFreq)
         /* set the new center Frequency */
         ((rfc_CMD_PROP_RADIO_DIV_SETUP_t*)cc1310.conf.ps_cmdPropRadioDivSetup)->centerFreq=frequency;
         /* send Setup command again */
-     /*   result = RF_runCmd(gps_rfHandle, (RF_Op*)cc1310.conf.ps_cmdPropRadioDivSetup, RF_PriorityNormal, NULL, 0);
-        if (!(result & RF_EventLastCmdDone))
-        {
-          return false;
-        }
-        */
         gps_rf_cmdHandle = RF_postCmd(gps_rfHandle, (RF_Op*)cc1310.conf.ps_cmdPropRadioDivSetup, RF_PriorityNormal, NULL, 0);
         if(gps_rf_cmdHandle < 0 )
          {
@@ -1131,13 +1138,6 @@ static bool sf_rf_update_run_frequency(uint16_t frequency, uint16_t fractFreq)
     ((rfc_CMD_FS_t*)cc1310.conf.ps_cmdFs)->frequency=frequency;
     ((rfc_CMD_FS_t*)cc1310.conf.ps_cmdFs)->fractFreq=fractFreq;
 
-    /* Send CMD_FS command to RF Core */
-  /*  result = RF_runCmd(gps_rfHandle, (RF_Op*)cc1310.conf.ps_cmdFs, RF_PriorityNormal, NULL, 0);
-    if (!(result & RF_EventLastCmdDone))
-    {
-      return false;
-    }
-*/
     gps_rf_cmdHandle = RF_postCmd(gps_rfHandle, (RF_Op*)cc1310.conf.ps_cmdFs , RF_PriorityNormal, NULL, 0);
     if(gps_rf_cmdHandle < 0 )
      {
