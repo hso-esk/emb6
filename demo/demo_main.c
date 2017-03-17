@@ -155,7 +155,7 @@
 #include "semphr.h"
 #endif /* #ifndef EMB6_PROC_DELAY */
 
-#ifdef USE_TI_RTOS
+#if USE_TI_RTOS
 /* XDCtools Header files */
 #include <stdlib.h>
 #include <xdc/std.h>
@@ -245,7 +245,7 @@ static uint8_t loc_demoAppsInit(void);
 /**
  * emb6 task.
  */
-#ifdef USE_TI_RTOS
+#if USE_TI_RTOS
 static void emb6_task(int argc, char **argv);
 #else
 static void emb6_task( void* p_params );
@@ -470,7 +470,7 @@ void emb6_errorHandler(e_nsErr_t *p_err)
 /*==============================================================================
  emb6_task()
 ==============================================================================*/
-#ifdef USE_TI_RTOS
+#if USE_TI_RTOS
 static void emb6_task(int argc, char **argv)
 {
     char *pc_mac_addr = NULL;
@@ -645,7 +645,7 @@ int main(void)
     configTOTAL_HEAP_SIZE in FreeRTOSConfig.h. */
     for( ;; );
 #else
- #ifdef USE_TI_RTOS
+ #if USE_TI_RTOS
     Error_Block eb;
 
     /* Call board init functions */

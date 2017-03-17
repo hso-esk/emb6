@@ -342,7 +342,7 @@ bool sf_rf_6lowpan_setTxPower(uint8_t c_signal)
         return false;
     /* Values from smart rf studio v2.1.0 */
     /* Set the minimum */
-    if(c_txPower <= 124U) /* -10dbm */
+    if(c_signal <= 124U) /* -10dbm */
     {
       s_cmdTxPower.txPower.IB =        0x00U;
       s_cmdTxPower.txPower.GC =        0x03U;
@@ -351,7 +351,7 @@ bool sf_rf_6lowpan_setTxPower(uint8_t c_signal)
       cc1310.tx.signalStrength = 120U;
     }
     /* Set the maximum */
-    else if(c_txPower >= 144) /*  14dbm */
+    else if(c_signal >= 144) /*  14dbm */
     {
       s_cmdTxPower.txPower.IB =        0x3FU;
       s_cmdTxPower.txPower.GC =        0x00U;
@@ -363,7 +363,7 @@ bool sf_rf_6lowpan_setTxPower(uint8_t c_signal)
     else
     {
       /* Check which setting should be used. */
-      switch(c_txPower)
+      switch(c_signal)
       {
       case 143U:                                                     /* 13dBm */
         s_cmdTxPower.txPower.IB =        0x3FU;
@@ -401,7 +401,7 @@ bool sf_rf_6lowpan_setTxPower(uint8_t c_signal)
         s_cmdTxPower.txPower.tempCoeff = 0x00U;
         break;
       }
-      cc1310.tx.signalStrength = c_txPower;
+      cc1310.tx.signalStrength = c_signal;
     }
 
       /* Transmit the tx power setting to the rf-core */

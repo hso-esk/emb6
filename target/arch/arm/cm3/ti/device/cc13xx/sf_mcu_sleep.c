@@ -27,13 +27,16 @@ extern "C" {
 #include <stdbool.h>
 
 /* Chip specific */
+#if USE_TI_RTOS
 #include <xdc/runtime/Error.h>
+#include "emb6_semaphore.h"
+#endif
 #include "driverlib/pwr_ctrl.h"
 #include "driverlib/flash.h"
 #include "driverlib/vims.h"
 #include "driverlib/sys_ctrl.h"
 
-#include "emb6_semaphore.h"
+
 
 #include "sf_mcu_sleep.h"
 #include "sf_mcu.h"
