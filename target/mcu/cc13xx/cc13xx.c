@@ -401,28 +401,28 @@ void hal_ledOn(uint16_t ui_led)
 #if USE_TI_RTOS
     PIN_setOutputValue(ledPinHandle, Board_LED0, 1);
 #else
-    bspLedClear( BSP_LED_1 );
+    bspLedSet( BSP_LED_1 );
 #endif
   break;
   case CC1310_LED1:
 #if USE_TI_RTOS
     PIN_setOutputValue(ledPinHandle, Board_LED1, 1);
 #else
-    bspLedClear( BSP_LED_2 );
+    bspLedSet( BSP_LED_2 );
 #endif
   break;
   case CC1310_LED2:
 #if USE_TI_RTOS
     PIN_setOutputValue(ledPinHandle, Board_LED2, 1);
 #else
-    bspLedClear( BSP_LED_3 );
+    bspLedSet( BSP_LED_3 );
 #endif
 break;
   case CC1310_LED3:
 #if USE_TI_RTOS
     PIN_setOutputValue(ledPinHandle, Board_LED3, 1);
 #else
-    bspLedClear( BSP_LED_4 );
+    bspLedSet( BSP_LED_4 );
 #endif
   break;
 }
