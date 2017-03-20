@@ -96,7 +96,8 @@ const uip_lladdr_t *uip_ds6_nbr_lladdr_from_ipaddr(const uip_ipaddr_t *ipaddr);
 void uip_ds6_link_neighbor_callback(int status, int numtx);
 void uip_ds6_neighbor_periodic(void);
 int uip_ds6_nbr_num(void);
-#if UIP_ND6_SEND_NA
+
+#if UIP_ND6_SEND_NS
 /**
  * \brief Refresh the reachable state of a neighbor. This function
  * may be called when a node receives an IPv6 message that confirms the
@@ -105,7 +106,7 @@ int uip_ds6_nbr_num(void);
  * should be refreshed.
  */
 void uip_ds6_nbr_refresh_reachable_state(const uip_ipaddr_t *ipaddr);
-#endif /* UIP_ND6_SEND_NA */
+#endif /* UIP_ND6_SEND_NS */
 
 /**
  * \brief
