@@ -340,12 +340,12 @@ static void loc_demoAppsConf(s_ns_t* pst_netStack, e_nsErr_t *p_err)
     #endif
 
     #if DEMO_USE_UDP_SOCKET
-    demo_udpSocketCfg(pst_netStack);
+    demo_udpSocketConf(pst_netStack);
     #endif
 
-  #if DEMO_USE_UDP_SOCKET_SIMPLE
-  demo_udpSocketSimpleCfg(pst_netStack);
-  #endif
+    #if DEMO_USE_UDP_SOCKET_SIMPLE
+    demo_udpSocketSimpleCfg(pst_netStack);
+    #endif
 
     #if DEMO_USE_APTB
     demo_aptbConf(pst_netStack);
