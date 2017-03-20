@@ -140,7 +140,7 @@ void cc13xx_eventHandler(c_event_t c_event, p_data_t p_data)
   e_nsErr_t err = NETSTK_ERR_NONE;
 
   /* check if it is the right event */
-  if(c_event == NETSTK_RF_EVENT )
+  if(c_event == EVENT_TYPE_RF )
   {
     ps_rf_netstk->phy->recv(sf_rf_get_p_lastPkt(), sf_rf_get_LenLastPkt(), &err);
   }
@@ -158,7 +158,7 @@ bool sf_rf_6lowpan_init(void *p_netstk)
   if(sf_rf_switchState(RF_STATUS_RX_LISTEN)!= ROUTINE_DONE)
     return false;
   /* initialize local variables */
-  RF_SEM_WAIT(NETSTK_RF_EVENT);
+  RF_SEM_WAIT(EVENT_TYPE_RF);
 
   return true;
 }
@@ -593,7 +593,7 @@ static void rx_call_back(uint32_t l_flag)
       else
       {
         /* signal complete reception interrupt */
-        en_evprocResCode_t err = RF_SEM_POST(NETSTK_RF_EVENT);
+        en_evprocResCode_t err = RF_SEM_POST(EVENT_TYPE_RF);
         /* handle the received packet */
         sf_rf_switchState(RF_STATUS_RX);
       }
