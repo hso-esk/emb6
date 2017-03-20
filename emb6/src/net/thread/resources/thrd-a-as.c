@@ -17,6 +17,7 @@
 #include "thrd-router-id.h"
 #include "thrd-leader-db.h"
 #include "thrd-route.h"
+#include "thrd-addr.h"
 
 #define     LOGGER_ENABLE                 LOGGER_THRD_NET
 #include    "logger.h"

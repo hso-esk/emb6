@@ -11,6 +11,8 @@
 #define EMB6_INC_NET_RIP_THRD_PARTITION_H_
 
 #include "tlv.h"
+#include "thread_conf.h"
+
 
 /**
  * Thread Network Partition.

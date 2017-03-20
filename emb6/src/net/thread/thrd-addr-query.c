@@ -8,7 +8,6 @@
  */
 
 #include "emb6.h"
-#include "thread_conf.h"
 #include "stdlib.h"
 #include "clist.h"
 #include "memb.h"
@@ -22,6 +21,7 @@
 #include "er-coap-engine.h"
 #include "rest-engine.h"
 #include "thrd-addr-query.h"
+#include "thrd-addr.h"
 
 #define     LOGGER_ENABLE                 LOGGER_THRD_NET
 #include    "logger.h"

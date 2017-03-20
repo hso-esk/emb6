@@ -10,6 +10,8 @@
 #ifndef EMB6_INC_NET_RIP_THRD_ADDR_H_
 #define EMB6_INC_NET_RIP_THRD_ADDR_H_
 
+#include "thread_conf.h"
+
 #define IPV6_UNIVERSAL_LOCAL_BIT				0x01
 #define IPV6_UNIVERSAL_LOCAL_BIT_INVERT_MASK	0xfd
 
