@@ -50,6 +50,10 @@
 #include "uip.h"
 #include "mac.h"
 
+#if USE_THREAD
+#include "thread_conf.h"
+#endif /* #if USE_THREAD  */
+
 #ifndef SICSLOWPAN_USE_MESH_HEADER
 #define SICSLOWPAN_USE_MESH_HEADER	FALSE
 #endif /* SICSLOWPAN_USE_MESH_HEADER */
