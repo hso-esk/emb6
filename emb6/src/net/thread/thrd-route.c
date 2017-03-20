@@ -778,7 +778,7 @@ thrd_rdb_link_update(uint8_t router_id, uint8_t link_margin,
 		l->L_link_margin = link_margin_shifted;
 		l->L_incoming_quality = thrd_rdb_link_calc_incoming_quality(link_margin_shifted);
 		l->L_outgoing_quality = outgoing_quality;
-		ctimer_set(&l->L_age, MAX_NEIGHBOR_AGE * bsp_get(E_BSP_GET_TRES), handle_max_neighbor_age_timeout, l);
+		ctimer_set(&l->L_age, MAX_NEIGHBOR_AGE * bsp_getTRes(), handle_max_neighbor_age_timeout, l);
 
 		/* Add new link first - assuming that there is a reason to add this
 		 * and that there is a packet coming soon. */

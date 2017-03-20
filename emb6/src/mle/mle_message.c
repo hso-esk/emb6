@@ -64,7 +64,7 @@
 /**
 * Generate 32-bit Random
 */
-#define MLE_MSG_RADNOM()		(bsp_getrand(0) | (bsp_getrand(0)<< 16))
+#define MLE_MSG_RADNOM()		(bsp_getrand(0, 0) | (bsp_getrand(0, 0)<< 16))
 
 
 /*==============================================================================

@@ -119,7 +119,7 @@ thrd_leader_init(void)
 
 	coap_init();
 	// Start timer for incrementing ID_sequence_number.
-	ctimer_set(&leader_ct, ID_SEQUENCE_PERIOD * bsp_get(E_BSP_GET_TRES), handle_increment_id_seq_num_timer, NULL);
+	ctimer_set(&leader_ct, ID_SEQUENCE_PERIOD * bsp_getTRes(), handle_increment_id_seq_num_timer, NULL);
 }
 
 /* --------------------------------------------------------------------------- */
@@ -217,7 +217,7 @@ thrd_leader_unassign_rid(uint8_t router_id)
 		// Removing the router id from the Router ID Set.
 		thrd_rdb_rid_rm(rid);
 		// Set the router id's reuse time.
-		ctimer_set(&ida->ID_reuse_time, ID_REUSE_DELAY * bsp_get(E_BSP_GET_TRES), handle_id_reuse_delay_timeout, ida);
+		ctimer_set(&ida->ID_reuse_time, ID_REUSE_DELAY * bsp_getTRes(), handle_id_reuse_delay_timeout, ida);
 		thrd_trickle_reset(); // Reset trickle algorithm (MLE advertisement sending rate).
 	}
 }
@@ -261,7 +261,6 @@ thrd_request_router_id(uint8_t *router_id)
 
 	thrd_create_meshlocal_prefix(&leader_addr);
 	thrd_create_rloc_iid(&leader_addr, THRD_CREATE_RLOC16(thrd_partition.leader_router_id, 0));
-
 
 	// THRD_LINK_LOCAL_ALL_NODES_ADDR(&leader_addr);
 

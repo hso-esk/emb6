@@ -8,7 +8,6 @@
  */
 
 #include "emb6.h"
-#include "thread_conf.h"
 #include "bsp.h"
 #include "thrd-partition.h"
 #include "rip.h"
@@ -69,10 +68,10 @@ thrd_partition_start(void)
 		thrd_leader_init();				// Initialize itself as the Leader.
 
 		thrd_partition.leader_router_id = thrd_iface.router_id;
-		thrd_partition.Partition_ID = (bsp_getrand(0) << 16) | (bsp_getrand(0));
-		thrd_partition.VN_version = (uint8_t) bsp_getrand(0);
-		thrd_partition.VN_stable_version = (uint8_t) bsp_getrand(0);
-		thrd_partition.ID_sequence_number = (uint8_t) bsp_getrand(0);
+		thrd_partition.Partition_ID = (bsp_getrand(0, 0) << 16) | (bsp_getrand(0, 0));
+		thrd_partition.VN_version = (uint8_t) bsp_getrand(0, 0);
+		thrd_partition.VN_stable_version = (uint8_t) bsp_getrand(0, 0);
+		thrd_partition.ID_sequence_number = (uint8_t) bsp_getrand(0, 0);
 		thrd_partition.Partition_weight = 64;
 
 		thrd_print_partition_data();

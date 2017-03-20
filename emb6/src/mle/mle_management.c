@@ -276,7 +276,7 @@ static void check_child_state(void *ptr)
 	{
 		LOG_RAW(ANSI_COLOR_YELLOW "Child Linked \n"ANSI_COLOR_RESET);
 		/* trigger the timer to count the time out  */
-		ctimer_set(&child->timer, child->time_out * bsp_get(E_BSP_GET_TRES) , time_out_remove_child, (void *) &child );
+		ctimer_set(&child->timer, child->time_out * bsp_getTRes() , time_out_remove_child, (void *) &child );
 		LOG_RAW(ANSI_COLOR_YELLOW"CHild time out is : %i \n"ANSI_COLOR_RESET , child->time_out);
 	}
 
@@ -329,7 +329,7 @@ static void reply_for_mle_parent_request(void *ptr)
 		mle_send_msg( &cmd,&child->tmp);
 
 		/* trigger the timer to remove the child after period of pending time (if the state wasn't changed to linked) */
-		ctimer_set(&child->timer, 5 * bsp_get(E_BSP_GET_TRES) , check_child_state, (void *) &child->id );
+		ctimer_set(&child->timer, 5 * bsp_getTRes() , check_child_state, (void *) &child->id );
 	}
 }
 
@@ -393,7 +393,7 @@ static void mle_join_process(void *ptr)
 				send_mle_parent_request(1,0);
 				LOG_RAW(ANSI_COLOR_GREEN"[+] "ANSI_COLOR_RESET);
 				LOG_RAW("JP Waiting for incoming response from active Router\n"ANSI_COLOR_RESET);
-				ctimer_set(&c_mle_Timer, 2 * bsp_get(E_BSP_GET_TRES) , mle_join_process, NULL);
+				ctimer_set(&c_mle_Timer, 2 * bsp_getTRes() , mle_join_process, NULL);
 				req_sent_to_reed=0;
 				finish=1;
 				break;
@@ -485,7 +485,7 @@ static void mle_join_process(void *ptr)
 				send_mle_parent_request(1,1);
 				LOG_RAW(ANSI_COLOR_GREEN"[+] "ANSI_COLOR_RESET);
 				LOG_RAW("JP Waiting for incoming response from active Router and REED \n"); PRESET();
-				ctimer_set(&c_mle_Timer, 3 * bsp_get(E_BSP_GET_TRES) , mle_join_process, NULL);
+				ctimer_set(&c_mle_Timer, 3 * bsp_getTRes() , mle_join_process, NULL);
 				req_sent_to_reed=1;
 				finish=1;
 				break;
@@ -649,7 +649,7 @@ static void reply_for_mle_link_request(void *ptr)
 			MyNode.challenge= add_rand_challenge_to_cmd(&cmd);
 
 			MyNode.syn_state=SYN_PROCESS_LINK;
-			ctimer_set(&c_mle_Timer, 2 * bsp_get(E_BSP_GET_TRES) , mle_synchro_process, NULL);
+			ctimer_set(&c_mle_Timer, 2 * bsp_getTRes() , mle_synchro_process, NULL);
 		}
 
 		/* get the received challenge of the child */
@@ -694,7 +694,7 @@ static void mle_synchro_process(void *ptr)
 				send_mle_link_request();
 				/* change the state and trigger the timer */
 				MyNode.syn_state=SYN_PROCESS_LINK;
-				ctimer_set(&c_mle_Timer, 2 * bsp_get(E_BSP_GET_TRES) , mle_synchro_process, NULL);
+				ctimer_set(&c_mle_Timer, 2 * bsp_getTRes() , mle_synchro_process, NULL);
 				finish=1;
 				break;
 			case SYN_PROCESS_LINK:
@@ -774,7 +774,7 @@ static void mle_keep_alive(void *ptr)
 
 				state=KA_WAIT_RESPONSE;
 				/* set the timer to wait for a response within 2s  */
-				ctimer_set(&parent_Timer, 2 * bsp_get(E_BSP_GET_TRES) , mle_keep_alive, NULL);
+				ctimer_set(&parent_Timer, 2 * bsp_getTRes() , mle_keep_alive, NULL);
 				finish++;
 
 				break;
@@ -786,7 +786,7 @@ static void mle_keep_alive(void *ptr)
 						nbr_retry=0;
 						/* set my node as not linked and redo the join process */
 						MyNode.OpMode=NOT_LINKED;
-						ctimer_set(&parent_Timer, 2 * bsp_get(E_BSP_GET_TRES) , mle_join_process , NULL );
+						ctimer_set(&parent_Timer, 2 * bsp_getTRes() , mle_join_process , NULL );
 						finish++;
 					}
 				}
@@ -795,7 +795,7 @@ static void mle_keep_alive(void *ptr)
 					/* reset the counter of retry */
 					nbr_retry=0;
 					/* trigger the timer to count again*/
-					ctimer_set(&parent_Timer-2 , MyNode.timeOut * bsp_get(E_BSP_GET_TRES) , mle_keep_alive , NULL );
+					ctimer_set(&parent_Timer-2 , MyNode.timeOut * bsp_getTRes() , mle_keep_alive , NULL );
 					finish++;
 				}
 				/* set the state to send keep alive message next time*/
@@ -882,7 +882,7 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 			uip_ip6addr_copy(&param.source_addr,source_addr);
 
 			/* trigger the timer to reply after the random period */
-			ctimer_set(&nb->L_age, bsp_getrand(500) *  (bsp_get(E_BSP_GET_TRES) / 1000 ),
+			ctimer_set(&nb->L_age, bsp_getrand(0, 500) *  (bsp_getTRes() / 1000 ),
 								 reply_for_mle_link_request, (void *) &nb->L_router_id );
 		}
 		break;
@@ -998,7 +998,7 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 				}
 
 				/* trigger the timer to reply after the random period */
-				ctimer_set(&child->timer, bsp_getrand(MaxRand) *  (bsp_get(E_BSP_GET_TRES) / 1000 ) , reply_for_mle_parent_request, (void *) &child->id );
+				ctimer_set(&child->timer, bsp_getrand(0, MaxRand) *  (bsp_getTRes() / 1000 ) , reply_for_mle_parent_request, (void *) &child->id );
 
 			}
 		}
@@ -1075,7 +1075,7 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 				/* sen child id update response */
 				send_mle_child_update_response(&child->tmp);
 				/* restart the time out timer since we received a child update command */
-				ctimer_set(&child->timer, child->time_out * bsp_get(E_BSP_GET_TRES) , time_out_remove_child, (void *) &child );
+				ctimer_set(&child->timer, child->time_out * bsp_getTRes() , time_out_remove_child, (void *) &child );
 			}
 			else
 				LOG_RAW(ANSI_COLOR_CYAN"child not found \n"ANSI_COLOR_RESET);
@@ -1208,7 +1208,7 @@ uint8_t mle_init(void)
 	/**********************/
 
 	/* Trigger the timer for the join process */
-	ctimer_set(&c_mle_Timer, 1 * bsp_get(E_BSP_GET_TRES) , mle_join_process, (void *) NULL );
+	ctimer_set(&c_mle_Timer, 1 * bsp_getTRes() , mle_join_process, (void *) NULL );
 
 	LOG_RAW( "MLE protocol initialized ... ");PRESET();
 	return 1;
@@ -1312,7 +1312,7 @@ void mle_set_parent_mode()
 	linkaddr_set_node_shortAddr(&add);
 
 	/* trigger the timer for the synchronisation process */
-	ctimer_set(&c_mle_Timer, 2 * bsp_get(E_BSP_GET_TRES) , mle_synchro_process , NULL );
+	ctimer_set(&c_mle_Timer, 2 * bsp_getTRes() , mle_synchro_process , NULL );
 
 	/* start the trickle algorithm */
 	thrd_trickle_init();
@@ -1345,7 +1345,7 @@ void mle_set_child_mode(uint16_t rloc16)
 	thrd_trickle_stop();
 
 	/* trigger the timer to start sending keep alive messages */
-	ctimer_set(&parent_Timer, MyNode.timeOut * bsp_get(E_BSP_GET_TRES) , mle_keep_alive , NULL );
+	ctimer_set(&parent_Timer, MyNode.timeOut * bsp_getTRes() , mle_keep_alive , NULL );
 
 
 }

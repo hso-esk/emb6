@@ -182,7 +182,7 @@ thrd_eid_rloc_cache_t
 
 		entry->EID = eid;
 		entry->RLOC = rloc;
-		entry->Age = bsp_get(E_BSP_GET_TICK);
+		entry->Age = bsp_getTick();
 
 		list_push(eidRlocMapCache_list, entry);
 

@@ -37,10 +37,10 @@
  * Create a random Interface Identifier (IID).
  */
 #define thrd_create_random_iid(addr) do {			\
-		(addr)->u16[4] = bsp_getrand(0);			\
-		(addr)->u16[5] = bsp_getrand(0);			\
-		(addr)->u16[6] = bsp_getrand(0);			\
-		(addr)->u16[7] = bsp_getrand(0);			\
+		(addr)->u16[4] = bsp_getrand(0, 0);			\
+		(addr)->u16[5] = bsp_getrand(0, 0);			\
+		(addr)->u16[6] = bsp_getrand(0, 0);			\
+		(addr)->u16[7] = bsp_getrand(0, 0);			\
 } while(0)
 /**
  * Check whether the given IPv6 address's IID is valid (Not allowed: 0000:00ff:fe00:xxxx).

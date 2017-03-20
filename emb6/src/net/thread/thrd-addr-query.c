@@ -954,10 +954,10 @@ thrd_addr_qry_request(uip_ipaddr_t *target_eid)
 	if ( addr_qry == NULL ) {
 		// Add a new entry to the Address Query Set.
 		addr_qry = thrd_addr_qry_add(*target_eid,
-				THRD_AQ_TIMEOUT * bsp_get(E_BSP_GET_TRES),
-				THRD_AQ_INITIAL_RETRY_DELAY * bsp_get(E_BSP_GET_TRES));
+				THRD_AQ_TIMEOUT * bsp_getTRes(),
+				THRD_AQ_INITIAL_RETRY_DELAY * bsp_getTRes());
 		if ( addr_qry != NULL ) {
-			ctimer_set(&addr_qry->timer, THRD_AQ_TIMEOUT * bsp_get(E_BSP_GET_TRES), thrd_handle_timeout, addr_qry);
+			ctimer_set(&addr_qry->timer, THRD_AQ_TIMEOUT * bsp_getTRes(), thrd_handle_timeout, addr_qry);
 		}
 
 	} else {
