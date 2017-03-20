@@ -41,19 +41,21 @@
 /**
  *      \addtogroup emb6
  *      @{
+ *      \addtogroup net
+ *      @{
  *      \addtogroup thread
  *      @{
  *      \addtogroup demo_thread_node
  *      @{
 */
-/*! \file   demo_thread_node.c
+/*! \file   demp_thread_node.h
 
- \author Lukas Zimmermann, Nidhal Mars
+    \author Lukas Zimmermann, lukas.zimmermann@hs-offenburg.de
 
- \brief  Thread node example application
+    \brief  This is the header file of the demo Thread node application
 
- \version 0.0.1
- */
+    \version 0.0.1
+*/
 /*============================================================================*/
 
 /*==============================================================================
@@ -82,110 +84,66 @@
                           LOCAL VARIABLE DECLARATIONS
  =============================================================================*/
 
-#define     SEND_INTERVAL               5
-
-//static struct etimer timer;
-uint8_t cnt = 0;
-
-/*==============================================================================
-                               LOCAL FUNCTION PROTOTYPES
- =============================================================================*/
-
-//static void timer_callback(c_event_t c_event, p_data_t p_data);
-//static void execute_routine(void);
-
-/*==============================================================================
-                                       LOCAL FUNCTIONS
- =============================================================================*/
-
-//static void
-//timer_callback(c_event_t c_event, p_data_t p_data)
-//{
-//	if (etimer_expired(&timer))
-//	{
-//		execute_routine();
-//		etimer_restart(&timer);
-//	}
-//} /* _mcast_callback */
-
-//static void
-//execute_routine(void)
-//{
-//	switch(cnt) {
-//	case 0:
-//
-//		PRINTF("----------------------------------------------------\n");
-//		break;
-//	case 1:
-//		PRINTF("----------------------------------------------------\n");
-//		break;
-//	case 2:
-//		PRINTF("----------------------------------------------------\n");
-//		break;
-//	case 3:
-//		PRINTF("----------------------------------------------------\n");
-//		break;
-//	default:
-//		exit(0);
-//		break;
-//	}
-//	cnt++;
-//}
-
 /*==============================================================================
                                          API FUNCTIONS
  =============================================================================*/
 
-int8_t demo_threadNodeInit(void)
+/*----------------------------------------------------------------------------*/
+/*    demo_threadNodeInit()                                                   */
+/*----------------------------------------------------------------------------*/
+int8_t demo_threadInit(void)
 {
+  PRINTF("|===============================================================================|\n\r");
+  PRINTF("|                                                                               |\n\r");
 	// Initialize Thread device.
-	thrd_dev_init();
-	PRINTF("Initializing Thread Interface.\n");
-	thrd_iface_init();
+  thrd_dev_init();
+  // Initialize Thread interface.
+  thrd_iface_init();
+  // Initialize Thread Network Data.
+  // thrd_network_data_init();
 
-	thrd_network_data_init();
+  PRINTF("|THREAD DEVICE INITIALIZED                                                      |\n\r");
+  PRINTF("|===============================================================================|\n\r");
 
-	if ( !mle_init() ){ return 0; }
+  if ( !mle_init() ){ return -1; }
 
-	/* set periodic timer */
-	// etimer_set(&timer, SEND_INTERVAL * bsp_get(E_BSP_GET_TRES), timer_callback);
-
-    return 1;
+  return 0;
 }
 
 /*----------------------------------------------------------------------------*/
-/*    demo_coapConf()                                                           */
+/*    demo_threadNodeConf()                                                   */
 /*----------------------------------------------------------------------------*/
 
-uint8_t demo_threadNodeConf(s_ns_t* p_netstk)
+int8_t demo_threadConf(s_ns_t* p_netstk)
 {
-    uint8_t c_ret = 1;
+  int8_t ret = -1;
 
-    /*
-     * By default stack
-     */
-    if (p_netstk != NULL) {
-        if (!p_netstk->c_configured) {
-            p_netstk->hc    = &sicslowpan_driver;
-            p_netstk->frame = &framer_802154;
-            p_netstk->dllsec = &nullsec_driver;
-            p_netstk->c_configured = 1;
-
-        } else {
-            if ((p_netstk->hc    == &sicslowpan_driver) &&
-                (p_netstk->frame == &framer_802154)    	&&
-                (p_netstk->dllsec == &nullsec_driver)) {
-            }
-            else {
-                p_netstk = NULL;
-                c_ret = 0;
-            }
-        }
+  /*
+   * By default stack
+   */
+  if (p_netstk != NULL) {
+    if (!p_netstk->c_configured) {
+      p_netstk->hc    = &hc_driver_sicslowpan;
+      p_netstk->frame = &framer_802154;
+      p_netstk->dllsec = &dllsec_driver_null;
+      p_netstk->c_configured = 1;
+      ret = 0;
+    } else {
+      if ((p_netstk->hc    == &hc_driver_sicslowpan) &&
+          (p_netstk->frame == &framer_802154)    	&&
+          (p_netstk->dllsec == &dllsec_driver_null)) {
+        ret = 0;
+      } else {
+        p_netstk = NULL;
+        ret = -1;
+      }
     }
+  }
 
-    return (c_ret);
+  return (ret);
 }
 
+/** @} */
 /** @} */
 /** @} */
 /** @} */

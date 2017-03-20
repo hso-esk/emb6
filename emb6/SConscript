@@ -141,18 +141,6 @@ emb6 = {
         ]
     },
 
-    # Muticast extension to IPv6. Shall only be active if multicast is
-    # required.
-    'ipv6mc' : {
-        'src' : [
-            'net/ipv6/multicast/*.c',
-        ],
-
-        'inc' : [
-            'net/ipv6/multicast/',
-        ]
-    },
-
     # Sources of the 6LoWPAN frame handling such as the compression,
     # fragmentation etc.
     'sicslowpan' : {
@@ -258,10 +246,16 @@ net = {
         # protocol (RPL).
         'src' : [
             'net/rpl/*.c',
+            'net/ipv6/multicast/smrf.c',
+            'net/ipv6/multicast/esmrf.c',
+            'net/ipv6/multicast/uip-mcast6-route.c',
+            'net/ipv6/multicast/uip-mcast6-stats.c',
         ],
 
         'inc' : [
             'net/rpl/',
+            'net/ipv6/multicast/smrf.h',
+            'net/ipv6/multicast/esmrf.h',
         ],
 
         # C global defines
@@ -280,15 +274,53 @@ net = {
         # protocol (RPL).
         'src' : [
             'net/rpl/*.c',
+            'net/ipv6/multicast/smrf.c',
+            'net/ipv6/multicast/esmrf.c',
         ],
 
         'inc' : [
             'net/rpl/',
+            'net/ipv6/multicast/smrf.h',
+            'net/ipv6/multicast/esmrf.h',
         ],
 
         # C global defines
         'CPPDEFINES' : [
             ('NET_USE_RPL',1),
+        ],
+
+        # GCC flags
+        'CFLAGS' : [
+        ]
+    },
+
+	'thread' : {
+        # Adds the sources for MLE and Thread Network Layer.
+        'src' : [
+            'net/thread/resources/*.c',
+            'net/thread/*.c',
+            'mle/*.c',
+            'net/ipv6/multicast/roll-tm.c',
+            'net/ipv6/multicast/uip-mcast6-route.c',
+            'net/ipv6/multicast/uip-mcast6-stats.c',
+            'apl/er-coap/*.c',
+            'apl/rest-engine/*.c',
+        ],
+
+        'inc' : [
+            'net/thread/',
+            'mle/',
+            'net/ipv6/multicast/roll-tm.h',
+            'net/ipv6/multicast/uip-mcast6-route.h',
+            'net/ipv6/multicast/uip-mcast6-stats.h',
+            'apl/er-coap/',
+            'apl/rest-engine/',
+        ],
+
+        # C global defines
+        'CPPDEFINES' : [
+            ('USE_THREAD', 1),
+            ('THRD_USE_ROUTING', 1),
         ],
 
         # GCC flags

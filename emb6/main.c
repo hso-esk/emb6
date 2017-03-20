@@ -366,9 +366,12 @@ static s_demo_t* loc_demoAppsSet( void )
     EMB6_DEMO_SET( ret, aptb, emb6_demos );
 #endif /* #if DEMO_USE_APTB */
 
-
 #if DEMO_USE_DTLS
     EMB6_DEMO_SET( ret, dtls, emb6_demos );
+#endif /* #if DEMO_USE_DTLS */
+
+#if DEMO_USE_THREAD
+    EMB6_DEMO_SET( ret, thread, emb6_demos );
 #endif /* #if DEMO_USE_DTLS */
 
     if( ret > 0 )

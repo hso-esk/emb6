@@ -38,23 +38,22 @@
  *
  */
 /*============================================================================*/
+/*============================================================================*/
 /**
  *      \addtogroup emb6
  *      @{
- *   \addtogroup demo
- *   @{
- *   \addtogroup demo_coap
- *   @{
- *   \defgroup demo_coap_server CoAP server
- *
- *   Simple example of a CoAP Server requesting several resources.
- *   @{
+ *      \addtogroup net
+ *      @{
+ *      \addtogroup thread
+ *      @{
+ *      \addtogroup demo_thread_node
+ *      @{
 */
-/*! \file   demo_coap_srv.h
+/*! \file   demp_thread_node.h
 
-    \author Peter Lehmann, peter.lehmann@hs-offenburg.de
+    \author Lukas Zimmermann, lukas.zimmermann@hs-offenburg.de
 
-    \brief  This is the header file of the demo CoAP server application
+    \brief  This is the header file of the demo Thread node application
 
     \version 0.0.1
 */
@@ -65,24 +64,23 @@
 #define DEMO_COAP_SRV_H_
 /*==============================================================================
                          FUNCTION PROTOTYPES OF THE API
-==============================================================================*/
+/*============================================================================*/
+/*!
+   \brief Initialization of the Thread node application.
+
+    \return  0 on success, otherwise -1
+
+*/
+extern int8_t demo_threadInit(void);
 
 /*============================================================================*/
 /*!
-   \brief Initialization of the CoAP server application.
+    \brief Configuration of the Thread node application.
 
+    \return  0 on success, otherwise -1
 */
 /*============================================================================*/
-extern int8_t demo_threadNodeInit(void);
-
-/*============================================================================*/
-/*!
-    \brief Configuration of the CoAP server application.
-
-    \return 0 - error, 1 - success
-*/
-/*============================================================================*/
-extern uint8_t demo_threadNodeConf(s_ns_t* pst_netStack);
+extern int8_t demo_threadConf(s_ns_t* pst_netStack);
 
 #endif /* DEMO_COAP_SRV_H_ */
 /** @} */

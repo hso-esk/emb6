@@ -170,7 +170,7 @@ def createOptions():
     AddOption('--net',
               dest='net', type='choice',
               action='store',
-              choices=['rpl-router', 'rpl-dagroot',],
+              choices=['rpl-router', 'rpl-dagroot', 'thread'],
               default='rpl-router',
               metavar='<net-role>',
               help='Network type and its role')

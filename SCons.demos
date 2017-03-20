@@ -146,5 +146,12 @@ demos += [{
     'demo'  : ('mdns','client'),
 }]
 
+# The Thread REED demo gives an example of how to establish a connection
+# between devices.
+demos += [{
+    'id'    : 'ThreadREED',
+    'demo'  : ('thread', ''),
+}]
+
 
 Return('demos')

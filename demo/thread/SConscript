@@ -1,4 +1,4 @@
-thread_node = {
+thread = {
 	'demo' : [
 	],
 	'emb6' : [
@@ -29,4 +29,4 @@ thread_node = {
 	]	
 }
 
-Return('thread_node')
+Return('thread')
