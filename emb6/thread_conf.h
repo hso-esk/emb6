@@ -12,6 +12,28 @@
 // #include "thrd-dev.h"
 
 /*=============================================================================
+                                      THREAD
+===============================================================================*/
+
+/*
+ * scons --demos=ThreadREED --bsp=native --net=thread --os=none --mac=0x00AA
+ * --logger=3 --ccflags=MODULATION=MODULATION_2FSK50
+ */
+
+#ifndef USE_THREAD
+#define USE_THREAD                    FALSE
+#endif /* USE_THREAD */
+
+#ifndef THRD_USE_ROUTING
+#define THRD_USE_ROUTING              FALSE
+#endif /* THRD_USE_ROUTING */
+
+#if THRD_USE_ROUTING
+#define UIP_CONF_IPV6_THRD_ROUTING    TRUE
+#define SICSLOWPAN_USE_MESH_HEADER    TRUE
+#endif /* THRD_USE_ROUTING */
+
+/*=============================================================================
                                     ERROR CODES
 ===============================================================================*/
 
@@ -65,6 +87,7 @@ typedef enum {
 #define THRD_REALM_LOCAL_ALL_ROUTERS_ADDR(ipaddr)	uip_ip6addr(ipaddr, 0xff03, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0002)
 #define THRD_REALM_LOCAL_ALL_MPL_FORWARDERS_ADDR(ipaddr)	uip_ip6addr(ipaddr, 0xff03, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x00fc)
 
+
 // ------------- THREAD IPv6 ADDRESS PREFIX ----------------------
 #define	THRD_MESH_LOCAL_PREFIX		0xfd00
 
@@ -75,17 +98,7 @@ typedef enum {
                                 NETWORK LAYER SECTION
 ===============================================================================*/
 
-#ifndef THRD_USE_ROUTING
-#define THRD_USE_ROUTING				FALSE
-#endif /* THRD_USE_ROUTING */
-
-#if THRD_USE_ROUTING
-#define UIP_CONF_IPV6_THRD_ROUTING		TRUE
-#define SICSLOWPAN_USE_MESH_HEADER		TRUE
-#endif /* THRD_USE_ROUTING */
-
 // --------------- THREAD ROUTING PROTOCOL ----------------------
-
 
 /** Routing table size */
 #define THRD_CONF_MAX_ROUTES            32 // Must be 32!!!
