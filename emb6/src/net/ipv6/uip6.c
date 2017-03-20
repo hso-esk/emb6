@@ -90,7 +90,7 @@
 #if UIP_CONF_IPV6_RPL
 #include "rpl.h"
 #include "rpl-private.h"
-#endif
+#endif /* UIP_CONF_IPV6_RPL */
 
 #if UIP_ND6_SEND_NA
 #include "uip-ds6-nbr.h"
