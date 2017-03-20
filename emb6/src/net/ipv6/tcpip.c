@@ -711,7 +711,7 @@ tcpip_ipv6_output(void)
 			/*
 			 * Send the queued packets from here, may not be 100% perfect though.
 			 * This happens in a few cases, for example when instead of receiving a
-			 * NA after sendiong a NS, you receive a NS with SLLAO: the entry moves
+			 * NA after sending a NS, you receive a NS with SLLAO: the entry moves
 			 * to STALE, and you must both send a NA and the queued packet.
 			 */
 			if(uip_packetqueue_buflen(&nbr->packethandle) != 0) {
