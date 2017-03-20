@@ -72,6 +72,8 @@
 /*!
    \brief Initialization of the simple UDP client server application.
 
+   \return  0 on success, otherwise -1
+
 */
 /*----------------------------------------------------------------------------*/
 int8_t demo_udpAliveInit(void);
@@ -80,10 +82,10 @@ int8_t demo_udpAliveInit(void);
 /*!
     \brief Configuration of the simple UDP client application.
 
-    \return 0 - error, 1 - success
+    \return  0 on success, otherwise -1
 */
 /*----------------------------------------------------------------------------*/
-uint8_t demo_udpAliveConf(s_ns_t* pst_netStack);
+int8_t demo_udpAliveConf(s_ns_t* pst_netStack);
 
 #endif /* _DEMO_UDP_ALIVE_H_ */
 /** @} */

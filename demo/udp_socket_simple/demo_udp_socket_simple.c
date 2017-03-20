@@ -195,7 +195,7 @@ static void _tx_eventHandler(c_event_t c_event, p_data_t p_data)
     ps_dag_desc = rpl_get_any_dag();
     if (ps_dag_desc) {
 
-      LOG1_INFO("UDP Tx Seq.-Nr.: %d", udp_socket_currSeqTx);
+      LOG1_INFO("UDP Tx Seq.-Nr.: %lu", udp_socket_currSeqTx);
       /*Issue transmission request */
       udp_socket_sendto(&s_soc, &data, 1, &ps_dag_desc->dag_id ,DEMO_UDP_SIMPLE_PORT);
     }
@@ -242,7 +242,7 @@ int8_t demo_udpSocketSimpleInit(void)
 #endif /* if (DEMO_UDP_SOCKET_SIMPLE_ROLE_CLIENT == TRUE) */
 
   /* Always success */
-  return 1;
+  return 0;
 } /* demo_udpSocketSimpleInit() */
 
 
@@ -250,7 +250,7 @@ int8_t demo_udpSocketSimpleInit(void)
 /*
 * demo_udpSocketSimpleCfg()
 */
-int8_t demo_udpSocketSimpleCfg(s_ns_t *p_netstk)
+int8_t demo_udpSocketSimpleConf(s_ns_t *p_netstk)
 {
   int8_t i_ret = -1;
 
@@ -259,15 +259,15 @@ int8_t demo_udpSocketSimpleCfg(s_ns_t *p_netstk)
       p_netstk->hc = &hc_driver_sicslowpan;
       p_netstk->frame = &framer_802154;
       p_netstk->dllsec = &dllsec_driver_null;
-      i_ret = 1;
+      i_ret = 0;
     } else {
       if ((p_netstk->hc == &hc_driver_sicslowpan) &&
           (p_netstk->frame == &framer_802154) &&
           (p_netstk->dllsec == &dllsec_driver_null)) {
-        i_ret = 1;
+        i_ret = 0;
       } else {
         p_netstk = NULL;
-        i_ret = 0;
+        i_ret = -1;
       }
     }
   }

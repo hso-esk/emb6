@@ -1,7 +1,6 @@
-/**
- *   \addtogroup ctimer Callback timer library
- *   @{
-*/
+/*
+ * --- License --------------------------------------------------------------*
+ */
 /*
  * emb6 is licensed under the 3-clause BSD license. This license gives everyone
  * the right to use and distribute the code, either in binary or source code
@@ -13,12 +12,7 @@
  * more adaptivity during run-time.
  *
  * The license text is:
- *
- * Copyright (c) 2015,
- * Hochschule Offenburg, University of Applied Sciences
- * Laboratory Embedded Systems and Communications Electronics.
- * All rights reserved.
- *
+
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  * 1. Redistributions of source code must retain the above copyright notice,
@@ -40,161 +34,185 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
+ * Copyright (c) 2016,
+ * Hochschule Offenburg, University of Applied Sciences
+ * Institute of reliable Embedded Systems and Communications Electronics.
+ * All rights reserved.
  */
-/*============================================================================*/
-/*!
-    \file   ctimer.c
 
-    \author Artem Yushev 
+/*
+ *  --- Module Description ---------------------------------------------------*
+ */
+/**
+ *  \file       ctimer.c
+ *  \author     Institute of reliable Embedded Systems
+ *              and Communication Electronics
+ *  \date       $Date$
+ *  \version    $Version$
+ *
+ *  \brief      Callback timer module for emb::6.
+ *
+ *              This module provides so-called callback timer. A callback timer
+ *              can be used to trigger the execution of a callback function
+ *              after a specific period.
+ */
 
-    \brief  Functions to manage Contiki timers
-            Contiki has two main type of timers callback timers (ctimer) and
-            event timer (etimer)
-            The first one push callbacks after timer expires and the second one
-            push event when timer expires.
-
-  \version  0.1
-*/
-/*============================================================================*/
-/*==============================================================================
-                             INCLUDE FILES
-==============================================================================*/
+/*
+ *  --- Includes -------------------------------------------------------------*
+ */
 #include "emb6.h"
-
 #include "bsp.h"
 #include "evproc.h"
 #include "ctimer.h"
 #include "timer.h"
 #include "clist.h"
 
-/*==============================================================================
-                             LOCAL MACROS
-==============================================================================*/
-#define     LOGGER_ENABLE        LOGGER_CTIMER
-#if            LOGGER_ENABLE     ==     TRUE
-#define        LOGGER_SUBSYSTEM    "ctim"
-#endif
-#include    "logger.h"
 
-/*==============================================================================
-                            LOCAL VARIABLES
-==============================================================================*/
-LIST(gp_ctimList);
-static     char         gc_init = 0;
+#define LOGGER_ENABLE                   LOGGER_CTIMER
+#define LOGGER_SUBSYSTEM                "ctim"
+#include "logger.h"
 
-void ctimer_refresh(c_event_t event, void * data);
-
-/*==============================================================================
-                             LOCAL FUNCTIONS
-==============================================================================*/
-/**
- * \brief      Refresh a callback timer list
- * \param event        New event
- * \param data        Pointer to the data
- *
- * \sa ctimer_refresh()
+/*
+ *  --- Local Variables ---------------------------------------------------- *
  */
-void ctimer_refresh(c_event_t event, void * data)
+
+/** List for the callback timer. */
+LIST(gp_ctimList);
+
+
+/*
+ *  --- Local Function Prototypes ------------------------------------------ *
+ */
+
+/* Refresh the callback timer list. For further declaration please
+ * refer to the function definition */
+static void _ctimer_refresh( c_event_t event, void* data );
+
+
+/*
+ *  --- Local Functions ---------------------------------------------------- *
+ */
+
+/**
+ * \brief   Refresh the callback timer list.
+ *
+ *          This function iterates through the list of registered
+ *          callback timers and checks if they expired. If yes
+ *          the according callback will be called.
+ *          This function is given to the event timer as callback. It compares
+ *          the event timer structures given as parameter of the callback to identify
+ *          which of the callback timer expired actually.
+ *
+ * \param   event   New event
+ * \param   data    Pointer to the data
+ *
+ */
+void _ctimer_refresh( c_event_t event, void* data )
 {
     struct ctimer *pst_cTim;
-    for(pst_cTim = list_head(gp_ctimList); \
-        pst_cTim != NULL; \
-        pst_cTim = pst_cTim->next) {
-      if(&pst_cTim->etimer == data) {
-          list_remove(gp_ctimList, pst_cTim);
-          if(pst_cTim->f != NULL) {
-              pst_cTim->f(pst_cTim->ptr);
+
+    for( pst_cTim = list_head(gp_ctimList); pst_cTim != NULL;
+            pst_cTim = pst_cTim->next )
+    {
+      if( &pst_cTim->etimer == data )
+      {
+          list_remove( gp_ctimList, pst_cTim );
+          if( pst_cTim->f != NULL )
+          {
+              pst_cTim->f( pst_cTim->ptr );
           }
           break;
       }
     }
 }
-/*==============================================================================
-                             GLOBAL FUNCTIONS
-==============================================================================*/
-/*============================================================================*/
-/*  ctimer_init()                                                     */
-/*============================================================================*/
-void ctimer_init(void)
+
+
+/*
+ * --- Global Function Definitions ----------------------------------------- *
+ */
+
+/*---------------------------------------------------------------------------*/
+/*
+* ctimer_init()
+*/
+void ctimer_init( void )
 {
-    if (gc_init)
-        return;
-    etimer_init();
-    struct ctimer *c;
-    list_init(gp_ctimList);
-    for(c = list_head(gp_ctimList); c != NULL; c = c->next) {
-        etimer_set(&c->etimer, c->etimer.timer.interval, ctimer_refresh);
-    }
-    gc_init = 1;
-}
-/*============================================================================*/
-/*  ctimer_set()                                                     */
-/*============================================================================*/
-void ctimer_set(struct ctimer *c, clock_time_t t,
-       void (*f)(void *), void *ptr)
+    /* initialize timer list */
+    list_init( gp_ctimList );
+
+} /* ctimer_init() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* ctimer_set()
+*/
+void ctimer_set( struct ctimer* c, clock_time_t t,
+        fn_ctimer_cb_t f, void* ptr )
 {
     LOG_INFO("ctimer_set %p %u", c, (unsigned)t);
     c->f = f;
     c->ptr = ptr;
-    if(gc_init) {
-        etimer_set(&c->etimer, t, ctimer_refresh);
-    } else {
-        c->etimer.timer.interval = t;
-    }
 
-    list_add(gp_ctimList, c);
-}
-/*============================================================================*/
-/*  ctimer_reset()                                                     */
-/*============================================================================*/
-void ctimer_reset(struct ctimer *c)
-{
-  if(gc_init) {
-    etimer_reset(&c->etimer);
-  }
+    /* set the associated etimer and add the timer to the list */
+    etimer_set( &c->etimer, t, _ctimer_refresh );
+    list_add( gp_ctimList, c );
 
-  list_remove(gp_ctimList, c);
-  list_add(gp_ctimList, c);
-}
-/*============================================================================*/
-/*  ctimer_restart()                                                     */
-/*============================================================================*/
-void ctimer_restart(struct ctimer *c)
-{
-  if(gc_init) {
-    etimer_restart(&c->etimer);
-  }
+} /* ctimer_set() */
 
-  list_remove(gp_ctimList, c);
-  list_add(gp_ctimList, c);
-}
-/*============================================================================*/
-/*  ctimer_stop()                                                     */
-/*============================================================================*/
-void ctimer_stop(struct ctimer *pst_stopTim)
+
+/*---------------------------------------------------------------------------*/
+/*
+* ctimer_stop()
+*/
+void ctimer_stop( struct ctimer* pst_stopTim )
 {
-    if(gc_init) {
-        etimer_stop(&pst_stopTim->etimer);
-    } else {
-        pst_stopTim->etimer.next = NULL;
-        pst_stopTim->etimer.active = TMR_NOT_ACTIVE;
-    }
-    list_remove(gp_ctimList, pst_stopTim);
-}
-/*============================================================================*/
-/*  ctimer_expired()                                                     */
-/*============================================================================*/
-int ctimer_expired(struct ctimer *pst_checkTim)
+    /* Stop the timer and remove it from the list */
+    etimer_stop( &pst_stopTim->etimer );
+    list_remove( gp_ctimList, pst_stopTim );
+
+} /* ctimer_stop() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* ctimer_reset()
+*/
+void ctimer_reset( struct ctimer* c )
 {
-    struct ctimer *pst_t;
-    if(gc_init) {
-        return etimer_expired(&pst_checkTim->etimer);
-    }
-    for(pst_t = list_head(gp_ctimList); pst_t != NULL; pst_t = pst_t->next) {
-        if(pst_t == pst_checkTim) {
-            return 0;
-        }
-    }
-    return 1;
-}
-/** @} */
+  /* Reset the timer.*/
+  etimer_reset( &c->etimer );
+
+  /* Put timer to the end of the list */
+  list_remove( gp_ctimList, c );
+  list_add( gp_ctimList, c );
+
+} /* ctimer_reset() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* ctimer_restart()
+*/
+void ctimer_restart( struct ctimer* c )
+{
+  /* Restart the timer */
+  etimer_restart( &c->etimer );
+
+  /* Put timer to the end of the list */
+  list_remove( gp_ctimList, c );
+  list_add( gp_ctimList, c );
+
+} /* ctimer_restart() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* ctimer_expired()
+*/
+int ctimer_expired( struct ctimer* pst_checkTim )
+{
+    /* Check if the timer expired */
+    return etimer_expired( &pst_checkTim->etimer );
+
+} /* ctimer_expired() */

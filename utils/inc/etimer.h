@@ -1,4 +1,7 @@
 /*
+ * --- License --------------------------------------------------------------*
+ */
+/*
  * emb6 is licensed under the 3-clause BSD license. This license gives everyone
  * the right to use and distribute the code, either in binary or source code
  * format, as long as the copyright license is retained in the source code.
@@ -9,12 +12,7 @@
  * more adaptivity during run-time.
  *
  * The license text is:
- *
- * Copyright (c) 2015,
- * Hochschule Offenburg, University of Applied Sciences
- * Laboratory Embedded Systems and Communications Electronics.
- * All rights reserved.
- *
+
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  * 1. Redistributions of source code must retain the above copyright notice,
@@ -36,245 +34,253 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
+ * Copyright (c) 2016,
+ * Hochschule Offenburg, University of Applied Sciences
+ * Institute of reliable Embedded Systems and Communications Electronics.
+ * All rights reserved.
  */
-/*============================================================================*/
+
+/*
+ *  --- Module Description ---------------------------------------------------*
+ */
 /**
- *   \addtogroup utils
- *   @{
-*/
-/**
- *   \defgroup etimer Event timer library
+ *  \file       etimer.h
+ *  \author     Institute of reliable Embedded Systems
+ *              and Communication Electronics
+ *  \date       $Date$
+ *  \version    $Version$
  *
- *   This is a set of functions to generate particular event for all of the
- *   subscribed functions
- *   @{
-*/
-/*!
-    \file   etimer.h
+ *  \brief      Event timer module for emb::6.
+ *
+ *              This module provides so-called event timer. A event timer
+ *              can be used to trigger the execution of an event
+ *              after a specific period.
+ */
+#ifndef __ETIMER_H__
+#define __ETIMER_H__
 
-    \author Artem Yushev 
 
-    \brief  Functions to manage Contiki timers
-            Contiki has two main type of timers callback timers (ctimer) and
-            event timer (etimer)
-            The first one push callbacks after timer expires and the second one
-            push event when timer expires.
-
-  \version  0.1
-*/
-#ifndef __ETIMER_H_
-#define __ETIMER_H_
-/*============================================================================*/
-
-/*=============================================================================
-                                 INCLUDES
- =============================================================================*/
+/*
+ *  --- Includes -------------------------------------------------------------*
+ */
+#include <stdint.h>
 #include "timer.h"
 #include "evproc.h"
 
-/*=============================================================================
-                                 MACROS
- =============================================================================*/
 
+/*
+ * --- Macro Definitions --------------------------------------------------- *
+ */
+
+/** Timer is not active */
 #define TMR_ACTIVE                1
+/** Timer is active */
 #define TMR_NOT_ACTIVE            0
 
-/*=============================================================================
-                        STRUCTURES AND OTHER TYPEDEFS
- =============================================================================*/
-struct etimer {
-    struct     etimer     *next; /**<  Pointer to the next etimer structure in list */
-    struct     timer     timer; /**<  Structure to store start timestamp and interval.*/
-    uint8_t    active;/**<  Flag indicating either etimer has expired or not*/
+
+/*
+ *  --- Type Definitions -----------------------------------------------------*
+ */
+
+/**
+ * \brief   Structure of an etimer.
+ *
+ *          The etimer structure is used e.g. to access a specific event
+ *          timer e.g. to stop or to reset.
+ */
+struct etimer
+{
+    /** Pointer to the next etimer structure in the list. */
+    struct etimer* next;
+
+    /** Structure to store timer information. */
+    struct timer timer;
+
+    /** Flag indicating whether etimer has expired or not. */
+    uint8_t active;
 };
 
 
-/**
- * \brief      Set an event timer.
- * \param et   A pointer to the event timer
- * \param interval The interval before the timer expires.
- * \param callback callback function pointer
- *
- *             This function is used to set an event timer for a time
- *             sometime in the future. When the event timer expires,
- *             the event PROCESS_EVENT_TIMER will be posted to the
- *             process that called the etimer_set() function.
- *
- */
-void etimer_set(struct etimer *et, clock_time_t interval, pfn_callback_t callback);
-
-/**
- * \brief      Reset an event timer with the same interval as was
- *             previously set.
- * \param et   A pointer to the event timer.
- *
- *             This function resets the event timer with the same
- *             interval that was given to the event timer with the
- *             etimer_set() function. The start point of the interval
- *             is the exact time that the event timer last
- *             expired. Therefore, this function will cause the timer
- *             to be stable over time, unlike the etimer_restart()
- *             function.
- *
- * \sa etimer_restart()
+/*
+ *  --- Global Functions Definition ------------------------------------------*
  */
 
 /**
- * \brief      Reset an event timer with a new interval.
- * \param et   A pointer to the event timer.
- * \param interval The interval before the timer expires.
+ * etimer_init()
  *
- *             This function very similar to etimer_reset. Opposed to
- *             etimer_reset it is possible to change the timout.
- *             This allows accurate, non-periodic timers without drift.
+ * \brief      Initialize the event timer module.
  *
- * \sa etimer_reset()
+ *             This function initializes the event timer module and
+ *             should be called from the system boot up code.
  */
-void etimer_reset_with_new_interval(struct etimer *et, clock_time_t interval, pfn_callback_t pfn_callback);
+void etimer_init( void );
 
-CCIF void etimer_reset(struct etimer *et);
 
 /**
- * \brief      Restart an event timer from the current point in time
- * \param et   A pointer to the event timer.
+ * etimer_request_poll()
  *
- *             This function restarts the event timer with the same
- *             interval that was given to the etimer_set()
- *             function. The event timer will start at the current
- *             time.
+ * \brief   Make the event timer aware that the clock has changed
  *
- *             \note A periodic timer will drift if this function is
- *             used to reset it. For periodic timers, use the
- *             etimer_reset() function instead.
- *
- * \sa etimer_reset()
+ *          This function is used to inform the event timer module
+ *          that the system clock has been updated. Typically, this
+ *          function would be called from the timer interrupt
+ *          handler when the clock has ticked.
  */
-void etimer_restart(struct etimer *et);
+void etimer_request_poll(void);
+
 
 /**
- * \brief      Adjust the expiration time for an event timer
- * \param et   A pointer to the event timer.
- * \param td   The time difference to adjust the expiration time with.
+ * etimer_set()
  *
- *             This function is used to adjust the time the event
- *             timer will expire. It can be used to synchronize
- *             periodic timers without the need to restart the timer
- *             or change the timer interval.
+ * \brief   Set an event timer.
  *
- *             \note This function should only be used for small
- *             adjustments. For large adjustments use etimer_set()
- *             instead.
+ *          This function is used to set an event timer for a time
+ *          sometime in the future. When the event timer expires,
+ *          an according event will be posted to the and the associated
+ *          callback will be called.
  *
- *             \note A periodic timer will drift unless the
- *             etimer_reset() function is used.
+ * \param   et          Pointer to the event timer.
+ * \param   interval    The interval before the timer expires.
+ * \param   callback    Callback function to call if the event was fired.
  *
- * \sa etimer_set()
- * \sa etimer_reset()
  */
-void etimer_adjust(struct etimer *et, int32_t td);
+void etimer_set( struct etimer* et, clock_time_t interval,
+        pfn_callback_t callback);
+
 
 /**
- * \brief      Get the expiration time for the event timer.
- * \param et   A pointer to the event timer
- * \return     The expiration time for the event timer.
+ * etimer_stop()
  *
- *             This function returns the expiration time for an event timer.
- */
-clock_time_t etimer_expiration_time(struct etimer *et);
-
-/**
- * \brief      Get the start time for the event timer.
- * \param et   A pointer to the event timer
- * \return     The start time for the event timer.
+ * \brief   Stop a pending event timer.
  *
- *             This function returns the start time (when the timer
- *             was last set) for an event timer.
- */
-clock_time_t etimer_start_time(struct etimer *et);
-
-/**
- * \brief      Check if an event timer has expired.
- * \param et   A pointer to the event timer
- * \return     Non-zero if the timer has expired, zero otherwise.
+ *          This function stops an event timer that has previously
+ *          been set with etimer_set() or etimer_reset(). After
+ *          this function has been called, the event timer will not
+ *          emit any event when it expires.
  *
- *             This function tests if an event timer has expired and
- *             returns true or false depending on its status.
- */
-CCIF int etimer_expired(struct etimer *et);
-
-/**
- * \brief      Stop a pending event timer.
- * \param et   A pointer to the pending event timer.
- *
- *             This function stops an event timer that has previously
- *             been set with etimer_set() or etimer_reset(). After
- *             this function has been called, the event timer will not
- *             emit any event when it expires.
+ * \param   et   Pointer to the pending event timer to stop.
  *
  */
 void etimer_stop(struct etimer *et);
 
-/*==============================================================================
-                          FUNCTION PROTOTYPES
-==============================================================================*/
+
 /**
- * \brief      Initialize an event timer library.
+ * etimer_reset()
  *
- *             This function initializes the event timer library and
- *             should be called from the system boot up code.
- */
-void etimer_init(void);
-
-
-/**
- * \name Functions called from timer interrupts, by the system
- * @{
- */
-/**
- * \brief      Make the event timer aware that the clock has changed
+ * \brief   Reset an event timer with its initial interval.
  *
- *             This function is used to inform the event timer module
- *             that the system clock has been updated. Typically, this
- *             function would be called from the timer interrupt
- *             handler when the clock has ticked.
- */
-void etimer_request_poll(void);
-
-/**
- * \brief      Check if there are any non-expired event timers.
- * \return     True if there are active event timers, false if there are
- *             no active timers.
+  *         This function resets the event timer with the same
+ *          interval that was given to the event timer with the
+ *          etimer_set() function. The start point of the interval
+ *          is the exact time that the event timer last
+ *          expired. Therefore, this function will cause the timer
+ *          to be stable over time, unlike the etimer_restart()
+ *          function.
  *
- *             This function checks if there are any active event
- *             timers that have not expired.
+ * \param   et      A pointer to the event timer to reset.
  */
-int etimer_pending(void);
+void etimer_reset( struct etimer* et );
+
 
 /**
- * \brief      Get next event timer expiration time.
- * \return     Next expiration time of all pending event timers.
- *             If there are no pending event timers this function
- *           returns 0.
+ * etimer_restart()
+ *
+ * \brief   Restart an event timer from the current point in time.
+ *
+ *          This function restarts the event timer with the same
+ *          interval that was given to the etimer_set()
+ *          function. The event timer will start at the current
+ *          time.
+ *          The periodic timer will drift if this function is
+ *          used to reset it. For periodic timers, use the
+ *          etimer_reset() function instead.
+ *
+ * \param   et   Pointer to the event timer to restart.
+ *
+ */
+void etimer_restart( struct etimer* et );
+
+
+/**
+ * etimer_adjust()
+ *
+ * \brief   Adjust the expiration time for an event timer
+ *
+ *          This function is used to adjust the time the event
+ *          timer will expire. It can be used to synchronize
+ *          periodic timers without the need to restart the timer
+ *          or change the timer interval.
+ *          This function should only be used for small
+ *          adjustments. For large adjustments use etimer_set()
+ *          instead.
+ *          A periodic timer will drift unless the
+ *          etimer_reset() function is used.
+ *
+ * \param   et      Pointer to the event timer to adjust.
+ * \param   td      Time difference to adjust the expiration time with.
+ *
+ */
+void etimer_adjust( struct etimer* et, int32_t td );
+
+
+/**
+ * etimer_expired()
+ *
+ * \brief   Check if an event timer has expired.
+ *
+ *          This function tests if an event timer has expired and
+ *          returns true or false depending on its status.
+ *
+ * \param   et  Pointer to the event timer to check.
+ *
+ * \return  Non-zero if the timer has expired, zero otherwise.
+ *
+ */
+int etimer_expired( struct etimer *et );
+
+
+/**
+ * etimer_expiration_time()
+ *
+ * \brief   Get the expiration time for the event timer.
+ *
+ * \param   et  Pointer to the event timer to get the expiration time from.
+ *
+ * \return  The expiration time for the event timer.
+ *
+ */
+clock_time_t etimer_expiration_time( struct etimer* et );
+
+
+/**
+ * etimer_start_time()
+ *
+ * \brief   Get the start time for the event timer.
+ *
+ *          This function returns the start time (when the timer
+ *          was last set) for an event timer.
+ *
+ * \param   et  Pointer to the event timer to get the start time from.
+ *
+ * \return  The start time for the event timer. *
+ */
+clock_time_t etimer_start_time( struct etimer* et );
+
+
+/**
+ * etimer_request_poll()
+ *
+ * \brief   Get next event.
  *
  *             This functions returns next expiration time of all
- *             pending event timers.
- */
-clock_time_t etimer_next_expiration_time(void);
-
-/**
- * \brief      Get next event.
- * \return     Next expiration time.
- *             If there are no pending event timers this function
- *         returns 0.
+ *             pending event timers. In case no event is pending,
+ *             zero will be returned.
  *
- *             This functions returns next expiration time of all
- *             pending event timers.
+ * \return     Next expiration time. If there are no pending event
+ *             timers this function returns zero.
  */
-clock_time_t etimer_nextEvent(void);
+clock_time_t etimer_nextEvent( void );
 
 
+#endif /* __ETIMER_H__ */
 
-#endif /* ETIMER_H_ */
-/** @} */
-/** @} */
-/** @} */

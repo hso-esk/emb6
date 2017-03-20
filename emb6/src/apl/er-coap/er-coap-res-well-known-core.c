@@ -78,7 +78,7 @@
 /*---------------------------------------------------------------------------*/
 void
 well_known_core_get_handler(void *request, void *response, uint8_t *buffer,
-                            uint16_t preferred_size, int32_t *offset)
+                            uint16_t preferred_size, int32_t *offset, void* user)
 {
   size_t strpos = 0;            /* position in overall string (which is larger than the buffer) */
   size_t bufpos = 0;            /* position within buffer (bytes written) */

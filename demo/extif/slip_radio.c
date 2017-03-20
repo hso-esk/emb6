@@ -93,7 +93,7 @@ static int
 slip_radio_cmd_handler(const uint8_t *data, int len)
 {
   int i;
-  s_ns_t * ps_ns = NULL;
+  const s_ns_t * ps_ns = NULL;
 
   if(data[0] == '!') {
     /* should send out stuff to the radio - ignore it as IP */
@@ -174,12 +174,12 @@ int8_t demo_extifInit(void)
     slip_set_input_callback(slip_input_callback);
     packet_pos = 0;
     slip_init();
-    return 1;
+    return 0;
 }
 
-uint8_t demo_extifConf(s_ns_t* p_netstk)
+int8_t demo_extifConf(s_ns_t* p_netstk)
 {
-  uint8_t c_ret = 1;
+  int8_t ret = -1;
 
   if (p_netstk != NULL) {
     if (p_netstk->c_configured == 0) {
@@ -187,21 +187,21 @@ uint8_t demo_extifConf(s_ns_t* p_netstk)
       p_netstk->frame  = &framer_noframer;
       p_netstk->dllsec = &dllsec_driver_null;
       p_netstk->dllc   = &dllc_driver_null;
-      c_ret = 1;
+      ret = 0;
     } else {
       if ((p_netstk->hc     == &hc_driver_slipnet) &&
           (p_netstk->frame  == &framer_noframer) &&
           (p_netstk->dllsec == &dllsec_driver_null) &&
           (p_netstk->dllc   == &dllc_driver_null)) {
-        c_ret = 1;
+        ret = 0;
       } else {
         p_netstk = NULL;
-        c_ret = 0;
+        ret = -1;
       }
     }
   }
 
-  return (c_ret);
+  return ret;
 }
 
 /*---------------------------------------------------------------------------*/

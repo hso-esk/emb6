@@ -268,19 +268,19 @@ typedef struct lwm2m_object {
   static lwm2m_instance_t name[] = { __VA_ARGS__ }
 
 #define LWM2M_OBJECT(name, id, instances)                       \
-    static void lwm2m_get_h_##name(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset); \
-    static void lwm2m_put_h_##name(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset); \
-    static void lwm2m_post_h_##name(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset); \
-    static void lwm2m_delete_h_##name(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset); \
+    static void lwm2m_get_h_##name(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset, void* user); \
+    static void lwm2m_put_h_##name(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset, void* user); \
+    static void lwm2m_post_h_##name(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset, void* user); \
+    static void lwm2m_delete_h_##name(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset, void* user); \
     static resource_t rest_rsc_##name = { NULL, NULL, HAS_SUB_RESOURCES | IS_OBSERVABLE, NULL, lwm2m_get_h_##name, lwm2m_post_h_##name, lwm2m_put_h_##name, lwm2m_delete_h_##name, { NULL } }; \
     static const lwm2m_object_t name = { id, sizeof(instances)/sizeof(lwm2m_instance_t), LWM2M_OBJECT_PATH_STR(id), &rest_rsc_##name, instances}; \
-    static void lwm2m_get_h_##name(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset) { \
+    static void lwm2m_get_h_##name(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset, void* user) { \
       lwm2m_engine_handler(&name, request, response, buffer, preferred_size, offset); } \
-    static void lwm2m_put_h_##name(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset) { \
+    static void lwm2m_put_h_##name(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset, void* user) { \
       lwm2m_engine_handler(&name, request, response, buffer, preferred_size, offset); } \
-    static void lwm2m_post_h_##name(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset) { \
+    static void lwm2m_post_h_##name(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset, void* user) { \
       lwm2m_engine_handler(&name, request, response, buffer, preferred_size, offset); } \
-    static void lwm2m_delete_h_##name(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset) { \
+    static void lwm2m_delete_h_##name(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset, void* user) { \
       lwm2m_engine_delete_handler(&name, request, response, buffer, preferred_size, offset); }
 
 /* how do we register attributes in the above resource here ??? */

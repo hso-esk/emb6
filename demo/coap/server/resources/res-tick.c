@@ -55,7 +55,7 @@
 
 /* Handler for GET actions. For further details see the function definition */
 static void res_get_handler(void *request, void *response, uint8_t *buffer,
-        uint16_t preferred_size, int32_t *offset);
+        uint16_t preferred_size, int32_t *offset, void* user);
 
 /* Periodic handler */
 static void res_periodic_handler(void);
@@ -99,7 +99,7 @@ static int32_t event = 0;
  *          Returns the current counter value.
  */
 static void res_get_handler(void *request, void *response, uint8_t *buffer,
-        uint16_t preferred_size, int32_t *offset)
+        uint16_t preferred_size, int32_t *offset, void* user)
 {
     /* Just return the current counter value. */
     int length = snprintf( (char*)buffer, preferred_size,"Counter: %li", event );

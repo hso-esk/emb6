@@ -74,12 +74,12 @@ int8_t demo_dtlsInit(void);
 
 /*============================================================================*/
 /*!
-	\brief Configuration of the CoAP server application.
+    \brief Configuration of the CoAP server application.
 
-	\return 0 - error, 1 - success
+    \return  0 on success, otherwise -1
 */
 /*============================================================================*/
-uint8_t demo_dtlsConf(s_ns_t* pst_netStack);
+int8_t demo_dtlsConf(s_ns_t* pst_netStack);
 
 #endif /* DEMO_DTLS_SRV_H_ */
 /** @} */

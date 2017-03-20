@@ -94,6 +94,6 @@ int8_t demo_udpSocketSimpleInit(void);
  *
  * \return  0 on success, otherwise -1
  */
-int8_t demo_udpSocketSimpleCfg(s_ns_t *p_netStack);
+int8_t demo_udpSocketSimpleConf(s_ns_t *p_netStack);
 
 #endif /* __DEMO_UDP_SOCKET_SIMPLE_H__ */

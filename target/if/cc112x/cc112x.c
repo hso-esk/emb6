@@ -477,7 +477,7 @@ static void rf_init(void *p_netstk, e_nsErr_t *p_err)
   rf_calibrateRCOsc();
 
   /* initialize local variables */
-  evproc_regCallback(NETSTK_RF_EVENT, rf_eventHandler);
+  evproc_regCallback(EVENT_TYPE_RF, rf_eventHandler);
 
   /* configure operating mode and channel number */
   p_ctx->cfgFreqChanNum = 0;
@@ -829,7 +829,7 @@ static void rf_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err) {
        * command is issued.
        * Trigger event-process manually
        */
-      rf_eventHandler(NETSTK_RF_EVENT, NULL);
+      rf_eventHandler(EVENT_TYPE_RF, NULL);
       break;
 
     case NETSTK_CMD_RF_RSSI_GET:
@@ -1360,7 +1360,7 @@ static void rf_rx_chksum(struct s_rf_ctx *p_ctx) {
     p_ctx->state = RF_STATE_RX_FINI;
     if (p_ctx->rxReqAck == FALSE) {
       /* signal upper layer */
-      evproc_putEvent(E_EVPROC_HEAD, NETSTK_RF_EVENT, p_ctx);
+      evproc_putEvent(E_EVPROC_HEAD, EVENT_TYPE_RF, p_ctx);
     }
   }
   else {
@@ -1407,7 +1407,7 @@ static void rf_rx_txAckSync(struct s_rf_ctx *p_ctx) {
 static void rf_rx_txAckFini(struct s_rf_ctx *p_ctx) {
 
   p_ctx->state = RF_STATE_RX_TXACK_FINI;
-  evproc_putEvent(E_EVPROC_HEAD, NETSTK_RF_EVENT, p_ctx);
+  evproc_putEvent(E_EVPROC_HEAD, EVENT_TYPE_RF, p_ctx);
 }
 #endif /* #if (NETSTK_SUPPORT_SW_RF_AUTOACK == TRUE) */
 
@@ -1637,7 +1637,7 @@ static void rf_eventHandler(c_event_t c_event, p_data_t p_data) {
   struct s_rf_ctx *p_ctx = &rf_ctx;
 
   /* handle nested events */
-  if (c_event == NETSTK_RF_EVENT) {
+  if (c_event == EVENT_TYPE_RF) {
     if ((p_ctx->state == RF_STATE_RX_FINI) ||
         (p_ctx->state == RF_STATE_RX_TXACK_FINI)) {
       rf_rx_fini(p_ctx);

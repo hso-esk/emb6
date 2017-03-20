@@ -28,6 +28,7 @@
 #include <driverlib/rf_mailbox.h>
 #include <driverlib/rf_common_cmd.h>
 #include <driverlib/rf_prop_cmd.h>
+#include "bsp.h"
 //#include <ti/drivers/rf/RF.h>
 
 
@@ -107,13 +108,11 @@ rfc_CMD_PROP_RADIO_DIV_SETUP_t RF_802_15_4_cmdPropRadioDivSetup =
     .formatConf.bBitReversal = 0x0,
     .formatConf.bMsbFirst = 0x1,
     .formatConf.fecMode = 0x0,
-
 #if NETSTK_CFG_IEEE_802154G_EN
 	.formatConf.whitenMode = 0x6,
 #else
 	.formatConf.whitenMode = 0x0,
 #endif
-
 	.config.frontEndMode = 0x0,
     .config.biasMode = 0x1,
     .config.bNoFsPowerUp = 0x0,
@@ -142,9 +141,9 @@ rfc_CMD_FS_t RF_802_15_4_cmdFs =
     .synthConf.bTxMode = 0x0,
     .synthConf.refFreq = 0x0,
     .__dummy0 = 0x00,
-//    .midPrecal = 0x00,
-//   .ktPrecal = 0x00,
-//    .tdcPrecal = 0x0000,
+    .midPrecal = 0x00,
+    .ktPrecal = 0x00,
+    .tdcPrecal = 0x0000,
 };
 
 
@@ -169,10 +168,9 @@ rfc_CMD_PROP_TX_ADV_t RF_802_15_4_cmdPropTxAdv =
                                               //!<        1: Include sync word in CRC calculation
     .pktConf.bCrcIncHdr = 0x0,   //!< \brief 0: Do not include header in CRC calculation<br>
                                  //!<        1: Include header in CRC calculation
-
-
 #if NETSTK_CFG_IEEE_802154G_EN
-    .numHdrBits = 16,          // Number of bits in header (032)
+    .numHdrBits = 16,          // Number of bits in header (0�32)
+
 	.preTrigger.triggerType = TRIG_REL_START, /* Setting needed for 15.4g due to bug. Will do the same as TRIG_NOW */
 	.preTrigger.bEnaCmd = 0,
 	.preTrigger.triggerNo = 0,
@@ -240,7 +238,7 @@ rfc_CMD_PROP_RX_ADV_t RF_802_15_4_cmdPropRxAdv =
                                                 //!<        0: Unlimited or unknown length
 
 #if NETSTK_CFG_IEEE_802154G_EN
-	.hdrConf.numHdrBits = 16,          // Number of bits in header (032)
+	.hdrConf.numHdrBits = 16,          // Number of bits in header (0�32)
     .hdrConf.numLenBits = 11,
 	.lenOffset = -4,
 #else
@@ -248,8 +246,9 @@ rfc_CMD_PROP_RX_ADV_t RF_802_15_4_cmdPropRxAdv =
     .hdrConf.numLenBits = 0x8,
     .lenOffset = -2,
 #endif
-
     .hdrConf.lenPos = 0x0,
+
+
     .addrConf.addrType = 0x0,
     .addrConf.addrSize = 0x0,
     .addrConf.addrPos = 0x0,

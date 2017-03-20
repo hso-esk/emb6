@@ -130,16 +130,16 @@ int8_t demo_mdnsInit(void)
 	pst_server_udp_socket->udp_conn->rport = UIP_HTONS(3001);
 	udp_socket_bind(pst_server_udp_socket, 3000);
 
-	return 1;
+	return 0;
 }
 
 /*------------------------------------------------------------------------------
 demo_mdnsConf()
 ------------------------------------------------------------------------------*/
 
-uint8_t demo_mdnsConf(s_ns_t* pst_netStack)
+int8_t demo_mdnsConf(s_ns_t* pst_netStack)
 {
-  uint8_t c_ret = 1;
+  int8_t ret = -1;
 
   /*
    * By default stack
@@ -149,19 +149,19 @@ uint8_t demo_mdnsConf(s_ns_t* pst_netStack)
       pst_netStack->hc = &hc_driver_sicslowpan;
       pst_netStack->frame = &framer_802154;
       pst_netStack->dllsec = &dllsec_driver_null;
-      c_ret = 1;
+      ret = 0;
     } else {
       if ((pst_netStack->hc == &hc_driver_sicslowpan) &&
           (pst_netStack->frame == &framer_802154) &&
           (pst_netStack->dllsec == &dllsec_driver_null)) {
-        c_ret = 1;
+        ret = 0;
       } else {
         pst_netStack = NULL;
-        c_ret = 0;
+        ret = -1;
       }
     }
   }
-  return (c_ret);
+  return ret;
 }
 
 /** @} */

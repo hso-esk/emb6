@@ -125,13 +125,17 @@ static void  _aptb_callback(struct udp_socket *c, void *ptr,
              const uint8_t *data,             uint16_t datalen)
 {
     char        pc_buf[MAX_S_PAYLOAD_LEN];
-    uint64_t    seqID;
+    uint32_t    seqID = 0;
 
     if (data != NULL)
     {
         if (data[0] == EMB6_APTB_REQUEST) {
-            seqID = (data[1] << 24) + (data[2] << 16) +
-                    (data[3] << 8)  + data[4];
+
+              seqID += ( ((uint32_t)data[1] << 24) && 0xff000000 );
+              seqID += ( ((uint32_t)data[2] << 16) && 0x00ff0000 );
+              seqID += ( ((uint32_t)data[3] << 8) && 0x0000ff00 );
+              seqID += ( ((uint32_t)data[4]) && 0x000000ff );
+
             LOG_INFO("Request sequence: [%lu]", seqID);
             seqID++;
 
@@ -167,15 +171,15 @@ int8_t demo_aptbInit(void)
     udp_socket_connect(&st_udp_socket, NULL, _LISTEN_PORT);
     LOG_INFO("local port %u", _LOCAL_PORT);
     LOG_INFO("APTB demo initialized, waiting for connection...");
-    return 1;
+    return 0;
 }/* demo_aptbInit()  */
 
 /*----------------------------------------------------------------------------*/
 /*    demo_aptbConf()                                                           */
 /*----------------------------------------------------------------------------*/
-uint8_t demo_aptbConf(s_ns_t* pst_netStack)
+int8_t demo_aptbConf(s_ns_t* pst_netStack)
 {
-  uint8_t c_ret = 1;
+  int8_t ret = -1;
 
   /*
    * By default stack
@@ -186,21 +190,21 @@ uint8_t demo_aptbConf(s_ns_t* pst_netStack)
       pst_netStack->dllsec = &dllsec_driver_null;
       pst_netStack->frame = &framer_802154;
       pst_netStack->c_configured = 1;
-      /* Transceiver interface is defined by @ref board_conf function*/
-      /* pst_netStack->inif   = $<some_transceiver>;*/
+      ret = 0;
     } else {
       if ((pst_netStack->hc == &hc_driver_sicslowpan) &&
           (pst_netStack->dllsec == &dllsec_driver_null) &&
           (pst_netStack->frame == &framer_802154)) {
         /* right configuration */
+        ret = 0;
       } else {
         pst_netStack = NULL;
-        c_ret = 0;
+        ret = -1;
       }
     }
   }
 
-  return (c_ret);
+  return ret;
 }/* demo_aptbConf()  */
 /** @} */
 /** @} */

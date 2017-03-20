@@ -74,6 +74,49 @@ memb_alloc(struct memb *m)
   return NULL;
 }
 /*---------------------------------------------------------------------------*/
+void *
+memb_allocm(struct memb *m, int n)
+{
+  int i;
+  int j;
+
+  for(i = 0; i < m->num; ++i) {
+    if(m->count[i] == 0) {
+
+      /* we found an unused block and can start from here */
+      for(j = 0; (((j + i) < m->num) && (j < n)); j++ ) {
+
+        if( m->count[i+j] == 0 ) {
+          /* found free block ... check next*/
+          continue;
+        }
+        else {
+          /* block is occupied ... break and restart with next
+           * free block.*/
+          break;
+        }
+      }
+
+      if( j < n ) {
+        /* block was not available. */
+        i += j;
+        continue;
+      }
+      else {
+        /* whole free block was found. */
+        for( j = 0; j < n; j++ )
+          ++(m->count[i+j]);
+
+        return (void *)((char *)m->mem + (i * m->size));
+      }
+    }
+  }
+
+  /* No free block was found, so we return NULL to indicate failure to
+     allocate block. */
+  return NULL;
+}
+/*---------------------------------------------------------------------------*/
 char
 memb_free(struct memb *m, void *ptr)
 {
@@ -84,7 +127,7 @@ memb_free(struct memb *m, void *ptr)
      which the pointer "ptr" points to. */
   ptr2 = (char *)m->mem;
   for(i = 0; i < m->num; ++i) {
-    
+
     if(ptr2 == (char *)ptr) {
       /* We've found to block to which "ptr" points so we decrease the
      reference count and return the new value of it. */
@@ -92,6 +135,35 @@ memb_free(struct memb *m, void *ptr)
     /* Make sure that we don't deallocate free memory. */
     --(m->count[i]);
       }
+      return m->count[i];
+    }
+    ptr2 += m->size;
+  }
+  return -1;
+}
+/*---------------------------------------------------------------------------*/
+char
+memb_freem(struct memb *m, void *ptr, int n)
+{
+  int i;
+  int j;
+  char *ptr2;
+
+  /* Walk through the list of blocks and try to find the block to
+     which the pointer "ptr" points to. */
+  ptr2 = (char *)m->mem;
+  for(i = 0; i < m->num; ++i) {
+
+    if(ptr2 == (char *)ptr) {
+
+      /* We've found to block to which "ptr" points so we decrease the
+         reference count and return the new value of it. */
+      for( j = 0; (((i+j) < m->num) && (j < n)); j++ ) {
+        if(m->count[i+j] > 0) {
+          --(m->count[i+j]);
+        }
+      }
+
       return m->count[i];
     }
     ptr2 += m->size;

@@ -278,6 +278,26 @@ nbr_table_allocate(nbr_table_reason_t reason, void *data)
     }
   }
 }
+void
+nbr_table_init(void)
+{
+#if DEBUG
+  if(!initialized) {
+    initialized = 1;
+    /* schedule a debug printout per minute */
+    ctimer_set(&periodic_timer, CLOCK_SECOND * 60, handle_periodic_timer, NULL);
+  }
+#endif
+
+
+  memset( used_map, 0, sizeof(used_map) );
+  memset( locked_map, 0, sizeof(locked_map) );
+  memset( all_tables, 0, sizeof(all_tables) );
+  num_tables = 0;
+
+  memb_init(&neighbor_addr_mem);
+  list_init(nbr_table_keys);
+}
 /*---------------------------------------------------------------------------*/
 /* Register a new neighbor table. To be used at initialization by modules
  * using a neighbor table */
