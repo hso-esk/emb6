@@ -100,7 +100,7 @@
 /* For Debug, logging, statistics                                            */
 /*---------------------------------------------------------------------------*/
 
-#define DEBUG DEBUG_PRINT
+#define DEBUG DEBUG_NONE
 #include "uip-debug.h"
 
 #if UIP_LOGGING == 1
@@ -1251,7 +1251,6 @@ uip_process(uint8_t flag)
 				goto send;
 			}
 
-#error
 			UIP_IP_BUF->ttl = UIP_IP_BUF->ttl - 1;
 			PRINTF("Forwarding packet to ");
 			PRINT6ADDR(&UIP_IP_BUF->destipaddr);
