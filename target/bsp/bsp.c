@@ -333,6 +333,9 @@ uint32_t bsp_getrand( uint32_t min, uint32_t max )
 {
   uint32_t ret;
 
+  if(min == 0 && max == 0)
+    return ((uint32_t) random_rand());
+
   if( max <= min )
     return 0;
 
