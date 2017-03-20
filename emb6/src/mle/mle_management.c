@@ -833,11 +833,7 @@ static void  _mle_process_incoming_msg(struct udp_socket *c, void *ptr, const ui
 	uint16_t MaxRand;
 	uint8_t id=0;
 
-	/* TODO  To avoid the problem of the additional bytes until we fix it  */
-	//		if( uip_is_addr_linklocal_allrouters_mcast(dest_addr) || uip_is_addr_linklocal_allnodes_mcast(dest_addr))
-	mle_create_cmd_from_buff(&cmd , (uint8_t * )data , datalen - 40 );
-	//		else
-	//			mle_create_cmd_from_buff(&cmd , (uint8_t * )data , datalen );
+	mle_create_cmd_from_buff(&cmd , (uint8_t * )data , datalen);
 
 	LOG_RAW("<== MLE ");
 	mle_print_type_cmd(*cmd);
@@ -1183,30 +1179,6 @@ uint8_t mle_init(void)
 	MyNode.timeOut=TIME_OUT;
 	MyNode.rx_on_when_idle=IS_RX_ON_WHEN_IDLE;
 	MyNode.childs_counter=0;
-
-
-
-	/**************  test ******************/
-
-	/*
-		linkaddr_t add;
-	add.u8[7]=0x02 ;
-	add.u8[6]=0x00 ;
-	linkaddr_set_node_shortAddr(&add);
-
-	mle_init_cmd(&cmd,LINK_REQUEST);
-	add_src_address_to_cmd(&cmd);
-	add_leader_to_cmd(&cmd,thrd_generate_leader_data_tlv());
-	MyNode.challenge=add_rand_challenge_to_cmd(&cmd);
-	add_version_to_cmd(&cmd);
-	thrd_iface_set_rloc(0x0002);
-	//uip_ip6addr(&s_destAddr, 0xfe80, 0, 0, 0, 0, 0x00ff, 0xfe00, 0x0001);
-	uip_ip6addr(&s_destAddr, 0xfd00, 0, 0, 0, 0, 0x00ff, 0xfe00, 0x0001);
-	//uip_ip6addr(&s_destAddr, 0xfe80, 0, 0, 0, 0x250, 0xc2ff, 0xfea8, 0xb0);
-	mle_send_msg(&cmd, &s_destAddr);
-	 */
-
-	/**********************/
 
 	/* Trigger the timer for the join process */
 	ctimer_set(&c_mle_Timer, 1 * bsp_getTRes() , mle_join_process, (void *) NULL );
