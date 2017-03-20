@@ -238,7 +238,7 @@ static int8_t _udpAlive_sendMsg(void)
 
             break;
         case E_UDPALIVE_PREPMSG:
-                i = sprintf(ac_buf, "%u | ", ++l_seqId);
+                i = sprintf(ac_buf, "%lu | ", ++l_seqId);
                 if(ps_dagDesc && ps_dagDesc->instance->def_route) {
                     _udpAlive_addAddr(ac_buf + i,
                                       &ps_dagDesc->instance->def_route->ipaddr);
@@ -290,33 +290,33 @@ static    void _udpAlive_callback(c_event_t c_event, p_data_t p_data) {
 /*---------------------------------------------------------------------------*/
 /*  demo_udpAliveInit()                                                      */
 /*---------------------------------------------------------------------------*/
-uint8_t demo_udpAliveConf(s_ns_t* p_netstk)
+int8_t demo_udpAliveConf(s_ns_t* p_netstk)
 {
-    uint8_t c_ret = 1;
+  int8_t ret = -1;
 
-    /*
-     * By default stack
-     */
-    if (p_netstk != NULL) {
-        if (!p_netstk->c_configured) {
-            p_netstk->hc    = &sicslowpan_driver;
-            p_netstk->frame = &framer_802154;
-            p_netstk->dllsec = &nullsec_driver;
-            p_netstk->c_configured = 1;
-
-        } else {
-            if ((p_netstk->hc    == &sicslowpan_driver) &&
-                (p_netstk->frame == &framer_802154)    	&&
-                (p_netstk->dllsec == &nullsec_driver)) {
-            }
-            else {
-                p_netstk = NULL;
-                c_ret = 0;
-            }
-        }
+  /*
+   * By default stack
+   */
+  if (p_netstk != NULL) {
+    if (!p_netstk->c_configured) {
+      p_netstk->hc = &hc_driver_sicslowpan;
+      p_netstk->frame = &framer_802154;
+      p_netstk->dllsec = &dllsec_driver_null;
+      p_netstk->c_configured = 1;
+      ret = 0;
+    } else {
+      if ((p_netstk->hc == &hc_driver_sicslowpan) &&
+          (p_netstk->frame == &framer_802154) &&
+          (p_netstk->dllsec == &dllsec_driver_null)) {
+        ret = 0;
+      } else {
+        p_netstk = NULL;
+        ret = -1;
+      }
     }
+  }
 
-    return (c_ret);
+  return ret;
 }/* demo_udpAliveConf */
 
 /*---------------------------------------------------------------------------*/
@@ -330,11 +330,11 @@ int8_t demo_udpAliveInit(void)
     pst_udp_socket = &st_udp_socket;
 
     /* set periodic timer */
-    etimer_set( &e_udpAliveTmr,SEND_INTERVAL * bsp_get(E_BSP_GET_TRES),
+    etimer_set( &e_udpAliveTmr,SEND_INTERVAL * bsp_getTRes(),
                 _udpAlive_callback);
 
     LOG2_INFO( "Leave demo_udpAliveInit() function" );
-    return 1;
+    return 0;
 }/* demo_udpAliveInit()  */
 /** @} */
 /** @} */

@@ -39,54 +39,78 @@
  */
 
 
+/*
+********************************************************************************
+*                                   INCLUDES
+********************************************************************************
+*/
+#include "emb6.h"
 #include "er-coap.h"
 
+/*
+********************************************************************************
+*                          LOCAL FUNCTION DECLARATIONS
+********************************************************************************
+*/
+
+/* Handler for GET actions. For further details see the function definition */
 static void res_get_handler(void *request, void *response, uint8_t *buffer,
-                            uint16_t preferred_size, int32_t *offset);
+        uint16_t preferred_size, int32_t *offset, void* user);
 
 /*
- * A handler function named [resource name]_handler must be implemented for
- * each RESOURCE. A buffer for the response payload is provided through the
- * buffer pointer. Simple resources can ignore preferred_size and offset, but
- * must respect the REST_MAX_CHUNK_SIZE limit for the buffer. If a smaller
- * block size is requested for CoAP, the REST framework automatically splits
- * the data.
- */
+********************************************************************************
+*                               GLOBAL VARIABLES
+********************************************************************************
+*/
+/* Resource definition of a simple sensor example. This
+ * returns the temperature */
 RESOURCE(res_temp,
-         "title=\"Temperature sensor\";rt=\"Text\"",
+         "title=\"Temperature sensor\";type=\"Info\"",
          res_get_handler,
          NULL,
          NULL,
          NULL);
 
-static void
-res_get_handler(void *request, void *response, uint8_t *buffer,
-                uint16_t preferred_size, int32_t *offset)
+/*
+********************************************************************************
+*                           LOCAL FUNCTION DEFINITIONS
+********************************************************************************
+*/
+/**
+ * \brief   Handler for getting data from the resource.
+ *
+ *          The TEMP resource can return the temperature in Celcius of
+ *          Fahrenheit depending on the query parameters. This can be selected
+ *          using the query ?unit=celcius for Celcius or ?unit=fahrenheit for Fahrenheit.
+ */
+static void res_get_handler(void *request, void *response, uint8_t *buffer,
+        uint16_t preferred_size, int32_t *offset, void* user)
 {
-    const char *len = NULL;
-    /* Some data that has the length up to REST_MAX_CHUNK_SIZE. For more,
-     * see the chunk resource. */
-    char const *const message =
-            "Temperature 22°C ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefgh";
-    int length = 16; /*          |<------------->| */
+    size_t len;
+    const char* unit = NULL;
+    char* message = NULL;
+    int length;
 
-    /* The query string can be retrieved by rest_get_query() or parsed for
-     * its key-value pairs. */
-    if(REST.get_query_variable(request, "len", &len)) {
-        length = atoi(len);
-        if(length < 0) {
-            length = 0;
-        }
-        if(length > REST_MAX_CHUNK_SIZE) {
-            length = REST_MAX_CHUNK_SIZE;
-        }
+    if((len = REST.get_query_variable(request, "unit", &unit))) {
 
-        memcpy(buffer, message, length);
+        if(strncmp(unit, "celcius", len) == 0) {
+            /* Ceclius chosen as unit */
+            message ="Temperature 22°C";
+        }
+        else if(strncmp(unit, "fahrenheit", len) == 0) {
+            /* Fahrenheit chosen as unit */
+            message ="Temperature 71,6°F";
+        }
+        else{
+            /* Invalid unit */
+            message ="Invalid unit: Please use ?unit=<celcius|fahrenheit>";
+        }
     } else {
-        memcpy(buffer, message, length);
+        /* No unit */
+        message ="No unit specified: Please use ?unit=<celcius|fahrenheit>";
     }
 
-    /* text/plain is the default, hence this option could be omitted. */
+    length = snprintf( (char*)buffer, preferred_size, message );
     REST.set_header_content_type(response, REST.type.TEXT_PLAIN);
     REST.set_header_etag(response, (uint8_t *)&length, 1);
     REST.set_response_payload(response, buffer, length);

@@ -56,9 +56,9 @@
 #include "packetbuf.h"
 #include "logger.h"
 
-#if (NETSTK_CFG_RF_CRC_EN == FALSE)
-#include "lib_crc.h"
-#endif
+#if !defined(NETSTK_SUPPORT_HW_CRC)
+#include "crc.h"
+#endif /* #if !defined(NETSTK_SUPPORT_HW_CRC) */
 
 
 /*
@@ -188,7 +188,7 @@ static void dllc_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
   pdllc_netstk->mac->ioctrl(NETSTK_CMD_TX_CBFNCT_SET, (void *)dllc_cbTx, p_err);
   pdllc_netstk->mac->ioctrl(NETSTK_CMD_TX_CBARG_SET, NULL, p_err);
 
-#if (NETSTK_CFG_RF_CRC_EN == FALSE) && 0
+#if !defined(NETSTK_SUPPORT_HW_CRC)
   uint8_t *p_mfr;
   uint32_t fcs;
   packetbuf_attr_t fcs_len;
@@ -209,11 +209,11 @@ static void dllc_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     p_mfr[0] = (fcs & 0xFF00u) >> 8;
     p_mfr[1] = (fcs & 0x00FFu);
   }
+  len += fcs_len;
+#endif /* #if !defined(NETSTK_SUPPORT_HW_CRC) */
 
-  pdllc_netstk->mac->send(p_data, len + fcs_len, p_err);
-#else
+  /* issue transmission request */
   pdllc_netstk->mac->send(p_data, len, p_err);
-#endif /* NETSTK_CFG_RF_CRC_EN */
 
 #if (NETSTK_CFG_AUTO_ONOFF_EN == TRUE)
   if (dllc_isOn == FALSE) {
@@ -228,11 +228,16 @@ static void dllc_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
   if (dllc_cbRxFnct) {
     /* set return error code */
     *p_err = NETSTK_ERR_NONE;
+    int8_t rssi;
 
     /* store the received frame into common packet buffer */
     packetbuf_clear();
     packetbuf_set_datalen(len);
     memcpy(packetbuf_dataptr(), p_data, len);
+
+    /* set packet buffer miscellaneous attributes */
+    pdllc_netstk->mac->ioctrl(NETSTK_CMD_RF_RSSI_GET, &rssi, p_err);
+    packetbuf_set_attr(PACKETBUF_ATTR_RSSI, rssi);
 
     /* Inform the next higher layer */
     dllc_cbRxFnct(packetbuf_dataptr(), packetbuf_datalen(), p_err);

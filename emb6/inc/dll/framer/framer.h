@@ -46,6 +46,4 @@
 
 #define FRAMER_FAILED -1
 
-int8_t framer_canonical_create_and_secure(s_ns_t* p_ns);
-
 #endif /* FRAMER_H_ */

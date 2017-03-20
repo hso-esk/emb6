@@ -37,24 +37,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-/*============================================================================*/
-/**
- *      \addtogroup emb6
- *      @{
- *      \addtogroup demo_coap
- *      @{
- *      \addtogroup demo_coap_server
- *      @{
-*/
-/*! \file   demo_coap_srv.c
 
- \author Peter Lehmann
-
- \brief  CoAP Server example application
-
- \version 0.0.1
- */
-/*============================================================================*/
 
 /*==============================================================================
  INCLUDE FILES
@@ -76,11 +59,15 @@
 * The build system automatically compiles the resources in the corresponding sub-directory.
 */
 extern resource_t
-  res_push,
+  res_tick,
   res_radio_info,
   res_radio_ctrl,
   res_temp,
+#if DEMO_COAP_SERVER_LCD_RES_EN
+  res_lcd,
+#endif /* #if DEMO_COAP_SERVER_LCD_RES_EN */
   res_led;
+
 
 /*==============================================================================
                                          API FUNCTIONS
@@ -101,46 +88,50 @@ int8_t demo_coapInit(void)
 * WARNING: Activating twice only means alternatle path, not two instances!
 * All static variables are the same for each URI path.
 */
-    rest_activate_resource(&res_temp, "dev/temp");
-    rest_activate_resource(&res_push, "test/push");
-    rest_activate_resource(&res_led, "dev/led");
-    rest_activate_resource(&res_radio_info, "dev/txrx/inf");
-    rest_activate_resource(&res_radio_ctrl, "dev/txrx/ctrl");
 
-    return 1;
+    rest_activate_resource(&res_tick, "tick");
+    rest_activate_resource(&res_temp, "dev/temp");
+    rest_activate_resource(&res_led, "dev/led");
+#if DEMO_COAP_SERVER_LCD_RES_EN
+    rest_activate_resource(&res_lcd, "dev/lcd");
+#endif /* #if DEMO_COAP_SERVER_LCD_RES_EN */
+    rest_activate_resource(&res_radio_info, "radio/info");
+    rest_activate_resource(&res_radio_ctrl, "radio/control");
+
+    return 0;
 }
 
 /*----------------------------------------------------------------------------*/
 /*    demo_coapConf()                                                           */
 /*----------------------------------------------------------------------------*/
 
-uint8_t demo_coapConf(s_ns_t* p_netstk)
+int8_t demo_coapConf(s_ns_t* p_netstk)
 {
-    uint8_t c_ret = 1;
+  int8_t ret = -1;
 
-    /*
-     * By default stack
-     */
-    if (p_netstk != NULL) {
-        if (!p_netstk->c_configured) {
-            p_netstk->hc    = &sicslowpan_driver;
-            p_netstk->frame = &framer_802154;
-            p_netstk->dllsec = &nullsec_driver;
-            p_netstk->c_configured = 1;
-
-        } else {
-            if ((p_netstk->hc    == &sicslowpan_driver) &&
-                (p_netstk->frame == &framer_802154)    	&&
-                (p_netstk->dllsec == &nullsec_driver)) {
-            }
-            else {
-                p_netstk = NULL;
-                c_ret = 0;
-            }
-        }
+  /*
+   * By default stack
+   */
+  if (p_netstk != NULL) {
+    if (!p_netstk->c_configured) {
+      p_netstk->hc = &hc_driver_sicslowpan;
+      p_netstk->frame = &framer_802154;
+      p_netstk->dllsec = &dllsec_driver_null;
+      p_netstk->c_configured = 1;
+      ret = 0;
+    } else {
+      if ((p_netstk->hc == &hc_driver_sicslowpan) &&
+          (p_netstk->frame == &framer_802154) &&
+          (p_netstk->dllsec == &dllsec_driver_null)) {
+        ret = 0;
+      } else {
+        p_netstk = NULL;
+        ret = -1;
+      }
     }
+  }
 
-    return (c_ret);
+  return ret;
 }
 
 /** @} */

@@ -62,12 +62,12 @@
 *                          LOCAL FUNCTION DECLARATIONS
 ********************************************************************************
 */
-static void MAC_Init(void *p_netstk, e_nsErr_t *p_err);
-static void MAC_On(e_nsErr_t *p_err);
-static void MAC_Off(e_nsErr_t *p_err);
-static void MAC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
-static void MAC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
-static void MAC_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
+static void mac_init(void *p_netstk, e_nsErr_t *p_err);
+static void mac_on(e_nsErr_t *p_err);
+static void mac_off(e_nsErr_t *p_err);
+static void mac_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
+static void mac_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
+static void mac_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
 
 
 /*
@@ -75,25 +75,25 @@ static void MAC_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
 *                               LOCAL VARIABLES
 ********************************************************************************
 */
-static s_ns_t           *MAC_Netstk;
-static void            *MAC_CbTxArg;
-static nsTxCbFnct_t     MAC_CbTxFnct;
-static e_nsErr_t        MAC_TxErr;
+static s_ns_t       *pmac_netstk;
+static void         *pmac_cbTxArg;
+static nsTxCbFnct_t  mac_cbTxFnct;
+static e_nsErr_t     mac_txErr;
 
 /*
 ********************************************************************************
 *                               GLOBAL VARIABLES
 ********************************************************************************
 */
-const s_nsMAC_t MACDrvNull =
+const s_nsMAC_t mac_driver_null =
 {
    "MAC NULL",
-    MAC_Init,
-    MAC_On,
-    MAC_Off,
-    MAC_Send,
-    MAC_Recv,
-    MAC_IOCtrl
+    mac_init,
+    mac_on,
+    mac_off,
+    mac_send,
+    mac_recv,
+    mac_ioctl
 };
 
 extern uip_lladdr_t uip_lladdr;
@@ -103,40 +103,40 @@ extern uip_lladdr_t uip_lladdr;
 *                           LOCAL FUNCTION DEFINITIONS
 ********************************************************************************
 */
-static void MAC_Init(void *p_netstk, e_nsErr_t *p_err)
+static void mac_init(void *p_netstk, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
-    if (p_netstk == NULL) {
-        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
-        return;
-    }
+  if (p_netstk == NULL) {
+    *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+    return;
+  }
 #endif
 
-    /* store pointer to netstack structure */
-    MAC_Netstk = p_netstk;
+  /* store pointer to netstack structure */
+  pmac_netstk = p_netstk;
 
-    /* configure stack MAC address */
-    memcpy(&uip_lladdr.addr, &mac_phy_config.mac_address, 8);
-    linkaddr_set_node_addr((linkaddr_t *)mac_phy_config.mac_address);
+  /* configure stack MAC address */
+  memcpy(&uip_lladdr.addr, &mac_phy_config.mac_address, 8);
+  linkaddr_set_node_addr((linkaddr_t *) mac_phy_config.mac_address);
 
-    /* set returned error code */
-    *p_err = NETSTK_ERR_NONE;
+  /* set returned error code */
+  *p_err = NETSTK_ERR_NONE;
 }
 
 
-static void MAC_On(e_nsErr_t *p_err)
+static void mac_on(e_nsErr_t *p_err)
 {
-    MAC_Netstk->phy->on(p_err);
+  pmac_netstk->phy->on(p_err);
 }
 
 
-static void MAC_Off(e_nsErr_t *p_err)
+static void mac_off(e_nsErr_t *p_err)
 {
-    MAC_Netstk->phy->off(p_err);
+  pmac_netstk->phy->off(p_err);
 }
 
 
-static void MAC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
+static void mac_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 {
 #if LOGGER_ENABLE
     /*
@@ -151,21 +151,20 @@ static void MAC_Send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     LOG_RAW("\r\n====================\r\n");
 #endif
 
-    MAC_Netstk->phy->send(p_data, len, p_err);
+  pmac_netstk->phy->send(p_data, len, p_err);
 
-    MAC_TxErr = NETSTK_ERR_NONE;
-    if( MAC_CbTxFnct != NULL )
-        MAC_CbTxFnct(MAC_CbTxArg, &MAC_TxErr);
+  mac_txErr = NETSTK_ERR_NONE;
+  if (mac_cbTxFnct != NULL) {
+    mac_cbTxFnct(pmac_cbTxArg, &mac_txErr);
+  }
 }
 
 
-static void MAC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
+static void mac_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 {
-    packetbuf_clear();
-    packetbuf_set_datalen(len);
-    memcpy(packetbuf_dataptr(),
-           p_data,
-           len);
+  packetbuf_clear();
+  packetbuf_set_datalen(len);
+  memcpy(packetbuf_dataptr(), p_data, len);
 
 #if LOGGER_ENABLE
     /*
@@ -180,39 +179,38 @@ static void MAC_Recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     LOG_RAW("\r\n====================\r\n");
 #endif
 
-    MAC_Netstk->dllc->recv(p_data, len, p_err);
+  pmac_netstk->dllc->recv(p_data, len, p_err);
 }
 
 
-static void MAC_IOCtrl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
+static void mac_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err)
 {
 #if NETSTK_CFG_ARG_CHK_EN
-    if (p_err == NULL) {
-        return;
-    }
+  if (p_err == NULL) {
+    return;
+  }
 #endif
 
+  *p_err = NETSTK_ERR_NONE;
+  switch (cmd) {
+    case NETSTK_CMD_TX_CBFNCT_SET:
+      if (p_val == NULL) {
+        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+      } else {
+        mac_cbTxFnct = (nsTxCbFnct_t) p_val;
+      }
+      break;
 
-    *p_err = NETSTK_ERR_NONE;
-    switch (cmd) {
-        case NETSTK_CMD_TX_CBFNCT_SET:
-            if (p_val == NULL) {
-                *p_err = NETSTK_ERR_INVALID_ARGUMENT;
-            } else {
-                MAC_CbTxFnct = (nsTxCbFnct_t)p_val;
-            }
-            break;
+    case NETSTK_CMD_TX_CBARG_SET:
+      pmac_cbTxArg = p_val;
+      break;
+    case NETSTK_CMD_MAC_RSVD:
+      break;
 
-        case NETSTK_CMD_TX_CBARG_SET:
-            MAC_CbTxArg = p_val;
-            break;
-            case NETSTK_CMD_MAC_RSVD:
-                break;
-
-        default:
-            MAC_Netstk->phy->ioctrl(cmd, p_val, p_err);
-            break;
-    }
+    default:
+      pmac_netstk->phy->ioctrl(cmd, p_val, p_err);
+      break;
+  }
 }
 
 

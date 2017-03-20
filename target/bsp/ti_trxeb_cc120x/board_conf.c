@@ -1,46 +1,92 @@
 /*
- * board_conf.c
+ * emb6 is licensed under the 3-clause BSD license. This license gives everyone
+ * the right to use and distribute the code, either in binary or source code
+ * format, as long as the copyright license is retained in the source code.
  *
- *  Created on: 06.10.2015
- *      Author: nphuong
+ * The emb6 is derived from the Contiki OS platform with the explicit approval
+ * from Adam Dunkels. However, emb6 is made independent from the OS through the
+ * removal of protothreads. In addition, APIs are made more flexible to gain
+ * more adaptivity during run-time.
+ *
+ * The license text is:
+ *
+ * Copyright (c) 2015,
+ * Hochschule Offenburg, University of Applied Sciences
+ * Laboratory Embedded Systems and Communications Electronics.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 1. Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO
+ * EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
  */
 
+/*
+ * --- Module Description ---------------------------------------------------*
+ */
+/**
+ *  \file       board_conf.c
+ *  \author     Institute of reliable Embedded Systems
+ *              and Communication Electronics
+ *  \date       $Date$
+ *  \version    $Version$
+ *
+ *  \brief      Definition of the Board Configuration.
+ *
+ *              The Board Configuration configures the underlying MCU and
+ *              transceiver.
+ */
 
 /*
-********************************************************************************
-*                                   INCLUDES
-********************************************************************************
-*/
+ *  --- Includes -------------------------------------------------------------*
+ */
 #include "emb6.h"
+#include "emb6assert.h"
 #include "board_conf.h"
 
 
+/*
+ * --- Macro Definitions --------------------------------------------------- *
+ */
 /** Enable or disable logging */
-#define LOGGER_ENABLE       LOGGER_BSP
+#define LOGGER_ENABLE             LOGGER_BSP
 #include "logger.h"
 
 
-/**
- * @brief   Configure Board Support Package module
- *
- * @param   ps_ns   Pointer to net stack structure
- * @return  1 if success; otherwise 0
+/*
+ *  --- Global Functions Definition ------------------------------------------*
  */
-uint8_t board_conf(s_ns_t *p_netstk)
+
+/*---------------------------------------------------------------------------*/
+/*
+* board_conf()
+*/
+int8_t board_conf( s_ns_t* p_ns )
 {
-    uint8_t c_ret = 1;
+  EMB6_ASSERT_RET( p_ns != NULL, -1 );
 
+  p_ns->dllc = &dllc_driver_802154;
+  p_ns->mac = &mac_driver_802154;
+  p_ns->phy = &phy_driver_802154;
+  p_ns->rf = &rf_driver_ticc120x;
 
-    if (p_netstk != NULL) {
-        p_netstk->dllc  = &DLLCDrv802154;
-        p_netstk->mac   = &MACDrv802154;
-        p_netstk->phy   = &PHYDrv802154;
-        p_netstk->rf    = &RFDrvCC120x;
-    }
-    else {
-        LOG_ERR("Network stack pointer is NULL");
-        c_ret = 0;
-    }
+  return 0;
+} /* board_conf */
 
-    return c_ret;
-}

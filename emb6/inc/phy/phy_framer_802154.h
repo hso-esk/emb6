@@ -48,6 +48,8 @@
 #ifndef PHY_FRAMER154_PRESENT
 #define PHY_FRAMER154_PRESENT
 
+#include "emb6.h"
+
 
 #if NETSTK_CFG_IEEE_802154G_EN
 #define PHY_HEADER_LEN                  (uint16_t)(    2u )

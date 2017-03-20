@@ -57,7 +57,7 @@
 ==============================================================================*/
 #include "emb6.h"
 #include "bsp.h"
-
+#include "board_conf.h"
 #include "at86rf212.h"
 #include "at86rf212_regmap.h"
 #include "at86rf_hal_spi.h"
@@ -68,13 +68,17 @@
 /*==============================================================================
                                      MACROS
 ==============================================================================*/
+#if (NETSTK_SUPPORT_HW_CRC != TRUE)
+#error "missing or wrong radio checksum setting in board_conf.h"
+#endif
+
 #define     LOGGER_ENABLE        LOGGER_RADIO
 #include    "logger.h"
 
 
-#define bsp_clrPin(pin)           bsp_pin(E_BSP_PIN_CLR, pin)
-#define bsp_setPin(pin)           bsp_pin(E_BSP_PIN_SET, pin)
-#define bsp_getPin(pin)           bsp_pin(E_BSP_PIN_GET, pin)
+#define bsp_clrPin(pin)           bsp_pinSet(pin, 0)
+#define bsp_setPin(pin)           bsp_pinSet(pin, 1)
+#define bsp_getPin(pin)           bsp_pinGet(pin)
 
 #define move_ind(a)               a++; if (a >= RF212_CONF_RX_BUFFERS) a=0;
 #define    move_head_ind()        move_ind(c_rxframe_head);
@@ -102,6 +106,7 @@ static  uint8_t                   c_power;
 static  uint8_t                   c_sensitivity;
 static  void *                    p_slpTrig = NULL;
 static  void *                    p_rst = NULL;
+static  void *                    p_irq = NULL;
 
 /* Pointer to the PHY structure */
 static  const s_nsPHY_t*          p_phy = NULL;
@@ -174,7 +179,7 @@ static    void                     _show_stat(void *);
 /*==============================================================================
                          STRUCTURES AND OTHER TYPEDEFS
 ==============================================================================*/
-const s_nsRF_t rf212_driver = {
+const s_nsRF_t rf_driver_at212 = {
         .name               = "rf212",
         .init               = &_rf212_init,
         .send               = &_rf212_send,
@@ -269,9 +274,9 @@ static void     _rf212_setChannel(uint8_t c)
 static void _rf212_smReset(void)
 {
     bsp_clrPin(p_slpTrig);
-    bsp_delay_us(E_TIME_NOCLK_TO_WAKE);
+    bsp_delayUs(E_TIME_NOCLK_TO_WAKE);
     _spiBitWrite(RG_TRX_STATE,SR_TRX_CMD, CMD_FORCE_TRX_OFF );
-    bsp_delay_us(E_TIME_CMD_FORCE_TRX_OFF);
+    bsp_delayUs(E_TIME_CMD_FORCE_TRX_OFF);
 } /*  _rf212_smReset() */
 
 /*----------------------------------------------------------------------------*/
@@ -435,14 +440,14 @@ static e_rf212_sm_status_t _rf212_setTrxState(uint8_t c_new_state)
             /* The final state transition to TX_ARET_ON is handled after the if-else if. */
             _spiBitWrite(RG_TRX_STATE, SR_TRX_CMD, PLL_ON);
             //            bsp_spiSubWrite(SR_TRX_CMD, PLL_ON);
-            bsp_delay_us(E_TIME_STATE_TRANSITION_PLL_ACTIVE);
+            bsp_delayUs(E_TIME_STATE_TRANSITION_PLL_ACTIVE);
         } else if ((c_new_state == RX_AACK_ON) &&
                 (c_orig_state == TX_ARET_ON)){
             /* First do intermediate state transition to RX_ON, then to RX_AACK_ON. */
             /* The final state transition to RX_AACK_ON is handled after the if-else if. */
             _spiBitWrite(RG_TRX_STATE, SR_TRX_CMD, RX_ON);
             //            bsp_spiSubWrite(SR_TRX_CMD, RX_ON);
-            bsp_delay_us(E_TIME_STATE_TRANSITION_PLL_ACTIVE);
+            bsp_delayUs(E_TIME_STATE_TRANSITION_PLL_ACTIVE);
         }
 
         /* Any other state transition can be done directly. */
@@ -452,9 +457,9 @@ static e_rf212_sm_status_t _rf212_setTrxState(uint8_t c_new_state)
         /* When the PLL is active most states can be reached in 1us. However, from */
         /* TRX_OFF the PLL needs time to activate. */
         if (c_orig_state == TRX_OFF){
-            bsp_delay_us(E_TIME_TRX_OFF_TO_PLL_ACTIVE);
+            bsp_delayUs(E_TIME_TRX_OFF_TO_PLL_ACTIVE);
         } else {
-            bsp_delay_us(E_TIME_STATE_TRANSITION_PLL_ACTIVE);
+            bsp_delayUs(E_TIME_STATE_TRANSITION_PLL_ACTIVE);
         }
     } /*  end: if(new_state == TRX_OFF) ... */
 
@@ -488,8 +493,8 @@ static e_radio_tx_status_t _rf212_transmit(uint8_t c_len)
     /* This automatically does the PLL calibrations */
     if (bsp_getPin(p_slpTrig)) {
         bsp_clrPin(p_slpTrig);
-        bsp_delay_us(2*E_TIME_SLEEP_TO_TRX_OFF); //extra delay depends on board capacitance
-        //    bsp_delay_us(E_TIME_SLEEP_TO_TRX_OFF+E_TIME_SLEEP_TO_TRX_OFF/2);
+        bsp_delayUs(2*E_TIME_SLEEP_TO_TRX_OFF); //extra delay depends on board capacitance
+        //    bsp_delayUs(E_TIME_SLEEP_TO_TRX_OFF+E_TIME_SLEEP_TO_TRX_OFF/2);
     } else {
 #if RADIO_CONF_CALIBRATE_INTERVAL
         /* If nonzero, do periodic calibration. See clock.c */
@@ -500,7 +505,7 @@ static e_radio_tx_status_t _rf212_transmit(uint8_t c_len)
             //            bsp_spiSubWrite(SR_PLL_DCU_START,1); //takes 6us, concurrently
             _rf212_calibrate=0;
             _rf212_calibrated=1;
-            bsp_delay_us(80); //?
+            bsp_delayUs(80); //?
         }
 #endif
     }
@@ -1110,8 +1115,8 @@ static int8_t _rf212_intON(void)
          */
         //  uint8_t sreg = SREG;cli();
         bsp_clrPin(p_slpTrig);
-        bsp_delay_us(2*E_TIME_SLEEP_TO_TRX_OFF);
-        //  bsp_delay_us(E_TIME_SLEEP_TO_TRX_OFF+E_TIME_SLEEP_TO_TRX_OFF/2);
+        bsp_delayUs(2*E_TIME_SLEEP_TO_TRX_OFF);
+        //  bsp_delayUs(E_TIME_SLEEP_TO_TRX_OFF+E_TIME_SLEEP_TO_TRX_OFF/2);
         //  SREG=sreg;
     }
 
@@ -1207,17 +1212,18 @@ static void _rf212_init(void *p_netstk, e_nsErr_t *p_err)
     *p_err = NETSTK_ERR_NONE;
 
     /* Wait in case VCC just applied */
-    bsp_delay_us(E_TIME_TO_ENTER_P_ON);
+    bsp_delayUs(E_TIME_TO_ENTER_P_ON);
     /* Init spi interface and transceiver. Transceiver utilize spi interface. */
-    p_rst = bsp_pinInit( E_TARGET_RADIO_RST);
-    p_slpTrig = bsp_pinInit( E_TARGET_RADIO_SLPTR);
+    p_rst = bsp_pinInit( EN_HAL_PIN_RFCTRL0);
+    p_slpTrig = bsp_pinInit( EN_HAL_PIN_RFCTRL1);
+    p_irq = bsp_pinInit( EN_HAL_PIN_RFCTRL2);
     at86rf_halSpiInit();
 
     if ((p_rst != NULL) && (p_slpTrig != NULL) && (p_netstk != NULL))
     {
         /* configure external interrupt */
-        bsp_extIntRegister(E_TARGET_RADIO_INT, E_TARGET_INT_EDGE_RISING, _isr_callback);
-        bsp_extIntEnable(E_TARGET_RADIO_INT);
+        hal_pinIRQRegister(p_irq, EN_HAL_IRQEDGE_RISING, _isr_callback);
+        hal_pinIRQEnable(p_irq);
 
         /* Set receive buffers empty and point to the first */
         for (i=0;i<RF212_CONF_RX_BUFFERS;i++)
@@ -1235,12 +1241,12 @@ static void _rf212_init(void *p_netstk, e_nsErr_t *p_err)
          * Wake time depends on board capacitance; use 2x the nominal delay for safety.
          * See www.avrfreaks.net/index.php?name=PNphpBB2&file=viewtopic&t=78725
          */
-        bsp_delay_us(2*E_TIME_SLEEP_TO_TRX_OFF);
+        bsp_delayUs(2*E_TIME_SLEEP_TO_TRX_OFF);
         bsp_setPin(p_rst);
 
         /* Force transition to TRX_OFF */
         _spiBitWrite(RG_TRX_STATE, SR_TRX_CMD, CMD_FORCE_TRX_OFF);
-        bsp_delay_us(E_TIME_P_ON_TO_TRX_OFF);
+        bsp_delayUs(E_TIME_P_ON_TO_TRX_OFF);
 
         /* Verify that it is a supported version */
         /* Note gcc optimizes this away if DEBUG is not set! */

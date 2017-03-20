@@ -57,7 +57,6 @@ void slip_send_packet(const uint8_t *ptr, int len);
  /* max 16 packets at the same time??? */
 uint8_t packet_ids[16];
 int packet_pos;
-
 static int slip_radio_cmd_handler(const uint8_t *data, int len);
 
 
@@ -94,7 +93,7 @@ static int
 slip_radio_cmd_handler(const uint8_t *data, int len)
 {
   int i;
-  s_ns_t * ps_ns = NULL;
+  const s_ns_t * ps_ns = NULL;
 
   if(data[0] == '!') {
     /* should send out stuff to the radio - ignore it as IP */
@@ -135,7 +134,7 @@ slip_radio_cmd_handler(const uint8_t *data, int len)
       return 1;
     } else if(data[1] == 'R' && len == 2) {
       PRINTF("Rebooting\n");
-      bsp_wdt(E_BSP_WDT_RESET);
+      bsp_watchdog(EN_BSP_WD_RESET);
       return 1;
     }
   } else if(uip_buf[0] == '?') {
@@ -171,35 +170,38 @@ slip_input_callback(void)
 /*---------------------------------------------------------------------------*/
 int8_t demo_extifInit(void)
 {
-    bsp_extIntRegister(E_TARGET_USART_INT, E_TARGET_INT_EDGE_RISING, slip_input_byte);
-    bsp_extIntEnable(E_TARGET_USART_INT);
-
+    bsp_periphIRQRegister( EN_HAL_PERIPHIRQ_SLIPUART_RX, slip_input_byte, NULL );
     slip_set_input_callback(slip_input_callback);
     packet_pos = 0;
     slip_init();
-    return 1;
+    return 0;
 }
 
-uint8_t demo_extifConf(s_ns_t* pst_netStack)
+int8_t demo_extifConf(s_ns_t* p_netstk)
 {
-    uint8_t c_ret = 1;
+  int8_t ret = -1;
 
-    if (pst_netStack != NULL) {
-        if (pst_netStack->hc == &slipnet_driver) {}
-        else if (pst_netStack->dllsec == &nullsec_driver) {}
-        else if (pst_netStack->frame == &framer_noframer) {}
-        else {
-            c_ret = 0;
-        }
-
-        pst_netStack->hc     = &slipnet_driver;
-        pst_netStack->dllsec  = &nullsec_driver;
-        pst_netStack->frame  = &framer_noframer;
-        pst_netStack->dllc = &DLLCDrvNull;
-        /* Transceiver interface is defined by @ref board_conf function*/
-        /*pst_netStack->inif   = $<some_transceiver>;*/
+  if (p_netstk != NULL) {
+    if (p_netstk->c_configured == 0) {
+      p_netstk->hc     = &hc_driver_slipnet;
+      p_netstk->frame  = &framer_noframer;
+      p_netstk->dllsec = &dllsec_driver_null;
+      p_netstk->dllc   = &dllc_driver_null;
+      ret = 0;
+    } else {
+      if ((p_netstk->hc     == &hc_driver_slipnet) &&
+          (p_netstk->frame  == &framer_noframer) &&
+          (p_netstk->dllsec == &dllsec_driver_null) &&
+          (p_netstk->dllc   == &dllc_driver_null)) {
+        ret = 0;
+      } else {
+        p_netstk = NULL;
+        ret = -1;
+      }
     }
-    return (c_ret);
+  }
+
+  return ret;
 }
 
 /*---------------------------------------------------------------------------*/

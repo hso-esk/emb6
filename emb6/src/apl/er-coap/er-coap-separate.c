@@ -38,7 +38,7 @@
 
 #include <stdio.h>
 #include <string.h>
-
+#include "cc.h"
 #include "uip.h"
 #include "er-coap-separate.h"
 #include "er-coap-transactions.h"

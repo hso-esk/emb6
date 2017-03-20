@@ -78,7 +78,7 @@
 #include    "logger.h"
 
 
-#define     SEND_INTERVAL           5 * bsp_get(E_BSP_GET_TRES)
+#define     SEND_INTERVAL           5 * bsp_getTRes()
 #define     MAX_S_PAYLOAD_LEN       256
 #define     MAX_C_PAYLOAD_LEN       40
 
@@ -195,10 +195,12 @@ static void  _aptb_callback(struct udp_socket *c, void *ptr,
     	printf("data received length : %i \n", datalen);
         if (data[0] == EMB6_APTB_RESPONSE) {
             /* Skip packet type header */
-            l_lastSeqId = (data[1] << 24) +
-                          (data[2] << 16) +
-                          (data[3] << 8) +
-                          data[4];
+            l_lastSeqId = 0;
+            l_lastSeqId += ( ((uint32_t)data[1] << 24) && 0xff000000 );
+            l_lastSeqId += ( ((uint32_t)data[2] << 16) && 0x00ff0000 );
+            l_lastSeqId += ( ((uint32_t)data[3] << 8) && 0x0000ff00 );
+            l_lastSeqId += ( ((uint32_t)data[4]) && 0x000000ff );
+
             LOG_INFO("Response from a server: [%lu]", l_lastSeqId);
         } else {
             LOG_ERR("Error in parsing: invalid packet format");
@@ -251,41 +253,40 @@ int8_t demo_aptbInit(void)
     //printf("Set dudp timer %p\n\r",&s_et);
     etimer_set(&s_et, SEND_INTERVAL, _send_msg_tout);
     LOG_INFO("APTB demo initialized, Connecting ...");
-    return 1;
+    return 0;
 }/* demo_aptbInit()  */
 
 
 /*----------------------------------------------------------------------------*/
 /*    demo_aptbConf()                                                           */
 /*----------------------------------------------------------------------------*/
-uint8_t demo_aptbConf(s_ns_t* pst_netStack)
+int8_t demo_aptbConf(s_ns_t* pst_netStack)
 {
-    uint8_t c_ret = 1;
+  int8_t ret = -1;
 
-    /*
-     * By default stack
-     */
-    if (pst_netStack != NULL) {
-        if (!pst_netStack->c_configured) {
-            pst_netStack->hc     = &sicslowpan_driver;
-            pst_netStack->dllsec  = &nullsec_driver;
-            pst_netStack->frame  = &framer_802154;
-            pst_netStack->c_configured = 1;
-            /* Transceiver interface is defined by @ref board_conf function*/
-            /* pst_netStack->inif   = $<some_transceiver>;*/
-        } else {
-            if ((pst_netStack->hc == &sicslowpan_driver)   &&
-                (pst_netStack->dllsec == &nullsec_driver)   &&
-                (pst_netStack->frame == &framer_802154)) {
-                /* right configuration */
-            }
-            else {
-                pst_netStack = NULL;
-                c_ret = 0;
-            }
-        }
+  /*
+   * By default stack
+   */
+  if (pst_netStack != NULL) {
+    if (!pst_netStack->c_configured) {
+      pst_netStack->hc = &hc_driver_sicslowpan;
+      pst_netStack->dllsec = &dllsec_driver_null;
+      pst_netStack->frame = &framer_802154;
+      pst_netStack->c_configured = 1;
+      ret = 0;
+    } else {
+      if ((pst_netStack->hc == &hc_driver_sicslowpan) &&
+          (pst_netStack->dllsec == &dllsec_driver_null) &&
+          (pst_netStack->frame == &framer_802154)) {
+        /* right configuration */
+        ret = 0;
+      } else {
+        pst_netStack = NULL;
+        ret = -1;
+      }
     }
-    return (c_ret);
+  }
+  return ret;
 }/* demo_aptbConf()  */
 /** @} */
 /** @} */

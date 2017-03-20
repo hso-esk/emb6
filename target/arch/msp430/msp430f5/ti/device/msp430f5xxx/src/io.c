@@ -522,6 +522,7 @@ void io_init (void)
   /* Initialization of MCU IOs */
   _io_mcu_init();
 
+#if 0 // peripherals should be initialized individually
   /* Initialization of LEDs */
   _io_led_init();
 
@@ -552,6 +553,7 @@ void io_init (void)
   /* initialization of RF */
   _io_rf_init();
 #endif /* #if( TARGET_CONFIG_RF == TRUE ) */
+#endif /* #if 0 */
 
 }/* io_init() */
 
@@ -602,10 +604,9 @@ int8_t io_get( s_io_pin_desc_t* ps_pin )
 {
   int8_t i_ret = -1;
 
-  /* Pin must be IO input */
-  if( (ps_pin != NULL) && ((*ps_pin->PORT->PDIR & ps_pin->MSK ) == 0))
+  /* get the Pin value */
+  if( (ps_pin != NULL))
   {
-    /* get the Pin */
     i_ret = (*ps_pin->PORT->PIN & ps_pin->MSK) >> ps_pin->PIN;
   }
 

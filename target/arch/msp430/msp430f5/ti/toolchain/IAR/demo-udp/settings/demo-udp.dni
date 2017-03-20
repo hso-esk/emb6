@@ -20,7 +20,7 @@ NextState1=0
 Break=0
 State Storage=0
 [DebugChecksum]
-Checksum=1287180853
+Checksum=-24277767
 [CallStack]
 ShowArgs=0
 [Disassembly]
@@ -51,19 +51,22 @@ Fmt18={W}0:frame_len	3	0
 Fmt19={W}0:ftrptr	3	0
 Fmt20={W}0:hdr_len	3	0
 Fmt21={W}0:hdrptr	3	0
-Fmt22={W}0:len	3	0
-Fmt23={W}0:marc_status	1	0
-Fmt24={W}0:num_rx_bytes	4	0
-Fmt25={W}0:p_data[0]	4	0
-Fmt26={W}0:p_data[1]	4	0
-Fmt27={W}0:packetbuf[88]	4	0
-Fmt28={W}0:packetbuf[89]	4	0
-Fmt29={W}0:phr	4	0
-Fmt30={W}0:pkt_len	3	0
-Fmt31={W}0:ps_pin->MSK	4	0
-Fmt32={W}0:psdu_len	4	0
-Fmt33={W}0:rf_rxBuf[3]	3	0
-Fmt34={W}0:write_byte	3	0
+Fmt22={W}0:iteration	4	0
+Fmt23={W}0:len	3	0
+Fmt24={W}0:marc_state	4	0
+Fmt25={W}0:marc_status	1	0
+Fmt26={W}0:num_rx_bytes	4	0
+Fmt27={W}0:p_data[0]	4	0
+Fmt28={W}0:p_data[1]	4	0
+Fmt29={W}0:packetbuf[88]	4	0
+Fmt30={W}0:packetbuf[89]	4	0
+Fmt31={W}0:phr	4	0
+Fmt32={W}0:pkt_len	3	0
+Fmt33={W}0:ps_pin->MSK	4	0
+Fmt34={W}0:psdu_len	4	0
+Fmt35={W}0:rf_rxBuf[3]	3	0
+Fmt36={W}0:rf_state	3	0
+Fmt37={W}0:write_byte	3	0
 [Log file]
 LoggingEnabled=_ 0
 LogFile=_ ""
@@ -72,8 +75,11 @@ Category=_ 0
 LoggingEnabled=_ 0
 LogFile=_ ""
 [Breakpoints]
-Bp0=_ "STD_CODE" "{$PROJ_DIR$\..\..\..\..\..\..\..\..\demo\demo_main.c}.324.5" 1 0 0 0 "" 0 ""
-Count=1
+Bp0=_ "STD_CODE" "{$PROJ_DIR$\..\..\..\..\..\..\..\..\demo\demo_main.c}.328.1" 1 0 0 0 "" 0 ""
+Bp1=_ "STD_CODE" "{$PROJ_DIR$\..\..\..\..\..\..\..\if\cc120x\cc120x.c}.565.2" 0 0 0 0 "" 0 ""
+Bp2=_ "STD_CODE" "{$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\dll\dllc\dllc_802154.c}.357.3" 0 0 0 0 "" 0 ""
+Bp3=_ "STD_CODE" "{$PROJ_DIR$\..\..\..\..\..\..\..\..\emb6\src\dll\dllsec\dllsec_null.c}.123.1" 0 0 0 0 "" 0 ""
+Count=4
 [FET]
 Clock mode=14
 Extended Clock mode=-1

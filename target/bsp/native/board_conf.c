@@ -37,62 +37,59 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-/**  \addtogroup emb6
- *      @{
- *      \addtogroup bsp Board Support Package
- *   @{
- *   \addtogroup board
- *   @{
- *      \addtogroup x86 x86 emulation with a TCPIP based fake radio interface
- *      				   specific configuration
- *   @{
- */
-/*! \file   x86/board_conf.c
-
-    \author Artem Yushev, 
-
-    \brief  Board Configuration for x86 emulation
-
-    \version 0.0.1
-*/
 
 /*
-********************************************************************************
-*                                   INCLUDES
-********************************************************************************
-*/
-#include "emb6.h"
+ * --- Module Description ---------------------------------------------------*
+ */
+/**
+ *  \file       board_conf.c
+ *  \author     Institute of reliable Embedded Systems
+ *              and Communication Electronics
+ *  \date       $Date$
+ *  \version    $Version$
+ *
+ *  \brief      Definition of the Board Configuration.
+ *
+ *              The Board Configuration configures the underlying MCU and
+ *              transceiver.
+ */
 
-#include "../native/board_conf.h"
-#include "hwinit.h"
+/*
+ *  --- Includes -------------------------------------------------------------*
+ */
+#include "emb6.h"
+#include "emb6assert.h"
+#include "board_conf.h"
 #include "etimer.h"
 #include "etimer.h"
 #include "bsp.h"
 #include "logger.h"
 
+
+/*
+ * --- Macro Definitions --------------------------------------------------- *
+ */
 /** Enable or disable logging */
 #define        LOGGER_ENABLE          LOGGER_BSP
 
-uint8_t board_conf(s_ns_t* p_netstk)
+
+/*
+ *  --- Global Functions Definition ------------------------------------------*
+ */
+
+/*---------------------------------------------------------------------------*/
+/*
+* board_conf()
+*/
+int8_t board_conf( s_ns_t* p_ns )
 {
-    uint8_t 	c_ret = 0;
+  EMB6_ASSERT_RET( p_ns != NULL, -1 );
 
+  p_ns->dllc = &dllc_driver_802154;
+  p_ns->mac  = &mac_driver_null;
+  p_ns->phy  = &phy_driver_null;
+  p_ns->rf   = &rf_driver_native;
+  etimer_init();
 
-    if (p_netstk != NULL) {
-		p_netstk->dllc = &DLLCDrv802154;
-		p_netstk->mac = &MACDrvNull;
-		p_netstk->phy = &PHYDrvNull; // &PHYDrv802154;
-		p_netstk->rf  = &RFDrvNative;
-		etimer_init();
-		c_ret = 1;
-    }
-    else {
-            LOG_ERR("Network stack pointer is NULL");
-    }
-
-    return c_ret;
-}
-/** @} */
-/** @} */
-/** @} */
-/** @} */
+  return 0;
+} /* board_conf() */

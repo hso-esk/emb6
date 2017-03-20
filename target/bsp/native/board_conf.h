@@ -37,47 +37,77 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-/**  \addtogroup emb6
- *      @{
- *      \addtogroup bsp Board Support Package
- *   @{
- *   \addtogroup board
- *   @{
- *      \addtogroup x86 x86 emulation with a TCPIP based fake radio interface
- *      				specific configuration
- *   @{
+
+/*
+ * --- Module Description ---------------------------------------------------*
  */
-/*! \file   x86/board_conf.h
+/**
+ *  \file       board_conf.h
+ *  \author     Institute of reliable Embedded Systems
+ *              and Communication Electronics
+ *  \date       $Date$
+ *  \version    $Version$
+ *
+ *  \brief      Definition of the Board Configuration.
+ *
+ *              The Board Configuration configures the underlying MCU and
+ *              transceiver.
+ */
+#ifndef __BOARD_CONF_H__
+#define __BOARD_CONF_H__
 
-    \author Artem Yushev, 
 
-    \brief  Board Configuration for x86 platform woth tcpip based fake radio
-
-    \version 0.0.1
-*/
-
-#ifndef BOARD_CONF_H_
-#define BOARD_CONF_H_
-
-
+/*
+ * --- Includes -------------------------------------------------------------*
+ */
 #include "emb6.h"
 
-/*============================================================================*/
-/*!
-\brief    emb6 board configuration fuction
 
-        This function chooses the transceiver driver for the specific board.
+/*
+ * --- Macro Definitions --------------------------------------------------- *
+ */
+/* add platform-specific LEDs configuration */
+/** Number of supported LEDs */
+#ifndef HAL_SUPPORT_LEDNUM
+#define HAL_SUPPORT_LEDNUM                    ( 0 )
+#endif /* #ifndef HAL_SUPPORT_LEDNUM */
 
-\param    ps_nStack pointer to global netstack struct
 
-\return  success 1, failure 0
+/*
+ * --- Stack Macro Definitions ---------------------------------------------- *
+ */
 
-*/
-/*============================================================================*/
-uint8_t board_conf(s_ns_t* ps_nStack);
+/** Default modulation scheme */
+#if !defined(MODULATION)
+#define MODULATION                            MODULATION_2FSK50
+#endif /* #if !defined(MODULATION) */
 
-#endif /* BOARD_CONF_H_ */
-/** @} */
-/** @} */
-/** @} */
-/** @} */
+/** transceiver supports standard-specific checksum algorithm */
+#define NETSTK_SUPPORT_HW_CRC                 TRUE
+
+/** transceiver supports auto-acknowledgment on hardware */
+#if (NETSTK_SUPPORT_SW_MAC_AUTOACK == FALSE)
+#define NETSTK_SUPPORT_HW_AUTOACK             TRUE
+#endif /* #if (NETSTK_SUPPORT_SW_MAC_AUTOACK == FALSE) */
+
+
+/*
+ *  --- Global Functions Definition ------------------------------------------*
+ */
+
+/**
+ * board_conf()
+ *
+ * \brief   Configure board.
+ *
+ *          This function is used to configure the specific board for usage
+ *          with emb::6. Therefore e.g. the transceiver and the according
+ *          layers will be selected.
+ *
+ * \param   p_ns  Pointer to global netstack struct.
+ *
+ * \return  0 on success or negative value on error.
+ */
+int8_t board_conf( s_ns_t* p_ns );
+
+#endif /* __BOARD_CONF_H__ */

@@ -369,9 +369,9 @@ int8_t demo_dtlsInit(void)
 	if (!connected)
 		connected = dtls_connect(dtls_context, &dst) >= 0;
 
-	etimer_set(&et, 20 * bsp_get(E_BSP_GET_TRES), try_send);
+	etimer_set(&et, 20 * bsp_getTRes(), try_send);
 
-	return 1;
+	return 0;
 }
 
 static void dtls_udp_callback(void)
@@ -383,33 +383,32 @@ static void dtls_udp_callback(void)
  demo_dtlsConf()
 ==============================================================================*/
 
-uint8_t demo_dtlsConf(s_ns_t* pst_netStack)
+int8_t demo_dtlsConf(s_ns_t* pst_netStack)
 {
-	uint8_t c_ret = 1;
+  int8_t ret = -1;
 
-	/*
-	 * By default stack
-	 */
-    if (pst_netStack != NULL) {
-        if (!pst_netStack->c_configured) {
-            pst_netStack->hc     = &sicslowpan_driver;
-            pst_netStack->dllsec   = &nullsec_driver;
-            pst_netStack->frame  = &framer_802154;
-            pst_netStack->c_configured = 1;
-            /* Transceiver interface is defined by @ref board_conf function*/
-            /*pst_netStack->inif   = $<some_transceiver>;*/
-        } else {
-            if ((pst_netStack->hc == &sicslowpan_driver)   &&
-                (pst_netStack->dllsec == &nullsec_driver)   &&
-                (pst_netStack->frame == &framer_802154)) {
-                /* right configuration */
-            }
-            else {
-                c_ret = 0;
-            }
-        }
+  /*
+   * By default stack
+   */
+  if (pst_netStack != NULL) {
+    if (!pst_netStack->c_configured) {
+      pst_netStack->hc = &hc_driver_sicslowpan;
+      pst_netStack->dllsec = &dllsec_driver_null;
+      pst_netStack->frame = &framer_802154;
+      pst_netStack->c_configured = 1;
+      ret = 0;
+    } else {
+      if ((pst_netStack->hc == &hc_driver_sicslowpan) &&
+          (pst_netStack->dllsec == &dllsec_driver_null) &&
+          (pst_netStack->frame == &framer_802154)) {
+        /* right configuration */
+        ret = 0;
+      } else {
+        ret = -1;
+      }
     }
-    return (c_ret);
+  }
+  return ret;
 }
 
 /** @} */

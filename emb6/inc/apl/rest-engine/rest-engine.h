@@ -67,17 +67,13 @@
 #define REST_MAX_CHUNK_SIZE     64
 #endif
 
-#ifndef MIN
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-#endif /* MIN */
-
 struct resource_s;
 struct periodic_resource_s;
 
 /* signatures of handler functions */
 typedef void (*restful_handler)(void *request, void *response,
                                 uint8_t *buffer, uint16_t preferred_size,
-                                int32_t *offset);
+                                int32_t *offset, void* p_user );
 typedef void (*restful_final_handler)(struct resource_s *resource,
                                       void *request, void *response);
 typedef void (*restful_periodic_handler)(void);
@@ -104,6 +100,7 @@ struct resource_s {
     restful_trigger_handler trigger;
     restful_trigger_handler resume;
   }un_handler;
+  void* p_user;
 };
 typedef struct resource_s resource_t;
 

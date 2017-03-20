@@ -50,25 +50,31 @@
 
 uint16_t phy_framer802154_getPktLen(uint8_t *p_data, uint16_t len)
 {
-    if (len < PHY_HEADER_LEN) {
-        return 0;
-    }
+  if (len < PHY_HEADER_LEN) {
+    return 0;
+  }
 
-    uint16_t psdu_len = 0;
+  uint16_t psdu_len = 0;
 
 #if NETSTK_CFG_IEEE_802154G_EN
-    uint16_t phr;
+  uint16_t phr;
 
-    phr = (p_data[0] << 8) | (p_data[1]);
+  phr = (p_data[0] << 8) | (p_data[1]);
+  if (phr & 0xE800) {
+    /* unsupported frame, see also IEEE Std. 802.15.4g-2012, 18.1.1.3 */
+    psdu_len = 0;
+  } else {
     psdu_len = phr & 0x07FF;
+  }
 #else
-    psdu_len = p_data[0];
+  psdu_len = p_data[0];
 #endif
 
-    /* verify length of PSDU */
-    if ((psdu_len < PHY_PSDU_MIN( phr )) || (psdu_len > PHY_PSDU_MAX) ) {
-        psdu_len = 0;
-    }
+  /* verify length of PSDU */
+  if ((psdu_len < PHY_PSDU_MIN(phr)) ||
+      (psdu_len > PHY_PSDU_MAX )) {
+    psdu_len = 0;
+  }
 
-    return psdu_len;
+  return psdu_len;
 }

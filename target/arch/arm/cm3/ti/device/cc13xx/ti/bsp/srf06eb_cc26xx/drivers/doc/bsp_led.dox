@@ -1,0 +1,86 @@
+//*****************************************************************************
+//! @file       bsp_led.dox
+//! @brief      Board Support Package LED chapter.
+//!
+//! Revised     $Date: 2012-05-03 14:55:14 +0200 (to, 03 mai 2012) $
+//! Revision    $Revision: 7500 $
+//
+//  Copyright (C) 2011 Texas Instruments Incorporated - http://www.ti.com/
+//
+//
+//  Redistribution and use in source and binary forms, with or without
+//  modification, are permitted provided that the following conditions
+//  are met:
+//
+//    Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//
+//    Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//
+//    Neither the name of Texas Instruments Incorporated nor the names of
+//    its contributors may be used to endorse or promote products derived
+//    from this software without specific prior written permission.
+//
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+//  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+//  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+//  A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+//  OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+//  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+//  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+//  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+//  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+//  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+//  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//****************************************************************************/
+
+/*! \page bsp_led_chapter
+\latexonly
+\chapter{LEDs}
+\jumptext{led_intro}{Introduction}\\
+\jumptext{group__bsp__led__api}{API Functions}\\
+\jumptext{led_code_example}{Programming Example}\\
+\input{led_intro}
+\input{group__bsp__led__api}
+\input{led_code_example}
+\endlatexonly
+*/
+
+/*! \page led_intro Introduction
+The CCBOARD has BOARDLEDCOUNT LEDs that can be controlled from the CCDEVICE. 
+The CCBOARD BSP LED driver provides functionality for setting, 
+clearing, and toggling these LEDs. The LEDs can be accessed using defines 
+\b BSP_LED_1 through \b BSP_LED_BOARDLEDCOUNT. Define \b BSP_LED_ALL is an 
+ORed bitmask of all LEDs on the CCBOARD accessible from the CCDEVICE.
+
+The driver files are located in <tt>bsp/CCFOLDER/drivers</tt>.
+- <tt>source/bsp_led.c</tt> contains the function implementations for CCDEVICE 
+  on CCBOARD.
+- <tt>source/bsp_led.h</tt> contains the API definitions for use by 
+  applications.
+
+\defgroup bsp_led_api API Functions
+The functionality found in bspLedInit() is also performed in the BSP 
+initialization function, bspInit(). It is therefore not necessary to 
+call bspLedInit() if bspInit() has already been called.
+*/
+
+/*! \page led_code_example Programming Example
+The following example shows how to use the BSP LED API to initialize the LEDs
+and to turn on an LED. For more LED code examples, see 
+<tt>bsp/CCFOLDER/examples/leds</tt>.
+
+\code
+    //
+    // Initialize the CCBOARD LEDs as off.
+    //
+    bspLedInit();
+
+    //
+    // Turn on LED 1 and 2.
+    //
+    bspLedSet(BSP_LED_1 | BSP_LED_2);
+\endcode
+*/

@@ -31,77 +31,27 @@
  */
 /**
  * \file
- *         A set of debugging macros.
+ *         A set of debugging macros for the IP stack
  *
  * \author Nicolas Tsiftes <nvt@sics.se>
  *         Niclas Finne <nfi@sics.se>
  *         Joakim Eriksson <joakime@sics.se>
+ *         Simon Duquennoy <simon.duquennoy@inria.fr>
  */
 
 #ifndef UIP_DEBUG_H
 #define UIP_DEBUG_H
 
+#include "net-debug.h"
 #include "uip.h"
 #include <stdio.h>
 
 void uip_debug_ipaddr_print(const uip_ipaddr_t *addr);
-void uip_debug_lladdr_print(const uip_lladdr_t *addr);
-
-#define DEBUG_NONE      0
-#define DEBUG_PRINT     1
-#define DEBUG_ANNOTATE  2
-#define DEBUG_FULL      DEBUG_ANNOTATE | DEBUG_PRINT
-
-/* PRINTA will always print if the debug routines are called directly */
-#ifdef __AVR__
-#include <avr/pgmspace.h>
-#define PRINTA(FORMAT,args...) printf_P(PSTR(FORMAT),##args)
-#else
-#define PRINTA(...) printf(__VA_ARGS__)
-#endif
-
-#if (DEBUG) & DEBUG_ANNOTATE
-#ifdef __AVR__
-#define ANNOTATE(FORMAT,args...) printf_P(PSTR(FORMAT),##args)
-#else
-#define ANNOTATE(...) printf(__VA_ARGS__)
-#endif
-#else
-#define ANNOTATE(...)
-#endif /* (DEBUG) & DEBUG_ANNOTATE */
 
 #if (DEBUG) & DEBUG_PRINT
-#ifdef __AVR__
-#define PRINTF(FORMAT,args...) printf_P(PSTR(FORMAT),##args)
-#else
-#define PRINTF(...)  printf(__VA_ARGS__)
-/** Debug print colors. */
-#define ANSI_COLOR_RED     	"\x1b[31m"
-#define ANSI_COLOR_YELLOW  	"\x1b[33m"
-#define	ANSI_COLOR_GREEN	"\x1B[32m"
-#define ANSI_COLOR_CYAN    	"\x1b[36m"
-#define ANSI_COLOR_MAGENTA 	"\x1b[35m"
-#define ANSI_COLOR_RESET  	"\x1b[0m"
-
-#define PRINTFR(...) printf(ANSI_COLOR_RED __VA_ARGS__ )
-#define PRINTFY(...) printf(ANSI_COLOR_YELLOW __VA_ARGS__ )
-#define PRINTFG(...) printf(ANSI_COLOR_GREEN __VA_ARGS__ )
-#define PRINTFC(...) printf(ANSI_COLOR_CYAN __VA_ARGS__ )
-#define PRINTFM(...) printf(ANSI_COLOR_MAGENTA __VA_ARGS__ )
-#define PRESET()     printf(ANSI_COLOR_RESET " \n")
-#endif
 #define PRINT6ADDR(addr) uip_debug_ipaddr_print(addr)
-#define PRINTLLADDR(lladdr) uip_debug_lladdr_print(lladdr)
 #else
-#define PRINTF(...)
-#define PRINTFR(...)
-#define PRINTFY(...)
-#define PRINTFG(...)
-#define PRINTFC(...)
-#define PRINTFM(...)
-#define PRESET()
 #define PRINT6ADDR(addr)
-#define PRINTLLADDR(lladdr)
 #endif /* (DEBUG) & DEBUG_PRINT */
 
-#endif
+#endif /* UIP_DEBUG_H */

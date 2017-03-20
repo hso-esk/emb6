@@ -58,6 +58,7 @@
 
 #include "emb6_conf.h"
 #include "emb6.h"
+#include "cc.h"
 
 /* Header sizes. */
 #if NETSTACK_CONF_WITH_IPV6
@@ -580,7 +581,7 @@ void uip_unlisten(uint16_t port);
  * or NULL if no connection could be allocated.
  *
  */
-struct uip_conn *uip_connect(uip_ipaddr_t *ripaddr, uint16_t port);
+struct uip_conn *uip_connect(const uip_ipaddr_t *ripaddr, uint16_t port);
 
 
 
@@ -1010,10 +1011,10 @@ struct uip_udp_conn *uip_udp_new(const uip_ipaddr_t *ripaddr, uint16_t rport);
 #define uip_ipaddr_copy(dest, src) (*(dest) = *(src))
 #endif
 #ifndef uip_ip4addr_copy
-#define uip_ip4addr_copy(dest, src) (*(dest) = *(src))
+#define uip_ip4addr_copy(dest, src) (*((uip_ip4addr_t *)dest) = *((uip_ip4addr_t *)src))
 #endif
 #ifndef uip_ip6addr_copy
-#define uip_ip6addr_copy(dest, src) (*(dest) = *(src))
+#define uip_ip6addr_copy(dest, src) (*((uip_ip6addr_t *)dest) = *((uip_ip6addr_t *)src))
 #endif
 
 /**
@@ -1315,6 +1316,22 @@ extern uint8_t uip_ext_len;
 extern uint16_t uip_urglen, uip_surglen;
 #endif /* UIP_URGDATA > 0 */
 
+/*
+ * Clear uIP buffer
+ *
+ * This function clears the uIP buffer by reseting the uip_len and
+ * uip_ext_len pointers.
+ */
+#if NETSTACK_CONF_WITH_IPV6
+#define uip_clear_buf() { \
+  uip_len = 0; \
+  uip_ext_len = 0; \
+}
+#else /*NETSTACK_CONF_WITH_IPV6*/
+#define uip_clear_buf() { \
+  uip_len = 0; \
+}
+#endif /*NETSTACK_CONF_WITH_IPV6*/
 
 /**
  * Representation of a uIP TCP connection.
@@ -1352,8 +1369,7 @@ struct uip_conn {
   uint8_t nrtx;          /**< The number of retransmissions for the last
              segment sent. */
 
-  /** The application state. */
-  uip_tcp_appstate_t appstate;
+  uip_tcp_appstate_t appstate; /** The application state. */
 };
 
 
@@ -1402,7 +1418,13 @@ extern struct uip_udp_conn uip_udp_conns[UIP_UDP_CONNS];
 
 struct uip_fallback_interface {
   void (*init)(void);
-  void (*output)(void);
+  /**
+   * \retval >=0
+   * 	in case of success
+   * \retval <0
+   *	in case of failure
+   */
+  int (*output)(void);
 };
 
 #if UIP_CONF_ICMP6
@@ -1785,6 +1807,13 @@ typedef struct uip_routing_hdr {
   uint8_t seg_left;
 } uip_routing_hdr;
 
+/* RPL Source Routing Header */
+typedef struct uip_rpl_srh_hdr {
+  uint8_t cmpr; /* CmprI and CmprE */
+  uint8_t pad;
+  uint8_t reserved[2];
+} uip_rpl_srh_hdr;
+
 /* fragmentation header */
 typedef struct uip_frag_hdr {
   uint8_t next;
@@ -1990,8 +2019,9 @@ CCIF extern uip_lladdr_t uip_lladdr;
    (((a)->u8[15]) == 0x02))
 
 /**
- * \brief Checks whether the address a is link local.
- * a is of type uip_ipaddr_t
+ * \brief is addr (a) a link local unicast address, see RFC 4291
+ *  i.e. is (a) on prefix FE80::/10
+ *  a is of type uip_ipaddr_t*
  */
 #define uip_is_addr_linklocal(a)                 \
   ((a)->u8[0] == 0xfe &&                         \
@@ -2013,7 +2043,7 @@ CCIF extern uip_lladdr_t uip_lladdr;
   } while(0)
 
 /**
- * \brief  is addr (a) a solicited node multicast address, see RFC3513
+ * \brief  is addr (a) a solicited node multicast address, see RFC 4291
  *  a is of type uip_ipaddr_t*
  */
 #define uip_is_addr_solicited_node(a)          \
@@ -2045,15 +2075,6 @@ CCIF extern uip_lladdr_t uip_lladdr;
   (((b)->u16[7]) = ((a)->u16[7]))
 
 /**
- * \brief is addr (a) a link local unicast address, see RFC3513
- *  i.e. is (a) on prefix FE80::/10
- *  a is of type uip_ipaddr_t*
- */
-#define uip_is_addr_link_local(a) \
-  ((((a)->u8[0]) == 0xFE) && \
-  (((a)->u8[1]) == 0x80))
-
-/**
  * \brief was addr (a) forged based on the mac address m
  * a type is uip_ipaddr_t
  * m type is uiplladdr_t
@@ -2083,7 +2104,7 @@ CCIF extern uip_lladdr_t uip_lladdr;
 #endif /*UIP_CONF_LL_802154*/
 
 /**
- * \brief is address a multicast address, see RFC 3513
+ * \brief is address a multicast address, see RFC 4291
  * a is of type uip_ipaddr_t*
  * */
 #define uip_is_addr_mcast(a)                    \

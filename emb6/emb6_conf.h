@@ -49,14 +49,19 @@
 /*! \file   emb6_conf.h
 
     \author Peter Lehmann peter.lehmann@hs-offenburg.de
+            Phuong Nguyen minh.nguyen@hs-offenburg.de
 
     \brief  emb6 compile-time parameter configuration
 
-    \version 0.0.1
+    \version 0.0.2
 */
 
 #ifndef EMB6_CONF_H_
 #define EMB6_CONF_H_
+
+#define EMB6_TEST_CFG_CONT_TX_EN                      FALSE
+#define EMB6_TEST_CFG_CONT_RX_EN                      FALSE
+#define EMB6_TEST_CFG_WOR_EN                          FALSE
 
 
 /*=============================================================================
@@ -69,6 +74,8 @@
 
 /** Define a network prefix for dag root */
 #define NETWORK_PREFIX_DODAG                   0xaaaa, 0x0000, 0x0000, 0x0000
+
+#define UIP_CONF_DS6_DEFAULT_PREFIX             0xaaaa
 
 /*=============================================================================
                                 TRANSPORT LAYER SECTION
@@ -128,6 +135,8 @@
 /** Do we support 6lowpan fragmentation */
 #define SICSLOWPAN_CONF_FRAG                 TRUE
 
+#define SICSLOWPAN_CONF_FRAGMENT_BUFFERS     4
+
 /** Most browsers reissue GETs after 3 seconds which stops frag reassembly, longer MAXAGE does no good */
 #define SICSLOWPAN_CONF_MAXAGE               3
 
@@ -140,13 +149,6 @@
 #ifndef LLSEC802154_CONF_SECURITY_LEVEL
 #define LLSEC802154_CONF_SECURITY_LEVEL      0
 #endif /* LLSEC802154_CONF_SECURITY_LEVEL */
-
-
-/*=============================================================================
-                                DLL/PHY SECTIONS
-==============================================================================*/
-#define NETSTK_CFG_IEEE_802154_IGNACK           FALSE
-#define NETSTK_CFG_IEEE_802154G_EN              TRUE
 
 
 /*==============================================================================
@@ -193,34 +195,62 @@
 #define UIP_CONF_IPV6_RPL                   TRUE
 #endif
 
+/* If RPL is enabled also enable the RPL NBR Policy */
+#if UIP_CONF_IPV6_RPL
+#ifndef NBR_TABLE_FIND_REMOVABLE
+#define NBR_TABLE_FIND_REMOVABLE rpl_nbr_policy_find_removable
+#endif /* NBR_TABLE_FIND_REMOVABLE */
+#endif /* UIP_CONF_IPV6_RPL */
+
 /** Set to 1 to enable RPL statistics */
 #define    RPL_CONF_STATS                   FALSE
-
-#define    RPL_CONF_DAO_LATENCY             bsp_get(E_BSP_GET_TRES)
-#define RPL_CONF_DAG_MC                     RPL_DAG_MC_ETX
-/**
- * Select routing metric supported at runtime. This must be a valid
- * DAG Metric Container Object Type (see below). Currently, we only
- * support RPL_DAG_MC_ETX and RPL_DAG_MC_ENERGY.
- * When MRHOF (RFC6719) is used with ETX, no metric container must
- * be used; instead the rank carries ETX directly.
+#define    RPL_CONF_DAO_LATENCY             bsp_getTRes()
+#define    RPL_CONF_DAG_MC                  RPL_DAG_MC_ETX
+/*
+ * The objective function (OF) used by a RPL root is configurable through
+ * the RPL_CONF_OF_OCP parameter. This is defined as the objective code
+ * point (OCP) of the OF, RPL_OCP_OF0 or RPL_OCP_MRHOF. This flag is of
+ * no relevance to non-root nodes, which run the OF advertised in the
+ * instance they join.
+ * Make sure the selected of is inRPL_SUPPORTED_OFS.
  */
+#ifdef RPL_CONF_OF_OCP
+#define RPL_OF_OCP RPL_CONF_OF_OCP
+#else /* RPL_CONF_OF_OCP */
+#define RPL_OF_OCP RPL_OCP_MRHOF
+#endif /* RPL_CONF_OF_OCP */
+
+/*
+ * The set of objective functions supported at runtime. Nodes are only
+ * able to join instances that advertise an OF in this set. To include
+ * both OF0 and MRHOF, use {&rpl_of0, &rpl_mrhof}.
+ */
+#ifdef RPL_CONF_SUPPORTED_OFS
+#define RPL_SUPPORTED_OFS RPL_CONF_SUPPORTED_OFS
+#else /* RPL_CONF_SUPPORTED_OFS */
+#define RPL_SUPPORTED_OFS {&rpl_of0, &rpl_mrhof}
+#endif /* RPL_CONF_SUPPORTED_OFS */
+
+/*
+ * Enable/disable RPL Metric Containers (MC). The actual MC in use
+ * for a given DODAG is decided at runtime, when joining. Note that
+ * OF0 (RFC6552) operates without MC, and so does MRHOF (RFC6719) when
+ * used with ETX as a metric (the rank is the metric). We disable MC
+ * by default, but note it must be enabled to support joining a DODAG
+ * that requires MC (e.g., MRHOF with a metric other than ETX).
+ */
+#ifdef RPL_CONF_WITH_MC
+#define RPL_WITH_MC RPL_CONF_WITH_MC
+#else /* RPL_CONF_WITH_MC */
+#define RPL_WITH_MC 0
+#endif /* RPL_CONF_WITH_MC */
+
+/* The MC advertised in DIOs and propagating from the root */
 #ifdef RPL_CONF_DAG_MC
 #define RPL_DAG_MC                          RPL_CONF_DAG_MC
 #else
 #define RPL_DAG_MC                          RPL_DAG_MC_NONE
 #endif /* RPL_CONF_DAG_MC */
-/**
- * The objective function used by RPL is configurable through the
- * RPL_CONF_OF parameter. This should be defined to be the name of an
- * rpl_of object linked into the system image, e.g., rpl_of0.
- */
-#ifdef RPL_CONF_OF
-#define RPL_OF RPL_CONF_OF
-#else
-/** ETX is the default objective function. */
-#define RPL_OF rpl_mrhof
-#endif /* RPL_CONF_OF */
 
 /** This value decides which DAG instance we should participate in by default. */
 #ifdef RPL_CONF_DEFAULT_INSTANCE
@@ -287,15 +317,35 @@
 #define RPL_MAX_DAG_PER_INSTANCE     2
 #endif /* RPL_CONF_MAX_DAG_PER_INSTANCE */
 
-/**
- * Initial metric attributed to a link when the ETX is unknown
+/*
+ * RPL Default route lifetime
+ * The RPL route lifetime is used for the downward routes and for the default
+ * route. In a high density network with DIO suppression activated it may happen
+ * that a node will never send a DIO once the DIO interval becomes high as it
+ * has heard DIO from many neighbors already. As the default route to the
+ * preferred parent has a lifetime reset by receiving DIO from the parent, it
+ * means that the default route can be destroyed after a while. Setting the
+ * default route with infinite lifetime secures the upstream route.
  */
-#ifndef RPL_CONF_INIT_LINK_METRIC
-#define RPL_INIT_LINK_METRIC                rpl_config.linkMetric
+#ifdef RPL_CONF_DEFAULT_ROUTE_INFINITE_LIFETIME
+#define RPL_DEFAULT_ROUTE_INFINITE_LIFETIME                    RPL_CONF_DEFAULT_ROUTE_INFINITE_LIFETIME
 #else
-#define RPL_INIT_LINK_METRIC                RPL_CONF_INIT_LINK_METRIC
-#endif
-/**
+#define RPL_DEFAULT_ROUTE_INFINITE_LIFETIME                    0
+#endif /* RPL_CONF_DEFAULT_ROUTE_INFINITE_LIFETIME */
+
+/*
+ * Maximum lifetime of a DAG
+ * When a DODAG is not updated since RPL_CONF_DAG_LIFETIME times the DODAG
+ * maximum DIO interval the DODAG is removed from the list of DODAGS of the
+ * related instance, except if it is the currently joined DODAG.
+ */
+#ifdef RPL_CONF_DAG_LIFETIME
+#define RPL_DAG_LIFETIME                    RPL_CONF_DAG_LIFETIME
+#else
+#define RPL_DAG_LIFETIME                    3
+#endif /* RPL_CONF_DAG_LIFETIME */
+
+/*
  *
  */
 #ifndef RPL_CONF_DAO_SPECIFY_DAG
@@ -336,6 +386,121 @@
 #define RPL_PREFERENCE                      0
 #endif
 
+/*
+ * RPL DAO ACK support. When enabled, DAO ACK will be sent and requested.
+ * This will also enable retransmission of DAO when no ack is received.
+ * */
+#ifdef RPL_CONF_WITH_DAO_ACK
+#define RPL_WITH_DAO_ACK RPL_CONF_WITH_DAO_ACK
+#else
+#define RPL_WITH_DAO_ACK 1
+#endif /* RPL_CONF_WITH_DAO_ACK */
+
+/*
+ * RPL REPAIR ON DAO NACK. When enabled, DAO NACK will trigger a local
+ * repair in order to quickly find a new parent to send DAO's to.
+ * NOTE: this is too agressive in some cases so use with care.
+ * */
+#ifdef RPL_CONF_RPL_REPAIR_ON_DAO_NACK
+#define RPL_REPAIR_ON_DAO_NACK RPL_CONF_RPL_REPAIR_ON_DAO_NACK
+#else
+#define RPL_REPAIR_ON_DAO_NACK 0
+#endif /* RPL_CONF_RPL_REPAIR_ON_DAO_NACK */
+
+/*
+ * Setting the DIO_REFRESH_DAO_ROUTES will make the RPL root always
+ * increase the DTSN (Destination Advertisement Trigger Sequence Number)
+ * when sending multicast DIO. This is to get all children to re-register
+ * their DAO route. This is needed when DAO-ACK is not enabled to add
+ * reliability to route maintenance.
+ * */
+#ifdef RPL_CONF_DIO_REFRESH_DAO_ROUTES
+#define RPL_DIO_REFRESH_DAO_ROUTES RPL_CONF_DIO_REFRESH_DAO_ROUTES
+#else
+#define RPL_DIO_REFRESH_DAO_ROUTES 1
+#endif /* RPL_CONF_DIO_REFRESH_DAO_ROUTES */
+
+/*
+ * RPL probing. When enabled, probes will be sent periodically to keep
+ * parent link estimates up to date.
+ * */
+#ifdef RPL_CONF_WITH_PROBING
+#define RPL_WITH_PROBING RPL_CONF_WITH_PROBING
+#else
+#define RPL_WITH_PROBING 1
+#endif
+
+/*
+ * RPL probing interval.
+ * */
+#ifdef RPL_CONF_PROBING_INTERVAL
+#define RPL_PROBING_INTERVAL RPL_CONF_PROBING_INTERVAL
+#else
+#define RPL_PROBING_INTERVAL (120 * bsp_getTRes())
+#endif
+
+/*
+ * Function used to select the next parent to be probed.
+ * */
+#ifdef RPL_CONF_PROBING_SELECT_FUNC
+#define RPL_PROBING_SELECT_FUNC RPL_CONF_PROBING_SELECT_FUNC
+#else
+#define RPL_PROBING_SELECT_FUNC get_probing_target
+#endif
+
+/*
+ * Function used to send RPL probes.
+ * To probe with DIO, use:
+ * #define RPL_CONF_PROBING_SEND_FUNC(instance, addr) dio_output((instance), (addr))
+ * To probe with DIS, use:
+ * #define RPL_CONF_PROBING_SEND_FUNC(instance, addr) dis_output((addr))
+ * Any other custom probing function is also acceptable.
+ * */
+#ifdef RPL_CONF_PROBING_SEND_FUNC
+#define RPL_PROBING_SEND_FUNC RPL_CONF_PROBING_SEND_FUNC
+#else
+#define RPL_PROBING_SEND_FUNC(instance, addr) dio_output((instance), (addr))
+#endif
+
+/*
+ * Function used to calculate next RPL probing interval
+ * */
+#ifdef RPL_CONF_PROBING_DELAY_FUNC
+#define RPL_PROBING_DELAY_FUNC RPL_CONF_PROBING_DELAY_FUNC
+#else
+#define RPL_PROBING_DELAY_FUNC get_probing_delay
+#endif
+
+/*
+ * Interval of DIS transmission
+ */
+#ifdef  RPL_CONF_DIS_INTERVAL
+#define RPL_DIS_INTERVAL                RPL_CONF_DIS_INTERVAL
+#else
+#define RPL_DIS_INTERVAL                60
+#endif
+
+/*
+ * Added delay of first DIS transmission after boot
+ */
+#ifdef  RPL_CONF_DIS_START_DELAY
+#define RPL_DIS_START_DELAY             RPL_CONF_DIS_START_DELAY
+#else
+#define RPL_DIS_START_DELAY             5
+#endif
+
+/* RPL_CONF_MOP specifies the RPL mode of operation that will be
+ * advertised by the RPL root. Possible values: RPL_MOP_NO_DOWNWARD_ROUTES,
+ * RPL_MOP_NON_STORING, RPL_MOP_STORING_NO_MULTICAST, RPL_MOP_STORING_MULTICAST */
+#ifndef RPL_CONF_MOP
+#define RPL_CONF_MOP RPL_MOP_STORING_NO_MULTICAST
+#endif /* RPL_CONF_MOP */
+
+/* RPL_NS_CONF_LINK_NUM specifies the maximum number of links a RPL root
+ * will maintain in non-storing mode. */
+#ifndef RPL_NS_CONF_LINK_NUM
+#define RPL_NS_CONF_LINK_NUM 20
+#endif /* RPL_NS_CONF_LINK_NUM */
 
 /*=============================================================================
                                   uIP SECTION
@@ -824,37 +989,37 @@ void uip_log(char *msg);
 /** Core logging, should be TRUE for almost all cases except for production
 * (see emb6.c) */
 #ifndef LOGGER_CORE
-#define LOGGER_CORE                        	FALSE
+#define LOGGER_CORE                         FALSE
 #endif
 
-/** Hardware abstraction layer functions   	(see target.c) */
+/** Hardware abstraction layer functions    (see target.c) */
 #ifndef LOGGER_HAL
-#define LOGGER_HAL                         	FALSE
+#define LOGGER_HAL                          FALSE
 #endif
 
-/** Board support package                  	(see bsp.c) */
+/** Board support package                   (see bsp.c) */
 #ifndef LOGGER_BSP
-#define LOGGER_BSP                        	FALSE
+#define LOGGER_BSP                          FALSE
 #endif
 
-/** Main functions                         	(see emb6_main.c) */
+/** Main functions                          (see emb6_main.c) */
 #ifndef LOGGER_MAIN
-#define LOGGER_MAIN                        	FALSE
+#define LOGGER_MAIN                         FALSE
 #endif
 
-/** Event process functions                	(see llc_xxx.c) */
+/** Event process functions                 (see llc_xxx.c) */
 #ifndef LOGGER_LLC
-#define LOGGER_LLC                         	FALSE
+#define LOGGER_LLC                          FALSE
 #endif
 
-/** Event process functions                	(see mac_xxx.c) */
+/** Event process functions                 (see mac_xxx.c) */
 #ifndef LOGGER_MAC
-#define LOGGER_MAC                         	FALSE
+#define LOGGER_MAC                          FALSE
 #endif
 
-/** Event process functions                	(see phy_xxx.c) */
+/** Event process functions                 (see phy_xxx.c) */
 #ifndef LOGGER_PHY
-#define LOGGER_PHY                         	FALSE
+#define LOGGER_PHY                          FALSE
 #endif
 
 /** MLE functions                			(see mle/) */
@@ -867,9 +1032,9 @@ void uip_log(char *msg);
 #define LOGGER_THRD_NET                    	TRUE
 #endif
 
-/** Radio functions                        	(see $(IF).c) */
+/** Radio functions                         (see $(IF).c) */
 #ifndef LOGGER_RADIO
-#define LOGGER_RADIO                       	FALSE
+#define LOGGER_RADIO                        FALSE
 #endif
 
 /** DEMO UDP socket example                 (see demo_udp_socket.c) */
@@ -877,24 +1042,34 @@ void uip_log(char *msg);
 #define LOGGER_DEMO_UDP_SOCKET              FALSE
 #endif
 
-/** DEMO UDP example                       	(see demo_exudp.c) */
+ /** DEMO UDP socket simple example        (see demo_udp_socket_simple.c) */
+ #ifndef LOGGER_DEMO_UDP_SOCKET_SIMPLE
+ #define LOGGER_DEMO_UDP_SOCKET_SIMPLE      FALSE
+ #endif
+
+/** DEMO UDP example                        (see demo_exudp.c) */
 #ifndef LOGGER_DEMO_UDPIAA
-#define LOGGER_DEMO_UDPIAA                 	FALSE
+#define LOGGER_DEMO_UDPIAA                  FALSE
 #endif
 
-/** DEMO APTB example                      	(see demo_aptb_xxx.c) */
+/** DEMO APTB example                       (see demo_aptb_xxx.c) */
 #ifndef LOGGER_DEMO_APTB
-#define LOGGER_DEMO_APTB                   	FALSE
+#define LOGGER_DEMO_APTB                    FALSE
 #endif
 
-/** DEMO COAP example                      	(see demo_coap_*.c) */
+/** DEMO COAP example                       (see demo_coap_*.c) */
 #ifndef LOGGER_DEMO_COAP
-#define LOGGER_DEMO_COAP                   	FALSE
+#define LOGGER_DEMO_COAP                    FALSE
 #endif
 
-/** DEMO DTLS example                      	(see demo_dtls_*.c) */
+/** DEMO LWM2M example                      (see demo_lwm2m_*.c) */
+#ifndef LOGGER_DEMO_LWM2M
+#define LOGGER_DEMO_LWM2M                   FALSE
+#endif
+
+/** DEMO DTLS example                       (see demo_dtls_*.c) */
 #ifndef LOGGER_DEMO_DTLS
-#define LOGGER_DEMO_DTLS                   	TRUE
+#define LOGGER_DEMO_DTLS                    FALSE
 #endif
 
  /** DEMO MCAST example						(see mcast/*.c) */
@@ -902,34 +1077,34 @@ void uip_log(char *msg);
 #define LOGGER_DEMO_MCAST                  	FALSE
 #endif
 
-/** DEMO MDNS example                      	(see demo_mdns_*.c) */
+/** DEMO MDNS example                       (see demo_mdns_*.c) */
 #ifndef LOGGER_DEMO_MDNS
-#define LOGGER_DEMO_MDNS                   	FALSE
+#define LOGGER_DEMO_MDNS                    FALSE
 #endif
 
-/** DEMO SNIFFER                           	(see demo_sniffer.c) */
+/** DEMO SNIFFER                            (see demo_sniffer.c) */
 #ifndef LOGGER_DEMO_SNIFFER
-#define LOGGER_DEMO_SNIFFER                	FALSE
+#define LOGGER_DEMO_SNIFFER                 FALSE
 #endif
 
-/** DEMO TESTSUITE                         	(see tessuite.c) */
+/** DEMO TESTSUITE                          (see tessuite.c) */
 #ifndef LOGGER_DEMO_TESTSUITE
-#define LOGGER_DEMO_TESTSUITE             	FALSE
+#define LOGGER_DEMO_TESTSUITE               FALSE
 #endif
 
-/** Event timer functions                  	(see etimer.c) */
+/** Event timer functions                   (see etimer.c) */
 #ifndef LOGGER_ETIMER
-#define LOGGER_ETIMER                      	FALSE
+#define LOGGER_ETIMER                       FALSE
 #endif
 
-/** Callback timer functions               	(see ctimer.c) */
+/** Callback timer functions                (see ctimer.c) */
 #ifndef LOGGER_CTIMER
-#define LOGGER_CTIMER                      	FALSE
+#define LOGGER_CTIMER                       FALSE
 #endif
 
-/** Event process functions                	(see evproc.c) */
+/** Event process functions                 (see evproc.c) */
 #ifndef LOGGER_EVPROC
-#define LOGGER_EVPROC                      	FALSE
+#define LOGGER_EVPROC                       FALSE
 #endif
 
 
@@ -938,10 +1113,82 @@ void uip_log(char *msg);
 *                          NETSTACK CONFIGURATIONS
 ********************************************************************************
 */
+ /*!< Enable/Disable support for IEEE Std. 802.15.4G */
+#ifndef NETSTK_CFG_IEEE_802154G_EN
+#define NETSTK_CFG_IEEE_802154G_EN                          FALSE
+#endif
+
 #if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
+ /*!< Enable/Disable 2k-length frame support in 802.15.4G mode */
+  #ifndef NETSTK_CFG_2K_FRAME_EN
+    #define NETSTK_CFG_2K_FRAME_EN                          TRUE
+  #endif
+
+  /*!< Enable/Disable MR-FSK PHY, see IEEE Std. 802.15.4g-2012 */
+  #ifndef NETSTK_CFG_MR_FSK_PHY_EN
+    #define NETSTK_CFG_MR_FSK_PHY_EN                        TRUE
+  #endif
+#endif
+
+/*!< Turn SW auto-ACK support on MAC by default */
+#ifndef NETSTK_SUPPORT_SW_MAC_AUTOACK
+#define NETSTK_SUPPORT_SW_MAC_AUTOACK                       FALSE
+#endif
+
+/*!< Enable/Disable automatic on/off to netstack
+ * If the netstack receives transmission request in sleep mode, it shall
+ * go back to the sleep mode upon complete transmission process
+ */
+#ifndef NETSTK_CFG_AUTO_ONOFF_EN
+#define NETSTK_CFG_AUTO_ONOFF_EN                            FALSE
+#endif
+
+/*!< Enable/Disable PHY MR-FSK operation mode, see IEEE Std. 802.15.4g-2012 table 68d */
 #define NETSTK_CFG_PHY_OP_MODE_1_EN                         TRUE
 #define NETSTK_CFG_PHY_OP_MODE_2_EN                         FALSE
 #define NETSTK_CFG_PHY_OP_MODE_3_EN                         FALSE
+
+/*!< Enable/Disable low power mode */
+#ifndef NETSTK_CFG_LOW_POWER_MODE_EN
+#define NETSTK_CFG_LOW_POWER_MODE_EN                        FALSE
+#endif
+
+/*!< Enable/Disable loosely-sync feature in low power mode */
+#if (NETSTK_CFG_LOW_POWER_MODE_EN == TRUE)
+  #ifndef NETSTK_CFG_LOOSELY_SYNC_EN
+    #define NETSTK_CFG_LOOSELY_SYNC_EN                      FALSE
+  #endif
+#endif
+
+/*!< Enable/Disable Data Whitening */
+#ifndef NETSTK_CFG_DATA_WHITENING_EN
+#define NETSTK_CFG_DATA_WHITENING_EN                        FALSE
+#endif
+
+/*!< Enable/Disable eWOR support */
+#ifndef NETSTK_CFG_WOR_EN
+#define NETSTK_CFG_WOR_EN                                   FALSE
+#endif
+
+/*!< CSMA configuration */
+#define NETSTK_CFG_CSMA_MIN_BE                    (uint8_t )(   3u )
+#define NETSTK_CFG_CSMA_MAX_BE                    (uint8_t )(   5u )
+#define NETSTK_CFG_CSMA_MAX_BACKOFF               (uint8_t )(   4u )
+#define NETSTK_CFG_CSMA_UNIT_BACKOFF_US           (uint32_t)( 400u )  /* @50kbps 2FSK */
+
+/*!< Default transceiver's transmission power */
+#ifndef TX_POWER
+#define TX_POWER              0
+#endif
+
+/*!< Default transceiver's receive sensitivity */
+#ifndef RX_SENSITIVITY
+#define RX_SENSITIVITY      -100
+#endif
+
+/*!< Default transceiver's transmission power */
+#ifndef MAC_ADDR_WORD
+#define MAC_ADDR_WORD       0xffff
 #endif
 
 /*
@@ -950,95 +1197,6 @@ void uip_log(char *msg);
 ********************************************************************************
 */
 #define NETSTK_CFG_ARG_CHK_EN               ( 1u )
-
-
- /*=============================================================================
-                                 POWER_SAVING SECTION
- =============================================================================*/
-/**
- * @addtogroup  Configurations
- * @{
- */
-#define MAC_ULE_CFG_LOOSE_SYNC_EN                      (TRUE)
-#define MAC_ULE_CFG_POWERUP_INTERVAL_IN_MS             (uint32_t)(  500u )
-#define MAC_ULE_CFG_STROBE_TX_INTERVAL_IN_MS           (MAC_ULE_CFG_POWERUP_INTERVAL_IN_MS * 2)
-
-#if (MAC_ULE_CFG_LOOSE_SYNC_EN == TRUE)
-#define MAC_ULE_CFG_PWRON_TBL_SIZE                     (uint8_t )(   3u  )
-#define MAC_ULE_CFG_QTY_STROBE_SENT_IN_ADVANCE         (uint8_t )(   3u  )      /*!< variable   */
-#endif
- /**
-  * @}
-  */
-
-
- /**
-  * @addtogroup  Porting
-  * @note        These following parameters are hardware-specific. Measurements
-  *              should be taken on every platform for which the APSS module is
-  *              ported.
-  *              t_scan = t_strobe_gap + t_tx(strobe_len + sync_len + preamble_detection_len) + T_sniff
-  *
-  *
-  *              i.e. Guideline for calculating APSS parameters for RF
-  *                   transceiver TI CC1120:
-  *
-  *              preamble_detection_len = 4 bits = 0.5 byte
-  *
-  *              sync_len = 4 bytes
-  *
-  *              strobe_len = preamble_len + sync_len + strobe_payload_len + CRC_len
-  *                         =     24       +     4    +         5          +    2
-  *                         = 35 bytes ~ 5.4ms@50kbps
-  *
-  *              t_strobe_gap = t_tx_strobe + 2 * t_tx_rx_turnaround
-  *                           ~      5.4    +      2 * 1
-  *                           ~ 8ms
-  *
-  *              T_sniff@24byte_preamble = t_wakeup + t_rx  + t_sleep
-  *                                      ~  0.5665  + 0.315 +  2.868 (SmartRFStudio)
-  *                                      ~  3.75ms
-  *
-  *              => t_scan ~ 8 + t_tx((35 + 4 + 0.5)bytes@50kbps) + 3.75
-  *                        ~ 8 +            6,1         + 3.75
-  *                        ~ 18ms (minimum)
-  *
-  *              However @18ms, scanning performance is not reliable. A small
-  *              time period of 1-2ms is added as a trade-off for better performance.
-  *              This time addition is usually caused by transition time of RF
-  *              driver implementation.
-  */
-#define MAC_ULE_PORT_SCAN_DURATION_IN_MS                (uint32_t)(  30u )          /*!< fixed, hardware-specific       */
-#define MAC_ULE_PORT_MIN_DELAY_IN_MS                    (uint32_t)(  50U )          /*!< fixed, hardware-specific, 50   */
-#define MAC_ULE_PORT_ON_TO_OFF_TIME_IN_MS               (uint32_t)(   8u )          /*!< fixed, hardware-specific, 06   */
-#define MAC_ULE_PORT_OFF_TO_ON_TIME_IN_MS               (uint32_t)(  20u )          /*!< fixed, hardware-specific, 15   */
-#define MAC_ULE_PORT_TX_RX_TURNAROUND_IN_MS             (uint32_t)(   1u )          /*!< fixed, hardware-specific, 01   */
-#define MAC_ULE_PORT_STROBE_TX_TIME_IN_MS               (uint32_t)(  10u )          /*!< fixed, hardware-specific, 08   */
-#define MAC_ULE_PORT_STROBE_TX_GAP_TIME_IN_MS           (uint32_t)(  10u )          /*!< fixed, hardware-specific, 09   */
-#define MAC_ULE_PORT_RX_PAYLOAD_OFFSET_IN_MS            (uint32_t)(   2u )          /*!< variable, needed for better performance 2   */
-#define MAC_ULE_PORT_WFA_TIMEOUT_IN_MS                  (MAC_ULE_PORT_STROBE_TX_GAP_TIME_IN_MS)
-
-#define MAC_ULE_PORT_WFP_TIMEOUT_IN_MS                  (MAC_ULE_PORT_STROBE_TX_GAP_TIME_IN_MS +   \
-                                                         MAC_ULE_PORT_TX_RX_TURNAROUND_IN_MS   +   \
-                                                         MAC_ULE_PORT_RX_PAYLOAD_OFFSET_IN_MS  + 10)
-
-#define MAC_ULE_PORT_STROBE_TX_INTERVAL_IN_MS           (uint32_t)( 20U )
-
-#define MAC_ULE_CFG_STROBE_TX_MAX                       (uint8_t )(MAC_ULE_CFG_STROBE_TX_INTERVAL_IN_MS     /   \
-                                                                   MAC_ULE_PORT_STROBE_TX_INTERVAL_IN_MS)
-
-/**
- * @note    Broadcast feature is at the moment only available with SmartMAC
- */
-#define MAC_ULE_CFG_BROADCAST_TX_ADDITION               (uint8_t)( 2u )
-#define MAC_ULE_CFG_BROADCAST_TX_MAX                    (uint8_t)(MAC_ULE_CFG_POWERUP_INTERVAL_IN_MS       /       \
-                                                              MAC_ULE_PORT_STROBE_TX_INTERVAL_IN_MS    +       \
-                                                              MAC_ULE_CFG_BROADCAST_TX_ADDITION)
-
-
-/**
- * @}
- */
 
 
 #endif /* EMB6_CONF_H_ */

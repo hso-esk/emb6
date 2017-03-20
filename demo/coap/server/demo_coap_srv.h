@@ -68,6 +68,8 @@
 /*!
    \brief Initialization of the CoAP server application.
 
+    \return  0 on success, otherwise -1
+
 */
 /*============================================================================*/
 int8_t demo_coapInit(void);
@@ -76,10 +78,10 @@ int8_t demo_coapInit(void);
 /*!
     \brief Configuration of the CoAP server application.
 
-    \return 0 - error, 1 - success
+    \return  0 on success, otherwise -1
 */
 /*============================================================================*/
-uint8_t demo_coapConf(s_ns_t* pst_netStack);
+int8_t demo_coapConf(s_ns_t* pst_netStack);
 
 #endif /* DEMO_COAP_SRV_H_ */
 /** @} */

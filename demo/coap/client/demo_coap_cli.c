@@ -116,20 +116,16 @@ char *service_urls[NUMBER_OF_URLS] =
 /* This function is will be passed to coap_nonblocking_request() to handle responses. */
 void _client_chunk_handler(void *response)
 {
-    const uint8_t *chunk;
+
     if(!response) {
         LOG_INFO("%s\n\r","Restart Timer (no response)");
     } else {
         LOG_INFO("%s\n\r","response payload:");
-//        int len = coap_get_payload(response, &chunk);
-//        printf("%d|%s", len, (char *)chunk);
-//        printf("\n\r");
-//        printf("\n\r");
     }
     /* Restart Timer after response or timeout */
     etimer_restart(&et);
 }
-//uint8_t i=0;
+
 
 void _demo_coapCl_callback (c_event_t c_event, p_data_t p_data)
 {
@@ -169,41 +165,41 @@ int8_t demo_coapInit(void)
     coap_init_engine();
 
     /* set request intervall */
-    etimer_set(&et, TOGGLE_INTERVAL * bsp_get(E_BSP_GET_TRES), _demo_coapCl_callback);
-    return 1;
+    etimer_set(&et, TOGGLE_INTERVAL * bsp_getTRes(), _demo_coapCl_callback);
+    return 0;
 }
 
 /*==============================================================================
  demo_coapConf()
 ==============================================================================*/
 
-uint8_t demo_coapConf(s_ns_t* p_netstk)
+int8_t demo_coapConf(s_ns_t* p_netstk)
 {
-    uint8_t c_ret = 1;
+  int8_t ret = -1;
 
-    /*
-     * By default stack
-     */
-    if (p_netstk != NULL) {
-        if (!p_netstk->c_configured) {
-            p_netstk->hc    = &sicslowpan_driver;
-            p_netstk->frame = &framer_802154;
-            p_netstk->dllsec = &nullsec_driver;
-            p_netstk->c_configured = 1;
-
-        } else {
-            if ((p_netstk->hc    == &sicslowpan_driver) &&
-                (p_netstk->frame == &framer_802154)    	&&
-                (p_netstk->dllsec == &nullsec_driver)) {
-            }
-            else {
-                p_netstk = NULL;
-                c_ret = 0;
-            }
-        }
+  /*
+   * By default stack
+   */
+  if (p_netstk != NULL) {
+    if (!p_netstk->c_configured) {
+      p_netstk->hc = &hc_driver_sicslowpan;
+      p_netstk->frame = &framer_802154;
+      p_netstk->dllsec = &dllsec_driver_null;
+      p_netstk->c_configured = 1;
+      ret = 0;
+    } else {
+      if ((p_netstk->hc == &hc_driver_sicslowpan) &&
+          (p_netstk->frame == &framer_802154) &&
+          (p_netstk->dllsec == &dllsec_driver_null)) {
+        ret = 0;
+      } else {
+        p_netstk = NULL;
+        ret = -1;
+      }
     }
+  }
 
-    return (c_ret);
+  return ret;
 }
 
 /** @} */

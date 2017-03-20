@@ -130,39 +130,38 @@ int8_t demo_mdnsInit(void)
 	pst_server_udp_socket->udp_conn->rport = UIP_HTONS(3001);
 	udp_socket_bind(pst_server_udp_socket, 3000);
 
-	return 1;
+	return 0;
 }
 
 /*------------------------------------------------------------------------------
 demo_mdnsConf()
 ------------------------------------------------------------------------------*/
 
-uint8_t demo_mdnsConf(s_ns_t* pst_netStack)
+int8_t demo_mdnsConf(s_ns_t* pst_netStack)
 {
-	uint8_t c_ret = 1;
+  int8_t ret = -1;
 
-	/*
-	 * By default stack
-	 */
-    if (pst_netStack != NULL) {
-        if (!pst_netStack->c_configured) {
-            pst_netStack->hc    = &sicslowpan_driver;
-            pst_netStack->frame = &framer_802154;
-            pst_netStack->dllsec = &nullsec_driver;
-            c_ret = 1;
-        } else {
-            if ((pst_netStack->hc    == &sicslowpan_driver) &&
-                (pst_netStack->frame == &framer_802154)     &&
-                (pst_netStack->dllsec == &nullsec_driver)) {
-                c_ret = 1;
-            }
-            else {
-                pst_netStack = NULL;
-                c_ret = 0;
-            }
-        }
+  /*
+   * By default stack
+   */
+  if (pst_netStack != NULL) {
+    if (!pst_netStack->c_configured) {
+      pst_netStack->hc = &hc_driver_sicslowpan;
+      pst_netStack->frame = &framer_802154;
+      pst_netStack->dllsec = &dllsec_driver_null;
+      ret = 0;
+    } else {
+      if ((pst_netStack->hc == &hc_driver_sicslowpan) &&
+          (pst_netStack->frame == &framer_802154) &&
+          (pst_netStack->dllsec == &dllsec_driver_null)) {
+        ret = 0;
+      } else {
+        pst_netStack = NULL;
+        ret = -1;
+      }
     }
-	return (c_ret);
+  }
+  return ret;
 }
 
 /** @} */

@@ -29,63 +29,106 @@
  * This file is part of the Contiki operating system.
  */
 
-/**
- * \file
- *      Example resource
- * \author
- *      Matthias Kovatsch <kovatsch@inf.ethz.ch>
- *      modified by Peter Lehmann <peter.lehmann@hs-offenburg.de>
- *
- */
-
-
-
+/*
+********************************************************************************
+*                                   INCLUDES
+********************************************************************************
+*/
 #include "emb6.h"
 #include "bsp.h"
 #include "er-coap.h"
 
+/*
+********************************************************************************
+*                          LOCAL FUNCTION DECLARATIONS
+********************************************************************************
+*/
+/* Handler for GET actions. For further details see the function definition */
+static void res_get_handler(void *request, void *response, uint8_t *buffer,
+        uint16_t preferred_size, int32_t *offset, void* user);
 
-static void res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset);
+/* Handler for POST actions. For further details see the function definition */
+static void res_post_handler(void *request, void *response, uint8_t *buffer,
+        uint16_t preferred_size, int32_t *offset, void* user);
 
-static void res_get_handler(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset);
-
-/* A simple actuator example. Toggles the Yellow led */
+/*
+********************************************************************************
+*                               GLOBAL VARIABLES
+********************************************************************************
+*/
+/* Resource definition of a simple actuator example. This
+ * toggles one or more LEDs */
 RESOURCE(res_led,
-         "title=\"Toggle LED: POST\";rt=\"Control\"",
+         "title=\"LED toggle\";type=\"Control\"",
          res_get_handler,
          res_post_handler,
          NULL,
          NULL);
 
-static void
-res_get_handler(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
-{
-  const char *len = NULL;
-  /* Some data that has the length up to REST_MAX_CHUNK_SIZE. For more, see the chunk resource. */
-  char const *const message = "Press POST to toggle the LED";
-  int length = 32; /*          |<-------->| */
 
-  /* The query string can be retrieved by rest_get_query() or parsed for its key-value pairs. */
-  if(REST.get_query_variable(request, "len", &len)) {
-    length = atoi(len);
-    if(length < 0) {
-      length = 0;
-    }
-    if(length > REST_MAX_CHUNK_SIZE) {
-      length = REST_MAX_CHUNK_SIZE;
-    }
-    memcpy(buffer, message, length);
-  } else {
-    memcpy(buffer, message, length);
-  } REST.set_header_content_type(response, REST.type.TEXT_PLAIN); /* text/plain is the default, hence this option could be omitted. */
+/*
+********************************************************************************
+*                           LOCAL FUNCTION DEFINITIONS
+********************************************************************************
+*/
+/**
+ * \brief   Handler for getting data from the resource.
+ *
+ *          The LED resource has no data to get However it is possible
+ *          to get a description of how to control the resource..
+ */
+static void res_get_handler(void *request, void *response, uint8_t *buffer,
+        uint16_t preferred_size, int32_t *offset, void* user)
+{
+  /* Some data that has the length up to REST_MAX_CHUNK_SIZE. For more, see the chunk resource. */
+  char const *const message = "Use POST to toggle the LEDs using parameters (e.g. POST: led=1)";
+  int length = snprintf( (char*)buffer, preferred_size, message );
+
+  REST.set_header_content_type(response, REST.type.TEXT_PLAIN);
   REST.set_header_etag(response, (uint8_t *)&length, 1);
   REST.set_response_payload(response, buffer, length);
 }
 
-static void
-res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
+/**
+ * \brief   Handler for posting data to the resource.
+ *
+ *          The LED resource can be controlled by using a POST. The post
+ *          variable "led" defines which LED to toggle as a bitmask. If no or an
+ *          invalid LED mask was selected all the LEDs will be toggled.
+ *          command: led=<x>.
+ */
+static void res_post_handler(void *request, void *response, uint8_t *buffer,
+        uint16_t preferred_size, int32_t *offset, void* user)
 {
-    bsp_led(E_BSP_LED_1,E_BSP_LED_TOGGLE);
-    bsp_led(E_BSP_LED_0,E_BSP_LED_TOGGLE);
-    bsp_led(E_BSP_LED_2,E_BSP_LED_TOGGLE);
+    const char *ledVal = NULL;
+
+    /* check the query variable */
+    if(REST.get_post_variable(request, "led", &ledVal) == 0) {
+
+        /* No POST variable. Toggle all LEDs */
+        bsp_led(HAL_LED0,EN_BSP_LED_OP_TOGGLE);
+        bsp_led(HAL_LED1,EN_BSP_LED_OP_TOGGLE);
+        bsp_led(HAL_LED2,EN_BSP_LED_OP_TOGGLE);
+        bsp_led(HAL_LED3,EN_BSP_LED_OP_TOGGLE);
+
+    } else {
+
+        int ledMsk = atoi(ledVal);
+
+        /* LED mask is available. Check which LEDs to toggle. */
+        if( ledMsk & (1<<0) )
+            bsp_led(HAL_LED0,EN_BSP_LED_OP_TOGGLE);
+        else if( ledMsk & (1<<1) )
+            bsp_led(HAL_LED1,EN_BSP_LED_OP_TOGGLE);
+        else if( ledMsk & (1<<2) )
+            bsp_led(HAL_LED2,EN_BSP_LED_OP_TOGGLE);
+        else if( ledMsk & (1<<3) )
+            bsp_led(HAL_LED3,EN_BSP_LED_OP_TOGGLE);
+        else {
+            bsp_led(HAL_LED0,EN_BSP_LED_OP_TOGGLE);
+            bsp_led(HAL_LED1,EN_BSP_LED_OP_TOGGLE);
+            bsp_led(HAL_LED2,EN_BSP_LED_OP_TOGGLE);
+            bsp_led(HAL_LED3,EN_BSP_LED_OP_TOGGLE);
+        }
+    }
 }

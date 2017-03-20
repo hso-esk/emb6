@@ -50,14 +50,15 @@ static void _rtc_irq( void* p_params );
 /*============================================================================*/
 static void _rtc_irq( void* p_params )
 {
-  if( gpf_rtc_cb != NULL )
+  if( RTCIV & RTCTEVIFG )
   {
-    if( RTCIV & RTCTEVIFG )
-    {
-      /* get the current time from RTC */
-      s_rtc_time_t s_time = rtc_getTime();
+    /* get the current time from RTC */
+    s_rtc_time_t s_time;
+    rtc_getTime( &s_time );
 
-      /* callback */
+    /* callback */
+    if( gpf_rtc_cb != NULL )
+    {
       gpf_rtc_cb( &s_time );
     }
   }
@@ -117,20 +118,18 @@ void rtc_setTime( s_rtc_time_t* ps_time )
 /*=============================================================================
  *  rtc_getTime()
  *============================================================================*/
-s_rtc_time_t rtc_getTime( void )
+void rtc_getTime( s_rtc_time_t* ps_time )
 {
-  s_rtc_time_t s_time;
-
-  /* Retrieve time from RTC */
-  s_time.ui_year = RTCYEAR;
-  s_time.uc_mon = RTCMON;
-  s_time.uc_day = RTCDAY;
-  s_time.uc_hour = RTCHOUR;
-  s_time.uc_min = RTCMIN;
-  s_time.uc_sec = RTCSEC;
-
-  return s_time;
-
+  if (ps_time != NULL)
+  {
+    /* Retrieve time from RTC */
+    ps_time->ui_year = RTCYEAR;
+    ps_time->uc_mon = RTCMON;
+    ps_time->uc_day = RTCDAY;
+    ps_time->uc_hour = RTCHOUR;
+    ps_time->uc_min = RTCMIN;
+    ps_time->uc_sec = RTCSEC;
+  }
 } /* rtc_getTime() */
 
 

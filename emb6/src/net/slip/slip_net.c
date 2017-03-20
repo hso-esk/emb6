@@ -10,6 +10,7 @@
  */
 
 #include "emb6.h"
+#include "bsp.h"
 #include "uip.h"
 #include "packetbuf.h"
 #include "slip.h"
@@ -23,10 +24,15 @@
 #define DEBUG DEBUG_NONE
 #include "uip-debug.h"
 
+static void* p_slipUart;
+
 /*---------------------------------------------------------------------------*/
 void
 slipnet_init(s_ns_t* p_ns)
 {
+  /* get the according UART from the BSP */
+  p_slipUart = bsp_uartInit( EN_HAL_UART_SLIP );
+  EMB6_ASSERT( p_slipUart != NULL );
 }
 /*---------------------------------------------------------------------------*/
 void
@@ -35,19 +41,22 @@ slip_send_packet(const uint8_t *ptr, int len)
   uint16_t i;
   uint8_t c;
 
-  putchar(SLIP_END);
+  uint8_t SLIPEND_C = SLIP_END;
+  uint8_t SLIPESC_C = SLIP_ESC;
+
+  bsp_uartTx(p_slipUart, &SLIPEND_C, 1);
   for(i = 0; i < len; ++i) {
     c = *ptr++;
     if(c == SLIP_END) {
-        putchar(SLIP_ESC);
+        bsp_uartTx(p_slipUart, &SLIPESC_C, 1);
         c = SLIP_ESC_END;
     } else if(c == SLIP_ESC) {
-        putchar(SLIP_ESC);
+        bsp_uartTx(p_slipUart, &SLIPESC_C, 1);
         c = SLIP_ESC_ESC;
     }
-    putchar(c);
+    bsp_uartTx(p_slipUart, &c, 1);
   }
-  putchar(SLIP_END);
+  bsp_uartTx(p_slipUart, &SLIPEND_C, 1);
 }
 /*---------------------------------------------------------------------------*/
 void
@@ -77,7 +86,7 @@ slipnet_input(void)
   slip_send_packet(uip_buf, uip_len);
 }
 /*---------------------------------------------------------------------------*/
-const s_nsHeadComp_t slipnet_driver = {
+const s_nsHeadComp_t hc_driver_slipnet = {
   "slipnet",
   slipnet_init,
   slipnet_input

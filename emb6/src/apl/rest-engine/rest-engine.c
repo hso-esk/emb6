@@ -80,8 +80,9 @@ void _rest_et_callback(c_event_t c_event, p_data_t p_data);
 void
 rest_init_engine(void)
 {
-  list_init(restful_services);
 
+  /* initialize list */
+  list_init(restful_services);
   REST.set_service_callback(rest_invoke_restful_service);
 
   /* Start the RESTful server implementation. */
@@ -122,7 +123,7 @@ rest_activate_resource(resource_t *resource, char *path)
       PRINTF("Periodic: Set timer for /%s to %lu\n\r",
              periodic_resource->resource->url, periodic_resource->period);
       etimer_set(&periodic_resource->periodic_timer,
-                 periodic_resource->period * bsp_get(E_BSP_GET_TRES), _rest_et_callback);
+                 periodic_resource->period * bsp_getTRes(), _rest_et_callback);
     }
   }
 }
@@ -144,15 +145,19 @@ rest_invoke_restful_service(void *request, void *response, uint8_t *buffer,
 
   resource_t *resource = NULL;
   const char *url = NULL;
+  int url_len, res_url_len;
 
+  url_len = REST.get_url(request, &url);
   for(resource = (resource_t *)list_head(restful_services);
       resource; resource = resource->next) {
 
     /* if the web service handles that kind of requests and urls matches */
-    if((REST.get_url(request, &url) == strlen(resource->url)
-        || (REST.get_url(request, &url) > strlen(resource->url)
-            && (resource->flags & HAS_SUB_RESOURCES)))
-       && strncmp(resource->url, url, strlen(resource->url)) == 0) {
+    res_url_len = strlen(resource->url);
+    if((url_len == res_url_len
+        || (url_len > res_url_len
+            && (resource->flags & HAS_SUB_RESOURCES)
+            && url[res_url_len] == '/'))
+       && strncmp(resource->url, url, res_url_len) == 0) {
       found = 1;
       rest_resource_flags_t method = REST.get_method_type(request);
 
@@ -161,18 +166,18 @@ rest_invoke_restful_service(void *request, void *response, uint8_t *buffer,
 
       if((method & METHOD_GET) && resource->get_handler != NULL) {
         /* call handler function */
-        resource->get_handler(request, response, buffer, buffer_size, offset);
+        resource->get_handler(request, response, buffer, buffer_size, offset, resource->p_user);
       } else if((method & METHOD_POST) && resource->post_handler != NULL) {
         /* call handler function */
         resource->post_handler(request, response, buffer, buffer_size,
-                               offset);
+                               offset, resource->p_user);
       } else if((method & METHOD_PUT) && resource->put_handler != NULL) {
         /* call handler function */
-        resource->put_handler(request, response, buffer, buffer_size, offset);
+        resource->put_handler(request, response, buffer, buffer_size, offset, resource->p_user);
       } else if((method & METHOD_DELETE) && resource->delete_handler != NULL) {
         /* call handler function */
         resource->delete_handler(request, response, buffer, buffer_size,
-                                 offset);
+                                 offset, resource->p_user);
       } else {
         allowed = 0;
         REST.set_response_status(response, REST.status.METHOD_NOT_ALLOWED);

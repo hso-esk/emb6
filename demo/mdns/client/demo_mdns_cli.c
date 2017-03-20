@@ -99,7 +99,7 @@ static resolv_status_t set_connection_address(uip_ipaddr_t *ipaddr);
                                 LOCAL CONSTANTS
  =============================================================================*/
 
-#define SEND_INTERVAL		15 * bsp_get(E_BSP_GET_TRES)
+#define SEND_INTERVAL		15 * bsp_getTRes()
 #define MAX_PAYLOAD_LEN		40
 
 static char buf[MAX_PAYLOAD_LEN];
@@ -232,39 +232,38 @@ int8_t demo_mdnsInit(void)
 			UIP_HTONS(pst_client_udp_socket->udp_conn->lport), UIP_HTONS(pst_client_udp_socket->udp_conn->rport));
 
 	etimer_set(&et, SEND_INTERVAL, demo_mdns_callback);
-	return 1;
+	return 0;
 }
 
 /*------------------------------------------------------------------------------
 demo_mdnsConf()
 ------------------------------------------------------------------------------*/
 
-uint8_t demo_mdnsConf(s_ns_t* pst_netStack)
+int8_t demo_mdnsConf(s_ns_t* pst_netStack)
 {
-	uint8_t c_ret = 1;
+  int8_t ret = -1;
 
-	/*
-	 * By default stack
-	 */
-    if (pst_netStack != NULL) {
-        if (!pst_netStack->c_configured) {
-            pst_netStack->hc    = &sicslowpan_driver;
-            pst_netStack->frame = &framer_802154;
-            pst_netStack->dllsec = &nullsec_driver;
-            c_ret = 1;
-        } else {
-            if ((pst_netStack->hc    == &sicslowpan_driver) &&
-                (pst_netStack->frame == &framer_802154)     &&
-                (pst_netStack->dllsec == &nullsec_driver)) {
-                c_ret = 1;
-            }
-            else {
-                pst_netStack = NULL;
-                c_ret = 0;
-            }
-        }
+  /*
+   * By default stack
+   */
+  if (pst_netStack != NULL) {
+    if (!pst_netStack->c_configured) {
+      pst_netStack->hc = &hc_driver_sicslowpan;
+      pst_netStack->frame = &framer_802154;
+      pst_netStack->dllsec = &dllsec_driver_null;
+      ret = 0;
+    } else {
+      if ((pst_netStack->hc == &hc_driver_sicslowpan) &&
+          (pst_netStack->frame == &framer_802154) &&
+          (pst_netStack->dllsec == &dllsec_driver_null)) {
+        ret = 0;
+      } else {
+        pst_netStack = NULL;
+        ret = -1;
+      }
     }
-	return (c_ret);
+  }
+  return ret;
 }
 
 /** @} */

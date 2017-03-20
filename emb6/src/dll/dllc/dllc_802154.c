@@ -60,9 +60,10 @@
 #define     LOGGER_ENABLE        LOGGER_LLC
 #include    "logger.h"
 
-#if (NETSTK_CFG_RF_CRC_EN == FALSE)
-#include "lib_crc.h"
-#endif
+#if !defined(NETSTK_SUPPORT_HW_CRC)
+#include "crc.h"
+#endif /* #if !defined(NETSTK_SUPPORT_HW_CRC) */
+
 
 /*
 ********************************************************************************
@@ -103,7 +104,7 @@ static uint8_t       dllc_isOn;
 *                               GLOBAL VARIABLES
 ********************************************************************************
 */
-const s_nsDLLC_t DLLCDrv802154 =
+const s_nsDLLC_t dllc_driver_802154 =
 {
  "DLLC 802154",
   dllc_init,
@@ -328,8 +329,7 @@ static void dllc_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
   /* write the header */
   frame802154_create(&params, packetbuf_hdrptr());
 
-
-#if (NETSTK_CFG_RF_CRC_EN == FALSE) && 0
+#if !defined(NETSTK_SUPPORT_HW_CRC)
   uint16_t checksum_data_len;
   uint8_t *p_mhr;
   uint8_t *p_mfr;
@@ -363,7 +363,7 @@ static void dllc_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     p_mfr[0] = (fcs & 0xFF00u) >> 8;
     p_mfr[1] = (fcs & 0x00FFu);
   }
-#endif /* NETSTK_CFG_RF_CRC_EN */
+#endif /* #if !defined(NETSTK_SUPPORT_HW_CRC) */
 
 #if LOGGER_ENABLE
   /*
@@ -418,6 +418,7 @@ static void dllc_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 
   frame802154_t frame;
   int hdrlen, ret;
+  int8_t rssi;
 
   /* store the received packet into internal packet buffer */
   packetbuf_clear();
@@ -435,16 +436,20 @@ static void dllc_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
   ret = packetbuf_hdrreduce(len - frame.payload_len);
   if (ret == 0) {
     *p_err = NETSTK_ERR_FATAL;
-	LOG_RAW("discarded -%d", *p_err);
+    LOG_RAW("discarded -%d", *p_err);
     return;
   }
 
   /* verify frame addresses */
   dllc_verifyAddr(&frame, p_err);
   if (*p_err != NETSTK_ERR_NONE) {
-	LOG_RAW("discarded -%d", *p_err);
+    LOG_RAW("discarded -%d", *p_err);
     return;
   }
+
+  /* set packet buffer miscellaneous attributes */
+  pdllc_netstk->mac->ioctrl(NETSTK_CMD_RF_RSSI_GET, &rssi, p_err);
+  packetbuf_set_attr(PACKETBUF_ATTR_RSSI, rssi);
 
   /* signal next higher layer of the valid received frame */
   if (dllc_cbRxFnct) {

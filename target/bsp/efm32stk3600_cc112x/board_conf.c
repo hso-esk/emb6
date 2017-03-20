@@ -37,57 +37,61 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-/**  	\addtogroup emb6
- *   @{
- *   	\addtogroup bsp Board Support Package
- *   @{
- *   	\addtogroup board
- *   @{
- *      \addtogroup efm32stk3600_cc112x Board EFM32 Leopard Gecko Starter Kit specific configuration
- *   @{
- */
-/*! \file   efm32stk3600_cc112x/board_conf.c
-
-    \author Phuong Nguyen,
-
-    \brief  Board Configuration for EFM32 Leopard Gecko Starter Kit
-
-    \version 0.0.1
-*/
 
 /*
-********************************************************************************
-*                                   INCLUDES
-********************************************************************************
-*/
-#include "board_conf.h"
-#include "hwinit.h"
+ * --- Module Description ---------------------------------------------------*
+ */
+/**
+ *  \file       board_conf.c
+ *  \author     Institute of reliable Embedded Systems
+ *              and Communication Electronics
+ *  \date       $Date$
+ *  \version    $Version$
+ *
+ *  \brief      Definition of the Board Configuration.
+ *
+ *              The Board Configuration configures the underlying MCU and
+ *              transceiver.
+ */
+
+/*
+ *  --- Includes -------------------------------------------------------------*
+ */
 #include "emb6.h"
-#include "logger.h"
-#include "bsp.h"
+#include "emb6assert.h"
+#include "board_conf.h"
 
+
+/*
+ * --- Macro Definitions --------------------------------------------------- *
+ */
 /** Enable or disable logging */
-#define        LOGGER_ENABLE          LOGGER_BSP
+#define LOGGER_ENABLE             LOGGER_BSP
+#include "logger.h"
 
-uint8_t board_conf(s_ns_t *p_netstk)
+
+/*
+ *  --- Global Functions Definition ------------------------------------------*
+ */
+
+/*---------------------------------------------------------------------------*/
+/*
+* board_conf()
+*/
+int8_t board_conf( s_ns_t* p_ns )
 {
-    uint8_t c_ret = 1;
+  EMB6_ASSERT_RET( p_ns != NULL, -1 );
 
+  /* stack driver selection */
+  p_ns->dllc = &dllc_driver_802154;
+#if (NETSTK_CFG_LOW_POWER_MODE_EN == TRUE)
+  p_ns->mac  = &mac_driver_smartmac;
+#else
+  p_ns->mac  = &mac_driver_802154;
+#endif /* #if (NETSTK_CFG_LOW_POWER_MODE_EN == TRUE) */
+  p_ns->phy  = &phy_driver_802154;
+  p_ns->rf   = &rf_driver_ticc112x;
 
-    if (p_netstk != NULL) {
-        p_netstk->dllc  = &DLLCDrv802154;
-        p_netstk->mac   = &MACDrv802154;
-        p_netstk->phy   = &PHYDrv802154;
-        p_netstk->rf    = &RFDrvCC112x;
-    }
-    else {
-        LOG_ERR("Network stack pointer is NULL");
-        c_ret = 0;
-    }
+  return 0;
+} /* board_conf */
 
-    return c_ret;
-}
-/** @} */
-/** @} */
-/** @} */
-/** @} */

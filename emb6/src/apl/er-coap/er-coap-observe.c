@@ -180,17 +180,47 @@ coap_remove_observer_by_mid(uip_ipaddr_t *addr, uint16_t port, uint16_t mid)
 void
 coap_notify_observers(resource_t *resource)
 {
+	coap_notify_observers_sub(resource, NULL);
+}
+
+void
+coap_notify_observers_sub(resource_t *resource, const char *subpath)
+{
   /* build notification */
   coap_packet_t notification[1]; /* this way the packet can be treated as pointer as usual */
-  coap_init_message(notification, COAP_TYPE_NON, CONTENT_2_05, 0);
+  coap_packet_t request[1]; /* this way the packet can be treated as pointer as usual */
   coap_observer_t *obs = NULL;
+  int url_len, obs_url_len;
+  char url[COAP_OBSERVER_URL_LEN];
 
-  PRINTF("Observe: Notification from %s\n", resource->url);
+  url_len = strlen(resource->url);
+  strncpy(url, resource->url, COAP_OBSERVER_URL_LEN - 1);
+  if(url_len < COAP_OBSERVER_URL_LEN - 1 && subpath != NULL) {
+    strncpy(&url[url_len], subpath, COAP_OBSERVER_URL_LEN - url_len - 1);
+  }
+  /* Ensure url is null terminated because strncpy does not guarantee this */
+  url[COAP_OBSERVER_URL_LEN - 1] = '\0';
+  /* url now contains the notify URL that needs to match the observer */
+  PRINTF("Observe: Notification from %s\n", url);
+
+  coap_init_message(notification, COAP_TYPE_NON, CONTENT_2_05, 0);
+  /* create a "fake" request for the URI */
+  coap_init_message(request, COAP_TYPE_CON, COAP_GET, 0);
+  coap_set_header_uri_path(request, url);
 
   /* iterate over observers */
+  url_len = strlen(url);
   for(obs = (coap_observer_t *)list_head(observers_list); obs;
       obs = obs->next) {
-    if(obs->url == resource->url) {     /* using RESOURCE url pointer as handle */
+    obs_url_len = strlen(obs->url);
+
+    /* Do a match based on the parent/sub-resource match so that it is
+       possible to do parent-node observe */
+    if((obs_url_len == url_len
+        || (obs_url_len > url_len
+            && (resource->flags & HAS_SUB_RESOURCES)
+            && obs->url[url_len] == '/'))
+       && strncmp(url, obs->url, url_len) == 0) {
       coap_transaction_t *transaction = NULL;
 
       /*TODO implement special transaction for CON, sharing the same buffer to allow for more observers */
@@ -211,9 +241,9 @@ coap_notify_observers(resource_t *resource)
         /* prepare response */
         notification->mid = transaction->mid;
 
-        resource->get_handler(NULL, notification,
+        resource->get_handler(request, notification,
                               transaction->packet + COAP_MAX_HEADER_SIZE,
-                              REST_MAX_CHUNK_SIZE, NULL);
+                              REST_MAX_CHUNK_SIZE, NULL, resource->p_user );
 
         if(notification->code < BAD_REQUEST_4_00) {
           coap_set_header_observe(notification, (obs->obs_counter)++);
@@ -228,6 +258,7 @@ coap_notify_observers(resource_t *resource)
     }
   }
 }
+
 /*---------------------------------------------------------------------------*/
 void
 coap_observe_handler(resource_t *resource, void *request, void *response)

@@ -37,59 +37,57 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-/**  \addtogroup emb6
- *      @{
- *      \addtogroup bsp Board Support Package
- *   @{
- *   \addtogroup board
- *   @{
- *      \addtogroup efm32stk3600_rf212b Board EFM32 Leopard Gecko Starter Kit specific configuration
- *   @{
+
+/*
+ * --- Module Description ---------------------------------------------------*
  */
-/*! \file   efm32stk3600_rf212b/board_conf.c
+/**
+ *  \file       board_conf.c
+ *  \author     Institute of reliable Embedded Systems
+ *              and Communication Electronics
+ *  \date       $Date$
+ *  \version    $Version$
+ *
+ *  \brief      Definition of the Board Configuration.
+ *
+ *              The Board Configuration configures the underlying MCU and
+ *              transceiver.
+ */
 
-    \author Artem Yushev,
-
-    \brief  Board Configuration for EFM32 Leopard Gecko Starter Kit
-
-    \version 0.0.1
-*/
+/*
+ *  --- Includes -------------------------------------------------------------*
+ */
+#include "emb6.h"
+#include "emb6assert.h"
+#include "board_conf.h"
 
 
 /*
-********************************************************************************
-*                                   INCLUDES
-********************************************************************************
-*/
-#include "emb6.h"
-
-#include "board_conf.h"
-#include "hwinit.h"
-#include "logger.h"
-#include "bsp.h"
-
+ * --- Macro Definitions --------------------------------------------------- *
+ */
 /** Enable or disable logging */
-#define        LOGGER_ENABLE          LOGGER_BSP
+#define LOGGER_ENABLE             LOGGER_BSP
+#include "logger.h"
 
 
-uint8_t board_conf(s_ns_t* ps_nStack)
+/*
+ *  --- Global Functions Definition ------------------------------------------*
+ */
+
+/*---------------------------------------------------------------------------*/
+/*
+* board_conf()
+*/
+int8_t board_conf( s_ns_t* p_ns )
 {
-    uint8_t c_ret = 1;
+  EMB6_ASSERT_RET( p_ns != NULL, -1 );
 
-    if (ps_nStack != NULL) {
-        ps_nStack->dllc = &DLLCDrv802154;
-        ps_nStack->mac  = &MACDrvNull;
-        ps_nStack->phy  = &PHYDrvNull;
-        ps_nStack->rf   = &rf212b_driver;
-    }
-    else {
-        LOG_ERR("Network stack pointer is NULL");
-        c_ret = 0;
-    }
+  /* stack driver selection */
+  p_ns->dllc = &dllc_driver_802154;
+  p_ns->mac = &mac_driver_null;
+  p_ns->phy = &phy_driver_null;
+  p_ns->rf = &rf_driver_at212b;
 
-    return c_ret;
-}
-/** @} */
-/** @} */
-/** @} */
-/** @} */
+  return 0;
+} /* board_conf */
+

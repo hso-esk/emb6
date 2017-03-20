@@ -1,0 +1,28 @@
+//*****************************************************************************
+//
+// chapters.dox - Chapter listing for the SmartRF06EB Board support package.
+//
+// Copyright (c) 2012 Texas Instruments Incorporated.  All rights reserved.
+// TI Information - Selective Disclosure
+//
+//*****************************************************************************
+
+/*! \page chapters
+\latexonly
+\input{intro_chapter}
+\input{bsp_use_chapter}
+\input{bsp_chapter}
+\input{io_pin_int_chapter}
+\input{bsp_led_chapter}
+\input{bsp_key_chapter}
+%\input{acc_chapter}
+%\input{als_chapter}
+\input{lcd_chapter}
+%\input{sdcard_chapter}
+%\input{bsp_uart_chapter}
+%\input{conventions_chapter}
+\input{reference_chapter}
+\input{doc_history_chapter}
+
+\endlatexonly
+*/

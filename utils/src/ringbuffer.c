@@ -86,7 +86,7 @@ ringb_size_t ringb_pull( s_ringb_t *ps_rb, ringb_atom_t* p_data,
 
     ringb_atom_t *data_ptr = p_data;
     ringb_size_t cnt = 0;
-    while( ringb_pulla( ps_rb, data_ptr ) && cnt < len )
+    while( (cnt < len) && ringb_pulla( ps_rb, data_ptr ) )
     {
         cnt++;
         data_ptr++;
