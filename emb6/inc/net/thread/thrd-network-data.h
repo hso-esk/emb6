@@ -9,6 +9,7 @@
 
 #include "bsp.h"
 #include "thrd-network-data-tlv.h"
+// #include "thread_conf.h"
 
 #ifndef EMB6_INC_NET_RIP_THRD_NETWORK_DATA_H_
 #define EMB6_INC_NET_RIP_THRD_NETWORK_DATA_H_

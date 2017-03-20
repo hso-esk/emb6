@@ -58,6 +58,7 @@
 #include "mle_table.h"
 #include "clist.h"
 #include "memb.h"
+#include "rip.h"
 
 
 #define		DEBUG		DEBUG_PRINT

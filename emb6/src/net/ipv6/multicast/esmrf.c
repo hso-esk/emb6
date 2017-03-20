@@ -47,7 +47,9 @@
 #include "uip-mcast6-route.h"
 #include "uip-mcast6-stats.h"
 #include "esmrf.h"
+#if UIP_CONF_IPV6_RPL
 #include "rpl.h"
+#endif /* UIP_CONF_IPV6_RPL */
 #include "uip.h"
 // #include "netstack.h"
 #include <string.h>

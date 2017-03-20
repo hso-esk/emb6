@@ -130,6 +130,10 @@
 #endif /* #if CONF_USE_SERVER */
 #endif /* #if DEMO_USE_DTLS */
 
+#if DEMO_USE_THREAD
+#include "demo_thread_node.h"
+#endif /* #if DEMO_USE_THREAD */
+
 #if UIP_CONF_IPV6_RPL
 #include "rpl.h"
 #endif /* #if UIP_CONF_IPV6_RPL */
