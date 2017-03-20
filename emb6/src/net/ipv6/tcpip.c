@@ -60,6 +60,10 @@
 #include "rpl-private.h"
 #endif
 
+#if USE_THREAD
+#include "thread_conf.h"
+#endif /* #if USE_THREAD */
+
 #include <string.h>
 #include "evproc.h"
 #define DEBUG DEBUG_NONE
@@ -498,7 +502,9 @@ tcpip_input(void)
 void
 tcpip_ipv6_output(void)
 {
-	uip_ds6_nbr_t *nbr = NULL;
+#if USE_THREAD==FALSE
+  uip_ds6_nbr_t *nbr = NULL;
+#endif /* USE_THREAD==FALSE */
   uip_ipaddr_t *nexthop = NULL;
 
 	if(uip_len == 0) {
@@ -528,8 +534,7 @@ tcpip_ipv6_output(void)
 
 	if(!uip_is_addr_mcast(&UIP_IP_BUF->destipaddr)) {
 
-#ifdef UIP_CONF_IPV6_THRD_ROUTING
-
+#if USE_THREAD
 		uip_lladdr_t dest_lladdr;
 
 		nexthop = &UIP_IP_BUF->destipaddr;
@@ -725,7 +730,7 @@ tcpip_ipv6_output(void)
       uip_clear_buf();
 			return;
 		}
-#endif /* UIP_CONF_IPV6_THRD_ROUTING */
+#endif /* USE_THREAD */
 	}
 	/* Multicast IP destination address. */
 	tcpip_output(NULL);
