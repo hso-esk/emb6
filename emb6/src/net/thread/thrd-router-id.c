@@ -338,6 +338,7 @@ thrd_addr_solicit_chunk_handler(void *response)
     			}
     		}
     	}
+      LOG_RAW("payload_len: %d\n\r", payload_len);
     	thrd_dev_print_dev_info();
     }
     reply_for_mle_childID_request(&thrd_iface.router_id);

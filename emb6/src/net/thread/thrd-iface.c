@@ -149,16 +149,16 @@ thrd_iface_print()
 	LOG_RAW("|---------------------------------------------------------------------------------------|\n\r");
 	LOG_RAW("| ML-EID = ");
 	LOG_IP6ADDR(&thrd_iface.ml_eid);
-	LOG_RAW("\n");
+	LOG_RAW("\n\r");
 	LOG_RAW("| ML-RLOC = ");
 	LOG_IP6ADDR(&thrd_iface.ml_rloc);
-	LOG_RAW("\n");
+	LOG_RAW("\n\r");
 	LOG_RAW("| LL-EUI-64 = ");
 	LOG_IP6ADDR(&thrd_iface.ll_eid);
-	LOG_RAW("\n");
+	LOG_RAW("\n\r");
 	LOG_RAW("| LL-RLOC = ");
 	LOG_IP6ADDR(&thrd_iface.ll_rloc);
-	LOG_RAW("\n");
+	LOG_RAW("\n\r");
 	LOG_RAW("|=======================================================================================|\n\r");
 }
 
@@ -174,7 +174,7 @@ print_all_addr()
 		if( uip_ds6_if.addr_list[i].isused && (state == ADDR_TENTATIVE || state == ADDR_PREFERRED) ) {
 			LOG_RAW("  ");
 			LOG_IP6ADDR(&uip_ds6_if.addr_list[i].ipaddr);
-			LOG_RAW("\n");
+			LOG_RAW("\n\r");
 		}
 	}
 }

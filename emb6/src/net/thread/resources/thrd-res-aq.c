@@ -62,7 +62,7 @@ static void
 res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
 {
 	const uint8_t *chunk;
-	LOG_RAW("========================== CoAP ==========================\n");
+	LOG_RAW("========================== CoAP ==========================\n\r");
 	LOG_RAW("Receiving CoAP packet (Res: a/aq)!\n");
 
 	if ( (len = coap_get_payload(request, &chunk)) == 18 ) {
@@ -70,8 +70,8 @@ res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t prefer
 		if ( tlv->type == NET_TLV_TARGET_EID && tlv->length == 16 ) {
 			target_eid_tlv = (net_tlv_target_eid_t*) tlv->value;
 			LOG_RAW("Target EID = ");
-			PRINT6ADDR(&target_eid_tlv->target_eid);
-			LOG_RAW("\n");
+			LOG_IP6ADDR(&target_eid_tlv->target_eid);
+			LOG_RAW("\n\r");
 
 			// Receipt of Address Query Messages.
 			thrd_local_addr_t *local_addr;
@@ -87,13 +87,13 @@ res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t prefer
 				// uip_ipaddr_t addr;
 				uip_ipaddr_t addr = UIP_IP_BUF->srcipaddr;
 				LOG_RAW("Responding to Address Query Request received from IP Address: ");
-				PRINT6ADDR(&addr);
+				LOG_IP6ADDR(&addr);
 				LOG_RAW("\n\r");
 				thrd_addr_ntf_response(&addr, &target_eid_tlv->target_eid, &rloc16, ml_eid, &time);
 			}
 		}
 	}
-	LOG_RAW("==========================================================\n");
+	LOG_RAW("==========================================================\n\r");
 }
 
 /* --------------------------------------------------------------------------- */

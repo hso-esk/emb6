@@ -334,9 +334,9 @@ thrd_local_addr_t
 
 	} else {
 
-		LOG_RAW(ANSI_COLOR_RED "thrd_local_addr_add: EID is already known for ");
+		LOG_RAW("thrd_local_addr_add: EID is already known for ");
 		LOG_RAW("%d\n", eid);
-		LOG_RAW(ANSI_COLOR_RESET "\n\r");
+		LOG_RAW("\n\r");
 
 		LOG_RAW("thrd_local_addr_add: num_eids %d\n\r", num_eids);
 		LOG_RAW("-----------------------------------------------------\n\r");
@@ -617,9 +617,9 @@ thrd_rfd_child_addr_t
 
 	} else {
 
-		LOG_RAW(ANSI_COLOR_RED "thrd_rfd_child_addr_add: RFD Child Address is already known for ");
+		LOG_RAW("thrd_rfd_child_addr_add: RFD Child Address is already known for ");
 		LOG_IP6ADDR(&child_addr);
-		LOG_RAW(ANSI_COLOR_RESET "\n\r");
+		LOG_RAW("\n\r");
 		LOG_RAW("-----------------------------------------------------\n\r");
 
 		return NULL;
@@ -836,9 +836,9 @@ thrd_addr_qry_t
 
 	} else {
 
-		LOG_RAW(ANSI_COLOR_RED "thrd_addr_qr_add: Address Query is already known for EID ");
+		LOG_RAW("thrd_addr_qr_add: Address Query is already known for EID ");
 		LOG_RAW("%d\n", eid);
-		LOG_RAW(ANSI_COLOR_RESET "\n\r");
+		LOG_RAW("\n\r");
 
 		LOG_RAW("thrd_addr_qr_add: num_addr_qry %d\n\r", num_addr_qry);
 		LOG_RAW("-----------------------------------------------------\n\r");

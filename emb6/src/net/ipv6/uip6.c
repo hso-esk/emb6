@@ -1563,7 +1563,6 @@ uip_process(uint8_t flag)
 	UIP_UDP_APPCALL();
 
 	udp_send:
-	PRINTF("In udp_send\n\r");
 
 	if(uip_slen == 0) {
 		goto drop;

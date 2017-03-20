@@ -56,6 +56,8 @@
 #include "mle_cmd.h"
 #include "string.h"
 
+#define     LOGGER_ENABLE                 LOGGER_MLE
+#include    "logger.h"
 
 /*==============================================================================
                                  API FUNCTIONS
@@ -101,7 +103,7 @@ uint8_t mle_add_tlv_to_cmd( mle_cmd_t * cmd, const tlv_type_t type, const int8_t
 	/* carry about data buffer overflow*/
 	if ((cmd->used_data+ length +sizeof(tlv->type) + sizeof(tlv->length)) >= MAX_TLV_DATA_SIZE)
 	{
-		printf("Buffer overflow \n");
+		LOG_RAW("Buffer overflow \n");
 		return 0;
 	};
 
@@ -116,7 +118,7 @@ uint8_t mle_add_tlv_to_cmd( mle_cmd_t * cmd, const tlv_type_t type, const int8_t
 	{
 		if (tlv->type==type && type!=TLV_SOURCE_ADDRESS)
 		{
-			printf("Error TLV already exist ...\n" );
+			LOG_RAW("Error TLV already exist ...\n" );
 			return 0 ;
 		}
 		i+=(tlv->length+2);
@@ -138,11 +140,11 @@ uint8_t mle_add_tlv_to_cmd( mle_cmd_t * cmd, const tlv_type_t type, const int8_t
 
 void print_buffer( uint8_t* buffer, uint8_t length )
 {
-	printf("==> Buffer :  ");
+	LOG_RAW("==> Buffer :  ");
 	for(uint8_t i=0 ; i<length ;i++) {
-		printf("%02x ", buffer[i]);
+		LOG_RAW("%02x ", buffer[i]);
 	}
-	printf("\n");
+	LOG_RAW("\n");
 
 }
 
@@ -152,52 +154,52 @@ uint8_t mle_print_type_cmd( mle_cmd_t cmd )
 	switch (cmd.type)
 	{
 	case LINK_REQUEST:
-		printf("LINK REQUEST");
+		LOG_RAW("LINK REQUEST");
 		break;
 	case LINK_ACCEPT:
-		printf("LINK ACCEPT");
+		LOG_RAW("LINK ACCEPT");
 		break;
 	case LINK_ACCEPT_AND_REQUEST:
-		printf("LINK ACCEPT AND REQUEST");
+		LOG_RAW("LINK ACCEPT AND REQUEST");
 		break;
 	case LINK_REJECT:
-		printf("LINK REJECT");
+		LOG_RAW("LINK REJECT");
 		break;
 	case ADVERTISEMENT:
-		printf("ADVERTISEMENT");
+		LOG_RAW("ADVERTISEMENT");
 		break;
 	case UPDATE:
-		printf("UPDATE");
+		LOG_RAW("UPDATE");
 		break;
 	case UPDATE_REQUEST:  // Not used in Thread Network
-		printf("UPDATE REQUEST");
+		LOG_RAW("UPDATE REQUEST");
 		break;
 	case DATA_REQUEST:  // Not used in Thread Network
-		printf("DATA REQUEST");
+		LOG_RAW("DATA REQUEST");
 		break;
 	case DATA_RESPONSE:
-		printf("DATA RESPONSE");
+		LOG_RAW("DATA RESPONSE");
 		break;
 	case PARENT_REQUEST:
-		printf("PARENT REQUEST");
+		LOG_RAW("PARENT REQUEST");
 		break;
 	case PARENT_RESPONSE:
-		printf("PARENT RESPONSE");
+		LOG_RAW("PARENT RESPONSE");
 		break;
 	case CHILD_ID_REQUEST:
-		printf("CHILD ID REQUEST");
+		LOG_RAW("CHILD ID REQUEST");
 		break;
 	case CHILD_ID_RESPONSE:
-		printf("CHILD ID RESPONSE");
+		LOG_RAW("CHILD ID RESPONSE");
 		break;
 	case CHILD_UPDATE:
-		printf("CHILD UPDATE");
+		LOG_RAW("CHILD UPDATE");
 		break;
 	case CHILD_UPDATE_RESPONSE:
-		printf("CHILD UPDATE RESPONSE");
+		LOG_RAW("CHILD UPDATE RESPONSE");
 		break;
 	default :
-		printf("error mle command type not recognized ");
+		LOG_RAW("error mle command type not recognized ");
 		return 0 ;
 		break;
 	}
@@ -210,10 +212,10 @@ uint8_t mle_print_cmd( mle_cmd_t cmd )
 	tlv_t * tlv;
 	uint8_t i=0;
 
-	printf("---------------------------------------------------------------\n            MLE command : " );
+	LOG_RAW("---------------------------------------------------------------\n            MLE command : " );
 	if(!mle_print_type_cmd(cmd ))
 		return 0 ;
-	printf("\n---------------------------------------------------------------\n" );
+	LOG_RAW("\n---------------------------------------------------------------\n" );
 
 	tlv_init(&tlv,cmd.tlv_data);
 	while( tlv < (tlv_t*)&cmd.tlv_data[cmd.used_data])
@@ -223,7 +225,7 @@ uint8_t mle_print_cmd( mle_cmd_t cmd )
 		tlv_init(&tlv,&cmd.tlv_data[i]);
 	}
 
-	printf("---------------------------------------------------------------\n" );
+	LOG_RAW("---------------------------------------------------------------\n" );
 	return 1 ;
 }
 

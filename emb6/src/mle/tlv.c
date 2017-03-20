@@ -54,6 +54,8 @@
 #include "tlv.h"
 #include "net_tlv.h"
 
+#define     LOGGER_ENABLE                 LOGGER_MLE
+#include    "logger.h"
 
 /*==============================================================================
                                  API FUNCTIONS
@@ -129,7 +131,7 @@ tlv_t* tlv_find( uint8_t * buf, uint8_t buf_length, const tlv_type_t type )
 	{
 		if ( tlv->type==type )
 		{
-			printf(" TLV exist ...\n");
+			LOG_RAW(" TLV exist ...\n");
 			return tlv;
 		}
 		/* check the next TLV */
@@ -145,80 +147,80 @@ tlv_t* tlv_find( uint8_t * buf, uint8_t buf_length, const tlv_type_t type )
 
 uint8_t tlv_print( tlv_t* tlv )
 {
-	PRINTF("  + type :");
+	LOG_RAW("  + type :");
 	switch (tlv->type)
 	{
 	case TLV_SOURCE_ADDRESS:
-		PRINTF(" SOURCE_ADDRESS    ");
+		LOG_RAW(" SOURCE_ADDRESS    ");
 		break;
 	case TLV_MODE:
-		PRINTF(" MODE              ");
+		LOG_RAW(" MODE              ");
 		break;
 	case TLV_TIME_OUT:
-		PRINTF(" TIME_OUT 	     ");
+		LOG_RAW(" TIME_OUT 	     ");
 		break;
 	case TLV_CHALLENGE:
-		PRINTF(" CHALLENGE         ");
+		LOG_RAW(" CHALLENGE         ");
 		break;
 	case TLV_RESPONSE:
-		PRINTF(" RESPONSE          ");
+		LOG_RAW(" RESPONSE          ");
 		break;
 	case TLV_LINK_LAYER_FRAME_COUNTER:
-		printf(" LINK_LAYER_FRAME_COUNTER");
+		LOG_RAW(" LINK_LAYER_FRAME_COUNTER");
 		break;
 	case TLV_LINK_QUALITY:  // Not used in Thread Network
-		PRINTF(" LINK_QUALITY      ");
+		LOG_RAW(" LINK_QUALITY      ");
 		break;
 	case TLV_NETWORK_PARAMETER:  // Not used in Thread Network
-		PRINTF(" NETWORK_PARAMETER ");
+		LOG_RAW(" NETWORK_PARAMETER ");
 		break;
 	case TLV_MLE_FRAME_COUNTER:
-		PRINTF(" MLE_FRAME_COUNTER ");
+		LOG_RAW(" MLE_FRAME_COUNTER ");
 		break;
 	case TLV_ROUTE64:
-		PRINTF(" ROUTE64          ");
+		LOG_RAW(" ROUTE64          ");
 		break;
 	case TLV_ADDRESS16:
-		PRINTF(" ADDRESS16         ");
+		LOG_RAW(" ADDRESS16         ");
 		break;
 	case TLV_LEADER_DATA:
-		PRINTF(" LEADER_DATA       ");
+		LOG_RAW(" LEADER_DATA       ");
 		break;
 	case TLV_NETWORK_DATA:
-		PRINTF(" NETWORK_DATA      ");
+		LOG_RAW(" NETWORK_DATA      ");
 		break;
 	case TLV_TLV_REQUEST:
-		PRINTF(" TLV_REQUEST       ");
+		LOG_RAW(" TLV_REQUEST       ");
 		break;
 	case TLV_SCAN_MASK:
-		PRINTF(" SCAN_MASK         ");
+		LOG_RAW(" SCAN_MASK         ");
 		break;
 	case TLV_CONNECTIVITY:
-		PRINTF(" CONNECTIVITY      ");
+		LOG_RAW(" CONNECTIVITY      ");
 		break;
 	case TLV_LINK_MARGIN:
-		PRINTF(" LINK_MARGIN       ");
+		LOG_RAW(" LINK_MARGIN       ");
 		break;
 	case TLV_STATUS:
-		PRINTF(" STATUS            ");
+		LOG_RAW(" STATUS            ");
 		break;
 	case TLV_VERSION:
-		PRINTF(" VERSION           ");
+		LOG_RAW(" VERSION           ");
 		break;
 	case TLV_ADDRESS_REGISTRATION:
-		PRINTF(" ADDRESS_REGISTRATION");
+		LOG_RAW(" ADDRESS_REGISTRATION");
 		break;
 	default:
-		PRINTF("Error tlv type not recognized ");
+		LOG_RAW("Error tlv type not recognized ");
 		return 0 ;
 		break;
 	}
-	PRINTF(", length : %i , value :  ",tlv->length);
+	LOG_RAW(", length : %i , value :  ",tlv->length);
 
 	for(uint8_t i=0 ; i < tlv->length; i++) {
-		PRINTF("%02x ", tlv->value[i]);
+		LOG_RAW("%02x ", tlv->value[i]);
 	}
-	PRINTF("\r\n");
+	LOG_RAW("\r\n");
 	return 1;
 
 }
