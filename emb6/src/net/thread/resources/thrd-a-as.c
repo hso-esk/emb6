@@ -28,7 +28,7 @@
  */
 
 static void res_post_handler(void *request, void *response, uint8_t *buffer,
-		uint16_t preferred_size, int32_t *offset);
+		uint16_t preferred_size, int32_t *offset, void* p_user);
 
 static size_t create_response_payload(uint8_t *buf, uint8_t status,
 		uint16_t *rloc16, uint8_t *id_sequence, uint64_t *router_mask);
@@ -73,7 +73,8 @@ RESOURCE(thrd_res_a_as,
  */
 
 static void
-res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
+res_post_handler(void *request, void *response, uint8_t *buffer,
+    uint16_t preferred_size, int32_t *offset, void* p_user)
 {
 	const uint8_t *chunk;
 	LOG_RAW("========================== CoAP ==========================\n");

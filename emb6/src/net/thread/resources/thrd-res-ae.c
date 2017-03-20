@@ -24,7 +24,8 @@
  ********************************************************************************
  */
 
-static void res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset);
+static void res_post_handler(void *request, void *response, uint8_t *buffer,
+    uint16_t preferred_size, int32_t *offset, void* p_user);
 
 static void print_ml_eid(net_tlv_ml_eid_t *ml_eid_tlv);
 
@@ -62,7 +63,8 @@ RESOURCE(thrd_res_a_ae,
  */
 
 static void
-res_post_handler(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
+res_post_handler(void *request, void *response, uint8_t *buffer,
+    uint16_t preferred_size, int32_t *offset, void* p_user)
 {
 	const uint8_t *chunk;
 	LOG_RAW("========================== CoAP ==========================\n\r");
