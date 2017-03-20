@@ -81,7 +81,7 @@ res_post_handler(void *request, void *response, uint8_t *buffer,
 	LOG_RAW("========================== CoAP ==========================\n");
 	LOG_RAW("Receiving CoAP packet! (Res: a/as)\n");
 
-	if ( (len = coap_get_payload(request, &chunk)) >= 20 ) {
+	if ( (len = coap_get_payload(request, &chunk)) >= 10 ) {
 		tlv = (tlv_t*) &chunk[0];
 		uint8_t router_id = 63;	// Invalid Router ID.
 		if ( tlv->type == NET_TLV_ML_EID && tlv->length == 8 ) {
@@ -89,7 +89,7 @@ res_post_handler(void *request, void *response, uint8_t *buffer,
 			LOG_RAW("ML-EID = ");
 			print_ml_eid(ml_eid_tlv);
 		}
-		if ( len == 24 ) {
+		if ( len == 14 ) {
 			tlv = (tlv_t*) &chunk[10];
 			if ( tlv->type == NET_TLV_RLOC16 && tlv->length == 2 ) {
 				rloc16_tlv = (net_tlv_rloc16_t*) tlv->value;
