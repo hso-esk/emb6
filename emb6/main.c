@@ -1,4 +1,7 @@
 /*
+ * --- License --------------------------------------------------------------*
+ */
+/*
  * emb6 is licensed under the 3-clause BSD license. This license gives everyone
  * the right to use and distribute the code, either in binary or source code
  * format, as long as the copyright license is retained in the source code.
@@ -9,12 +12,7 @@
  * more adaptivity during run-time.
  *
  * The license text is:
- *
- * Copyright (c) 2015,
- * Hochschule Offenburg, University of Applied Sciences
- * Laboratory Embedded Systems and Communications Electronics.
- * All rights reserved.
- *
+
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  * 1. Redistributions of source code must retain the above copyright notice,
@@ -36,35 +34,32 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
+ * Copyright (c) 2016,
+ * Hochschule Offenburg, University of Applied Sciences
+ * Institute of reliable Embedded Systems and Communications Electronics.
+ * All rights reserved.
  */
-/*============================================================================*/
+
+/*
+ *  --- Module Description ---------------------------------------------------*
+ */
 /**
- *      \addtogroup emb6
- *      @{
+ *  \file       main.h
+ *  \author     Institute of reliable Embedded Systems
+ *              and Communication Electronics
+ *  \date       $Date$
+ *  \version    $Version$
  *
- *      \defgroup demo Demo applications
+ *  \brief      Main file used for all demo applications.
  *
- *   This is a set of applications to demonstrate behavior of different supported
- *   protocols. Files which start with demo_ are used for demonstrating
- *   functionality of a given protocol.
- *
- *      @{
- *
+ *              This file provides the entry for all demo applications. depending
+ *              on the configuration it initializes the stack and the according
+ *              modules before it starts operation.
  */
-/*! \file   demo_main.c
 
-    \author Artem Yushev,
-
-    \brief  Main function.
-
-   \version 0.0.1
-*/
-
-/*============================================================================*/
-
-/*==============================================================================
-                                 INCLUDE FILES
- =============================================================================*/
+/*
+ *  --- Includes -------------------------------------------------------------*
+ */
 #include "emb6.h"
 #include "board_conf.h"
 #include "bsp.h"
@@ -176,13 +171,19 @@
 #include "emb6_semaphore.h"
 
 #endif
-/*==============================================================================
-                                     MACROS
- =============================================================================*/
+/*
+ * --- Macro Definitions --------------------------------------------------- *
+ */
+/** Maximum number of demos */
+#ifndef EMB6_DEMOS_MAX
+#define EMB6_DEMOS_MAX                      10
+#endif /* #ifndef EMB6_DEMOS_MAX */
 
 #ifndef EMB6_PROC_DELAY
 #define EMB6_PROC_DELAY                     500
 #endif /* #ifndef EMB6_PROC_DELAY */
+
+
 
 #if USE_FREERTOS
 /* Task priorities. */
@@ -190,13 +191,24 @@
 #define mainLED_TASK_PRIORITY           ( tskIDLE_PRIORITY + 2 )
 #endif /* #if USE_FREERTOS */
 
+#define EMB6_DEMO_SET( i,name, demos )      do{                                             \
+                                              if( (i < EMB6_DEMOS_MAX) && (i >= 0) )        \
+                                              {                                             \
+                                                if( i > 0 )                                 \
+                                                  demos[i-1].p_next = &demos[i];            \
+                                                demos[i].pf_conf = demo_##name##Conf;       \
+                                                demos[i++].pf_init = demo_##name##Init;     \
+                                              }                                             \
+                                              else                                          \
+                                                i = -1;                                     \
+                                            }while(0);
 
 #if USE_FREERTOS & USE_TI_RTOS
 #error Please choose only one RTOS
 #endif
-/*==============================================================================
-                                     STRUCTS
- =============================================================================*/
+/*
+ *  --- Type Definitions -----------------------------------------------------*
+ */
 
 /**
  * emb6 task parameters
@@ -225,9 +237,12 @@ typedef struct
                                      ENUMS
  =============================================================================*/
 
-/*==============================================================================
-                                    VARIABLES
- =============================================================================*/
+/*
+ *  --- Local Variables ---------------------------------------------------- *
+ */
+
+/** Demo configurations */
+static s_demo_t emb6_demos[EMB6_DEMOS_MAX];
 
 /** parameters for emb6 startup */
 s_emb6_startup_params_t emb6_startupParams;
@@ -237,9 +252,9 @@ s_emb6_startup_params_t emb6_startupParams;
  s_led_task_param_t ledTaskParams;
 #endif /* #if USE_FREERTOS */
 
-/*==============================================================================
-                           LOCAL FUNCTION PROTOTYPES
- =============================================================================*/
+ /*
+  *  --- Local Function Prototypes ------------------------------------------ *
+  */
 static void loc_stackConf(uint16_t mac_addr_word);
 static void loc_demoAppsConf(s_ns_t* pst_netStack, e_nsErr_t *p_err);
 static uint8_t loc_demoAppsInit(void);
@@ -270,9 +285,9 @@ static void prvSetupHardware( void );
 static void prvLowPowerMode1( void );
 #endif /* #if USE_FREERTOS */
 
-/*==============================================================================
-                                LOCAL FUNCTIONS
- =============================================================================*/
+/*
+ *  --- Local Functions ---------------------------------------------------- *
+ */
 static void loc_stackConf(uint16_t mac_addr_word)
 {
     /* set last byte of mac address */
@@ -453,10 +468,72 @@ static uint8_t loc_demoAppsInit(void)
 
     return 1;
 }
+/**
+321
+ * \brief   Set the demo applications.
+322
+ *
+323
+ *          This function sets the demo applications according
+324
+ *          according to the build configuration. This will be used
+325
+ *          by the stack to configure and to initialize the according
+326
+ *          demos
+327
+ *
+328
+ * \return  Pointer to the demo structures on success or NULL on error.
+329
+ */
+static s_demo_t* loc_demoAppsSet( void )
+{
+    int16_t ret = 0;
+#if DEMO_USE_EXTIF
+    EMB6_DEMO_SET( ret, extif, emb6_demos );
+#endif /* #if DEMO_USE_EXTIF */
 
-/*==============================================================================
- emb6_task()
-==============================================================================*/
+#if DEMO_USE_COAP
+    EMB6_DEMO_SET( ret, coap, emb6_demos );
+#endif /* #if DEMO_USE_COAP */
+
+#if DEMO_USE_LWM2M
+    EMB6_DEMO_SET( ret, lwm2m, emb6_demos );
+#endif /* #if DEMO_USE_LWM2M */
+
+#if DEMO_USE_MDNS
+    EMB6_DEMO_SET( ret, mdns, emb6_demos );
+#endif /* #if DEMO_USE_MDNS */
+
+#if DEMO_USE_UDPALIVE
+    EMB6_DEMO_SET( ret, udpAlive, emb6_demos );
+#endif /* #if DEMO_USE_UDPALIVE */
+
+#if DEMO_USE_UDP_SOCKET
+    EMB6_DEMO_SET( ret, udpSocket, emb6_demos );
+#endif /* #if DEMO_USE_UDP_SOCKET */
+
+#if DEMO_USE_UDP_SOCKET_SIMPLE
+    EMB6_DEMO_SET( ret, udpSocketSimple, emb6_demos );
+#endif /* #if DEMO_USE_UDP_SOCKET_SIMPLE */
+
+#if DEMO_USE_APTB
+    EMB6_DEMO_SET( ret, aptb, emb6_demos );
+#endif /* #if DEMO_USE_APTB */
+
+#if DEMO_USE_DTLS
+    EMB6_DEMO_SET( ret, dtls, emb6_demos );
+#endif /* #if DEMO_USE_DTLS */
+    if( ret > 0 )
+      return emb6_demos;
+    else
+      return NULL;
+}
+
+/*
+ *  ---  emb6_task() ------------------------------------------------------ *
+ */
 #if USE_TI_RTOS
 static void emb6_task(int argc, char **argv)
 {
@@ -522,7 +599,7 @@ static void emb6_task( void* p_params )
 
       /* Initialize applications */
       ret = loc_demoAppsInit();
-      if (ret == 0) {
+      if (ret != 0) {
         LOG_ERR("Demo APP failed to initialize");
         err = NETSTK_ERR_INIT;
         emb6_errorHandler(&err);
@@ -590,9 +667,9 @@ static void prvLowPowerMode1( void )
 }
 #endif /* #if USE_FREERTOS */
 
-/*==============================================================================
- main()
-==============================================================================*/
+/*
+ *  --- Main function ------------------------------------------------------ *
+ */
 #if defined(MAIN_WITH_ARGS)
 int main(int argc, char **argv)
 #else
@@ -608,6 +685,7 @@ int main(void)
   }
 #endif /* #if defined(MAIN_WITH_ARGS) */
   emb6_startupParams.ui_macAddr = loc_parseMac(NULL, MAC_ADDR_WORD);
+  emb6_startupParams.p_demos = loc_demoAppsSet();
 
 #if USE_FREERTOS
     ledTaskParams.en = 1;
