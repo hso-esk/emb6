@@ -45,6 +45,7 @@
 #include "bsp/srf06eb_cc26xx/drivers/source/bsp_led.h"
 #endif
 
+
 /*! Enable or disable logging. */
 #define     LOGGER_ENABLE        LOGGER_HAL
 #include    "logger.h"
@@ -86,35 +87,9 @@ static void _hal_isrSysTick(uint32_t l_count);
 /*                           LOCAL VARIABLES                                  */
 /*============================================================================*/
 
-
-#if USE_TI_RTOS
-
-#define Board_LED0          IOID_25
-#define Board_LED1          IOID_27
-#define Board_LED2          IOID_7
-#define Board_LED3          IOID_6
-
-/* Pin driver handle */
-static PIN_Handle ledPinHandle;
-static PIN_State ledPinState;
-
-/*
- * Application LED pin configuration table:
- *   - All LEDs board LEDs are off.
- */
-PIN_Config ledPinTable[] = {
-    Board_LED0 | PIN_GPIO_OUTPUT_EN | PIN_GPIO_LOW | PIN_PUSHPULL | PIN_DRVSTR_MAX,
-    Board_LED1 | PIN_GPIO_OUTPUT_EN | PIN_GPIO_LOW | PIN_PUSHPULL | PIN_DRVSTR_MAX,
-    Board_LED2 | PIN_GPIO_OUTPUT_EN | PIN_GPIO_LOW | PIN_PUSHPULL | PIN_DRVSTR_MAX,
-    Board_LED3 | PIN_GPIO_OUTPUT_EN | PIN_GPIO_LOW | PIN_PUSHPULL | PIN_DRVSTR_MAX,
-    PIN_TERMINATE
-};
-
-#endif
-
-
 /*! Hal tick counter */
 static clock_time_t volatile hal_ticks;
+
 
 /**
  * \brief   Description of a single Pin.
@@ -162,6 +137,31 @@ static s_hal_gpio_pin_t s_hal_gpio[EN_HAL_PIN_MAX] = {
 };
 /** Definition of the peripheral callback functions */
 s_hal_irq s_hal_irqs[EN_HAL_PERIPHIRQ_MAX];
+
+#if USE_TI_RTOS
+
+#define Board_LED0          IOID_25
+#define Board_LED1          IOID_27
+#define Board_LED2          IOID_7
+#define Board_LED3          IOID_6
+
+/* Pin driver handle */
+static PIN_Handle ledPinHandle;
+static PIN_State ledPinState;
+
+/*
+ * Application LED pin configuration table:
+ *   - All LEDs board LEDs are off.
+ */
+PIN_Config ledPinTable[] = {
+    Board_LED0 | PIN_GPIO_OUTPUT_EN | PIN_GPIO_LOW | PIN_PUSHPULL | PIN_DRVSTR_MAX,
+    Board_LED1 | PIN_GPIO_OUTPUT_EN | PIN_GPIO_LOW | PIN_PUSHPULL | PIN_DRVSTR_MAX,
+    Board_LED2 | PIN_GPIO_OUTPUT_EN | PIN_GPIO_LOW | PIN_PUSHPULL | PIN_DRVSTR_MAX,
+    Board_LED3 | PIN_GPIO_OUTPUT_EN | PIN_GPIO_LOW | PIN_PUSHPULL | PIN_DRVSTR_MAX,
+    PIN_TERMINATE
+};
+
+#endif
 
 /*============================================================================*/
 /*                           LOCAL FUNCTIONS                                  */
@@ -257,6 +257,29 @@ static int8_t _hal_systick(void)
   return sc_retStatus;
 }
 
+
+/*!
+ * @brief  UART RX call back function.
+ *
+ * @param  received char
+ */
+#if defined(HAL_SUPPORT_UART)
+#if defined(HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX)
+/*---------------------------------------------------------------------------*/
+/*
+* _hal_uartRxCb()
+*/
+static void _hal_uartRxCb( uint8_t c )
+{
+  if( s_hal_irqs[EN_HAL_PERIPHIRQ_SLIPUART_RX].pf_cb != NULL )
+  {
+    s_hal_irqs[EN_HAL_PERIPHIRQ_SLIPUART_RX].pf_cb( &c );
+  }
+} /* _hal_uartRxCb() */
+
+#endif /* #if defined(HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX) */
+#endif /* #if defined(HAL_SUPPORT_UART) */
+
 /*==============================================================================
                              API FUNCTIONS
  ==============================================================================*/
@@ -296,6 +319,7 @@ int8_t hal_init(void)
       System_abort("Error initializing board LED pins\n");
   }
 #endif
+
   /* Initialize the mcu */
   b_functionStatus = sf_mcu_init();
   if(b_functionStatus)
@@ -307,14 +331,11 @@ int8_t hal_init(void)
     b_functionStatus = sf_mcu_timer_init(MCU_TICKS_PER_SECOND);
     #endif
 
-    if(b_functionStatus)
-    {
-      c_retStatus = _hal_uart_init();
-      if(MCU_INIT_RET_STATUS_CHECK(c_retStatus))
-      {
-        c_retStatus = _hal_systick();
-      }
-    }
+    if(!b_functionStatus)
+      return -1;
+    c_retStatus = _hal_systick();
+    if(!MCU_INIT_RET_STATUS_CHECK(c_retStatus))
+      return -1;
   }
 
   /* Initialize hal_ticks */
@@ -336,37 +357,37 @@ uint32_t hal_getrand(void)
 /*============================================================================*/
 void hal_ledOff(uint16_t ui_led)
 {
-	   switch( ui_led )
-	    {
-	        case CC1310_LED0:
+  switch( ui_led )
+  {
+  case CC1310_LED0:
 #if USE_TI_RTOS
-	            PIN_setOutputValue(ledPinHandle, Board_LED0, 0);
+    PIN_setOutputValue(ledPinHandle, Board_LED0, 0);
 #else
-	            bspLedClear( BSP_LED_1 );
+    bspLedClear( BSP_LED_1 );
 #endif
-	            break;
-	        case CC1310_LED1:
+  break;
+  case CC1310_LED1:
 #if USE_TI_RTOS
-	            PIN_setOutputValue(ledPinHandle, Board_LED1, 0);
+    PIN_setOutputValue(ledPinHandle, Board_LED1, 0);
 #else
-	            bspLedClear( BSP_LED_2 );
+    bspLedClear( BSP_LED_2 );
 #endif
-	            break;
-	        case CC1310_LED2:
+  break;
+  case CC1310_LED2:
 #if USE_TI_RTOS
-	            PIN_setOutputValue(ledPinHandle, Board_LED2, 0);
+    PIN_setOutputValue(ledPinHandle, Board_LED2, 0);
 #else
-	            bspLedClear( BSP_LED_3 );
+    bspLedClear( BSP_LED_3 );
 #endif
-	            break;
-	        case CC1310_LED3:
+  break;
+  case CC1310_LED3:
 #if USE_TI_RTOS
-	            PIN_setOutputValue(ledPinHandle, Board_LED3, 0);
+    PIN_setOutputValue(ledPinHandle, Board_LED3, 0);
 #else
-	            bspLedClear( BSP_LED_4 );
+    bspLedClear( BSP_LED_4 );
 #endif
-	            break;
-	    }
+  break;
+ }
 }/* hal_ledOff() */
 
 /*============================================================================*/
@@ -374,37 +395,37 @@ void hal_ledOff(uint16_t ui_led)
 /*============================================================================*/
 void hal_ledOn(uint16_t ui_led)
 {
-	   switch( ui_led )
-	    {
-	        case CC1310_LED0:
+  switch( ui_led )
+  {
+  case CC1310_LED0:
 #if USE_TI_RTOS
-	            PIN_setOutputValue(ledPinHandle, Board_LED0, 1);
+    PIN_setOutputValue(ledPinHandle, Board_LED0, 1);
 #else
-	            bspLedClear( BSP_LED_1 );
+    bspLedSet( BSP_LED_1 );
 #endif
-	            break;
-	        case CC1310_LED1:
+  break;
+  case CC1310_LED1:
 #if USE_TI_RTOS
-	            PIN_setOutputValue(ledPinHandle, Board_LED1, 1);
+    PIN_setOutputValue(ledPinHandle, Board_LED1, 1);
 #else
-	            bspLedClear( BSP_LED_2 );
+    bspLedSet( BSP_LED_2 );
 #endif
-	            break;
-	        case CC1310_LED2:
+  break;
+  case CC1310_LED2:
 #if USE_TI_RTOS
-	            PIN_setOutputValue(ledPinHandle, Board_LED2, 1);
+    PIN_setOutputValue(ledPinHandle, Board_LED2, 1);
 #else
-	            bspLedClear( BSP_LED_3 );
+    bspLedSet( BSP_LED_3 );
 #endif
-	            break;
-	        case CC1310_LED3:
+break;
+  case CC1310_LED3:
 #if USE_TI_RTOS
-	            PIN_setOutputValue(ledPinHandle, Board_LED3, 1);
+    PIN_setOutputValue(ledPinHandle, Board_LED3, 1);
 #else
-	            bspLedClear( BSP_LED_4 );
+    bspLedSet( BSP_LED_4 );
 #endif
-	            break;
-	    }
+  break;
+}
 }/* hal_ledOn() */
 
 /*============================================================================*/
@@ -416,7 +437,6 @@ void* hal_pinInit( en_hal_pin_t pin )
     p_pin = &s_hal_gpio[pin];
     p_pin->val=1;
     hal_ledOn(p_pin->pin);
-
   return p_pin ;
 } /* hal_pinInit() */
 
@@ -536,6 +556,80 @@ int8_t hal_delayUs(uint32_t i_delay)
   return 0;
 } /* hal_delay_us() */
 
+
+
+#if defined(HAL_SUPPORT_SPI)
+void* hal_spiInit( en_hal_spi_t spi )
+{
+  /* Not needed because of integrated IF */
+  return NULL;
+} /* hal_spiInit() */
+
+
+int32_t hal_spiTRx( void* p_spi, uint8_t* p_tx, uint8_t* p_rx, uint16_t len )
+{
+  /* Not needed because of integrated IF */
+  return 0U;
+} /* hal_spiRead() */
+
+
+int32_t hal_spiRx( void* p_spi, uint8_t * p_rx, uint16_t len )
+{
+  /* Not needed because of integrated IF */
+    return 0U;
+}
+
+int32_t hal_spiTx( void* p_spi, uint8_t* p_tx, uint16_t len )
+{
+  /* Not needed because of integrated IF */
+    return 0U;
+}
+#endif
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_uartInit()
+*/
+#if defined(HAL_SUPPORT_UART)
+void* hal_uartInit( en_hal_uart_t uart )
+{
+	_hal_uart_init();
+    sf_uart_setRxCb( _hal_uartRxCb );
+    return _hal_uartRxCb;
+}/* hal_uartInit() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_uartRx()
+*/
+int32_t hal_uartRx( void* p_uart, uint8_t * p_rx, uint16_t len )
+{
+    EMB6_ASSERT_RET( p_rx != NULL, -1 );
+
+    if( len == 0 )
+      return 0;
+
+    sf_uart_read(p_rx, len);
+    return len;
+}/* hal_uartRx() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_uartTx()
+*/
+int32_t hal_uartTx( void* p_uart, uint8_t* p_tx, uint16_t len )
+{
+    EMB6_ASSERT_RET( p_tx != NULL, -1 );
+
+    if( len == 0 )
+      return 0;
+
+    sf_uart_write(p_tx, len);
+    return len;
+}/* hal_uartTx() */
+#endif /* #if defined(HAL_SUPPORT_UART) */
+
 /*============================================================================*/
 /* hal_pinIRQClear() */
 /*============================================================================*/
@@ -579,10 +673,10 @@ int8_t hal_pinIRQRegister( void* p_pin, en_hal_irqedge_t edge,
 int8_t hal_periphIRQRegister( en_hal_periphirq_t irq, pf_hal_irqCb_t pf_cb,
     void* p_data )
 {
-	  /* set the callback and data pointer */
-	  s_hal_irqs[irq].pf_cb = pf_cb;
-	  s_hal_irqs[irq].p_data = p_data;
-	  return 0;
+    /* set the callback and data pointer */
+    s_hal_irqs[irq].pf_cb = pf_cb;
+    s_hal_irqs[irq].p_data = p_data;
+    return 0;
 } /* hal_periphIRQRegister() */
 
 /*============================================================================*/
