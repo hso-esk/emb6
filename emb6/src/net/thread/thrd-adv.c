@@ -47,12 +47,13 @@ thrd_process_route64(uint8_t rid_sender, tlv_route64_t *route64_tlv)
 
 	if ( route64_tlv != NULL ) {
 
-		uint8_t sender_cost = 0x0F;
+	  // uint8_t sender_cost = 0x0F;
 		thrd_rdb_route_t *sender_route;
 
 		sender_route = thrd_rdb_route_lookup(rid_sender);
 		if ( sender_route != NULL ) {
-			sender_cost = sender_route->R_route_cost;
+		  // uint8_t sender_cost = 0x0F;
+		  // sender_cost = sender_route->R_route_cost;
 		} else {
 			// TODO Check this.
 			LOG_RAW("thrd_process_route64: No route to reach neighbor (%d) detected.\n\r", rid_sender);
@@ -91,7 +92,7 @@ thrd_process_route64(uint8_t rid_sender, tlv_route64_t *route64_tlv)
 				// Check whether the link quality / route data byte is valid (see spec.).
 				if ( lq_rd_data != ROUTE64_LQ_RD_INVALID ) {
 					uint8_t outgoing_quality = lq_rd_data >> 6;
-					uint8_t incoming_quality = lq_rd_data & ROUTE64_LQ_RD_IN_MASK >> 4;	// TODO
+					// uint8_t incoming_quality = lq_rd_data & ROUTE64_LQ_RD_IN_MASK >> 4;	// TODO
 					if ( outgoing_quality != 0 ) {
 						link = thrd_rdb_link_lookup(id_cnt);
 						if ( link != NULL ) {

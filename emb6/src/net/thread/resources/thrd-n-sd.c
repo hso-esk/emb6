@@ -30,8 +30,8 @@ static void res_post_handler(void *request, void *response, uint8_t *buffer,
  ********************************************************************************
  */
 
-static uint8_t payload_buf[MAX_NETWORK_DATA_SIZE] = { 0 };
-static size_t len = 0;						// CoAP payload length.
+// static uint8_t payload_buf[MAX_NETWORK_DATA_SIZE] = { 0 };
+// static size_t len = 0;						// CoAP payload length.
 
 /**
  * Server Data Registration CoAP Resource (/n/sd).
@@ -59,7 +59,7 @@ static void
 res_post_handler(void *request, void *response, uint8_t *buffer,
     uint16_t preferred_size, int32_t *offset, void* p_user)
 {
-	const uint8_t *chunk;
+	// const uint8_t *chunk;
 	LOG_RAW("========================== CoAP ==========================\n");
 	LOG_RAW("Receiving CoAP packet! (Res: n/sd)\n");
 
