@@ -26,29 +26,20 @@
 /*============================================================================*/
 
 #ifndef TX_POWER
-#define TX_POWER                    		(int8_t  )( 14 )
+#define TX_POWER                    (int8_t  )( 14 )
 #endif
 
 #ifndef RX_SENSITIVITY
-#define RX_SENSITIVITY              		(int8_t  )(  0 )    /* FIXME use proper configuration */
+#define RX_SENSITIVITY              (int8_t  )(  0 )    /* FIXME use proper configuration */
 #endif
 
 #ifndef MODULATION
-#define MODULATION                  		MODULATION_2FSK50   /* FIXME use proper configuration */
-#endif
-
-/* enable auto-acknowledgment of radio driver */
-#ifndef NETSTK_CFG_RF_SW_AUTOACK_EN
-#define NETSTK_CFG_RF_SW_AUTOACK_EN         TRUE
+#define MODULATION                  MODULATION_2FSK50
 #endif
 
 /** transceiver supports standard-specific checksum algorithm */
 #define NETSTK_SUPPORT_HW_CRC               TRUE
 
-/* radio transceiver does not support standard-specified checksum */
-#ifndef NETSTK_CFG_RF_CRC_EN
-#define NETSTK_CFG_RF_CRC_EN                TRUE
-#endif
 
 #ifndef CC13XX_LCD_ENABLE
 #define CC13XX_LCD_ENABLE           		FALSE
@@ -85,8 +76,6 @@
 #define HAL_SUPPORT_LED3                    TRUE
 #endif /* #ifndef HAL_SUPPORT_LED3 */
 
-
-
 /*============================================================================*/
 /*                       API FUNCTION DECLARATION                             */
 /*============================================================================*/
@@ -97,9 +86,9 @@
  * This function initializes the netstack structure and thus sets which drivers are used.
  *
  * @param   p_netstk Pointer to net stack structure.
- * @return  1 if success; otherwise 0.
+ * @return  0 if function succeeded, otherwise function failed.
  */
-int8_t board_conf(s_ns_t* p_netstk);
+uint8_t board_conf(s_ns_t* p_netstk);
 
 #endif /* _BOARD_CONF_H_ */
 

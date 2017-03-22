@@ -141,9 +141,6 @@ rfc_CMD_FS_t RF_802_15_4_cmdFs =
     .synthConf.bTxMode = 0x0,
     .synthConf.refFreq = 0x0,
     .__dummy0 = 0x00,
-    .midPrecal = 0x00,
-    .ktPrecal = 0x00,
-    .tdcPrecal = 0x0000,
 };
 
 
