@@ -97,10 +97,6 @@
 /** Enable RIP DEBUG PRINT */
 #define	RIP_DEBUG							TRUE
 
-/** Define the Multicast Engine to Roll Trickle Multicast */
-#define	UIP_CONF_IPV6_MULTICAST				TRUE
-#define UIP_MCAST6_CONF_ENGINE				UIP_MCAST6_ENGINE_ROLL_TM
-
 
 /** Define IPv6 as based protocol (should not be undefined) */
 #define UIP_CONF_IPV6                        TRUE
@@ -127,7 +123,9 @@
 #define UIP_CONF_DS6_ADDR_NBU                4
 
 /** Should we use LinkLayer acks in NUD ? */
+#ifndef UIP_CONF_DS6_LL_NUD
 #define UIP_CONF_DS6_LL_NUD                  TRUE
+#endif /* #ifndef UIP_CONF_DS6_LL_NUD */
 
 /** Force acknowledge from sender (test hardware autoacks) */
 #define SICSLOWPAN_CONF_ACK_ALL              TRUE

@@ -321,6 +321,11 @@ net = {
         'CPPDEFINES' : [
             ('USE_THREAD', 1),
             ('THRD_USE_ROUTING', 1),
+            ('UIP_CONF_IPV6_MULTICAST', 1),
+            ('UIP_MCAST6_CONF_ENGINE', 'UIP_MCAST6_ENGINE_ROLL_TM'),
+            ('UIP_CONF_DS6_LL_NUD', 0),
+            ('UIP_CONF_ND6_SEND_RA', 0),
+            ('UIP_CONF_ND6_SEND_NA', 0),
         ],
 
         # GCC flags
