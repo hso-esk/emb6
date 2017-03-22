@@ -94,9 +94,6 @@
                                 NETWORK LAYER SECTION
 ===============================================================================*/
 
-/** Enable RIP DEBUG PRINT */
-#define	RIP_DEBUG							TRUE
-
 
 /** Define IPv6 as based protocol (should not be undefined) */
 #define UIP_CONF_IPV6                        TRUE
@@ -1104,6 +1101,11 @@ void uip_log(char *msg);
 #ifndef LOGGER_EVPROC
 #define LOGGER_EVPROC                       FALSE
 #endif
+
+ /** Enable RIP DEBUG PRINT */
+ #ifndef RIP_DEBUG
+ #define RIP_DEBUG                           FALSE
+ #endif /* #ifndef RIP_DEBUG */
 
 
 /*

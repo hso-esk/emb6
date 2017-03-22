@@ -146,7 +146,9 @@ thrd_process_adv(uint16_t source_rloc, tlv_route64_t *route64_tlv, tlv_leader_t 
 	// Process Leader Data TLV.
 	thrd_partition_process(thrd_extract_id_seq_number(route64_tlv), leader_tlv);
 
+#if RIP_DEBUG
 	thrd_rdb_print_routing_database();
+#endif /* #if RIP_DEBUG */
 }
 
 /* -------------------------------------------------------------------------- */
