@@ -1027,9 +1027,9 @@ void uip_log(char *msg);
 #define LOGGER_MLE                         	TRUE
 #endif
 
-/** Thread Network Layer functions          (see net/rip) */
+/** Thread Network Layer functions          (see net/thread) */
 #ifndef LOGGER_THRD_NET
-#define LOGGER_THRD_NET                    	TRUE
+#define LOGGER_THRD_NET                    	FALSE
 #endif
 
 /** Radio functions                         (see $(IF).c) */
