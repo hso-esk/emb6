@@ -1022,7 +1022,7 @@ void uip_log(char *msg);
 #define LOGGER_PHY                          FALSE
 #endif
 
-/** MLE functions                			(see mle/) */
+/** MLE functions                           (see mle/) */
 #ifndef LOGGER_MLE
 #define LOGGER_MLE                         	TRUE
 #endif
