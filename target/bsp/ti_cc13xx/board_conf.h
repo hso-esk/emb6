@@ -37,9 +37,19 @@
 #define MODULATION                  MODULATION_2FSK50
 #endif
 
+
+/* enable auto-acknowledgment of radio driver */
+#ifndef NETSTK_CFG_RF_SW_AUTOACK_EN
+#define NETSTK_CFG_RF_SW_AUTOACK_EN         TRUE
+#endif
+
 /** transceiver supports standard-specific checksum algorithm */
 #define NETSTK_SUPPORT_HW_CRC               TRUE
 
+/* radio transceiver does not support standard-specified checksum */
+#ifndef NETSTK_CFG_RF_CRC_EN
+#define NETSTK_CFG_RF_CRC_EN                TRUE
+#endif
 
 #ifndef CC13XX_LCD_ENABLE
 #define CC13XX_LCD_ENABLE           		FALSE
@@ -53,7 +63,7 @@
 
 /** Enable  HAL SUPPORT SLIPUART_RX */
 #ifndef HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX
-#define HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX                TRUE
+#define HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX                FALSE
 #endif /* #ifndef HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX */
 
 /** Enable LED0 */
@@ -75,6 +85,8 @@
 #ifndef HAL_SUPPORT_LED3
 #define HAL_SUPPORT_LED3                    TRUE
 #endif /* #ifndef HAL_SUPPORT_LED3 */
+
+
 
 /*============================================================================*/
 /*                       API FUNCTION DECLARATION                             */
