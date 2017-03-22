@@ -6,7 +6,7 @@
 	<deviceEndianness value="little"/>
 	<codegenToolVersion value="GNU_4.8.4:Linaro"/>
 	<isElfFormat value="true"/>
-	<connection value="common/targetdb/connections/TIXDS100v3_Dot7_Connection.xml"/>
+	<connection value="common/targetdb/connections/TIXDS110_Connection.xml"/>
 	<linkerCommandFile value="cc13x0f128.lds"/>
 	<rts value="libc.a"/>
 	<createSlaveProjects value=""/>
