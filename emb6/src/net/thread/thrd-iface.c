@@ -31,7 +31,7 @@ thrd_iface_t thrd_iface = {
 
 static void remove_rloc_addr();
 
-static void print_all_addr();
+// static void print_all_addr();
 
 /*==============================================================================
                                     LOCAL FUNCTIONS
@@ -163,7 +163,7 @@ thrd_iface_print()
 }
 
 /* --------------------------------------------------------------------------- */
-
+/*
 static void
 print_all_addr()
 {
@@ -178,4 +178,4 @@ print_all_addr()
 		}
 	}
 }
-
+*/
