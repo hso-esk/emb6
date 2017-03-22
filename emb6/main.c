@@ -542,7 +542,7 @@ static void emb6_task(int argc, char **argv)
       s_ns_t st_netstack;
       uint8_t ret;
       e_nsErr_t err;
-
+      s_emb6_startup_params_t* ps_params = &emb6_startupParams;
       /* Initialize variables */
       err = NETSTK_ERR_NONE;
       memset(&st_netstack, 0, sizeof(st_netstack));
