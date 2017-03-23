@@ -489,13 +489,12 @@ copy_frags2uip(int context)
 
 static s_ns_t*        p_ns = NULL;
 
-#ifdef SICSLOWPAN_USE_MESH_HEADER
-
+#if SICSLOWPAN_USE_MESH_HEADER
 static uint8_t mesh_hdr[SICSLOWPAN_MAX_MESH_HEADER_SIZE];
 
 static uint8_t forward(uint8_t dest_rid);
 
-#endif /* SICSLOWPAN_USE_MESH_HEADER */
+#endif /* #if SICSLOWPAN_USE_MESH_HEADER */
 
 static uint8_t sicslowpan_mesh_hdr_len;
 
