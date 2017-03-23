@@ -1975,9 +1975,6 @@ static uint8_t output(const uip_lladdr_t *localdest)
 		// Without 6LoWPAN mesh header.
 
 #if SICSLOWPAN_CONF_FRAG
-	/* Number of bytes processed. */
-	uint16_t processed_ip_out_len;
-
 	struct queuebuf *q;
     uint16_t frag_tag;
 
@@ -2166,8 +2163,6 @@ input(void)
 	uncomp_hdr_len = 0;
 	packetbuf_hdr_len = 0;
 
-	uint8_t mesh_hdr_len = 0;
-
 	/* The MAC puts the 15.4 payload inside the packetbuf data buffer */
 	packetbuf_ptr = packetbuf_dataptr();
 
@@ -2180,6 +2175,7 @@ input(void)
 
 #if SICSLOWPAN_CONF_FRAG
 #if SICSLOWPAN_USE_MESH_HEADER
+	uint8_t mesh_hdr_len = 0;
 	/*
 	 * Since we support the mesh header, the first header
 	 * we look for is the mesh header.
