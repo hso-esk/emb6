@@ -491,9 +491,9 @@ static s_ns_t*        p_ns = NULL;
 
 #if SICSLOWPAN_USE_MESH_HEADER
 static uint8_t mesh_hdr[SICSLOWPAN_MAX_MESH_HEADER_SIZE];
-
+#if THRD_USE_ROUTING
 static uint8_t forward(uint8_t dest_rid);
-
+#endif /* #if THRD_USE_ROUTING */
 #endif /* #if SICSLOWPAN_USE_MESH_HEADER */
 
 static uint8_t sicslowpan_mesh_hdr_len;
