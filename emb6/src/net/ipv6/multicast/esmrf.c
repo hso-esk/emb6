@@ -51,6 +51,10 @@
 #include "rpl.h"
 #endif /* UIP_CONF_IPV6_RPL */
 #include "uip.h"
+#include "uip-icmp6.h"
+#include "packetbuf.h"
+#include "bsp.h"
+#include "random.h"
 // #include "netstack.h"
 #include <string.h>
 
