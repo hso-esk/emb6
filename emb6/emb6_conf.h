@@ -1019,7 +1019,7 @@ void uip_log(char *msg);
 
 /** MLE functions                           (see mle/) */
 #ifndef LOGGER_MLE
-#define LOGGER_MLE                         	TRUE
+#define LOGGER_MLE                         	FALSE
 #endif
 
 /** Thread Network Layer functions          (see net/thread) */
