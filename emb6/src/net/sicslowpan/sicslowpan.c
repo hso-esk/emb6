@@ -2094,6 +2094,7 @@ static uint8_t output(const uip_lladdr_t *localdest)
 #endif /* SICSLOWPAN_CONF_FRAG */
 	} else {
 
+#if USE_THREAD
 #if THRD_USE_ROUTING
 #else
 	  // Check whether the destination address is a multicast address.
@@ -2105,6 +2106,10 @@ static uint8_t output(const uip_lladdr_t *localdest)
 	    packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_LONGADDRMODE);
 	  }
 #endif /* THRD_USE_ROUTING */
+#else /* #if USE_THREAD */
+    packetbuf_set_attr(PACKETBUF_ATTR_ADDR_RECEIVER_MODE, FRAME802154_LONGADDRMODE);
+    packetbuf_set_attr(PACKETBUF_ATTR_ADDR_SENDER_MODE, FRAME802154_LONGADDRMODE);
+#endif /* #if USE_THREAD */
 
 		/*
 		 * The packet does not need to be fragmented
