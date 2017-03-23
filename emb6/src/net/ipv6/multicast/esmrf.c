@@ -88,9 +88,10 @@ static struct esmrf_stats stats;
 /* Macros */
 /*---------------------------------------------------------------------------*/
 /* CCI */
-#define ESMRF_FWD_DELAY()  NETSTACK_RDC.channel_check_interval()
+// #define ESMRF_FWD_DELAY()  NETSTACK_RDC.channel_check_interval()
+#define ESMRF_FWD_DELAY()  0 // //emb6_get()->lmac->channel_check_interval()  /* FIXME */
 /* Number of slots in the next 500ms */
-#define ESMRF_INTERVAL_COUNT  ((CLOCK_SECOND >> 2) / fwd_delay)
+#define ESMRF_INTERVAL_COUNT  ((bsp_getTRes() >> 2) / fwd_delay)
 /*---------------------------------------------------------------------------*/
 /* Internal Data */
 /*---------------------------------------------------------------------------*/
