@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>emb6-cc13xx</name>
+	<name>CC13xx-noRTOS</name>
 	<comment></comment>
 	<projects>
 	</projects>
