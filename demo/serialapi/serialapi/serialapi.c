@@ -69,6 +69,39 @@
 #include "serialapi.h"
 #include "sf_serialmac.h"
 
+
+/*
+ *  --- Macros --------------------------------------------------------------*
+ */
+
+#define SERIAL_API_SET_FIELD( dst, dstlen, type, src)       \
+    do{                                                     \
+      *((type*)dst) = src;                                  \
+      dst += sizeof(type);                                  \
+      dstlen -= sizeof(type);                               \
+    } while (0);
+
+#define SERIAL_API_SET_FIELD_MEM( dst, dstlen, src, size)   \
+    do{                                                     \
+      memcpy(dst, src, size);                               \
+      dst += size;                                          \
+      dstlen -= size;                                       \
+    } while (0);
+
+#define SERIAL_API_GET_FIELD( dst, src, srclen, type)        \
+    do{                                                     \
+      dst = *((type*)(src));                                \
+      src += sizeof(type);                                  \
+      srclen -= sizeof(type);                               \
+    } while (0);
+
+#define SERIAL_API_GET_FIELD_MEM( dst, src, srclen, size)    \
+    do{                                                     \
+      memcpy(dst, src, size);                               \
+      src += size;                                          \
+      srclen -= size;                                       \
+    } while (0);
+
 /*
  *  --- Enumerations --------------------------------------------------------*
  */
@@ -269,7 +302,7 @@ typedef struct
  *
  * \return Length of the generated response.
  */
-typedef uint16_t (*fn_serialApiHndl_t)( uint8_t* p_cmd, uint16_t cmdLen,
+typedef int32_t (*fn_serialApiHndl_t)( uint8_t* p_cmd, uint16_t cmdLen,
     uint8_t* p_rpl, uint16_t rplLen );
 
 
@@ -290,40 +323,45 @@ static void _txData( uint16_t len, void* p_param );
  * For further details have a look at the function definitions. */
 static int8_t _rx_data( uint8_t* p_data, uint16_t len );
 
+/** Generate a generic status response.
+ * For further details have a look at the function definitions. */
+static int32_t _rsp_status( uint8_t* p_rpl, uint16_t rplLen,
+    e_serial_api_type_t type, e_serial_api_ret_t ret );
+
 
 /** Callback function in case a PING command was received. For further
  * details have a look at the function definition.*/
-static uint16_t _hndl_ping( uint8_t* p_cmd, uint16_t cmdLen,
+static int32_t _hndl_ping( uint8_t* p_cmd, uint16_t cmdLen,
     uint8_t* p_rpl, uint16_t rplLen );
 
 /** Callback function in case a CFG_GET command was received. For further
  * details have a look at the function definition.*/
-static uint16_t _hndl_cfgSet( uint8_t* p_cmd, uint16_t cmdLen,
+static int32_t _hndl_cfgSet( uint8_t* p_cmd, uint16_t cmdLen,
     uint8_t* p_rpl, uint16_t rplLen );
 
 /** Callback function in case a PING command was received. For further
  * details have a look at the function definition.*/
-static uint16_t _hndl_cfgGet( uint8_t* p_cmd, uint16_t cmdLen,
+static int32_t _hndl_cfgGet( uint8_t* p_cmd, uint16_t cmdLen,
     uint8_t* p_rpl, uint16_t rplLen );
 
 /** Callback function in case a DEV_START command was received. For further
  * details have a look at the function definition.*/
-static uint16_t _hndl_devStart( uint8_t* p_cmd, uint16_t cmdLen,
+static int32_t _hndl_devStart( uint8_t* p_cmd, uint16_t cmdLen,
     uint8_t* p_rpl, uint16_t rplLen );
 
 /** Callback function in case a DEV_STOP command was received. For further
  * details have a look at the function definition.*/
-static uint16_t _hndl_devStop( uint8_t* p_cmd, uint16_t cmdLen,
+static int32_t _hndl_devStop( uint8_t* p_cmd, uint16_t cmdLen,
     uint8_t* p_rpl, uint16_t rplLen );
 
 /** Callback function in case a STATUS_GET command was received. For further
  * details have a look at the function definition.*/
-static uint16_t _hndl_statusGet( uint8_t* p_cmd, uint16_t cmdLen,
+static int32_t _hndl_statusGet( uint8_t* p_cmd, uint16_t cmdLen,
     uint8_t* p_rpl, uint16_t rplLen );
 
 /** Callback function in case a ERR_GET command was received. For further
  * details have a look at the function definition.*/
-static uint16_t _hndl_errGet( uint8_t* p_cmd, uint16_t cmdLen,
+static int32_t _hndl_errGet( uint8_t* p_cmd, uint16_t cmdLen,
     uint8_t* p_rpl, uint16_t rplLen );
 
 
@@ -359,56 +397,36 @@ static s_serialapi_prot_t protCtx;
  */
 void _event_callback( c_event_t ev, p_data_t data )
 {
+  int32_t ret = 0;
+  uint8_t* p_txBuf = _p_txBuf;
+  uint16_t txBufLen = _txBufLen;
+
   if( ev == EVENT_TYPE_STATUS_CHANGE )
   {
-    uint8_t* p_txBuf = _p_txBuf;
 
-   /* set the according RET ID */
-    *((serialapi_frameID_t*)p_txBuf) = e_serial_api_type_status_ret;
-    p_txBuf += sizeof(serialapi_frameID_t);
+    /* Call the status get handler */
+    ret = _hndl_statusGet( NULL, 0, p_txBuf, txBufLen );
+  }
 
-    /* set OK return value to indicate ping response */
-    serialapi_ret_t* p_ret = (serialapi_ret_t*)p_txBuf;
-    p_txBuf += sizeof(serialapi_ret_t);
-
-    switch( emb6_getStatus() )
-    {
-      case STACK_STATUS_IDLE:
-        *p_ret = e_serial_api_status_stopped;
-        break;
-
-      case STACK_STATUS_ACTIVE:
-        *p_ret = e_serial_api_status_started;
-        break;
-
-      case STACK_STATUS_NETWORK:
-        *p_ret = e_serial_api_status_network;
-        break;
-
-      default:
-        *p_ret = e_serial_api_status_undef;
-        break;
-    }
-
-    EMB6_ASSERT_RET( _fn_tx != NULL, );
-    /* Call the associated Tx function with the according
-     * parameter. */
-    if( p_txBuf - _p_txBuf )
-        /* transmit response */
-        _fn_tx( (p_txBuf - _p_txBuf), _p_txParam );
+  if( ret > 0 )
+  {
+      EMB6_ASSERT_RET( _fn_tx != NULL, );
+      /* Call the associated Tx function with the according
+       * parameter. */
+      _fn_tx( ret, _p_txParam );
   }
 }
 
 
 /*
-* \brief   Callback from higher instance if data shall be transmitted.
-*
-*          This function is registered as tx functions for higher layers
-*          to transmit the actual data in the Tx buffer..
-*
-* \param   len         Length to transmit.
-* \param   p_param     Parameter registered during initialization.
-*/
+ * \brief   Callback from higher instance if data shall be transmitted.
+ *
+ *          This function is registered as tx functions for higher layers
+ *          to transmit the actual data in the Tx buffer..
+ *
+ * \param   len         Length to transmit.
+ * \param   p_param     Parameter registered during initialization.
+ */
 static void _txData( uint16_t len, void* p_param )
 {
   /* set the frame ID before sending */
@@ -432,12 +450,15 @@ static void _txData( uint16_t len, void* p_param )
  */
 static int8_t _rx_data( uint8_t* p_data, uint16_t len )
 {
+
+  int8_t ret = 0;
   serialapi_frameID_t id;
   size_t bufLeft = len;
   uint8_t* p_dataPtr = p_data;
+  uint8_t* p_txBuf = _p_txBuf;
+  uint16_t txBufLen = _txBufLen;
 
   fn_serialApiHndl_t f_hndl = NULL;
-  uint16_t hndlRet = 0;
 
   /* A frame has been received */
   /* check parameters */
@@ -494,40 +515,97 @@ static int8_t _rx_data( uint8_t* p_data, uint16_t len )
       /* check if the ID was registered */
       if( (protCtx.id == id ) && (protCtx.p_fin != NULL) )
         return protCtx.p_fin( p_dataPtr, bufLeft, TRUE );
+      else
+        ret = -2;
       break;
   }
 
   /* call the according handler */
   if( f_hndl != NULL )
   {
-    hndlRet = f_hndl( (p_dataPtr), bufLeft, _p_txBuf, _txBufLen );
-
-    if( hndlRet )
+    ret = f_hndl( (p_dataPtr), bufLeft, _p_txBuf, _txBufLen );
+    if( ret > 0 )
     {
         EMB6_ASSERT_RET( _fn_tx != NULL, -1 );
         /* Call the associated Tx function with the according
          * parameter. */
-        _fn_tx( hndlRet, _p_txParam );
-        return 0;
+        _fn_tx( ret, _p_txParam );
+        ret = 0;
     }
   }
-  else
-  {
-    /* The command was not found */
-    uint8_t* p_txBuf = _p_txBuf;
-    *((serialapi_frameID_t*)p_txBuf) = e_serial_api_type_ret;
-    p_txBuf += sizeof(serialapi_frameID_t);
-    serialapi_ret_t* p_ret = (serialapi_ret_t*)p_txBuf;
-    p_txBuf += sizeof(serialapi_ret_t);
-    *p_ret = e_serial_api_ret_error_cmd;
 
-    EMB6_ASSERT_RET( _fn_tx != NULL, -1 );
-    _fn_tx( (p_txBuf - _p_txBuf), _p_txParam );
-    return 0;
+  if( ret != 0 )
+  {
+    /* Reply wit a return frame containing the according error code */
+    EMB6_ASSERT_RET( txBufLen >= sizeof(serialapi_frameID_t), -1 );
+    SERIAL_API_SET_FIELD( p_txBuf, txBufLen, serialapi_frameID_t,
+        e_serial_api_type_ret );
+    switch( ret )
+    {
+      case -2:
+        EMB6_ASSERT_RET( txBufLen >= sizeof(e_serial_api_ret_t), -1 );
+        SERIAL_API_SET_FIELD( p_txBuf, txBufLen, e_serial_api_ret_t,
+            e_serial_api_ret_error_cmd );
+        break;
+
+      case -3:
+        EMB6_ASSERT_RET( txBufLen >= sizeof(e_serial_api_ret_t), -1 );
+        SERIAL_API_SET_FIELD( p_txBuf, txBufLen, e_serial_api_ret_t,
+            e_serial_api_ret_error_param );
+        break;
+
+      default:
+        EMB6_ASSERT_RET( txBufLen >= sizeof(e_serial_api_ret_t), -1 );
+        SERIAL_API_SET_FIELD( p_txBuf, txBufLen, e_serial_api_ret_t,
+            e_serial_api_ret_error );
+        break;
+    }
+
+    ret = p_txBuf - _p_txBuf;
   }
 
-  return -1;
+  if( ret > 0 )
+  {
+    EMB6_ASSERT_RET( _fn_tx != NULL, -1 );
+    _fn_tx( (p_txBuf - _p_txBuf), _p_txParam );
+    ret = 0;
+  }
 
+  return ret;
+}
+
+
+/**
+ * \brief   Generates a generic response.
+ *
+ *          This generates a generic response that is used to reply
+ *          to several commands.
+ *
+ * \param   p_rpl   Pointer to store the response to.
+ * \param   rplLen  Length of the response buffer.
+ * \ret     Return value to use for the response
+ *
+ * \return  The length of the generated response or 0 if no response
+ *          has been generated.
+ */
+static int32_t _rsp_status( uint8_t* p_rpl, uint16_t rplLen,
+    e_serial_api_type_t type, e_serial_api_ret_t ret )
+{
+  uint8_t* p_txBuf = p_rpl;
+
+  EMB6_ASSERT_RET( p_rpl != NULL, -1 );
+
+  /* set the according RET ID */
+  EMB6_ASSERT_RET( rplLen >= sizeof(serialapi_frameID_t), -1 );
+  SERIAL_API_SET_FIELD( p_txBuf, rplLen, serialapi_frameID_t,
+      type );
+
+  /* set OK return value to indicate ping response */
+  EMB6_ASSERT_RET( rplLen >= sizeof(serialapi_ret_t), -1 );
+  SERIAL_API_SET_FIELD( p_txBuf, rplLen, serialapi_ret_t,
+      ret );
+
+  return p_txBuf - p_rpl;
 }
 
 
@@ -546,30 +624,16 @@ static int8_t _rx_data( uint8_t* p_data, uint16_t len )
  * \return  The length of the generated response or 0 if no response
  *          has been generated.
  */
-static uint16_t _hndl_ping( uint8_t* p_cmd, uint16_t cmdLen,
+static int32_t _hndl_ping( uint8_t* p_cmd, uint16_t cmdLen,
     uint8_t* p_rpl, uint16_t rplLen )
 {
-  /* A ping was requested from the host. Reply with a simple
-   * RET frame to indicate that the device is alive. */
+  int32_t ret;
 
-  EMB6_ASSERT_RET( p_cmd != NULL, 0 );
-  EMB6_ASSERT_RET( p_rpl != NULL, 0 );
-  EMB6_ASSERT_RET( rplLen >= sizeof(serialapi_frameID_t), 0 );
+  EMB6_ASSERT_RET( p_rpl != NULL, -1 );
+  ret = _rsp_status( p_rpl, rplLen, e_serial_api_type_ret,
+      e_serial_api_ret_ok );
 
-  uint8_t* p_txBuf = p_rpl;
-
-  /* set the according RET ID */
-  *((serialapi_frameID_t*)p_txBuf) = e_serial_api_type_ret;
-  p_txBuf += sizeof(serialapi_frameID_t);
-  rplLen -= sizeof(serialapi_frameID_t);
-
-  EMB6_ASSERT_RET( rplLen >= sizeof(serialapi_ret_t), 0 );
-
-  /* set OK return value to indicate ping response */
-  *((serialapi_ret_t*)p_txBuf) = e_serial_api_ret_ok;
-  p_txBuf += sizeof(serialapi_ret_t);
-
-  return p_txBuf - p_rpl;
+  return ret;
 }
 
 
@@ -586,248 +650,81 @@ static uint16_t _hndl_ping( uint8_t* p_cmd, uint16_t cmdLen,
  * \return  The length of the generated response or 0 if no response
  *          has been generated.
  */
-static uint16_t _hndl_cfgSet( uint8_t* p_cmd, uint16_t cmdLen,
+static int32_t _hndl_cfgSet( uint8_t* p_cmd, uint16_t cmdLen,
     uint8_t* p_rpl, uint16_t rplLen )
 {
-  /* A configuration value shall be set. Get the type and value
-   * for the configuration and try to set it. */
-
-  EMB6_ASSERT_RET( p_cmd != NULL, 0 );
-  EMB6_ASSERT_RET( p_rpl != NULL, 0 );
-
+  int32_t ret = 0;
   uint8_t* p_data = p_cmd;
-  uint8_t* p_txBuf = p_rpl;
-
   const s_ns_t* p_stack = emb6_get();
-  EMB6_ASSERT_RET( (p_stack != NULL), 0 );
 
-  /* set the according RET ID */
-  *((serialapi_frameID_t*)p_txBuf) = e_serial_api_type_ret;
-  p_txBuf += sizeof(serialapi_frameID_t);
-  serialapi_ret_t* p_ret = (serialapi_ret_t*)p_txBuf;
-  p_txBuf += sizeof(serialapi_ret_t);
+  EMB6_ASSERT_RET( p_cmd != NULL, -1 );
+  EMB6_ASSERT_RET( p_rpl != NULL, -1 );
+  EMB6_ASSERT_RET( (p_stack != NULL), -1 );
 
   /* get the type of configuration */
-  serialapi_cfg_getset_t* p_cfgset = (serialapi_cfg_getset_t*)p_data;
-  p_data += sizeof(serialapi_cfg_getset_t);
-  cmdLen -= sizeof(serialapi_cfg_getset_t);
+  serialapi_cfg_getset_t cfgsetId;
+  EMB6_ASSERT_RET( cmdLen >= sizeof(serialapi_cfg_getset_t), -3 );
+  SERIAL_API_GET_FIELD( cfgsetId, p_data, cmdLen, serialapi_cfg_getset_t );
 
-  if( p_stack->status != STACK_STATUS_IDLE )
-  {
-    /* invalid state to set the configuration */
-    *p_ret = e_serial_api_ret_error;
-  }
-  else
-  {
-    /* Check which type of configuration shall be set */
-    switch( *p_cfgset )
-    {
-      /* MAc address shall be set */
-      case e_serial_api_cfgid_macaddr:
-      {
-        serialapi_cfg_macaddr_t* p_cfgMac;
-        EMB6_ASSERT_RET( (cmdLen >= sizeof(serialapi_cfg_macaddr_t)), 0 );
-
-        /* get the configuration value */
-        p_cfgMac = (serialapi_cfg_macaddr_t*)p_data;
-        p_data += sizeof(serialapi_cfg_getset_t);
-        cmdLen -= sizeof(serialapi_cfg_getset_t);
-
-        /** Try to set the MAC Address and set the return
-         * type accordingly */
-        /* set the configuration */
-        memcpy( mac_phy_config.mac_address, p_cfgMac, sizeof(serialapi_cfg_macaddr_t) );
-        *p_ret = e_serial_api_ret_ok;
-
-        break;
-      }
-
-      /* PAN ID shall be set */
-      case e_serial_api_cfgid_panid:
-      {
-        serialapi_cfg_panid_t* p_cfgPan;
-        EMB6_ASSERT_RET( (cmdLen >= sizeof(serialapi_cfg_panid_t)), 0 );
-
-        /* get the configuration value */
-        p_cfgPan = (serialapi_cfg_panid_t*)p_data;
-        p_data += sizeof(serialapi_cfg_panid_t);
-        cmdLen -= sizeof(serialapi_cfg_panid_t);
-
-        /** Try to set the PAN ID set the return
-         * type accordingly */
-        /* set the configuration */
-        mac_phy_config.pan_id = *p_cfgPan;
-        *p_ret = e_serial_api_ret_ok;
-        break;
-      }
-
-      /* Operation mode shall be set */
-      case e_serial_api_cfgid_opmode:
-      {
-        serialapi_cfg_opmode_t* p_cfgOpM;
-        EMB6_ASSERT_RET( (cmdLen >= sizeof(serialapi_cfg_opmode_t)), 0 );
-
-        /* get the configuration value */
-        p_cfgOpM = (serialapi_cfg_opmode_t*)p_data;
-        p_data += sizeof(serialapi_cfg_opmode_t);
-        cmdLen -= sizeof(serialapi_cfg_opmode_t);
-
-        /** Try to set the operation mode and set the return
-         * type accordingly */
-        /* set the configuration */
-        mac_phy_config.op_mode = *p_cfgOpM;
-        *p_ret = e_serial_api_ret_ok;
-        break;
-      }
-
-      /* Radio channel shall be set */
-      case e_serial_api_cfgid_rfch:
-      {
-        serialapi_cfg_rfch_t* p_cfgRfCh;
-        EMB6_ASSERT_RET( (cmdLen >= sizeof(serialapi_cfg_rfch_t)), 0 );
-
-        /* get the configuration value */
-        p_cfgRfCh = (serialapi_cfg_rfch_t*)p_data;
-        p_data += sizeof(serialapi_cfg_rfch_t);
-        cmdLen -= sizeof(serialapi_cfg_rfch_t);
-
-        /** Try to set the channel and set the return
-         * type accordingly */
-        /* set the configuration */
-        mac_phy_config.chan_num = *p_cfgRfCh;
-        *p_ret = e_serial_api_ret_ok;
-        break;
-      }
-
-      /* Invalid configuration value */
-      default:
-        *p_ret = e_serial_api_ret_error_param;
-        break;
-    }
-  }
-
-  return p_txBuf - p_rpl;
-}
-
-
-/**
- * \brief   Callback function for XXX commands.
- *
- *          This function is called whenever a XXX
- *
- * \param   p_cmd   Further data of the command.
- * \param   cmdLen  Length of the command data.
- * \param   p_rpl   Pointer to store the response to.
- * \param   rplLen  Length of the response buffer.
- *
- * \return  The length of the generated response or 0 if no response
- *          has been generated.
- */
-static uint16_t _hndl_cfgGet( uint8_t* p_cmd, uint16_t cmdLen,
-    uint8_t* p_rpl, uint16_t rplLen )
-{
-  /* A configuration value was requested. Get the type of the
- * configuration and return its value. */
-
-  EMB6_ASSERT_RET( p_cmd != NULL, 0 );
-  EMB6_ASSERT_RET( p_rpl != NULL, 0 );
-
-  uint8_t* p_data = p_cmd;
-  uint8_t* p_txBuf = p_rpl;
-
-  serialapi_frameID_t* p_id = (serialapi_frameID_t*)p_txBuf;
-  p_txBuf += sizeof(serialapi_frameID_t);
-  serialapi_cfg_getset_t* p_cfgRsp = (serialapi_cfg_getset_t*)p_txBuf;
-  p_txBuf += sizeof(serialapi_cfg_getset_t);
-
-  EMB6_ASSERT_RET( (cmdLen >= sizeof(serialapi_cfg_getset_t)), 0 );
-
-  /* get the type of configuration */
-  serialapi_cfg_getset_t* p_cfgget = (serialapi_cfg_getset_t*)p_data;
-  p_data += sizeof(serialapi_cfg_getset_t);
-  cmdLen -= sizeof(serialapi_cfg_getset_t);
-
-  /* set ID of the response frame */
-  *p_cfgRsp = *p_cfgget;
+  EMB6_ASSERT_RET( p_stack->status == STACK_STATUS_IDLE, -1 );
 
   /* Check which type of configuration shall be set */
-  switch( *p_cfgget )
+  switch( cfgsetId )
   {
     /* MAc address shall be set */
     case e_serial_api_cfgid_macaddr:
     {
-      /* reply with a configuration response */
-      *p_id = e_serial_api_type_cfg_rsp;
-
-      /* set the configuration value */
-      serialapi_cfg_macaddr_t* p_cfgMac = (serialapi_cfg_macaddr_t*)p_txBuf;
-      p_txBuf += sizeof(serialapi_cfg_macaddr_t);
-
-      /* Copy value from configuration to frame */
-      memcpy( p_cfgMac, mac_phy_config.mac_address, sizeof(serialapi_cfg_macaddr_t) );
+      /* get the configuration value */
+      EMB6_ASSERT_RET( (cmdLen >= sizeof(serialapi_cfg_macaddr_t)), -3 );
+      SERIAL_API_GET_FIELD_MEM( mac_phy_config.mac_address, p_data,
+          cmdLen, sizeof(serialapi_cfg_macaddr_t) );
       break;
     }
 
     /* PAN ID shall be set */
     case e_serial_api_cfgid_panid:
     {
-      /* reply with a configuration response */
-      *p_id = e_serial_api_type_cfg_rsp;
-
-      /* set the configuration value */
-      serialapi_cfg_panid_t* p_cfgPan = (serialapi_cfg_panid_t*)p_txBuf;
-      p_txBuf += sizeof(serialapi_cfg_panid_t);
-
-      /* Copy value from configuration to frame */
-      *p_cfgPan = mac_phy_config.pan_id;
+      /* get the configuration value */
+      EMB6_ASSERT_RET( (cmdLen >= sizeof(serialapi_cfg_panid_t)), -3 );
+      SERIAL_API_GET_FIELD( mac_phy_config.pan_id, p_data,
+          cmdLen, serialapi_cfg_panid_t );
       break;
     }
 
     /* Operation mode shall be set */
     case e_serial_api_cfgid_opmode:
     {
-      /* reply with a configuration response */
-      *p_id = e_serial_api_type_cfg_rsp;
-
-      /* set the configuration value */
-      serialapi_cfg_opmode_t* p_cfgOpM = (serialapi_cfg_opmode_t*)p_txBuf;
-      p_txBuf += sizeof(serialapi_cfg_opmode_t);
-
-      /* Copy value from configuration to frame */
-      *p_cfgOpM = mac_phy_config.op_mode;
+      /* get the configuration value */
+      EMB6_ASSERT_RET( (cmdLen >= sizeof(serialapi_cfg_opmode_t)), -3 );
+      SERIAL_API_GET_FIELD( mac_phy_config.op_mode, p_data,
+          cmdLen, serialapi_cfg_opmode_t );
       break;
     }
 
     /* Radio channel shall be set */
     case e_serial_api_cfgid_rfch:
     {
-      /* reply with a configuration response */
-      *p_id = e_serial_api_type_cfg_rsp;
-
-      /* set the configuration value */
-      serialapi_cfg_rfch_t* p_cfgRfCh = (serialapi_cfg_rfch_t*)p_txBuf;
-      p_txBuf += sizeof(serialapi_cfg_rfch_t);
-
-      /* Copy value from configuration to frame */
-      *p_cfgRfCh = mac_phy_config.chan_num;
+      /* get the configuration value */
+      EMB6_ASSERT_RET( (cmdLen >= sizeof(serialapi_cfg_rfch_t)), -3 );
+      SERIAL_API_GET_FIELD( mac_phy_config.chan_num, p_data,
+          cmdLen, serialapi_cfg_rfch_t );
       break;
     }
 
+    /* Invalid configuration value */
     default:
-      /* reply with an error response */
-      *p_id = e_serial_api_type_ret;
-
-      /* reset frame buffer pointer */
-      p_txBuf -= sizeof(serialapi_cfg_getset_t);
-
-      /* set error return value to indicate invalid frame */
-      serialapi_ret_t* p_ret = (serialapi_ret_t*)p_txBuf;
-      p_txBuf += sizeof(serialapi_ret_t);
-      *p_ret = e_serial_api_ret_error_cmd;
+      ret = -3;
       break;
   }
 
-  return p_txBuf - p_rpl;
+  if( ret == 0 )
+  {
+    EMB6_ASSERT_RET( p_rpl != NULL, -1 );
+    ret = _rsp_status( p_rpl, rplLen, e_serial_api_type_ret,
+        e_serial_api_ret_ok );
+  }
+
+  return ret;
 }
 
 
@@ -844,29 +741,108 @@ static uint16_t _hndl_cfgGet( uint8_t* p_cmd, uint16_t cmdLen,
  * \return  The length of the generated response or 0 if no response
  *          has been generated.
  */
-static uint16_t _hndl_devStart( uint8_t* p_cmd, uint16_t cmdLen,
+static int32_t _hndl_cfgGet( uint8_t* p_cmd, uint16_t cmdLen,
     uint8_t* p_rpl, uint16_t rplLen )
 {
-  /* Start of the device was requested. Check the given configuration
-   * and start the network. */
-
-  EMB6_ASSERT_RET( p_cmd != NULL, 0 );
-  EMB6_ASSERT_RET( p_rpl != NULL, 0 );
-
+  int32_t ret = 0;
+  uint8_t* p_data = p_cmd;
   uint8_t* p_txBuf = p_rpl;
 
-  /* set the according RET ID */
-  *((serialapi_frameID_t*)p_txBuf) = e_serial_api_type_ret;
-  p_txBuf += sizeof(serialapi_frameID_t);
+  EMB6_ASSERT_RET( p_cmd != NULL, -1 );
+  EMB6_ASSERT_RET( p_rpl != NULL, -1 );
 
-  /* set OK return value to indicate ping response */
-  serialapi_ret_t* p_ret = (serialapi_ret_t*)p_txBuf;
-  p_txBuf += sizeof(serialapi_ret_t);
-  *p_ret = e_serial_api_ret_ok;
+  EMB6_ASSERT_RET( rplLen >= sizeof(serialapi_frameID_t), -1 );
+  SERIAL_API_SET_FIELD( p_txBuf, rplLen, serialapi_frameID_t,
+      e_serial_api_type_cfg_rsp );
+
+  /* get the type of configuration */
+  serialapi_cfg_getset_t cfgsetId;
+  EMB6_ASSERT_RET( (cmdLen >= sizeof(serialapi_cfg_getset_t)), -3 );
+  SERIAL_API_GET_FIELD( cfgsetId, p_data, cmdLen, serialapi_cfg_getset_t );
+
+  /* set ID of the response frame */
+  EMB6_ASSERT_RET( rplLen >= sizeof(serialapi_cfg_getset_t), -1 );
+  SERIAL_API_SET_FIELD( p_txBuf, rplLen, serialapi_cfg_getset_t,
+      cfgsetId);
+
+  /* Check which type of configuration shall be set */
+  switch( cfgsetId )
+  {
+    /* MAc address shall be set */
+    case e_serial_api_cfgid_macaddr:
+
+      /* set the configuration value */
+      EMB6_ASSERT_RET( rplLen >= sizeof(serialapi_cfg_macaddr_t), -1 );
+      SERIAL_API_SET_FIELD_MEM( p_txBuf, rplLen, mac_phy_config.mac_address,
+          sizeof(serialapi_cfg_macaddr_t) )
+
+      break;
+
+    /* PAN ID shall be set */
+    case e_serial_api_cfgid_panid:
+
+      /* set the configuration value */
+      EMB6_ASSERT_RET( rplLen >= sizeof(serialapi_cfg_panid_t), -1 );
+      SERIAL_API_SET_FIELD( p_txBuf, rplLen, serialapi_cfg_panid_t,
+          mac_phy_config.pan_id );
+      break;
+
+
+    /* Operation mode shall be set */
+    case e_serial_api_cfgid_opmode:
+
+      /* set the configuration value */
+      EMB6_ASSERT_RET( rplLen >= sizeof(serialapi_cfg_opmode_t), -1 );
+      SERIAL_API_SET_FIELD( p_txBuf, rplLen, serialapi_cfg_opmode_t,
+          mac_phy_config.op_mode );
+      break;
+
+    /* Radio channel shall be set */
+    case e_serial_api_cfgid_rfch:
+
+      /* set the configuration value */
+      EMB6_ASSERT_RET( rplLen >= sizeof(serialapi_cfg_rfch_t), -1 );
+      SERIAL_API_SET_FIELD( p_txBuf, rplLen, serialapi_cfg_rfch_t,
+          mac_phy_config.chan_num );
+      break;
+
+    default:
+      ret = -3;
+      break;
+  }
+
+  if( ret == 0 )
+    ret = p_txBuf - p_rpl;
+
+  return ret;
+}
+
+
+/**
+ * \brief   Callback function for XXX commands.
+ *
+ *          This function is called whenever a XXX
+ *
+ * \param   p_cmd   Further data of the command.
+ * \param   cmdLen  Length of the command data.
+ * \param   p_rpl   Pointer to store the response to.
+ * \param   rplLen  Length of the response buffer.
+ *
+ * \return  The length of the generated response or 0 if no response
+ *          has been generated.
+ */
+static int32_t _hndl_devStart( uint8_t* p_cmd, uint16_t cmdLen,
+    uint8_t* p_rpl, uint16_t rplLen )
+{
+  int32_t ret;
+
+  EMB6_ASSERT_RET( p_rpl != NULL, -1 );
+  ret = _rsp_status( p_rpl, rplLen, e_serial_api_type_ret,
+      e_serial_api_ret_ok );
 
   /* put event to the queue */
   evproc_putEvent(E_EVPROC_HEAD, EVENT_TYPE_REQ_START, NULL);
-  return p_txBuf - p_rpl;
+  return ret;
 
 }
 
@@ -884,28 +860,18 @@ static uint16_t _hndl_devStart( uint8_t* p_cmd, uint16_t cmdLen,
  * \return  The length of the generated response or 0 if no response
  *          has been generated.
  */
-static uint16_t _hndl_devStop( uint8_t* p_cmd, uint16_t cmdLen,
+static int32_t _hndl_devStop( uint8_t* p_cmd, uint16_t cmdLen,
     uint8_t* p_rpl, uint16_t rplLen )
 {
-  /* Stop the device. */
+  int32_t ret;
 
-  EMB6_ASSERT_RET( p_cmd != NULL, 0 );
-  EMB6_ASSERT_RET( p_rpl != NULL, 0 );
-
-  uint8_t* p_txBuf = p_rpl;
-
-  /* set the according RET ID */
-  *((serialapi_frameID_t*)p_txBuf) = e_serial_api_type_ret;
-  p_txBuf += sizeof(serialapi_frameID_t);
-
-  /* set OK return value to indicate ping response */
-  serialapi_ret_t* p_ret = (serialapi_ret_t*)p_txBuf;
-  p_txBuf += sizeof(serialapi_ret_t);
-  *p_ret = e_serial_api_ret_ok;
+  EMB6_ASSERT_RET( p_rpl != NULL, -1 );
+  ret = _rsp_status( p_rpl, rplLen, e_serial_api_type_ret,
+      e_serial_api_ret_ok );
 
   /* put event to the queue */
   evproc_putEvent(E_EVPROC_HEAD, EVENT_TYPE_REQ_STOP, NULL);
-  return p_txBuf - p_rpl;
+  return ret;
 }
 
 
@@ -922,47 +888,41 @@ static uint16_t _hndl_devStop( uint8_t* p_cmd, uint16_t cmdLen,
  * \return  The length of the generated response or 0 if no response
  *          has been generated.
  */
-static uint16_t _hndl_statusGet( uint8_t* p_cmd, uint16_t cmdLen,
+static int32_t _hndl_statusGet( uint8_t* p_cmd, uint16_t cmdLen,
     uint8_t* p_rpl, uint16_t rplLen )
 {
-  /* Get the current status of the device. */
-
-  EMB6_ASSERT_RET( p_cmd != NULL, 0 );
-  EMB6_ASSERT_RET( p_rpl != NULL, 0 );
-
-  uint8_t* p_txBuf = p_rpl;
-
+  int32_t ret;
+  e_serial_api_ret_t e_ret;
   const s_ns_t* p_stack = emb6_get();
-  EMB6_ASSERT_RET( (p_stack != NULL), 0 );
 
-  /* set the according RET ID */
-  *((serialapi_frameID_t*)p_txBuf) = e_serial_api_type_status_ret;
-  p_txBuf += sizeof(serialapi_frameID_t);
-
-  /* set OK return value to indicate ping response */
-  serialapi_ret_t* p_ret = (serialapi_ret_t*)p_txBuf;
-  p_txBuf += sizeof(serialapi_ret_t);
+  EMB6_ASSERT_RET( p_rpl != NULL, 0 );
+  EMB6_ASSERT_RET( (p_stack != NULL), -1 );
 
   switch( emb6_getStatus() )
   {
     case STACK_STATUS_IDLE:
-      *p_ret = e_serial_api_status_stopped;
+      e_ret = e_serial_api_status_stopped;
       break;
 
     case STACK_STATUS_ACTIVE:
-      *p_ret = e_serial_api_status_started;
+      e_ret = e_serial_api_status_started;
       break;
 
     case STACK_STATUS_NETWORK:
-      *p_ret = e_serial_api_status_network;
+      e_ret = e_serial_api_status_network;
       break;
 
     default:
-      *p_ret = e_serial_api_status_undef;
+      e_ret = e_serial_api_status_undef;
       break;
   }
 
-  return p_txBuf - p_rpl;
+  /* set the according status */
+  EMB6_ASSERT_RET( p_rpl != NULL, -1 );
+  ret = _rsp_status( p_rpl, rplLen, e_serial_api_type_status_ret,
+      e_ret );
+
+  return ret;
 }
 
 
@@ -979,24 +939,22 @@ static uint16_t _hndl_statusGet( uint8_t* p_cmd, uint16_t cmdLen,
  * \return  The length of the generated response or 0 if no response
  *          has been generated.
  */
-static uint16_t _hndl_errGet( uint8_t* p_cmd, uint16_t cmdLen,
+static int32_t _hndl_errGet( uint8_t* p_cmd, uint16_t cmdLen,
     uint8_t* p_rpl, uint16_t rplLen )
 {
-  /* Get the current error state of the device. */
-
-  EMB6_ASSERT_RET( p_cmd != NULL, 0 );
-  EMB6_ASSERT_RET( p_rpl != NULL, 0 );
-
   uint8_t* p_txBuf = p_rpl;
 
-  /* set the according RET ID */
-  *((serialapi_frameID_t*)p_txBuf) = e_serial_api_type_error_ret;
-  p_txBuf += sizeof(serialapi_frameID_t);
+  EMB6_ASSERT_RET( p_rpl != NULL, 0 );
 
-  /* set OK return value to indicate ping response */
-  serialapi_ret_t* p_ret = (serialapi_ret_t*)p_txBuf;
-  p_txBuf += sizeof(serialapi_ret_t);
-  *p_ret = e_serial_api_error_unknown;
+  /* set the according frame id of the reply */
+  EMB6_ASSERT_RET( rplLen >= sizeof(serialapi_frameID_t), -1 );
+  SERIAL_API_SET_FIELD( p_txBuf, rplLen, serialapi_frameID_t,
+      e_serial_api_type_error_ret );
+
+  /* set the according error */
+  EMB6_ASSERT_RET( rplLen >= sizeof(serialapi_ret_t), -1 );
+  SERIAL_API_SET_FIELD( p_txBuf, rplLen, serialapi_ret_t,
+      e_serial_api_error_no );
 
   return p_txBuf - p_rpl;
 
@@ -1013,7 +971,6 @@ static uint16_t _hndl_errGet( uint8_t* p_cmd, uint16_t cmdLen,
 */
 int8_t serialApiInit( uint8_t* p_txBuf, uint16_t txBufLen,
         void(*fn_tx)(uint16_t len, void* p_param), void* p_txParam )
-
 {
     int8_t ret = 0;
 
@@ -1043,6 +1000,8 @@ int8_t serialApiInit( uint8_t* p_txBuf, uint16_t txBufLen,
 int8_t serialApiInput( uint8_t* p_data, uint16_t len, uint8_t valid )
 {
     int ret = -1;
+    uint8_t* p_txBuf = _p_txBuf;
+    uint16_t txBufLen = _txBufLen;
 
     if( valid )
     {
@@ -1052,13 +1011,16 @@ int8_t serialApiInput( uint8_t* p_data, uint16_t len, uint8_t valid )
 
     if( ret != 0 )
     {
+
+      /* set the according frame id of the reply  */
+      EMB6_ASSERT_RET( txBufLen >= sizeof(serialapi_frameID_t), -1 );
+      SERIAL_API_SET_FIELD( p_txBuf, txBufLen, serialapi_frameID_t,
+          e_serial_api_type_status_ret );
+
       /* A general error occurred */
-      uint8_t* p_txBuf = _p_txBuf;
-      *((serialapi_frameID_t*)p_txBuf) = e_serial_api_type_ret;
-      p_txBuf += sizeof(serialapi_frameID_t);
-      serialapi_ret_t* p_ret = (serialapi_ret_t*)p_txBuf;
-      p_txBuf += sizeof(serialapi_ret_t);
-      *p_ret = e_serial_api_ret_error;
+      EMB6_ASSERT_RET( txBufLen >= sizeof(serialapi_frameID_t), -1 );
+      SERIAL_API_SET_FIELD( p_txBuf, txBufLen, serialapi_frameID_t,
+          e_serial_api_ret_error );
 
       EMB6_ASSERT_RET( _fn_tx != NULL, -1 );
       _fn_tx( (p_txBuf - _p_txBuf), _p_txParam );
