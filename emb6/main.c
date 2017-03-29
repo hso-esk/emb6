@@ -256,8 +256,7 @@ s_emb6_startup_params_t emb6_startupParams;
   *  --- Local Function Prototypes ------------------------------------------ *
   */
 static void loc_stackConf(uint16_t mac_addr_word);
-static void loc_demoAppsConf(s_ns_t* pst_netStack, e_nsErr_t *p_err);
-static uint8_t loc_demoAppsInit(void);
+
 /**
  * emb6 task.
  */
@@ -317,157 +316,7 @@ static uint16_t loc_parseMac(const char* mac, uint16_t defaultMac)
     return defaultMac;
 }
 
-static void loc_demoAppsConf(s_ns_t* pst_netStack, e_nsErr_t *p_err)
-{
-#if NETSTK_CFG_ARG_CHK_EN
-    if (p_err == NULL) {
-        emb6_errorHandler(p_err);
-    }
 
-    if (pst_netStack == NULL) {
-        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
-        return;
-    }
-#endif
-
-    #if DEMO_USE_EXTIF
-    demo_extifConf(pst_netStack);
-    #endif
-
-#if DEMO_USE_LWM2M
-  demo_lwm2mConf(pst_netStack);
-#endif
-
-    #if DEMO_USE_COAP
-    demo_coapConf(pst_netStack);
-    #endif
-
-    #if DEMO_USE_MDNS
-    demo_mdnsConf(pst_netStack);
-    #endif
-
-    #if DEMO_USE_SNIFFER
-    demo_sniffConf(pst_netStack);
-    #endif
-
-    #if DEMO_USE_UDPALIVE
-    demo_udpAliveConf(pst_netStack);
-    #endif
-
-    #if DEMO_USE_UDP_SOCKET
-    demo_udpSocketConf(pst_netStack);
-    #endif
-
-    #if DEMO_USE_UDP_SOCKET_SIMPLE
-    demo_udpSocketSimpleConf(pst_netStack);
-    #endif
-
-    #if DEMO_USE_APTB
-    demo_aptbConf(pst_netStack);
-    #endif
-
-    #if DEMO_USE_UDP
-    demo_udpSockConf(pst_netStack);
-    #endif
-
-    #if DEMO_USE_MQTT
-    demo_mqttConf(pst_netStack);
-    #endif
-
-    #if DEMO_USE_TESTSUITE
-    demo_testsuiteConf(pst_netStack);
-    #endif
-
-    #if DEMO_USE_DTLS
-    demo_dtlsConf(pst_netStack);
-    #endif
-
-    /* set returned error code */
-    *p_err = NETSTK_ERR_NONE;
-}
-
-static uint8_t loc_demoAppsInit(void)
-{
-    #if DEMO_USE_EXTIF
-    if (!demo_extifInit()) {
-        return 0;
-    }
-    #endif
-
-    #if DEMO_USE_COAP
-    if (!demo_coapInit()) {
-        return 0;
-    }
-    #endif
-
-    #if DEMO_USE_LWM2M
-    if (!demo_lwm2mInit()) {
-        return 0;
-    }
-    #endif
-
-    #if DEMO_USE_MDNS
-    if (!demo_mdnsInit()) {
-        return 0;
-    }
-    #endif
-
-    #if DEMO_USE_SNIFFER
-    if (!demo_sniffInit()) {
-        return 0;
-    }
-    #endif
-
-    #if DEMO_USE_UDPALIVE
-    if (!demo_udpAliveInit()) {
-        return 0;
-    }
-    #endif
-
-    #if DEMO_USE_UDP_SOCKET
-    if (!demo_udpSocketInit()) {
-        return 0;
-    }
-    #endif
-
-    #if DEMO_USE_UDP_SOCKET_SIMPLE
-    if (!demo_udpSocketSimpleInit()) {
-        return 0;
-    }
-    #endif
-
-    #if DEMO_USE_APTB
-    if (!demo_aptbInit()) {
-        return 0;
-    }
-    #endif
-
-    #if DEMO_USE_UDP
-    if (!demo_udpSockInit()) {
-        return 0;
-    }
-    #endif
-
-    #if DEMO_USE_MQTT
-    if (!mqtt_init()) {
-        return 0;
-    }
-    #endif
-
-    #if DEMO_USE_TESTSUITE
-    if (!demo_testsuiteInit()) {
-        return 0;
-    }
-    #endif
-
-    #if DEMO_USE_DTLS
-    if (!demo_dtlsInit()) {
-	    return 0;
-    }
-    #endif
-
-    return 1;
-}
 /**
 321
  * \brief   Set the demo applications.
@@ -580,12 +429,6 @@ static void emb6_task( void* p_params )
         emb6_errorHandler(&err);
       }
 
-      /* Configure applications */
-      loc_demoAppsConf(&st_netstack,&err);
-      if (err != NETSTK_ERR_NONE) {
-          emb6_errorHandler(&err);
-      }
-
       /* Initialize stack */
       emb6_init(&st_netstack, ps_params->p_demos , &err);
       if (err != NETSTK_ERR_NONE) {
@@ -596,14 +439,6 @@ static void emb6_task( void* p_params )
       bsp_led(HAL_LED0, EN_BSP_LED_OP_ON);
       bsp_delayUs(2000000);
       bsp_led(HAL_LED0, EN_BSP_LED_OP_OFF);
-
-      /* Initialize applications */
-      ret = loc_demoAppsInit();
-      if (ret != 0) {
-        LOG_ERR("Demo APP failed to initialize");
-        err = NETSTK_ERR_INIT;
-        emb6_errorHandler(&err);
-      }
 
     while(1)
     {
