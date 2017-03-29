@@ -41,6 +41,7 @@
 serialapi = {
     'demo' : [
       'serialapi/*',
+      'serialapi/lwm2m-objects/*',
       'serial-interface-mac/*',
       'serial-interface-mac/dep/crc/*',
     ],

@@ -71,25 +71,63 @@
 #include "lwm2m-engine.h"
 #include "lwm2m-object.h"
 
+#include "lwm2m-objects/lwm2m-object-temp.h"
+#include "lwm2m-objects/lwm2m-object-counter.h"
+
 
 /*
  *  --- Macros --------------------------------------------------------------*
  */
 
+#define LWM2M_API_SET_FIELD( dst, dstlen, type, src)       \
+    do{                                                     \
+      *((type*)dst) = src;                                  \
+      dst += sizeof(type);                                  \
+      dstlen -= sizeof(type);                               \
+    } while (0);
+
+#define LWM2M_API_SET_FIELD_MEM( dst, dstlen, src, size)   \
+    do{                                                     \
+      memcpy(dst, src, size);                               \
+      dst += size;                                          \
+      dstlen -= size;                                       \
+    } while (0);
+
+#define LWM2M_API_GET_FIELD( dst, src, srclen, type)        \
+    do{                                                     \
+      dst = *((type*)(src));                                \
+      src += sizeof(type);                                  \
+      srclen -= sizeof(type);                               \
+    } while (0);
+
+#define LWM2M_API_GET_FIELD_MEM( dst, src, srclen, size)    \
+    do{                                                     \
+      memcpy(dst, src, size);                               \
+      src += size;                                          \
+      srclen -= size;                                       \
+    } while (0);
+
+#if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE
 /** Maximum number of LWM2M objects */
 #define LWM2MAPI_OBJ_MAX                5
 /** Maximum number of LWM2M instances */
 #define LWM2MAPI_INST_MAX               5
 /** Maximum number of LWM2M resources */
 #define LWM2MAPI_RES_MAX                5
+#endif /* #if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE */
 
 #ifdef LWM2M_USE_BOOTSTRAP
+
 #define LWM2M_BOOTSTRAP_SERVER_IP(ipaddr)   uip_ip6addr(ipaddr,  0xbbbb, 0x0000, 0x0000, 0x0000, 0x000a, 0x0bff,0xfe0c, 0x0d0e)
 #define LWM2M_BOOTSTRAP_SERVER_PORT         UIP_HTONS(5583)
 #else
-#define LWM2M_SERVER_IP(ipaddr)             uip_ip6addr(ipaddr, 0xbbbb, 0x0000, 0x0000, 0x0000,0x6eec, 0xebff,0xfe67, 0xea04)
+#define LWM2M_SERVER_IP(ipaddr)             uip_ip6addr(ipaddr, 0xbbbb, 0x0000, 0x0000, 0x0000, 0x0a00, 0x27ff,0xfe23, 0x6fcd)
+//#define LWM2M_SERVER_IP(ipaddr)             uip_ip6addr(ipaddr, 0xbbbb, 0x0000, 0x0000, 0x0000,0x6eec, 0xebff,0xfe67, 0xea04)
+//#define LWM2M_SERVER_IP(ipaddr)             uip_ip6addr(ipaddr, 0x2001, 0x0db8, 0x0100, 0xf101, 0x0a00, 0x27ff, 0xfe23, 0x6fcd)
 #define LWM2M_SERVER_PORT                   UIP_HTONS(5683)
 #endif /* #ifdef LWM2M_USE_BOOTSTRAP /* #ifdef LWM2M_USE_BOOTSTRAP */
+
+
 
 
 /*
@@ -106,12 +144,8 @@ typedef enum
     * before configuring/starting the LWM2M layer. */
   e_lwm2m_api_type_ret = 0x00,
 
-  /** Initialize the LWM2M communication. A host has to issue this command
-    * before configuring/starting the LWM2M layer. */
-  e_lwm2m_api_type_init = 0x05,
-
   /** Set a configuration parameter. */
-  e_lwm2m_api_type_cfg_set = 0x10,
+  e_lwm2m_api_type_cfg_set = 0x20,
 
   /** Get a configuration parameter. */
   e_lwm2m_api_type_cfg_get,
@@ -119,48 +153,77 @@ typedef enum
   /** return a configuration parameter. */
   e_lwm2m_api_type_cfg_rsp,
 
-  /** Initiate a bootstrap procedure. The client uses the bootstrap
-    * configuration to connect to the bootstrap server. */
-  e_lwm2m_api_type_bs = 0x20,
+  /** Stop the LWM2M communication. The client tries to deregister
+    * at the configured server. */
+  e_lwm2m_api_type_stop = 0x30,
 
   /** Start the LWM2M communication. The client tries to register
     * at the configured server. */
   e_lwm2m_api_type_start,
 
-  /** Create a LWM2M object. */
-  e_lwm2m_api_type_obj_create = 0x30,
+  /** Initiate a bootstrap procedure. The client uses the bootstrap
+    * configuration to connect to the bootstrap server. */
+  e_lwm2m_api_type_bs = 0x33,
 
-  /** Delete a previously created object. The host must use a
-    * resource ID returned by a previous create operation. */
-  e_lwm2m_api_type_obj_delete,
+  /** Get the Status of the LWM2M module.  */
+  e_lwm2m_api_type_status_get = 0x40,
+
+  /** Returns the status of the LWM2M module. */
+  e_lwm2m_api_type_status_ret,
+
+  /** Get the current error of the LWM2M module.  */
+  e_lwm2m_api_type_error_get = 0x50,
+
+  /** Returns the current error of the LWM2M module. */
+  e_lwm2m_api_type_error_ret,
+
+#if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE
+  /** Create a LWM2M object. */
+  e_lwm2m_api_type_obj_create = 0x60,
+
+  /** Create a LWM2M object using an XML file. */
+  e_lwm2m_api_type_obj_create_xml = 0x61,
 
   /** Returns an ID of a previously created L2M2M object. The
     * host uses this ID for further actions related to the
     * according resource (e.g. deletion). */
   e_lwm2m_api_type_obj_ret,
 
+  /** Delete a previously created object. The host must use a
+    * resource ID returned by a previous create operation. */
+  e_lwm2m_api_type_obj_delete,
+#endif /* #if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE */
+
+#if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE
+  /** Create a LWM2M resource. */
+  e_lwm2m_api_type_res_create = 0x70,
+
+  /** Returns an ID of a previously created LWM2M resource. The
+    * host uses this ID for further actions related to the
+    * according resource (e.g. deletion). */
+  e_lwm2m_api_type_res_ret = 0x72,
+
+  /** Delete a previously created resource. The host must use a
+    * resource ID returned by a previous create operation. */
+  e_lwm2m_api_type_res_delete,
+#endif /* #if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE */
+
   /** Read request initiated by the device. The Device calls this
    * function whenever it receives an according request from the
    * associated LWM2M server. */
-  e_lwm2m_api_type_rd_req = 0x40,
+  e_lwm2m_api_type_res_rd_req = 0x80,
 
-  /** The host has to answer to a LWM2M2_RD_REQ using a
-    * LWM2M2_RD_RSP. */
-  e_lwm2m_api_type_rd_rsp,
+  /** The device/host has to answer to a LWM2M2_RES_RD_REQ using a
+    * LWM2M2_RES_RD_RSP. */
+  e_lwm2m_api_type_res_rd_rsp,
 
   /** Write request to a LWM2M resource. Both device and host use this
     * command e.g. to set configurations or stored values. */
-  e_lwm2m_api_type_wr_req,
+  e_lwm2m_api_type_res_wr_req,
 
-  /** The host/device has to answer to a LWM2M2_WR_REQ using a
-    * LWM2M2_WR_RSP. */
-  e_lwm2m_api_type_wr_rsp,
-
-  /** Get the Status of the LWM2M module.  */
-  e_lwm2m_api_type_status_get = 0x50,
-
-  /** Returns the status of the LWM2M module. */
-  e_lwm2m_api_type_status_ret,
+  /** The host/device has to answer to a LWM2M2_RES_WR_REQ using a
+    * LWM2M2_RES_WR_RSP. */
+  e_lwm2m_api_type_res_wr_rsp,
 
   e_lwm2m_api_type_max
 
@@ -176,18 +239,17 @@ typedef enum
     * a command was issued. */
   e_lwm2m_api_ret_ok = 0x00,
 
+  /** A general error occurred during the operation. */
+  e_lwm2m_api_ret_error,
+
   /** The command is not valid or supported. */
   e_lwm2m_api_ret_error_cmd,
 
   /** The parameters are invalid or not supported. */
   e_lwm2m_api_ret_error_param,
 
-  /** Describes a positive return value e.g. after
-    * a command was issued. */
-  e_lwm2m_api_status_ok = 0x20,
-
-  /** LWM2M is performing bootstrapping */
-  e_lwm2m_api_status_boot,
+  /** LWM2M module has stopped. */
+  e_lwm2m_api_status_stopped = 0x30,
 
   /** LWM2M module has started. */
   e_lwm2m_api_status_started,
@@ -195,6 +257,13 @@ typedef enum
   /** The LWM2M module is registered at the server that was configured
     * or the server retrieved via bootstrapping. */
   e_lwm2m_api_status_registered,
+
+  /** LWM2M is performing bootstrapping */
+  e_lwm2m_api_status_boot,
+
+  /** undefined status */
+  e_lwm2m_api_status_undef,
+
 
 } e_lwm2m_api_ret_t;
 
@@ -232,6 +301,9 @@ typedef enum
 /** frameID */
 typedef uint8_t lwm2mapi_frameID_t;
 
+/** Get/Set ID */
+typedef uint8_t lwm2mapi_cfg_getset_t;
+
 /** IP address address configuration*/
 typedef uip_ipaddr_t lwm2mapi_cfg_ipaddr_t;
 
@@ -240,6 +312,9 @@ typedef uint16_t lwm2mapi_cfg_port_t;
 
 /** Client Name configuration */
 typedef char* lwm2mapi_cfg_cliname_t;
+
+/** Format of a general RET response. */
+typedef uint8_t lwm2mapi_ret_t;
 
 
 /**
@@ -255,7 +330,7 @@ typedef char* lwm2mapi_cfg_cliname_t;
  *
  * \return Length of the generated response.
  */
-typedef uint16_t (*fn_serialApiHndl_t)( uint8_t* p_cmd, uint16_t cmdLen,
+typedef int32_t (*fn_serialApiHndl_t)( uint8_t* p_cmd, uint16_t cmdLen,
     uint8_t* p_rpl, uint16_t rplLen );
 
 
@@ -263,18 +338,56 @@ typedef uint16_t (*fn_serialApiHndl_t)( uint8_t* p_cmd, uint16_t cmdLen,
  *  --- Local Function Prototypes ------------------------------------------ *
  */
 
+/** Called by the stack in case a registered event occurred.
+ * For further details have a look at the function definitions. */
+static void _event_callback( c_event_t ev, p_data_t data );
 
 /** Receive data.
  * For further details have a look at the function definitions. */
 static int8_t _rx_data( uint8_t* p_data, uint16_t len );
 
+/** Generate a generic status response.
+ * For further details have a look at the function definitions. */
+static int32_t _rsp_status( uint8_t* p_rpl, uint16_t rplLen,
+    e_lwm2m_api_type_t type, e_lwm2m_api_ret_t ret );
 
-/** Callback function in case a INIT command was received. For further
+
+/** Get LWM2M path of a object/resource/instance.
+ * For further details have a look at the function definitions. */
+static int _get_lwm2m_url( const uint16_t* p_id0,
+    const uint16_t* p_id1, const uint16_t* p_id2,
+    char** url  );
+
+/** Stop LWM2M.
+ * For further details have a look at the function definitions. */
+static int8_t _stopLWM2M( void );
+
+/** Start LWM2M.
+ * For further details have a look at the function definitions. */
+static int8_t _startLWM2M( void );
+
+
+/** Callback function in case a CFG_GET command was received. For further
  * details have a look at the function definition.*/
-static uint16_t _hndl_init( uint8_t* p_cmd, uint16_t cmdLen,
+static int32_t _hndl_cfgSet( uint8_t* p_cmd, uint16_t cmdLen,
     uint8_t* p_rpl, uint16_t rplLen );
 
+/** Callback function in case a PING command was received. For further
+ * details have a look at the function definition.*/
+static int32_t _hndl_cfgGet( uint8_t* p_cmd, uint16_t cmdLen,
+    uint8_t* p_rpl, uint16_t rplLen );
 
+/** Callback function in case a STATUS_GET command was received. For further
+ * details have a look at the function definition.*/
+static int32_t _hndl_statusGet( uint8_t* p_cmd, uint16_t cmdLen,
+    uint8_t* p_rpl, uint16_t rplLen );
+
+/** Callback function in case a RESOURCE_WRITE command was received. For further
+ * details have a look at the function definition.*/
+static int32_t _hndl_res_wr( uint8_t* p_cmd, uint16_t cmdLen,
+    uint8_t* p_rpl, uint16_t rplLen );
+
+#if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE
 /** Generic LWM2M handler to GET a resource. For furhther information
  * refer to the function definition. */
 static void lwm2m_get(void *request, void *response, uint8_t *buffer,
@@ -294,6 +407,7 @@ static void lwm2m_post(void *request, void *response, uint8_t *buffer,
  * refer to the function definition. */
 static void lwm2m_delete(void *request, void *response, uint8_t *buffer,
     uint16_t preferred_size, int32_t *offset, void* p_user);
+#endif /* #if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE */
 
 
 /*
@@ -310,6 +424,13 @@ static uint16_t _txBufLen = 0;
 /** Tx parameter */
 static void* _p_txParam = NULL;
 
+/** Buffer for URLS */
+static char _p_url[COAP_OBSERVER_URL_LEN];
+
+/** LWM2M status */
+static e_lwm2m_api_ret_t _status;
+
+#if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE
 /** Storage for Rest Resources */
 MEMB(lwm2mrestres_storage, resource_t, LWM2MAPI_OBJ_MAX );
 /** Storage for LWM2M Objects */
@@ -318,6 +439,7 @@ MEMB(lwm2mobject_storage, lwm2m_object_t, LWM2MAPI_OBJ_MAX );
 MEMB(lwm2minstance_storage, lwm2m_instance_t, LWM2MAPI_INST_MAX);
 /** Storage for LWM2M Resources */
 MEMB(lwm2mresource_storage, lwm2m_resource_t, LWM2MAPI_RES_MAX);
+#endif /* #if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE */
 
 
 /** server IP address */
@@ -327,6 +449,68 @@ static uip_ipaddr_t server_ipaddr;
 /*
  *  --- Local Functions ---------------------------------------------------- *
  */
+
+/**
+ * \brief   Callback function of the stack for new data on the RX interface.
+ *
+ *          This function is called by the stack everytime new data is
+ *          available on the RX interface. This is required to separate
+ *          Interrupts from regular operations.
+ *
+ * \param   ev    The type of the event.
+ * \param   data  Extra data.
+ */
+void _event_callback( c_event_t ev, p_data_t data )
+{
+  int32_t ret = 0;
+  uint8_t* p_txBuf = _p_txBuf;
+  uint16_t txBufLen = _txBufLen;
+
+  if( ev == EVENT_TYPE_STATUS_CHANGE )
+  {
+    switch( emb6_getStatus() )
+    {
+      case STACK_STATUS_IDLE:
+      {
+        /* stop LWM2M */
+        _stopLWM2M();
+        /* Call the status get handler */
+        ret = _hndl_statusGet( NULL, 0, p_txBuf, txBufLen );
+        break;
+      }
+
+      case STACK_STATUS_ACTIVE:
+      {
+        /* start LWM2M */
+        _startLWM2M();
+        /* Call the status get handler */
+        ret = _hndl_statusGet( NULL, 0, p_txBuf, txBufLen );
+        break;
+      }
+
+      case STACK_STATUS_NETWORK:
+      {
+        /* set status as registered */
+        _status = e_lwm2m_api_status_registered;
+        /* Call the status get handler */
+        ret = _hndl_statusGet( NULL, 0, p_txBuf, txBufLen );
+        break;
+      }
+
+      default:
+        break;
+    }
+  }
+
+  if( ret > 0 )
+  {
+      EMB6_ASSERT_RET( _fn_tx != NULL, );
+      /* Call the associated Tx function with the according
+       * parameter. */
+      _fn_tx( ret, _p_txParam );
+  }
+}
+
 
 /**
  * \brief   This event is raised by the serial MAC if a frame was received.
@@ -339,198 +523,201 @@ static uip_ipaddr_t server_ipaddr;
  */
 static int8_t _rx_data( uint8_t* p_data, uint16_t len )
 {
+  int8_t ret = 0;
   lwm2mapi_frameID_t id;
   size_t bufLeft = len;
   uint8_t* p_dataPtr = p_data;
+  uint8_t* p_txBuf = _p_txBuf;
+  uint16_t txBufLen = _txBufLen;
+
 
   fn_serialApiHndl_t f_hndl = NULL;
-  uint16_t hndlRet = 0;
 
   /* A frame has been received */
   /* check parameters */
   EMB6_ASSERT_RET( (p_dataPtr != NULL), -1 );
-  EMB6_ASSERT_RET( (bufLeft >= sizeof(lwm2mapi_frameID_t)), -1 );
+  EMB6_ASSERT_RET( (bufLeft >= sizeof(lwm2mapi_frameID_t)), -3 );
 
   /* get ID */
-  id = *p_dataPtr;
-  p_dataPtr += sizeof(lwm2mapi_frameID_t);
-  bufLeft -= sizeof(lwm2mapi_frameID_t);
+  EMB6_ASSERT_RET( bufLeft >= sizeof(lwm2mapi_frameID_t), -2 );
+  LWM2M_API_GET_FIELD( id, p_dataPtr, bufLeft, lwm2mapi_frameID_t );
 
   switch( id )
   {
-    /* A ping was requested from the host. Reply with a simple
-     * RET frame to indicate that the device is alive. */
-    case e_lwm2m_api_type_init:
-      f_hndl = _hndl_init;
+    /* write configuration request */
+    case e_lwm2m_api_type_cfg_set:
+      f_hndl = _hndl_cfgSet;
       break;
 
+    /* read configuration request */
+    case e_lwm2m_api_type_cfg_get:
+      f_hndl = _hndl_cfgGet;
+      break;
+
+    /* read status */
+    case e_lwm2m_api_type_status_get:
+      f_hndl = _hndl_statusGet;
+      break;
+
+    /* write request to a resource */
+    case e_lwm2m_api_type_res_wr_req:
+      f_hndl = _hndl_res_wr;
+      break;
 
     default:
+      ret = -2;
       break;
   }
 
   /* call the according handler */
   if( f_hndl != NULL )
   {
-    hndlRet = f_hndl( p_dataPtr, bufLeft, _p_txBuf, _txBufLen );
-    if( hndlRet )
+    ret = f_hndl( p_dataPtr, bufLeft, _p_txBuf, _txBufLen );
+    if( ret > 0 )
     {
         EMB6_ASSERT_RET( _fn_tx != NULL, -1 );
         /* Call the associated Tx function with the according
          * parameter. */
-        _fn_tx( hndlRet, _p_txParam );
-        return 0;
+        _fn_tx( ret, _p_txParam );
+        ret = 0;
     }
   }
-  else
+
+  if( ret != 0 )
   {
     /* The command was not found */
-    uint8_t* p_txBuf = _p_txBuf;
-    *((lwm2mapi_frameID_t*)p_txBuf) = e_lwm2m_api_type_ret;
-    p_txBuf += sizeof(lwm2mapi_frameID_t);
-    e_lwm2m_api_ret_t* p_ret = (e_lwm2m_api_ret_t*)p_txBuf;
-    p_txBuf += sizeof(e_lwm2m_api_ret_t);
-    *p_ret = e_lwm2m_api_ret_error_cmd;
+    EMB6_ASSERT_RET( txBufLen >= sizeof(lwm2mapi_frameID_t), -1 );
+    LWM2M_API_SET_FIELD( p_txBuf, txBufLen, lwm2mapi_frameID_t,
+        e_lwm2m_api_type_ret );
 
-    EMB6_ASSERT_RET( _fn_tx != NULL, -1 );
-    _fn_tx( (p_txBuf - _p_txBuf), _p_txParam );
-    return 0;
+    switch( ret )
+    {
+      case -2:
+        EMB6_ASSERT_RET( txBufLen >= sizeof(e_lwm2m_api_ret_t), -1 );
+        LWM2M_API_SET_FIELD( p_txBuf, txBufLen, e_lwm2m_api_ret_t,
+            e_lwm2m_api_ret_error_cmd );
+        break;
+
+      case -3:
+        EMB6_ASSERT_RET( txBufLen >= sizeof(e_lwm2m_api_ret_t), -1 );
+        LWM2M_API_SET_FIELD( p_txBuf, txBufLen, e_lwm2m_api_ret_t,
+            e_lwm2m_api_ret_error_param );
+        break;
+
+      default:
+        EMB6_ASSERT_RET( txBufLen >= sizeof(e_lwm2m_api_ret_t), -1 );
+        LWM2M_API_SET_FIELD( p_txBuf, txBufLen, e_lwm2m_api_ret_t,
+            e_lwm2m_api_ret_error );
+        break;
+    }
+
+    ret = (p_txBuf - _p_txBuf);
   }
 
-  return -1;
+  if( ret > 0 )
+  {
+    EMB6_ASSERT_RET( _fn_tx != NULL, -1 );
+    _fn_tx( (p_txBuf - _p_txBuf), _p_txParam );
+    ret = 0;
+  }
 
+  return ret;
 }
 
 
-/**
- * \brief   Callback to initialize LWM2M.
+/*
+ * \brief   Generates a generic response.
  *
- * \param   p_cmd   Further data of the command.
- * \param   cmdLen  Length of the command data.
+ *          This generates a generic response that is used to reply
+ *          to several commands.
+ *
  * \param   p_rpl   Pointer to store the response to.
  * \param   rplLen  Length of the response buffer.
+ * \ret     Return value to use for the response
  *
  * \return  The length of the generated response or 0 if no response
  *          has been generated.
  */
-static uint16_t _hndl_init( uint8_t* p_cmd, uint16_t cmdLen,
-    uint8_t* p_rpl, uint16_t rplLen )
+static int32_t _rsp_status( uint8_t* p_rpl, uint16_t rplLen,
+   e_lwm2m_api_type_t type, e_lwm2m_api_ret_t ret )
 {
-    /* Initialization was requested. Reset all the internal
-     * parameters and prepare for operation. */
+ uint8_t* p_txBuf = p_rpl;
 
-    EMB6_ASSERT_RET( p_cmd != NULL, 0 );
-    EMB6_ASSERT_RET( p_rpl != NULL, 0 );
+ EMB6_ASSERT_RET( p_rpl != NULL, -1 );
 
-    uint8_t* p_txBuf = p_rpl;
+ /* set the according RET ID */
+ EMB6_ASSERT_RET( rplLen >= sizeof(lwm2mapi_frameID_t), -1 );
+ LWM2M_API_SET_FIELD( p_txBuf, rplLen, lwm2mapi_frameID_t,
+     type );
 
-    /* set the according id */
-    *((lwm2mapi_frameID_t*)p_txBuf) = e_lwm2m_api_ret_ok;
-    p_txBuf += sizeof(lwm2mapi_frameID_t);
+ /* set OK return value to indicate ping response */
+ EMB6_ASSERT_RET( rplLen >= sizeof(lwm2mapi_ret_t), -1 );
+ LWM2M_API_SET_FIELD( p_txBuf, rplLen, lwm2mapi_ret_t,
+     ret );
 
-    return p_txBuf - p_rpl;
-
-  return 0;
+ return p_txBuf - p_rpl;
 }
 
 
 /**
- * \brief   Generic LWM2M handler to GET a resource.
+ * \brief   Get Path to an LWM2M object/instance/resource
  *
- *          This function is called from the underlying CoAP engine
- *          if a GET access to a resource was requested. The target
- *          of the request can be seen from the parameters.
- *          The request will be forwarded to the LWM2M engine.
+ * \param   p_id0   First ID (/<p_id0>) or NULL if not requested.
+ * \param   p_id1   Second ID (/<p_id0>/<p_id1>) or NULL if not requested.
+ * \param   p_id2   Second ID (/<p_id0>/<p_id1>/<p_id2>) or NULL if not requested.
+ * \param   url     Destination to write the url to.
  *
+ * \return  Length of the URL.
  */
-static void lwm2m_get(void *request, void *response, uint8_t *buffer,
-    uint16_t preferred_size, int32_t *offset, void* p_user)
+static int _get_lwm2m_url( const uint16_t* p_id0,
+    const uint16_t* p_id1, const uint16_t* p_id2,
+    char** url )
 {
-  /* forward request */
-  lwm2m_engine_handler((lwm2m_object_t*)p_user, request, response, buffer,
-      preferred_size, offset);
+  EMB6_ASSERT_RET( p_id0 != NULL, 0 );
+  EMB6_ASSERT_RET( url != NULL, 0 );
+
+  int ret = 0;
+
+  if( p_id1 == NULL )
+    ret = snprintf( _p_url, COAP_OBSERVER_URL_LEN, "/%u",
+        *p_id0 );
+  else if( p_id2 == NULL )
+    ret = snprintf( _p_url, COAP_OBSERVER_URL_LEN, "/%u/%u",
+        *p_id0, *p_id1 );
+  else
+    ret = snprintf( _p_url, COAP_OBSERVER_URL_LEN, "/%u/%u/%u",
+        *p_id0, *p_id1, *p_id2 );
+
+  *url = _p_url;
+  return ret;
 }
 
 
 /**
- * \brief   Generic LWM2M handler to PUT a resource.
- *
- *          This function is called from the underlying CoAP engine
- *          if a PUT access to a resource was requested. The target
- *          of the request can be seen from the parameters.
- *          The request will be forwarded to the LWM2M engine.
- *
+ * \brief   Stop LWM2M.
  */
-static void lwm2m_put(void *request, void *response, uint8_t *buffer,
-    uint16_t preferred_size, int32_t *offset, void* p_user)
+static int8_t _stopLWM2M( void )
 {
-  /* forward request */
-  lwm2m_engine_handler((lwm2m_object_t*)p_user, request, response, buffer,
-      preferred_size, offset);
+  int8_t ret = 0;
+  _status = e_lwm2m_api_status_stopped;
+  return ret;
 }
 
 
 /**
- * \brief   Generic LWM2M handler to POST a resource.
- *
- *          This function is called from the underlying CoAP engine
- *          if a POST access to a resource was requested. The target
- *          of the request can be seen from the parameters.
- *          The request will be forwarded to the LWM2M engine.
- *
+ * \brief   Start LWM2M.
  */
-static void lwm2m_post(void *request, void *response, uint8_t *buffer,
-    uint16_t preferred_size, int32_t *offset, void* p_user)
-{
-  /* forward request */
-  lwm2m_engine_handler((lwm2m_object_t*)p_user, request, response, buffer,
-      preferred_size, offset);
-}
-
-
-/**
- * \brief   Generic LWM2M handler to DELETE a resource.
- *
- *          This function is called from the underlying CoAP engine
- *          if a DELETE access to a resource was requested. The target
- *          of the request can be seen from the parameters.
- *          The request will be forwarded to the LWM2M engine.
- *
- */
-static void lwm2m_delete(void *request, void *response, uint8_t *buffer,
-    uint16_t preferred_size, int32_t *offset, void* p_user)
-{
-  /* forward request */
-  lwm2m_engine_delete_handler((lwm2m_object_t*)p_user, request, response, buffer,
-      preferred_size, offset);
-}
-
-/*
- *  --- Global Functions  ---------------------------------------------------*
- */
-
-/*---------------------------------------------------------------------------*/
-/*
-* lwm2mApiInit()
-*/
-int8_t lwm2mApiInit( uint8_t* p_txBuf, uint16_t txBufLen,
-        void(*fn_tx)(uint16_t len, void* p_param), void* p_txParam )
+static int8_t _startLWM2M( void )
 {
     int8_t ret = 0;
 
-    /* set buffer description */
-    _p_txBuf = p_txBuf;
-    _txBufLen = txBufLen;
-    _p_txParam = p_txParam;
-
-    /* set Tx function */
-    _fn_tx = fn_tx;
-
+#if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE
     /* initialize memory */
     memb_init( &lwm2mrestres_storage );
     memb_init( &lwm2mobject_storage );
     memb_init( &lwm2minstance_storage );
     memb_init( &lwm2mresource_storage );
+#endif /* #if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE */
 
 #ifdef LWM2M_USE_BOOTSTRAP
     LWM2M_BOOTSTRAP_SERVER_IP(&server_ipaddr);
@@ -548,6 +735,10 @@ int8_t lwm2mApiInit( uint8_t* p_txBuf, uint16_t txBufLen,
     /* Register default LWM2M objects */
     lwm2m_engine_register_default_objects();
 
+    lwm2m_object_tempInit();
+    lwm2m_object_counterInit();
+
+#if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE
     /* TEST */
     {
       ret = -1;
@@ -629,6 +820,416 @@ int8_t lwm2mApiInit( uint8_t* p_txBuf, uint16_t txBufLen,
 
     }
     /** TEST END */
+#endif /* #if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE */
+
+    _status = e_lwm2m_api_status_started;
+    return ret;
+}
+
+
+/**
+ * \brief   Callback to set LWM2M parameters
+ *
+ * \param   p_cmd   Further data of the command.
+ * \param   cmdLen  Length of the command data.
+ * \param   p_rpl   Pointer to store the response to.
+ * \param   rplLen  Length of the response buffer.
+ *
+ * \return  The length of the generated response or 0 if no response
+ *          has been generated.
+ */
+static int32_t _hndl_cfgSet( uint8_t* p_cmd, uint16_t cmdLen,
+    uint8_t* p_rpl, uint16_t rplLen )
+{
+  int32_t ret = 0;
+  uint8_t* p_data = p_cmd;
+
+  EMB6_ASSERT_RET( p_cmd != NULL, 0 );
+  EMB6_ASSERT_RET( p_rpl != NULL, 0 );
+
+  EMB6_ASSERT_RET( _status == e_lwm2m_api_status_stopped, -1 );
+
+  /* get the type of configuration */
+  lwm2mapi_cfg_getset_t cfgsetId;
+  EMB6_ASSERT_RET( cmdLen >= sizeof(lwm2mapi_cfg_getset_t), -3 );
+  LWM2M_API_GET_FIELD( cfgsetId, p_data, cmdLen, lwm2mapi_cfg_getset_t );
+
+  switch( cfgsetId )
+  {
+
+    default:
+      ret = -3;
+      break;
+  }
+
+  if( ret == 0 )
+  {
+    EMB6_ASSERT_RET( p_rpl != NULL, -1 );
+    ret = _rsp_status( p_rpl, rplLen, e_lwm2m_api_type_ret,
+        e_lwm2m_api_ret_ok );
+  }
+
+  return ret;
+}
+
+
+/**
+ * \brief   Callback to get LWM2M parameters
+ *
+ * \param   p_cmd   Further data of the command.
+ * \param   cmdLen  Length of the command data.
+ * \param   p_rpl   Pointer to store the response to.
+ * \param   rplLen  Length of the response buffer.
+ *
+ * \return  The length of the generated response or 0 if no response
+ *          has been generated.
+ */
+static int32_t _hndl_cfgGet( uint8_t* p_cmd, uint16_t cmdLen,
+    uint8_t* p_rpl, uint16_t rplLen )
+{
+  int32_t ret = 0;
+  uint8_t* p_data = p_cmd;
+  uint8_t* p_txBuf = p_rpl;
+
+  EMB6_ASSERT_RET( p_cmd != NULL, 0 );
+  EMB6_ASSERT_RET( p_rpl != NULL, 0 );
+
+  /* get the type of configuration */
+  lwm2mapi_cfg_getset_t cfgsetId;
+  EMB6_ASSERT_RET( cmdLen >= sizeof(lwm2mapi_cfg_getset_t), -3 );
+  LWM2M_API_GET_FIELD( cfgsetId, p_data, cmdLen, lwm2mapi_cfg_getset_t );
+
+  /* set ID of the response frame */
+  EMB6_ASSERT_RET( rplLen >= sizeof(lwm2mapi_cfg_getset_t), -1 );
+  LWM2M_API_SET_FIELD( p_txBuf, rplLen, lwm2mapi_cfg_getset_t,
+      cfgsetId);
+
+  switch( cfgsetId )
+  {
+
+    default:
+      ret = -3;
+      break;
+  }
+
+  if( ret == 0 )
+    ret = p_txBuf - p_rpl;
+
+  return ret;
+}
+
+
+/**
+ * \brief   Callback function for XXX commands.
+ *
+ *          This function is called whenever a XXX
+ *
+ * \param   p_cmd   Further data of the command.
+ * \param   cmdLen  Length of the command data.
+ * \param   p_rpl   Pointer to store the response to.
+ * \param   rplLen  Length of the response buffer.
+ *
+ * \return  The length of the generated response or 0 if no response
+ *          has been generated.
+ */
+static int32_t _hndl_statusGet( uint8_t* p_cmd, uint16_t cmdLen,
+    uint8_t* p_rpl, uint16_t rplLen )
+{
+  int32_t ret;
+  e_lwm2m_api_ret_t e_ret;
+
+  EMB6_ASSERT_RET( p_rpl != NULL, 0 );
+
+  if( (_status < e_lwm2m_api_status_stopped) ||
+      (_status > e_lwm2m_api_status_boot))
+    e_ret = e_lwm2m_api_status_undef;
+  else
+    e_ret = _status;
+
+  /* set the according status */
+  EMB6_ASSERT_RET( p_rpl != NULL, -1 );
+  ret = _rsp_status( p_rpl, rplLen, e_lwm2m_api_type_status_ret,
+      e_ret );
+
+  return ret;
+}
+
+
+/**
+ * \brief   Callback to write a LWM2M resource.
+ *
+ * \param   p_cmd   Further data of the command.
+ * \param   cmdLen  Length of the command data.
+ * \param   p_rpl   Pointer to store the response to.
+ * \param   rplLen  Length of the response buffer.
+ *
+ * \return  The length of the generated response or 0 if no response
+ *          has been generated.
+ */
+static int32_t _hndl_res_wr( uint8_t* p_cmd, uint16_t cmdLen,
+    uint8_t* p_rpl, uint16_t rplLen )
+{
+  int32_t ret = 0;
+  uint8_t* p_data = p_cmd;
+  uint8_t* p_txBuf = p_rpl;
+
+  int16_t objId;
+  int8_t instId;
+  int16_t resId;
+
+  const lwm2m_object_t* p_lwm2mObj;
+  lwm2m_instance_t* p_lwm2mInst;
+  const lwm2m_resource_t* p_lwm2mRes;
+
+  char* p_url;
+  int urlLen = 0;
+
+  EMB6_ASSERT_RET( p_cmd != NULL, -1 );
+  EMB6_ASSERT_RET( p_rpl != NULL, -1 );
+
+  if( ret == 0 )
+  {
+    /* get the object ID, instance ID and resource ID*/
+    EMB6_ASSERT_RET( cmdLen >= sizeof(uint16_t), -2 );
+    LWM2M_API_GET_FIELD( objId, p_data, cmdLen, uint16_t );
+    EMB6_ASSERT_RET( cmdLen >= sizeof(uint8_t), -2 );
+    LWM2M_API_GET_FIELD( instId, p_data, cmdLen, uint8_t );
+    EMB6_ASSERT_RET( cmdLen >= sizeof(uint16_t), -2 );
+    LWM2M_API_GET_FIELD( resId, p_data, cmdLen, uint16_t );
+
+    objId = uip_ntohs( objId );
+    resId = uip_ntohs( resId );
+
+    /* try to get the according object */
+    p_lwm2mObj = lwm2m_engine_get_object( objId );
+    if( p_lwm2mObj == NULL )
+      ret = -1;
+  }
+
+  if( ret == 0 )
+  {
+    int i = 0;
+    for( i = 0; i < p_lwm2mObj->count; i++ )
+    {
+      p_lwm2mInst = p_lwm2mObj->instances;
+      if( p_lwm2mInst->id == instId )
+        /* we found the according instance ID */
+        break;
+      p_lwm2mInst++;
+    }
+
+    if( i >= p_lwm2mObj->count )
+      /* instance was not found */
+      ret = -1;
+  }
+
+  if( ret == 0 )
+  {
+    int i = 0;
+    for( i = 0; i < p_lwm2mInst->count; i++ )
+    {
+      p_lwm2mRes = p_lwm2mInst->resources;
+      if( p_lwm2mRes->id == resId )
+        /* we found the according resource ID */
+        break;
+    }
+
+    if( i >= p_lwm2mInst->count )
+      /* resource was not found */
+      ret = -1;
+  }
+
+  if( ret == 0 )
+  {
+    /* get the URL */
+    urlLen = _get_lwm2m_url( &p_lwm2mInst->id, &p_lwm2mRes->id, NULL,
+        &p_url );
+    if( urlLen == 0)
+      ret = -1;
+  }
+
+  if( ret == 0 )
+  {
+    /* resource was found. Now we can read the value from it */
+    switch( p_lwm2mRes->type )
+    {
+      /* String Write */
+      case LWM2M_RESOURCE_TYPE_STR_VARIABLE:
+        break;
+
+      /* Integer write */
+      case LWM2M_RESOURCE_TYPE_INT_VARIABLE:
+      {
+        int32_t val;
+        if( cmdLen < sizeof(val) )
+          ret = -2;
+
+        if( ret == 0 )
+        {
+          /* get the value */
+          EMB6_ASSERT_RET( cmdLen >= sizeof(int32_t), -2 );
+          LWM2M_API_GET_FIELD( val, p_data, cmdLen, int32_t );
+
+          /* write the value*/
+          val = uip_ntohl( val );
+          *p_lwm2mRes->value.integervar.var = val;
+        }
+        break;
+      }
+
+      /* Float write */
+      case LWM2M_RESOURCE_TYPE_FLOATFIX_VARIABLE:
+      {
+        union {
+          float        f;
+          unsigned int i;
+        } val;
+
+        if( cmdLen < sizeof(val) )
+          ret = -2;
+
+        if( ret == 0 )
+        {
+          /* get the value */
+          EMB6_ASSERT_RET( cmdLen >= sizeof(val), -2 );
+          LWM2M_API_GET_FIELD_MEM( &val, p_data, cmdLen, sizeof(val) );
+
+          /* write the value*/
+          val.i = uip_ntohl( val.i );
+          *p_lwm2mRes->value.floatfixvar.var = (val.f * LWM2M_FLOAT32_FRAC);
+        }
+        break;
+      }
+
+      /* Boolean write */
+      case LWM2M_RESOURCE_TYPE_BOOLEAN_VARIABLE:
+        break;
+
+      default:
+        ret = -1;
+        break;
+    }
+  }
+
+  if( ret == 0)
+  {
+    /* Notify all observers */
+    lwm2m_object_notify_observers( p_lwm2mObj, p_url );
+
+    /* Reply wit a return frame containing the according error code */
+    EMB6_ASSERT_RET( rplLen >= sizeof(lwm2mapi_frameID_t), -1 );
+    LWM2M_API_SET_FIELD( p_txBuf, rplLen, lwm2mapi_frameID_t,
+        e_lwm2m_api_type_ret );
+
+
+    EMB6_ASSERT_RET( rplLen >= sizeof(e_lwm2m_api_ret_t), -1 );
+    LWM2M_API_SET_FIELD( p_txBuf, rplLen, e_lwm2m_api_ret_t,
+        e_lwm2m_api_ret_ok );
+
+    ret = p_txBuf - p_rpl;
+  }
+
+  return ret;
+}
+
+
+#if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE
+/**
+ * \brief   Generic LWM2M handler to GET a resource.
+ *
+ *          This function is called from the underlying CoAP engine
+ *          if a GET access to a resource was requested. The target
+ *          of the request can be seen from the parameters.
+ *          The request will be forwarded to the LWM2M engine.
+ *
+ */
+static void lwm2m_get(void *request, void *response, uint8_t *buffer,
+    uint16_t preferred_size, int32_t *offset, void* p_user)
+{
+  /* forward request */
+  lwm2m_engine_handler((lwm2m_object_t*)p_user, request, response, buffer,
+      preferred_size, offset);
+}
+
+
+/**
+ * \brief   Generic LWM2M handler to PUT a resource.
+ *
+ *          This function is called from the underlying CoAP engine
+ *          if a PUT access to a resource was requested. The target
+ *          of the request can be seen from the parameters.
+ *          The request will be forwarded to the LWM2M engine.
+ *
+ */
+static void lwm2m_put(void *request, void *response, uint8_t *buffer,
+    uint16_t preferred_size, int32_t *offset, void* p_user)
+{
+  /* forward request */
+  lwm2m_engine_handler((lwm2m_object_t*)p_user, request, response, buffer,
+      preferred_size, offset);
+}
+
+
+/**
+ * \brief   Generic LWM2M handler to POST a resource.
+ *
+ *          This function is called from the underlying CoAP engine
+ *          if a POST access to a resource was requested. The target
+ *          of the request can be seen from the parameters.
+ *          The request will be forwarded to the LWM2M engine.
+ *
+ */
+static void lwm2m_post(void *request, void *response, uint8_t *buffer,
+    uint16_t preferred_size, int32_t *offset, void* p_user)
+{
+  /* forward request */
+  lwm2m_engine_handler((lwm2m_object_t*)p_user, request, response, buffer,
+      preferred_size, offset);
+}
+
+
+/**
+ * \brief   Generic LWM2M handler to DELETE a resource.
+ *
+ *          This function is called from the underlying CoAP engine
+ *          if a DELETE access to a resource was requested. The target
+ *          of the request can be seen from the parameters.
+ *          The request will be forwarded to the LWM2M engine.
+ *
+ */
+static void lwm2m_delete(void *request, void *response, uint8_t *buffer,
+    uint16_t preferred_size, int32_t *offset, void* p_user)
+{
+  /* forward request */
+  lwm2m_engine_delete_handler((lwm2m_object_t*)p_user, request, response, buffer,
+      preferred_size, offset);
+}
+#endif /* #if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE */
+
+/*
+ *  --- Global Functions  ---------------------------------------------------*
+ */
+
+/*---------------------------------------------------------------------------*/
+/*
+* lwm2mApiInit()
+*/
+int8_t lwm2mApiInit( uint8_t* p_txBuf, uint16_t txBufLen,
+        void(*fn_tx)(uint16_t len, void* p_param), void* p_txParam )
+{
+    int8_t ret = 0;
+
+    /* set buffer description */
+    _p_txBuf = p_txBuf;
+    _txBufLen = txBufLen;
+    _p_txParam = p_txParam;
+
+    /* set Tx function */
+    _fn_tx = fn_tx;
+
+    /* register events */
+    evproc_regCallback( EVENT_TYPE_STATUS_CHANGE, _event_callback );
+    _status = e_lwm2m_api_status_stopped;
 
     return ret;
 } /* lwm2mApiInit() */
