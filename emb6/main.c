@@ -403,32 +403,16 @@ static s_demo_t* loc_demoAppsSet( void )
  */
 #if USE_TI_RTOS
 static void emb6_task(int argc, char **argv)
-{
-    char *pc_mac_addr = NULL;
-    uint16_t mac_addr_word;
-    s_ns_t st_netstack;
-    uint8_t ret;
-    e_nsErr_t err;
-    s_emb6_startup_params_t* ps_params = &emb6_startupParams;
-    /* Initialize variables */
-    err = NETSTK_ERR_NONE;
-    memset(&st_netstack, 0, sizeof(st_netstack));
-
-    if (argc > 1) {
-      pc_mac_addr = malloc(strlen(argv[1])+1);
-      strcpy(pc_mac_addr, argv[1]);
-    }
-    mac_addr_word = loc_parseMac(pc_mac_addr, MAC_ADDR_WORD);
-    free(pc_mac_addr);
-
-    /* Configure stack parameters */
-    loc_stackConf(mac_addr_word);
-
 #else
 static void emb6_task( void* p_params )
+#endif /* #if USE_TI_RTOS */
 {
     s_ns_t s_ns;
+#if USE_TI_RTOS
+    s_emb6_startup_params_t* ps_params = &emb6_startupParams;
+#else
     s_emb6_startup_params_t* ps_params = p_params;
+#endif /* #if USE_TI_RTOS */
     uint8_t ret;
     e_nsErr_t err;
 
