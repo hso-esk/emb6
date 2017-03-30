@@ -49,6 +49,8 @@
 #define LWM2M_FLOAT32_BITS  10
 #define LWM2M_FLOAT32_FRAC (1L << LWM2M_FLOAT32_BITS)
 
+#define LWM2M_ENDPOINT_NAME_MAX   32
+
 /* LWM2M / CoAP Content-Formats */
 typedef enum {
   LWM2M_TEXT_PLAIN = 1541,
@@ -57,7 +59,7 @@ typedef enum {
   LWM2M_OPAQUE     = 1544
 } lwm2m_content_format_t;
 
-void lwm2m_engine_init(void);
+void lwm2m_engine_init(char* epname);
 void lwm2m_engine_register_default_objects(void);
 void lwm2m_engine_use_bootstrap_server(int use);
 void lwm2m_engine_use_registration_server(int use);
