@@ -107,6 +107,7 @@
       srclen -= size;                                       \
     } while (0);
 
+
 #if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE
 /** Maximum number of LWM2M objects */
 #define LWM2MAPI_OBJ_MAX                5
@@ -116,16 +117,21 @@
 #define LWM2MAPI_RES_MAX                5
 #endif /* #if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE */
 
-#ifdef LWM2M_USE_BOOTSTRAP
 
-#define LWM2M_BOOTSTRAP_SERVER_IP(ipaddr)   uip_ip6addr(ipaddr,  0xbbbb, 0x0000, 0x0000, 0x0000, 0x000a, 0x0bff,0xfe0c, 0x0d0e)
-#define LWM2M_BOOTSTRAP_SERVER_PORT         UIP_HTONS(5583)
-#else
-#define LWM2M_SERVER_IP(ipaddr)             uip_ip6addr(ipaddr, 0xbbbb, 0x0000, 0x0000, 0x0000, 0x0a00, 0x27ff,0xfe23, 0x6fcd)
+//#define LWM2M_SERVER_IP(ipaddr)             uip_ip6addr(ipaddr, 0xbbbb, 0x0000, 0x0000, 0x0000, 0x0a00, 0x27ff,0xfe23, 0x6fcd)
 //#define LWM2M_SERVER_IP(ipaddr)             uip_ip6addr(ipaddr, 0xbbbb, 0x0000, 0x0000, 0x0000,0x6eec, 0xebff,0xfe67, 0xea04)
 //#define LWM2M_SERVER_IP(ipaddr)             uip_ip6addr(ipaddr, 0x2001, 0x0db8, 0x0100, 0xf101, 0x0a00, 0x27ff, 0xfe23, 0x6fcd)
-#define LWM2M_SERVER_PORT                   UIP_HTONS(5683)
-#endif /* #ifdef LWM2M_USE_BOOTSTRAP /* #ifdef LWM2M_USE_BOOTSTRAP */
+
+/** default server ip */
+#define LWM2MAPI_SERVER_IP                  0xbbbb, 0x0000, 0x0000, 0x0000, \
+                                            0x0a00, 0x27ff,0xfe23, 0x6fcd
+
+#define LWM2MAPI_SERVER_IP_CONV(dst, src)   uip_ip6addr(dst, src.u16[0], src.u16[1], src.u16[2], src.u16[3],   \
+                                                             src.u16[4], src.u16[5], src.u16[6], src.u16[7])
+/** default server port */
+#define LWM2MAPI_SERVER_PORT                5683
+/** default endpoint name */
+#define LWM2MAPI_ENDPOINT                   "emb6-serialLWM2M"
 
 
 
@@ -311,7 +317,7 @@ typedef uip_ipaddr_t lwm2mapi_cfg_ipaddr_t;
 typedef uint16_t lwm2mapi_cfg_port_t;
 
 /** Client Name configuration */
-typedef char* lwm2mapi_cfg_cliname_t;
+typedef char lwm2mapi_cfg_cliname_t[LWM2M_ENDPOINT_NAME_MAX];
 
 /** Format of a general RET response. */
 typedef uint8_t lwm2mapi_ret_t;
@@ -443,7 +449,11 @@ MEMB(lwm2mresource_storage, lwm2m_resource_t, LWM2MAPI_RES_MAX);
 
 
 /** server IP address */
-static uip_ipaddr_t server_ipaddr;
+static uip_ipaddr_t _serverIP = {.u16 = {LWM2MAPI_SERVER_IP}};
+/** server port */
+static uint16_t _serverPort = LWM2MAPI_SERVER_PORT;
+/** lwm2m endpoint name */
+static lwm2mapi_cfg_cliname_t _epName = LWM2MAPI_ENDPOINT;
 
 
 /*
@@ -710,6 +720,7 @@ static int8_t _stopLWM2M( void )
 static int8_t _startLWM2M( void )
 {
     int8_t ret = 0;
+    uip_ipaddr_t tmpIP;
 
 #if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE
     /* initialize memory */
@@ -719,18 +730,13 @@ static int8_t _startLWM2M( void )
     memb_init( &lwm2mresource_storage );
 #endif /* #if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE */
 
-#ifdef LWM2M_USE_BOOTSTRAP
-    LWM2M_BOOTSTRAP_SERVER_IP(&server_ipaddr);
-    lwm2m_engine_use_bootstrap_server(1);
-    lwm2m_engine_register_with_bootstrap_server( &server_ipaddr, LWM2M_BOOTSTRAP_SERVER_PORT );
-#else
-    LWM2M_SERVER_IP(&server_ipaddr);
+    LWM2MAPI_SERVER_IP_CONV( &tmpIP, _serverIP );
     lwm2m_engine_use_registration_server(1);
-    lwm2m_engine_register_with_server( &server_ipaddr, LWM2M_SERVER_PORT );
-#endif /* #ifdef LWM2M_USE_BOOTSTRAP */
+    lwm2m_engine_register_with_server( &tmpIP, UIP_HTONS(_serverPort) );
+
 
     /* Initialize the OMA LWM2M engine */
-    lwm2m_engine_init();
+    lwm2m_engine_init( _epName );
 
     /* Register default LWM2M objects */
     lwm2m_engine_register_default_objects();
@@ -856,6 +862,42 @@ static int32_t _hndl_cfgSet( uint8_t* p_cmd, uint16_t cmdLen,
 
   switch( cfgsetId )
   {
+    case e_lwm2m_api_cfgid_srvip:
+
+      /* set the configuration value */
+      EMB6_ASSERT_RET( rplLen >= sizeof(lwm2mapi_cfg_ipaddr_t), -1 );
+      for( int i = 0; i < (sizeof(_serverIP ) / sizeof(uint16_t)); i++ )
+      {
+        LWM2M_API_GET_FIELD( _serverIP.u16[i], p_data,
+            cmdLen, uint16_t );
+
+        _serverIP.u16[i] = UIP_HTONS(_serverIP.u16[i]);
+      }
+      break;
+
+    /* Server port shall be set */
+    case e_lwm2m_api_cfgid_srvport:
+
+      /* get the configuration value */
+      EMB6_ASSERT_RET( (cmdLen >= sizeof(lwm2mapi_cfg_port_t)), -3 );
+      LWM2M_API_GET_FIELD( _serverPort, p_data,
+          cmdLen, lwm2mapi_cfg_port_t );
+
+      _serverPort = UIP_HTONS( _serverPort );
+      break;
+
+    /* Client name shall be set  */
+    case e_lwm2m_api_cfgid_cliname:
+
+      /* set the configuration value */
+      EMB6_ASSERT_RET( cmdLen <= sizeof(lwm2mapi_cfg_cliname_t), -3 );
+      EMB6_ASSERT_RET( cmdLen >= 0, -3 );
+
+      memset( _epName, 0, sizeof(_epName) );
+      LWM2M_API_GET_FIELD_MEM( _epName, p_data, cmdLen,
+          cmdLen );
+      break;
+
 
     default:
       ret = -3;
@@ -906,6 +948,32 @@ static int32_t _hndl_cfgGet( uint8_t* p_cmd, uint16_t cmdLen,
 
   switch( cfgsetId )
   {
+    case e_lwm2m_api_cfgid_srvip:
+
+      /* set the configuration value */
+      EMB6_ASSERT_RET( rplLen >= sizeof(lwm2mapi_cfg_ipaddr_t), -1 );
+      for( int i = 0; i < (sizeof(_serverIP ) / sizeof(uint16_t)); i++ )
+      {
+        LWM2M_API_SET_FIELD( p_txBuf, rplLen, uint16_t,
+            UIP_HTONS( _serverIP.u16[i] ) );
+      }
+      break;
+
+    case e_lwm2m_api_cfgid_srvport:
+
+      /* set the configuration value */
+      EMB6_ASSERT_RET( rplLen >= sizeof(lwm2mapi_cfg_port_t), -1 );
+      LWM2M_API_SET_FIELD( p_txBuf, rplLen, lwm2mapi_cfg_port_t,
+          UIP_HTONS( _serverPort ) );
+      break;
+
+    case e_lwm2m_api_cfgid_cliname:
+
+      /* set the configuration value */
+      EMB6_ASSERT_RET( rplLen >= sizeof(lwm2mapi_cfg_cliname_t), -1 );
+      LWM2M_API_SET_FIELD_MEM( p_txBuf, rplLen, _epName,
+          strlen( _epName ) );
+      break;
 
     default:
       ret = -3;
