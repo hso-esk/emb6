@@ -849,6 +849,7 @@ static int32_t _hndl_cfgSet( uint8_t* p_cmd, uint16_t cmdLen,
 {
   int32_t ret = 0;
   uint8_t* p_data = p_cmd;
+  int i;
 
   EMB6_ASSERT_RET( p_cmd != NULL, 0 );
   EMB6_ASSERT_RET( p_rpl != NULL, 0 );
@@ -866,7 +867,7 @@ static int32_t _hndl_cfgSet( uint8_t* p_cmd, uint16_t cmdLen,
 
       /* set the configuration value */
       EMB6_ASSERT_RET( rplLen >= sizeof(lwm2mapi_cfg_ipaddr_t), -1 );
-      for( int i = 0; i < (sizeof(_serverIP ) / sizeof(uint16_t)); i++ )
+      for( i = 0; i < (sizeof(_serverIP ) / sizeof(uint16_t)); i++ )
       {
         LWM2M_API_GET_FIELD( _serverIP.u16[i], p_data,
             cmdLen, uint16_t );
@@ -891,7 +892,7 @@ static int32_t _hndl_cfgSet( uint8_t* p_cmd, uint16_t cmdLen,
 
       /* set the configuration value */
       EMB6_ASSERT_RET( cmdLen <= sizeof(lwm2mapi_cfg_cliname_t), -3 );
-      EMB6_ASSERT_RET( cmdLen >= 0, -3 );
+      EMB6_ASSERT_RET( cmdLen > 0, -3 );
 
       memset( _epName, 0, sizeof(_epName) );
       LWM2M_API_GET_FIELD_MEM( _epName, p_data, cmdLen,
@@ -932,6 +933,7 @@ static int32_t _hndl_cfgGet( uint8_t* p_cmd, uint16_t cmdLen,
   int32_t ret = 0;
   uint8_t* p_data = p_cmd;
   uint8_t* p_txBuf = p_rpl;
+  int i;
 
   EMB6_ASSERT_RET( p_cmd != NULL, 0 );
   EMB6_ASSERT_RET( p_rpl != NULL, 0 );
@@ -952,7 +954,7 @@ static int32_t _hndl_cfgGet( uint8_t* p_cmd, uint16_t cmdLen,
 
       /* set the configuration value */
       EMB6_ASSERT_RET( rplLen >= sizeof(lwm2mapi_cfg_ipaddr_t), -1 );
-      for( int i = 0; i < (sizeof(_serverIP ) / sizeof(uint16_t)); i++ )
+      for( i = 0; i < (sizeof(_serverIP ) / sizeof(uint16_t)); i++ )
       {
         LWM2M_API_SET_FIELD( p_txBuf, rplLen, uint16_t,
             UIP_HTONS( _serverIP.u16[i] ) );
