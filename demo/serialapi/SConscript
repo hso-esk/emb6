@@ -69,7 +69,6 @@ serialapi = {
         ('LOGGER_LEVEL', 3),
         ('HAL_SUPPORT_SLIPUART', 1),
         ('HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX', 1),
-        ('LWM2M_ENGINE_CLIENT_ENDPOINT_NAME', '\\"emb6-LWM2MSerial\\"'),
         ('LWM2M_DEVICE_MANUFACTURER', '\\"ivESK\\"'),
         ('LWM2M_DEVICE_TYPE', '\\"Demo-Device\\"'),
         ('LWM2M_DEVICE_MODEL_NUMBER', '\\"NIKI\\"'),
