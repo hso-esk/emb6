@@ -60,9 +60,9 @@ LIST(observers_list);
 /*---------------------------------------------------------------------------*/
 /*- Internal API ------------------------------------------------------------*/
 /*---------------------------------------------------------------------------*/
-coap_observer_t *
-coap_add_observer(uip_ipaddr_t *addr, uint16_t port, const uint8_t *token,
-                  size_t token_len, const char *uri)
+static coap_observer_t *
+add_observer(uip_ipaddr_t *addr, uint16_t port, const uint8_t *token,
+             size_t token_len, const char *uri, int uri_len)
 {
   /* Remove existing observe relationship, if any. */
   coap_remove_observer_by_uri(addr, port, uri);
@@ -70,7 +70,12 @@ coap_add_observer(uip_ipaddr_t *addr, uint16_t port, const uint8_t *token,
   coap_observer_t *o = memb_alloc(&observers_memb);
 
   if(o) {
-    o->url = uri;
+    int max = sizeof(o->url) - 1;
+    if(max > uri_len) {
+      max = uri_len;
+    }
+    memcpy(o->url, uri, max);
+    o->url[max] = 0;
     o->addr = *addr;
     o->port = port;
     o->token_len = token_len;
@@ -180,9 +185,8 @@ coap_remove_observer_by_mid(uip_ipaddr_t *addr, uint16_t port, uint16_t mid)
 void
 coap_notify_observers(resource_t *resource)
 {
-	coap_notify_observers_sub(resource, NULL);
+  coap_notify_observers_sub(resource, NULL);
 }
-
 void
 coap_notify_observers_sub(resource_t *resource, const char *subpath)
 {
@@ -190,6 +194,7 @@ coap_notify_observers_sub(resource_t *resource, const char *subpath)
   coap_packet_t notification[1]; /* this way the packet can be treated as pointer as usual */
   coap_packet_t request[1]; /* this way the packet can be treated as pointer as usual */
   coap_observer_t *obs = NULL;
+
   int url_len, obs_url_len;
   char url[COAP_OBSERVER_URL_LEN];
 
@@ -258,7 +263,6 @@ coap_notify_observers_sub(resource_t *resource, const char *subpath)
     }
   }
 }
-
 /*---------------------------------------------------------------------------*/
 void
 coap_observe_handler(resource_t *resource, void *request, void *response)
@@ -267,14 +271,12 @@ coap_observe_handler(resource_t *resource, void *request, void *response)
   coap_packet_t *const coap_res = (coap_packet_t *)response;
   coap_observer_t * obs;
 
-  //static char content[16];
-
   if(coap_req->code == COAP_GET && coap_res->code < 128) { /* GET request and response without error code */
     if(IS_OPTION(coap_req, COAP_OPTION_OBSERVE)) {
       if(coap_req->observe == 0) {
-        obs = coap_add_observer(&UIP_IP_BUF->srcipaddr, UIP_UDP_BUF->srcport,
-                                coap_req->token, coap_req->token_len,
-                                resource->url);
+         obs = add_observer(&UIP_IP_BUF->srcipaddr, UIP_UDP_BUF->srcport,
+                            coap_req->token, coap_req->token_len,
+                            coap_req->uri_path, coap_req->uri_path_len);
        if(obs) {
           coap_set_header_observe(coap_res, (obs->obs_counter)++);
           /*
@@ -282,13 +284,14 @@ coap_observe_handler(resource_t *resource, void *request, void *response)
            * A subscription should return the same representation as a normal GET.
            * Uncomment if you want an information about the avaiable observers.
            */
-          /*
-           * coap_set_payload(coap_res,
-           *                  content,
-           *                  snprintf(content, sizeof(content), "Added %u/%u",
-           *                           list_length(observers_list),
-           *                           COAP_MAX_OBSERVERS));
-           */
+#if 0
+          static char content[16];
+          coap_set_payload(coap_res,
+                           content,
+                           snprintf(content, sizeof(content), "Added %u/%u",
+                                    list_length(observers_list),
+                                    COAP_MAX_OBSERVERS));
+#endif
         } else {
           coap_res->code = SERVICE_UNAVAILABLE_5_03;
           coap_set_payload(coap_res, "TooManyObservers", 16);
