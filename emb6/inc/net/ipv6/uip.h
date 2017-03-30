@@ -1222,8 +1222,8 @@ struct uip_udp_conn *uip_udp_new(const uip_ipaddr_t *ripaddr, uint16_t rport);
 #      define UIP_HTONS(n) (n)
 #      define UIP_HTONL(n) (n)
 #   else /* UIP_BYTE_ORDER == UIP_BIG_ENDIAN */
-#      define UIP_HTONS(n)  (uint16_t)(((n) <<  8) | ((n) >>  8))
-#      define UIP_HTONL(n)  (uint32_t)(((n) << 16) | ((n) >> 16))
+#      define UIP_HTONS(n) (uint16_t)((((uint16_t) (n)) << 8) | (((uint16_t) (n)) >> 8))
+#      define UIP_HTONL(n) (((uint32_t)UIP_HTONS(n) << 16) | UIP_HTONS((uint32_t)(n) >> 16))
 #   endif /* UIP_BYTE_ORDER == UIP_BIG_ENDIAN */
 #else
 #error "UIP_HTONS already defined!"
