@@ -84,7 +84,7 @@
 #define BS_REMOTE_PORT     UIP_HTONS(5685)
 
 static const lwm2m_object_t *objects[MAX_OBJECTS];
-static char endpoint[32];
+static char endpoint[LWM2M_ENDPOINT_NAME_MAX];
 static char rd_data[128]; /* allocate some data for the RD */
 
 static uip_ipaddr_t server_ipaddr;
@@ -372,7 +372,7 @@ lwm2m_engine_callback(c_event_t c_event, p_data_t p_data)
 
 /*---------------------------------------------------------------------------*/
 void
-lwm2m_engine_init(void)
+lwm2m_engine_init(char* epname)
 {
 #ifdef LWM2M_ENGINE_CLIENT_ENDPOINT_NAME
 
@@ -381,42 +381,50 @@ lwm2m_engine_init(void)
 
 #else /* LWM2M_ENGINE_CLIENT_ENDPOINT_NAME */
 
-  int len, i;
-  uint8_t state;
-  uip_ipaddr_t *ipaddr;
-  char client[sizeof(endpoint)];
-
-  len = strlen(LWM2M_ENGINE_CLIENT_ENDPOINT_PREFIX);
-  /* ensure that this fits with the hex-nums */
-  if(len > sizeof(client) - 13) {
-    len = sizeof(client) - 13;
+  if( epname != NULL )
+  {
+    snprintf(endpoint, sizeof(endpoint) - 1,
+               "?ep=%s", epname);
   }
-  memcpy(client, LWM2M_ENGINE_CLIENT_ENDPOINT_PREFIX, len);
+  else
+  {
+    int len, i;
+    uint8_t state;
+    uip_ipaddr_t *ipaddr;
+    char client[sizeof(endpoint)];
 
-  /* pick an IP address that is PREFERRED or TENTATIVE */
-  ipaddr = NULL;
-  for(i = 0; i < UIP_DS6_ADDR_NB; i++) {
-    state = uip_ds6_if.addr_list[i].state;
-    if(uip_ds6_if.addr_list[i].isused &&
-       (state == ADDR_TENTATIVE || state == ADDR_PREFERRED)) {
-      ipaddr = &(uip_ds6_if.addr_list[i]).ipaddr;
-      break;
+    len = strlen(LWM2M_ENGINE_CLIENT_ENDPOINT_PREFIX);
+    /* ensure that this fits with the hex-nums */
+    if(len > sizeof(client) - 13) {
+      len = sizeof(client) - 13;
     }
-  }
+    memcpy(client, LWM2M_ENGINE_CLIENT_ENDPOINT_PREFIX, len);
 
-  if(ipaddr != NULL) {
-    for(i = 0; i < 6; i++) {
-      /* assume IPv6 for now */
-      uint8_t b = ipaddr->u8[10 + i];
-      client[len++] = (b >> 4) > 9 ? 'A' - 10 + (b >> 4) : '0' + (b >> 4);
-      client[len++] = (b & 0xf) > 9 ? 'A' - 10 + (b & 0xf) : '0' + (b & 0xf);
+    /* pick an IP address that is PREFERRED or TENTATIVE */
+    ipaddr = NULL;
+    for(i = 0; i < UIP_DS6_ADDR_NB; i++) {
+      state = uip_ds6_if.addr_list[i].state;
+      if(uip_ds6_if.addr_list[i].isused &&
+         (state == ADDR_TENTATIVE || state == ADDR_PREFERRED)) {
+        ipaddr = &(uip_ds6_if.addr_list[i]).ipaddr;
+        break;
+      }
     }
-  }
 
-  /* a zero at end of string */
-  client[len] = 0;
-  /* create endpoint */
-  snprintf(endpoint, sizeof(endpoint) - 1, "?ep=%s", client);
+    if(ipaddr != NULL) {
+      for(i = 0; i < 6; i++) {
+        /* assume IPv6 for now */
+        uint8_t b = ipaddr->u8[10 + i];
+        client[len++] = (b >> 4) > 9 ? 'A' - 10 + (b >> 4) : '0' + (b >> 4);
+        client[len++] = (b & 0xf) > 9 ? 'A' - 10 + (b & 0xf) : '0' + (b & 0xf);
+      }
+    }
+
+    /* a zero at end of string */
+    client[len] = 0;
+    /* create endpoint */
+    snprintf(endpoint, sizeof(endpoint) - 1, "?ep=%s", client);
+  }
 
 #endif /* LWM2M_ENGINE_CLIENT_ENDPOINT_NAME */
 

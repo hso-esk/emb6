@@ -554,6 +554,7 @@ void emb6_process( int32_t us_delay )
           etimer_request_poll();
           bsp_delayUs(delay);
 
+#if UIP_CONF_IPV6_RPL
 #if EMB6_INIT_ROOT==TRUE
           if( emb6_getStatus() == STACK_STATUS_ACTIVE )
             loc_set_status( STACK_STATUS_NETWORK );
@@ -572,6 +573,7 @@ void emb6_process( int32_t us_delay )
               loc_set_status( STACK_STATUS_ACTIVE );
           }
 #endif /* #if EMB6_INIT_ROOT==TRUE */
+#endif
 
         }
     }while(runLoop);

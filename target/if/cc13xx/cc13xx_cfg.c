@@ -75,6 +75,11 @@ uint32_t pOverrides[] =
     HW_REG_OVERRIDE(0x6088,0x001A),
 // TX power override
     ADI_REG_OVERRIDE(0,12,0xF8),
+#if NETSTK_CFG_IEEE_802154G_EN
+	  /* Overrides for CRC16 functionality */
+	  (uint32_t)0x943,
+	  (uint32_t)0x963,
+#endif
     (uint32_t)0xFFFFFFFF,
 };
 
@@ -136,9 +141,6 @@ rfc_CMD_FS_t RF_802_15_4_cmdFs =
     .synthConf.bTxMode = 0x0,
     .synthConf.refFreq = 0x0,
     .__dummy0 = 0x00,
-    .midPrecal = 0x00,
-    .ktPrecal = 0x00,
-    .tdcPrecal = 0x0000,
 };
 
 

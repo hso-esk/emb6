@@ -44,7 +44,7 @@
  *  --- Module Description ---------------------------------------------------*
  */
 /**
- *  \file       demo_main.h
+ *  \file       main.h
  *  \author     Institute of reliable Embedded Systems
  *              and Communication Electronics
  *  \date       $Date$
@@ -57,7 +57,6 @@
  *              modules before it starts operation.
  */
 
-
 /*
  *  --- Includes -------------------------------------------------------------*
  */
@@ -66,7 +65,7 @@
 #include "bsp.h"
 #include "etimer.h"
 
-#define LOGGER_ENABLE         LOGGER_MAIN
+#define  LOGGER_ENABLE        LOGGER_MAIN
 #include "logger.h"
 
 #if DEMO_USE_UDP
@@ -116,10 +115,6 @@
 #include "demo_aptb.h"
 #endif /* #if DEMO_USE_APTB */
 
-#if DEMO_USE_TESTSUITE
-#include "demo_tsemb6.h"
-#endif /* #if DEMO_USE_TESTSUITE */
-
 #if DEMO_USE_EXTIF
 #include "slip_radio.h"
 #include "slip.h"
@@ -144,9 +139,29 @@
 #include "task.h"
 #include "queue.h"
 #include "semphr.h"
-#endif /* #ifndef EMB6_PROC_DELAY */
+#endif /* #if USE_FREERTOS */
 
+#if USE_TI_RTOS
+/* XDCtools Header files */
+#include <stdlib.h>
+#include <xdc/std.h>
+#include <xdc/cfg/global.h>
+#include <xdc/runtime/System.h>
+#include <xdc/runtime/Error.h>
 
+/* BIOS Header files */
+#include <ti/sysbios/BIOS.h>
+#include <ti/sysbios/knl/Task.h>
+#include <ti/drivers/UART.h>
+
+/* Example/Board Header files */
+#include "ti_rtos_src/Board.h"
+#include "ti_rtos_src/sf_mcu_timerRtos.h"
+
+#include "emb6_task.h"
+#include "emb6_semaphore.h"
+
+#endif /* #if USE_TI_RTOS */
 /*
  * --- Macro Definitions --------------------------------------------------- *
  */
@@ -163,10 +178,9 @@
 
 #if USE_FREERTOS
 /* Task priorities. */
-#define mainEMB6_TASK_PRIORITY              ( tskIDLE_PRIORITY + 1 )
-#define mainLED_TASK_PRIORITY               ( tskIDLE_PRIORITY + 2 )
+#define mainEMB6_TASK_PRIORITY          ( tskIDLE_PRIORITY + 1 )
+#define mainLED_TASK_PRIORITY           ( tskIDLE_PRIORITY + 2 )
 #endif /* #if USE_FREERTOS */
-
 
 #define EMB6_DEMO_SET( i,name, demos )      do{                                             \
                                               if( (i < EMB6_DEMOS_MAX) && (i >= 0) )        \
@@ -180,7 +194,9 @@
                                                 i = -1;                                     \
                                             }while(0);
 
-
+#if USE_FREERTOS & USE_TI_RTOS
+#error Please choose only one RTOS
+#endif
 /*
  *  --- Type Definitions -----------------------------------------------------*
  */
@@ -192,10 +208,8 @@ typedef struct
 {
   /** MAC address */
   uint16_t ui_macAddr;
-
   /** Demos */
   s_demo_t* p_demos;
-
 }s_emb6_startup_params_t;
 
 #if USE_FREERTOS
@@ -239,13 +253,14 @@ static uint16_t loc_parseMac( const char* mac, uint16_t defaultMac );
  * function definition. */
 static void loc_stackConf(uint16_t mac_addr_word);
 
-/* Set demo applications. For more information please refer to the
- * function definition. */
-static s_demo_t* loc_demoAppsSet( void );
-
-/* Main emb6 task. For more information please refer to the
- * function definition. */
+/**
+ * emb6 task.
+ */
+#if USE_TI_RTOS
+static void emb6_task(int argc, char **argv);
+#else
 static void emb6_task( void* p_params );
+#endif /* #if USE_TI_RTOS */
 
 #if USE_FREERTOS
 /* FreeRTOS LED task. For more information please refer to the
@@ -260,7 +275,6 @@ static void prvSetupHardware( void );
  * information please refer to the function definition. */
 static void prvLowPowerMode1( void );
 #endif /* #if USE_FREERTOS */
-
 
 /*
  *  --- Local Functions ---------------------------------------------------- *
@@ -372,7 +386,6 @@ static s_demo_t* loc_demoAppsSet( void )
 #if DEMO_USE_DTLS
     EMB6_DEMO_SET( ret, dtls, emb6_demos );
 #endif /* #if DEMO_USE_DTLS */
-
     if( ret > 0 )
       return emb6_demos;
     else
@@ -392,10 +405,18 @@ static s_demo_t* loc_demoAppsSet( void )
  *
  * \param   p_params      Parameters used to execute the stack.
  */
+#if USE_TI_RTOS
+static void emb6_task(int argc, char **argv)
+#else
 static void emb6_task( void* p_params )
+#endif /* #if USE_TI_RTOS */
 {
     s_ns_t s_ns;
+#if USE_TI_RTOS
+    s_emb6_startup_params_t* ps_params = &emb6_startupParams;
+#else
     s_emb6_startup_params_t* ps_params = p_params;
+#endif /* #if USE_TI_RTOS */
     uint8_t ret;
     e_nsErr_t err;
 
@@ -450,6 +471,7 @@ static void emb6_task( void* p_params )
     return;
 }
 
+
 #if USE_FREERTOS
 /*-----------------------------------------------------------*/
 static void vLEDTask( void *pvParameters )
@@ -500,30 +522,25 @@ static void prvLowPowerMode1( void )
 }
 #endif /* #if USE_FREERTOS */
 
-
-
 /*
  *  --- Main function ------------------------------------------------------ *
  */
-
 #if defined(MAIN_WITH_ARGS)
-int main( int argc, char **argv )
+int main(int argc, char **argv)
 #else
-int main( void )
+int main(void)
 #endif /* #if defined(MAIN_WITH_ARGS) */
 {
-  /* set startup parameter to zero */
-  memset( &emb6_startupParams, 0, sizeof(emb6_startupParams) );
-
+    /* set startup parameter to zero */
+    memset(&emb6_startupParams, 0, sizeof(emb6_startupParams));
 
 #if defined(MAIN_WITH_ARGS)
-  if( argc > 1 )
-  {
-    emb6_startupParams.ui_macAddr = loc_parseMac(argv[1], MAC_ADDR_WORD);
-  }
+    if (argc > 1) {
+      emb6_startupParams.ui_macAddr = loc_parseMac(argv[1], MAC_ADDR_WORD);
+    }
 #endif /* #if defined(MAIN_WITH_ARGS) */
-  emb6_startupParams.ui_macAddr = loc_parseMac(NULL, MAC_ADDR_WORD);
-  emb6_startupParams.p_demos = loc_demoAppsSet();
+    emb6_startupParams.ui_macAddr = loc_parseMac(NULL, MAC_ADDR_WORD);
+    emb6_startupParams.p_demos = loc_demoAppsSet();
 
 #if USE_FREERTOS
     ledTaskParams.en = 1;
@@ -547,6 +564,24 @@ int main( void )
     for the idle task to be created.  In this case the heap size is set by
     configTOTAL_HEAP_SIZE in FreeRTOSConfig.h. */
     for( ;; );
+#elif USE_TI_RTOS
+    Error_Block eb;
+
+    /* Call board init functions */
+    Board_initGeneral();
+    Board_initUART();
+
+    /* Initialize error parameters */
+    Error_init(&eb);
+    /* Initialize serial task */
+    emb6_task_init( (ti_sysbios_knl_Task_FuncPtr) &emb6_task, &eb);
+    /* Initialize semaphore to pend task */
+    semaphore_init(&eb);
+    /* Initialize the periodical clock source of the wmbus stack */
+    sf_mcu_timerRtos_init(2000U, &eb);
+
+    /* Start BIOS */
+    BIOS_start();
 #else
     emb6_task( &emb6_startupParams );
 #endif /* #if USE_FREERTOS */

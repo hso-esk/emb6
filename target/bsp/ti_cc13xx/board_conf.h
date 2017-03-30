@@ -26,16 +26,17 @@
 /*============================================================================*/
 
 #ifndef TX_POWER
-#define TX_POWER                    		(int8_t  )( 14 )
+#define TX_POWER                    (int8_t  )( 14 )
 #endif
 
 #ifndef RX_SENSITIVITY
-#define RX_SENSITIVITY              		(int8_t  )(  0 )    /* FIXME use proper configuration */
+#define RX_SENSITIVITY              (int8_t  )(  0 )    /* FIXME use proper configuration */
 #endif
 
 #ifndef MODULATION
-#define MODULATION                  		MODULATION_2FSK50   /* FIXME use proper configuration */
+#define MODULATION                  MODULATION_2FSK50
 #endif
+
 
 /* enable auto-acknowledgment of radio driver */
 #ifndef NETSTK_CFG_RF_SW_AUTOACK_EN
@@ -62,7 +63,7 @@
 
 /** Enable  HAL SUPPORT SLIPUART_RX */
 #ifndef HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX
-#define HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX                TRUE
+#define HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX                FALSE
 #endif /* #ifndef HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX */
 
 /** Enable LED0 */
@@ -97,9 +98,9 @@
  * This function initializes the netstack structure and thus sets which drivers are used.
  *
  * @param   p_netstk Pointer to net stack structure.
- * @return  1 if success; otherwise 0.
+ * @return  0 if function succeeded, otherwise function failed.
  */
-int8_t board_conf(s_ns_t* p_netstk);
+uint8_t board_conf(s_ns_t* p_netstk);
 
 #endif /* _BOARD_CONF_H_ */
 
