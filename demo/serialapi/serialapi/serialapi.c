@@ -68,6 +68,7 @@
 #include "evproc.h"
 #include "serialapi.h"
 #include "sf_serialmac.h"
+#include "uip.h"
 
 
 /*
@@ -688,6 +689,8 @@ static int32_t _hndl_cfgSet( uint8_t* p_cmd, uint16_t cmdLen,
       EMB6_ASSERT_RET( (cmdLen >= sizeof(serialapi_cfg_panid_t)), -3 );
       SERIAL_API_GET_FIELD( mac_phy_config.pan_id, p_data,
           cmdLen, serialapi_cfg_panid_t );
+
+      mac_phy_config.pan_id = UIP_HTONS( mac_phy_config.pan_id );
       break;
     }
 
@@ -784,7 +787,7 @@ static int32_t _hndl_cfgGet( uint8_t* p_cmd, uint16_t cmdLen,
       /* set the configuration value */
       EMB6_ASSERT_RET( rplLen >= sizeof(serialapi_cfg_panid_t), -1 );
       SERIAL_API_SET_FIELD( p_txBuf, rplLen, serialapi_cfg_panid_t,
-          mac_phy_config.pan_id );
+          UIP_HTONS( mac_phy_config.pan_id ) );
       break;
 
 
