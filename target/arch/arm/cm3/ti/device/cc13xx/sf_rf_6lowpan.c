@@ -173,23 +173,23 @@ uint8_t sf_rf_6lowpan_sendBlocking(uint8_t *pc_data, uint16_t  i_len)
   /* init tx cmd */
   if (!sf_rf_init_tx(pc_data,i_len))
   {
-    bsp_led( HAL_LED3, EN_BSP_LED_OP_ON );
     return 0;
   }
   /* call the routine with tx state to send the packet*/
   status = sf_rf_switchState(RF_STATUS_TX);
   if(status != ROUTINE_DONE && status != ROUTINE_ERROR_TX_NOACK )
   {
-      bsp_led( HAL_LED3, EN_BSP_LED_OP_ON );
       return 0;
   }
   else
   {
-        #if CC13XX_TX_LED_ENABLED
-          bsp_led( HAL_LED2, EN_BSP_LED_OP_BLINK );
-        #endif
+#if CC13XX_TX_LED_ENABLED
+         bsp_led( HAL_LED2, EN_BSP_LED_OP_BLINK );
+#endif /* #if CC13XX_TX_LED_ENABLED */
+
         /* Set the transceiver in rx mode */
-          sf_rf_switchState(RF_STATUS_RX_LISTEN);
+        sf_rf_switchState(RF_STATUS_RX_LISTEN);
+
         if(status== ROUTINE_DONE)
             return 1;
         else
@@ -576,6 +576,10 @@ static void rx_call_back(uint32_t l_flag)
 {
   if(IRQ_RX_OK == (l_flag & IRQ_RX_OK))
   {
+#if CC13XX_RX_LED_ENABLED
+         bsp_led( HAL_LED3, EN_BSP_LED_OP_BLINK );
+#endif /* #if CC13XX_RX_LED_ENABLED */
+
       if (cc1310.tx.Tx_waiting_Ack)
       {
           cc1310.rx.p_lastPkt = (uint8_t*)(&cc1310.rx.p_currentDataEntry->data) ;
@@ -599,17 +603,11 @@ static void rx_call_back(uint32_t l_flag)
       }
       /* set RX mode again */
       sf_rf_switchState(RF_STATUS_RX_LISTEN);
-      bsp_led( HAL_LED1, EN_BSP_LED_OP_OFF );
-      bsp_led( HAL_LED0, EN_BSP_LED_OP_ON );
-      bsp_led( HAL_LED3, EN_BSP_LED_OP_BLINK );
   }
   else if(IRQ_RX_NOK == (l_flag & IRQ_RX_NOK))
   {
     /* set RX mode again */
     sf_rf_switchState(RF_STATUS_RX_LISTEN);
-    bsp_led( HAL_LED1, EN_BSP_LED_OP_ON );
-    bsp_led( HAL_LED0, EN_BSP_LED_OP_OFF );
-    bsp_led( HAL_LED3, EN_BSP_LED_OP_BLINK );
   }
   else if(IRQ_INTERNAL_ERROR == (l_flag & IRQ_INTERNAL_ERROR))
   {
@@ -619,16 +617,12 @@ static void rx_call_back(uint32_t l_flag)
       /* Send RX command to the radio */
       if(sf_rf_switchState(RF_STATUS_RX_LISTEN)!= ROUTINE_DONE)
           sf_rf_switchState(RF_STATUS_ERROR);
-    bsp_led( HAL_LED1, EN_BSP_LED_OP_ON );
-    bsp_led( HAL_LED0, EN_BSP_LED_OP_ON );
   }
   else if((IRQ_RX_BUF_FULL == (l_flag & IRQ_RX_BUF_FULL)) || (IRQ_RX_IGNORED == (l_flag & IRQ_RX_IGNORED))
           || (IRQ_RX_ABORTED == (l_flag & IRQ_RX_ABORTED)) )
   {
     /* set RX mode again */
     sf_rf_switchState(RF_STATUS_RX_LISTEN);
-    bsp_led( HAL_LED1, EN_BSP_LED_OP_ON );
-    bsp_led( HAL_LED0, EN_BSP_LED_OP_ON );
   }
 }
 
@@ -671,7 +665,6 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
       gps_rf_cmdHandle = RF_postCmd(gps_rfHandle, (RF_Op*)cc1310.conf.ps_cmdFs, RF_PriorityNormal, NULL, 0);
       if(gps_rf_cmdHandle < 0 )
        {
-          bsp_led( HAL_LED3, EN_BSP_LED_OP_ON );
           return ROUTINE_ERROR_FS_CMD ;
        }
 #else
@@ -683,7 +676,6 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
       /* enable radio again */
       if (RFC_enableRadio() != RFC_OK)
       {
-        bsp_led( HAL_LED3, EN_BSP_LED_OP_ON );
         return ROUTINE_ERROR_ENABLE_RADIO;
       }
 
@@ -695,7 +687,6 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
         cmdStatus = RFC_sendRadioOp(cc1310.conf.ps_cmdFs);
         if(cmdStatus != RFC_CMDSTATUS_DONE)
         {
-          bsp_led( HAL_LED3, EN_BSP_LED_OP_ON );
           return ROUTINE_ERROR_FS_CMD ;
         }
       }
@@ -717,7 +708,6 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
       if(RFQueue_defineQueue(&cc1310.rx.dataQueue, RxBuff, RX_BUFF_SIZE , 2 , 150 + 3 ) != 0x00U)
       {
         /* Failed to allocate space for all data entries */
-        bsp_led( HAL_LED3, EN_BSP_LED_OP_ON );
         return ROUTINE_ERROR_INIT_QUEUE ;
       }
 
@@ -731,7 +721,6 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
     }
     else
     {
-      bsp_led( HAL_LED3, EN_BSP_LED_OP_ON );
       return ROUTINE_ERROR_INIT_RF ;
     }
   case RF_STATUS_IDLE :
@@ -815,7 +804,6 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
       /* Since we sent a blocking cmd then we check the state */
       if(cmdStatus != RFC_CMDSTATUS_DONE)
       {
-        bsp_led( HAL_LED3, EN_BSP_LED_OP_ON );
         return ROUTINE_ERROR_TX_CMD ;
       }
       else
@@ -855,7 +843,6 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
     /*  check the return value */
     if(gps_rf_cmdHandle < 0 )
     {
-      bsp_led( HAL_LED3, EN_BSP_LED_OP_ON );
       return ROUTINE_ERROR_RX_CMD ;
     }
     return ROUTINE_DONE ;
@@ -866,7 +853,6 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
     cmdStatus=RFC_sendRadioOp_nb((rfc_radioOp_t*)cc1310.rx.p_cmdPropRxAdv , NULL);
     if(cmdStatus != RFC_CMDSTATUS_DONE)
     {
-      bsp_led( HAL_LED3, EN_BSP_LED_OP_ON );
       return ROUTINE_ERROR_RX_CMD ;
     }
     return ROUTINE_DONE ;
@@ -1161,7 +1147,6 @@ static bool sf_rf_update_run_frequency(uint16_t frequency, uint16_t fractFreq)
     /* Send CMD_FS command to RF Core */
     if(RFC_sendRadioOp(cc1310.conf.ps_cmdFs) != RFC_CMDSTATUS_DONE)
     {
-      bsp_led( HAL_LED3, EN_BSP_LED_OP_ON );
       return false ;
     }
 #endif
