@@ -101,10 +101,6 @@ int8_t demo_lwm2mInit(void)
 
     /* Initialize the OMA LWM2M engine */
     lwm2m_engine_init();
-
-    /* Register default LWM2M objects */
-    lwm2m_engine_register_default_objects();
-
     return 0;
 }
 

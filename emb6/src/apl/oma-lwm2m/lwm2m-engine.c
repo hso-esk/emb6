@@ -44,6 +44,7 @@
 #include "emb6.h"
 #include "lwm2m-engine.h"
 #include "lwm2m-object.h"
+#include "lwm2m-server.h"
 #include "lwm2m-device.h"
 #include "lwm2m-plain-text.h"
 #include "lwm2m-json.h"
@@ -103,7 +104,6 @@ static struct etimer et;
 
 void lwm2m_device_init(void);
 void lwm2m_security_init(void);
-void lwm2m_server_init(void);
 
 static const lwm2m_instance_t *get_first_instance_of_object(uint16_t id, lwm2m_context_t *context);
 static const lwm2m_instance_t *get_instance(const lwm2m_object_t *object, lwm2m_context_t *context, int depth);
@@ -374,6 +374,12 @@ lwm2m_engine_callback(c_event_t c_event, p_data_t p_data)
 void
 lwm2m_engine_init(char* epname)
 {
+  /* initialize REST engine */
+  rest_init_engine();
+
+  /* register the default objects */
+  lwm2m_engine_register_default_objects();
+
 #ifdef LWM2M_ENGINE_CLIENT_ENDPOINT_NAME
 
   snprintf(endpoint, sizeof(endpoint) - 1,
@@ -383,8 +389,9 @@ lwm2m_engine_init(char* epname)
 
   if( epname != NULL )
   {
-    snprintf(endpoint, sizeof(endpoint) - 1,
-               "?ep=%s", epname);
+      snprintf(endpoint, sizeof(endpoint) - 1,
+               "?ep=%s&lt=%d&b=%s", epname, lwm2m_server_getLifetime(),
+               lwm2m_server_getBinding() );
   }
   else
   {
@@ -428,7 +435,7 @@ lwm2m_engine_init(char* epname)
 
 #endif /* LWM2M_ENGINE_CLIENT_ENDPOINT_NAME */
 
-  rest_init_engine();
+  /* start timer for local lwm2m engine callback */
   etimer_set(&et, 5 * bsp_getTRes(), lwm2m_engine_callback);
 }
 /*---------------------------------------------------------------------------*/
