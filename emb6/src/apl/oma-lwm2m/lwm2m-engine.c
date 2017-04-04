@@ -44,6 +44,7 @@
 #include "emb6.h"
 #include "lwm2m-engine.h"
 #include "lwm2m-object.h"
+#include "lwm2m-server.h"
 #include "lwm2m-device.h"
 #include "lwm2m-plain-text.h"
 #include "lwm2m-json.h"
@@ -103,7 +104,6 @@ static struct etimer et;
 
 void lwm2m_device_init(void);
 void lwm2m_security_init(void);
-void lwm2m_server_init(void);
 
 static const lwm2m_instance_t *get_first_instance_of_object(uint16_t id, lwm2m_context_t *context);
 static const lwm2m_instance_t *get_instance(const lwm2m_object_t *object, lwm2m_context_t *context, int depth);
