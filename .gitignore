@@ -23,6 +23,13 @@ _*/
 *.a
 *.swp
 *.bin
+*.mk
+*.out
+*.obj
+*.launch
+*.opt
+*_linkInfo.xml
+makefile
 
 GPATH
 GRTAGS
