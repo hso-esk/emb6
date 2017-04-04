@@ -374,6 +374,12 @@ lwm2m_engine_callback(c_event_t c_event, p_data_t p_data)
 void
 lwm2m_engine_init(char* epname)
 {
+  /* initialize REST engine */
+  rest_init_engine();
+
+  /* register the default objects */
+  lwm2m_engine_register_default_objects();
+
 #ifdef LWM2M_ENGINE_CLIENT_ENDPOINT_NAME
 
   snprintf(endpoint, sizeof(endpoint) - 1,
@@ -428,7 +434,7 @@ lwm2m_engine_init(char* epname)
 
 #endif /* LWM2M_ENGINE_CLIENT_ENDPOINT_NAME */
 
-  rest_init_engine();
+  /* start timer for local lwm2m engine callback */
   etimer_set(&et, 5 * bsp_getTRes(), lwm2m_engine_callback);
 }
 /*---------------------------------------------------------------------------*/
