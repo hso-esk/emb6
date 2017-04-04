@@ -389,8 +389,9 @@ lwm2m_engine_init(char* epname)
 
   if( epname != NULL )
   {
-    snprintf(endpoint, sizeof(endpoint) - 1,
-               "?ep=%s", epname);
+      snprintf(endpoint, sizeof(endpoint) - 1,
+               "?ep=%s&lt=%d&b=%s", epname, lwm2m_server_getLifetime(),
+               lwm2m_server_getBinding() );
   }
   else
   {
