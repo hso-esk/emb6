@@ -49,7 +49,7 @@
 #define LWM2M_FLOAT32_BITS  10
 #define LWM2M_FLOAT32_FRAC (1L << LWM2M_FLOAT32_BITS)
 
-#define LWM2M_ENDPOINT_NAME_MAX   32
+#define LWM2M_ENDPOINT_NAME_MAX   64
 
 /* LWM2M / CoAP Content-Formats */
 typedef enum {
