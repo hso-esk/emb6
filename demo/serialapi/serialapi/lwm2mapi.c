@@ -74,6 +74,7 @@
 #include "lwm2m-objects/lwm2m-object-temp.h"
 #include "lwm2m-objects/lwm2m-object-counter.h"
 #include "lwm2m-objects/lwm2m-object-bme280-temp.h"
+#include "lwm2m-objects/lwm2m-object-bme280-humidity.h"
 
 
 /*
@@ -745,6 +746,7 @@ static int8_t _startLWM2M( void )
 
     /* register specific objects */
     lwm2m_object_tempBME280Init( _lwm2m_resource_access_cb, NULL );
+    lwm2m_object_humidityBME280Init( _lwm2m_resource_access_cb, NULL );
 
 
 #if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE
