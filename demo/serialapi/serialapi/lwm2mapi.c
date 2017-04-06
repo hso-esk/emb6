@@ -743,8 +743,6 @@ static int8_t _startLWM2M( void )
     lwm2m_engine_init( _epName );
 
 
-    lwm2m_object_tempInit();
-    lwm2m_object_counterInit();
 
 #if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE
     /* TEST */
