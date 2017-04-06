@@ -742,8 +742,6 @@ static int8_t _startLWM2M( void )
     /* Initialize the OMA LWM2M engine */
     lwm2m_engine_init( _epName );
 
-    /* Register default LWM2M objects */
-    lwm2m_engine_register_default_objects();
 
     lwm2m_object_tempInit();
     lwm2m_object_counterInit();
