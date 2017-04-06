@@ -83,33 +83,33 @@
  */
 
 /* Write min log temp */
-static int write_log_min( const lwm2m_context_t *ctx, const uint8_t *inbuf, size_t insize,
+static int write_log_min( lwm2m_context_t *ctx, const uint8_t *inbuf, size_t insize,
     uint8_t *outbuf, size_t outsize );
 
 /* Read min log temp */
-static int read_log_min( const lwm2m_context_t *ctx, uint8_t *outbuf, size_t outsize );
+static int read_log_min( lwm2m_context_t *ctx, uint8_t *outbuf, size_t outsize );
 
 /* Set min log temp */
 static int set_log_min( void* value, size_t size );
 
 
 /* Write max log temp */
-static int write_log_max( const lwm2m_context_t *ctx, const uint8_t *inbuf, size_t insize,
+static int write_log_max( lwm2m_context_t *ctx, const uint8_t *inbuf, size_t insize,
     uint8_t *outbuf, size_t outsize );
 
 /* Read max log temp */
-static int read_log_max( const lwm2m_context_t *ctx, uint8_t *outbuf, size_t outsize );
+static int read_log_max( lwm2m_context_t *ctx, uint8_t *outbuf, size_t outsize );
 
 /* Set max log temp */
 static int set_log_max( void* value, size_t size );
 
 
 /* Write abs log temp */
-static int write_log_abs( const lwm2m_context_t *ctx, const uint8_t *inbuf, size_t insize,
+static int write_log_abs( lwm2m_context_t *ctx, const uint8_t *inbuf, size_t insize,
     uint8_t *outbuf, size_t outsize );
 
 /* Read abs log temp */
-static int read_log_abs( const lwm2m_context_t *ctx, uint8_t *outbuf, size_t outsize );
+static int read_log_abs( lwm2m_context_t *ctx, uint8_t *outbuf, size_t outsize );
 
 /* Set abs log temp */
 static int set_log_abs( void* value, size_t size );
@@ -183,7 +183,7 @@ LWM2M_OBJECT(bme280_temperature, 13303, bme280_temperature_instances);
 /**
  * \brief   Callback to write the minimum value to write to log file.
  */
-static int write_log_min( const lwm2m_context_t *ctx, const uint8_t *inbuf, size_t insize,
+static int write_log_min( lwm2m_context_t *ctx, const uint8_t *inbuf, size_t insize,
     uint8_t *outbuf, size_t outsize )
 {
   int32_t value;
@@ -209,7 +209,7 @@ static int write_log_min( const lwm2m_context_t *ctx, const uint8_t *inbuf, size
 /**
  * \brief   Callback to read the minimum value to write to log file.
  */
-static int read_log_min( const lwm2m_context_t *ctx, uint8_t *outbuf, size_t outsize )
+static int read_log_min( lwm2m_context_t *ctx, uint8_t *outbuf, size_t outsize )
 {
   /* reply with current interval */
   return ctx->writer->write_float32fix(ctx, outbuf, outsize, log_min_temp,
@@ -231,7 +231,7 @@ static int set_log_min( void* value, size_t size )
 /**
  * \brief   Callback to write the maximum value to write to log file.
  */
-static int write_log_max( const lwm2m_context_t *ctx, const uint8_t *inbuf, size_t insize,
+static int write_log_max( lwm2m_context_t *ctx, const uint8_t *inbuf, size_t insize,
   uint8_t *outbuf, size_t outsize )
 {
   int32_t value;
@@ -257,7 +257,7 @@ static int write_log_max( const lwm2m_context_t *ctx, const uint8_t *inbuf, size
 /**
  * \brief   Callback to read the maximum value to write to log file.
  */
-static int read_log_max( const lwm2m_context_t *ctx, uint8_t *outbuf, size_t outsize )
+static int read_log_max( lwm2m_context_t *ctx, uint8_t *outbuf, size_t outsize )
 {
   /* reply with current interval */
   return ctx->writer->write_float32fix(ctx, outbuf, outsize, log_max_temp,
@@ -279,7 +279,7 @@ static int set_log_max( void* value, size_t size )
 /**
  * \brief   Callback to write the absolute value change to write to log file.
  */
-static int write_log_abs( const lwm2m_context_t *ctx, const uint8_t *inbuf, size_t insize,
+static int write_log_abs( lwm2m_context_t *ctx, const uint8_t *inbuf, size_t insize,
   uint8_t *outbuf, size_t outsize )
 {
   int32_t value;
@@ -305,7 +305,7 @@ static int write_log_abs( const lwm2m_context_t *ctx, const uint8_t *inbuf, size
 /**
  * \brief   Callback to read the absolute value change to write to log file.
  */
-static int read_log_abs( const lwm2m_context_t *ctx, uint8_t *outbuf, size_t outsize )
+static int read_log_abs( lwm2m_context_t *ctx, uint8_t *outbuf, size_t outsize )
 {
   /* reply with current interval */
   return ctx->writer->write_float32fix(ctx, outbuf, outsize, log_abs_temp,
