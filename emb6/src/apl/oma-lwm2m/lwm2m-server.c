@@ -100,7 +100,8 @@ LWM2M_RESOURCES(server_resources,
         LWM2M_RESOURCE_INTEGER_VAR(2, &pmin),
         LWM2M_RESOURCE_INTEGER_VAR(3, &pmax),
         LWM2M_RESOURCE_STRING(7, LWM2M_SERVER_BINDING ),
-        LWM2M_RESOURCE_CALLBACK(8, { NULL, NULL, exec_regupdate } )
+        LWM2M_RESOURCE_CALLBACK(8, LWM2M_RESOURCE_TYPE_CALLBACK,
+            { NULL, NULL, exec_regupdate, NULL } )
                 );
 
 /** Only one instance is upported */

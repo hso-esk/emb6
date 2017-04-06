@@ -124,6 +124,7 @@ typedef struct lwm2m_value_callback {
                 uint8_t *outbuf, size_t outlen);
   int (* exec)(lwm2m_context_t *ctx, const uint8_t *arg, size_t len,
                uint8_t *outbuf, size_t outlen);
+  int (*set)(void* value, size_t size);
 } lwm2m_value_callback_t;
 
 #define LWM2M_RESOURCE_TYPE_STR_VALUE                1
@@ -143,7 +144,8 @@ typedef struct lwm2m_value_callback {
 
 typedef struct lwm2m_resource {
   uint16_t id;
-  uint8_t type; /* indicate value type and multi-instance resource */
+  uint8_t type;     /* indicate value type and multi-instance resource */
+  uint8_t subtype;  /* subtype in case of a callback */
   union {
     struct {
       uint16_t len;
@@ -255,8 +257,8 @@ typedef struct lwm2m_object {
 #define LWM2M_RESOURCE_BOOLEAN_VAR_ARR(id, c, v)                        \
   { id, LWM2M_RESOURCE_TYPE_BOOLEAN_VARIABLE_ARRAY, .value.booleanvararr.count = (c), .value.booleanvararr.var = (v) }
 
-#define LWM2M_RESOURCE_CALLBACK(id, ...)                                \
-  { id, LWM2M_RESOURCE_TYPE_CALLBACK, .value.callback = __VA_ARGS__ }
+#define LWM2M_RESOURCE_CALLBACK(id, stype, ...)                                \
+  { id, LWM2M_RESOURCE_TYPE_CALLBACK, stype, .value.callback = __VA_ARGS__ }
 
 #define LWM2M_INSTANCE(id, resources)                           \
   { id, sizeof(resources)/sizeof(lwm2m_resource_t), LWM2M_INSTANCE_FLAG_USED, resources }

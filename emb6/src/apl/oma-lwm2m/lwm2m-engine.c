@@ -723,6 +723,32 @@ write_rd_json_data(const lwm2m_context_t *context,
                        "%s{\"n\":\"%u\",\"bv\":%s}", s, resource->id,
                        value ? "true" : "false");
       }
+    } else if(lwm2m_object_is_resource_callback(resource)) {
+
+      if( resource->value.callback.read != NULL ) {
+        lwm2m_context_t tmpContext;
+        tmpContext = *context;
+        tmpContext.writer = &lwm2m_plain_text_writer;
+        len = snprintf(&buffer[rdlen], size - rdlen,
+                        "%s{\"n\":\"%u\",\"v\":", s, resource->id);
+        rdlen += len;
+        if(len < 0 || rdlen >= size) {
+          return -1;
+        }
+
+        len = resource->value.callback.read(&tmpContext, (uint8_t*)&buffer[rdlen],
+            size - rdlen );
+
+        if(len == 0) {
+          return -1;
+        }
+        rdlen += len;
+
+        if(rdlen < size) {
+          buffer[rdlen] = '}';
+        }
+        len = 1;
+      }
     }
     rdlen += len;
     if(len < 0 || rdlen >= size) {

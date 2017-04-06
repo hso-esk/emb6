@@ -47,6 +47,7 @@
  ==============================================================================*/
 #ifndef EMB6_ASSERT_CFG
 #define EMB6_ASSERT_CFG                     1
+#define EMB6_ASSERT(x)                      ((void)0)
 #endif /* #ifndef EMB6_ASSERT_DEBUG_PRINT_V_CFG */
 
 #ifndef EMB6_ASSERT_DEBUG_PRINT_CFG
