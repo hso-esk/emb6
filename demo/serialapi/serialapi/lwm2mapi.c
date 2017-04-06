@@ -372,6 +372,11 @@ static int8_t _stopLWM2M( void );
  * For further details have a look at the function definitions. */
 static int8_t _startLWM2M( void );
 
+/** Callback for LWM2M instance or resource access.
+ * For further details have a look at the function definitions. */
+static void _lwm2m_resource_access_cb( uint16_t objID, uint16_t instId, uint16_t resID,
+    uint8_t type, void* val, uint16_t len, void* p_user  );
+
 
 /** Callback function in case a CFG_GET command was received. For further
  * details have a look at the function definition.*/
@@ -830,6 +835,114 @@ static int8_t _startLWM2M( void )
 
     _status = e_lwm2m_api_status_started;
     return ret;
+}
+
+
+/**
+ * \brief   Callback issued if a LWM2M instance or resource was accessed.
+ *
+ * \param   objID   Object Id of the accessed resource.
+ * \param   instId  Instance Id of the accessed resource.
+ * \param   resID   Resource Id of the accessed resource.
+ * \param   type    Type of the resource.
+ * \param   val     Value that has been written.
+ * \param   len     Length of the value.
+ * \param   p_user  User related data.
+ */
+static void _lwm2m_resource_access_cb( uint16_t objID, uint16_t instId, uint16_t resID,
+    uint8_t type, void* val, uint16_t len, void* p_user )
+{
+  int32_t ret = 0;
+  uint8_t* p_txBuf = _p_txBuf;
+  uint16_t txBufLen = _txBufLen;
+
+  EMB6_ASSERT_RET( p_txBuf != NULL, );
+
+  /* set the according RET ID */
+  EMB6_ASSERT_RET( txBufLen >= sizeof(lwm2mapi_frameID_t), );
+  LWM2M_API_SET_FIELD( p_txBuf, txBufLen, lwm2mapi_frameID_t,
+      e_lwm2m_api_type_res_wr_req );
+
+  objID = uip_htons( objID );
+  resID = uip_htons( resID );
+
+  /* set Object ID */
+  EMB6_ASSERT_RET( txBufLen >= sizeof(uint16_t), );
+  LWM2M_API_SET_FIELD( p_txBuf, txBufLen, uint16_t, objID );
+
+  /* set Instance ID */
+  EMB6_ASSERT_RET( txBufLen >= sizeof(uint8_t), );
+  LWM2M_API_SET_FIELD( p_txBuf, txBufLen, uint8_t, instId );
+
+  /* set resource ID */
+  EMB6_ASSERT_RET( txBufLen >= sizeof(uint16_t), );
+  LWM2M_API_SET_FIELD( p_txBuf, txBufLen, uint16_t, resID );
+
+  if( ret == 0 )
+  {
+    /* resource was found. Now we can read the value from it */
+    switch( type )
+    {
+      /* String Write */
+      case LWM2M_RESOURCE_TYPE_STR_VARIABLE:
+      {
+        EMB6_ASSERT_RET( txBufLen >= len, );
+        LWM2M_API_SET_FIELD_MEM( p_txBuf, txBufLen, val, len );
+        break;
+      }
+
+      /* Integer write */
+      case LWM2M_RESOURCE_TYPE_INT_VARIABLE:
+      {
+        int32_t tmpVal;
+        EMB6_ASSERT_RET( len == sizeof(int32_t), );
+        memcpy( &tmpVal, val, len );
+        tmpVal = uip_htonl( tmpVal );
+
+        EMB6_ASSERT_RET( txBufLen >= sizeof(int32_t), );
+        LWM2M_API_SET_FIELD( p_txBuf, txBufLen, int32_t, tmpVal );
+        break;
+      }
+
+      /* Float write */
+      case LWM2M_RESOURCE_TYPE_FLOATFIX_VARIABLE:
+      {
+        union {
+          float        f;
+          unsigned int i;
+        } tmpVal;
+
+        EMB6_ASSERT_RET( len == sizeof(float), );
+
+        memcpy( &tmpVal.i, val, len );
+        tmpVal.f = (float)tmpVal.i / (float)LWM2M_FLOAT32_FRAC;
+        tmpVal.i = uip_htonl( tmpVal.i );
+
+        EMB6_ASSERT_RET( txBufLen >= sizeof(int32_t), );
+        LWM2M_API_SET_FIELD( p_txBuf, txBufLen, int32_t, tmpVal.i );
+        break;
+      }
+
+      /* Boolean write */
+      case LWM2M_RESOURCE_TYPE_BOOLEAN_VARIABLE:
+        break;
+
+      default:
+        ret = -1;
+        break;
+    }
+  }
+
+  if( ret == 0 )
+    ret = p_txBuf - _p_txBuf;
+
+  if( ret > 0 )
+  {
+      EMB6_ASSERT_RET( _fn_tx != NULL, );
+      /* Call the associated Tx function with the according
+       * parameter. */
+      _fn_tx( ret, _p_txParam );
+  }
 }
 
 

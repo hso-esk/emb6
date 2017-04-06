@@ -65,6 +65,33 @@
  */
 #include <stdint.h>
 #include "emb6.h"
+#include "lwm2m-object.h"
+
+
+/*
+ *  --- Macros --------------------------------------------------------------*
+ */
+#define LWM2MAPI_ACCESS_READ              0
+#define LWM2MAPI_ACCESS_WRITE             1
+
+
+/*
+ *  --- Type Definitions -----------------------------------------------------*
+ */
+
+/**
+ * \brief   Callback that is issued when ever a Resource was accessed.
+ *
+ * \param   objID   Object Id of the accessed resource.
+ * \param   instId  Instance Id of the accessed resource.
+ * \param   resID   Resource Id of the accessed resource.
+ * \param   type    Type of the resource.
+ * \param   val     Value that has been written.
+ * \param   len     Length of the value.
+ * \param   p_user  User related data.
+ */
+typedef void(*f_lwm2m_resource_access_cb)( uint16_t objID, uint16_t instId, uint16_t resID,
+    uint8_t type, void* val, uint16_t len, void* p_user  );
 
 
 /*
