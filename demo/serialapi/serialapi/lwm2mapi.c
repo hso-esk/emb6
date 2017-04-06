@@ -1294,22 +1294,14 @@ static int32_t _hndl_res_wr( uint8_t* p_cmd, uint16_t cmdLen,
     }
   }
 
-  if( ret == 0)
+  if( ret == 0 )
   {
     /* Notify all observers */
     lwm2m_object_notify_observers( p_lwm2mObj, p_url );
 
-    /* Reply wit a return frame containing the according error code */
-    EMB6_ASSERT_RET( rplLen >= sizeof(lwm2mapi_frameID_t), -1 );
-    LWM2M_API_SET_FIELD( p_txBuf, rplLen, lwm2mapi_frameID_t,
-        e_lwm2m_api_type_ret );
-
-
-    EMB6_ASSERT_RET( rplLen >= sizeof(e_lwm2m_api_ret_t), -1 );
-    LWM2M_API_SET_FIELD( p_txBuf, rplLen, e_lwm2m_api_ret_t,
+    EMB6_ASSERT_RET( p_rpl != NULL, -1 );
+    ret = _rsp_status( p_rpl, rplLen, e_lwm2m_api_type_ret,
         e_lwm2m_api_ret_ok );
-
-    ret = p_txBuf - p_rpl;
   }
 
   return ret;
