@@ -127,7 +127,8 @@ LWM2M_RESOURCES(counter_resources,
                 /* Max Measured Value */
                 LWM2M_RESOURCE_INTEGER_VAR(5602, &max_counter),
                 /* Interval */
-                LWM2M_RESOURCE_CALLBACK(5828, { read_interval, write_interval, NULL }),
+                LWM2M_RESOURCE_CALLBACK(5828, LWM2M_RESOURCE_TYPE_INT_VARIABLE,
+                    { read_interval, write_interval, NULL, NULL }),
                 );
 
 LWM2M_INSTANCES(counter_instances,
