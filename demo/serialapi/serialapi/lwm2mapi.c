@@ -737,8 +737,7 @@ static int8_t _startLWM2M( void )
 
     LWM2MAPI_SERVER_IP_CONV( &tmpIP, _serverIP );
     lwm2m_engine_use_registration_server(1);
-    lwm2m_engine_register_with_server( &tmpIP, UIP_HTONS(_serverPort) );
-
+    lwm2m_engine_register_with_server( &tmpIP, uip_htons(_serverPort) );
 
     /* Initialize the OMA LWM2M engine */
     lwm2m_engine_init( _epName );
@@ -985,7 +984,7 @@ static int32_t _hndl_cfgSet( uint8_t* p_cmd, uint16_t cmdLen,
         LWM2M_API_GET_FIELD( _serverIP.u16[i], p_data,
             cmdLen, uint16_t );
 
-        _serverIP.u16[i] = UIP_HTONS(_serverIP.u16[i]);
+        _serverIP.u16[i] = uip_ntohs(_serverIP.u16[i]);
       }
       break;
 
@@ -997,7 +996,7 @@ static int32_t _hndl_cfgSet( uint8_t* p_cmd, uint16_t cmdLen,
       LWM2M_API_GET_FIELD( _serverPort, p_data,
           cmdLen, lwm2mapi_cfg_port_t );
 
-      _serverPort = UIP_HTONS( _serverPort );
+      _serverPort = uip_ntohs( _serverPort );
       break;
 
     /* Client name shall be set  */
@@ -1070,7 +1069,7 @@ static int32_t _hndl_cfgGet( uint8_t* p_cmd, uint16_t cmdLen,
       for( i = 0; i < (sizeof(_serverIP ) / sizeof(uint16_t)); i++ )
       {
         LWM2M_API_SET_FIELD( p_txBuf, rplLen, uint16_t,
-            UIP_HTONS( _serverIP.u16[i] ) );
+            uip_htons( _serverIP.u16[i] ) );
       }
       break;
 
@@ -1079,7 +1078,7 @@ static int32_t _hndl_cfgGet( uint8_t* p_cmd, uint16_t cmdLen,
       /* set the configuration value */
       EMB6_ASSERT_RET( rplLen >= sizeof(lwm2mapi_cfg_port_t), -1 );
       LWM2M_API_SET_FIELD( p_txBuf, rplLen, lwm2mapi_cfg_port_t,
-          UIP_HTONS( _serverPort ) );
+          uip_htons( _serverPort ) );
       break;
 
     case e_lwm2m_api_cfgid_cliname:
