@@ -176,7 +176,8 @@ LWM2M_RESOURCE_INTEGER(15, LWM2M_DEVICE_TIMEZONE),
 #endif /* LWM2M_DEVICE_TIMEZONE */
 
 /* Current Time */
-LWM2M_RESOURCE_CALLBACK(13, { read_lwtime, set_lwtime, NULL }),
+LWM2M_RESOURCE_CALLBACK(13, LWM2M_RESOURCE_TYPE_INT_VARIABLE,
+    { read_lwtime, set_lwtime, NULL, NULL }),
 );
 
 LWM2M_INSTANCES(device_instances, LWM2M_INSTANCE(0, device_resources));
