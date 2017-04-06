@@ -421,7 +421,7 @@ int8_t demo_serialApiInit( void )
 
   /* initialize serial API and register LWM2M */
   serialApiInit( p_frameBufTx, SERIALAPI_TX_BUF_LEN, _txDataCb, NULL );
-  serialApiRegister( 0xFF, lwm2mApiInit, lwm2mApiInput );
+  serialApiRegister( 0xE1, lwm2mApiInit, lwm2mApiInput );
 
   /* register events */
   evproc_regCallback( EVENT_TYPE_SLIP_POLL, _event_callback );
