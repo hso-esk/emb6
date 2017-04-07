@@ -74,7 +74,7 @@
 #endif /* #ifndef IPSO_BAROMETER_UNIT_MAX */
 
 #ifndef IPSO_BAROMETER_UNIT_DEFAULT
-#define IPSO_BAROMETER_UNIT_DEFAULT                   "Celcius"
+#define IPSO_BAROMETER_UNIT_DEFAULT                   "Bar"
 #endif /* #ifndef IPSO_BAROMETER_UNIT_DEFAULT */
 
 
