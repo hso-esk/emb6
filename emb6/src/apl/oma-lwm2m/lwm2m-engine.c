@@ -726,18 +726,49 @@ write_rd_json_data(const lwm2m_context_t *context,
     } else if(lwm2m_object_is_resource_callback(resource)) {
 
       if( resource->value.callback.read != NULL ) {
+        char varBuf[32] = {0};
         lwm2m_context_t tmpContext;
-        tmpContext = *context;
-        tmpContext.writer = &lwm2m_plain_text_writer;
+
         len = snprintf(&buffer[rdlen], size - rdlen,
-                        "%s{\"n\":\"%u\",\"v\":", s, resource->id);
+                        "%s{\"n\":\"%u\",", s, resource->id);
+
+
         rdlen += len;
         if(len < 0 || rdlen >= size) {
           return -1;
         }
 
-        len = resource->value.callback.read(&tmpContext, (uint8_t*)&buffer[rdlen],
-            size - rdlen );
+        /** read value into buffer */
+        tmpContext = *context;
+        tmpContext.writer = &lwm2m_plain_text_writer;
+        len = resource->value.callback.read(&tmpContext, (uint8_t*)varBuf,32 );
+
+        if(len < 0) {
+          return -1;
+        }
+
+        switch( resource->subtype )
+        {
+          case LWM2M_RESOURCE_TYPE_BOOLEAN_VALUE:
+          case LWM2M_RESOURCE_TYPE_BOOLEAN_VARIABLE:
+            len = snprintf(&buffer[rdlen], size - rdlen,
+                          "\"bv\":%s", varBuf );
+            break;
+
+          case LWM2M_RESOURCE_TYPE_STR_VALUE:
+          case LWM2M_RESOURCE_TYPE_STR_VARIABLE:
+            len = snprintf(&buffer[rdlen], size - rdlen,
+                          "\"sv\":\"%s\"", varBuf );
+            break;
+
+          case LWM2M_RESOURCE_TYPE_INT_VALUE:
+          case LWM2M_RESOURCE_TYPE_INT_VARIABLE:
+          case LWM2M_RESOURCE_TYPE_FLOATFIX_VALUE:
+          case LWM2M_RESOURCE_TYPE_FLOATFIX_VARIABLE:
+            len = snprintf(&buffer[rdlen], size - rdlen,
+                          "\"v\":%s", varBuf );
+            break;
+        }
 
         if(len == 0) {
           return -1;
