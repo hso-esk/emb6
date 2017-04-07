@@ -71,23 +71,24 @@
 #include "lwm2m-engine.h"
 #include "lwm2m-object.h"
 
-#if PARSIFAL_OBJECTS
+
+#if LWM2MAPI_PARSIFAL_OBJECTS
 #include "lwm2m-objects/lwm2m-object-bme280-temp.h"
 #include "lwm2m-objects/lwm2m-object-bme280-humidity.h"
 #include "lwm2m-objects/lwm2m-object-bme280-airpressure.h"
-#endif /* #if PARSIFAL_OBJECTS */
+#endif /* #if LWM2MAPI_PARSIFAL_OBJECTS */
 
-#if NIKI_EMETER_OBJECTS
+#if LWM2MAPI_NIKI_EMETER_OBJECTS
 #include "lwm2m-objects/lwm2m-object-ipso-voltage.h"
 #include "lwm2m-objects/lwm2m-object-ipso-current.h"
-#endif /* #if NIKI_EMETER_OBJECTS */
+#endif /* #if LWM2MAPI_NIKI_EMETER_OBJECTS */
 
-#if NIKI_EIS_OBJECTS
+#if LWM2MAPI_NIKI_EIS_OBJECTS
 #include "lwm2m-objects/lwm2m-object-ipso-illuminance.h"
 #include "lwm2m-objects/lwm2m-object-ipso-temperature.h"
 #include "lwm2m-objects/lwm2m-object-ipso-humidity.h"
 #include "lwm2m-objects/lwm2m-object-ipso-barometer.h"
-#endif /* #if NIKI_EIS_OBJECTS */
+#endif /* #if LWM2MAPI_NIKI_EIS_OBJECTS */
 
 
 /*
@@ -758,23 +759,23 @@ static int8_t _startLWM2M( void )
     lwm2m_engine_init( _epName );
 
     /* register specific objects */
-#if PARSIFAL_OBJECTS
+#if LWM2MAPI_PARSIFAL_OBJECTS
     lwm2m_object_tempBME280Init( _lwm2m_resource_access_cb, NULL );
     lwm2m_object_humidityBME280Init( _lwm2m_resource_access_cb, NULL );
     lwm2m_object_airpressureBME280Init( _lwm2m_resource_access_cb, NULL );
-#endif /* #if PARSIFAL_OBJECTS */
+#endif /* #if LWM2MAPI_PARSIFAL_OBJECTS */
 
-#if NIKI_EMETER_OBJECTS
+#if LWM2MAPI_NIKI_EMETER_OBJECTS
     lwm2m_object_ipsoVoltageInit( _lwm2m_resource_access_cb, NULL );
     lwm2m_object_ipsoCurrentInit( _lwm2m_resource_access_cb, NULL );
-#endif /* NIKI_EMETER_OBJECTS */
+#endif /* LWM2MAPI_NIKI_EMETER_OBJECTS */
 
-#if NIKI_EIS_OBJECTS
+#if LWM2MAPI_NIKI_EIS_OBJECTS
     lwm2m_object_ipsoIlluminanceInit( _lwm2m_resource_access_cb, NULL );
     lwm2m_object_ipsoTemperatureInit( _lwm2m_resource_access_cb, NULL );
     lwm2m_object_ipsoHumidityInit( _lwm2m_resource_access_cb, NULL );
     lwm2m_object_ipsoBarometerInit( _lwm2m_resource_access_cb, NULL );
-#endif /* #if NIKI_EIS_OBJECTS */
+#endif /* #if LWM2MAPI_NIKI_EIS_OBJECTS */
 
 #if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE
     /* TEST */
