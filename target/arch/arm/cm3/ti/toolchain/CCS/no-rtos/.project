@@ -303,12 +303,12 @@
 		<link>
 			<name>demo/serialapi/demo_serialapi.c</name>
 			<type>1</type>
-			<location>C:/Data/hso/projects/emb6/devel/emb6-niki/demo/serialapi/demo_serialapi.c</location>
+			<locationURI>PARENT-8-PROJECT_LOC/demo/serialapi/demo_serialapi.c</locationURI>
 		</link>
 		<link>
 			<name>demo/serialapi/demo_serialapi.h</name>
 			<type>1</type>
-			<location>C:/Data/hso/projects/emb6/devel/emb6-niki/demo/serialapi/demo_serialapi.h</location>
+			<locationURI>PARENT-8-PROJECT_LOC/demo/serialapi/demo_serialapi.h</locationURI>
 		</link>
 		<link>
 			<name>demo/serialapi/serial-interface-mac</name>
@@ -933,12 +933,12 @@
 		<link>
 			<name>demo/serialapi/serial-interface-mac/sf_serialmac.c</name>
 			<type>1</type>
-			<location>C:/Data/hso/projects/emb6/devel/emb6-niki/demo/serialapi/serial-interface-mac/sf_serialmac.c</location>
+			<locationURI>PARENT-8-PROJECT_LOC/demo/serialapi/serial-interface-mac/sf_serialmac.c</locationURI>
 		</link>
 		<link>
 			<name>demo/serialapi/serial-interface-mac/sf_serialmac.h</name>
 			<type>1</type>
-			<location>C:/Data/hso/projects/emb6/devel/emb6-niki/demo/serialapi/serial-interface-mac/sf_serialmac.h</location>
+			<locationURI>PARENT-8-PROJECT_LOC/demo/serialapi/serial-interface-mac/sf_serialmac.h</locationURI>
 		</link>
 		<link>
 			<name>demo/serialapi/serialapi/lwm2m-objects</name>
@@ -948,22 +948,22 @@
 		<link>
 			<name>demo/serialapi/serialapi/lwm2mapi.c</name>
 			<type>1</type>
-			<location>C:/Data/hso/projects/emb6/devel/emb6-niki/demo/serialapi/serialapi/lwm2mapi.c</location>
+			<locationURI>PARENT-8-PROJECT_LOC/demo/serialapi/serialapi/lwm2mapi.c</locationURI>
 		</link>
 		<link>
 			<name>demo/serialapi/serialapi/lwm2mapi.h</name>
 			<type>1</type>
-			<location>C:/Data/hso/projects/emb6/devel/emb6-niki/demo/serialapi/serialapi/lwm2mapi.h</location>
+			<locationURI>PARENT-8-PROJECT_LOC/demo/serialapi/serialapi/lwm2mapi.h</locationURI>
 		</link>
 		<link>
 			<name>demo/serialapi/serialapi/serialapi.c</name>
 			<type>1</type>
-			<location>C:/Data/hso/projects/emb6/devel/emb6-niki/demo/serialapi/serialapi/serialapi.c</location>
+			<locationURI>PARENT-8-PROJECT_LOC/demo/serialapi/serialapi/serialapi.c</locationURI>
 		</link>
 		<link>
 			<name>demo/serialapi/serialapi/serialapi.h</name>
 			<type>1</type>
-			<location>C:/Data/hso/projects/emb6/devel/emb6-niki/demo/serialapi/serialapi/serialapi.h</location>
+			<locationURI>PARENT-8-PROJECT_LOC/demo/serialapi/serialapi/serialapi.h</locationURI>
 		</link>
 		<link>
 			<name>demo/udp_socket/client/SConscript</name>
@@ -1656,24 +1656,114 @@
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
+			<name>demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-bme280-airpressure.c</name>
+			<type>1</type>
+			<locationURI>REPO_ROOT_DIR/demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-bme280-airpressure.c</locationURI>
+		</link>
+		<link>
+			<name>demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-bme280-airpressure.h</name>
+			<type>1</type>
+			<locationURI>REPO_ROOT_DIR/demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-bme280-airpressure.h</locationURI>
+		</link>
+		<link>
+			<name>demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-bme280-humidity.c</name>
+			<type>1</type>
+			<locationURI>REPO_ROOT_DIR/demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-bme280-humidity.c</locationURI>
+		</link>
+		<link>
+			<name>demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-bme280-humidity.h</name>
+			<type>1</type>
+			<locationURI>REPO_ROOT_DIR/demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-bme280-humidity.h</locationURI>
+		</link>
+		<link>
+			<name>demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-bme280-temp.c</name>
+			<type>1</type>
+			<locationURI>REPO_ROOT_DIR/demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-bme280-temp.c</locationURI>
+		</link>
+		<link>
+			<name>demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-bme280-temp.h</name>
+			<type>1</type>
+			<locationURI>REPO_ROOT_DIR/demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-bme280-temp.h</locationURI>
+		</link>
+		<link>
 			<name>demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-counter.c</name>
 			<type>1</type>
-			<location>C:/Data/hso/projects/emb6/devel/emb6-niki/demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-counter.c</location>
+			<locationURI>PARENT-8-PROJECT_LOC/demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-counter.c</locationURI>
 		</link>
 		<link>
 			<name>demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-counter.h</name>
 			<type>1</type>
-			<location>C:/Data/hso/projects/emb6/devel/emb6-niki/demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-counter.h</location>
+			<locationURI>PARENT-8-PROJECT_LOC/demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-counter.h</locationURI>
+		</link>
+		<link>
+			<name>demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-ipso-barometer.c</name>
+			<type>1</type>
+			<locationURI>REPO_ROOT_DIR/demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-ipso-barometer.c</locationURI>
+		</link>
+		<link>
+			<name>demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-ipso-barometer.h</name>
+			<type>1</type>
+			<locationURI>REPO_ROOT_DIR/demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-ipso-barometer.h</locationURI>
+		</link>
+		<link>
+			<name>demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-ipso-current.c</name>
+			<type>1</type>
+			<locationURI>REPO_ROOT_DIR/demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-ipso-current.c</locationURI>
+		</link>
+		<link>
+			<name>demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-ipso-current.h</name>
+			<type>1</type>
+			<locationURI>REPO_ROOT_DIR/demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-ipso-current.h</locationURI>
+		</link>
+		<link>
+			<name>demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-ipso-humidity.c</name>
+			<type>1</type>
+			<locationURI>REPO_ROOT_DIR/demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-ipso-humidity.c</locationURI>
+		</link>
+		<link>
+			<name>demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-ipso-humidity.h</name>
+			<type>1</type>
+			<locationURI>REPO_ROOT_DIR/demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-ipso-humidity.h</locationURI>
+		</link>
+		<link>
+			<name>demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-ipso-illuminance.c</name>
+			<type>1</type>
+			<locationURI>REPO_ROOT_DIR/demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-ipso-illuminance.c</locationURI>
+		</link>
+		<link>
+			<name>demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-ipso-illuminance.h</name>
+			<type>1</type>
+			<locationURI>REPO_ROOT_DIR/demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-ipso-illuminance.h</locationURI>
+		</link>
+		<link>
+			<name>demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-ipso-temperature.c</name>
+			<type>1</type>
+			<locationURI>REPO_ROOT_DIR/demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-ipso-temperature.c</locationURI>
+		</link>
+		<link>
+			<name>demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-ipso-temperature.h</name>
+			<type>1</type>
+			<locationURI>REPO_ROOT_DIR/demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-ipso-temperature.h</locationURI>
+		</link>
+		<link>
+			<name>demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-ipso-voltage.c</name>
+			<type>1</type>
+			<locationURI>REPO_ROOT_DIR/demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-ipso-voltage.c</locationURI>
+		</link>
+		<link>
+			<name>demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-ipso-voltage.h</name>
+			<type>1</type>
+			<locationURI>REPO_ROOT_DIR/demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-ipso-voltage.h</locationURI>
 		</link>
 		<link>
 			<name>demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-temp.c</name>
 			<type>1</type>
-			<location>C:/Data/hso/projects/emb6/devel/emb6-niki/demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-temp.c</location>
+			<locationURI>PARENT-8-PROJECT_LOC/demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-temp.c</locationURI>
 		</link>
 		<link>
 			<name>demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-temp.h</name>
 			<type>1</type>
-			<location>C:/Data/hso/projects/emb6/devel/emb6-niki/demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-temp.h</location>
+			<locationURI>PARENT-8-PROJECT_LOC/demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-temp.h</locationURI>
 		</link>
 		<link>
 			<name>emb6/inc/apl/dns/resolv.h</name>
@@ -1749,6 +1839,11 @@
 			<name>emb6/inc/apl/oma-lwm2m/lwm2m-plain-text.h</name>
 			<type>1</type>
 			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/apl/oma-lwm2m/lwm2m-plain-text.h</locationURI>
+		</link>
+		<link>
+			<name>emb6/inc/apl/oma-lwm2m/lwm2m-server.h</name>
+			<type>1</type>
+			<locationURI>REPO_ROOT_DIR/emb6/inc/apl/oma-lwm2m/lwm2m-server.h</locationURI>
 		</link>
 		<link>
 			<name>emb6/inc/apl/oma-lwm2m/oma-tlv-reader.h</name>
@@ -2443,12 +2538,12 @@
 		<link>
 			<name>demo/serialapi/serial-interface-mac/dep/crc/sf_crc.c</name>
 			<type>1</type>
-			<location>C:/Data/hso/projects/emb6/devel/emb6-niki/demo/serialapi/serial-interface-mac/dep/crc/sf_crc.c</location>
+			<locationURI>PARENT-8-PROJECT_LOC/demo/serialapi/serial-interface-mac/dep/crc/sf_crc.c</locationURI>
 		</link>
 		<link>
 			<name>demo/serialapi/serial-interface-mac/dep/crc/sf_crc.h</name>
 			<type>1</type>
-			<location>C:/Data/hso/projects/emb6/devel/emb6-niki/demo/serialapi/serial-interface-mac/dep/crc/sf_crc.h</location>
+			<locationURI>PARENT-8-PROJECT_LOC/demo/serialapi/serial-interface-mac/dep/crc/sf_crc.h</locationURI>
 		</link>
 		<link>
 			<name>emb6/inc/net/dtls/aes/rijndael.h</name>
