@@ -298,7 +298,7 @@ int8_t lwm2m_object_ipsoVoltageInit( f_lwm2m_resource_access_cb p_cb,
         IPSO_VOLTAGE_UNIT_DEFAULT );
 
     curr_calib_len = snprintf( (char*)curr_calib, IPSO_VOLTAGE_CALIB_MAX,
-        IPSO_VOLTAGE_UNIT_DEFAULT );
+        IPSO_VOLTAGE_CALIB_DEFAULT );
 
     apptype_len = snprintf( (char*)apptype, IPSO_VOLTAGE_APPTYPE_MAX,
         IPSO_VOLTAGE_APPTYPE_DEFAULT );
