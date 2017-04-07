@@ -71,8 +71,6 @@
 #include "lwm2m-engine.h"
 #include "lwm2m-object.h"
 
-#include "lwm2m-objects/lwm2m-object-temp.h"
-#include "lwm2m-objects/lwm2m-object-counter.h"
 #include "lwm2m-objects/lwm2m-object-bme280-temp.h"
 #include "lwm2m-objects/lwm2m-object-bme280-humidity.h"
 #include "lwm2m-objects/lwm2m-object-bme280-airpressure.h"
