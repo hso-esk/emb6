@@ -121,7 +121,7 @@ LWM2M_RESOURCES(ipso_humidity_resources,
 LWM2M_INSTANCES(ipso_humidity_instances,
                 LWM2M_INSTANCE(0, ipso_humidity_resources));
 
-LWM2M_OBJECT(ipso_humidity, 3301, ipso_humidity_instances);
+LWM2M_OBJECT(ipso_humidity, 3304, ipso_humidity_instances);
 
 
 /*

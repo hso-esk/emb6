@@ -121,7 +121,7 @@ LWM2M_RESOURCES(ipso_barometer_resources,
 LWM2M_INSTANCES(ipso_barometer_instances,
                 LWM2M_INSTANCE(0, ipso_barometer_resources));
 
-LWM2M_OBJECT(ipso_barometer, 3303, ipso_barometer_instances);
+LWM2M_OBJECT(ipso_barometer, 3315, ipso_barometer_instances);
 
 
 /*
