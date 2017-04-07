@@ -298,7 +298,7 @@ int8_t lwm2m_object_ipsoCurrentInit( f_lwm2m_resource_access_cb p_cb,
         IPSO_CURRENT_UNIT_DEFAULT );
 
     curr_calib_len = snprintf( (char*)curr_calib, IPSO_CURRENT_CALIB_MAX,
-        IPSO_CURRENT_UNIT_DEFAULT );
+        IPSO_CURRENT_CALIB_DEFAULT );
 
     apptype_len = snprintf( (char*)apptype, IPSO_CURRENT_APPTYPE_MAX,
         IPSO_CURRENT_APPTYPE_DEFAULT );
