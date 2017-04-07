@@ -77,6 +77,7 @@
 #include "lwm2m-objects/lwm2m-object-bme280-humidity.h"
 #include "lwm2m-objects/lwm2m-object-bme280-airpressure.h"
 #include "lwm2m-objects/lwm2m-object-ipso-current.h"
+#include "lwm2m-objects/lwm2m-object-ipso-humidity.h"
 #include "lwm2m-objects/lwm2m-object-ipso-barometer.h"
 
 
@@ -753,6 +754,7 @@ static int8_t _startLWM2M( void )
     lwm2m_object_airpressureBME280Init( _lwm2m_resource_access_cb, NULL );
     lwm2m_object_ipsoCurrentInit( _lwm2m_resource_access_cb, NULL );
 
+    lwm2m_object_ipsoHumidityInit( _lwm2m_resource_access_cb, NULL );
     lwm2m_object_ipsoBarometerInit( _lwm2m_resource_access_cb, NULL );
 
 #if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE
