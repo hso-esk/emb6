@@ -74,7 +74,7 @@
 #endif /* #ifndef IPSO_ILLUMINANCE_UNIT_MAX */
 
 #ifndef IPSO_ILLUMINANCE_UNIT_DEFAULT
-#define IPSO_ILLUMINANCE_UNIT_DEFAULT                   "Celcius"
+#define IPSO_ILLUMINANCE_UNIT_DEFAULT                   "Lux"
 #endif /* #ifndef IPSO_ILLUMINANCE_UNIT_DEFAULT */
 
 
