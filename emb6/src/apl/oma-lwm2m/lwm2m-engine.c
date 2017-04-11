@@ -252,7 +252,7 @@ lwm2m_engine_callback(c_event_t c_event, p_data_t p_data)
           coap_set_header_uri_query(request, endpoint);
 
           PRINTF("Registering ID with bootstrap server [");
-          uip_debug_ipaddr_print(&bs_server_ipaddr);
+          PRINT6ADDR(&bs_server_ipaddr);
           PRINTF("]:%u as '%s'\n", uip_ntohs(bs_server_port), endpoint);
 
           coap_nonblocking_request(&bs_server_ipaddr, bs_server_port, request,
@@ -356,7 +356,7 @@ lwm2m_engine_callback(c_event_t c_event, p_data_t p_data)
         coap_set_payload(request, (uint8_t *)rd_data, pos);
 
         PRINTF("Registering with [");
-        uip_debug_ipaddr_print(&server_ipaddr);
+        PRINT6ADDR(&server_ipaddr);
         PRINTF("]:%u lwm2m endpoint '%s': '%.*s'\n", uip_ntohs(server_port),
                endpoint, pos, rd_data);
 
