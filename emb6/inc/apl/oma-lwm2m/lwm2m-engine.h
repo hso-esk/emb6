@@ -59,7 +59,9 @@ typedef enum {
   LWM2M_OPAQUE     = 11544
 } lwm2m_content_format_t;
 
-void lwm2m_engine_init(char* epname);
+typedef void(*f_lwm2m_engine_statch_cb)(uint8_t registered, void* p_data);
+
+void lwm2m_engine_init(char* epname, f_lwm2m_engine_statch_cb p_cb, void* p_data );
 void lwm2m_engine_register_default_objects(void);
 void lwm2m_engine_use_bootstrap_server(int use);
 void lwm2m_engine_use_registration_server(int use);
@@ -69,6 +71,7 @@ void lwm2m_engine_register_with_bootstrap_server(const uip_ipaddr_t *server, uin
 const lwm2m_object_t *lwm2m_engine_get_object(uint16_t id);
 
 int lwm2m_engine_register_object(const lwm2m_object_t *object);
+int lwm2m_engine_is_registered(void);
 
 void lwm2m_engine_handler(const lwm2m_object_t *object,
                           void *request, void *response,

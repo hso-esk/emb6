@@ -100,7 +100,7 @@ int8_t demo_lwm2mInit(void)
 #endif /* #ifdef LWM2M_USE_BOOTSTRAP */
 
     /* Initialize the OMA LWM2M engine */
-    lwm2m_engine_init();
+    lwm2m_engine_init( NULL, NULL, NULL );
     return 0;
 }
 
