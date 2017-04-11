@@ -101,6 +101,8 @@ static uint8_t registered = 0;
 static uint8_t bootstrapped = 0; /* bootstrap made... */
 
 static struct etimer et;
+static f_lwm2m_engine_statch_cb p_statch_cb;
+static void* p_statch_data;
 
 void lwm2m_device_init(void);
 void lwm2m_security_init(void);
@@ -119,6 +121,26 @@ client_chunk_handler(void *response)
 
   PRINTF("|%.*s\n", len, (char *)chunk);
 #endif /* (DEBUG) & DEBUG_PRINT */
+}
+/*---------------------------------------------------------------------------*/
+static void
+client_registration_handler(void *response)
+{
+  if( response != NULL )
+  {
+    uint8_t code = ((coap_packet_t *)response)->code;
+    if( code == CREATED_2_01)
+    {
+      /* client is registered */
+      registered = 1;
+
+      if( p_statch_cb != NULL )
+      {
+        /* call status update callback */
+        p_statch_cb( registered, p_statch_data );
+      }
+    }
+  }
 }
 /*---------------------------------------------------------------------------*/
 static int
@@ -329,7 +351,6 @@ lwm2m_engine_callback(c_event_t c_event, p_data_t p_data)
                 update_registration_server()) {
         int pos;
         int len, i, j;
-        registered = 1;
 
         /* prepare request, TID is set by COAP_BLOCKING_REQUEST() */
         coap_init_message(request, COAP_TYPE_CON, COAP_POST, 0);
@@ -361,7 +382,7 @@ lwm2m_engine_callback(c_event_t c_event, p_data_t p_data)
                endpoint, pos, rd_data);
 
         coap_nonblocking_request(&server_ipaddr, server_port, request,
-            client_chunk_handler);
+            client_registration_handler);
       }
       /* for now only register once...   registered = 0; */
       etimer_set(&et, 15 * bsp_getTRes(), lwm2m_engine_callback);
@@ -372,10 +393,14 @@ lwm2m_engine_callback(c_event_t c_event, p_data_t p_data)
 
 /*---------------------------------------------------------------------------*/
 void
-lwm2m_engine_init(char* epname)
+lwm2m_engine_init(char* epname, f_lwm2m_engine_statch_cb p_cb, void* p_data )
 {
   /* initialize REST engine */
   rest_init_engine();
+
+  /* set callback */
+  p_statch_cb = p_cb;
+  p_statch_data = p_data;
 
   /* register the default objects */
   lwm2m_engine_register_default_objects();
@@ -522,6 +547,12 @@ lwm2m_engine_register_object(const lwm2m_object_t *object)
   rest_activate_resource(lwm2m_object_get_coap_resource(object),
                          (char *)object->path);
   return found;
+}
+/*---------------------------------------------------------------------------*/
+int
+lwm2m_engine_is_registered(void)
+{
+  return registered;
 }
 /*---------------------------------------------------------------------------*/
 static const lwm2m_instance_t *
