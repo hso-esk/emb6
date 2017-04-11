@@ -360,6 +360,10 @@ typedef int32_t (*fn_serialApiHndl_t)( uint8_t* p_cmd, uint16_t cmdLen,
  *  --- Local Function Prototypes ------------------------------------------ *
  */
 
+/** Called for LWM2M status changes.
+ * For further details have a look at the function definitions. */
+void _lwm2m_engine_statch_cb( uint8_t registered, void* p_data );
+
 /** Called by the stack in case a registered event occurred.
  * For further details have a look at the function definitions. */
 static void _event_callback( c_event_t ev, p_data_t data );
@@ -482,6 +486,40 @@ static lwm2mapi_cfg_cliname_t _epName = LWM2MAPI_ENDPOINT;
  */
 
 /**
+ * \brief   Callback function for periodic status check.
+ *
+ *          This function is called periodically to check the status
+ *          of the LWM2M connection.
+ *
+ * \param   ev    The type of the event.
+ * \param   data  Extra data.
+ */
+void _lwm2m_engine_statch_cb( uint8_t registered, void* p_data )
+{
+  int32_t ret = 0;
+  uint8_t* p_txBuf = _p_txBuf;
+  uint16_t txBufLen = _txBufLen;
+
+  if( (_status != e_lwm2m_api_status_registered) &&
+      lwm2m_engine_is_registered() )
+  {
+    /* set status as registered */
+    _status = e_lwm2m_api_status_registered;
+    /* Call the status get handler */
+    ret = _hndl_statusGet( NULL, 0, p_txBuf, txBufLen );
+  }
+
+  if( ret > 0 )
+  {
+      EMB6_ASSERT_RET( _fn_tx != NULL, );
+      /* Call the associated Tx function with the according
+       * parameter. */
+      _fn_tx( ret, _p_txParam );
+  }
+}
+
+
+/**
  * \brief   Callback function of the stack for new data on the RX interface.
  *
  *          This function is called by the stack everytime new data is
@@ -521,10 +559,7 @@ void _event_callback( c_event_t ev, p_data_t data )
 
       case STACK_STATUS_NETWORK:
       {
-        /* set status as registered */
-        _status = e_lwm2m_api_status_registered;
-        /* Call the status get handler */
-        ret = _hndl_statusGet( NULL, 0, p_txBuf, txBufLen );
+        /* nothing to do */
         break;
       }
 
@@ -756,7 +791,7 @@ static int8_t _startLWM2M( void )
     lwm2m_engine_register_with_server( &tmpIP, uip_htons(_serverPort) );
 
     /* Initialize the OMA LWM2M engine */
-    lwm2m_engine_init( _epName );
+    lwm2m_engine_init( _epName, _lwm2m_engine_statch_cb, NULL );
 
     /* register specific objects */
 #if LWM2MAPI_PARSIFAL_OBJECTS
