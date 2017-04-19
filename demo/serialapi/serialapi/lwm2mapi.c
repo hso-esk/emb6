@@ -1396,7 +1396,7 @@ static int32_t _hndl_res_wr( uint8_t* p_cmd, uint16_t cmdLen,
           else
           {
             /* write the value*/
-            *p_lwm2mRes->value.floatfixvar.var = (val.f * LWM2M_FLOAT32_FRAC);
+            *p_lwm2mRes->value.floatfixvar.var = val.i;
           }
         }
         break;
