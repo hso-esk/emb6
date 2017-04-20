@@ -44,11 +44,8 @@
  */
 
 #include "emb6.h"
+#include "phy_framer_802154.h"
 #include "packetbuf.h"
-
-//#include <stdint.h>
-//#include <string.h>
-
 #include "linkaddr.h"
 #include "cc.h"
 
@@ -64,8 +61,10 @@ static uint8_t hdrptr, ftrptr;
    an even 32-bit boundary. On some platforms (most notably the
    msp430 or OpenRISC), having a potentially misaligned packet buffer may lead to
    problems when accessing words. */
-static uint32_t packetbuf_aligned[(PACKETBUF_SIZE + 3) / 4];
-static uint8_t *packetbuf = (uint8_t *)packetbuf_aligned;
+static uint32_t packetbuf_aligned[((PHY_HEADER_LEN + PACKETBUF_SIZE) + 3) / 4];
+static uint8_t *packetbuf = &((uint8_t *)packetbuf_aligned)[PHY_HEADER_LEN];
+
+
 
 #define DEBUG DEBUG_NONE
 #if DEBUG
