@@ -197,23 +197,12 @@ int fputs(const char *_ptr, register FILE *_fp)
  */
 int8_t _hal_uart_init()
 {
-  int si_retStaus = 0;
   bool b_return = false;
-
-  uint8_t p_data[] = { "\r\n\r\n========== BEGIN ===========\r\n\r\n" };
-  uint16_t i_dataLen = sizeof(p_data);
 
   /* Initialize UART */
   b_return = sf_uart_init();
 
-  if (b_return) {
-    if (!(sf_uart_write(p_data, i_dataLen) == i_dataLen))
-    {
-        si_retStaus = 1;
-    }
-  }
-
-  return si_retStaus;
+  return b_return == true ? 0 : -1;
 }
 
 /*!
