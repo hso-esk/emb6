@@ -49,18 +49,10 @@
 #define DEBUG DEBUG_PRINT
 #include "net/ip/uip-debug.h"
 
-#define CONFIG_VIA_BUTTON PLATFORM_HAS_BUTTON
-#if CONFIG_VIA_BUTTON
-#include "button-sensor.h"
-#endif /* CONFIG_VIA_BUTTON */
-
 /*---------------------------------------------------------------------------*/
 PROCESS(node_process, "RPL Node");
-#if CONFIG_VIA_BUTTON
-AUTOSTART_PROCESSES(&node_process, &sensors_process);
-#else /* CONFIG_VIA_BUTTON */
 AUTOSTART_PROCESSES(&node_process);
-#endif /* CONFIG_VIA_BUTTON */
+
 
 /*---------------------------------------------------------------------------*/
 static void
@@ -140,6 +132,51 @@ print_network_status(void)
 
   PRINTF("----------------------\n");
 }
+
+/*---------------------------------------------------------------------------*/
+/*
+* demo_6tischConf()
+*/
+int8_t demo_6tischConf(s_ns_t *p_netstk)
+{
+  int8_t ret = -1;
+
+  if (p_netstk != NULL) {
+    if (p_netstk->c_configured == FALSE) {
+      p_netstk->hc = &hc_driver_sicslowpan;
+      p_netstk->frame = &framer_802154;
+      p_netstk->dllsec = &dllsec_driver_null;
+      /*FIXME switch to the 6tisch mac driver */
+      // p_netstk->mac=&
+      ret = 0;
+    } else {
+      if ((p_netstk->hc == &hc_driver_sicslowpan) &&
+          (p_netstk->frame == &framer_802154) &&
+          (p_netstk->dllsec == &dllsec_driver_null)) {
+          /*FIXME switch to the 6tisch mac driver */
+          // p_netstk->mac=&
+        ret = 0;
+      } else {
+        p_netstk = NULL;
+        ret = -1;
+      }
+    }
+  }
+  return ret;
+} /* demo_6tischConf() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* demo_6tischInit()
+*/
+int8_t demo_6tischInit(void)
+{
+
+  /* Always success */
+  return 0;
+} /* demo_6tischInit() */
+
+
 /*---------------------------------------------------------------------------*/
 static void
 net_init(uip_ipaddr_t *br_prefix)

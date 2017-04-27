@@ -83,4 +83,4 @@ int8_t demo_6tischInit(void);
  */
 int8_t demo_6tischConf(s_ns_t *p_netStack);
 
-#endif /* __DEMO_UDP_SOCKET_H__ */
+#endif /* __DEMO_6TISCH_H__ */
