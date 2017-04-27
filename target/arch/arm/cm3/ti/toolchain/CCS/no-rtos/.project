@@ -81,6 +81,11 @@
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
+			<name>demo/6tisch</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
 			<name>demo/aptb</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
@@ -199,6 +204,16 @@
 			<name>utils/src</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>demo/6tisch/demo_6tisch.c</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/demo/6tisch/demo_6tisch.c</locationURI>
+		</link>
+		<link>
+			<name>demo/6tisch/demo_6tisch.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/demo/6tisch/demo_6tisch.h</locationURI>
 		</link>
 		<link>
 			<name>demo/aptb/client</name>
