@@ -981,6 +981,11 @@
 			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/readme</locationURI>
 		</link>
 		<link>
+			<name>emb6/inc/dll/tsch</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
 			<name>emb6/inc/net/dtls</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
@@ -1067,6 +1072,11 @@
 		</link>
 		<link>
 			<name>emb6/src/dll/mac</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>emb6/src/dll/tsch</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
