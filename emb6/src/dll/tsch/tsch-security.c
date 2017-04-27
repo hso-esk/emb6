@@ -37,21 +37,19 @@
  *         Simon Duquennoy <simonduq@sics.se>
  */
 
-#include "contiki.h"
-#include "net/mac/tsch/tsch.h"
-#include "net/mac/tsch/tsch-packet.h"
-#include "net/mac/tsch/tsch-private.h"
-#include "net/mac/tsch/tsch-schedule.h"
-#include "net/mac/tsch/tsch-security.h"
-#include "net/mac/tsch/tsch-log.h"
-#include "net/mac/frame802154.h"
+#include "emb6.h"
+#include "tsch.h"
+#include "tsch-packet.h"
+#include "tsch-private.h"
+#include "tsch-schedule.h"
+#include "tsch-security.h"
+#include "tsch-log.h"
+#include "frame802154.h"
 #include "net/mac/framer-802154.h"
 #include "net/netstack.h"
 #include "net/packetbuf.h"
 #include "lib/ccm-star.h"
 #include "lib/aes-128.h"
-#include <stdio.h>
-#include <string.h>
 
 #if TSCH_LOG_LEVEL >= 1
 #define DEBUG DEBUG_PRINT

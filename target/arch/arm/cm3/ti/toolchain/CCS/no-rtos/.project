@@ -1756,6 +1756,76 @@
 			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/mac/mac.h</locationURI>
 		</link>
 		<link>
+			<name>emb6/inc/dll/tsch/frame802154.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/tsch/frame802154.h</locationURI>
+		</link>
+		<link>
+			<name>emb6/inc/dll/tsch/frame802154e-ie.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/tsch/frame802154e-ie.h</locationURI>
+		</link>
+		<link>
+			<name>emb6/inc/dll/tsch/tsch-adaptive-timesync.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/tsch/tsch-adaptive-timesync.h</locationURI>
+		</link>
+		<link>
+			<name>emb6/inc/dll/tsch/tsch-asn.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/tsch/tsch-asn.h</locationURI>
+		</link>
+		<link>
+			<name>emb6/inc/dll/tsch/tsch-conf.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/tsch/tsch-conf.h</locationURI>
+		</link>
+		<link>
+			<name>emb6/inc/dll/tsch/tsch-log.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/tsch/tsch-log.h</locationURI>
+		</link>
+		<link>
+			<name>emb6/inc/dll/tsch/tsch-packet.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/tsch/tsch-packet.h</locationURI>
+		</link>
+		<link>
+			<name>emb6/inc/dll/tsch/tsch-private.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/tsch/tsch-private.h</locationURI>
+		</link>
+		<link>
+			<name>emb6/inc/dll/tsch/tsch-queue.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/tsch/tsch-queue.h</locationURI>
+		</link>
+		<link>
+			<name>emb6/inc/dll/tsch/tsch-rpl.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/tsch/tsch-rpl.h</locationURI>
+		</link>
+		<link>
+			<name>emb6/inc/dll/tsch/tsch-schedule.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/tsch/tsch-schedule.h</locationURI>
+		</link>
+		<link>
+			<name>emb6/inc/dll/tsch/tsch-security.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/tsch/tsch-security.h</locationURI>
+		</link>
+		<link>
+			<name>emb6/inc/dll/tsch/tsch-slot-operation.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/tsch/tsch-slot-operation.h</locationURI>
+		</link>
+		<link>
+			<name>emb6/inc/dll/tsch/tsch.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/tsch/tsch.h</locationURI>
+		</link>
+		<link>
 			<name>emb6/inc/net/dtls/aes</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
@@ -2149,6 +2219,61 @@
 			<name>emb6/src/dll/mac/mac_smartmac.c</name>
 			<type>1</type>
 			<locationURI>PARENT-8-PROJECT_LOC/emb6/src/dll/mac/mac_smartmac.c</locationURI>
+		</link>
+		<link>
+			<name>emb6/src/dll/tsch/frame802154.c</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/src/dll/tsch/frame802154.c</locationURI>
+		</link>
+		<link>
+			<name>emb6/src/dll/tsch/frame802154e-ie.c</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/src/dll/tsch/frame802154e-ie.c</locationURI>
+		</link>
+		<link>
+			<name>emb6/src/dll/tsch/tsch-adaptive-timesync.c</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/src/dll/tsch/tsch-adaptive-timesync.c</locationURI>
+		</link>
+		<link>
+			<name>emb6/src/dll/tsch/tsch-log.c</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/src/dll/tsch/tsch-log.c</locationURI>
+		</link>
+		<link>
+			<name>emb6/src/dll/tsch/tsch-packet.c</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/src/dll/tsch/tsch-packet.c</locationURI>
+		</link>
+		<link>
+			<name>emb6/src/dll/tsch/tsch-queue.c</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/src/dll/tsch/tsch-queue.c</locationURI>
+		</link>
+		<link>
+			<name>emb6/src/dll/tsch/tsch-rpl.c</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/src/dll/tsch/tsch-rpl.c</locationURI>
+		</link>
+		<link>
+			<name>emb6/src/dll/tsch/tsch-schedule.c</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/src/dll/tsch/tsch-schedule.c</locationURI>
+		</link>
+		<link>
+			<name>emb6/src/dll/tsch/tsch-security.c</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/src/dll/tsch/tsch-security.c</locationURI>
+		</link>
+		<link>
+			<name>emb6/src/dll/tsch/tsch-slot-operation.c</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/src/dll/tsch/tsch-slot-operation.c</locationURI>
+		</link>
+		<link>
+			<name>emb6/src/dll/tsch/tsch.c</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/src/dll/tsch/tsch.c</locationURI>
 		</link>
 		<link>
 			<name>emb6/src/net/dtls/aes</name>

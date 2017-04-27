@@ -34,16 +34,15 @@
  *
  * \author Simon Duquennoy <simonduq@sics.se>
  */
+#include "emb6.h"
 
 #if UIP_CONF_IPV6_RPL
-
-#include "contiki.h"
 #include "net/rpl/rpl.h"
 #include "net/rpl/rpl-private.h"
-#include "net/mac/tsch/tsch.h"
-#include "net/mac/tsch/tsch-private.h"
-#include "net/mac/tsch/tsch-schedule.h"
-#include "net/mac/tsch/tsch-log.h"
+#include "tsch.h"
+#include "tsch-private.h"
+#include "tsch-schedule.h"
+#include "tsch-log.h"
 #include "tsch-rpl.h"
 
 #if TSCH_LOG_LEVEL >= 1

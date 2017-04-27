@@ -555,12 +555,13 @@
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo/udp_socket_simple&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo/udp_socket&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo/udp_alive&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo/6tisch&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/emb6&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/emb6/inc&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/emb6/inc/dll&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/emb6/inc/dll/framer&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/emb6/inc/phy&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/emb6/inc/dll/tsch&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/emb6/inc/dll/dllc&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/emb6/inc/dll/dllsec&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/emb6/inc/dll/mac&quot;"/>

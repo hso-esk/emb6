@@ -42,13 +42,13 @@
 
 #include "contiki.h"
 #include <stdio.h>
-#include "net/mac/tsch/tsch.h"
-#include "net/mac/tsch/tsch-queue.h"
-#include "net/mac/tsch/tsch-private.h"
-#include "net/mac/tsch/tsch-log.h"
-#include "net/mac/tsch/tsch-packet.h"
-#include "net/mac/tsch/tsch-schedule.h"
-#include "net/mac/tsch/tsch-slot-operation.h"
+#include "tsch.h"
+#include "tsch-queue.h"
+#include "tsch-private.h"
+#include "tsch-log.h"
+#include "tsch-packet.h"
+#include "tsch-schedule.h"
+#include "tsch-slot-operation.h"
 #include "lib/ringbufindex.h"
 
 #if TSCH_LOG_LEVEL >= 1

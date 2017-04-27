@@ -38,22 +38,21 @@
  *         Beshr Al Nahas <beshr@sics.se>
  */
 
-#include "contiki.h"
+#include "emb6.h"
 #include "dev/leds.h"
 #include "lib/memb.h"
 #include "net/nbr-table.h"
 #include "net/packetbuf.h"
 #include "net/queuebuf.h"
-#include "net/mac/tsch/tsch.h"
-#include "net/mac/tsch/tsch-queue.h"
-#include "net/mac/tsch/tsch-private.h"
-#include "net/mac/tsch/tsch-packet.h"
-#include "net/mac/tsch/tsch-schedule.h"
-#include "net/mac/tsch/tsch-log.h"
-#include "net/mac/frame802154.h"
+#include "tsch.h"
+#include "tsch-queue.h"
+#include "tsch-private.h"
+#include "tsch-packet.h"
+#include "tsch-schedule.h"
+#include "tsch-log.h"
+#include "frame802154.h"
 #include "sys/process.h"
 #include "sys/rtimer.h"
-#include <string.h>
 
 #if TSCH_LOG_LEVEL >= 1
 #define DEBUG DEBUG_PRINT
