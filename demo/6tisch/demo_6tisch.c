@@ -37,21 +37,20 @@
  */
 
 #include "demo_6tisch.h"
-#include "node-id.h"
-#include "net/rpl/rpl.h"
-#include "net/ipv6/uip-ds6-route.h"
-#include "net/mac/tsch/tsch.h"
-#include "net/rpl/rpl-private.h"
+#include "rpl.h"
+#include "uip-ds6-route.h"
+#include "tsch.h"
+#include "rpl-private.h"
 #if WITH_ORCHESTRA
 #include "orchestra.h"
 #endif /* WITH_ORCHESTRA */
 
 #define DEBUG DEBUG_PRINT
-#include "net/ip/uip-debug.h"
+#include "uip-debug.h"
 
 /*---------------------------------------------------------------------------*/
-PROCESS(node_process, "RPL Node");
-AUTOSTART_PROCESSES(&node_process);
+//PROCESS(node_process, "RPL Node");
+//AUTOSTART_PROCESSES(&node_process);
 
 
 /*---------------------------------------------------------------------------*/
@@ -179,7 +178,7 @@ int8_t demo_6tischInit(void)
 
 /*---------------------------------------------------------------------------*/
 static void
-net_init(uip_ipaddr_t *br_prefix)
+net_init(uip_ipaddr_t *br_prefix, s_ns_t *p_netstk)
 {
   uip_ipaddr_t global_ipaddr;
 
@@ -193,7 +192,9 @@ net_init(uip_ipaddr_t *br_prefix)
     rpl_repair_root(RPL_DEFAULT_INSTANCE);
   }
 
-  NETSTACK_MAC.on();
+  /* FIXME add the error code */
+  p_netstk->mac->on(NULL);
+  //NETSTACK_MAC.on();
 }
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(node_process, ev, data)
@@ -221,7 +222,7 @@ PROCESS_THREAD(node_process, ev, data)
 
   coordinator_candidate = (memcmp(node_mac, coordinator_mac, 8) == 0);
 #elif CONTIKI_TARGET_COOJA
-  coordinator_candidate = (node_id == 1);
+//  coordinator_candidate = (node_id == 1);
 #endif
 
   if(coordinator_candidate) {
@@ -269,9 +270,10 @@ PROCESS_THREAD(node_process, ev, data)
   if(is_coordinator) {
     uip_ipaddr_t prefix;
     uip_ip6addr(&prefix, UIP_DS6_DEFAULT_PREFIX, 0, 0, 0, 0, 0, 0, 0);
-    net_init(&prefix);
+    /* FIXME correct the second argument  */
+    net_init(&prefix, NULL);
   } else {
-    net_init(NULL);
+    net_init(NULL, NULL);
   }
 
 #if WITH_ORCHESTRA
@@ -279,7 +281,7 @@ PROCESS_THREAD(node_process, ev, data)
 #endif /* WITH_ORCHESTRA */
 
   /* Print out routing tables every minute */
-  etimer_set(&et, CLOCK_SECOND * 60);
+  etimer_set(&et, bsp_getTRes() * 60 , NULL);
   while(1) {
     print_network_status();
     PROCESS_YIELD_UNTIL(etimer_expired(&et));

@@ -35,9 +35,8 @@
 
 /********** Includes **********/
 
-#include "contiki.h"
-#include "net/mac/mac.h"
-#include "net/mac/tsch/tsch-security.h"
+#include "emb6.h"
+#include "tsch-security.h"
 
 /******** Configuration *******/
 

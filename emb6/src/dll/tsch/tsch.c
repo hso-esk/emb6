@@ -57,6 +57,13 @@
 #include "net/mac/mac-sequence.h"
 #include "lib/random.h"
 
+
+/***********************/
+
+static s_ns_t          *pmac_netstk;
+
+/**********************/
+
 #if FRAME802154_VERSION < FRAME802154_IEEE802154E_2012
 #error TSCH: FRAME802154_VERSION must be at least FRAME802154_IEEE802154E_2012
 #endif
@@ -796,8 +803,26 @@ PROCESS_THREAD(tsch_pending_events_process, ev, data)
 
 /*---------------------------------------------------------------------------*/
 static void
-tsch_init(void)
+tsch_init(void *p_netstk, e_nsErr_t *p_err)
 {
+
+/***<*********************/
+
+#if NETSTK_CFG_ARG_CHK_EN
+  if (p_err == NULL) {
+    return;
+  }
+
+  if (p_netstk == NULL) {
+    *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+    return;
+  }
+#endif
+
+  /* initialize local variables */
+  pmac_netstk = (s_ns_t *) p_netstk;
+/************************>**/
+
   radio_value_t radio_rx_mode;
   radio_value_t radio_tx_mode;
   rtimer_clock_t t;
@@ -986,6 +1011,7 @@ packet_input(void)
 static int
 turn_on(void)
 {
+
   if(tsch_is_initialized == 1 && tsch_is_started == 0) {
     tsch_is_started = 1;
     /* Process tx/rx callback and log messages whenever polled */
@@ -1000,15 +1026,15 @@ turn_on(void)
   return 0;
 }
 /*---------------------------------------------------------------------------*/
-static int
-turn_off(int keep_radio_on)
+static void
+turn_off(e_nsErr_t *p_err)
 {
-  if(keep_radio_on) {
-    NETSTACK_RADIO.on();
-  } else {
-    NETSTACK_RADIO.off();
+#if NETSTK_CFG_ARG_CHK_EN
+  if (p_err == NULL) {
+    return;
   }
-  return 1;
+#endif
+	  pmac_netstk->phy->off(p_err);
 }
 /*---------------------------------------------------------------------------*/
 static unsigned short
@@ -1017,13 +1043,13 @@ channel_check_interval(void)
   return 0;
 }
 /*---------------------------------------------------------------------------*/
-const struct mac_driver tschmac_driver = {
+const struct s_nsMAC_t tschmac_driver = {
   "TSCH",
   tsch_init,
-  send_packet,
-  packet_input,
   turn_on,
   turn_off,
+  send_packet,
+  packet_input,
   channel_check_interval,
 };
 /*---------------------------------------------------------------------------*/

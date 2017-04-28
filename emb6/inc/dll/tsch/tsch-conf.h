@@ -42,7 +42,7 @@
 
 /********** Includes **********/
 
-#include "contiki.h"
+#include "emb6.h"
 
 /******** Configuration *******/
 

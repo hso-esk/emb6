@@ -44,10 +44,11 @@
 
 /********** Includes **********/
 
-#include "contiki.h"
-#include "net/linkaddr.h"
-#include "net/mac/tsch/tsch-asn.h"
-#include "net/mac/tsch/tsch-conf.h"
+#include "emb6.h"
+#include "rt_tmr.h"
+#include "linkaddr.h"
+#include "tsch-asn.h"
+#include "tsch-conf.h"
 #if CONTIKI_TARGET_COOJA || CONTIKI_TARGET_COOJA_IP64
 #include "lib/simEnvChange.h"
 #include "sys/cooja_mt.h"
@@ -87,7 +88,9 @@ extern struct tsch_link *current_link;
 extern uint8_t tsch_hopping_sequence[TSCH_HOPPING_SEQUENCE_MAX_LEN];
 extern struct tsch_asn_divisor_t tsch_hopping_sequence_length;
 /* TSCH timeslot timing (in rtimer ticks) */
-extern rtimer_clock_t tsch_timing[tsch_ts_elements_count];
+/* FIXME to check this */
+//extern rtimer_clock_t tsch_timing[tsch_ts_elements_count];
+extern rt_tmr_tick_t tsch_timing[tsch_ts_elements_count];
 
 /* TSCH processes */
 PROCESS_NAME(tsch_process);

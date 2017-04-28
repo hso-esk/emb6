@@ -40,9 +40,9 @@
 #ifndef FRAME_802154E_H
 #define FRAME_802154E_H
 
-#include "contiki.h"
+#include "emb6.h"
 /* We need definitions from tsch-private.h for TSCH-specific information elements */
-#include "net/mac/tsch/tsch-private.h"
+#include "tsch-private.h"
 
 #define FRAME802154E_IE_MAX_LINKS       4
 

@@ -35,12 +35,12 @@
 
 /********** Includes **********/
 
-#include "contiki.h"
-#include "net/mac/tsch/tsch-asn.h"
-#include "net/mac/tsch/tsch-private.h"
-#include "net/mac/frame802154.h"
-#include "net/llsec/llsec802154.h"
-#include "net/mac/frame802154e-ie.h"
+#include "emb6.h"
+#include "tsch-asn.h"
+#include "tsch-private.h"
+#include "frame802154.h"
+#include "dllsec_802154.h"
+#include "frame802154e-ie.h"
 
 /******** Configuration *******/
 
