@@ -593,11 +593,10 @@
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEFINE.1102885006" name="Pre-define NAME (--define, -D)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEFINE" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="LOGGER_LEVEL=3"/>
 									<listOptionValue builtIn="false" value="USE_TI_RTOS=0"/>
-									<listOptionValue builtIn="false" value="LOGGER_DEMO_UDP_SOCKET=1"/>
+									<listOptionValue builtIn="false" value="LOGGER_DEMO_6TISCH=1"/>
 									<listOptionValue builtIn="false" value="EMB6_INIT_ROOT=1"/>
 									<listOptionValue builtIn="false" value="NET_USE_RPL=1"/>
-									<listOptionValue builtIn="false" value="DEMO_USE_UDP_SOCKET=1"/>
-									<listOptionValue builtIn="false" value="DEMO_UDP_SOCKET_ROLE_SERVER=1"/>
+									<listOptionValue builtIn="false" value="DEMO_USE_6TISCH=1"/>
 									<listOptionValue builtIn="false" value="MAC_ADDR_WORD=0x00aa"/>
 								</option>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DIAG_WRAP.729952596" name="Wrap diagnostic messages (--diag_wrap)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DIAG_WRAP" value="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DIAG_WRAP.off" valueType="enumerated"/>
@@ -637,7 +636,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/startup_files/startup_keil.s|target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/startup_files/startup_iar.c|target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/startup_files/startup_gcc.c|target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/startup_files/ccfg.c|target/arch/arm/cm3/ti/device/cc13xx/ti_rtos_src|src|target/arch/msp430|target/bsp/mosesstick|demo/mdns|target/if/native|emb6/src/apl|target/mcu/atmega1281|demo/aptb|target/mcu/samd20|target/if/cc112x|target/mcu/efm32lg840f256|target/arch/avr|target/if/at86rf212b|target/mcu/native|target/bsp/ti_trxeb_cc120x|demo/lwm2m|target/mcu/samd21|demo/udp_alive|target/bsp/efm32stk3600_cc112x|emb6/src/net/slip|demo/coap|target/bsp/efm32stk3600_rf212b|target/if/at86rf212|target/bsp/atany900_pro5|target/bsp/samd20xpro_rf212|emb6/src/net/dtls|target/bsp/native|target/arch/native|target/bsp/atany900_basic|demo/dtls|demo/udp_socket_simple|target/if/at86rf230|target/bsp/samd20xpro_rf212b|demo/extif|target/bsp/moses|target/arch/arm/cm3/silabs|target/bsp/ti_trxeb_cc112x|target/mcu/template|target/arch/arm/cm0plus|emb6/src/net/ipv6/multicast/esmrf.c|target/mcu/efm32lg990f256|target/bsp/template|target/mcu/msp430f5438a|target/bsp/efm32stk3600_cc120x|CC1310DK_7XD.cmd|target/if/cc120x|target/bsp/atany900" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="demo/udp_socket|target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/startup_files/startup_keil.s|target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/startup_files/startup_iar.c|target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/startup_files/startup_gcc.c|target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/startup_files/ccfg.c|target/arch/arm/cm3/ti/device/cc13xx/ti_rtos_src|src|target/arch/msp430|target/bsp/mosesstick|demo/mdns|target/if/native|emb6/src/apl|target/mcu/atmega1281|demo/aptb|target/mcu/samd20|target/if/cc112x|target/mcu/efm32lg840f256|target/arch/avr|target/if/at86rf212b|target/mcu/native|target/bsp/ti_trxeb_cc120x|demo/lwm2m|target/mcu/samd21|demo/udp_alive|target/bsp/efm32stk3600_cc112x|emb6/src/net/slip|demo/coap|target/bsp/efm32stk3600_rf212b|target/if/at86rf212|target/bsp/atany900_pro5|target/bsp/samd20xpro_rf212|emb6/src/net/dtls|target/bsp/native|target/arch/native|target/bsp/atany900_basic|demo/dtls|demo/udp_socket_simple|target/if/at86rf230|target/bsp/samd20xpro_rf212b|demo/extif|target/bsp/moses|target/arch/arm/cm3/silabs|target/bsp/ti_trxeb_cc112x|target/mcu/template|target/arch/arm/cm0plus|emb6/src/net/ipv6/multicast/esmrf.c|target/mcu/efm32lg990f256|target/bsp/template|target/mcu/msp430f5438a|target/bsp/efm32stk3600_cc120x|CC1310DK_7XD.cmd|target/if/cc120x|target/bsp/atany900" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
