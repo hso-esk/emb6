@@ -53,12 +53,18 @@
 #define LOGGER_SUBSYSTEM        "6TISCH"
 #endif /* #if LOGGER_ENABLE == TRUE */
 #include    "logger.h"
-/*---------------------------------------------------------------------------*/
-//PROCESS(node_process, "RPL Node");
-//AUTOSTART_PROCESSES(&node_process);
 
 
-/*---------------------------------------------------------------------------*/
+/*
+ *  --- Local Variables ---------------------------------------------------- *
+ */
+
+static struct ctimer ct;
+
+/*
+ *  --- Local Functions ---------------------------------------------------- *
+ */
+
 static void print_network_status(void)
 {
   int i;
@@ -136,7 +142,6 @@ static void print_network_status(void)
   PRINTF("----------------------\n");
 }
 
-/*---------------------------------------------------------------------------*/
 static void net_init(uip_ipaddr_t *br_prefix, s_ns_t *p_netstk)
 {
   uip_ipaddr_t global_ipaddr;
@@ -155,6 +160,18 @@ static void net_init(uip_ipaddr_t *br_prefix, s_ns_t *p_netstk)
   p_netstk->mac->on(NULL);
   //NETSTACK_MAC.on();
 }
+
+static  void demo_6tisch_cb_logger(void *ptr)
+{
+	print_network_status();
+	ctimer_set(&ct, bsp_getTRes() * 60, demo_6tisch_cb_logger, NULL);
+}
+
+
+
+/*
+ * --- Global Function Definitions ----------------------------------------- *
+ */
 
 
 /*---------------------------------------------------------------------------*/
@@ -196,8 +213,6 @@ int8_t demo_6tischConf(s_ns_t *p_netstk)
 int8_t demo_6tischInit(void)
 {
 	 static struct etimer et;
-//	  PROCESS_BEGIN();
-
 	  /* 3 possible roles:
 	   * - role_6ln: simple node, will join any network, secured or not
 	   * - role_6dr: DAG root, will advertise (unsecured) beacons
@@ -276,18 +291,10 @@ int8_t demo_6tischInit(void)
 	  orchestra_init();
 	#endif /* WITH_ORCHESTRA */
 
-	  /* Print out routing tables every minute */
-	  etimer_set(&et, bsp_getTRes() * 60 , NULL);
-	  while(1) {
-	    print_network_status();
-//	    PROCESS_YIELD_UNTIL(etimer_expired(&et));
-	    etimer_reset(&et);
-	  }
-
-//	  PROCESS_END();
+  /* start the ctimer for logging */
+		ctimer_set(&ct, bsp_getTRes() * 60, demo_6tisch_cb_logger, NULL);
   /* Always success */
   return 0;
 } /* demo_6tischInit() */
-
 
 /*---------------------------------------------------------------------------*/
