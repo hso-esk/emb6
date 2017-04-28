@@ -48,14 +48,18 @@
 #define DEBUG DEBUG_PRINT
 #include "uip-debug.h"
 
+#define LOGGER_ENABLE           LOGGER_DEMO_6TISCH
+#if LOGGER_ENABLE == TRUE
+#define LOGGER_SUBSYSTEM        "6TISCH"
+#endif /* #if LOGGER_ENABLE == TRUE */
+#include    "logger.h"
 /*---------------------------------------------------------------------------*/
 //PROCESS(node_process, "RPL Node");
 //AUTOSTART_PROCESSES(&node_process);
 
 
 /*---------------------------------------------------------------------------*/
-static void
-print_network_status(void)
+static void print_network_status(void)
 {
   int i;
   uint8_t state;
@@ -133,52 +137,7 @@ print_network_status(void)
 }
 
 /*---------------------------------------------------------------------------*/
-/*
-* demo_6tischConf()
-*/
-int8_t demo_6tischConf(s_ns_t *p_netstk)
-{
-  int8_t ret = -1;
-
-  if (p_netstk != NULL) {
-    if (p_netstk->c_configured == FALSE) {
-      p_netstk->hc = &hc_driver_sicslowpan;
-      p_netstk->frame = &framer_802154;
-      p_netstk->dllsec = &dllsec_driver_null;
-      /*FIXME switch to the 6tisch mac driver */
-      // p_netstk->mac=&
-      ret = 0;
-    } else {
-      if ((p_netstk->hc == &hc_driver_sicslowpan) &&
-          (p_netstk->frame == &framer_802154) &&
-          (p_netstk->dllsec == &dllsec_driver_null)) {
-          /*FIXME switch to the 6tisch mac driver */
-          // p_netstk->mac=&
-        ret = 0;
-      } else {
-        p_netstk = NULL;
-        ret = -1;
-      }
-    }
-  }
-  return ret;
-} /* demo_6tischConf() */
-
-/*---------------------------------------------------------------------------*/
-/*
-* demo_6tischInit()
-*/
-int8_t demo_6tischInit(void)
-{
-
-  /* Always success */
-  return 0;
-} /* demo_6tischInit() */
-
-
-/*---------------------------------------------------------------------------*/
-static void
-net_init(uip_ipaddr_t *br_prefix, s_ns_t *p_netstk)
+static void net_init(uip_ipaddr_t *br_prefix, s_ns_t *p_netstk)
 {
   uip_ipaddr_t global_ipaddr;
 
@@ -196,98 +155,139 @@ net_init(uip_ipaddr_t *br_prefix, s_ns_t *p_netstk)
   p_netstk->mac->on(NULL);
   //NETSTACK_MAC.on();
 }
+
+
 /*---------------------------------------------------------------------------*/
-PROCESS_THREAD(node_process, ev, data)
+/*
+* demo_6tischConf()
+*/
+int8_t demo_6tischConf(s_ns_t *p_netstk)
 {
-  static struct etimer et;
-  PROCESS_BEGIN();
+  int8_t ret = -1;
 
-  /* 3 possible roles:
-   * - role_6ln: simple node, will join any network, secured or not
-   * - role_6dr: DAG root, will advertise (unsecured) beacons
-   * - role_6dr_sec: DAG root, will advertise secured beacons
-   * */
-  static int is_coordinator = 0;
-  static enum { role_6ln, role_6dr, role_6dr_sec } node_role;
-  node_role = role_6ln;
-
-  int coordinator_candidate = 0;
-
-#ifdef CONTIKI_TARGET_Z1
-  /* Set node with MAC address c1:0c:00:00:00:00:01 as coordinator,
-   * convenient in cooja for regression tests using z1 nodes
-   * */
-  extern unsigned char node_mac[8];
-  unsigned char coordinator_mac[8] = { 0xc1, 0x0c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01 };
-
-  coordinator_candidate = (memcmp(node_mac, coordinator_mac, 8) == 0);
-#elif CONTIKI_TARGET_COOJA
-//  coordinator_candidate = (node_id == 1);
-#endif
-
-  if(coordinator_candidate) {
-    if(LLSEC802154_ENABLED) {
-      node_role = role_6dr_sec;
+  if (p_netstk != NULL) {
+    if (p_netstk->c_configured == FALSE) {
+      p_netstk->hc = &hc_driver_sicslowpan;
+      p_netstk->frame = &framer_802154;
+      p_netstk->dllsec = &dllsec_driver_null;
+      /*FIXME switch to the 6tisch mac driver */
+      p_netstk->mac= &tschmac_driver;
+      ret = 0;
     } else {
-      node_role = role_6dr;
-    }
-  } else {
-    node_role = role_6ln;
-  }
-
-#if CONFIG_VIA_BUTTON
-  {
-#define CONFIG_WAIT_TIME 5
-
-    SENSORS_ACTIVATE(button_sensor);
-    etimer_set(&et, CLOCK_SECOND * CONFIG_WAIT_TIME);
-
-    while(!etimer_expired(&et)) {
-      printf("Init: current role: %s. Will start in %u seconds. Press user button to toggle mode.\n",
-             node_role == role_6ln ? "6ln" : (node_role == role_6dr) ? "6dr" : "6dr-sec",
-             CONFIG_WAIT_TIME);
-      PROCESS_WAIT_EVENT_UNTIL(((ev == sensors_event) &&
-                                (data == &button_sensor) && button_sensor.value(0) > 0)
-                               || etimer_expired(&et));
-      if(ev == sensors_event && data == &button_sensor && button_sensor.value(0) > 0) {
-        node_role = (node_role + 1) % 3;
-        if(LLSEC802154_ENABLED == 0 && node_role == role_6dr_sec) {
-          node_role = (node_role + 1) % 3;
-        }
-        etimer_restart(&et);
+      if ((p_netstk->hc == &hc_driver_sicslowpan) &&
+          (p_netstk->frame == &framer_802154) &&
+          (p_netstk->dllsec == &dllsec_driver_null)) {
+          /*FIXME switch to the 6tisch mac driver */
+           p_netstk->mac= &tschmac_driver;
+        ret = 0;
+      } else {
+        p_netstk = NULL;
+        ret = -1;
       }
     }
   }
+  return ret;
+} /* demo_6tischConf() */
 
-#endif /* CONFIG_VIA_BUTTON */
+/*---------------------------------------------------------------------------*/
+/*
+* demo_6tischInit()
+*/
+int8_t demo_6tischInit(void)
+{
+	 static struct etimer et;
+//	  PROCESS_BEGIN();
 
-  printf("Init: node starting with role %s\n",
-         node_role == role_6ln ? "6ln" : (node_role == role_6dr) ? "6dr" : "6dr-sec");
+	  /* 3 possible roles:
+	   * - role_6ln: simple node, will join any network, secured or not
+	   * - role_6dr: DAG root, will advertise (unsecured) beacons
+	   * - role_6dr_sec: DAG root, will advertise secured beacons
+	   * */
+	  static int is_coordinator = 0;
+	  static enum { role_6ln, role_6dr, role_6dr_sec } node_role;
+	  node_role = role_6ln;
 
-  tsch_set_pan_secured(LLSEC802154_ENABLED && (node_role == role_6dr_sec));
-  is_coordinator = node_role > role_6ln;
+	  int coordinator_candidate = 0;
 
-  if(is_coordinator) {
-    uip_ipaddr_t prefix;
-    uip_ip6addr(&prefix, UIP_DS6_DEFAULT_PREFIX, 0, 0, 0, 0, 0, 0, 0);
-    /* FIXME correct the second argument  */
-    net_init(&prefix, NULL);
-  } else {
-    net_init(NULL, NULL);
-  }
+	#ifdef CONTIKI_TARGET_Z1
+	  /* Set node with MAC address c1:0c:00:00:00:00:01 as coordinator,
+	   * convenient in cooja for regression tests using z1 nodes
+	   * */
+	  extern unsigned char node_mac[8];
+	  unsigned char coordinator_mac[8] = { 0xc1, 0x0c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01 };
 
-#if WITH_ORCHESTRA
-  orchestra_init();
-#endif /* WITH_ORCHESTRA */
+	  coordinator_candidate = (memcmp(node_mac, coordinator_mac, 8) == 0);
+	#elif CONTIKI_TARGET_COOJA
+	//  coordinator_candidate = (node_id == 1);
+	#endif
 
-  /* Print out routing tables every minute */
-  etimer_set(&et, bsp_getTRes() * 60 , NULL);
-  while(1) {
-    print_network_status();
-    PROCESS_YIELD_UNTIL(etimer_expired(&et));
-    etimer_reset(&et);
-  }
+	  if(coordinator_candidate) {
+	    if(LLSEC802154_ENABLED) {
+	      node_role = role_6dr_sec;
+	    } else {
+	      node_role = role_6dr;
+	    }
+	  } else {
+	    node_role = role_6ln;
+	  }
 
-  PROCESS_END();
-}
+	#if CONFIG_VIA_BUTTON
+	  {
+	#define CONFIG_WAIT_TIME 5
+
+	    SENSORS_ACTIVATE(button_sensor);
+	    etimer_set(&et, CLOCK_SECOND * CONFIG_WAIT_TIME);
+
+	    while(!etimer_expired(&et)) {
+	      printf("Init: current role: %s. Will start in %u seconds. Press user button to toggle mode.\n",
+	             node_role == role_6ln ? "6ln" : (node_role == role_6dr) ? "6dr" : "6dr-sec",
+	             CONFIG_WAIT_TIME);
+	      PROCESS_WAIT_EVENT_UNTIL(((ev == sensors_event) &&
+	                                (data == &button_sensor) && button_sensor.value(0) > 0)
+	                               || etimer_expired(&et));
+	      if(ev == sensors_event && data == &button_sensor && button_sensor.value(0) > 0) {
+	        node_role = (node_role + 1) % 3;
+	        if(LLSEC802154_ENABLED == 0 && node_role == role_6dr_sec) {
+	          node_role = (node_role + 1) % 3;
+	        }
+	        etimer_restart(&et);
+	      }
+	    }
+	  }
+
+	#endif /* CONFIG_VIA_BUTTON */
+
+	  printf("Init: node starting with role %s\n",
+	         node_role == role_6ln ? "6ln" : (node_role == role_6dr) ? "6dr" : "6dr-sec");
+
+	  tsch_set_pan_secured(LLSEC802154_ENABLED && (node_role == role_6dr_sec));
+	  is_coordinator = node_role > role_6ln;
+
+	  if(is_coordinator) {
+	    uip_ipaddr_t prefix;
+	    uip_ip6addr(&prefix, UIP_DS6_DEFAULT_PREFIX, 0, 0, 0, 0, 0, 0, 0);
+	    /* FIXME correct the second argument  */
+	    net_init(&prefix, NULL);
+	  } else {
+	    net_init(NULL, NULL);
+	  }
+
+	#if WITH_ORCHESTRA
+	  orchestra_init();
+	#endif /* WITH_ORCHESTRA */
+
+	  /* Print out routing tables every minute */
+	  etimer_set(&et, bsp_getTRes() * 60 , NULL);
+	  while(1) {
+	    print_network_status();
+//	    PROCESS_YIELD_UNTIL(etimer_expired(&et));
+	    etimer_reset(&et);
+	  }
+
+//	  PROCESS_END();
+  /* Always success */
+  return 0;
+} /* demo_6tischInit() */
+
+
 /*---------------------------------------------------------------------------*/
