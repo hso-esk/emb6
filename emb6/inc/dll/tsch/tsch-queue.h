@@ -36,9 +36,9 @@
 /********** Includes **********/
 
 #include "contiki.h"
-#include "lib/ringbufindex.h"
-#include "net/linkaddr.h"
-#include "net/mac/tsch/tsch-schedule.h"
+#include "ringbufindex.h"
+#include "linkaddr.h"
+#include "tsch-schedule.h"
 #include "net/mac/mac.h"
 
 /******** Configuration *******/
