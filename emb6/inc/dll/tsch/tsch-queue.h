@@ -35,11 +35,11 @@
 
 /********** Includes **********/
 
-#include "contiki.h"
+#include "emb6.h"
 #include "ringbufindex.h"
 #include "linkaddr.h"
 #include "tsch-schedule.h"
-#include "net/mac/mac.h"
+//#include "net/mac/mac.h"
 
 /******** Configuration *******/
 

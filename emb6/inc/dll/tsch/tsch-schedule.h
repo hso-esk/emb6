@@ -36,11 +36,11 @@
 /********** Includes **********/
 
 #include "emb6.h"
-#include "lib/list.h"
-#include "net/mac/tsch/tsch-private.h"
-#include "net/mac/tsch/tsch-queue.h"
-#include "net/mac/tsch/tsch-slot-operation.h"
-#include "net/linkaddr.h"
+#include "clist.h"
+#include "tsch-private.h"
+#include "tsch-queue.h"
+#include "tsch-slot-operation.h"
+#include "linkaddr.h"
 
 /******** Configuration *******/
 

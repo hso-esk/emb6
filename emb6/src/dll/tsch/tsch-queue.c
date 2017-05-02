@@ -43,11 +43,11 @@
  */
 
 #include "emb6.h"
-#include "lib/list.h"
-#include "lib/memb.h"
-#include "lib/random.h"
-#include "net/queuebuf.h"
-#include "net/mac/rdc.h"
+#include "clist.h"
+#include "memb.h"
+#include "random.h"
+#include "queuebuf.h"
+//#include "net/mac/rdc.h"
 #include "tsch.h"
 #include "tsch-private.h"
 #include "tsch-queue.h"

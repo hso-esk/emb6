@@ -35,9 +35,9 @@
 
 /********** Includes **********/
 
-#include "contiki.h"
-#include "sys/rtimer.h"
-#include "net/mac/tsch/tsch-private.h"
+#include "emb6.h"
+#include "rt_tmr.h"
+#include "tsch-private.h"
 
 /******** Configuration *******/
 

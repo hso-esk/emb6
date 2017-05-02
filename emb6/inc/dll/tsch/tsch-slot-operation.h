@@ -35,10 +35,10 @@
 
 /********** Includes **********/
 
-#include "contiki.h"
-#include "lib/ringbufindex.h"
-#include "net/mac/tsch/tsch-packet.h"
-#include "net/mac/tsch/tsch-private.h"
+#include "emb6.h"
+#include "ringbufindex.h"
+#include "tsch-packet.h"
+#include "tsch-private.h"
 
 /******** Configuration *******/
 

@@ -36,10 +36,10 @@
 /********** Includes **********/
 
 #include "emb6.h"
-#include "net/packetbuf.h"
-#include "net/mac/tsch/tsch-private.h"
-#include "net/mac/frame802154.h"
-#include "net/mac/frame802154e-ie.h"
+#include "packetbuf.h"
+#include "tsch-private.h"
+#include "frame802154.h"
+#include "frame802154e-ie.h"
 
 /******** Configuration *******/
 
