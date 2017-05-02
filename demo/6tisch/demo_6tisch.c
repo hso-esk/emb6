@@ -157,7 +157,6 @@ static void net_init(uip_ipaddr_t *br_prefix)
   }
 
   /* FIXME Normally all layers should be enabled during emb6 init */
-  //p_netstk->mac->on(NULL);
   //NETSTACK_MAC.on();
 }
 
@@ -219,59 +218,18 @@ int8_t demo_6tischInit(void)
 	   * */
 	  static int is_coordinator = 0;
 	  static enum { role_6ln, role_6dr, role_6dr_sec } node_role;
-	  node_role = role_6ln;
-
 	  int coordinator_candidate = 0;
 
-	#ifdef CONTIKI_TARGET_Z1
-	  /* Set node with MAC address c1:0c:00:00:00:00:01 as coordinator,
-	   * convenient in cooja for regression tests using z1 nodes
-	   * */
-	  extern unsigned char node_mac[8];
-	  unsigned char coordinator_mac[8] = { 0xc1, 0x0c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01 };
+	  /* selecting the configured  role for the 6tisch network */
+#ifdef TISCH_ROLE_6LN
+	  node_role == role_6ln;
+#elif TISCH_ROLE_6DR
+	  node_role == role_6dr;
+#elif TISCH_ROLE_6DR_SEC
+	  node_role == role_6dr_sec;
+#endif
 
-	  coordinator_candidate = (memcmp(node_mac, coordinator_mac, 8) == 0);
-	#elif CONTIKI_TARGET_COOJA
-	//  coordinator_candidate = (node_id == 1);
-	#endif
-
-	  if(coordinator_candidate) {
-	    if(LLSEC802154_ENABLED) {
-	      node_role = role_6dr_sec;
-	    } else {
-	      node_role = role_6dr;
-	    }
-	  } else {
-	    node_role = role_6ln;
-	  }
-
-	#if CONFIG_VIA_BUTTON
-	  {
-	#define CONFIG_WAIT_TIME 5
-
-	    SENSORS_ACTIVATE(button_sensor);
-	    etimer_set(&et, CLOCK_SECOND * CONFIG_WAIT_TIME);
-
-	    while(!etimer_expired(&et)) {
-	      printf("Init: current role: %s. Will start in %u seconds. Press user button to toggle mode.\n",
-	             node_role == role_6ln ? "6ln" : (node_role == role_6dr) ? "6dr" : "6dr-sec",
-	             CONFIG_WAIT_TIME);
-	      PROCESS_WAIT_EVENT_UNTIL(((ev == sensors_event) &&
-	                                (data == &button_sensor) && button_sensor.value(0) > 0)
-	                               || etimer_expired(&et));
-	      if(ev == sensors_event && data == &button_sensor && button_sensor.value(0) > 0) {
-	        node_role = (node_role + 1) % 3;
-	        if(LLSEC802154_ENABLED == 0 && node_role == role_6dr_sec) {
-	          node_role = (node_role + 1) % 3;
-	        }
-	        etimer_restart(&et);
-	      }
-	    }
-	  }
-
-	#endif /* CONFIG_VIA_BUTTON */
-
-	  printf("Init: node starting with role %s\n",
+	  PRINTF("Init: node starting with role %s\n",
 	         node_role == role_6ln ? "6ln" : (node_role == role_6dr) ? "6dr" : "6dr-sec");
 
 	  tsch_set_pan_secured(LLSEC802154_ENABLED && (node_role == role_6dr_sec));
@@ -280,7 +238,6 @@ int8_t demo_6tischInit(void)
 	  if(is_coordinator) {
 	    uip_ipaddr_t prefix;
 	    uip_ip6addr(&prefix, UIP_DS6_DEFAULT_PREFIX, 0, 0, 0, 0, 0, 0, 0);
-	    /* FIXME correct the second argument  */
 	    net_init(&prefix);
 	  } else {
 	    net_init(NULL);
