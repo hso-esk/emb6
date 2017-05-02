@@ -1009,8 +1009,14 @@ packet_input(void)
 }
 /*---------------------------------------------------------------------------*/
 static int
-turn_on(void)
+turn_on(e_nsErr_t *p_err)
 {
+
+#if NETSTK_CFG_ARG_CHK_EN
+  if (p_err == NULL) {
+    return;
+  }
+#endif
 
   if(tsch_is_initialized == 1 && tsch_is_started == 0) {
     tsch_is_started = 1;
@@ -1021,9 +1027,9 @@ turn_on(void)
     /* try to associate to a network or start one if setup as coordinator */
     process_start(&tsch_process, NULL);
     PRINTF("TSCH: starting as %s\n", tsch_is_coordinator ? "coordinator" : "node");
-    return 1;
+    return;
   }
-  return 0;
+	  *p_err = NETSTK_ERR_RF_XXX;
 }
 /*---------------------------------------------------------------------------*/
 static void
@@ -1043,7 +1049,7 @@ channel_check_interval(void)
   return 0;
 }
 /*---------------------------------------------------------------------------*/
-const struct s_nsMAC_t tschmac_driver = {
+const s_nsMAC_t tschmac_driver = {
   "TSCH",
   tsch_init,
   turn_on,
