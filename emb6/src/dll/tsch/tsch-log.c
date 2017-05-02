@@ -49,7 +49,7 @@
 #include "tsch-packet.h"
 #include "tsch-schedule.h"
 #include "tsch-slot-operation.h"
-#include "lib/ringbufindex.h"
+#include "ringbufindex.h"
 
 #if TSCH_LOG_LEVEL >= 1
 #define DEBUG DEBUG_PRINT
