@@ -47,7 +47,7 @@
 #include "frame802154.h"
 #include "net/mac/framer-802154.h"
 #include "net/netstack.h"
-#include "net/packetbuf.h"
+#include "packetbuf.h"
 #include "lib/ccm-star.h"
 #include "lib/aes-128.h"
 

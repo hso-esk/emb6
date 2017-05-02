@@ -39,11 +39,11 @@
  */
 
 #include "emb6.h"
-#include "dev/leds.h"
-#include "lib/memb.h"
-#include "net/nbr-table.h"
-#include "net/packetbuf.h"
-#include "net/queuebuf.h"
+//#include "dev/leds.h"
+#include "memb.h"
+#include "nbr-table.h"
+#include "packetbuf.h"
+#include "queuebuf.h"
 #include "tsch.h"
 #include "tsch-queue.h"
 #include "tsch-private.h"
@@ -51,8 +51,8 @@
 #include "tsch-schedule.h"
 #include "tsch-log.h"
 #include "frame802154.h"
-#include "sys/process.h"
-#include "sys/rtimer.h"
+//#include "sys/process.h"
+#include "rt_tmr.h"
 
 #if TSCH_LOG_LEVEL >= 1
 #define DEBUG DEBUG_PRINT

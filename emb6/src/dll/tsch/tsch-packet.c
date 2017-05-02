@@ -39,7 +39,7 @@
  */
 
 #include "emb6.h"
-#include "net/packetbuf.h"
+#include "packetbuf.h"
 #include "tsch.h"
 #include "tsch-packet.h"
 #include "tsch-private.h"

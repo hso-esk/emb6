@@ -43,9 +43,9 @@
 #include "emb6.h"
 #include "dev/radio.h"
 #include "net/netstack.h"
-#include "net/packetbuf.h"
-#include "net/queuebuf.h"
-#include "net/nbr-table.h"
+#include "packetbuf.h"
+#include "queuebuf.h"
+#include "nbr-table.h"
 #include "net/mac/framer-802154.h"
 #include "tsch.h"
 #include "tsch-slot-operation.h"
@@ -55,7 +55,7 @@
 #include "tsch-packet.h"
 #include "tsch-security.h"
 #include "net/mac/mac-sequence.h"
-#include "lib/random.h"
+#include "random.h"
 
 
 /***********************/
