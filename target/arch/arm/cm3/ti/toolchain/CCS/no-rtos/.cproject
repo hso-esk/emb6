@@ -592,6 +592,7 @@
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEBUGGING_MODEL.1187383945" name="Debugging model" superClass="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEBUGGING_MODEL" value="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEBUGGING_MODEL.SYMDEBUG__DWARF" valueType="enumerated"/>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEFINE.1102885006" name="Pre-define NAME (--define, -D)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEFINE" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="LOGGER_LEVEL=3"/>
+									<listOptionValue builtIn="false" value="TISCH_ROLE_6DR=1"/>
 									<listOptionValue builtIn="false" value="USE_TI_RTOS=0"/>
 									<listOptionValue builtIn="false" value="LOGGER_DEMO_6TISCH=1"/>
 									<listOptionValue builtIn="false" value="EMB6_INIT_ROOT=1"/>

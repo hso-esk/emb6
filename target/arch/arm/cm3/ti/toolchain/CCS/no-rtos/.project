@@ -686,6 +686,11 @@
 			<locationURI>PARENT-8-PROJECT_LOC/utils/inc/ringbuffer.h</locationURI>
 		</link>
 		<link>
+			<name>utils/inc/ringbufindex.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/utils/inc/ringbufindex.h</locationURI>
+		</link>
+		<link>
 			<name>utils/inc/rt_tmr.h</name>
 			<type>1</type>
 			<locationURI>PARENT-8-PROJECT_LOC/utils/inc/rt_tmr.h</locationURI>
@@ -759,6 +764,11 @@
 			<name>utils/src/ringbuffer.c</name>
 			<type>1</type>
 			<locationURI>PARENT-8-PROJECT_LOC/utils/src/ringbuffer.c</locationURI>
+		</link>
+		<link>
+			<name>utils/src/ringbufindex.c</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/utils/src/ringbufindex.c</locationURI>
 		</link>
 		<link>
 			<name>utils/src/rt_tmr.c</name>
