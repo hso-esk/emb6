@@ -36,7 +36,7 @@
 /********** Includes **********/
 
 #include "emb6.h"
-#include "net/mac/tsch/tsch-private.h"
+#include "tsch-private.h"
 
 /******** Configuration *******/
 
