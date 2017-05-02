@@ -65,8 +65,8 @@
 
 #include "sys/cc.h"
 #include "frame802154.h"
-#include "net/llsec/llsec802154.h"
-#include "net/linkaddr.h"
+#include "llsec802154.h"
+#include "linkaddr.h"
 #include <string.h>
 
 /**  \brief The 16-bit identifier of the PAN on which the device is
