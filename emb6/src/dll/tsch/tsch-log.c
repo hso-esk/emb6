@@ -40,7 +40,7 @@
  *
  */
 
-#include "contiki.h"
+#include "emb6.h"
 #include <stdio.h>
 #include "tsch.h"
 #include "tsch-queue.h"

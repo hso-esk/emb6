@@ -35,7 +35,7 @@
 
 /********** Includes **********/
 
-#include "contiki.h"
+#include "emb6.h"
 #include "net/packetbuf.h"
 #include "net/mac/tsch/tsch-private.h"
 #include "net/mac/frame802154.h"

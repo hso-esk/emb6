@@ -35,7 +35,7 @@
 
 /********** Includes **********/
 
-#include "contiki.h"
+#include "emb6.h"
 #include "net/mac/tsch/tsch-private.h"
 
 /******** Configuration *******/
