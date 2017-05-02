@@ -142,7 +142,7 @@ static void print_network_status(void)
   PRINTF("----------------------\n");
 }
 
-static void net_init(uip_ipaddr_t *br_prefix, s_ns_t *p_netstk)
+static void net_init(uip_ipaddr_t *br_prefix)
 {
   uip_ipaddr_t global_ipaddr;
 
@@ -156,15 +156,15 @@ static void net_init(uip_ipaddr_t *br_prefix, s_ns_t *p_netstk)
     rpl_repair_root(RPL_DEFAULT_INSTANCE);
   }
 
-  /* FIXME add the error code */
-  p_netstk->mac->on(NULL);
+  /* FIXME Normally all layers should be enabled during emb6 init */
+  //p_netstk->mac->on(NULL);
   //NETSTACK_MAC.on();
 }
 
 static  void demo_6tisch_cb_logger(void *ptr)
 {
 	print_network_status();
-	ctimer_set(&ct, bsp_getTRes() * 60, demo_6tisch_cb_logger, NULL);
+	ctimer_set(&ct, bsp_getTRes() * 15, demo_6tisch_cb_logger, NULL);
 }
 
 
@@ -212,7 +212,6 @@ int8_t demo_6tischConf(s_ns_t *p_netstk)
 */
 int8_t demo_6tischInit(void)
 {
-	 static struct etimer et;
 	  /* 3 possible roles:
 	   * - role_6ln: simple node, will join any network, secured or not
 	   * - role_6dr: DAG root, will advertise (unsecured) beacons
@@ -282,9 +281,9 @@ int8_t demo_6tischInit(void)
 	    uip_ipaddr_t prefix;
 	    uip_ip6addr(&prefix, UIP_DS6_DEFAULT_PREFIX, 0, 0, 0, 0, 0, 0, 0);
 	    /* FIXME correct the second argument  */
-	    net_init(&prefix, NULL);
+	    net_init(&prefix);
 	  } else {
-	    net_init(NULL, NULL);
+	    net_init(NULL);
 	  }
 
 	#if WITH_ORCHESTRA
@@ -292,7 +291,7 @@ int8_t demo_6tischInit(void)
 	#endif /* WITH_ORCHESTRA */
 
   /* start the ctimer for logging */
-		ctimer_set(&ct, bsp_getTRes() * 60, demo_6tisch_cb_logger, NULL);
+		ctimer_set(&ct, bsp_getTRes() * 15, demo_6tisch_cb_logger, NULL);
   /* Always success */
   return 0;
 } /* demo_6tischInit() */
