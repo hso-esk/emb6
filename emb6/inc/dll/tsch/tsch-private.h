@@ -45,7 +45,7 @@
 /********** Includes **********/
 
 #include "emb6.h"
-#include "rt_tmr.h"
+#include "rtimer.h"
 #include "linkaddr.h"
 #include "tsch-asn.h"
 #include "tsch-conf.h"
@@ -90,7 +90,7 @@ extern struct tsch_asn_divisor_t tsch_hopping_sequence_length;
 /* TSCH timeslot timing (in rtimer ticks) */
 /* FIXME to check this */
 //extern rtimer_clock_t tsch_timing[tsch_ts_elements_count];
-extern rt_tmr_tick_t tsch_timing[tsch_ts_elements_count];
+extern rtimer_clock_t tsch_timing[tsch_ts_elements_count];
 
 /* TSCH processes */
 PROCESS_NAME(tsch_process);

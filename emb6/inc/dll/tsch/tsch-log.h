@@ -36,7 +36,7 @@
 /********** Includes **********/
 
 #include "emb6.h"
-#include "rt_tmr.h"
+#include "rtimer.h"
 #include "tsch-private.h"
 
 /******** Configuration *******/

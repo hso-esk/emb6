@@ -52,7 +52,7 @@
 #include "tsch-log.h"
 #include "frame802154.h"
 //#include "sys/process.h"
-#include "rt_tmr.h"
+#include "rtimer.h"
 
 #if TSCH_LOG_LEVEL >= 1
 #define DEBUG DEBUG_PRINT

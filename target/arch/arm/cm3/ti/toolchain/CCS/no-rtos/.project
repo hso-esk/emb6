@@ -696,6 +696,11 @@
 			<locationURI>PARENT-8-PROJECT_LOC/utils/inc/rt_tmr.h</locationURI>
 		</link>
 		<link>
+			<name>utils/inc/rtimer.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/utils/inc/rtimer.h</locationURI>
+		</link>
+		<link>
 			<name>utils/inc/stimer.h</name>
 			<type>1</type>
 			<locationURI>PARENT-8-PROJECT_LOC/utils/inc/stimer.h</locationURI>
@@ -774,6 +779,11 @@
 			<name>utils/src/rt_tmr.c</name>
 			<type>1</type>
 			<locationURI>PARENT-8-PROJECT_LOC/utils/src/rt_tmr.c</locationURI>
+		</link>
+		<link>
+			<name>utils/src/rtimer.c</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/utils/src/rtimer.c</locationURI>
 		</link>
 		<link>
 			<name>utils/src/stimer.c</name>
