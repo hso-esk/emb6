@@ -43,7 +43,7 @@
  */
 
 #include <string.h>
-#include "lib/ringbufindex.h"
+#include "ringbufindex.h"
 
 /* Initialize a ring buffer. The size must be a power of two */
 void

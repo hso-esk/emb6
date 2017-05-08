@@ -45,6 +45,12 @@
 #include "orchestra.h"
 #endif /* WITH_ORCHESTRA */
 
+#if SUPPORT_RTIMER
+#include "rtimer.h"
+#else
+#error 6tisch does not work without rtimer module
+#endif
+
 #define DEBUG DEBUG_PRINT
 #include "uip-debug.h"
 
@@ -212,13 +218,13 @@ int8_t demo_6tischConf(s_ns_t *p_netstk)
 int8_t demo_6tischInit(void)
 {
 	  /* 3 possible roles:
+	rtimer_init();
 	   * - role_6ln: simple node, will join any network, secured or not
 	   * - role_6dr: DAG root, will advertise (unsecured) beacons
 	   * - role_6dr_sec: DAG root, will advertise secured beacons
 	   * */
 	  static int is_coordinator = 0;
 	  static enum { role_6ln, role_6dr, role_6dr_sec } node_role;
-	  int coordinator_candidate = 0;
 
 	  /* selecting the configured  role for the 6tisch network */
 #ifdef TISCH_ROLE_6LN
@@ -246,7 +252,6 @@ int8_t demo_6tischInit(void)
 	#if WITH_ORCHESTRA
 	  orchestra_init();
 	#endif /* WITH_ORCHESTRA */
-
   /* start the ctimer for logging */
 		ctimer_set(&ct, bsp_getTRes() * 15, demo_6tisch_cb_logger, NULL);
   /* Always success */

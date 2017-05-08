@@ -86,8 +86,9 @@
 #define HAL_SUPPORT_LED3                    TRUE
 #endif /* #ifndef HAL_SUPPORT_LED3 */
 
-
-
+#ifndef SUPPORT_RTIMER
+#define SUPPORT_RTIMER                      TRUE
+#endif /* #ifndef SUPPORT_RTIMER */
 /*============================================================================*/
 /*                       API FUNCTION DECLARATION                             */
 /*============================================================================*/

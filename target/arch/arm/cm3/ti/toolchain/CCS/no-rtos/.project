@@ -4296,6 +4296,16 @@
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
+			<name>target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/rtimer_arch.c</name>
+			<type>1</type>
+			<locationURI>PARENT-3-PROJECT_LOC/device/cc13xx/rf_noRtos_lib/rtimer_arch.c</locationURI>
+		</link>
+		<link>
+			<name>target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/rtimer_arch.h</name>
+			<type>1</type>
+			<locationURI>PARENT-3-PROJECT_LOC/device/cc13xx/rf_noRtos_lib/rtimer_arch.h</locationURI>
+		</link>
+		<link>
 			<name>target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/sf_mcu_timer.c</name>
 			<type>1</type>
 			<locationURI>PARENT-3-PROJECT_LOC/device/cc13xx/rf_noRtos_lib/sf_mcu_timer.c</locationURI>

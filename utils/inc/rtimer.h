@@ -54,8 +54,7 @@
 #define RTIMER_H_
 
 #include "emb6.h"
-#include "rtimer-arch.h"
-
+#include "rtimer_arch.h"
 
 #ifndef RTIMER_CLOCK_DIFF
 typedef unsigned short rtimer_clock_t;
@@ -149,11 +148,7 @@ void rtimer_run_next(void);
  */
 #define RTIMER_TIME(task) ((task)->time)
 
-void rtimer_arch_init(void);
-void rtimer_arch_schedule(rtimer_clock_t t);
-/*rtimer_clock_t rtimer_arch_now(void);*/
-
-#define RTIMER_SECOND RTIMER_ARCH_SECOND
+#define RTIMER_SECOND  RTIMER_ARCH_SECOND
 
 /* RTIMER_GUARD_TIME is the minimum amount of rtimer ticks between
    the current time and the future time when a rtimer is scheduled.
