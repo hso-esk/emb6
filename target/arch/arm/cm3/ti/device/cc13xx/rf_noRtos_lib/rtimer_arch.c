@@ -10,6 +10,7 @@
 #include <driverlib/aon_event.h>
 #include <driverlib/aon_rtc.h>
 #include <driverlib/interrupt.h>
+#include "rtimer.h"
 
 /*==============================================================================
                           LOCAL FUNCTION PROTOTYPES
