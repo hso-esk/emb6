@@ -39,6 +39,8 @@
 #include "ringbufindex.h"
 #include "tsch-packet.h"
 #include "tsch-private.h"
+#include "tsch-conf.h"
+#include "cc.h"
 
 /******** Configuration *******/
 

@@ -606,6 +606,11 @@
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
+			<name>utils/inc/aes-128.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/utils/inc/aes-128.h</locationURI>
+		</link>
+		<link>
 			<name>utils/inc/cc-gcc.h</name>
 			<type>1</type>
 			<locationURI>PARENT-8-PROJECT_LOC/utils/inc/cc-gcc.h</locationURI>
@@ -614,6 +619,11 @@
 			<name>utils/inc/cc.h</name>
 			<type>1</type>
 			<locationURI>PARENT-8-PROJECT_LOC/utils/inc/cc.h</locationURI>
+		</link>
+		<link>
+			<name>utils/inc/ccm-star.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/utils/inc/ccm-star.h</locationURI>
 		</link>
 		<link>
 			<name>utils/inc/clist.h</name>
@@ -714,6 +724,16 @@
 			<name>utils/inc/trace.h</name>
 			<type>1</type>
 			<locationURI>PARENT-8-PROJECT_LOC/utils/inc/trace.h</locationURI>
+		</link>
+		<link>
+			<name>utils/src/aes-128.c</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/utils/src/aes-128.c</locationURI>
+		</link>
+		<link>
+			<name>utils/src/ccm-star.c</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/utils/src/ccm-star.c</locationURI>
 		</link>
 		<link>
 			<name>utils/src/crc.c</name>
