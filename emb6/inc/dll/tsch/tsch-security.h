@@ -38,7 +38,7 @@
 #include "emb6.h"
 #include "tsch-asn.h"
 #include "tsch-private.h"
-#include "frame802154.h"
+#include "framer_802154.h"
 #include "dllsec_802154.h"
 #include "frame802154e-ie.h"
 

@@ -1776,11 +1776,6 @@
 			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/mac/mac.h</locationURI>
 		</link>
 		<link>
-			<name>emb6/inc/dll/tsch/frame802154.h</name>
-			<type>1</type>
-			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/tsch/frame802154.h</locationURI>
-		</link>
-		<link>
 			<name>emb6/inc/dll/tsch/frame802154e-ie.h</name>
 			<type>1</type>
 			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/tsch/frame802154e-ie.h</locationURI>
@@ -2239,11 +2234,6 @@
 			<name>emb6/src/dll/mac/mac_smartmac.c</name>
 			<type>1</type>
 			<locationURI>PARENT-8-PROJECT_LOC/emb6/src/dll/mac/mac_smartmac.c</locationURI>
-		</link>
-		<link>
-			<name>emb6/src/dll/tsch/frame802154.c</name>
-			<type>1</type>
-			<locationURI>PARENT-8-PROJECT_LOC/emb6/src/dll/tsch/frame802154.c</locationURI>
 		</link>
 		<link>
 			<name>emb6/src/dll/tsch/frame802154e-ie.c</name>

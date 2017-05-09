@@ -44,7 +44,7 @@
 #include "tsch-schedule.h"
 #include "tsch-security.h"
 #include "tsch-log.h"
-#include "frame802154.h"
+#include "framer_802154.h"
 #include "net/mac/framer-802154.h"
 #include "net/netstack.h"
 #include "packetbuf.h"
