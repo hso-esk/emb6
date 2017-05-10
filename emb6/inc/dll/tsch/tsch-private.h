@@ -49,6 +49,7 @@
 #include "linkaddr.h"
 #include "tsch-asn.h"
 #include "tsch-conf.h"
+#include "bsp.h"
 #if CONTIKI_TARGET_COOJA || CONTIKI_TARGET_COOJA_IP64
 #include "lib/simEnvChange.h"
 #include "sys/cooja_mt.h"
@@ -112,7 +113,7 @@ void tsch_disassociate(void);
 #define TSCH_PACKET_DURATION(len) US_TO_RTIMERTICKS(32 * ((len) + 3))
 
 /* Convert rtimer ticks to clock and vice versa */
-#define TSCH_CLOCK_TO_TICKS(c) (((c) * RTIMER_SECOND) / CLOCK_SECOND)
+#define TSCH_CLOCK_TO_TICKS(c) (((c) * RTIMER_SECOND) / bsp_getTRes())
 #define TSCH_CLOCK_TO_SLOTS(c, timeslot_length) (TSCH_CLOCK_TO_TICKS(c) / timeslot_length)
 
 /* Wait for a condition with timeout t0+offset. */

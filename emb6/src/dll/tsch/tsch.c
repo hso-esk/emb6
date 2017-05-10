@@ -56,7 +56,8 @@
 #include "tsch-security.h"
 //#include "net/mac/mac-sequence.h"
 #include "random.h"
-
+#include "bsp.h"
+#include "etimer.h"
 
 /***********************/
 
@@ -515,7 +516,7 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
 #if TSCH_CHECK_TIME_AT_ASSOCIATION > 0
   /* Divide by 4k and multiply again to avoid integer overflow */
   uint32_t expected_asn = 4096 * TSCH_CLOCK_TO_SLOTS(clock_time() / 4096, tsch_timing_timeslot_length); /* Expected ASN based on our current time*/
-  int32_t asn_threshold = TSCH_CHECK_TIME_AT_ASSOCIATION * 60ul * TSCH_CLOCK_TO_SLOTS(CLOCK_SECOND, tsch_timing_timeslot_length);
+  int32_t asn_threshold = TSCH_CHECK_TIME_AT_ASSOCIATION * 60ul * TSCH_CLOCK_TO_SLOTS(bsp_getTRes(), tsch_timing_timeslot_length);
   int32_t asn_diff = (int32_t)tsch_current_asn.ls4b - expected_asn;
   if(asn_diff > asn_threshold) {
     PRINTF("TSCH:! EB ASN rejected %lx %lx %ld\n",
@@ -618,7 +619,7 @@ PT_THREAD(tsch_scan(struct pt *pt))
 
   TSCH_ASN_INIT(tsch_current_asn, 0, 0);
 
-  etimer_set(&scan_timer, CLOCK_SECOND / TSCH_ASSOCIATION_POLL_FREQUENCY);
+  etimer_set(&scan_timer, bsp_getTRes() / TSCH_ASSOCIATION_POLL_FREQUENCY);
   current_channel_since = clock_time();
 
   while(!tsch_is_associated && !tsch_is_coordinator) {
@@ -722,7 +723,7 @@ PROCESS_THREAD(tsch_send_eb_process, ev, data)
   PROCESS_BEGIN();
 
   /* Wait until association */
-  etimer_set(&eb_timer, CLOCK_SECOND / 10);
+  etimer_set(&eb_timer, bsp_getTRes() / 10);
   while(!tsch_is_associated) {
     PROCESS_WAIT_UNTIL(etimer_expired(&eb_timer));
     etimer_reset(&eb_timer);

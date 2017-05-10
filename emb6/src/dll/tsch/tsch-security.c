@@ -46,7 +46,6 @@
 #include "tsch-log.h"
 #include "framer_802154.h"
 //#include "net/mac/framer-802154.h"
-//#include "net/netstack.h"
 #include "packetbuf.h"
 #include "ccm-star.h"
 #include "aes-128.h"

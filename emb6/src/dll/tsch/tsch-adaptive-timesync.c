@@ -43,6 +43,8 @@
 #include "tsch/tsch-adaptive-timesync.h"
 #include "tsch-log.h"
 #include <stdio.h>
+#include "bsp.h"
+#include "cc.h"
 
 #if TSCH_ADAPTIVE_TIMESYNC
 
