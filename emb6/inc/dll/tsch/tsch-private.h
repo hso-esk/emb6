@@ -93,11 +93,6 @@ extern struct tsch_asn_divisor_t tsch_hopping_sequence_length;
 //extern rtimer_clock_t tsch_timing[tsch_ts_elements_count];
 extern rtimer_clock_t tsch_timing[tsch_ts_elements_count];
 
-/* TSCH processes */
-PROCESS_NAME(tsch_process);
-PROCESS_NAME(tsch_send_eb_process);
-PROCESS_NAME(tsch_pending_events_process);
-
 /********** Functions *********/
 
 /* Set TSCH to send a keepalive message after TSCH_KEEPALIVE_TIMEOUT */
