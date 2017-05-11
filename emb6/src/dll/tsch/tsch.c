@@ -154,7 +154,6 @@ static clock_time_t tsch_current_ka_timeout;
 static struct ctimer keepalive_timer;
 
 /* TSCH processes and protothreads */
-PT_THREAD(tsch_scan(struct pt *pt));
 PROCESS(tsch_process, "TSCH: main process");
 PROCESS(tsch_send_eb_process, "TSCH: send EB process");
 PROCESS(tsch_pending_events_process, "TSCH: pending events process");
@@ -608,21 +607,22 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
  * Listen to different channels, and when receiving an EB,
  * attempt to associate.
  */
-PT_THREAD(tsch_scan(struct pt *pt))
+static struct ctimer scan_timer;
+static uint8_t scan_active = 0;
+static void tsch_scan(void *ptr)
 {
-  PT_BEGIN(pt);
-
   static struct input_packet input_eb;
-  static struct etimer scan_timer;
   /* Time when we started scanning on current_channel */
   static clock_time_t current_channel_since;
 
+  if(!scan_active)
+  {
   TSCH_ASN_INIT(tsch_current_asn, 0, 0);
-
-  etimer_set(&scan_timer, bsp_getTRes() / TSCH_ASSOCIATION_POLL_FREQUENCY);
   current_channel_since = bsp_getTick();
+  scan_active = 1;
+  }
 
-  while(!tsch_is_associated && !tsch_is_coordinator) {
+  if(!tsch_is_associated && !tsch_is_coordinator) {
     /* Hop to any channel offset */
     static uint8_t current_channel = 0;
 
@@ -670,14 +670,15 @@ PT_THREAD(tsch_scan(struct pt *pt))
     if(tsch_is_associated) {
       /* End of association, turn the radio off */
       NETSTACK_RADIO.off();
+      /* if the scan process is launched again we need to initialize some variable  */
+      scan_active = 0 ;
     } else if(!tsch_is_coordinator) {
-      /* Go back to scanning */
-      etimer_reset(&scan_timer);
-      PT_WAIT_UNTIL(pt, etimer_expired(&scan_timer));
+      /* Go back to scanning after the required time */
+      ctimer_set(&scan_timer, bsp_getTRes() / TSCH_ASSOCIATION_POLL_FREQUENCY, tsch_scan, NULL);
     }
   }
 
-  PT_END(pt);
+ // PT_END(pt);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -696,7 +697,8 @@ PROCESS_THREAD(tsch_process, ev, data)
         tsch_start_coordinator();
       } else {
         /* Start scanning, will attempt to join when receiving an EB */
-        PROCESS_PT_SPAWN(&scan_pt, tsch_scan(&scan_pt));
+         if(!scan_active)
+           tsch_scan(NULL);
       }
     }
 
