@@ -620,7 +620,7 @@ PT_THREAD(tsch_scan(struct pt *pt))
   TSCH_ASN_INIT(tsch_current_asn, 0, 0);
 
   etimer_set(&scan_timer, bsp_getTRes() / TSCH_ASSOCIATION_POLL_FREQUENCY);
-  current_channel_since = clock_time();
+  current_channel_since = bsp_getTick();
 
   while(!tsch_is_associated && !tsch_is_coordinator) {
     /* Hop to any channel offset */
@@ -629,7 +629,7 @@ PT_THREAD(tsch_scan(struct pt *pt))
     /* We are not coordinator, try to associate */
     rtimer_clock_t t0;
     int is_packet_pending = 0;
-    clock_time_t now_time = clock_time();
+    clock_time_t now_time = bsp_getTick();
 
     /* Switch to a (new) channel for scanning */
     if(current_channel == 0 || now_time - current_channel_since > TSCH_CHANNEL_SCAN_DURATION) {
