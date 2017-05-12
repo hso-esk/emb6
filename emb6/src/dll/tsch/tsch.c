@@ -57,7 +57,7 @@
 //#include "net/mac/mac-sequence.h"
 #include "random.h"
 #include "bsp.h"
-#include "etimer.h"
+#include "ctimer.h"
 #include "evproc.h"
 
 /***********************/
@@ -66,6 +66,10 @@ static s_ns_t          *pmac_netstk;
 
 #define TISCH_ASSOCIATE_EVENT_POST()     evproc_putEvent(E_EVPROC_HEAD, EVENT_TYPE_TISCH_PROCESS, NULL)
 #define TISCH_REG_PROCESS_HANDLER()         evproc_regCallback(EVENT_TYPE_TISCH_PROCESS, tsch_process)
+
+static void tsch_send_eb_process_start(void);
+static void tsch_send_eb_process_stop(void);
+static void tsch_send_eb_process (void *ptr);
 
 /**********************/
 
@@ -161,7 +165,6 @@ static struct ctimer keepalive_timer;
 static void packet_input(void);
 
 /* Getters and setters */
-
 /*---------------------------------------------------------------------------*/
 void
 tsch_set_coordinator(int enable)
@@ -430,6 +433,8 @@ tsch_disassociate(void)
     tsch_is_associated = 0;
     /* post TISCH process event */
     TISCH_ASSOCIATE_EVENT_POST();
+    /* stop the tsch_send_eb_process */
+    tsch_send_eb_process_stop();
     PRINTF("TSCH: leaving the network\n");
   }
 }
@@ -575,6 +580,8 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
       tsch_is_associated = 1;
       /* post TISCH process event */
       TISCH_ASSOCIATE_EVENT_POST();
+      /* launch the tsch_send_eb_process  */
+      tsch_send_eb_process_start();
 
       tsch_is_pan_secured = frame.fcf.security_enabled;
 
@@ -716,28 +723,28 @@ static uint8_t was_associated = 0 ;
 
 
 static struct ctimer send_eb_timer;
+
+static void tsch_send_eb_process_start(void)
+{
+  /* Set an initial delay except for coordinator, which should send an EB asap */
+  if(!tsch_is_coordinator)
+  {
+    ctimer_set(&send_eb_timer, random_rand() % TSCH_EB_PERIOD , tsch_send_eb_process, NULL);
+  }
+  else
+  {
+    ctimer_set(&send_eb_timer, bsp_getTRes() , tsch_send_eb_process, NULL);
+  }
+}
+
+static void tsch_send_eb_process_stop(void)
+{
+  ctimer_stop(send_eb_timer);
+}
 /*---------------------------------------------------------------------------*/
 /* A periodic process to send TSCH Enhanced Beacons (EB) */
-PROCESS_THREAD(tsch_send_eb_process, ev, data)
+static void tsch_send_eb_process (void *ptr)
 {
-  static struct etimer eb_timer;
-
-  PROCESS_BEGIN();
-
-  /* Wait until association */
-  etimer_set(&eb_timer, bsp_getTRes() / 10);
-  while(!tsch_is_associated) {
-    PROCESS_WAIT_UNTIL(etimer_expired(&eb_timer));
-    etimer_reset(&eb_timer);
-  }
-
-  /* Set an initial delay except for coordinator, which should send an EB asap */
-  if(!tsch_is_coordinator) {
-    etimer_set(&eb_timer, random_rand() % TSCH_EB_PERIOD);
-    PROCESS_WAIT_UNTIL(etimer_expired(&eb_timer));
-  }
-
-  while(1) {
     unsigned long delay;
 
     if(tsch_is_associated && tsch_current_eb_period > 0) {
@@ -781,10 +788,7 @@ PROCESS_THREAD(tsch_send_eb_process, ev, data)
     } else {
       delay = TSCH_EB_PERIOD;
     }
-    etimer_set(&eb_timer, delay);
-    PROCESS_WAIT_UNTIL(etimer_expired(&eb_timer));
-  }
-  PROCESS_END();
+    ctimer_set(&send_eb_timer, delay , tsch_send_eb_process, NULL);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -792,14 +796,12 @@ PROCESS_THREAD(tsch_send_eb_process, ev, data)
  * callbacks, outputs pending logs. */
 PROCESS_THREAD(tsch_pending_events_process, ev, data)
 {
-  PROCESS_BEGIN();
   while(1) {
     PROCESS_YIELD_UNTIL(ev == PROCESS_EVENT_POLL);
     tsch_rx_process_pending();
     tsch_tx_process_pending();
     tsch_log_process_pending();
   }
-  PROCESS_END();
 }
 
 /* Functions from the Contiki MAC layer driver interface */
@@ -1027,10 +1029,7 @@ turn_on(e_nsErr_t *p_err)
     tsch_is_started = 1;
     /* Process tx/rx callback and log messages whenever polled */
     process_start(&tsch_pending_events_process, NULL);
-    /* periodically send TSCH EBs */
-    process_start(&tsch_send_eb_process, NULL);
-    /* try to associate to a network or start one if setup as coordinator */
-    /* post TISCH process event */
+    /* try to associate to a network or start one if setup as coordinator: post TISCH process event */
     TISCH_ASSOCIATE_EVENT_POST();
     PRINTF("TSCH: starting as %s\n", tsch_is_coordinator ? "coordinator" : "node");
     return;
