@@ -58,10 +58,14 @@
 #include "random.h"
 #include "bsp.h"
 #include "etimer.h"
+#include "evproc.h"
 
 /***********************/
 
 static s_ns_t          *pmac_netstk;
+
+#define TISCH_ASSOCIATE_EVENT_POST()     evproc_putEvent(E_EVPROC_HEAD, EVENT_TYPE_TISCH_PROCESS, NULL)
+#define TISCH_REG_PROCESS_HANDLER()         evproc_regCallback(EVENT_TYPE_TISCH_PROCESS, tsch_process)
 
 /**********************/
 
@@ -152,11 +156,6 @@ static clock_time_t tsch_current_ka_timeout;
 
 /* timer for sending keepalive messages */
 static struct ctimer keepalive_timer;
-
-/* TSCH processes and protothreads */
-PROCESS(tsch_process, "TSCH: main process");
-PROCESS(tsch_send_eb_process, "TSCH: send EB process");
-PROCESS(tsch_pending_events_process, "TSCH: pending events process");
 
 /* Other function prototypes */
 static void packet_input(void);
@@ -429,7 +428,8 @@ tsch_disassociate(void)
 {
   if(tsch_is_associated == 1) {
     tsch_is_associated = 0;
-    process_post(&tsch_process, PROCESS_EVENT_POLL, NULL);
+    /* post TISCH process event */
+    TISCH_ASSOCIATE_EVENT_POST();
     PRINTF("TSCH: leaving the network\n");
   }
 }
@@ -573,6 +573,9 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
 
       /* Update global flags */
       tsch_is_associated = 1;
+      /* post TISCH process event */
+      TISCH_ASSOCIATE_EVENT_POST();
+
       tsch_is_pan_secured = frame.fcf.security_enabled;
 
       /* Start sending keep-alives now that tsch_is_associated is set */
@@ -677,45 +680,42 @@ static void tsch_scan(void *ptr)
       ctimer_set(&scan_timer, bsp_getTRes() / TSCH_ASSOCIATION_POLL_FREQUENCY, tsch_scan, NULL);
     }
   }
-
- // PT_END(pt);
 }
 
 /*---------------------------------------------------------------------------*/
 /* The main TSCH process */
-PROCESS_THREAD(tsch_process, ev, data)
+void  tsch_process(c_event_t c_event, p_data_t p_data)
 {
-  static struct pt scan_pt;
+static uint8_t was_associated = 0 ;
 
-  PROCESS_BEGIN();
-
-  while(1) {
-
-    while(!tsch_is_associated) {
-      if(tsch_is_coordinator) {
-        /* We are coordinator, start operating now */
-        tsch_start_coordinator();
-      } else {
-        /* Start scanning, will attempt to join when receiving an EB */
-         if(!scan_active)
-           tsch_scan(NULL);
-      }
-    }
-
-    /* We are part of a TSCH network, start slot operation */
-    tsch_slot_operation_start();
-
-    /* Yield our main process. Slot operation will re-schedule itself
-     * as long as we are associated */
-    PROCESS_YIELD_UNTIL(!tsch_is_associated);
-
-    /* Will need to re-synchronize */
-    tsch_reset();
+  if(c_event == EVENT_TYPE_TISCH_PROCESS )
+  {
+    if (!tsch_is_associated) /* initialization or dissociation event */
+    {
+      if(was_associated)
+         /* Will need to re-synchronize */
+         tsch_reset();
+	  if(tsch_is_coordinator) {
+		/* We are coordinator, start operating now */
+		tsch_start_coordinator();
+	  } else {
+		/* Start scanning, will attempt to join when receiving an EB */
+		 if(!scan_active)
+		   tsch_scan(NULL);
+	  }
+	}
+	else  /* association event */
+	{
+	/* We are part of a TSCH network, start slot operation */
+	tsch_slot_operation_start();
+    /* set the flag in order to reset the tisch in case of dissociation */
+	was_associated = 1;
+	}
   }
-
-  PROCESS_END();
 }
 
+
+static struct ctimer send_eb_timer;
 /*---------------------------------------------------------------------------*/
 /* A periodic process to send TSCH Enhanced Beacons (EB) */
 PROCESS_THREAD(tsch_send_eb_process, ev, data)
@@ -824,6 +824,8 @@ tsch_init(void *p_netstk, e_nsErr_t *p_err)
 
   /* initialize local variables */
   pmac_netstk = (s_ns_t *) p_netstk;
+  /* register TISCH */
+  TISCH_REG_PROCESS_HANDLER();
 /************************>**/
 
   radio_value_t radio_rx_mode;
@@ -1028,7 +1030,8 @@ turn_on(e_nsErr_t *p_err)
     /* periodically send TSCH EBs */
     process_start(&tsch_send_eb_process, NULL);
     /* try to associate to a network or start one if setup as coordinator */
-    process_start(&tsch_process, NULL);
+    /* post TISCH process event */
+    TISCH_ASSOCIATE_EVENT_POST();
     PRINTF("TSCH: starting as %s\n", tsch_is_coordinator ? "coordinator" : "node");
     return;
   }

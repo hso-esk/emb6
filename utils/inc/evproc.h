@@ -135,6 +135,9 @@ typedef enum
    /** Status changed event */
    EVENT_TYPE_STATUS_CHANGE,
 
+   /** tsch process event  */
+   EVENT_TYPE_TISCH_PROCESS,
+
    /** MAX identifier */
    EVENT_TYPE_MAX
 
