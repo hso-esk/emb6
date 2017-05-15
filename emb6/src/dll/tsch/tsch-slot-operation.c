@@ -41,6 +41,7 @@
  */
 
 #include "emb6.h"
+#include "mac.h"
 //#include "dev/radio.h"
 //#include "net/netstack.h"
 #include "packetbuf.h"
