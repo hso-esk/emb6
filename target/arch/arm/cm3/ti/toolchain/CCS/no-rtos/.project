@@ -1861,6 +1861,11 @@
 			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/tsch/tsch.h</locationURI>
 		</link>
 		<link>
+			<name>emb6/inc/dll/tsch/tsch_null_adaptive.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/tsch/tsch_null_adaptive.h</locationURI>
+		</link>
+		<link>
 			<name>emb6/inc/net/dtls/aes</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
@@ -2304,6 +2309,11 @@
 			<name>emb6/src/dll/tsch/tsch.c</name>
 			<type>1</type>
 			<locationURI>PARENT-8-PROJECT_LOC/emb6/src/dll/tsch/tsch.c</locationURI>
+		</link>
+		<link>
+			<name>emb6/src/dll/tsch/tsch_null_adaptive.c</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/src/dll/tsch/tsch_null_adaptive.c</locationURI>
 		</link>
 		<link>
 			<name>emb6/src/net/dtls/aes</name>
