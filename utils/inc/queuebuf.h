@@ -55,7 +55,6 @@
 #define QUEUEBUF_H_
 
 #include "packetbuf.h"
-#include "tsch-conf.h"
 
 
 /* QUEUEBUF_NUM is the total number of queuebuf */
