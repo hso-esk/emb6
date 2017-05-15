@@ -65,7 +65,7 @@
 static s_ns_t          *pmac_netstk;
 
 #define TISCH_ASSOCIATE_EVENT_POST()     evproc_putEvent(E_EVPROC_HEAD, EVENT_TYPE_TISCH_PROCESS, NULL)
-#define TISCH_REG_PROCESS_HANDLER()         evproc_regCallback(EVENT_TYPE_TISCH_PROCESS, tsch_process)
+#define TISCH_REG_PROCESS_HANDLER()      evproc_regCallback(EVENT_TYPE_TISCH_PROCESS, tsch_process)
 
 static void tsch_send_eb_process_start(void);
 static void tsch_send_eb_process_stop(void);
@@ -203,7 +203,10 @@ tsch_reset(void)
   int i;
   frame802154_set_pan_id(0xffff);
   /* First make sure pending packet callbacks are sent etc */
-  process_post_synch(&tsch_pending_events_process, PROCESS_EVENT_POLL, NULL);
+  /* TODO CHECK THIS */
+  //process_post_synch(&tsch_pending_events_process, PROCESS_EVENT_POLL, NULL);
+  //TISCH_RX_TX_EVENT_POST();
+  tsch_pending_events_process();
   /* Reset neighbor queues */
   tsch_queue_reset();
   /* Remove unused neighbors */
@@ -244,7 +247,7 @@ keepalive_packet_sent(void *ptr, int status, int transmissions)
 /*---------------------------------------------------------------------------*/
 /* Prepare and send a keepalive message */
 static void
-keepalive_send()
+keepalive_send(void *ptr)
 {
   if(tsch_is_associated) {
     struct tsch_neighbor *n = tsch_queue_get_time_source();
@@ -739,7 +742,7 @@ static void tsch_send_eb_process_start(void)
 
 static void tsch_send_eb_process_stop(void)
 {
-  ctimer_stop(send_eb_timer);
+  ctimer_stop(&send_eb_timer);
 }
 /*---------------------------------------------------------------------------*/
 /* A periodic process to send TSCH Enhanced Beacons (EB) */
@@ -794,14 +797,11 @@ static void tsch_send_eb_process (void *ptr)
 /*---------------------------------------------------------------------------*/
 /* A process that is polled from interrupt and calls tx/rx input
  * callbacks, outputs pending logs. */
-PROCESS_THREAD(tsch_pending_events_process, ev, data)
+void  tsch_pending_events_process(void)
 {
-  while(1) {
-    PROCESS_YIELD_UNTIL(ev == PROCESS_EVENT_POLL);
     tsch_rx_process_pending();
     tsch_tx_process_pending();
     tsch_log_process_pending();
-  }
 }
 
 /* Functions from the Contiki MAC layer driver interface */
@@ -826,7 +826,7 @@ tsch_init(void *p_netstk, e_nsErr_t *p_err)
 
   /* initialize local variables */
   pmac_netstk = (s_ns_t *) p_netstk;
-  /* register TISCH */
+  /* register TISCH process handler  */
   TISCH_REG_PROCESS_HANDLER();
 /************************>**/
 
@@ -1021,20 +1021,19 @@ turn_on(e_nsErr_t *p_err)
 
 #if NETSTK_CFG_ARG_CHK_EN
   if (p_err == NULL) {
-    return;
+    return -1;
   }
 #endif
 
   if(tsch_is_initialized == 1 && tsch_is_started == 0) {
     tsch_is_started = 1;
-    /* Process tx/rx callback and log messages whenever polled */
-    process_start(&tsch_pending_events_process, NULL);
     /* try to associate to a network or start one if setup as coordinator: post TISCH process event */
     TISCH_ASSOCIATE_EVENT_POST();
     PRINTF("TSCH: starting as %s\n", tsch_is_coordinator ? "coordinator" : "node");
-    return;
+    return 0;
   }
 	  *p_err = NETSTK_ERR_RF_XXX;
+	  return -1;
 }
 /*---------------------------------------------------------------------------*/
 static void

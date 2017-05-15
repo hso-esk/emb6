@@ -179,5 +179,6 @@ void tsch_set_ka_timeout(uint32_t timeout);
 void tsch_set_coordinator(int enable);
 /* Set the pan as secured or not */
 void tsch_set_pan_secured(int enable);
-
+/* process pending events */
+void  tsch_pending_events_process(void);
 #endif /* __TSCH_H__ */

@@ -41,11 +41,11 @@
  */
 
 #include "emb6.h"
-#include "dev/radio.h"
-#include "net/netstack.h"
+//#include "dev/radio.h"
+//#include "net/netstack.h"
 #include "packetbuf.h"
 #include "queuebuf.h"
-#include "net/mac/framer-802154.h"
+//#include "net/mac/framer-802154.h"
 #include "tsch.h"
 #include "tsch-slot-operation.h"
 #include "tsch-queue.h"
@@ -709,7 +709,9 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
     );
 
     /* Poll process for later processing of packet sent events and logs */
-    process_poll(&tsch_pending_events_process);
+    //process_poll(&tsch_pending_events_process);
+    /* TODO verify this */
+    tsch_pending_events_process();
   }
 
   TSCH_DEBUG_TX_EVENT();
@@ -911,7 +913,9 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
           }
 
           /* Poll process for processing of pending input and logs */
-          process_poll(&tsch_pending_events_process);
+          //process_poll(&tsch_pending_events_process);
+          /* TODO verify this */
+          tsch_pending_events_process();
         }
       }
 

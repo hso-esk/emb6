@@ -60,8 +60,6 @@
 
 #if TSCH_LOG_LEVEL >= 2 /* Skip this file for log levels 0 or 1 */
 
-PROCESS_NAME(tsch_pending_events_process);
-
 /* Check if TSCH_LOG_QUEUE_LEN is a power of two */
 #if (TSCH_LOG_QUEUE_LEN & (TSCH_LOG_QUEUE_LEN - 1)) != 0
 #error TSCH_LOG_QUEUE_LEN must be power of two
@@ -146,7 +144,9 @@ void
 tsch_log_commit(void)
 {
   ringbufindex_put(&log_ringbuf);
-  process_poll(&tsch_pending_events_process);
+  //process_poll(&tsch_pending_events_process);
+  /* TODO verify this */
+  tsch_pending_events_process();
 }
 /*---------------------------------------------------------------------------*/
 /* Initialize log module */
