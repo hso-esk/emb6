@@ -193,14 +193,18 @@ int8_t demo_6tischConf(s_ns_t *p_netstk)
       p_netstk->frame = &framer_802154;
       p_netstk->dllsec = &dllsec_driver_null;
       /*FIXME switch to the 6tisch mac driver */
-      p_netstk->mac= &tschmac_driver;
+      p_netstk->dllc = &dll_tsch_adaptive_driver;
+      p_netstk->mac = &mac_tsch_adaptive_driver;
+      p_netstk->phy   = &phy_driver_null;
       ret = 0;
     } else {
       if ((p_netstk->hc == &hc_driver_sicslowpan) &&
           (p_netstk->frame == &framer_802154) &&
           (p_netstk->dllsec == &dllsec_driver_null)) {
           /*FIXME switch to the 6tisch mac driver */
-           p_netstk->mac= &tschmac_driver;
+          p_netstk->dllc = &dll_tsch_adaptive_driver;
+          p_netstk->mac = &mac_tsch_adaptive_driver;
+          p_netstk->phy   = &phy_driver_null;
         ret = 0;
       } else {
         p_netstk = NULL;
@@ -217,8 +221,8 @@ int8_t demo_6tischConf(s_ns_t *p_netstk)
 */
 int8_t demo_6tischInit(void)
 {
-	  /* 3 possible roles:
 	rtimer_init();
+	  /* 3 possible roles:
 	   * - role_6ln: simple node, will join any network, secured or not
 	   * - role_6dr: DAG root, will advertise (unsecured) beacons
 	   * - role_6dr_sec: DAG root, will advertise secured beacons
