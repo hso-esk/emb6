@@ -1801,6 +1801,11 @@
 			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/tsch/frame802154e-ie.h</locationURI>
 		</link>
 		<link>
+			<name>emb6/inc/dll/tsch/mac-sequence.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/tsch/mac-sequence.h</locationURI>
+		</link>
+		<link>
 			<name>emb6/inc/dll/tsch/tsch-adaptive-timesync.h</name>
 			<type>1</type>
 			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/tsch/tsch-adaptive-timesync.h</locationURI>
@@ -2264,6 +2269,11 @@
 			<name>emb6/src/dll/tsch/frame802154e-ie.c</name>
 			<type>1</type>
 			<locationURI>PARENT-8-PROJECT_LOC/emb6/src/dll/tsch/frame802154e-ie.c</locationURI>
+		</link>
+		<link>
+			<name>emb6/src/dll/tsch/mac-sequence.c</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/src/dll/tsch/mac-sequence.c</locationURI>
 		</link>
 		<link>
 			<name>emb6/src/dll/tsch/tsch-adaptive-timesync.c</name>
