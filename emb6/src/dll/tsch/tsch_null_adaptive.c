@@ -42,9 +42,9 @@ static void input(void)
 }
 
 /*---------------------------------------------------------------------------*/
-static int dllsec_onFrameCreated(void)
+static int  dllsec_onFrameCreated(void)
 {
-  return 1;
+  return 0;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -54,18 +54,32 @@ static uint8_t dllsec_getOverhead(void)
 }
 
 /*---------------------------------------------------------------------------*/
+
 const struct s_nsDllsec dllsec_tsch_adaptive_driver = {
   "nullsec",
   init,
   send,
-  input,
   dllsec_onFrameCreated,
+  input,
   dllsec_getOverhead
 };
 
-const struct s_nsDLLC_t dll_tsch_adaptive_driver = {
+/*-----------------------------------------------------------------------------------*/
+
+static void init_dll(void *p_netstk, e_nsErr_t *p_err)
+{
+#if NETSTK_CFG_ARG_CHK_EN
+  if (p_netstk == NULL) {
+    return;
+  }
+#endif
+
+  pdllsec_netstk = p_netstk;
+}
+
+const s_nsDLLC_t dll_tsch_adaptive_driver = {
   "nullsec",
-  init,
+  init_dll,
   NULL,
   NULL,
   NULL,
@@ -73,9 +87,9 @@ const struct s_nsDLLC_t dll_tsch_adaptive_driver = {
   NULL
 };
 
-const struct s_nsMAC_t mac_tsch_adaptive_driver = {
+const s_nsMAC_t mac_tsch_adaptive_driver = {
   "nullsec",
-  init,
+  init_dll,
   NULL,
   NULL,
   NULL,
