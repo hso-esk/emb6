@@ -910,11 +910,6 @@ tsch_init(void *p_netstk, e_nsErr_t *p_err)
 
   tsch_is_initialized = 1;
 
-#if TSCH_AUTOSTART
-  /* Start TSCH operation.
-   * If TSCH_AUTOSTART is not set, one needs to call NETSTACK_MAC.on() to start TSCH. */
-  NETSTACK_MAC.on();
-#endif /* TSCH_AUTOSTART */
 }
 /*---------------------------------------------------------------------------*/
 /* Function send for TSCH-MAC, puts the packet in packetbuf in the MAC queue */

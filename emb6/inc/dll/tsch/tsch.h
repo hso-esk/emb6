@@ -84,16 +84,6 @@
 #define TSCH_MAX_JOIN_PRIORITY 32
 #endif
 
-/* Start TSCH automatically after init? If not, the upper layers
- * must call NETSTACK_MAC.on() to start it. Useful when the
- * application needs to control when the nodes are to start
- * scanning or advertising.*/
-#ifdef TSCH_CONF_AUTOSTART
-#define TSCH_AUTOSTART TSCH_CONF_AUTOSTART
-#else
-#define TSCH_AUTOSTART 1
-#endif
-
 /* Join only secured networks? (discard EBs with security disabled) */
 #ifdef TSCH_CONF_JOIN_SECURED_ONLY
 #define TSCH_JOIN_SECURED_ONLY TSCH_CONF_JOIN_SECURED_ONLY
