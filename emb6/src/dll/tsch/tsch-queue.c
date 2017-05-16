@@ -48,7 +48,7 @@
 #include "random.h"
 #include "queuebuf.h"
 #include "bsp.h"
-//#include "net/mac/rdc.h"
+#include "mac.h"
 #include "tsch.h"
 #include "tsch-private.h"
 #include "tsch-queue.h"
