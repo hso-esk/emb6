@@ -1042,35 +1042,27 @@ packet_input(void)
 }
 /*---------------------------------------------------------------------------*/
 static int
-turn_on(e_nsErr_t *p_err)
+turn_on(void)
 {
-
-#if NETSTK_CFG_ARG_CHK_EN
-  if (p_err == NULL) {
-    return -1;
-  }
-#endif
-
   if(tsch_is_initialized == 1 && tsch_is_started == 0) {
     tsch_is_started = 1;
     /* try to associate to a network or start one if setup as coordinator: post TISCH process event */
     TISCH_ASSOCIATE_EVENT_POST();
     PRINTF("TSCH: starting as %s\n", tsch_is_coordinator ? "coordinator" : "node");
-    return 0;
+    return 1;
   }
-	  *p_err = NETSTK_ERR_RF_XXX;
-	  return -1;
+	  return 0;
 }
 /*---------------------------------------------------------------------------*/
-static void
-turn_off(e_nsErr_t *p_err)
+static int
+turn_off(int keep_radio_on, e_nsErr_t *p_err)
 {
-#if NETSTK_CFG_ARG_CHK_EN
-  if (p_err == NULL) {
-    return;
-  }
-#endif
-	  pmac_netstk->phy->off(p_err);
+	  if(keep_radio_on) {
+		  pmac_netstk->phy->on(p_err);
+	  } else {
+		  pmac_netstk->phy->off(p_err);
+	  }
+	  return 0;
 }
 /*---------------------------------------------------------------------------*/
 static unsigned short
@@ -1079,13 +1071,13 @@ channel_check_interval(void)
   return 0;
 }
 /*---------------------------------------------------------------------------*/
-const s_nsMAC_t tschmac_driver = {
+const tsch_driver_t tschmac_driver = {
   "TSCH",
   tsch_init,
-  turn_on,
-  turn_off,
   send_packet,
   packet_input,
+  turn_on,
+  turn_off,
   channel_check_interval,
 };
 /*---------------------------------------------------------------------------*/

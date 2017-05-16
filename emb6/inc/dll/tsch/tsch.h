@@ -164,8 +164,6 @@ extern int tsch_is_coordinator;
 extern int tsch_is_associated;
 /* Is the PAN running link-layer security? */
 extern int tsch_is_pan_secured;
-/* The TSCH MAC driver */
-extern const struct mac_driver tschmac_driver;
 
 /********** Functions *********/
 
@@ -181,4 +179,35 @@ void tsch_set_coordinator(int enable);
 void tsch_set_pan_secured(int enable);
 /* process pending events */
 void  tsch_pending_events_process(void);
+
+
+/**
+ * The structure of a MAC protocol driver in Contiki.
+ */
+struct tsch_driver {
+  char *name;
+
+  /** Initialize the MAC driver */
+  void (* init)(void *p_netstk, e_nsErr_t *p_err);
+
+  /** Send a packet from the Rime buffer  */
+  void (* send)(mac_callback_t sent_callback, void *ptr);
+
+  /** Callback for getting notified of incoming packet. */
+  void (* input)(void);
+
+  /** Turn the MAC layer on. */
+  int (* on)(void);
+
+  /** Turn the MAC layer off. */
+  int (* off)(int keep_radio_on, e_nsErr_t *p_err);
+
+  /** Returns the channel check interval, expressed in clock_time_t ticks. */
+  unsigned short (* channel_check_interval)(void);
+};
+typedef struct tsch_driver tsch_driver_t;
+
+/* The TSCH MAC driver */
+extern const tsch_driver_t tschmac_driver;
+
 #endif /* __TSCH_H__ */
