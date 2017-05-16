@@ -278,7 +278,7 @@ keepalive_send(void *ptr)
     /* Simply send an empty packet */
     packetbuf_clear();
     packetbuf_set_addr(PACKETBUF_ADDR_RECEIVER, &n->addr);
-    NETSTACK_LLSEC.send(keepalive_packet_sent, NULL);
+    pmac_netstk->dllsec->send(keepalive_packet_sent, NULL);
     PRINTF("TSCH: sending KA to %u\n",
            TSCH_LOG_ID_FROM_LINKADDR(&n->addr));
   }
@@ -1034,7 +1034,7 @@ packet_input(void)
       PRINTF("TSCH: received from %u with seqno %u\n",
              TSCH_LOG_ID_FROM_LINKADDR(packetbuf_addr(PACKETBUF_ADDR_SENDER)),
              packetbuf_attr(PACKETBUF_ATTR_MAC_SEQNO));
-      NETSTACK_LLSEC.input();
+      pmac_netstk->dllsec->input();
     }
   }
 }
