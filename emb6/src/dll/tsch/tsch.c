@@ -975,7 +975,7 @@ send_packet(mac_callback_t sent, void *ptr)
   packetbuf_set_addr(PACKETBUF_ADDR_SENDER, &linkaddr_node_addr);
 #endif
 
-  if((hdr_len = NETSTACK_FRAMER.create()) < 0) {
+  if((hdr_len = pmac_netstk->frame->create()) < 0) {
     PRINTF("TSCH:! can't send packet due to framer error\n");
     ret = MAC_TX_ERR;
   } else {
@@ -1009,7 +1009,7 @@ packet_input(void)
 {
   int frame_parsed = 1;
 
-  frame_parsed = NETSTACK_FRAMER.parse();
+  frame_parsed = pmac_netstk->frame->parse();
 
   if(frame_parsed < 0) {
     PRINTF("TSCH:! failed to parse %u\n", packetbuf_datalen());
