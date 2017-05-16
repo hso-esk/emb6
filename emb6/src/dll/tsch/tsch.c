@@ -674,7 +674,9 @@ static void tsch_scan(void *ptr)
       uint8_t scan_channel = TSCH_JOIN_HOPPING_SEQUENCE[
           random_rand() % sizeof(TSCH_JOIN_HOPPING_SEQUENCE)];
       if(current_channel != scan_channel) {
-        NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, scan_channel);
+        //NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, scan_channel);
+        e_nsErr_t err = NETSTK_ERR_NONE;
+        pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_CHAN_NUM_SET, &scan_channel, &err);
         current_channel = scan_channel;
         PRINTF("TSCH: scanning on channel %u\n", scan_channel);
       }
@@ -886,7 +888,9 @@ tsch_init(void *p_netstk, e_nsErr_t *p_err)
     return;
   }
   /* Test setting channel */
-  if(NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, TSCH_DEFAULT_HOPPING_SEQUENCE[0]) != RADIO_RESULT_OK) {
+  //if(NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, TSCH_DEFAULT_HOPPING_SEQUENCE[0]) != RADIO_RESULT_OK) {
+  pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_CHAN_NUM_SET, &TSCH_DEFAULT_HOPPING_SEQUENCE[0], p_err);
+  if(p_err != NETSTK_ERR_NONE) {
     printf("TSCH:! radio does not support setting channel. Abort init.\n");
     return;
   }
