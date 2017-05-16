@@ -47,11 +47,11 @@
 #include "tsch-security.h"
 #include "tsch-log.h"
 #include "framer_802154.h"
-#include "net/mac/framer-802154.h"
-#include "net/netstack.h"
-#include "net/llsec/anti-replay.h"
-#include "lib/ccm-star.h"
-#include "lib/aes-128.h"
+//#include "net/mac/framer-802154.h"
+//#include "net/netstack.h"
+//#include "net/llsec/anti-replay.h"
+#include "ccm-star.h"
+#include "aes-128.h"
 
 #if TSCH_LOG_LEVEL >= 1
 #define DEBUG DEBUG_PRINT
