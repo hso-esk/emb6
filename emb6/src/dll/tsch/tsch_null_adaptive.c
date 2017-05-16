@@ -62,6 +62,26 @@ const struct s_nsDllsec dllsec_tsch_adaptive_driver = {
   dllsec_onFrameCreated,
   dllsec_getOverhead
 };
+
+const struct s_nsDLLC_t dll_tsch_adaptive_driver = {
+  "nullsec",
+  init,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL
+};
+
+const struct s_nsMAC_t mac_tsch_adaptive_driver = {
+  "nullsec",
+  init,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL
+};
 /*---------------------------------------------------------------------------*/
 
 /** @} */

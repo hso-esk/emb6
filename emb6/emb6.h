@@ -652,6 +652,7 @@ extern const s_nsHeadComp_t hc_driver_slipnet;
 
 /* Supported link layer security handlers */
 extern const s_nsDllsec_t dllsec_driver_null;
+extern const s_nsDllsec_t dllsec_tsch_adaptive_driver;
 
 
 /* Supported framers */
@@ -662,11 +663,13 @@ extern const s_nsFramer_t framer_nullframer;
 /* Supported dllc drivers */
 extern const s_nsDLLC_t dllc_driver_null;
 extern const s_nsDLLC_t dllc_driver_802154;
+extern const s_nsDLLC_t dll_tsch_adaptive_driver;
 
 /* Supported mac drivers */
 extern const s_nsMAC_t mac_driver_null;
 extern const s_nsMAC_t mac_driver_802154;
 extern const s_nsMAC_t mac_driver_smartmac;
+extern const s_nsMAC_t mac_tsch_adaptive_driver;
 
 /* Supported phy drivers */
 extern const s_nsPHY_t phy_driver_null;
