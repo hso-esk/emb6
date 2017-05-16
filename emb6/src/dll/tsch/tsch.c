@@ -197,6 +197,32 @@ tsch_set_eb_period(uint32_t period)
   tsch_current_eb_period = MIN(period, TSCH_MAX_EB_PERIOD);
 }
 /*---------------------------------------------------------------------------*/
+
+ void mac_call_sent_callback(mac_callback_t sent, void *ptr, int status, int num_tx)
+{
+  PRINTF("mac_callback_t %p ptr %p status %d num_tx %d\n",
+         (void *)sent, ptr, status, num_tx);
+  switch(status) {
+  case MAC_TX_COLLISION:
+    PRINTF("mac: collision after %d tx\n", num_tx);
+    break;
+  case MAC_TX_NOACK:
+    PRINTF("mac: noack after %d tx\n", num_tx);
+    break;
+  case MAC_TX_OK:
+    PRINTF("mac: sent after %d tx\n", num_tx);
+    break;
+  default:
+    PRINTF("mac: error %d after %d tx\n", status, num_tx);
+  }
+
+  if(sent) {
+    sent(ptr, status, num_tx);
+  }
+}
+
+/*----------------------------------------------------------------------------*/
+
 static void
 tsch_reset(void)
 {
