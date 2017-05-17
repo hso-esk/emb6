@@ -72,6 +72,7 @@ static s_ns_t          *pmac_netstk;
 static void tsch_send_eb_process_start(void);
 static void tsch_send_eb_process_stop(void);
 static void tsch_send_eb_process (void *ptr);
+static void tsch_pending_events_process(c_event_t c_event, p_data_t p_data);
 
 /**********************/
 
@@ -824,14 +825,12 @@ static void tsch_send_eb_process (void *ptr)
 }
 
 
-
-static struct ctimer pending_tx_rx_timer;
-
-
 void tsch_pending_events_process_start_now(void)
 {
-  tsch_pending_events_process(EVENT_TYPE_TISCH_TX_RX_PENDING, NULL)
+  /* run tsch_pending_events_process */
+  tsch_pending_events_process(EVENT_TYPE_TISCH_TX_RX_PENDING, NULL);
 }
+
 void tsch_pending_events_process_start_asap(void)
 {
 	/* Post the tx_rx_pending event */
@@ -841,7 +840,7 @@ void tsch_pending_events_process_start_asap(void)
 /*---------------------------------------------------------------------------*/
 /* A process that is polled from interrupt and calls tx/rx input
  * callbacks, outputs pending logs. */
-void  tsch_pending_events_process(c_event_t c_event, p_data_t p_data)
+static void  tsch_pending_events_process(c_event_t c_event, p_data_t p_data)
 {
   if(c_event == EVENT_TYPE_TISCH_TX_RX_PENDING)
   {
