@@ -74,7 +74,7 @@
 /** Invalid or no event */
 #define EVENT_TYPE_NONE                     ( 0xFF )
 /** Obligatory event */
-#define OBLIG_EVENT_PRIOR                   ( 15U )
+#define OBLIG_EVENT_PRIOR                   ( 16U )
 
 /** Maximum amount of callbacks allowed */
 #define MAX_CALLBACK_COUNT                  ( 13U )
@@ -119,6 +119,9 @@ typedef enum
 
    /** Event from RF layer */
    EVENT_TYPE_RF,
+
+   /** Event from TISCH layer */
+   EVENT_TYPE_TISCH_TX_RX_PENDING,
 
    /** Low-Layer Packet event */
    EVENT_TYPE_PCK_LL,

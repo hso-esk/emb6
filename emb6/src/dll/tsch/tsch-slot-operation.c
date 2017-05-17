@@ -711,17 +711,15 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 
     /* Poll process for later processing of packet sent events and logs */
     //process_poll(&tsch_pending_events_process);
-    /* TODO verify this */
-    tsch_pending_events_process();
+    /* TODO verify this because we are in interrupt context  */
+    tsch_pending_events_process_start_asap();
   }
 
   TSCH_DEBUG_TX_EVENT();
 
-  PT_END(pt);
 }
 /*---------------------------------------------------------------------------*/
-static
-PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
+static void tsch_rx_slot(struct rtimer *t)
 {
   /**
    * RX slot:
@@ -915,8 +913,8 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 
           /* Poll process for processing of pending input and logs */
           //process_poll(&tsch_pending_events_process);
-          /* TODO verify this */
-          tsch_pending_events_process();
+          /* TODO verify this because we are in interrupt context  */
+          tsch_pending_events_process_start_asap();
         }
       }
 

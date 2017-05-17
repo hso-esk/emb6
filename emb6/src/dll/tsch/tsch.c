@@ -62,8 +62,12 @@
 
 static s_ns_t          *pmac_netstk;
 
+
 #define TISCH_ASSOCIATE_EVENT_POST()     evproc_putEvent(E_EVPROC_HEAD, EVENT_TYPE_TISCH_PROCESS, NULL)
 #define TISCH_REG_PROCESS_HANDLER()      evproc_regCallback(EVENT_TYPE_TISCH_PROCESS, tsch_process)
+
+#define TISCH_PENDING_TX_RX_EVENT_POST()     evproc_putEvent(E_EVPROC_HEAD, EVENT_TYPE_TISCH_TX_RX_PENDING, NULL)
+#define TISCH_REG_PENDING_TX_RX_HANDLER()    evproc_regCallback(EVENT_TYPE_TISCH_TX_RX_PENDING, tsch_pending_events_process)
 
 static void tsch_send_eb_process_start(void);
 static void tsch_send_eb_process_stop(void);
@@ -229,8 +233,7 @@ tsch_reset(void)
   /* First make sure pending packet callbacks are sent etc */
   /* TODO CHECK THIS */
   //process_post_synch(&tsch_pending_events_process, PROCESS_EVENT_POLL, NULL);
-  //TISCH_RX_TX_EVENT_POST();
-  tsch_pending_events_process();
+  tsch_pending_events_process_start_now();
   /* Reset neighbor queues */
   tsch_queue_reset();
   /* Remove unused neighbors */
@@ -820,14 +823,32 @@ static void tsch_send_eb_process (void *ptr)
     ctimer_set(&send_eb_timer, delay , tsch_send_eb_process, NULL);
 }
 
+
+
+static struct ctimer pending_tx_rx_timer;
+
+
+void tsch_pending_events_process_start_now(void)
+{
+  tsch_pending_events_process(EVENT_TYPE_TISCH_TX_RX_PENDING, NULL)
+}
+void tsch_pending_events_process_start_asap(void)
+{
+	/* Post the tx_rx_pending event */
+	TISCH_PENDING_TX_RX_EVENT_POST();
+}
+
 /*---------------------------------------------------------------------------*/
 /* A process that is polled from interrupt and calls tx/rx input
  * callbacks, outputs pending logs. */
-void  tsch_pending_events_process(void)
+void  tsch_pending_events_process(c_event_t c_event, p_data_t p_data)
 {
+  if(c_event == EVENT_TYPE_TISCH_TX_RX_PENDING)
+  {
     tsch_rx_process_pending();
     tsch_tx_process_pending();
     tsch_log_process_pending();
+  }
 }
 
 /* Functions from the Contiki MAC layer driver interface */

@@ -146,7 +146,7 @@ tsch_log_commit(void)
   ringbufindex_put(&log_ringbuf);
   //process_poll(&tsch_pending_events_process);
   /* TODO verify this */
-  tsch_pending_events_process();
+  tsch_pending_events_process_start_asap();
 }
 /*---------------------------------------------------------------------------*/
 /* Initialize log module */

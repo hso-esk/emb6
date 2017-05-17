@@ -168,7 +168,9 @@ void tsch_set_coordinator(int enable);
 /* Set the pan as secured or not */
 void tsch_set_pan_secured(int enable);
 /* process pending events */
-void  tsch_pending_events_process(void);
+void tsch_pending_events_process_start_now(void);
+/* start the tsch_pending_events_process asap (useful to call in interrupt context)*/
+void tsch_pending_events_process_start_asap(void);
 
 
 /**
