@@ -113,6 +113,8 @@ typedef struct
   rfc_CMD_PROP_RX_ADV_t* p_cmdPropRxAdv;
   /* Meassured RSSI value */
   uint8_t c_rssiValue;
+  /* Time Stamp value  */
+  uint8_t timeStamp;
 } st_rx_cmd_t;
 
 typedef struct
@@ -231,6 +233,15 @@ uint8_t sf_rf_6lowpan_getRssi(void);
 
 /*============================================================================*/
 /**
+ * @brief  Request the last received Timestamp value.
+ *
+ * \return    Timestamp value
+ */
+/*============================================================================*/
+uint8_t sf_rf_6lowpan_getTimeStamp(void);
+
+/*============================================================================*/
+/**
  * @brief  Preform a clear channel assesment
  *
  * @param c_numOfRssiMeas Number of consecutive RSSI measurements below the
@@ -250,6 +261,9 @@ E_RF_CCA_RESULT_t sf_rf_6lowpan_cca(uint8_t c_numOfRssiMeas);
 
 bool sf_rf_6lowpan_chanNumSet(uint8_t chan_num);
 
+uint8_t set_pkt_length(uint16_t i_len);
+uint8_t set_p_pkt(uint8_t *pc_data);
+uint8_t rf_transmit(void);
 void cc13xx_eventHandler(c_event_t c_event, p_data_t p_data);
 
 #endif /* __SF_RF_6LOWPAN_H__ */

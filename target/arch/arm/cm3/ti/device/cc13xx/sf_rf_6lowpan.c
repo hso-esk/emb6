@@ -163,6 +163,62 @@ bool sf_rf_6lowpan_init(void *p_netstk)
   return true;
 }
 
+uint8_t set_pkt_length(uint16_t i_len)
+{
+  if (i_len > 1)
+  {
+    cc1310.tx.p_cmdPropTxAdv->pktLen = i_len ;
+    return 1;
+  }
+  return 0;
+}
+
+uint8_t set_p_pkt(uint8_t *pc_data)
+{
+  if (pc_data!=NULL)
+  {
+    cc1310.tx.p_cmdPropTxAdv->pPkt = pc_data;
+    return 1;
+  }
+  return 0;
+}
+
+uint8_t rf_transmit(void)
+{
+#if USE_TI_RTOS
+  RF_EventMask result ;
+#else
+  static rfc_cmdStatus_t cmdStatus;
+#endif
+
+  /* check if transceiver is not is sleepy mode */
+  if( sf_rf_get_Status() == RF_STATUS_SLEEP )
+    return 0;
+
+#if USE_TI_RTOS
+
+      /* Stop last cmd (usually it is Rx cmd ) */
+      RF_flushCmd(gps_rfHandle, gps_rf_cmdHandle, 1);
+      /* Send tx command  */
+      result = RF_runCmd(gps_rfHandle, (RF_Op*)cc1310.tx.p_cmdPropTxAdv, RF_PriorityNormal, NULL, 0);
+      if (!(result & RF_EventLastCmdDone))
+      {
+        return 0;
+      }
+#else
+      /* Stop last cmd (usually it is Rx cmd ) */
+      RFC_sendDirectCmd(CMDR_DIR_CMD(CMD_ABORT));
+      /* Send tx command  */
+      cmdStatus = RFC_sendRadioOp((rfc_radioOp_t*)cc1310.tx.p_cmdPropTxAdv);
+
+      /* Since we sent a blocking cmd then we check the state */
+      if(cmdStatus != RFC_CMDSTATUS_DONE)
+      {
+        return 0 ;
+      }
+#endif
+      return 1;
+}
 
 uint8_t sf_rf_6lowpan_sendBlocking(uint8_t *pc_data, uint16_t  i_len)
 {
@@ -416,6 +472,10 @@ uint8_t sf_rf_6lowpan_getRssi(void)
   return sf_rf_getRssi();
 }
 
+uint8_t sf_rf_6lowpan_getTimeStamp(void)
+{
+	return cc1310.rx.timeStamp;
+}
 
 E_RF_CCA_RESULT_t sf_rf_6lowpan_cca(uint8_t c_numOfRssiMeas)
 {

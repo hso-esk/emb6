@@ -185,6 +185,11 @@ static void loc_cc13xx_getRssi(int8_t *pc_rssi, e_nsErr_t *p_err)
   *p_err = NETSTK_ERR_NONE;
 }/* loc_cc13xx_getRssi() */
 
+
+static void loc_cc13xx_getTimestamp(int8_t *pc_timestamp, e_nsErr_t *p_err)
+{
+ *pc_timestamp = sf_rf_6lowpan_getTimeStamp();
+}
 /**
  * @brief   Preform a clear channel assesment and return @ref NETSTK_ERR_NONE if
  *          no signal is detected and @ref NETSTK_ERR_CHANNEL_ACESS_FAILURE if a
@@ -211,6 +216,20 @@ static void loc_cc13xx_cca(e_nsErr_t *p_err)
   }/* switch */
 }
 
+static void loc_cc13xx_set_p_pkt(uint8_t* ptr)
+{
+  set_p_pkt(ptr);
+}
+
+static void loc_cc13xx_set_pkt_length(uint16_t length)
+{
+  set_pkt_length(length);
+}
+
+static void loc_cc13xx_transmit(void)
+{
+  rf_transmit();
+}
 /*============================================================================*/
 /*                           API FUNCTION DEFINITIONS                         */
 /*============================================================================*/
@@ -383,14 +402,24 @@ static void cc13xx_Ioctl (e_nsIocCmd_t    cmd,
     case NETSTK_CMD_RF_TXPOWER_GET:
       loc_cc13xx_txPowerGet((int8_t*)p_val, p_err);
       break;
-
     case NETSTK_CMD_RF_CCA_GET:
       loc_cc13xx_cca(p_err);
       break;
     case NETSTK_CMD_RF_RSSI_GET:
       loc_cc13xx_getRssi((int8_t*)p_val, p_err);
       break;
-
+    case NETSTK_CMD_RF_TIMESTAMP_GET:
+      loc_cc13xx_getTimestamp((int8_t*)p_val, p_err);
+      break;
+    case NETSTK_CMD_RF_P_PKT_SET:
+      loc_cc13xx_set_p_pkt((uint8_t*)p_val);
+      break;
+    case NETSTK_CMD_RF_PKT_LENGTH_SET:
+      loc_cc13xx_set_pkt_length(*(int16_t*)p_val);
+      break;
+    case NETSTK_CMD_RF_TRANSMIT:
+      loc_cc13xx_transmit();
+      break;
     case NETSTK_CMD_RX_BUF_READ:
     /*
      * Signal upper layer if a packet has arrived by the time this
