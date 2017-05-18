@@ -232,11 +232,11 @@ int8_t demo_6tischInit(void)
 
 	  /* selecting the configured  role for the 6tisch network */
 #ifdef TISCH_ROLE_6LN
-	  node_role == role_6ln;
+	  node_role = role_6ln;
 #elif TISCH_ROLE_6DR
-	  node_role == role_6dr;
+	  node_role = role_6dr;
 #elif TISCH_ROLE_6DR_SEC
-	  node_role == role_6dr_sec;
+	  node_role = role_6dr_sec;
 #endif
 
 	  PRINTF("Init: node starting with role %s\n",
