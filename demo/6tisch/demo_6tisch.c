@@ -191,17 +191,15 @@ int8_t demo_6tischConf(s_ns_t *p_netstk)
     if (p_netstk->c_configured == FALSE) {
       p_netstk->hc = &hc_driver_sicslowpan;
       p_netstk->frame = &framer_802154;
-      p_netstk->dllsec = &dllsec_driver_null;
-      /*FIXME switch to the 6tisch mac driver */
+      p_netstk->dllsec = &dllsec_tsch_adaptive_driver;
       p_netstk->dllc = &dll_tsch_adaptive_driver;
       p_netstk->mac = &mac_tsch_adaptive_driver;
       p_netstk->phy   = &phy_driver_null;
       ret = 0;
     } else {
       if ((p_netstk->hc == &hc_driver_sicslowpan) &&
-          (p_netstk->frame == &framer_802154) &&
-          (p_netstk->dllsec == &dllsec_driver_null)) {
-          /*FIXME switch to the 6tisch mac driver */
+          (p_netstk->frame == &framer_802154)) {
+          p_netstk->dllsec = &dllsec_tsch_adaptive_driver;
           p_netstk->dllc = &dll_tsch_adaptive_driver;
           p_netstk->mac = &mac_tsch_adaptive_driver;
           p_netstk->phy   = &phy_driver_null;
