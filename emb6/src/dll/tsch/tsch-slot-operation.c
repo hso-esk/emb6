@@ -175,15 +175,12 @@ static struct tsch_link *backup_link = NULL;
 static struct tsch_packet *current_packet = NULL;
 static struct tsch_neighbor *current_neighbor = NULL;
 
-/* Protothread for association */
-PT_THREAD(tsch_scan(struct pt *pt));
 /* Protothread for slot operation, called from rtimer interrupt
  * and scheduled from tsch_schedule_slot_operation */
-static PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr));
-static struct pt slot_operation_pt;
+static void tsch_slot_operation(struct rtimer *t, void *ptr);
 /* Sub-protothreads of tsch_slot_operation */
-static PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t));
-static PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t));
+static void tsch_tx_slot(struct rtimer *t);
+static void tsch_rx_slot(struct rtimer *t);
 
 /*---------------------------------------------------------------------------*/
 /* TSCH locking system. TSCH is locked during slot operations */
@@ -312,12 +309,11 @@ tsch_schedule_slot_operation(struct rtimer *tm, rtimer_clock_t ref_time, rtimer_
 /* Schedule slot operation conditionally, and YIELD if success only.
  * Always attempt to schedule RTIMER_GUARD before the target to make sure to wake up
  * ahead of time and then busy wait to exactly hit the target. */
-#define TSCH_SCHEDULE_AND_YIELD(pt, tm, ref_time, offset, str) \
+#define TSCH_SCHEDULE_AND_YIELD(tm, ref_time, offset, str) \
   do { \
     if(tsch_schedule_slot_operation(tm, ref_time, offset - RTIMER_GUARD, str)) { \
-      PT_YIELD(pt); \
+        BUSYWAIT_UNTIL_ABS(0, ref_time, offset); \
     } \
-    BUSYWAIT_UNTIL_ABS(0, ref_time, offset); \
   } while(0);
 /*---------------------------------------------------------------------------*/
 /* Get EB, broadcast or unicast packet to be sent, and target neighbor. */
@@ -461,9 +457,10 @@ tsch_radio_off(enum tsch_radio_state_off_cmd command)
   }
 }
 /*---------------------------------------------------------------------------*/
-static
-PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
+static void tsch_tx_slot(struct rtimer *t)
 {
+
+	e_nsErr_t err = NETSTK_ERR_NONE;
   /**
    * TX slot:
    * 1. Copy packet to radio buffer
@@ -481,8 +478,6 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
   uint8_t in_queue;
   static int dequeued_index;
   static int packet_ready = 1;
-
-  PT_BEGIN(pt);
 
   TSCH_DEBUG_TX_EVENT();
 
@@ -545,7 +540,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #if CCA_ENABLED
         cca_status = 1;
         /* delay before CCA */
-        TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, TS_CCA_OFFSET, "cca");
+        TSCH_SCHEDULE_AND_YIELD(t, current_slot_start, TS_CCA_OFFSET, "cca");
         TSCH_DEBUG_TX_EVENT();
         tsch_radio_on(TSCH_RADIO_CMD_ON_WITHIN_TIMESLOT);
         /* CCA */
@@ -560,7 +555,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #endif /* CCA_ENABLED */
         {
           /* delay before TX */
-          TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, tsch_timing[tsch_ts_tx_offset] - RADIO_DELAY_BEFORE_TX, "TxBeforeTx");
+          TSCH_SCHEDULE_AND_YIELD(t, current_slot_start, tsch_timing[tsch_ts_tx_offset] - RADIO_DELAY_BEFORE_TX, "TxBeforeTx");
           TSCH_DEBUG_TX_EVENT();
           /* send packet already in radio tx buffer */
           mac_tx_status = NETSTACK_RADIO.transmit(packet_len);
@@ -590,7 +585,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
               NETSTACK_RADIO.set_value(RADIO_PARAM_RX_MODE, radio_rx_mode & (~RADIO_RX_MODE_ADDRESS_FILTER));
 #endif /* TSCH_HW_FRAME_FILTERING */
               /* Unicast: wait for ack after tx: sleep until ack time */
-              TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start,
+              TSCH_SCHEDULE_AND_YIELD(t, current_slot_start,
                   tsch_timing[tsch_ts_tx_offset] + tx_duration + tsch_timing[tsch_ts_rx_ack_delay] - RADIO_DELAY_BEFORE_RX, "TxBeforeAck");
               TSCH_DEBUG_TX_EVENT();
               tsch_radio_on(TSCH_RADIO_CMD_ON_WITHIN_TIMESLOT);
@@ -736,8 +731,6 @@ static void tsch_rx_slot(struct rtimer *t)
   static int16_t input_index;
   static int input_queue_drop = 0;
 
-  PT_BEGIN(pt);
-
   TSCH_DEBUG_RX_EVENT();
 
   input_index = ringbufindex_peek_put(&input_ringbuf);
@@ -760,7 +753,7 @@ static void tsch_rx_slot(struct rtimer *t)
     current_input = &input_array[input_index];
 
     /* Wait before starting to listen */
-    TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, tsch_timing[tsch_ts_rx_offset] - RADIO_DELAY_BEFORE_RX, "RxBeforeListen");
+    TSCH_SCHEDULE_AND_YIELD(t, current_slot_start, tsch_timing[tsch_ts_rx_offset] - RADIO_DELAY_BEFORE_RX, "RxBeforeListen");
     TSCH_DEBUG_RX_EVENT();
 
     /* Start radio for at least guard time */
@@ -874,7 +867,7 @@ static void tsch_rx_slot(struct rtimer *t)
                 NETSTACK_RADIO.prepare((const void *)ack_buf, ack_len);
 
                 /* Wait for time to ACK and transmit ACK */
-                TSCH_SCHEDULE_AND_YIELD(pt, t, rx_start_time,
+                TSCH_SCHEDULE_AND_YIELD(t, rx_start_time,
                                         packet_duration + tsch_timing[tsch_ts_tx_ack_delay] - RADIO_DELAY_BEFORE_TX, "RxBeforeAck");
                 TSCH_DEBUG_RX_EVENT();
                 NETSTACK_RADIO.transmit(ack_len);
@@ -932,19 +925,16 @@ static void tsch_rx_slot(struct rtimer *t)
 
   TSCH_DEBUG_RX_EVENT();
 
-  PT_END(pt);
 }
 /*---------------------------------------------------------------------------*/
 /* Protothread for slot operation, called from rtimer interrupt
  * and scheduled from tsch_schedule_slot_operation */
-static
-PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
+static void tsch_slot_operation(struct rtimer *t, void *ptr)
 {
   TSCH_DEBUG_INTERRUPT();
-  PT_BEGIN(&slot_operation_pt);
 
   /* Loop over all active slots */
-  while(tsch_is_associated) {
+  if(tsch_is_associated) {
 
     if(current_link == NULL || tsch_lock_requested) { /* Skip slot operation if there is no link
                                                           or if there is a pending request for getting the lock */
@@ -987,12 +977,10 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
            * 2. update_backoff_state(current_neighbor)
            * 3. post tx callback
            **/
-          static struct pt slot_tx_pt;
-          PT_SPAWN(&slot_operation_pt, &slot_tx_pt, tsch_tx_slot(&slot_tx_pt, t));
+           tsch_tx_slot(t);
         } else {
           /* Listen */
-          static struct pt slot_rx_pt;
-          PT_SPAWN(&slot_operation_pt, &slot_rx_pt, tsch_rx_slot(&slot_rx_pt, t));
+          tsch_rx_slot(t);
         }
       }
       TSCH_DEBUG_SLOT_END();
@@ -1046,12 +1034,8 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
         current_slot_start += tsch_timesync_adaptive_compensate(time_to_next_active_slot);
       } while(!tsch_schedule_slot_operation(t, prev_slot_start, time_to_next_active_slot, "main"));
     }
-
     tsch_in_slot_operation = 0;
-    PT_YIELD(&slot_operation_pt);
   }
-
-  PT_END(&slot_operation_pt);
 }
 /*---------------------------------------------------------------------------*/
 /* Set global time before starting slot operation,
