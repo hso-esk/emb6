@@ -43,6 +43,7 @@
 /********** Includes **********/
 
 #include "emb6.h"
+#include "board_conf.h"
 
 /******** Configuration *******/
 #ifndef IEEE802154_PANID
