@@ -63,8 +63,11 @@
 #define UART_BUFFER_RX_LEN          128U
 /*! Sets the length of the Tx ringbuffer. */
 #define UART_BUFFER_TX_LEN          128U
+
 /*! Default baudrate used for the uart */
+#ifndef UART_DEFAULT_BAUD
 #define UART_DEFAULT_BAUD           115200U
+#endif /* #ifndef UART_DEFAULT_BAUD */
 /*==============================================================================
                             VARIABLES
 ==============================================================================*/
