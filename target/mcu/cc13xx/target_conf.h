@@ -59,9 +59,14 @@
 
 /*========================= PLATFROM =========================================*/
 /*! Platform interfaces: Definition of RX pin and TX pin. */
+#ifndef UART_IOID_RXD
 #define UART_IOID_RXD                IOID_2
+#endif /* #ifndef UART_IOID_RXD */
+
 /*! Platform interfaces: Definition of TX pin. */
+#ifndef UART_IOID_TXD
 #define UART_IOID_TXD                IOID_3
+#endif /* #ifndef UART_IOID_TXD */
 
 #define CC1310_LED0                     0
 #define CC1310_LED1                     1
