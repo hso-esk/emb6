@@ -422,7 +422,10 @@ tsch_radio_on(enum tsch_radio_state_on_cmd command)
     break;
   }
   if(do_it) {
-    NETSTACK_RADIO.on();
+    //NETSTACK_RADIO.on();
+	  e_nsErr_t err = NETSTK_ERR_NONE;
+	  pmac_netstk->phy->on(&err);
+
   }
 }
 /*---------------------------------------------------------------------------*/
@@ -453,7 +456,9 @@ tsch_radio_off(enum tsch_radio_state_off_cmd command)
     break;
   }
   if(do_it) {
-    NETSTACK_RADIO.off();
+    //NETSTACK_RADIO.off();
+	  e_nsErr_t err = NETSTK_ERR_NONE;
+	  pmac_netstk->phy->off(&err);
   }
 }
 /*---------------------------------------------------------------------------*/
@@ -534,7 +539,11 @@ static void tsch_tx_slot(struct rtimer *t)
 #endif /* LLSEC802154_ENABLED */
 
       /* prepare packet to send: copy to radio buffer */
-      if(packet_ready && NETSTACK_RADIO.prepare(packet, packet_len) == 0) { /* 0 means success */
+      /* FIXME CHECK type convertion */
+      pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_PKT_LENGTH_SET, &packet_len, &err);
+      pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_P_PKT_SET, packet, &err);
+     // if(packet_ready && NETSTACK_RADIO.prepare(packet, packet_len) == 0) { /* 0 means success */
+      if(packet_ready && err != NETSTK_ERR_NONE){
         static rtimer_clock_t tx_duration;
 
 #if CCA_ENABLED
@@ -557,8 +566,11 @@ static void tsch_tx_slot(struct rtimer *t)
           /* delay before TX */
           TSCH_SCHEDULE_AND_YIELD(t, current_slot_start, tsch_timing[tsch_ts_tx_offset] - RADIO_DELAY_BEFORE_TX, "TxBeforeTx");
           TSCH_DEBUG_TX_EVENT();
+
           /* send packet already in radio tx buffer */
-          mac_tx_status = NETSTACK_RADIO.transmit(packet_len);
+          //mac_tx_status = NETSTACK_RADIO.transmit(packet_len);
+          pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_TRANSMIT, NULL, &err);
+
           /* Save tx timestamp */
           tx_start_time = current_slot_start + tsch_timing[tsch_ts_tx_offset];
           /* calculate TX duration based on sent packet len */
@@ -716,6 +728,8 @@ static void tsch_tx_slot(struct rtimer *t)
 /*---------------------------------------------------------------------------*/
 static void tsch_rx_slot(struct rtimer *t)
 {
+	e_nsErr_t err = NETSTK_ERR_NONE;
+
   /**
    * RX slot:
    * 1. Check if it is used for TIME_KEEPING
@@ -782,13 +796,13 @@ static void tsch_rx_slot(struct rtimer *t)
         static int frame_valid;
         static int header_len;
         static frame802154_t frame;
-        radio_value_t radio_last_rssi;
-
+        uint8_t radio_last_rssi;
         /* Read packet */
         current_input->len = NETSTACK_RADIO.read((void *)current_input->payload, TSCH_PACKET_MAX_LEN);
-        NETSTACK_RADIO.get_value(RADIO_PARAM_LAST_RSSI, &radio_last_rssi);
+        //NETSTACK_RADIO.get_value(RADIO_PARAM_LAST_RSSI, &radio_last_rssi);
+        pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_RSSI_GET, &radio_last_rssi, &err);
         current_input->rx_asn = tsch_current_asn;
-        current_input->rssi = (signed)radio_last_rssi;
+        current_input->rssi = (int16_t) radio_last_rssi;
         current_input->channel = current_channel;
         header_len = frame802154_parse((uint8_t *)current_input->payload, current_input->len, &frame);
         frame_valid = header_len > 0 &&
@@ -797,7 +811,9 @@ static void tsch_rx_slot(struct rtimer *t)
 
 #if TSCH_RESYNC_WITH_SFD_TIMESTAMPS
         /* At the end of the reception, get an more accurate estimate of SFD arrival time */
-        NETSTACK_RADIO.get_object(RADIO_PARAM_LAST_PACKET_TIMESTAMP, &rx_start_time, sizeof(rtimer_clock_t));
+        //NETSTACK_RADIO.get_object(RADIO_PARAM_LAST_PACKET_TIMESTAMP, &rx_start_time, sizeof(rtimer_clock_t));
+        /* FIXME check convertion ... */
+        pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_TIMESTAMP_GET, &rx_start_time, &err);
 #endif
 
         packet_duration = TSCH_PACKET_DURATION(current_input->len);
@@ -864,13 +880,16 @@ static void tsch_rx_slot(struct rtimer *t)
 #endif /* LLSEC802154_ENABLED */
 
                 /* Copy to radio buffer */
-                NETSTACK_RADIO.prepare((const void *)ack_buf, ack_len);
+                //NETSTACK_RADIO.prepare((const void *)ack_buf, ack_len);
+                pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_PKT_LENGTH_SET, &ack_len, &err);
+                pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_P_PKT_SET, ack_buf, &err);
 
                 /* Wait for time to ACK and transmit ACK */
                 TSCH_SCHEDULE_AND_YIELD(t, rx_start_time,
                                         packet_duration + tsch_timing[tsch_ts_tx_ack_delay] - RADIO_DELAY_BEFORE_TX, "RxBeforeAck");
                 TSCH_DEBUG_RX_EVENT();
-                NETSTACK_RADIO.transmit(ack_len);
+                //NETSTACK_RADIO.(ack_len);
+                pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_TRANSMIT, NULL, &err);
                 tsch_radio_off(TSCH_RADIO_CMD_OFF_WITHIN_TIMESLOT);
               }
             }
@@ -966,7 +985,10 @@ static void tsch_slot_operation(struct rtimer *t, void *ptr)
       if(is_active_slot) {
         /* Hop channel */
         current_channel = tsch_calculate_channel(&tsch_current_asn, current_link->channel_offset);
-        NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, current_channel);
+        //NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, current_channel);
+        e_nsErr_t err = NETSTK_ERR_NONE;
+        pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_CHAN_NUM_SET, &current_channel, &err);
+
         /* Turn the radio on already here if configured so; necessary for radios with slow startup */
         tsch_radio_on(TSCH_RADIO_CMD_ON_START_OF_TIMESLOT);
         /* Decide whether it is a TX/RX/IDLE or OFF slot */

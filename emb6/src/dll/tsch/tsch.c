@@ -60,7 +60,7 @@
 
 /***********************/
 
-static s_ns_t          *pmac_netstk;
+ s_ns_t  *pmac_netstk;
 
 
 #define TISCH_ASSOCIATE_EVENT_POST()     evproc_putEvent(E_EVPROC_HEAD, EVENT_TYPE_TISCH_PROCESS, NULL)
@@ -655,6 +655,7 @@ static void tsch_scan(void *ptr)
   static struct input_packet input_eb;
   /* Time when we started scanning on current_channel */
   static clock_time_t current_channel_since;
+  e_nsErr_t err = NETSTK_ERR_NONE;
 
   if(!scan_active)
   {
@@ -679,7 +680,6 @@ static void tsch_scan(void *ptr)
           random_rand() % sizeof(TSCH_JOIN_HOPPING_SEQUENCE)];
       if(current_channel != scan_channel) {
         //NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, scan_channel);
-        e_nsErr_t err = NETSTK_ERR_NONE;
         pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_CHAN_NUM_SET, &scan_channel, &err);
         current_channel = scan_channel;
         PRINTF("TSCH: scanning on channel %u\n", scan_channel);
@@ -688,21 +688,30 @@ static void tsch_scan(void *ptr)
     }
 
     /* Turn radio on and wait for EB */
-    NETSTACK_RADIO.on();
-
+    //NETSTACK_RADIO.on();
+	  pmac_netstk->phy->on(&err);
+#if IGNORE_ERROR
     is_packet_pending = NETSTACK_RADIO.pending_packet();
+
     if(!is_packet_pending && NETSTACK_RADIO.receiving_packet()) {
+#endif
+    if(!is_packet_pending) {
       /* If we are currently receiving a packet, wait until end of reception */
       t0 = RTIMER_NOW();
+#if IGNORE_ERROR
       BUSYWAIT_UNTIL_ABS((is_packet_pending = NETSTACK_RADIO.pending_packet()), t0, RTIMER_SECOND / 100);
+#endif
     }
 
     if(is_packet_pending) {
+#if IGNORE_ERROR
       /* Read packet */
       input_eb.len = NETSTACK_RADIO.read(input_eb.payload, TSCH_PACKET_MAX_LEN);
-
+#endif
       /* Save packet timestamp */
-      NETSTACK_RADIO.get_object(RADIO_PARAM_LAST_PACKET_TIMESTAMP, &t0, sizeof(rtimer_clock_t));
+      //NETSTACK_RADIO.get_object(RADIO_PARAM_LAST_PACKET_TIMESTAMP, &t0, sizeof(rtimer_clock_t));
+      /* FIXME check convertion ... */
+      pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_TIMESTAMP_GET, &t0, &err);
 
       /* Parse EB and attempt to associate */
       PRINTF("TSCH: association: received packet (%u bytes) on channel %u\n", input_eb.len, current_channel);
@@ -712,7 +721,8 @@ static void tsch_scan(void *ptr)
 
     if(tsch_is_associated) {
       /* End of association, turn the radio off */
-      NETSTACK_RADIO.off();
+      //NETSTACK_RADIO.off();
+      pmac_netstk->phy->off(&err);
       /* if the scan process is launched again we need to initialize some variable  */
       scan_active = 0 ;
     } else if(!tsch_is_coordinator) {
@@ -876,10 +886,13 @@ tsch_init(void *p_netstk, e_nsErr_t *p_err)
   TISCH_REG_PROCESS_HANDLER();
 /************************>**/
 
+#if IGNORE_ERROR
   radio_value_t radio_rx_mode;
   radio_value_t radio_tx_mode;
+#endif
   rtimer_clock_t t;
 
+#if IGNORE_ERROR
   /* Radio Rx mode */
   if(NETSTACK_RADIO.get_value(RADIO_PARAM_RX_MODE, &radio_rx_mode) != RADIO_RESULT_OK) {
     printf("TSCH:! radio does not support getting RADIO_PARAM_RX_MODE. Abort init.\n");
@@ -907,6 +920,7 @@ tsch_init(void *p_netstk, e_nsErr_t *p_err)
     printf("TSCH:! radio does not support setting required RADIO_PARAM_TX_MODE. Abort init.\n");
     return;
   }
+#endif
   /* Test setting channel */
   //if(NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, TSCH_DEFAULT_HOPPING_SEQUENCE[0]) != RADIO_RESULT_OK) {
   pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_CHAN_NUM_SET, &TSCH_DEFAULT_HOPPING_SEQUENCE[0], p_err);
@@ -915,7 +929,10 @@ tsch_init(void *p_netstk, e_nsErr_t *p_err)
     return;
   }
   /* Test getting timestamp */
-  if(NETSTACK_RADIO.get_object(RADIO_PARAM_LAST_PACKET_TIMESTAMP, &t, sizeof(rtimer_clock_t)) != RADIO_RESULT_OK) {
+  //if(NETSTACK_RADIO.get_object(RADIO_PARAM_LAST_PACKET_TIMESTAMP, &t, sizeof(rtimer_clock_t)) != RADIO_RESULT_OK) {
+      /* FIXME check convertion ... */
+    pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_TIMESTAMP_GET, &t, p_err);
+    if(p_err != NETSTK_ERR_NONE) {
     printf("TSCH:! radio does not support getting last packet timestamp. Abort init.\n");
     return;
   }

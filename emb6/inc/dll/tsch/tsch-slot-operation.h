@@ -106,6 +106,7 @@ extern struct tsch_packet *dequeued_array[TSCH_DEQUEUED_ARRAY_SIZE];
 extern struct ringbufindex input_ringbuf;
 extern struct input_packet input_array[TSCH_MAX_INCOMING_PACKETS];
 
+extern s_ns_t  *pmac_netstk;
 /********** Functions *********/
 
 /* Returns a 802.15.4 channel from an ASN and channel offset */
