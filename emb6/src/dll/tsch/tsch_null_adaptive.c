@@ -1,11 +1,14 @@
 #include "tsch_null_adaptive.h"
 #include "packetbuf.h"
+#include "tsch.h"
 
 static s_ns_t *pdllsec_netstk;
 
 /*---------------------------------------------------------------------------*/
 static void init(s_ns_t *p_netstk)
 {
+  e_nsErr_t err = NETSTK_ERR_NONE;
+
 #if NETSTK_CFG_ARG_CHK_EN
   if (p_netstk == NULL) {
     return;
@@ -13,6 +16,8 @@ static void init(s_ns_t *p_netstk)
 #endif
 
   pdllsec_netstk = p_netstk;
+  /* TODO to remove if we adapt tsch struct with mac driver struct */
+  tschmac_driver.init(p_netstk,&err);
   //pdllsec_netstk->dllc->ioctrl(NETSTK_CMD_RX_CBFNT_SET, (void *) dllsec_input, &err);
 }
 /*---------------------------------------------------------------------------*/
