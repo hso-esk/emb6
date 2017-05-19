@@ -77,10 +77,44 @@ static void init_dll(void *p_netstk, e_nsErr_t *p_err)
   pdllsec_netstk = p_netstk;
 }
 
+
+/**
+ * @brief   Turn driver on
+ *
+ * @param   p_err       Pointer to a variable storing returned error code
+ */
+static void dllc_on(e_nsErr_t *p_err)
+{
+#if NETSTK_CFG_ARG_CHK_EN
+  if (p_err == NULL) {
+    return;
+  }
+#endif
+
+  pdllsec_netstk->mac->on(p_err);
+#if (NETSTK_CFG_AUTO_ONOFF_EN == TRUE)
+  dllc_isOn = TRUE;
+#endif
+}
+
+static void mac_on(e_nsErr_t *p_err)
+{
+#if NETSTK_CFG_ARG_CHK_EN
+  if (p_err == NULL) {
+    return;
+  }
+#endif
+
+  pdllsec_netstk->phy->on(p_err);
+#if (NETSTK_CFG_AUTO_ONOFF_EN == TRUE)
+  dllc_isOn = TRUE;
+#endif
+}
+
 const s_nsDLLC_t dll_tsch_adaptive_driver = {
   "nullsec",
   init_dll,
-  NULL,
+  dllc_on,
   NULL,
   NULL,
   NULL,
@@ -90,7 +124,7 @@ const s_nsDLLC_t dll_tsch_adaptive_driver = {
 const s_nsMAC_t mac_tsch_adaptive_driver = {
   "nullsec",
   init_dll,
-  NULL,
+  mac_on,
   NULL,
   NULL,
   NULL,
