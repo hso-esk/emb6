@@ -247,6 +247,7 @@ int8_t demo_6tischInit(void)
 	    uip_ipaddr_t prefix;
 	    uip_ip6addr(&prefix, UIP_DS6_DEFAULT_PREFIX, 0, 0, 0, 0, 0, 0, 0);
 	    net_init(&prefix);
+	    tsch_set_coordinator(1);
 	  } else {
 	    net_init(NULL);
 	  }
