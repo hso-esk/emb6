@@ -920,7 +920,7 @@ tsch_init(void *p_netstk, e_nsErr_t *p_err)
     printf("TSCH:! radio does not support setting required RADIO_PARAM_TX_MODE. Abort init.\n");
     return;
   }
-#endif
+
   /* Test setting channel */
   //if(NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, TSCH_DEFAULT_HOPPING_SEQUENCE[0]) != RADIO_RESULT_OK) {
   pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_CHAN_NUM_SET, &TSCH_DEFAULT_HOPPING_SEQUENCE[0], p_err);
@@ -940,7 +940,7 @@ tsch_init(void *p_netstk, e_nsErr_t *p_err)
   if(TSCH_HOPPING_SEQUENCE_MAX_LEN < sizeof(TSCH_DEFAULT_HOPPING_SEQUENCE)) {
     printf("TSCH:! TSCH_HOPPING_SEQUENCE_MAX_LEN < sizeof(TSCH_DEFAULT_HOPPING_SEQUENCE). Abort init.\n");
   }
-
+#endif
   /* Init TSCH sub-modules */
   tsch_reset();
   tsch_queue_init();
@@ -950,6 +950,14 @@ tsch_init(void *p_netstk, e_nsErr_t *p_err)
   ringbufindex_init(&dequeued_ringbuf, TSCH_DEQUEUED_ARRAY_SIZE);
 
   tsch_is_initialized = 1;
+
+#if TSCH_AUTOSTART
+  /* Start TSCH operation.
+   * If TSCH_AUTOSTART is not set, one needs to call NETSTACK_MAC.on() to start TSCH. */
+   //NETSTACK_MAC.on();
+  /* TODO use the pointer to mac driver if we adapted the structure ... */
+   tschmac_driver.on();
+#endif /* TSCH_AUTOSTART */
 
 }
 /*---------------------------------------------------------------------------*/
