@@ -260,9 +260,9 @@ E_RF_CCA_RESULT_t sf_rf_6lowpan_cca(uint8_t c_numOfRssiMeas);
 /*============================================================================*/
 
 bool sf_rf_6lowpan_chanNumSet(uint8_t chan_num);
-
 uint8_t set_pkt_length(uint16_t i_len);
 uint8_t set_p_pkt(uint8_t *pc_data);
+uint8_t sf_rf_6lowpan_prepare_pkt(void);
 uint8_t rf_transmit(void);
 void cc13xx_eventHandler(c_event_t c_event, p_data_t p_data);
 

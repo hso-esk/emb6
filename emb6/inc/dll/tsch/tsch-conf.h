@@ -109,7 +109,7 @@
 
  * (TS_TX_OFFSET - (TS_RX_WAIT / 2)) instead */
 
-#if TSCH_CONF_DEFAULT_TIMESLOT_LENGTH == 10000
+#if TSCH_CONF_DEFAULT_TIMESLOT_LENGTH == 10000 //10ms
 /* Default timeslot timing as per IEEE 802.15.4e */
 
 #define TSCH_DEFAULT_TS_CCA_OFFSET         1800

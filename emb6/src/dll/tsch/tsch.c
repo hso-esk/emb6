@@ -447,6 +447,11 @@ tsch_start_coordinator(void)
 #endif
 
   tsch_is_associated = 1;
+  /* post TISCH process event */
+  TISCH_ASSOCIATE_EVENT_POST();
+  /* launch the tsch_send_eb_process  */
+  tsch_send_eb_process_start();
+
   tsch_join_priority = 0;
 
   PRINTF("TSCH: starting as coordinator, PAN ID %x, asn-%x.%lx\n",
