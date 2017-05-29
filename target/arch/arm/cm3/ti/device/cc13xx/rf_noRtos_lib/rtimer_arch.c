@@ -47,9 +47,6 @@ void rtimer_arch_init(void)
 		  IntMasterEnable();
 	  }
 
-	  AONRTCCompareValueSet(AON_RTC_CH0, AONRTCCurrentCompareValueGet()+ 10000);
-	  AONRTCChannelEnable(AON_RTC_CH0);
-
 }/* rtimer_arch_init() */
 
 /*============================================================================*/
