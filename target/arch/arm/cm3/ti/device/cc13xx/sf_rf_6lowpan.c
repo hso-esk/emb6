@@ -183,6 +183,12 @@ uint8_t set_p_pkt(uint8_t *pc_data)
   return 0;
 }
 
+uint8_t sf_rf_6lowpan_prepare_pkt(void)
+{
+sf_rf_init_tx(cc1310.tx.p_cmdPropTxAdv->pPkt,cc1310.tx.p_cmdPropTxAdv->pktLen);
+return 1;
+}
+
 uint8_t rf_transmit(void)
 {
 #if USE_TI_RTOS

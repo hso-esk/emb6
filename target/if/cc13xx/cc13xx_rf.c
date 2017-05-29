@@ -225,6 +225,10 @@ static void loc_cc13xx_set_pkt_length(uint16_t length)
 {
   set_pkt_length(length);
 }
+static void loc_cc13xx_prepare_pkt(void)
+{
+  sf_rf_6lowpan_prepare_pkt();
+}
 
 static void loc_cc13xx_transmit(void)
 {
@@ -416,6 +420,8 @@ static void cc13xx_Ioctl (e_nsIocCmd_t    cmd,
       break;
     case NETSTK_CMD_RF_PKT_LENGTH_SET:
       loc_cc13xx_set_pkt_length(*(int16_t*)p_val);
+    case NETSTK_CMD_RF_PREPARE_PKT:
+      loc_cc13xx_prepare_pkt();
       break;
     case NETSTK_CMD_RF_TRANSMIT:
       loc_cc13xx_transmit();
