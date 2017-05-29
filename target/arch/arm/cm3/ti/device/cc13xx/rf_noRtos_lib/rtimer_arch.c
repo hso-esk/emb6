@@ -40,6 +40,7 @@ void rtimer_arch_init(void)
 	  /* Enable the RTC */
 	  AONRTCEnable();
 	  IntRegister(INT_AON_RTC_COMB, &AONRTCIntHandler);
+	  IntPrioritySet(INT_AON_RTC_COMB, INT_PRI_LEVEL1);
 	  IntEnable(INT_AON_RTC_COMB);
 
 	  /* Re-enable interrupts */

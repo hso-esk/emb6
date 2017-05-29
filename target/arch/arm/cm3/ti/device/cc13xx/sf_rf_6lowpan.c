@@ -189,6 +189,14 @@ sf_rf_init_tx(cc1310.tx.p_cmdPropTxAdv->pPkt,cc1310.tx.p_cmdPropTxAdv->pktLen);
 return 1;
 }
 
+uint8_t tx_cmd_done = 0;
+static void tx_cmd_done_cb(uint32_t l_flag)
+{
+  if(IRQ_LAST_COMMAND_DONE == (l_flag & IRQ_LAST_COMMAND_DONE))
+  {
+	  tx_cmd_done = 1;
+  }
+}
 uint8_t rf_transmit(void)
 {
 #if USE_TI_RTOS
@@ -200,6 +208,8 @@ uint8_t rf_transmit(void)
   /* check if transceiver is not is sleepy mode */
   if( sf_rf_get_Status() == RF_STATUS_SLEEP )
     return 0;
+
+  tx_cmd_done = 0;
 
 #if USE_TI_RTOS
 
@@ -215,7 +225,10 @@ uint8_t rf_transmit(void)
       /* Stop last cmd (usually it is Rx cmd ) */
       RFC_sendDirectCmd(CMDR_DIR_CMD(CMD_ABORT));
       /* Send tx command  */
-      cmdStatus = RFC_sendRadioOp((rfc_radioOp_t*)cc1310.tx.p_cmdPropTxAdv);
+      // cmdStatus = RFC_sendRadioOp((rfc_radioOp_t*)cc1310.tx.p_cmdPropTxAdv);
+      cmdStatus = RFC_sendRadioOp_nb((rfc_radioOp_t*)cc1310.tx.p_cmdPropTxAdv, tx_cmd_done_cb);
+
+      while(!tx_cmd_done);
 
       /* Since we sent a blocking cmd then we check the state */
       if(cmdStatus != RFC_CMDSTATUS_DONE)
