@@ -57,7 +57,8 @@
 
 
 #ifndef RTIMER_CLOCK_DIFF
-typedef unsigned short rtimer_clock_t;
+//typedef unsigned short rtimer_clock_t;
+typedef uint32_t rtimer_clock_t;
 #define RTIMER_CLOCK_DIFF(a,b)     ((signed short)((a)-(b)))
 #endif /* RTIMER_CLOCK_DIFF */
 
