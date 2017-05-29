@@ -889,6 +889,8 @@ tsch_init(void *p_netstk, e_nsErr_t *p_err)
   pmac_netstk = (s_ns_t *) p_netstk;
   /* register TISCH process handler  */
   TISCH_REG_PROCESS_HANDLER();
+  /* register TISCH TX RX pending handler  */
+  TISCH_REG_PENDING_TX_RX_HANDLER();
 /************************>**/
 
 #if IGNORE_ERROR
