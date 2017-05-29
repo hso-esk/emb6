@@ -419,7 +419,7 @@ static void cc13xx_Ioctl (e_nsIocCmd_t    cmd,
       loc_cc13xx_set_p_pkt((uint8_t*)p_val);
       break;
     case NETSTK_CMD_RF_PKT_LENGTH_SET:
-      loc_cc13xx_set_pkt_length(*(int16_t*)p_val);
+      loc_cc13xx_set_pkt_length(*(uint8_t*)p_val);
     case NETSTK_CMD_RF_PREPARE_PKT:
       loc_cc13xx_prepare_pkt();
       break;
