@@ -542,8 +542,9 @@ static void tsch_tx_slot(struct rtimer *t)
       /* FIXME CHECK type convertion */
       pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_PKT_LENGTH_SET, &packet_len, &err);
       pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_P_PKT_SET, packet, &err);
+      pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_PREPARE_PKT, NULL, &err);
      // if(packet_ready && NETSTACK_RADIO.prepare(packet, packet_len) == 0) { /* 0 means success */
-      if(packet_ready && err != NETSTK_ERR_NONE){
+      if(packet_ready && (err == NETSTK_ERR_NONE)){
         static rtimer_clock_t tx_duration;
 
 #if CCA_ENABLED
@@ -883,6 +884,7 @@ static void tsch_rx_slot(struct rtimer *t)
                 //NETSTACK_RADIO.prepare((const void *)ack_buf, ack_len);
                 pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_PKT_LENGTH_SET, &ack_len, &err);
                 pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_P_PKT_SET, ack_buf, &err);
+                pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_PREPARE_PKT, NULL, &err);
 
                 /* Wait for time to ACK and transmit ACK */
                 TSCH_SCHEDULE_AND_YIELD(t, rx_start_time,
