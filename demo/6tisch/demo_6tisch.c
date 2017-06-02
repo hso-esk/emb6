@@ -169,6 +169,7 @@ static void net_init(uip_ipaddr_t *br_prefix)
 static  void demo_6tisch_cb_logger(void *ptr)
 {
 	print_network_status();
+	tsch_schedule_print();
 	ctimer_set(&ct, bsp_getTRes() * 15, demo_6tisch_cb_logger, NULL);
 }
 
