@@ -571,6 +571,10 @@ static void tsch_tx_slot(struct rtimer *t)
           /* send packet already in radio tx buffer */
           //mac_tx_status = NETSTACK_RADIO.transmit(packet_len);
           pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_TRANSMIT, NULL, &err);
+          if(err == NETSTK_ERR_NONE)
+            mac_tx_status = RADIO_TX_OK;
+          else
+            mac_tx_status = RADIO_TX_ERR;
 
           /* Save tx timestamp */
           tx_start_time = current_slot_start + tsch_timing[tsch_ts_tx_offset];
