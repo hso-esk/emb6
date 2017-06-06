@@ -149,6 +149,8 @@ typedef struct
   st_tx_cmd_t   tx;
   st_rx_cmd_t   rx;
   st_cca_cmd_t  cca;
+  /* Are we currently in poll mode? */
+  uint8_t poll_mode;
 } st_cc1310_t;
 
 
@@ -259,6 +261,7 @@ E_RF_CCA_RESULT_t sf_rf_6lowpan_cca(uint8_t c_numOfRssiMeas);
  */
 /*============================================================================*/
 
+void set_polling_mode(void);
 bool sf_rf_6lowpan_chanNumSet(uint8_t chan_num);
 uint8_t set_pkt_length(uint16_t i_len);
 uint8_t set_p_pkt(uint8_t *pc_data);

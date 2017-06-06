@@ -160,6 +160,14 @@ bool sf_rf_6lowpan_init(void *p_netstk)
   return true;
 }
 
+void set_polling_mode(void)
+{
+  cc1310.poll_mode=1;
+  RFC_registerCpe0Isr(NULL);
+  /* activate timestamp*/
+  cc1310.rx.p_cmdPropRxAdv->rxConf.bAppendTimestamp=1;
+}
+
 uint8_t set_pkt_length(uint16_t i_len)
 {
   if (i_len > 1)
@@ -234,6 +242,73 @@ uint8_t rf_transmit(void)
       }
 #endif
       return 1;
+}
+
+
+ uint8_t pending_packet(void)
+{
+  uint8_t rv = 0;
+  volatile rfc_dataEntry_t *entry = (rfc_dataEntry_t *)cc1310.rx.p_currentDataEntry;
+
+  /* Go through all RX buffers and check their status */
+  do {
+    if(entry->status == DATA_ENTRY_FINISHED) {
+      rv += 1;
+    }
+    entry = (rfc_dataEntry_t *)entry->pNextEntry;
+  } while(entry != (rfc_dataEntry_t *)cc1310.rx.p_currentDataEntry);
+
+  /* If we didn't find an entry at status finished, no frames are pending */
+  return rv;
+}
+
+ uint8_t read_frame(void *buf, unsigned short buf_len)
+{
+	 uint32_t rat_timestamp;
+	  if(cc1310.rx.p_currentDataEntry->status == DATA_ENTRY_FINISHED) {
+	    /* when we receive data */
+	#if NETSTK_CFG_IEEE_802154G_EN
+		uint8_t *p_data = (uint8_t*)(&cc1310.rx.p_currentDataEntry->data);
+		uint8_t tempData;
+
+	    /* FIXME flip PHR back */
+		tempData = p_data[0];
+		p_data[0] = p_data[1];
+		p_data[1] = tempData;
+
+	    cc1310.rx.LenLastPkt = phy_framer802154_getPktLen(p_data, PHY_HEADER_LEN) + PHY_HEADER_LEN;
+	    cc1310.rx.p_lastPkt = p_data;
+	#else
+	     /* FIXME this is not correct if the packet is lager 127 */
+	    cc1310.rx.LenLastPkt = *(uint8_t*)(&cc1310.rx.p_currentDataEntry->data) + PHY_HEADER_LEN;
+	    cc1310.rx.p_lastPkt = (uint8_t*)(&cc1310.rx.p_currentDataEntry->data);
+	#endif
+
+
+	    if(cc1310.rx.LenLastPkt > 0) {
+	      if(cc1310.rx.LenLastPkt <= buf_len) {
+	        memcpy(buf, cc1310.rx.p_lastPkt + PHY_HEADER_LEN , cc1310.rx.LenLastPkt - PHY_HEADER_LEN );
+	      }
+
+		   /* Get RSSI value from the queue : The RSSI is given on signed form in dBm.
+		    * If no RSSI is available, this is signaled with a special value of the RSSI (-128, or 0x80) */
+		  cc1310.rx.c_rssiValue=(uint8_t) cc1310.rx.p_lastPkt[cc1310.rx.LenLastPkt];
+	      packetbuf_set_attr(PACKETBUF_ATTR_RSSI, (int8_t)cc1310.rx.p_lastPkt[cc1310.rx.LenLastPkt]);
+	      packetbuf_set_attr(PACKETBUF_ATTR_LINK_QUALITY, 0x7F);
+	    }
+	   /* get the timestamp */
+	   memcpy(&rat_timestamp, (uint8_t *)&cc1310.rx.p_lastPkt[cc1310.rx.LenLastPkt+1], 4);
+	   cc1310.rx.timeStamp = rat_timestamp ;  // FIXME calc_last_packet_timestamp(rat_timestamp);
+
+
+	   /* switch to the next entry */
+	   RFQueue_nextEntry();
+	   /* Get the current entry and it to pending state */
+	   cc1310.rx.p_currentDataEntry = (rfc_dataEntryGeneral_t*)RFQueue_getDataEntry();
+	   cc1310.rx.p_currentDataEntry->status=DATA_ENTRY_PENDING;
+	   return cc1310.rx.LenLastPkt - PHY_HEADER_LEN ;
+	  }
+	  return 0;
 }
 
 uint8_t sf_rf_6lowpan_sendBlocking(uint8_t *pc_data, uint16_t  i_len)
