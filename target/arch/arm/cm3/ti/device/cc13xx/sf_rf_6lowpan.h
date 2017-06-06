@@ -114,7 +114,7 @@ typedef struct
   /* Meassured RSSI value */
   uint8_t c_rssiValue;
   /* Time Stamp value  */
-  uint8_t timeStamp;
+  uint32_t timeStamp;
 } st_rx_cmd_t;
 
 typedef struct
