@@ -87,7 +87,7 @@
 /* Timeslot timing */
 
 #ifndef TSCH_CONF_DEFAULT_TIMESLOT_LENGTH
-#define TSCH_CONF_DEFAULT_TIMESLOT_LENGTH 10000
+#define TSCH_CONF_DEFAULT_TIMESLOT_LENGTH 15000
 #endif /* TSCH_CONF_DEFAULT_TIMESLOT_LENGTH */
 
 /* Configurable Rx guard time is micro-seconds */
