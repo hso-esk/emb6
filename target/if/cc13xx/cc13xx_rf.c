@@ -397,28 +397,50 @@ static void cc13xx_Ioctl (e_nsIocCmd_t    cmd,
     case NETSTK_CMD_RF_TIMESTAMP_GET:
       loc_cc13xx_getTimestamp((int8_t*)p_val, p_err);
       break;
-    case NETSTK_CMD_RF_P_PKT_SET:
-      loc_cc13xx_set_p_pkt((uint8_t*)p_val);
+    case NETSTK_CMD_RF_P_TX_BUFF_SET:
+      set_p_TX_buff((uint8_t*)p_val);
       break;
-    case NETSTK_CMD_RF_PKT_LENGTH_SET:
-      loc_cc13xx_set_pkt_length(*(uint8_t*)p_val);
+    case NETSTK_CMD_RF_P_RX_BUFF_SET:
+      set_p_RX_buff((uint8_t*)p_val);
+      break;
+    case NETSTK_CMD_RF_TX_PKT_LENGTH_SET:
+      set_tx_pkt_length(*(uint8_t*)p_val);
+      break;
+    case NETSTK_CMD_RF_RX_BUFF_LENGTH_SET:
+      set_rx_buff_length(*(uint8_t*)p_val);
+      break;
     case NETSTK_CMD_RF_PREPARE_PKT:
-      loc_cc13xx_prepare_pkt();
+      sf_rf_6lowpan_prepare_pkt();
       break;
     case NETSTK_CMD_RF_TRANSMIT:
-      loc_cc13xx_transmit();
+      rf_transmit();
+      break;
+    case NETSTK_CMD_RF_IS_RX_BUSY:
+      *(uint8_t*)p_val = receiving_packet();
+      break;
+    case NETSTK_CMD_RF_RX_PENDING:
+      *(uint8_t*)p_val = pending_packet();
+      break;
+    case NETSTK_CMD_RF_OP_MODE_SET:
+      if(*(uint8_t*)p_val & 0x04)
+        set_polling_mode();
       break;
     case NETSTK_CMD_RX_BUF_READ:
-    /*
-     * Signal upper layer if a packet has arrived by the time this
-     * command is issued.
-     * Trigger event-process manually
-     */
-    cc13xx_eventHandler(EVENT_TYPE_RF, NULL);
+      if(is_polling_mode())
+      {
+        *(uint8_t*)p_val = read_frame();
+      }
+      else
+      {
+       /* Signal upper layer if a packet has arrived by the time this command is issued.
+        * Trigger event-process manually
+        */
+        cc13xx_eventHandler(EVENT_TYPE_RF, NULL);
+      }
     break;
     case NETSTK_CMD_RF_CHAN_NUM_SET:
         /* set the desired channel */
-        if(sf_rf_6lowpan_chanNumSet(*(uint8_t*)p_val))
+        if(1)// sf_rf_6lowpan_chanNumSet(*(uint8_t*)p_val))
             *p_err = NETSTK_ERR_NONE;
         else
             *p_err = NETSTK_ERR_INVALID_ARGUMENT;
@@ -427,7 +449,6 @@ static void cc13xx_Ioctl (e_nsIocCmd_t    cmd,
     case NETSTK_CMD_RF_ANT_DIV_SET:
     case NETSTK_CMD_RF_SENS_SET:
     case NETSTK_CMD_RF_SENS_GET:
-    case NETSTK_CMD_RF_IS_RX_BUSY:
     case NETSTK_CMD_RF_WOR_EN:
     default:
       /* unsupported commands are treated in same way */

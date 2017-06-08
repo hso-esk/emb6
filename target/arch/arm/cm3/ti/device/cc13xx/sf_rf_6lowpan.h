@@ -102,6 +102,7 @@ typedef struct
 
   /** Pointer to the buffer of the higher layer: used to copy received data from queue */
   uint8_t *p_appBuff;
+  uint16_t  max_len_appBuff;
   /** Receive dataQueue for RF Core to fill in data */
   dataQueue_t dataQueue;
   /** Pointer to the current data entry */
@@ -260,13 +261,21 @@ E_RF_CCA_RESULT_t sf_rf_6lowpan_cca(uint8_t c_numOfRssiMeas);
  * @brief  Eventhandler of the CC13xx used by the emb6 stack.
  */
 /*============================================================================*/
+void cc13xx_eventHandler(c_event_t c_event, p_data_t p_data);
 
-void set_polling_mode(void);
-bool sf_rf_6lowpan_chanNumSet(uint8_t chan_num);
-uint8_t set_pkt_length(uint16_t i_len);
-uint8_t set_p_pkt(uint8_t *pc_data);
+
+void    set_polling_mode(void);
+bool    sf_rf_6lowpan_chanNumSet(uint8_t chan_num);
+uint8_t set_tx_pkt_length(uint16_t i_len);
+uint8_t set_rx_buff_length(uint16_t i_len);
+uint8_t set_p_TX_buff(uint8_t *pc_data);
+uint8_t set_p_RX_buff(uint8_t *pc_data);
 uint8_t sf_rf_6lowpan_prepare_pkt(void);
 uint8_t rf_transmit(void);
-void cc13xx_eventHandler(c_event_t c_event, p_data_t p_data);
+void    set_polling_mode(void);
+uint8_t is_polling_mode(void);
+uint8_t receiving_packet(void);
+uint8_t pending_packet(void);
+uint8_t read_frame();
 
 #endif /* __SF_RF_6LOWPAN_H__ */

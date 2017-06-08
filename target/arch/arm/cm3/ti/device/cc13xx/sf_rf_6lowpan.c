@@ -160,15 +160,7 @@ bool sf_rf_6lowpan_init(void *p_netstk)
   return true;
 }
 
-void set_polling_mode(void)
-{
-  cc1310.poll_mode=1;
-  RFC_registerCpe0Isr(NULL);
-  /* activate timestamp*/
-  cc1310.rx.p_cmdPropRxAdv->rxConf.bAppendTimestamp=1;
-}
-
-uint8_t set_pkt_length(uint16_t i_len)
+uint8_t set_tx_pkt_length(uint16_t i_len)
 {
   if (i_len > 1)
   {
@@ -178,11 +170,30 @@ uint8_t set_pkt_length(uint16_t i_len)
   return 0;
 }
 
-uint8_t set_p_pkt(uint8_t *pc_data)
+uint8_t set_rx_buff_length(uint16_t i_len)
+{
+  if (i_len > 1)
+  {
+    cc1310.rx.max_len_appBuff = i_len ;
+    return 1;
+  }
+  return 0;
+}
+uint8_t set_p_TX_buff(uint8_t *pc_data)
 {
   if (pc_data!=NULL)
   {
-    cc1310.tx.p_cmdPropTxAdv->pPkt = pc_data;
+    cc1310.tx.p_cmdPropTxAdv->pPkt = pc_data -1 ;
+    return 1;
+  }
+  return 0;
+}
+
+uint8_t set_p_RX_buff(uint8_t *pc_data)
+{
+  if (pc_data!=NULL)
+  {
+    cc1310.rx.p_appBuff = pc_data;
     return 1;
   }
   return 0;
@@ -244,6 +255,35 @@ uint8_t rf_transmit(void)
       return 1;
 }
 
+void set_polling_mode(void)
+{
+  cc1310.poll_mode=1;
+  RFC_registerCpe0Isr(NULL);
+  /* activate timestamp*/
+  cc1310.rx.p_cmdPropRxAdv->rxConf.bAppendTimestamp=1;
+}
+
+uint8_t is_polling_mode(void)
+{
+	return cc1310.poll_mode;
+}
+
+uint8_t receiving_packet(void)
+{
+ uint8_t rv = 0;
+ volatile rfc_dataEntry_t *entry = (rfc_dataEntry_t *)cc1310.rx.p_currentDataEntry;
+
+ /* Go through all RX buffers and check their status */
+ do {
+   if(entry->status == DATA_ENTRY_BUSY || entry->status == DATA_ENTRY_ACTIVE) {
+     rv += 1;
+   }
+   entry = (rfc_dataEntry_t *)entry->pNextEntry;
+ } while(entry != (rfc_dataEntry_t *)cc1310.rx.p_currentDataEntry);
+
+ /* If we didn't find an entry at status finished, no frames are pending */
+ return rv;
+}
 
  uint8_t pending_packet(void)
 {
@@ -262,7 +302,7 @@ uint8_t rf_transmit(void)
   return rv;
 }
 
- uint8_t read_frame(void *buf, unsigned short buf_len)
+ uint8_t read_frame()
 {
 	 uint32_t rat_timestamp;
 	  if(cc1310.rx.p_currentDataEntry->status == DATA_ENTRY_FINISHED) {
