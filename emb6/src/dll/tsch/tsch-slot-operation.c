@@ -540,8 +540,8 @@ static void tsch_tx_slot(struct rtimer *t)
 
       /* prepare packet to send: copy to radio buffer */
       /* FIXME CHECK type convertion */
-      pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_PKT_LENGTH_SET, &packet_len, &err);
-      pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_P_PKT_SET, packet, &err);
+      pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_TX_PKT_LENGTH_SET, &packet_len, &err);
+      pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_P_TX_BUFF_SET, packet, &err);
       pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_PREPARE_PKT, NULL, &err);
      // if(packet_ready && NETSTACK_RADIO.prepare(packet, packet_len) == 0) { /* 0 means success */
       if(packet_ready && (err == NETSTK_ERR_NONE)){
@@ -629,7 +629,12 @@ static void tsch_tx_slot(struct rtimer *t)
 #endif /* TSCH_HW_FRAME_FILTERING */
 
               /* Read ack frame */
-              ack_len = NETSTACK_RADIO.read((void *)ackbuf, sizeof(ackbuf));
+#if IGNORE_ERROR
+              // ack_len = NETSTACK_RADIO.read((void *)ackbuf, sizeof(ackbuf));
+              pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_RX_BUFF_LENGTH_SET, &max_pkt_len, &err);
+              pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_P_RX_BUFF_SET, (void *)ackbuf, &err);
+              pmac_netstk->phy->ioctrl(NETSTK_CMD_RX_BUF_READ, &ack_len, &err);
+#endif
 
               is_time_source = 0;
               /* The radio driver should return 0 if no valid packets are in the rx buffer */
@@ -807,8 +812,13 @@ static void tsch_rx_slot(struct rtimer *t)
         static int header_len;
         static frame802154_t frame;
         uint8_t radio_last_rssi;
+        uint8_t max_pkt_len = TSCH_PACKET_MAX_LEN;
         /* Read packet */
-        current_input->len = NETSTACK_RADIO.read((void *)current_input->payload, TSCH_PACKET_MAX_LEN);
+        //current_input->len = NETSTACK_RADIO.read((void *)current_input->payload, TSCH_PACKET_MAX_LEN);
+        pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_RX_BUFF_LENGTH_SET, &max_pkt_len, &err);
+        pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_P_RX_BUFF_SET, (void *)current_input->payload, &err);
+        pmac_netstk->phy->ioctrl(NETSTK_CMD_RX_BUF_READ, &current_input->len, &err);
+
         //NETSTACK_RADIO.get_value(RADIO_PARAM_LAST_RSSI, &radio_last_rssi);
         pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_RSSI_GET, &radio_last_rssi, &err);
         current_input->rx_asn = tsch_current_asn;
@@ -891,8 +901,8 @@ static void tsch_rx_slot(struct rtimer *t)
 
                 /* Copy to radio buffer */
                 //NETSTACK_RADIO.prepare((const void *)ack_buf, ack_len);
-                pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_PKT_LENGTH_SET, &ack_len, &err);
-                pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_P_PKT_SET, ack_buf, &err);
+                pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_TX_PKT_LENGTH_SET, &ack_len, &err);
+                pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_P_TX_BUFF_SET, ack_buf, &err);
                 pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_PREPARE_PKT, NULL, &err);
 
                 /* Wait for time to ACK and transmit ACK */
