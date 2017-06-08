@@ -709,10 +709,11 @@ static void tsch_scan(void *ptr)
     }
 
     if(is_packet_pending) {
-#if IGNORE_ERROR
       /* Read packet */
-      input_eb.len = NETSTACK_RADIO.read(input_eb.payload, TSCH_PACKET_MAX_LEN);
-#endif
+      //input_eb.len = NETSTACK_RADIO.read(input_eb.payload, TSCH_PACKET_MAX_LEN);
+        pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_RX_BUFF_LENGTH_SET, &max_pkt_len, &err);
+        pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_P_RX_BUFF_SET, (void *)input_eb.payload, &err);
+        pmac_netstk->phy->ioctrl(NETSTK_CMD_RX_BUF_READ, &input_eb.len, &err);
       /* Save packet timestamp */
       //NETSTACK_RADIO.get_object(RADIO_PARAM_LAST_PACKET_TIMESTAMP, &t0, sizeof(rtimer_clock_t));
       /* FIXME check convertion ... */
@@ -905,17 +906,23 @@ tsch_init(void *p_netstk, e_nsErr_t *p_err)
     printf("TSCH:! radio does not support getting RADIO_PARAM_RX_MODE. Abort init.\n");
     return;
   }
+#endif
+  uint8_t radio_rx_mode = 0;
   /* Disable radio in frame filtering */
-  radio_rx_mode &= ~RADIO_RX_MODE_ADDRESS_FILTER;
+  //radio_rx_mode &= ~RADIO_RX_MODE_ADDRESS_FILTER;
   /* Unset autoack */
-  radio_rx_mode &= ~RADIO_RX_MODE_AUTOACK;
+ // radio_rx_mode &= ~RADIO_RX_MODE_AUTOACK;
   /* Set radio in poll mode */
-  radio_rx_mode |= RADIO_RX_MODE_POLL_MODE;
-  if(NETSTACK_RADIO.set_value(RADIO_PARAM_RX_MODE, radio_rx_mode) != RADIO_RESULT_OK) {
+  radio_rx_mode |= 0x04; //RADIO_RX_MODE_POLL_MODE;
+  //if(NETSTACK_RADIO.set_value(RADIO_PARAM_RX_MODE, radio_rx_mode) != RADIO_RESULT_OK) {
+  pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_OP_MODE_SET, &radio_rx_mode, p_err);
+  if(*p_err != NETSTK_ERR_NONE) {
     printf("TSCH:! radio does not support setting required RADIO_PARAM_RX_MODE. Abort init.\n");
     return;
   }
 
+
+#if IGNORE_ERROR
   /* Radio Tx mode */
   if(NETSTACK_RADIO.get_value(RADIO_PARAM_TX_MODE, &radio_tx_mode) != RADIO_RESULT_OK) {
     printf("TSCH:! radio does not support getting RADIO_PARAM_TX_MODE. Abort init.\n");
@@ -927,11 +934,11 @@ tsch_init(void *p_netstk, e_nsErr_t *p_err)
     printf("TSCH:! radio does not support setting required RADIO_PARAM_TX_MODE. Abort init.\n");
     return;
   }
-
+#endif
   /* Test setting channel */
   //if(NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, TSCH_DEFAULT_HOPPING_SEQUENCE[0]) != RADIO_RESULT_OK) {
   pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_CHAN_NUM_SET, &TSCH_DEFAULT_HOPPING_SEQUENCE[0], p_err);
-  if(p_err != NETSTK_ERR_NONE) {
+  if(*p_err != NETSTK_ERR_NONE) {
     printf("TSCH:! radio does not support setting channel. Abort init.\n");
     return;
   }
@@ -939,7 +946,7 @@ tsch_init(void *p_netstk, e_nsErr_t *p_err)
   //if(NETSTACK_RADIO.get_object(RADIO_PARAM_LAST_PACKET_TIMESTAMP, &t, sizeof(rtimer_clock_t)) != RADIO_RESULT_OK) {
       /* FIXME check convertion ... */
     pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_TIMESTAMP_GET, &t, p_err);
-    if(p_err != NETSTK_ERR_NONE) {
+    if(*p_err != NETSTK_ERR_NONE) {
     printf("TSCH:! radio does not support getting last packet timestamp. Abort init.\n");
     return;
   }
@@ -947,7 +954,7 @@ tsch_init(void *p_netstk, e_nsErr_t *p_err)
   if(TSCH_HOPPING_SEQUENCE_MAX_LEN < sizeof(TSCH_DEFAULT_HOPPING_SEQUENCE)) {
     printf("TSCH:! TSCH_HOPPING_SEQUENCE_MAX_LEN < sizeof(TSCH_DEFAULT_HOPPING_SEQUENCE). Abort init.\n");
   }
-#endif
+
   /* Init TSCH sub-modules */
   tsch_reset();
   tsch_queue_init();
