@@ -661,6 +661,7 @@ static void tsch_scan(void *ptr)
   /* Time when we started scanning on current_channel */
   static clock_time_t current_channel_since;
   e_nsErr_t err = NETSTK_ERR_NONE;
+  uint8_t max_pkt_len = TSCH_PACKET_MAX_LEN;
 
   if(!scan_active)
   {
@@ -695,17 +696,12 @@ static void tsch_scan(void *ptr)
     /* Turn radio on and wait for EB */
     //NETSTACK_RADIO.on();
 	  pmac_netstk->phy->on(&err);
-#if IGNORE_ERROR
-    is_packet_pending = NETSTACK_RADIO.pending_packet();
+    is_packet_pending = tsch_pending_packet();
 
-    if(!is_packet_pending && NETSTACK_RADIO.receiving_packet()) {
-#endif
-    if(!is_packet_pending) {
+    if(!is_packet_pending && tsch_receiving_packet()) {
       /* If we are currently receiving a packet, wait until end of reception */
       t0 = RTIMER_NOW();
-#if IGNORE_ERROR
-      BUSYWAIT_UNTIL_ABS((is_packet_pending = NETSTACK_RADIO.pending_packet()), t0, RTIMER_SECOND / 100);
-#endif
+      BUSYWAIT_UNTIL_ABS((is_packet_pending = tsch_pending_packet()), t0, RTIMER_SECOND / 100);
     }
 
     if(is_packet_pending) {

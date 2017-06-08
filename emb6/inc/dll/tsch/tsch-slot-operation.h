@@ -123,5 +123,8 @@ void tsch_slot_operation_sync(rtimer_clock_t next_slot_start,
     struct tsch_asn_t *next_slot_asn);
 /* Start actual slot operation */
 void tsch_slot_operation_start(void);
-
+/* check if we are receiving a packet */
+uint8_t tsch_receiving_packet(void);
+/* check if there is a pending packet */
+uint8_t tsch_pending_packet(void);
 #endif /* __TSCH_SLOT_OPERATION_H__ */
