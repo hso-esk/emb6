@@ -40,6 +40,7 @@
 #include "rpl.h"
 #include "uip-ds6-route.h"
 #include "tsch.h"
+#include "tsch-schedule.h"
 #include "rpl-private.h"
 #if WITH_ORCHESTRA
 #include "orchestra.h"
