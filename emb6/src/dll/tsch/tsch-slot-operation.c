@@ -306,16 +306,6 @@ tsch_schedule_slot_operation(struct rtimer *tm, rtimer_clock_t ref_time, rtimer_
   return 1;
 }
 /*---------------------------------------------------------------------------*/
-/* Schedule slot operation conditionally, and YIELD if success only.
- * Always attempt to schedule RTIMER_GUARD before the target to make sure to wake up
- * ahead of time and then busy wait to exactly hit the target. */
-#define TSCH_SCHEDULE_AND_YIELD(tm, ref_time, offset, str) \
-  do { \
-    if(tsch_schedule_slot_operation(tm, ref_time, offset - RTIMER_GUARD, str)) { \
-        BUSYWAIT_UNTIL_ABS(0, ref_time, offset); \
-    } \
-  } while(0);
-/*---------------------------------------------------------------------------*/
 /* Get EB, broadcast or unicast packet to be sent, and target neighbor. */
 static struct tsch_packet *
 get_packet_and_neighbor_for_link(struct tsch_link *link, struct tsch_neighbor **target_neighbor)
