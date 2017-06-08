@@ -216,24 +216,6 @@ static void loc_cc13xx_cca(e_nsErr_t *p_err)
   }/* switch */
 }
 
-static void loc_cc13xx_set_p_pkt(uint8_t* ptr)
-{
-  set_p_pkt(ptr);
-}
-
-static void loc_cc13xx_set_pkt_length(uint16_t length)
-{
-  set_pkt_length(length);
-}
-static void loc_cc13xx_prepare_pkt(void)
-{
-  sf_rf_6lowpan_prepare_pkt();
-}
-
-static void loc_cc13xx_transmit(void)
-{
-  rf_transmit();
-}
 /*============================================================================*/
 /*                           API FUNCTION DEFINITIONS                         */
 /*============================================================================*/
