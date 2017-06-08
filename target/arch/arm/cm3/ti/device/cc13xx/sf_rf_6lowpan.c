@@ -326,8 +326,8 @@ uint8_t receiving_packet(void)
 
 
 	    if(cc1310.rx.LenLastPkt > 0) {
-	      if(cc1310.rx.LenLastPkt <= buf_len) {
-	        memcpy(buf, cc1310.rx.p_lastPkt + PHY_HEADER_LEN , cc1310.rx.LenLastPkt - PHY_HEADER_LEN );
+	      if(cc1310.rx.LenLastPkt <= cc1310.rx.max_len_appBuff) {
+	        memcpy(cc1310.rx.p_appBuff, cc1310.rx.p_lastPkt + PHY_HEADER_LEN , cc1310.rx.LenLastPkt - PHY_HEADER_LEN );
 	      }
 
 		   /* Get RSSI value from the queue : The RSSI is given on signed form in dBm.
