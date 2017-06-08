@@ -565,7 +565,8 @@ static void tsch_tx_slot(struct rtimer *t)
 #endif /* CCA_ENABLED */
         {
           /* delay before TX */
-          TSCH_SCHEDULE_AND_YIELD(t, current_slot_start, tsch_timing[tsch_ts_tx_offset] - RADIO_DELAY_BEFORE_TX, "TxBeforeTx");
+          //TSCH_SCHEDULE_AND_YIELD(t, current_slot_start, tsch_timing[tsch_ts_tx_offset] - RADIO_DELAY_BEFORE_TX, "TxBeforeTx");
+          BUSYWAIT_UNTIL_ABS(0, current_slot_start, tsch_timing[tsch_ts_tx_offset] - RADIO_DELAY_BEFORE_TX);
           TSCH_DEBUG_TX_EVENT();
 
           /* send packet already in radio tx buffer */
@@ -594,6 +595,7 @@ static void tsch_tx_slot(struct rtimer *t)
               struct ieee802154_ies ack_ies;
               uint8_t ack_hdrlen;
               frame802154_t frame;
+              uint8_t max_pkt_len = sizeof(ackbuf);
 
 #if TSCH_HW_FRAME_FILTERING
               radio_value_t radio_rx_mode;
@@ -602,8 +604,9 @@ static void tsch_tx_slot(struct rtimer *t)
               NETSTACK_RADIO.set_value(RADIO_PARAM_RX_MODE, radio_rx_mode & (~RADIO_RX_MODE_ADDRESS_FILTER));
 #endif /* TSCH_HW_FRAME_FILTERING */
               /* Unicast: wait for ack after tx: sleep until ack time */
-              TSCH_SCHEDULE_AND_YIELD(t, current_slot_start,
-                  tsch_timing[tsch_ts_tx_offset] + tx_duration + tsch_timing[tsch_ts_rx_ack_delay] - RADIO_DELAY_BEFORE_RX, "TxBeforeAck");
+              //TSCH_SCHEDULE_AND_YIELD(t, current_slot_start,
+              //    tsch_timing[tsch_ts_tx_offset] + tx_duration + tsch_timing[tsch_ts_rx_ack_delay] - RADIO_DELAY_BEFORE_RX, "TxBeforeAck");
+              BUSYWAIT_UNTIL_ABS(0, current_slot_start, tsch_timing[tsch_ts_tx_offset] + tx_duration + tsch_timing[tsch_ts_rx_ack_delay] - RADIO_DELAY_BEFORE_RX);
               TSCH_DEBUG_TX_EVENT();
               tsch_radio_on(TSCH_RADIO_CMD_ON_WITHIN_TIMESLOT);
               /* Wait for ACK to come */
@@ -780,7 +783,8 @@ static void tsch_rx_slot(struct rtimer *t)
     current_input = &input_array[input_index];
 
     /* Wait before starting to listen */
-    TSCH_SCHEDULE_AND_YIELD(t, current_slot_start, tsch_timing[tsch_ts_rx_offset] - RADIO_DELAY_BEFORE_RX, "RxBeforeListen");
+   // TSCH_SCHEDULE_AND_YIELD(t, current_slot_start, tsch_timing[tsch_ts_rx_offset] - RADIO_DELAY_BEFORE_RX, "RxBeforeListen");
+    BUSYWAIT_UNTIL_ABS(0, current_slot_start, tsch_timing[tsch_ts_rx_offset] - RADIO_DELAY_BEFORE_RX);
     TSCH_DEBUG_RX_EVENT();
 
     /* Start radio for at least guard time */
@@ -821,6 +825,7 @@ static void tsch_rx_slot(struct rtimer *t)
 
         //NETSTACK_RADIO.get_value(RADIO_PARAM_LAST_RSSI, &radio_last_rssi);
         pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_RSSI_GET, &radio_last_rssi, &err);
+
         current_input->rx_asn = tsch_current_asn;
         current_input->rssi = (int16_t) radio_last_rssi;
         current_input->channel = current_channel;
@@ -906,8 +911,9 @@ static void tsch_rx_slot(struct rtimer *t)
                 pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_PREPARE_PKT, NULL, &err);
 
                 /* Wait for time to ACK and transmit ACK */
-                TSCH_SCHEDULE_AND_YIELD(t, rx_start_time,
-                                        packet_duration + tsch_timing[tsch_ts_tx_ack_delay] - RADIO_DELAY_BEFORE_TX, "RxBeforeAck");
+               // TSCH_SCHEDULE_AND_YIELD(t, rx_start_time,
+                //                        packet_duration + tsch_timing[tsch_ts_tx_ack_delay] - RADIO_DELAY_BEFORE_TX, "RxBeforeAck");
+                BUSYWAIT_UNTIL_ABS(0, rx_start_time, packet_duration + tsch_timing[tsch_ts_tx_ack_delay] - RADIO_DELAY_BEFORE_TX);
                 TSCH_DEBUG_RX_EVENT();
                 //NETSTACK_RADIO.(ack_len);
                 pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_TRANSMIT, NULL, &err);
