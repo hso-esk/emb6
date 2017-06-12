@@ -1122,6 +1122,7 @@ uint8_t tsch_receiving_packet(void)
 e_nsErr_t err = NETSTK_ERR_NONE;
 uint8_t receiving = 0;
 pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_IS_RX_BUSY, &receiving, &err);
+return receiving;
 }
 /*---------------------------------------------------------------------------*/
 /* check if there is a pending packet */
@@ -1130,4 +1131,5 @@ uint8_t tsch_pending_packet(void)
 e_nsErr_t err = NETSTK_ERR_NONE;
 uint8_t pending = 0;
 pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_RX_PENDING, &pending, &err);
+return pending;
 }
