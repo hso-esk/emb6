@@ -797,4 +797,37 @@ int8_t hal_rtcSetTime( en_hal_rtc_t *p_rtc );
 int8_t hal_rtcGetTime( en_hal_rtc_t *p_rtc );
 #endif /* #if defined(HAL_SUPPORT_RTC) */
 
+
+#if (HAL_SUPPORT_MCU_SLEEP == TRUE)
+/**
+ * hal_lpSleepDuration()
+ *
+ * \brief   Obtain total sleep time in practice
+ *
+ * \return  Remaining time.
+ */
+clock_time_t hal_sleepDuration( void );
+
+
+/**
+ * hal_lpSleepEnter()
+ *
+ * \brief   Enter low-power mode
+ *
+ * \return  0 on success, otherwise -1.
+ */
+int8_t hal_sleepEnter( uint32_t duration );
+
+
+/**
+ * hal_lpAdjustTick()
+ *
+ * \brief   Adjust system tick counter
+ *
+ * \return  0 on success, otherwise -1.
+ */
+int8_t hal_adjustTick( uint32_t ticks );
+#endif /* #if (HAL_SUPPORT_MCU_SLEEP == TRUE) */
+
+
 #endif /* __HAL_H__ */

@@ -599,5 +599,36 @@ int8_t bsp_rtcSetTime( en_hal_rtc_t *p_rtc );
 int8_t bsp_rtcGetTime( en_hal_rtc_t *p_rtc );
 #endif /* #if defined(HAL_SUPPORT_RTC) */
 
+#if (HAL_SUPPORT_MCU_SLEEP == TRUE)
+/**
+ * bsp_sleepDuration()
+ *
+ * \brief   Obtain remaining time of the low-power timer in ticks
+ *
+ * \return  Remaining time.
+ */
+clock_time_t bsp_sleepDuration( void );
+
+
+/**
+ * bsp_sleepEnter()
+ *
+ * \brief   Enter low-power mode
+ *
+ * \return  0 on success, otherwise -1.
+ */
+int8_t bsp_sleepEnter( uint32_t duration );
+
+
+/**
+ * bsp_adjustTick()
+ *
+ * \brief   Adjust system tick counter
+ *
+ * \return  0 on success, otherwise -1.
+ */
+int8_t bsp_adjustTick( clock_time_t ticks );
+#endif /* #if (HAL_SUPPORT_MCU_SLEEP == TRUE) */
+
 #endif /* __BSP_H__ */
 

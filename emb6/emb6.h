@@ -235,6 +235,7 @@ typedef enum
     NETSTK_CMD_TX_CBARG_SET,
     NETSTK_CMD_RX_CBFNT_SET,
     NETSTK_CMD_RX_BUF_READ,
+    NETSTK_CMD_IS_BUSY,
 
     /*
      * DLLC command codes

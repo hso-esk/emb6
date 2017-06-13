@@ -703,3 +703,35 @@ int8_t bsp_rtcGetTime( en_hal_rtc_t *p_rtc )
   return hal_rtcGetTime(p_rtc);
 }
 #endif /* #if defined(HAL_SUPPORT_RTC) */
+
+
+#if (HAL_SUPPORT_MCU_SLEEP == TRUE)
+/*---------------------------------------------------------------------------*/
+/*
+* bsp_sleepDuration()
+*/
+clock_time_t bsp_sleepDuration( void )
+{
+  return hal_sleepDuration();
+} /* bsp_sleepDuration() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* bsp_sleepEnter()
+*/
+int8_t bsp_sleepEnter( uint32_t duration )
+{
+  return hal_sleepEnter(duration);
+} /* bsp_sleepEnter() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* bsp_adjustTick()
+*/
+int8_t bsp_adjustTick( clock_time_t ticks )
+{
+  return hal_adjustTick(ticks);
+} /* bsp_adjustTick */
+#endif /* #if (HAL_SUPPORT_MCU_SLEEP == TRUE) */
