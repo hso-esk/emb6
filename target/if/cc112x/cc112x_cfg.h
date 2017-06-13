@@ -156,6 +156,8 @@ static const s_regSettings_t cc112x_cfg_iocfgOff[] = {
     {CC112X_IOCFG0,             0xB0},  /* Impedance */
     {CC112X_IOCFG2,             0xB0},  /* Impedance */
     {CC112X_IOCFG3,             0xB0},  /* Impedance */
+    {CC112X_IOCFG2,             0xB0},  /* Impedance */
+    {CC112X_IOCFG2,             0xB0},  /* Impedance */
 };
 
 /**
