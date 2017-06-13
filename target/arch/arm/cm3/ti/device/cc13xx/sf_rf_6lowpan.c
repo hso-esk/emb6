@@ -806,10 +806,13 @@ static void rx_call_back(uint32_t l_flag)
       }
       else
       {
+        if(!cc1310.poll_mode)
+        {
         /* signal complete reception interrupt */
         en_evprocResCode_t err = RF_SEM_POST(EVENT_TYPE_RF);
         /* handle the received packet */
         sf_rf_switchState(RF_STATUS_RX);
+        }
       }
       /* set RX mode again */
       sf_rf_switchState(RF_STATUS_RX_LISTEN);
