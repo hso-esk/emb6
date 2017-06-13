@@ -888,6 +888,11 @@ tsch_init(void *p_netstk, e_nsErr_t *p_err)
   TISCH_REG_PROCESS_HANDLER();
   /* register TISCH TX RX pending handler  */
   TISCH_REG_PENDING_TX_RX_HANDLER();
+
+  /* configure stack MAC address */
+  memcpy(&uip_lladdr.addr, &mac_phy_config.mac_address, 8);
+  linkaddr_set_node_addr((linkaddr_t *) mac_phy_config.mac_address);
+
 /************************>**/
 
 #if IGNORE_ERROR
