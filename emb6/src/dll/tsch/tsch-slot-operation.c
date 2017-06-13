@@ -600,18 +600,14 @@ static void tsch_tx_slot(struct rtimer *t)
               TSCH_DEBUG_TX_EVENT();
               tsch_radio_on(TSCH_RADIO_CMD_ON_WITHIN_TIMESLOT);
               /* Wait for ACK to come */
-#if IGNORE_ERROR
               BUSYWAIT_UNTIL_ABS(tsch_receiving_packet(),
                   tx_start_time, tx_duration + tsch_timing[tsch_ts_rx_ack_delay] + tsch_timing[tsch_ts_ack_wait] + RADIO_DELAY_BEFORE_DETECT);
-#endif
               TSCH_DEBUG_TX_EVENT();
 
               ack_start_time = RTIMER_NOW() - RADIO_DELAY_BEFORE_DETECT;
-#if IGNORE_ERROR
               /* Wait for ACK to finish */
               BUSYWAIT_UNTIL_ABS(!tsch_receiving_packet(),
                                  ack_start_time, tsch_timing[tsch_ts_max_ack]);
-#endif
               TSCH_DEBUG_TX_EVENT();
               tsch_radio_off(TSCH_RADIO_CMD_OFF_WITHIN_TIMESLOT);
 
@@ -622,12 +618,10 @@ static void tsch_tx_slot(struct rtimer *t)
 #endif /* TSCH_HW_FRAME_FILTERING */
 
               /* Read ack frame */
-#if IGNORE_ERROR
               // ack_len = NETSTACK_RADIO.read((void *)ackbuf, sizeof(ackbuf));
               pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_RX_BUFF_LENGTH_SET, &max_pkt_len, &err);
               pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_P_RX_BUFF_SET, (void *)ackbuf, &err);
               pmac_netstk->phy->ioctrl(NETSTK_CMD_RX_BUF_READ, &ack_len, &err);
-#endif
 
               is_time_source = 0;
               /* The radio driver should return 0 if no valid packets are in the rx buffer */
