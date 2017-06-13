@@ -45,6 +45,7 @@ extern "C" {
 #include "bsp.h"
 #include "framer_802154_ll.h"
 #include "phy_framer_802154.h"
+#include "rtimer.h"
 
 #if USE_TI_RTOS
 #include <ti/drivers/rf/RF.h>
@@ -770,6 +771,7 @@ void RFC_hw_Isr(void)
   if(interruptFlags & IRQ_HW_SYN_WORD)
   {
 	  cc1310.rx.is_receiving = 1;
+	  cc1310.rx.timeStamp = (uint32_t) RTIMER_NOW() - US_TO_RTIMERTICKS(95);
   }
 
 
