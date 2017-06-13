@@ -184,7 +184,7 @@ uint8_t set_p_TX_buff(uint8_t *pc_data)
 {
   if (pc_data!=NULL)
   {
-    cc1310.tx.p_cmdPropTxAdv->pPkt = pc_data -1 ;
+    cc1310.tx.p_cmdPropTxAdv->pPkt = pc_data;
     return 1;
   }
   return 0;
@@ -202,8 +202,10 @@ uint8_t set_p_RX_buff(uint8_t *pc_data)
 
 uint8_t sf_rf_6lowpan_prepare_pkt(void)
 {
-sf_rf_init_tx(cc1310.tx.p_cmdPropTxAdv->pPkt,cc1310.tx.p_cmdPropTxAdv->pktLen);
-return 1;
+  cc1310.tx.p_cmdPropTxAdv->pktLen += PHY_HEADER_LEN;
+  cc1310.tx.p_cmdPropTxAdv->pPkt -= PHY_HEADER_LEN;
+  sf_rf_init_tx(cc1310.tx.p_cmdPropTxAdv->pPkt, cc1310.tx.p_cmdPropTxAdv->pktLen);
+  return 1;
 }
 
 uint8_t tx_cmd_done = 0;
@@ -339,7 +341,7 @@ uint8_t receiving_packet(void)
 	   /* Get the current entry and it to pending state */
 	   cc1310.rx.p_currentDataEntry = (rfc_dataEntryGeneral_t*)RFQueue_getDataEntry();
 	   cc1310.rx.p_currentDataEntry->status=DATA_ENTRY_PENDING;
-	   return cc1310.rx.LenLastPkt - PHY_HEADER_LEN ;
+	   return cc1310.rx.LenLastPkt - 2 - PHY_HEADER_LEN ; /* 2 bytes crc */
 	  }
 	  return 0;
 }
