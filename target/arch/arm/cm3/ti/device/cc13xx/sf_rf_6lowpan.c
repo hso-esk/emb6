@@ -226,6 +226,8 @@ uint8_t rf_transmit(void)
     return 0;
 
   tx_cmd_done = 0;
+  /* reset the rx flag */
+  cc1310.rx.is_receiving = 0;
 
 #if USE_TI_RTOS
 
@@ -258,31 +260,21 @@ uint8_t rf_transmit(void)
 void set_polling_mode(void)
 {
   cc1310.poll_mode=1;
-  RFC_registerCpe0Isr(NULL);
+  // RFC_registerCpe0Isr(NULL);
   /* activate timestamp*/
   cc1310.rx.p_cmdPropRxAdv->rxConf.bAppendTimestamp=1;
 }
 
 uint8_t is_polling_mode(void)
 {
-	return cc1310.poll_mode;
+  /* return is polling flag  */
+  return cc1310.poll_mode;
 }
 
 uint8_t receiving_packet(void)
 {
- uint8_t rv = 0;
- volatile rfc_dataEntry_t *entry = (rfc_dataEntry_t *)cc1310.rx.p_currentDataEntry;
-
- /* Go through all RX buffers and check their status */
- do {
-   if(entry->status == DATA_ENTRY_BUSY || entry->status == DATA_ENTRY_ACTIVE) {
-     rv += 1;
-   }
-   entry = (rfc_dataEntry_t *)entry->pNextEntry;
- } while(entry != (rfc_dataEntry_t *)cc1310.rx.p_currentDataEntry);
-
- /* If we didn't find an entry at status finished, no frames are pending */
- return rv;
+ /* return is receiving flag  */
+ return cc1310.rx.is_receiving ;
 }
 
  uint8_t pending_packet(void)
@@ -762,9 +754,32 @@ static bool rf_driver_init(void)
 #endif
 }
 
+#define IRQN_HW_SYN_WORD           5
+#define IRQ_HW_SYN_WORD           (1U << IRQN_HW_SYN_WORD)
+void RFC_hw_Isr(void)
+{
+  /* Read interrupt flags */
+  uint32_t interruptFlags = HWREG(RFC_DBELL_BASE + RFC_DBELL_O_RFHWIFG);
+
+  /*  Clear interrupt */
+  do{
+    HWREG(RFC_DBELL_BASE + RFC_DBELL_O_RFHWIFG) = ~interruptFlags;
+  }while(HWREG(RFC_DBELL_BASE + RFC_DBELL_O_RFHWIFG) & interruptFlags);
+
+  /* check the flag interrupt */
+  if(interruptFlags & IRQ_HW_SYN_WORD)
+  {
+	  cc1310.rx.is_receiving = 1;
+  }
+
+
+}
 
 static void rx_call_back(uint32_t l_flag)
 {
+  /* reset the rx flag */
+  cc1310.rx.is_receiving = 0;
+
   if(IRQ_RX_OK == (l_flag & IRQ_RX_OK))
   {
 #if CC13XX_RX_LED_ENABLED
@@ -893,6 +908,12 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
       RFC_enableCpe0Interrupt(IRQ_RX_BUF_FULL);
       RFC_enableCpe0Interrupt(IRQ_RX_IGNORED);
 
+      /* initialize HW int */
+      IntRegister(INT_RFC_HW_COMB, &RFC_hw_Isr);
+      IntEnable(INT_RFC_HW_COMB);
+     // MB_RegisterIsrCback(RF_HW_INTERRUPT, &RFC_hw_Isr);
+      MB_EnableHWInts(IRQ_HW_SYN_WORD);
+
 #endif
 
       /* initialize RX queue */
@@ -902,6 +923,8 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
         return ROUTINE_ERROR_INIT_QUEUE ;
       }
 
+      /* reset the rx flag */
+      cc1310.rx.is_receiving = 0;
       /* reset the waiting for ACK flag */
       cc1310.tx.Tx_waiting_Ack=0;
       /* Initialize global variable. Set the lowest RSSI value as default -255dBm */
@@ -931,6 +954,8 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
       return ROUTINE_DONE;
 #endif
   case RF_STATUS_TX :
+	  /* reset the rx flag */
+	  cc1310.rx.is_receiving = 0;
       /* find out if ACK is required */
       cc1310.tx.Tx_waiting_Ack = packetbuf_attr(PACKETBUF_ATTR_MAC_ACK);
       if(cc1310.tx.Tx_waiting_Ack)
