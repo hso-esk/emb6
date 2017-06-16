@@ -428,7 +428,7 @@ static void cc13xx_Ioctl (e_nsIocCmd_t    cmd,
     case NETSTK_CMD_RX_BUF_READ:
       if(is_polling_mode())
       {
-        *(uint8_t*)p_val = read_frame();
+        *(int*)p_val = (int) read_frame();
       }
       else
       {
