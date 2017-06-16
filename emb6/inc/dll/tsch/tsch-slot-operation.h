@@ -127,4 +127,6 @@ void tsch_slot_operation_start(void);
 uint8_t tsch_receiving_packet(void);
 /* check if there is a pending packet */
 uint8_t tsch_pending_packet(void);
+/* check if channel clear */
+uint8_t tsch_channel_clear(void);
 #endif /* __TSCH_SLOT_OPERATION_H__ */

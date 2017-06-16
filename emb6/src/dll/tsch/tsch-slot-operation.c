@@ -540,12 +540,13 @@ static void tsch_tx_slot(struct rtimer *t)
 #if CCA_ENABLED
         cca_status = 1;
         /* delay before CCA */
-        TSCH_SCHEDULE_AND_YIELD(t, current_slot_start, TS_CCA_OFFSET, "cca");
+        //TSCH_SCHEDULE_AND_YIELD(t, current_slot_start, TS_CCA_OFFSET, "cca");
+        BUSYWAIT_UNTIL_ABS(0, current_slot_start, tsch_timing[tsch_ts_cca_offset]);
         TSCH_DEBUG_TX_EVENT();
         tsch_radio_on(TSCH_RADIO_CMD_ON_WITHIN_TIMESLOT);
         /* CCA */
-        BUSYWAIT_UNTIL_ABS(!(cca_status |= NETSTACK_RADIO.channel_clear()),
-                           current_slot_start, TS_CCA_OFFSET + TS_CCA);
+        BUSYWAIT_UNTIL_ABS(!(cca_status |= tsch_channel_clear()),
+                           current_slot_start, tsch_timing[tsch_ts_cca_offset] + tsch_timing[tsch_ts_cca]);
         TSCH_DEBUG_TX_EVENT();
         /* there is not enough time to turn radio off */
         /*  NETSTACK_RADIO.off(); */
@@ -1126,4 +1127,15 @@ e_nsErr_t err = NETSTK_ERR_NONE;
 uint8_t pending = 0;
 pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_RX_PENDING, &pending, &err);
 return pending;
+}
+
+uint8_t tsch_channel_clear(void)
+{
+  e_nsErr_t err = NETSTK_ERR_NONE;
+
+  pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_CCA_GET, NULL, &err);
+  if(err == NETSTK_ERR_NONE)
+    return 1 ;
+  else
+    return  0 ;
 }
