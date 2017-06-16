@@ -30,14 +30,8 @@ send(mac_callback_t sent, void *ptr)
   /*
    * Issue next lower layer to transmit the prepared packet
    */
-//  pdllsec_netstk->dllc->send(sent, ptr);
-  //NETSTACK_MAC.send(sent, ptr);
-
-
-  /* inform upper layer of the TX status */
- // dllsec_cbTx(p_arg, &err);
-
-/****************************/
+   //NETSTACK_MAC.send(sent, ptr);
+  tschmac_driver.send(sent,ptr);
 
 }
 /*---------------------------------------------------------------------------*/
