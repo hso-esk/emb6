@@ -82,10 +82,10 @@
 #define TSCH_DEBUG_TX_EVENT()
 #endif
 #ifndef TSCH_DEBUG_SLOT_START
-#define TSCH_DEBUG_SLOT_START() bsp_led(HAL_LED2, EN_BSP_LED_OP_ON)
+#define TSCH_DEBUG_SLOT_START() bsp_led(HAL_LED3, EN_BSP_LED_OP_ON)
 #endif
 #ifndef TSCH_DEBUG_SLOT_END
-#define TSCH_DEBUG_SLOT_END()   bsp_led(HAL_LED2, EN_BSP_LED_OP_OFF)
+#define TSCH_DEBUG_SLOT_END()   bsp_led(HAL_LED3, EN_BSP_LED_OP_OFF)
 #endif
 
 /* Check if TSCH_MAX_INCOMING_PACKETS is power of two */
