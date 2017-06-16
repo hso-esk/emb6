@@ -695,8 +695,11 @@ static void tsch_scan(void *ptr)
 
     /* Turn radio on and wait for EB */
     //NETSTACK_RADIO.on();
-	  pmac_netstk->phy->on(&err);
+	pmac_netstk->phy->on(&err);
     is_packet_pending = tsch_pending_packet();
+
+    t0 = RTIMER_NOW();
+    BUSYWAIT_UNTIL_ABS((is_packet_pending = tsch_pending_packet()), t0, RTIMER_SECOND);
 
     if(!is_packet_pending && tsch_receiving_packet()) {
       /* If we are currently receiving a packet, wait until end of reception */
