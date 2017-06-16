@@ -243,7 +243,7 @@ uint8_t sf_rf_6lowpan_getRssi(void);
  * \return    Timestamp value
  */
 /*============================================================================*/
-uint8_t sf_rf_6lowpan_getTimeStamp(void);
+uint32_t sf_rf_6lowpan_getTimeStamp(void);
 
 /*============================================================================*/
 /**

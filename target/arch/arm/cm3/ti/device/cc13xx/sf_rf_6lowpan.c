@@ -598,7 +598,7 @@ uint8_t sf_rf_6lowpan_getRssi(void)
   return sf_rf_getRssi();
 }
 
-uint8_t sf_rf_6lowpan_getTimeStamp(void)
+uint32_t sf_rf_6lowpan_getTimeStamp(void)
 {
 	return cc1310.rx.timeStamp;
 }

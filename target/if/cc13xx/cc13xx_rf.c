@@ -186,7 +186,7 @@ static void loc_cc13xx_getRssi(int8_t *pc_rssi, e_nsErr_t *p_err)
 }/* loc_cc13xx_getRssi() */
 
 
-static void loc_cc13xx_getTimestamp(int8_t *pc_timestamp, e_nsErr_t *p_err)
+static void loc_cc13xx_getTimestamp(uint32_t *pc_timestamp, e_nsErr_t *p_err)
 {
  *pc_timestamp = sf_rf_6lowpan_getTimeStamp();
 }
@@ -395,7 +395,7 @@ static void cc13xx_Ioctl (e_nsIocCmd_t    cmd,
       loc_cc13xx_getRssi((int8_t*)p_val, p_err);
       break;
     case NETSTK_CMD_RF_TIMESTAMP_GET:
-      loc_cc13xx_getTimestamp((int8_t*)p_val, p_err);
+      loc_cc13xx_getTimestamp((uint32_t*)p_val, p_err);
       break;
     case NETSTK_CMD_RF_P_TX_BUFF_SET:
       set_p_TX_buff((uint8_t*)p_val);
