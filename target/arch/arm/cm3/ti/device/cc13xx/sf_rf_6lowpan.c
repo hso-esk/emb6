@@ -759,6 +759,7 @@ static bool rf_driver_init(void)
 
 #define IRQN_HW_SYN_WORD           5
 #define IRQ_HW_SYN_WORD           (1U << IRQN_HW_SYN_WORD)
+uint32_t temp_timestamp;
 void RFC_hw_Isr(void)
 {
   /* Read interrupt flags */
@@ -773,7 +774,7 @@ void RFC_hw_Isr(void)
   if(interruptFlags & IRQ_HW_SYN_WORD)
   {
 	  cc1310.rx.is_receiving = 1;
-	  cc1310.rx.timeStamp = (uint32_t) RTIMER_NOW() - US_TO_RTIMERTICKS(95);
+	  temp_timestamp = (uint32_t) RTIMER_NOW() - (uint32_t) US_TO_RTIMERTICKS(1500);
   }
 
 
@@ -786,6 +787,7 @@ static void rx_call_back(uint32_t l_flag)
 
   if(IRQ_RX_OK == (l_flag & IRQ_RX_OK))
   {
+	  cc1310.rx.timeStamp = temp_timestamp;
 #if CC13XX_RX_LED_ENABLED
          bsp_led( HAL_LED3, EN_BSP_LED_OP_BLINK );
 #endif /* #if CC13XX_RX_LED_ENABLED */
