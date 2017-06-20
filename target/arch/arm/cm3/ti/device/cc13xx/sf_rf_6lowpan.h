@@ -116,7 +116,7 @@ typedef struct
   uint8_t c_rssiValue;
   /* Time Stamp value  */
   uint32_t timeStamp;
-  /* Meassured RSSI value */
+  /* is receiving flag */
   uint8_t is_receiving;
 } st_rx_cmd_t;
 

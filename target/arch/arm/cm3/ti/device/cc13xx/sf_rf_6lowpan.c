@@ -263,7 +263,6 @@ uint8_t rf_transmit(void)
 void set_polling_mode(void)
 {
   cc1310.poll_mode=1;
-  // RFC_registerCpe0Isr(NULL);
   /* activate timestamp*/
   cc1310.rx.p_cmdPropRxAdv->rxConf.bAppendTimestamp=1;
 }
@@ -345,7 +344,6 @@ uint8_t receiving_packet(void)
 	   /* Get the current entry and it to pending state */
 	   cc1310.rx.p_currentDataEntry = (rfc_dataEntryGeneral_t*)RFQueue_getDataEntry();
 	   cc1310.rx.p_currentDataEntry->status=DATA_ENTRY_PENDING;
-	   cc1310.rx.is_pending = 0;
 	   return cc1310.rx.LenLastPkt - 2 - PHY_HEADER_LEN ; /* fixme: 2 bytes crc */
 	  }
 	  return 0;
@@ -1049,6 +1047,7 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
 #endif
   case RF_STATUS_RX_LISTEN :
     cc1310.rx.p_currentDataEntry=(rfc_dataEntryGeneral_t*)cc1310.rx.dataQueue.pCurrEntry;
+    cc1310.rx.p_currentDataEntry->status=DATA_ENTRY_PENDING;
     /* Set the Data Entity queue for received data */
     cc1310.rx.p_cmdPropRxAdv->pQueue = &cc1310.rx.dataQueue;
     /* Set rx statistics output struct */
