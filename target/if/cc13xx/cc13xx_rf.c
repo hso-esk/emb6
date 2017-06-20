@@ -404,10 +404,10 @@ static void cc13xx_Ioctl (e_nsIocCmd_t    cmd,
       set_p_RX_buff((uint8_t*)p_val);
       break;
     case NETSTK_CMD_RF_TX_PKT_LENGTH_SET:
-      set_tx_pkt_length(*(uint8_t*)p_val);
+      set_tx_pkt_length((uint16_t)(*(uint8_t*)p_val));
       break;
     case NETSTK_CMD_RF_RX_BUFF_LENGTH_SET:
-      set_rx_buff_length(*(uint8_t*)p_val);
+      set_rx_buff_length((uint16_t)*(uint8_t*)p_val);
       break;
     case NETSTK_CMD_RF_PREPARE_PKT:
       sf_rf_6lowpan_prepare_pkt();
