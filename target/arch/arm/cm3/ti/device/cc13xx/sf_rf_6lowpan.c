@@ -299,8 +299,15 @@ uint8_t receiving_packet(void)
 
  uint8_t read_frame()
 {
-	 uint32_t rat_timestamp;
-	  if(cc1310.rx.p_currentDataEntry->status == DATA_ENTRY_FINISHED) {
+	 volatile rfc_dataEntryGeneral_t *entry = cc1310.rx.p_currentDataEntry;
+	 uint8_t finish = 0;
+	 while(!finish && entry->status != DATA_ENTRY_FINISHED)
+	 {
+		 entry = (rfc_dataEntryGeneral_t *)entry->pNextEntry;
+		 if(entry == (rfc_dataEntryGeneral_t *)cc1310.rx.p_currentDataEntry)
+			 finish=1;
+	 }
+	 if(entry->status == DATA_ENTRY_FINISHED) {
 	    /* when we receive data */
 	#if NETSTK_CFG_IEEE_802154G_EN
 		uint8_t *p_data = (uint8_t*)(&cc1310.rx.p_currentDataEntry->data);
@@ -315,8 +322,8 @@ uint8_t receiving_packet(void)
 	    cc1310.rx.p_lastPkt = p_data;
 	#else
 	     /* FIXME this is not correct if the packet is lager 127 */
-	    cc1310.rx.LenLastPkt = *(uint8_t*)(&cc1310.rx.p_currentDataEntry->data) + PHY_HEADER_LEN;
-	    cc1310.rx.p_lastPkt = (uint8_t*)(&cc1310.rx.p_currentDataEntry->data);
+	    cc1310.rx.LenLastPkt = *(uint8_t*)(&entry->data) + PHY_HEADER_LEN;
+	    cc1310.rx.p_lastPkt = (uint8_t*)(&entry->data);
 	#endif
 
 
@@ -331,17 +338,15 @@ uint8_t receiving_packet(void)
 	      packetbuf_set_attr(PACKETBUF_ATTR_RSSI, (int8_t)cc1310.rx.p_lastPkt[cc1310.rx.LenLastPkt]);
 	      packetbuf_set_attr(PACKETBUF_ATTR_LINK_QUALITY, 0x7F);
 	    }
-	   /* get the timestamp */
-	   memcpy(&rat_timestamp, (uint8_t *)&cc1310.rx.p_lastPkt[cc1310.rx.LenLastPkt+1], 4);
-	   cc1310.rx.timeStamp = rat_timestamp ;  // FIXME calc_last_packet_timestamp(rat_timestamp);
 
-
+	    entry->status=DATA_ENTRY_PENDING;
 	   /* switch to the next entry */
 	   RFQueue_nextEntry();
 	   /* Get the current entry and it to pending state */
 	   cc1310.rx.p_currentDataEntry = (rfc_dataEntryGeneral_t*)RFQueue_getDataEntry();
 	   cc1310.rx.p_currentDataEntry->status=DATA_ENTRY_PENDING;
-	   return cc1310.rx.LenLastPkt - 2 - PHY_HEADER_LEN ; /* 2 bytes crc */
+	   cc1310.rx.is_pending = 0;
+	   return cc1310.rx.LenLastPkt - 2 - PHY_HEADER_LEN ; /* fixme: 2 bytes crc */
 	  }
 	  return 0;
 }
