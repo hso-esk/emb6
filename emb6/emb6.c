@@ -164,10 +164,10 @@ s_mac_phy_conf_t mac_phy_config = {
     .chan_num = 26,
 
 #if (NETSTK_CFG_WOR_EN == TRUE)
-    /* Length of the preable used for WoR */
+    /* Length of the preamble used for WoR */
     .preamble_len = 24,
 #else
-    /* Default preambel length */
+    /* Default preamble length */
     .preamble_len = 4,
 #endif /* #if (NETSTK_CFG_WOR_EN == TRUE) */
 
