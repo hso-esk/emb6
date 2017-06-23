@@ -52,15 +52,13 @@
 #error 6tisch does not work without rtimer module
 #endif
 
-#define DEBUG DEBUG_PRINT
-#include "uip-debug.h"
-
 #define LOGGER_ENABLE           LOGGER_DEMO_6TISCH
 #if LOGGER_ENABLE == TRUE
+#define DEBUG DEBUG_PRINT
 #define LOGGER_SUBSYSTEM        "6TISCH"
 #endif /* #if LOGGER_ENABLE == TRUE */
 #include    "logger.h"
-
+#include "uip-debug.h"
 
 /*
  *  --- Local Variables ---------------------------------------------------- *
@@ -84,41 +82,41 @@ static void print_network_status(void)
   rpl_ns_node_t *link;
 #endif /* RPL_WITH_NON_STORING */
 
-  PRINTF("--- Network status ---\n");
+  LOG_RAW("--- Network status ---\n");
 
   /* Our IPv6 addresses */
-  PRINTF("- Server IPv6 addresses:\n");
+  LOG_RAW("- Server IPv6 addresses:\n");
   for(i = 0; i < UIP_DS6_ADDR_NB; i++) {
     state = uip_ds6_if.addr_list[i].state;
     if(uip_ds6_if.addr_list[i].isused &&
        (state == ADDR_TENTATIVE || state == ADDR_PREFERRED)) {
-      PRINTF("-- ");
+      LOG_RAW("-- ");
       PRINT6ADDR(&uip_ds6_if.addr_list[i].ipaddr);
-      PRINTF("\n");
+      LOG_RAW("\n");
     }
   }
 
   /* Our default route */
-  PRINTF("- Default route:\n");
+  LOG_RAW("- Default route:\n");
   default_route = uip_ds6_defrt_lookup(uip_ds6_defrt_choose());
   if(default_route != NULL) {
-    PRINTF("-- ");
+    LOG_RAW("-- ");
     PRINT6ADDR(&default_route->ipaddr);
-    PRINTF(" (lifetime: %lu seconds)\n", (unsigned long)default_route->lifetime.interval);
+    LOG_RAW(" (lifetime: %lu seconds)\n", (unsigned long)default_route->lifetime.interval);
   } else {
-    PRINTF("-- None\n");
+    LOG_RAW("-- None\n");
   }
 
 #if RPL_WITH_STORING
   /* Our routing entries */
-  PRINTF("- Routing entries (%u in total):\n", uip_ds6_route_num_routes());
+  LOG_RAW("- Routing entries (%u in total):\n", uip_ds6_route_num_routes());
   route = uip_ds6_route_head();
   while(route != NULL) {
-    PRINTF("-- ");
-    PRINT6ADDR(&route->ipaddr);
-    PRINTF(" via ");
+	LOG_RAW("-- ");
+	PRINT6ADDR(&route->ipaddr);
+    LOG_RAW(" via ");
     PRINT6ADDR(uip_ds6_route_nexthop(route));
-    PRINTF(" (lifetime: %lu seconds)\n", (unsigned long)route->state.lifetime);
+    LOG_RAW(" (lifetime: %lu seconds)\n", (unsigned long)route->state.lifetime);
     route = uip_ds6_route_next(route);
   }
 #endif
@@ -132,21 +130,21 @@ static void print_network_status(void)
     uip_ipaddr_t parent_ipaddr;
     rpl_ns_get_node_global_addr(&child_ipaddr, link);
     rpl_ns_get_node_global_addr(&parent_ipaddr, link->parent);
-    PRINTF("-- ");
+    LOG_RAW("-- ");
     PRINT6ADDR(&child_ipaddr);
     if(link->parent == NULL) {
       memset(&parent_ipaddr, 0, sizeof(parent_ipaddr));
-      PRINTF(" --- DODAG root ");
+      LOG_RAW(" --- DODAG root ");
     } else {
-      PRINTF(" to ");
+      LOG_RAW(" to ");
       PRINT6ADDR(&parent_ipaddr);
     }
-    PRINTF(" (lifetime: %lu seconds)\n", (unsigned long)link->lifetime);
+    LOG_RAW(" (lifetime: %lu seconds)\n", (unsigned long)link->lifetime);
     link = rpl_ns_node_next(link);
   }
 #endif
 
-  PRINTF("----------------------\n");
+  LOG_RAW("----------------------\n");
 }
 
 static void net_init(uip_ipaddr_t *br_prefix)
@@ -239,7 +237,7 @@ int8_t demo_6tischInit(void)
 	  node_role = role_6dr_sec;
 #endif
 
-	  PRINTF("Init: node starting with role %s\n",
+	  LOG_RAW("Init: node starting with role %s\n",
 	         node_role == role_6ln ? "6ln" : (node_role == role_6dr) ? "6dr" : "6dr-sec");
 
 	  tsch_set_pan_secured(LLSEC802154_ENABLED && (node_role == role_6dr_sec));
