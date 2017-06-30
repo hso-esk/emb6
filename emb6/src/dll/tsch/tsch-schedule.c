@@ -39,7 +39,6 @@
  */
 
 #include "emb6.h"
-//#include "dev/leds.h"
 #include "memb.h"
 #include "nbr-table.h"
 #include "packetbuf.h"
@@ -51,7 +50,6 @@
 #include "tsch-schedule.h"
 #include "tsch-log.h"
 #include "framer_802154.h"
-//#include "sys/process.h"
 #include "rtimer.h"
 
 #if TSCH_LOG_LEVEL >= 1
@@ -424,16 +422,16 @@ tsch_schedule_print(void)
   if(!tsch_is_locked()) {
     struct tsch_slotframe *sf = list_head(slotframe_list);
 
-    printf("Schedule: slotframe list\n");
+    PRINTF("Schedule: slotframe list\n");
 
     while(sf != NULL) {
       struct tsch_link *l = list_head(sf->links_list);
 
-      printf("[Slotframe] Handle %u, size %u\n", sf->handle, sf->size.val);
-      printf("List of links:\n");
+      PRINTF("[Slotframe] Handle %u, size %u\n", sf->handle, sf->size.val);
+      PRINTF("List of links:\n");
 
       while(l != NULL) {
-        printf("[Link] Options %02x, type %u, timeslot %u, channel offset %u, address %u\n",
+         PRINTF("[Link] Options %02x, type %u, timeslot %u, channel offset %u, address %u\n",
                l->link_options, l->link_type, l->timeslot, l->channel_offset, l->addr.u8[7]);
         l = list_item_next(l);
       }
@@ -441,7 +439,7 @@ tsch_schedule_print(void)
       sf = list_item_next(sf);
     }
 
-    printf("Schedule: end of slotframe list\n");
+    PRINTF("Schedule: end of slotframe list\n");
   }
 }
 /*---------------------------------------------------------------------------*/
