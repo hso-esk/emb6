@@ -529,11 +529,7 @@ static void tsch_tx_slot(struct rtimer *t)
 #endif /* LLSEC802154_ENABLED */
 
       /* prepare packet to send: copy to radio buffer */
-      /* FIXME CHECK type convertion */
-      pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_TX_PKT_LENGTH_SET, &packet_len, &err);
-      pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_P_TX_BUFF_SET, packet, &err);
-      pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_PREPARE_PKT, NULL, &err);
-     // if(packet_ready && NETSTACK_RADIO.prepare(packet, packet_len) == 0) { /* 0 means success */
+      pmac_netstk->rf->prepare((uint8_t *) packet, (uint16_t) packet_len, &err);
       if(packet_ready && (err == NETSTK_ERR_NONE)){
         static rtimer_clock_t tx_duration;
 
@@ -561,8 +557,7 @@ static void tsch_tx_slot(struct rtimer *t)
           TSCH_DEBUG_TX_EVENT();
 
           /* send packet already in radio tx buffer */
-          //mac_tx_status = NETSTACK_RADIO.transmit(packet_len);
-          pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_TRANSMIT, NULL, &err);
+          pmac_netstk->rf->transmit(&err);
           if(err == NETSTK_ERR_NONE)
             mac_tx_status = RADIO_TX_OK;
           else
@@ -586,7 +581,6 @@ static void tsch_tx_slot(struct rtimer *t)
               struct ieee802154_ies ack_ies;
               uint8_t ack_hdrlen;
               frame802154_t frame;
-              uint8_t max_pkt_len = sizeof(ackbuf);
 
 #if TSCH_HW_FRAME_FILTERING
               radio_value_t radio_rx_mode;
@@ -882,18 +876,14 @@ static void tsch_rx_slot(struct rtimer *t)
 #endif /* LLSEC802154_ENABLED */
 
                 /* Copy to radio buffer */
-                //NETSTACK_RADIO.prepare((const void *)ack_buf, ack_len);
-                pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_TX_PKT_LENGTH_SET, &ack_len, &err);
-                pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_P_TX_BUFF_SET, ack_buf, &err);
-                pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_PREPARE_PKT, NULL, &err);
+                pmac_netstk->rf->prepare((uint8_t *) ack_buf, (uint16_t) ack_len, &err);
 
                 /* Wait for time to ACK and transmit ACK */
                // TSCH_SCHEDULE_AND_YIELD(t, rx_start_time,
                 //                        packet_duration + tsch_timing[tsch_ts_tx_ack_delay] - RADIO_DELAY_BEFORE_TX, "RxBeforeAck");
                 BUSYWAIT_UNTIL_ABS(0, rx_start_time, packet_duration + tsch_timing[tsch_ts_tx_ack_delay] - RADIO_DELAY_BEFORE_TX);
                 TSCH_DEBUG_RX_EVENT();
-                //NETSTACK_RADIO.(ack_len);
-                pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_TRANSMIT, NULL, &err);
+                pmac_netstk->rf->transmit(&err);
                 tsch_radio_off(TSCH_RADIO_CMD_OFF_WITHIN_TIMESLOT);
               }
             }

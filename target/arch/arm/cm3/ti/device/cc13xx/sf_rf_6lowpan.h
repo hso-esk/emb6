@@ -265,19 +265,15 @@ E_RF_CCA_RESULT_t sf_rf_6lowpan_cca(uint8_t c_numOfRssiMeas);
 /*============================================================================*/
 void cc13xx_eventHandler(c_event_t c_event, p_data_t p_data);
 
-
-void    set_polling_mode(void);
 bool    sf_rf_6lowpan_chanNumSet(uint8_t chan_num);
-uint8_t set_tx_pkt_length(uint16_t i_len);
-uint8_t set_rx_buff_length(uint16_t i_len);
-uint8_t set_p_TX_buff(uint8_t *pc_data);
-uint8_t set_p_RX_buff(uint8_t *pc_data);
-uint8_t sf_rf_6lowpan_prepare_pkt(void);
-uint8_t rf_transmit(void);
+uint8_t sf_rf_set_rx_buff_length(uint16_t i_len);
+uint8_t sf_rf_set_p_RX_buff(uint8_t *pc_data);
+uint8_t sf_rf_6lowpan_prepare_pkt(uint8_t *payload, uint16_t payload_len);
+uint8_t sf_rf_transmit(void);
 void    set_polling_mode(void);
 uint8_t is_polling_mode(void);
 uint8_t receiving_packet(void);
 uint8_t pending_packet(void);
-uint8_t read_frame();
+uint8_t sf_rf_read_frame();
 
 #endif /* __SF_RF_6LOWPAN_H__ */
