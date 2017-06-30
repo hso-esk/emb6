@@ -44,7 +44,6 @@
 #include "packetbuf.h"
 #include "queuebuf.h"
 #include "nbr-table.h"
-//#include "net/mac/framer-802154.h"
 #include "tsch.h"
 #include "tsch-slot-operation.h"
 #include "tsch-queue.h"
@@ -232,8 +231,6 @@ tsch_reset(void)
   int i;
   frame802154_set_pan_id(0xffff);
   /* First make sure pending packet callbacks are sent etc */
-  /* TODO CHECK THIS */
-  //process_post_synch(&tsch_pending_events_process, PROCESS_EVENT_POLL, NULL);
   tsch_pending_events_process_start_now();
   /* Reset neighbor queues */
   tsch_queue_reset();
@@ -685,7 +682,6 @@ static void tsch_scan(void *ptr)
       uint8_t scan_channel = TSCH_JOIN_HOPPING_SEQUENCE[
           random_rand() % sizeof(TSCH_JOIN_HOPPING_SEQUENCE)];
       if(current_channel != scan_channel) {
-        //NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, scan_channel);
         pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_CHAN_NUM_SET, &scan_channel, &err);
         current_channel = scan_channel;
         PRINTF("TSCH: scanning on channel %u\n", scan_channel);
@@ -694,7 +690,6 @@ static void tsch_scan(void *ptr)
     }
 
     /* Turn radio on and wait for EB */
-    //NETSTACK_RADIO.on();
 	pmac_netstk->phy->on(&err);
     is_packet_pending = tsch_pending_packet();
 
@@ -709,11 +704,8 @@ static void tsch_scan(void *ptr)
 
     if(is_packet_pending) {
       /* Read packet */
-      //input_eb.len = NETSTACK_RADIO.read(input_eb.payload, TSCH_PACKET_MAX_LEN);
       input_eb.len = (int) pmac_netstk->rf->read(input_eb.payload, (uint16_t) TSCH_PACKET_MAX_LEN);
       /* Save packet timestamp */
-      //NETSTACK_RADIO.get_object(RADIO_PARAM_LAST_PACKET_TIMESTAMP, &t0, sizeof(rtimer_clock_t));
-      /* FIXME check convertion ... */
       pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_TIMESTAMP_GET, &t0, &err);
 
       /* Parse EB and attempt to associate */
@@ -724,7 +716,6 @@ static void tsch_scan(void *ptr)
 
     if(tsch_is_associated) {
       /* End of association, turn the radio off */
-      //NETSTACK_RADIO.off();
       pmac_netstk->phy->off(&err);
       /* if the scan process is launched again we need to initialize some variable  */
       scan_active = 0 ;
