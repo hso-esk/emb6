@@ -397,24 +397,6 @@ static void cc13xx_Ioctl (e_nsIocCmd_t    cmd,
     case NETSTK_CMD_RF_TIMESTAMP_GET:
       loc_cc13xx_getTimestamp((uint32_t*)p_val, p_err);
       break;
-    case NETSTK_CMD_RF_P_TX_BUFF_SET:
-      set_p_TX_buff((uint8_t*)p_val);
-      break;
-    case NETSTK_CMD_RF_P_RX_BUFF_SET:
-      set_p_RX_buff((uint8_t*)p_val);
-      break;
-    case NETSTK_CMD_RF_TX_PKT_LENGTH_SET:
-      set_tx_pkt_length((uint16_t)(*(uint8_t*)p_val));
-      break;
-    case NETSTK_CMD_RF_RX_BUFF_LENGTH_SET:
-      set_rx_buff_length((uint16_t)*(uint8_t*)p_val);
-      break;
-    case NETSTK_CMD_RF_PREPARE_PKT:
-      sf_rf_6lowpan_prepare_pkt();
-      break;
-    case NETSTK_CMD_RF_TRANSMIT:
-      rf_transmit();
-      break;
     case NETSTK_CMD_RF_IS_RX_BUSY:
       *(uint8_t*)p_val = receiving_packet();
       break;
@@ -426,11 +408,7 @@ static void cc13xx_Ioctl (e_nsIocCmd_t    cmd,
         set_polling_mode();
       break;
     case NETSTK_CMD_RX_BUF_READ:
-      if(is_polling_mode())
-      {
-        *(int*)p_val = (int) read_frame();
-      }
-      else
+      if(!is_polling_mode())
       {
        /* Signal upper layer if a packet has arrived by the time this command is issued.
         * Trigger event-process manually
@@ -457,6 +435,78 @@ static void cc13xx_Ioctl (e_nsIocCmd_t    cmd,
     }/* switch */
 }
 
+/*!
+ * @brief   This function prepare the radio with a packet to be sent.
+ *
+ * @param   payload             Point to buffer storing data to send.
+ * @param   payload_len         Length of data to send.
+ * @param   p_err               Pointer to result enum.
+ */
+static void cc13xx_Prepare(uint8_t *payload, uint16_t payload_len, e_nsErr_t *p_err)
+{
+  #if NETSTK_CFG_ARG_CHK_EN
+  if ((p_err == NULL) || (payload == NULL) || (payload_len == 0))
+  {
+    *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+    return;
+  }
+  #endif
+  if(sf_rf_6lowpan_prepare_pkt(payload,payload_len))
+	  *p_err = NETSTK_ERR_NONE;
+  else
+	  *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+}
+
+
+/*!
+ * @brief   This function Send the packet that has previously been prepared
+ *
+ * @param   p_err       Pointer to result enum.
+ */
+static void cc13xx_Transmit(e_nsErr_t *p_err)
+{
+  #if NETSTK_CFG_ARG_CHK_EN
+  if (p_err == NULL)
+  {
+	*p_err = NETSTK_ERR_INVALID_ARGUMENT;
+    return;
+  }
+  #endif
+
+  if(sf_rf_transmit())
+  {
+    *p_err = NETSTK_ERR_NONE;
+  }
+  else
+	 *p_err = NETSTK_ERR_RF_XXX;
+}
+
+/*!
+ * @brief   This function read a received packet into a buffer
+ *
+ * @param   buf         Point to buffer.
+ * @param   buf_len     max buffer Length.
+ *
+ * @return  Length of received data.
+ */
+static uint16_t cc13xx_Read(uint8_t *buf, uint16_t buf_len)
+{
+  #if NETSTK_CFG_ARG_CHK_EN
+  if ((buf == NULL) || (buf_len < 1))
+  {
+    return 0;
+  }
+  #endif
+
+  if(is_polling_mode())
+  {
+	sf_rf_set_rx_buff_length(buf_len);
+	sf_rf_set_p_RX_buff(buf);
+    return (uint16_t) sf_rf_read_frame();
+  }
+  return 0;
+}
+
 /*============================================================================*/
 /*                             DRIVER DEFINITION                              */
 /*============================================================================*/
@@ -471,6 +521,9 @@ const s_nsRF_t rf_driver_ticc13xx =
     cc13xx_Send,
     cc13xx_Recv,
     cc13xx_Ioctl,
+	cc13xx_Prepare,
+	cc13xx_Transmit,
+	cc13xx_Read,
 };
 
 /*! @} 6lowpan_if */

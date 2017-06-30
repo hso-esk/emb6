@@ -161,47 +161,15 @@ bool sf_rf_6lowpan_init(void *p_netstk)
   return true;
 }
 
-uint8_t set_tx_pkt_length(uint16_t i_len)
+uint8_t sf_rf_6lowpan_prepare_pkt(uint8_t *payload, uint16_t payload_len)
 {
-  if (i_len > 1)
-  {
-    cc1310.tx.p_cmdPropTxAdv->pktLen = i_len ;
-    return 1;
-  }
-  return 0;
-}
-
-uint8_t set_rx_buff_length(uint16_t i_len)
-{
-  if (i_len > 1)
-  {
-    cc1310.rx.max_len_appBuff = i_len ;
-    return 1;
-  }
-  return 0;
-}
-uint8_t set_p_TX_buff(uint8_t *pc_data)
-{
-  if (pc_data!=NULL)
-  {
-    cc1310.tx.p_cmdPropTxAdv->pPkt = pc_data;
-    return 1;
-  }
-  return 0;
-}
-
-uint8_t set_p_RX_buff(uint8_t *pc_data)
-{
-  if (pc_data!=NULL)
-  {
-    cc1310.rx.p_appBuff = pc_data;
-    return 1;
-  }
-  return 0;
-}
-
-uint8_t sf_rf_6lowpan_prepare_pkt(void)
-{
+	  if (payload!=NULL && payload_len > 1)
+	  {
+	    cc1310.tx.p_cmdPropTxAdv->pPkt = payload;
+	    cc1310.tx.p_cmdPropTxAdv->pktLen = payload_len ;
+	  }
+	  else
+		return 0;
   cc1310.tx.p_cmdPropTxAdv->pktLen += PHY_HEADER_LEN;
   cc1310.tx.p_cmdPropTxAdv->pPkt -= PHY_HEADER_LEN;
   sf_rf_init_tx(cc1310.tx.p_cmdPropTxAdv->pPkt, cc1310.tx.p_cmdPropTxAdv->pktLen);
@@ -216,7 +184,7 @@ static void tx_cmd_done_cb(uint32_t l_flag)
 	  tx_cmd_done = 1;
   }
 }
-uint8_t rf_transmit(void)
+uint8_t sf_rf_transmit(void)
 {
 #if USE_TI_RTOS
   RF_EventMask result ;
@@ -296,7 +264,27 @@ uint8_t receiving_packet(void)
   return rv;
 }
 
- uint8_t read_frame()
+ uint8_t sf_rf_set_rx_buff_length(uint16_t i_len)
+ {
+   if (i_len > 1)
+   {
+     cc1310.rx.max_len_appBuff = i_len ;
+     return 1;
+   }
+   return 0;
+ }
+
+ uint8_t sf_rf_set_p_RX_buff(uint8_t *pc_data)
+ {
+   if (pc_data!=NULL)
+   {
+     cc1310.rx.p_appBuff = pc_data;
+     return 1;
+   }
+   return 0;
+ }
+
+ uint8_t sf_rf_read_frame()
 {
 	 volatile rfc_dataEntryGeneral_t *entry = cc1310.rx.p_currentDataEntry;
 	 uint8_t finish = 0;
