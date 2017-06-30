@@ -442,6 +442,7 @@ typedef struct s_nsHeadComp s_nsHeadComp_t;
 typedef struct s_nsDllsec s_nsDllsec_t;
 typedef struct s_nsFramer s_nsFramer_t;
 typedef struct s_nsModuleDrv s_nsModuleDrv_t;
+typedef struct s_nsRadioDrv  s_nsRadioDrv_t;
 
 
 /**
@@ -516,7 +517,6 @@ struct s_nsDllsec
 
 };
 
-
 /**
  * \brief   Netstack submodule driver structure declaration
  */
@@ -542,7 +542,42 @@ struct s_nsModuleDrv
 
     /** IO control */
     void (*ioctrl)(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
+};
 
+/**
+ * \brief   Netstack submodule driver structure declaration
+ */
+struct s_nsRadioDrv
+{
+    /** Driver name */
+    char *name;
+
+    /** Initialization handler */
+    void (*init)(void *p_netstk, e_nsErr_t *p_err);
+
+    /** Turn the driver on */
+    void (*on)(e_nsErr_t *p_err);
+
+    /** Turn the driver off */
+    void (*off)(e_nsErr_t *p_err);
+
+    /** Data transmission handler */
+    void (*send)(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
+
+    /** Data reception handler */
+    void (*recv)(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
+
+    /** IO control */
+    void (*ioctrl)(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
+
+    /** Prepare the radio with a packet to be sent. */
+    void (* prepare)(uint8_t *payload, uint16_t payload_len, e_nsErr_t *p_err);
+
+    /** Send the packet that has previously been prepared. */
+    void (* transmit)(e_nsErr_t *p_err);
+
+    /** Read a received packet into a buffer. */
+    uint16_t (* read)(uint8_t *buf, uint16_t buf_len);
 };
 
 
@@ -556,7 +591,7 @@ typedef s_nsModuleDrv_t s_nsMAC_t;
 typedef s_nsModuleDrv_t s_nsPHY_t;
 
 /** Radio driver forward declaration */
-typedef s_nsModuleDrv_t s_nsRF_t;
+typedef s_nsRadioDrv_t s_nsRF_t;
 
 
 /**
