@@ -911,7 +911,6 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
       /* initialize HW int */
       IntRegister(INT_RFC_HW_COMB, &RFC_hw_Isr);
       IntEnable(INT_RFC_HW_COMB);
-     // MB_RegisterIsrCback(RF_HW_INTERRUPT, &RFC_hw_Isr);
       MB_EnableHWInts(IRQ_HW_SYN_WORD);
 
 #endif
