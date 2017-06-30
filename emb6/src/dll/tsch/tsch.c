@@ -710,9 +710,7 @@ static void tsch_scan(void *ptr)
     if(is_packet_pending) {
       /* Read packet */
       //input_eb.len = NETSTACK_RADIO.read(input_eb.payload, TSCH_PACKET_MAX_LEN);
-        pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_RX_BUFF_LENGTH_SET, &max_pkt_len, &err);
-        pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_P_RX_BUFF_SET, (void *)input_eb.payload, &err);
-        pmac_netstk->phy->ioctrl(NETSTK_CMD_RX_BUF_READ, &input_eb.len, &err);
+      input_eb.len = (int) pmac_netstk->rf->read(input_eb.payload, (uint16_t) TSCH_PACKET_MAX_LEN);
       /* Save packet timestamp */
       //NETSTACK_RADIO.get_object(RADIO_PARAM_LAST_PACKET_TIMESTAMP, &t0, sizeof(rtimer_clock_t));
       /* FIXME check convertion ... */
