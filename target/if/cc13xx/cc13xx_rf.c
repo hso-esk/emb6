@@ -418,7 +418,7 @@ static void cc13xx_Ioctl (e_nsIocCmd_t    cmd,
     break;
     case NETSTK_CMD_RF_CHAN_NUM_SET:
         /* set the desired channel */
-        if(1)// sf_rf_6lowpan_chanNumSet(*(uint8_t*)p_val))
+        if(sf_rf_6lowpan_chanNumSet(*(uint8_t*)p_val))
             *p_err = NETSTK_ERR_NONE;
         else
             *p_err = NETSTK_ERR_INVALID_ARGUMENT;
