@@ -412,7 +412,6 @@ tsch_radio_on(enum tsch_radio_state_on_cmd command)
     break;
   }
   if(do_it) {
-    //NETSTACK_RADIO.on();
 	  e_nsErr_t err = NETSTK_ERR_NONE;
 	  pmac_netstk->phy->on(&err);
 
@@ -446,7 +445,6 @@ tsch_radio_off(enum tsch_radio_state_off_cmd command)
     break;
   }
   if(do_it) {
-    //NETSTACK_RADIO.off();
 	  e_nsErr_t err = NETSTK_ERR_NONE;
 	  pmac_netstk->phy->off(&err);
   }
@@ -536,7 +534,6 @@ static void tsch_tx_slot(struct rtimer *t)
 #if CCA_ENABLED
         cca_status = 1;
         /* delay before CCA */
-        //TSCH_SCHEDULE_AND_YIELD(t, current_slot_start, TS_CCA_OFFSET, "cca");
         BUSYWAIT_UNTIL_ABS(0, current_slot_start, tsch_timing[tsch_ts_cca_offset]);
         TSCH_DEBUG_TX_EVENT();
         tsch_radio_on(TSCH_RADIO_CMD_ON_WITHIN_TIMESLOT);
@@ -545,14 +542,12 @@ static void tsch_tx_slot(struct rtimer *t)
                            current_slot_start, tsch_timing[tsch_ts_cca_offset] + tsch_timing[tsch_ts_cca]);
         TSCH_DEBUG_TX_EVENT();
         /* there is not enough time to turn radio off */
-        /*  NETSTACK_RADIO.off(); */
         if(cca_status == 0) {
           mac_tx_status = MAC_TX_COLLISION;
         } else
 #endif /* CCA_ENABLED */
         {
           /* delay before TX */
-          //TSCH_SCHEDULE_AND_YIELD(t, current_slot_start, tsch_timing[tsch_ts_tx_offset] - RADIO_DELAY_BEFORE_TX, "TxBeforeTx");
           BUSYWAIT_UNTIL_ABS(0, current_slot_start, tsch_timing[tsch_ts_tx_offset] - RADIO_DELAY_BEFORE_TX);
           TSCH_DEBUG_TX_EVENT();
 
@@ -589,14 +584,10 @@ static void tsch_tx_slot(struct rtimer *t)
               NETSTACK_RADIO.set_value(RADIO_PARAM_RX_MODE, radio_rx_mode & (~RADIO_RX_MODE_ADDRESS_FILTER));
 #endif /* TSCH_HW_FRAME_FILTERING */
               /* Unicast: wait for ack after tx: sleep until ack time */
-              //TSCH_SCHEDULE_AND_YIELD(t, current_slot_start,
-              //    tsch_timing[tsch_ts_tx_offset] + tx_duration + tsch_timing[tsch_ts_rx_ack_delay] - RADIO_DELAY_BEFORE_RX, "TxBeforeAck");
-              BUSYWAIT_UNTIL_ABS(0, current_slot_start, tsch_timing[tsch_ts_tx_offset] + tx_duration + tsch_timing[tsch_ts_rx_ack_delay] - RADIO_DELAY_BEFORE_RX);
               TSCH_DEBUG_TX_EVENT();
               tsch_radio_on(TSCH_RADIO_CMD_ON_WITHIN_TIMESLOT);
               /* Wait for ACK to come */
-              BUSYWAIT_UNTIL_ABS(tsch_receiving_packet(),
-                  tx_start_time, tx_duration + tsch_timing[tsch_ts_rx_ack_delay] + tsch_timing[tsch_ts_ack_wait] + RADIO_DELAY_BEFORE_DETECT);
+              BUSYWAIT_UNTIL_ABS(tsch_receiving_packet(), tx_start_time, tx_duration + tsch_timing[tsch_ts_rx_ack_delay] + tsch_timing[tsch_ts_ack_wait] + RADIO_DELAY_BEFORE_DETECT);
               TSCH_DEBUG_TX_EVENT();
 
               ack_start_time = RTIMER_NOW() - RADIO_DELAY_BEFORE_DETECT;
@@ -709,8 +700,6 @@ static void tsch_tx_slot(struct rtimer *t)
     );
 
     /* Poll process for later processing of packet sent events and logs */
-    //process_poll(&tsch_pending_events_process);
-    /* TODO verify this because we are in interrupt context  */
     tsch_pending_events_process_start_asap();
   }
 
@@ -759,7 +748,6 @@ static void tsch_rx_slot(struct rtimer *t)
     current_input = &input_array[input_index];
 
     /* Wait before starting to listen */
-   // TSCH_SCHEDULE_AND_YIELD(t, current_slot_start, tsch_timing[tsch_ts_rx_offset] - RADIO_DELAY_BEFORE_RX, "RxBeforeListen");
     BUSYWAIT_UNTIL_ABS(0, current_slot_start, tsch_timing[tsch_ts_rx_offset] - RADIO_DELAY_BEFORE_RX);
     TSCH_DEBUG_RX_EVENT();
 
@@ -807,8 +795,6 @@ static void tsch_rx_slot(struct rtimer *t)
 
 #if TSCH_RESYNC_WITH_SFD_TIMESTAMPS
         /* At the end of the reception, get an more accurate estimate of SFD arrival time */
-        //NETSTACK_RADIO.get_object(RADIO_PARAM_LAST_PACKET_TIMESTAMP, &rx_start_time, sizeof(rtimer_clock_t));
-        /* FIXME check convertion ... */
         pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_TIMESTAMP_GET, &rx_start_time, &err);
 #endif
 
@@ -879,8 +865,6 @@ static void tsch_rx_slot(struct rtimer *t)
                 pmac_netstk->rf->prepare((uint8_t *) ack_buf, (uint16_t) ack_len, &err);
 
                 /* Wait for time to ACK and transmit ACK */
-               // TSCH_SCHEDULE_AND_YIELD(t, rx_start_time,
-                //                        packet_duration + tsch_timing[tsch_ts_tx_ack_delay] - RADIO_DELAY_BEFORE_TX, "RxBeforeAck");
                 BUSYWAIT_UNTIL_ABS(0, rx_start_time, packet_duration + tsch_timing[tsch_ts_tx_ack_delay] - RADIO_DELAY_BEFORE_TX);
                 TSCH_DEBUG_RX_EVENT();
                 pmac_netstk->rf->transmit(&err);
@@ -918,8 +902,6 @@ static void tsch_rx_slot(struct rtimer *t)
           }
 
           /* Poll process for processing of pending input and logs */
-          //process_poll(&tsch_pending_events_process);
-          /* TODO verify this because we are in interrupt context  */
           tsch_pending_events_process_start_asap();
         }
       }
