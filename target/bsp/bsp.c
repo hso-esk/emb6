@@ -240,6 +240,11 @@ int8_t bsp_init (s_ns_t * ps_ns)
   /* initialize local variables */
   bsp_numNestedCriticalSection = 0;
 
+  /* Initialize rtimer module if supported*/
+#if (HAL_SUPPORT_RTIMER == TRUE)
+bsp_rtimer_init();
+#endif
+
   /* Normal exit*/
   return 0;
 }/* bsp_init() */
@@ -703,3 +708,15 @@ int8_t bsp_rtcGetTime( en_hal_rtc_t *p_rtc )
   return hal_rtcGetTime(p_rtc);
 }
 #endif /* #if defined(HAL_SUPPORT_RTC) */
+
+#if (HAL_SUPPORT_RTIMER == TRUE)
+/*---------------------------------------------------------------------------*/
+/*
+* bsp_rtimer_init()
+*/
+void bsp_rtimer_init()
+{
+  hal_rtimer_init();
+}
+
+#endif /* #if defined(HAL_SUPPORT_RTIMER) */

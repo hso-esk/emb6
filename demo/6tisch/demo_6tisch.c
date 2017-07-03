@@ -46,9 +46,7 @@
 #include "orchestra.h"
 #endif /* WITH_ORCHESTRA */
 
-#if SUPPORT_RTIMER
-#include "rtimer.h"
-#else
+#if (HAL_SUPPORT_RTIMER != TRUE)
 #error 6tisch does not work without rtimer module
 #endif
 
@@ -219,7 +217,6 @@ int8_t demo_6tischConf(s_ns_t *p_netstk)
 */
 int8_t demo_6tischInit(void)
 {
-	rtimer_init();
 	  /* 3 possible roles:
 	   * - role_6ln: simple node, will join any network, secured or not
 	   * - role_6dr: DAG root, will advertise (unsecured) beacons

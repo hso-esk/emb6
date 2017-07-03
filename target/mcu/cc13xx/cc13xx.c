@@ -45,7 +45,9 @@
 #include "bsp/srf06eb_cc26xx/drivers/source/bsp_led.h"
 #endif
 
-
+#if (HAL_SUPPORT_RTIMER == TRUE)
+#include "rtimer_arch.h"
+#endif
 /*! Enable or disable logging. */
 #define     LOGGER_ENABLE        LOGGER_HAL
 #include    "logger.h"
@@ -681,3 +683,17 @@ int8_t hal_debugInit( void )
 } /* hal_debugInit() */
 
 /*! @} 6lowpan_mcu */
+
+#if (HAL_SUPPORT_RTIMER == TRUE)
+/*---------------------------------------------------------------------------*/
+/*
+* hal_rtimer_init()
+*
+* \brief   initialize rtimer module
+*
+*/
+void hal_rtimer_init()
+{
+ rtimer_init();
+}
+#endif /* #if defined(HAL_SUPPORT_RTIMER) */

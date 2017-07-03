@@ -797,4 +797,17 @@ int8_t hal_rtcSetTime( en_hal_rtc_t *p_rtc );
 int8_t hal_rtcGetTime( en_hal_rtc_t *p_rtc );
 #endif /* #if defined(HAL_SUPPORT_RTC) */
 
+
+
+#if (HAL_SUPPORT_RTIMER == TRUE)
+/*---------------------------------------------------------------------------*/
+/*
+* hal_rtimer_init()
+*
+* \brief   initialize rtimer module
+*
+*/
+void hal_rtimer_init();
+#endif /* #if defined(HAL_SUPPORT_RTIMER) */
+
 #endif /* __HAL_H__ */

@@ -599,5 +599,16 @@ int8_t bsp_rtcSetTime( en_hal_rtc_t *p_rtc );
 int8_t bsp_rtcGetTime( en_hal_rtc_t *p_rtc );
 #endif /* #if defined(HAL_SUPPORT_RTC) */
 
+#if (HAL_SUPPORT_RTIMER == TRUE)
+/*---------------------------------------------------------------------------*/
+/*
+* bsp_rtimer_init()
+*
+* \brief   initialize rtimer module
+*
+*/
+void bsp_rtimer_init();
+#endif /* #if defined(HAL_SUPPORT_RTIMER) */
+
 #endif /* __BSP_H__ */
 

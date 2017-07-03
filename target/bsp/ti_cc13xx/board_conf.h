@@ -89,8 +89,8 @@
 /* --------------------------------------------------------------------- */
 /* TSCH related defines */
 
-#ifndef SUPPORT_RTIMER
-#define SUPPORT_RTIMER                      TRUE
+#ifndef HAL_SUPPORT_RTIMER
+#define HAL_SUPPORT_RTIMER                      TRUE
 #endif /* #ifndef SUPPORT_RTIMER */
 
 /* Delay between GO signal and SFD */
