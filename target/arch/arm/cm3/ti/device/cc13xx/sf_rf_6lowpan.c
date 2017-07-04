@@ -284,7 +284,7 @@ uint8_t receiving_packet(void)
    return 0;
  }
 
- uint8_t sf_rf_read_frame()
+ uint16_t sf_rf_read_frame()
 {
 	 volatile rfc_dataEntryGeneral_t *entry = cc1310.rx.p_currentDataEntry;
 	 uint8_t finish = 0;
@@ -315,7 +315,7 @@ uint8_t receiving_packet(void)
 
 
 	    if(cc1310.rx.LenLastPkt > 0) {
-	      if(cc1310.rx.LenLastPkt <= cc1310.rx.max_len_appBuff) {
+	      if(cc1310.rx.LenLastPkt <= cc1310.rx.max_len_appBuff + PHY_HEADER_LEN ) {
 	        memcpy(cc1310.rx.p_appBuff, cc1310.rx.p_lastPkt + PHY_HEADER_LEN , cc1310.rx.LenLastPkt - PHY_HEADER_LEN );
 	      }
 

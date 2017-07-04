@@ -274,6 +274,6 @@ void    set_polling_mode(void);
 uint8_t is_polling_mode(void);
 uint8_t receiving_packet(void);
 uint8_t pending_packet(void);
-uint8_t sf_rf_read_frame();
+uint16_t sf_rf_read_frame();
 
 #endif /* __SF_RF_6LOWPAN_H__ */
