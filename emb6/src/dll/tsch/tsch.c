@@ -907,7 +907,6 @@ tsch_init(void *p_netstk, e_nsErr_t *p_err)
  // radio_rx_mode &= ~RADIO_RX_MODE_AUTOACK;
   /* Set radio in poll mode */
   radio_rx_mode |= 0x04; //RADIO_RX_MODE_POLL_MODE;
-  //if(NETSTACK_RADIO.set_value(RADIO_PARAM_RX_MODE, radio_rx_mode) != RADIO_RESULT_OK) {
   pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_OP_MODE_SET, &radio_rx_mode, p_err);
   if(*p_err != NETSTK_ERR_NONE) {
     printf("TSCH:! radio does not support setting required RADIO_PARAM_RX_MODE. Abort init.\n");
@@ -929,15 +928,12 @@ tsch_init(void *p_netstk, e_nsErr_t *p_err)
   }
 #endif
   /* Test setting channel */
-  //if(NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, TSCH_DEFAULT_HOPPING_SEQUENCE[0]) != RADIO_RESULT_OK) {
   pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_CHAN_NUM_SET, &TSCH_DEFAULT_HOPPING_SEQUENCE[0], p_err);
   if(*p_err != NETSTK_ERR_NONE) {
     printf("TSCH:! radio does not support setting channel. Abort init.\n");
     return;
   }
   /* Test getting timestamp */
-  //if(NETSTACK_RADIO.get_object(RADIO_PARAM_LAST_PACKET_TIMESTAMP, &t, sizeof(rtimer_clock_t)) != RADIO_RESULT_OK) {
-      /* FIXME check convertion ... */
     pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_TIMESTAMP_GET, &t, p_err);
     if(*p_err != NETSTK_ERR_NONE) {
     printf("TSCH:! radio does not support getting last packet timestamp. Abort init.\n");
