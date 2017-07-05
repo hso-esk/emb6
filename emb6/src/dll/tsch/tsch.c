@@ -861,7 +861,7 @@ static void
 tsch_init(void *p_netstk, e_nsErr_t *p_err)
 {
 
-/***<*********************/
+rtimer_clock_t t;
 
 #if NETSTK_CFG_ARG_CHK_EN
   if (p_err == NULL) {
@@ -885,21 +885,6 @@ tsch_init(void *p_netstk, e_nsErr_t *p_err)
   memcpy(&uip_lladdr.addr, &mac_phy_config.mac_address, 8);
   linkaddr_set_node_addr((linkaddr_t *) mac_phy_config.mac_address);
 
-/************************>**/
-
-#if IGNORE_ERROR
-  radio_value_t radio_rx_mode;
-  radio_value_t radio_tx_mode;
-#endif
-  rtimer_clock_t t;
-
-#if IGNORE_ERROR
-  /* Radio Rx mode */
-  if(NETSTACK_RADIO.get_value(RADIO_PARAM_RX_MODE, &radio_rx_mode) != RADIO_RESULT_OK) {
-    printf("TSCH:! radio does not support getting RADIO_PARAM_RX_MODE. Abort init.\n");
-    return;
-  }
-#endif
   uint8_t radio_rx_mode = 0;
   /* Disable radio in frame filtering */
   //radio_rx_mode &= ~RADIO_RX_MODE_ADDRESS_FILTER;
@@ -913,20 +898,6 @@ tsch_init(void *p_netstk, e_nsErr_t *p_err)
     return;
   }
 
-
-#if IGNORE_ERROR
-  /* Radio Tx mode */
-  if(NETSTACK_RADIO.get_value(RADIO_PARAM_TX_MODE, &radio_tx_mode) != RADIO_RESULT_OK) {
-    printf("TSCH:! radio does not support getting RADIO_PARAM_TX_MODE. Abort init.\n");
-    return;
-  }
-  /* Unset CCA */
-  radio_tx_mode &= ~RADIO_TX_MODE_SEND_ON_CCA;
-  if(NETSTACK_RADIO.set_value(RADIO_PARAM_TX_MODE, radio_tx_mode) != RADIO_RESULT_OK) {
-    printf("TSCH:! radio does not support setting required RADIO_PARAM_TX_MODE. Abort init.\n");
-    return;
-  }
-#endif
   /* Test setting channel */
   pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_CHAN_NUM_SET, &TSCH_DEFAULT_HOPPING_SEQUENCE[0], p_err);
   if(*p_err != NETSTK_ERR_NONE) {
@@ -956,9 +927,7 @@ tsch_init(void *p_netstk, e_nsErr_t *p_err)
 
 #if TSCH_AUTOSTART
   /* Start TSCH operation.
-   * If TSCH_AUTOSTART is not set, one needs to call NETSTACK_MAC.on() to start TSCH. */
-   //NETSTACK_MAC.on();
-  /* TODO use the pointer to mac driver if we adapted the structure ... */
+   * If TSCH_AUTOSTART is not set, one needs to call tschmac_driver.on() to start TSCH. */
    tschmac_driver.on();
 #endif /* TSCH_AUTOSTART */
 
