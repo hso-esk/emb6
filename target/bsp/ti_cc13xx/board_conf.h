@@ -127,7 +127,7 @@
 #ifndef TSCH_CONF_BASE_DRIFT_PPM
 /* The drift compared to "true" 10ms slots.
  * Enable adaptive sync to enable compensation for this. */
-#define TSCH_CONF_BASE_DRIFT_PPM -977
+#define TSCH_CONF_BASE_DRIFT_PPM  0 // -977
 #endif
 
 /* 10 times per second */
@@ -138,7 +138,7 @@
 /* Slightly reduce the TSCH guard time (from 2200 usec to 1800 usec) to make sure
  * the CC26xx radio has sufficient time to start up. */
 #ifndef TSCH_CONF_RX_WAIT
-#define TSCH_CONF_RX_WAIT 1800
+#define TSCH_CONF_RX_WAIT  5800
 #endif
 
 #define CCA_ENABLED   0

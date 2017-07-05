@@ -151,15 +151,15 @@
 
 #define TSCH_DEFAULT_TS_CCA_OFFSET         1800
 #define TSCH_DEFAULT_TS_CCA                128
-#define TSCH_DEFAULT_TS_TX_OFFSET          52000
+#define TSCH_DEFAULT_TS_TX_OFFSET          10000       // 52000
 #define TSCH_DEFAULT_TS_RX_OFFSET          (TSCH_DEFAULT_TS_TX_OFFSET - (TSCH_CONF_RX_WAIT / 2))
 #define TSCH_DEFAULT_TS_RX_ACK_DELAY       58600
 #define TSCH_DEFAULT_TS_TX_ACK_DELAY       59000
 #define TSCH_DEFAULT_TS_RX_WAIT            TSCH_CONF_RX_WAIT
-#define TSCH_DEFAULT_TS_ACK_WAIT           800
+#define TSCH_DEFAULT_TS_ACK_WAIT           2800        // 800
 #define TSCH_DEFAULT_TS_RX_TX              2072
-#define TSCH_DEFAULT_TS_MAX_ACK            2400
-#define TSCH_DEFAULT_TS_MAX_TX             4256
+#define TSCH_DEFAULT_TS_MAX_ACK            20000       // 2400
+#define TSCH_DEFAULT_TS_MAX_TX             20000       // 4256
 #define TSCH_DEFAULT_TS_TIMESLOT_LENGTH    65000
 
 #else
