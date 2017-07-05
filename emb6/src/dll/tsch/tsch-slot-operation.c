@@ -584,6 +584,8 @@ static void tsch_tx_slot(struct rtimer *t)
               NETSTACK_RADIO.set_value(RADIO_PARAM_RX_MODE, radio_rx_mode & (~RADIO_RX_MODE_ADDRESS_FILTER));
 #endif /* TSCH_HW_FRAME_FILTERING */
               /* Unicast: wait for ack after tx: sleep until ack time */
+              tsch_radio_on(TSCH_RADIO_CMD_ON_FORCE);
+              BUSYWAIT_UNTIL_ABS(0, current_slot_start, tsch_timing[tsch_ts_tx_offset] + tx_duration + tsch_timing[tsch_ts_rx_ack_delay] - RADIO_DELAY_BEFORE_RX);
               TSCH_DEBUG_TX_EVENT();
               tsch_radio_on(TSCH_RADIO_CMD_ON_WITHIN_TIMESLOT);
               /* Wait for ACK to come */
@@ -592,8 +594,7 @@ static void tsch_tx_slot(struct rtimer *t)
 
               ack_start_time = RTIMER_NOW() - RADIO_DELAY_BEFORE_DETECT;
               /* Wait for ACK to finish */
-              BUSYWAIT_UNTIL_ABS(!tsch_receiving_packet(),
-                                 ack_start_time, tsch_timing[tsch_ts_max_ack]);
+              BUSYWAIT_UNTIL_ABS(!tsch_receiving_packet(), ack_start_time, tsch_timing[tsch_ts_max_ack]);
               TSCH_DEBUG_TX_EVENT();
               tsch_radio_off(TSCH_RADIO_CMD_OFF_WITHIN_TIMESLOT);
 
