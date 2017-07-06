@@ -42,12 +42,12 @@
 #include <driverlib/ioc.h>
 #include <xdc/runtime/System.h>
 #else
-#include "bsp/srf06eb_cc26xx/drivers/source/bsp_led.h"
-#endif
-
 #if (HAL_SUPPORT_RTIMER == TRUE)
 #include "rtimer_arch.h"
 #endif
+#include "bsp/srf06eb_cc26xx/drivers/source/bsp_led.h"
+#endif
+
 /*! Enable or disable logging. */
 #define     LOGGER_ENABLE        LOGGER_HAL
 #include    "logger.h"
@@ -694,6 +694,8 @@ int8_t hal_debugInit( void )
 */
 void hal_rtimer_init()
 {
+#if !USE_TI_RTOS
  rtimer_init();
+#endif
 }
 #endif /* #if defined(HAL_SUPPORT_RTIMER) */

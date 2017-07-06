@@ -45,7 +45,6 @@ extern "C" {
 #include "bsp.h"
 #include "framer_802154_ll.h"
 #include "phy_framer_802154.h"
-#include "rtimer.h"
 
 #if USE_TI_RTOS
 #include <ti/drivers/rf/RF.h>
@@ -61,6 +60,7 @@ extern "C" {
 #else
 /* BoardSupportPacket */
 #include "bsp/srf06eb_cc26xx/drivers/source/bsp.h"
+#include "rtimer.h"
 #endif
 /*==============================================================================
                             DEFINES
@@ -175,7 +175,7 @@ uint8_t sf_rf_6lowpan_prepare_pkt(uint8_t *payload, uint16_t payload_len)
   sf_rf_init_tx(cc1310.tx.p_cmdPropTxAdv->pPkt, cc1310.tx.p_cmdPropTxAdv->pktLen);
   return 1;
 }
-
+#if !USE_TI_RTOS
 uint8_t tx_cmd_done = 0;
 static void tx_cmd_done_cb(uint32_t l_flag)
 {
@@ -184,6 +184,8 @@ static void tx_cmd_done_cb(uint32_t l_flag)
 	  tx_cmd_done = 1;
   }
 }
+#endif
+
 uint8_t sf_rf_transmit(void)
 {
 #if USE_TI_RTOS
@@ -195,8 +197,9 @@ uint8_t sf_rf_transmit(void)
   /* check if transceiver is not is sleepy mode */
   if( sf_rf_get_Status() == RF_STATUS_SLEEP )
     return 0;
-
+#if !USE_TI_RTOS
   tx_cmd_done = 0;
+#endif
   /* reset the rx flag */
   cc1310.rx.is_receiving = 0;
 
@@ -741,6 +744,7 @@ static bool rf_driver_init(void)
 #endif
 }
 
+#if !USE_TI_RTOS
 #define IRQN_HW_SYN_WORD           5
 #define IRQ_HW_SYN_WORD           (1U << IRQN_HW_SYN_WORD)
 uint32_t temp_timestamp;
@@ -763,6 +767,7 @@ void RFC_hw_Isr(void)
 
 
 }
+#endif
 
 static void rx_call_back(uint32_t l_flag)
 {
@@ -771,7 +776,9 @@ static void rx_call_back(uint32_t l_flag)
 
   if(IRQ_RX_OK == (l_flag & IRQ_RX_OK))
   {
+#if !USE_TI_RTOS
 	  cc1310.rx.timeStamp = temp_timestamp;
+#endif
 #if CC13XX_RX_LED_ENABLED
          bsp_led( HAL_LED3, EN_BSP_LED_OP_BLINK );
 #endif /* #if CC13XX_RX_LED_ENABLED */
