@@ -121,11 +121,11 @@
 
 
 /** minimum packet length is equal to size of sequence number (4 bytes) */
-#define DEMO_UDP_PKT_LEN_MIN            (  4u )
+#define DEMO_UDP_PKT_LEN_MIN            (  4u ) // 80u to test fragmentation (threshold ~ 84 bytes )
 
 #ifndef DEMO_UDP_PKT_LEN_MAX
 /** maximum packet length */
-#define DEMO_UDP_PKT_LEN_MAX            ( 40u )
+#define DEMO_UDP_PKT_LEN_MAX            ( 40u ) // 90u to test fragmentation (threshold ~ 84 bytes )
 #endif /* #ifndef DEMO_UDP_PKT_LEN_MAX */
 
 
