@@ -73,6 +73,9 @@
 #include "em_usart.h"
 #include "em_timer.h"
 #include "gpiointerrupt.h"
+#if (HAL_SUPPORT_MCU_SLEEP == TRUE)
+#include "sleep.h"
+#endif /* #if (HAL_SUPPORT_MCU_SLEEP == TRUE) */
 #include "rt_tmr.h"
 
 
@@ -218,7 +221,7 @@ static s_hal_gpio_pin_t s_hal_gpio[EN_HAL_PIN_MAX] = {
   {EFM32_IO_PORT_RF_CTRL_1, EFM32_IO_PIN_RF_CTRL_1, EFM32_IO_PINMODE_RF_CTRL_1, 1, NULL}, /* RF CTRL 1 */
 #endif /* #if defined(HAL_SUPPORT_RFCTRL1) */
 #if defined(HAL_SUPPORT_RFCTRL2)
-  {EFM32_IO_PORT_RF_CTRL_2, EFM32_IO_PIN_RF_CTRL_2, EFM32_IO_PINMODE_RF_CTRL_2, 0, NULL}, /* RF CTRL 2 */
+  {EFM32_IO_PORT_RF_CTRL_2, EFM32_IO_PIN_RF_CTRL_2, EFM32_IO_PINMODE_RF_CTRL_2, 1, NULL}, /* RF CTRL 2 DO NOT CHANGE !!! */
 #endif /* #if defined(HAL_SUPPORT_RFCTRL2) */
 
 #if defined(HAL_SUPPORT_RFCTRL3) || defined(HAL_SUPPORT_RFCTRL4) || defined(HAL_SUPPORT_RFCTRL5)
@@ -259,6 +262,14 @@ static s_hal_uart_t s_hal_uart = {
 static s_hal_irq s_hal_irqs[EN_HAL_PERIPHIRQ_MAX];
 
 
+#if (HAL_SUPPORT_MCU_SLEEP == TRUE)
+/** low-power timer ID */
+static RTCDRV_TimerID_t s_hal_lowpowerTimerId;
+/** sleep duration in ticks */
+static uint32_t l_hal_sleepDuration;
+#endif
+
+
 /*
  *  --- Local Function Prototypes ------------------------------------------ *
  */
@@ -282,6 +293,15 @@ static void _hal_uartInit( s_hal_uart_t* p_uart );
 
 /* Common callback for external interrupts */
 static void _hal_extiCb( uint8_t pin );
+
+#if (HAL_SUPPORT_MCU_SLEEP == TRUE)
+/* callback for real-time clock used in low-power mode */
+static void _hal_rtcCallback(RTCDRV_TimerID_t id, void *p_data);
+/* callback function to be called as MCU is about to enter sleep mode */
+static void _hal_sleepCb(SLEEP_EnergyMode_t mode);
+/* callback function to be called as MCU just exits from sleep mode */
+static void _hal_wakeupCb(SLEEP_EnergyMode_t mode);
+#endif /* #if (HAL_SUPPORT_MCU_SLEEP == TRUE) */
 
 
 /*
@@ -455,6 +475,45 @@ static void _hal_extiCb( uint8_t pin )
   }
 }
 
+#if (HAL_SUPPORT_MCU_SLEEP == TRUE)
+/**
+ * \brief   callback for real-time clock used in low-power mode
+ *
+ *          This function is currently used for debugging purpose only
+ */
+static void _hal_rtcCallback(RTCDRV_TimerID_t id, void *p_data)
+{
+
+}
+
+
+/**
+ * \brief   callback function to be called as MCU is about to enter sleep mode
+ */
+static void _hal_sleepCb(SLEEP_EnergyMode_t mode)
+{
+  /* turn peripherals off */
+  RTCDRV_StartTimer(s_hal_lowpowerTimerId, rtcdrvTimerTypeOneshot,
+      l_hal_sleepDuration, _hal_rtcCallback, NULL);
+}
+
+
+/**
+ * \brief   callback function to be called as MCU just exits from sleep mode
+ */
+static void _hal_wakeupCb(SLEEP_EnergyMode_t mode)
+{
+  uint32_t timeRemain = 0;
+
+  /* compute the actual sleep duration */
+  RTCDRV_TimeRemaining(s_hal_lowpowerTimerId, &timeRemain);
+  l_hal_sleepDuration -= timeRemain;
+
+  /* force wake-up timer to stop */
+  RTCDRV_StopTimer(s_hal_lowpowerTimerId);
+}
+#endif /* #if (HAL_SUPPORT_MCU_SLEEP == TRUE) */
+
 
 /**
  * \brief   Timer1 interrupt handler.
@@ -514,6 +573,16 @@ int8_t hal_init (void)
 
   /* initialize SysTicks */
   _hal_tcInit();
+
+#if (HAL_SUPPORT_MCU_SLEEP == TRUE)
+  /* initialize RTC driver. */
+  SLEEP_Init(_hal_sleepCb, _hal_wakeupCb);
+  SLEEP_SleepBlockBegin(sleepEM3);
+
+  /* initialize low-power RTC driver. */
+  RTCDRV_Init();
+  RTCDRV_AllocateTimer(&s_hal_lowpowerTimerId);
+#endif /* #if (HAL_SUPPORT_MCU_SLEEP == TRUE) */
 
   /* initialize external interrupts */
   GPIOINT_Init();
@@ -1048,4 +1117,38 @@ int8_t hal_debugInit( void )
 #endif /* #if (LOGGER_LEVEL > 0) && (HAL_SUPPORT_SLIPUART == FALSE) */
   return 0;
 }
+
+#if (HAL_SUPPORT_MCU_SLEEP == TRUE)
+/*---------------------------------------------------------------------------*/
+/*
+* hal_sleepDuration()
+*/
+clock_time_t hal_sleepDuration( void )
+{
+  return l_hal_sleepDuration;
+} /* hal_sleepDuration() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_sleepEnter()
+*/
+int8_t hal_sleepEnter( uint32_t duration )
+{
+  l_hal_sleepDuration = duration;
+  SLEEP_Sleep();
+  return 0;
+} /* hal_sleepEnter() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_adjustTick()
+*/
+int8_t hal_adjustTick( uint32_t ticks )
+{
+  l_hal_tick += ticks;
+  return 0;
+} /* hal_adjustTick() */
+#endif /* #if (HAL_SUPPORT_MCU_SLEEP == TRUE) */
 

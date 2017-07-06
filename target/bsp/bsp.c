@@ -720,3 +720,34 @@ void bsp_rtimer_init()
 }
 
 #endif /* #if defined(HAL_SUPPORT_RTIMER) */
+
+#if (HAL_SUPPORT_MCU_SLEEP == TRUE)
+/*---------------------------------------------------------------------------*/
+/*
+* bsp_sleepDuration()
+*/
+clock_time_t bsp_sleepDuration( void )
+{
+  return hal_sleepDuration();
+} /* bsp_sleepDuration() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* bsp_sleepEnter()
+*/
+int8_t bsp_sleepEnter( uint32_t duration )
+{
+  return hal_sleepEnter(duration);
+} /* bsp_sleepEnter() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* bsp_adjustTick()
+*/
+int8_t bsp_adjustTick( clock_time_t ticks )
+{
+  return hal_adjustTick(ticks);
+} /* bsp_adjustTick */
+#endif /* #if (HAL_SUPPORT_MCU_SLEEP == TRUE) */

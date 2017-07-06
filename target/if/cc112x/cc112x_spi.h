@@ -62,5 +62,6 @@ rf_status_t cc112x_spiRxFifoRead(uint8_t *pReadData, uint8_t len);
 
 
 rf_status_t cc112x_spiCmdStrobe(uint8_t cmd);
+rf_status_t cc112x_spiCmdSTX();
 
 #endif /* CC112X_SPI_PRESENT */

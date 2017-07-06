@@ -304,3 +304,18 @@ rf_status_t cc112x_spiCmdStrobe(uint8_t cmd)
 
     return chip_status;
 }
+
+rf_status_t cc112x_spiCmdSTX()
+{
+    rf_status_t chip_status;
+    uint8_t cmd;
+
+    CC112X_SPI_ON();
+    cmd = CC112X_SIDLE;
+    bsp_spiTRx(cc112x_spiHandle, &cmd, &chip_status, 1);
+    cmd = CC112X_STX;
+    bsp_spiTRx(cc112x_spiHandle, &cmd, &chip_status, 1);
+    CC112X_SPI_OFF();
+
+    return chip_status;
+}

@@ -53,7 +53,7 @@
 		<link>
 			<name>ccfg.c</name>
 			<type>1</type>
-			<locationURI>PARENT-8-PROJECT_LOC/ccfg.c</locationURI>
+			<locationURI>PARENT-8-PROJECT_LOC/target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/startup_files/ccfg.c</locationURI>
 		</link>
 		<link>
 			<name>demo</name>

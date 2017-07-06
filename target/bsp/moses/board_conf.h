@@ -190,6 +190,11 @@
 /** LED1 pin index */
 #define EFM32_IO_PIN_LED1                   5
 
+/** Support low-power MCU */
+#ifndef HAL_SUPPORT_MCU_SLEEP
+#define HAL_SUPPORT_MCU_SLEEP               FALSE
+#endif
+
 
 /*
  * --- Stack Macro Definitions ---------------------------------------------- *
@@ -210,6 +215,14 @@
 #if (NETSTK_SUPPORT_SW_MAC_AUTOACK == FALSE)
 #define NETSTK_SUPPORT_SW_RF_AUTOACK        TRUE
 #endif /* #if (NETSTK_SUPPORT_SW_MAC_AUTOACK == FALSE) */
+
+/** Enable low-power management */
+#if !defined(NETSTK_CFG_LPM_ENABLED)
+#define NETSTK_CFG_LPM_ENABLED              FALSE
+/** Set default maximum sleeping duration in milliseconds */
+#define LPM_SLEEP_MAX                       ( 50000u )
+#endif /* #if !defined(NETSTK_CFG_LPM_ENABLED) */
+
 
 /*
  *  --- Global Functions Definition ------------------------------------------*

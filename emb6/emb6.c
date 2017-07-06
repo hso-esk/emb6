@@ -77,6 +77,10 @@
 #include "rpl.h"
 #endif
 
+#if NETSTK_CFG_LPM_ENABLED
+#include "lpm.h"
+#endif
+
 #define LOGGER_ENABLE           LOGGER_CORE
 #include "logger.h"
 
@@ -160,10 +164,10 @@ s_mac_phy_conf_t mac_phy_config = {
     .chan_num = 26,
 
 #if (NETSTK_CFG_WOR_EN == TRUE)
-    /* Length of the preable used for WoR */
+    /* Length of the preamble used for WoR */
     .preamble_len = 24,
 #else
-    /* Default preambel length */
+    /* Default preamble length */
     .preamble_len = 4,
 #endif /* #if (NETSTK_CFG_WOR_EN == TRUE) */
 
@@ -203,6 +207,48 @@ static void loc_set_status( e_stack_status_t status );
 /** Called by the stack in case new data was available from the RX interface.
  * For further details have a look at the function definitions. */
 static void loc_event_callback( c_event_t ev, p_data_t data );
+
+#if (NETSTK_CFG_LPM_ENABLED == TRUE)
+static int32_t loc_stackIdle(void)
+{
+    e_nsErr_t err;
+    uint8_t isStackBusy = FALSE;
+    uint8_t isNetstkBusy = FALSE;
+    en_evprocResCode_t evprocState = E_QUEUE_EMPTY;
+    clock_time_t nextTimerEvent = 0;
+    int32_t ret = LPM_MOD_BUSY;
+
+    /* check if the netstack is busy
+     * the netstack submodule should first check if it is busy.
+     * If yes, the submodule should declare the stack is busy.
+     * If not, the submodule shall forward the command to the next lower layer. */
+    ps_stack->dllc->ioctrl(NETSTK_CMD_IS_BUSY, &isNetstkBusy, &err);
+
+    /* check if there is any pending event to be processed */
+    evprocState = evproc_nextEvent();
+
+    /* check if the stack is busy */
+    isStackBusy = (isNetstkBusy == TRUE) ||
+                  (evprocState != E_QUEUE_EMPTY);
+
+    /* enter sleep if the stack is not busy */
+    if (isStackBusy == FALSE) {
+        /* obtain next timer event to determine sleep duration */
+        nextTimerEvent = etimer_nextEvent();
+        if (nextTimerEvent == TMR_NOT_ACTIVE) {
+            ret = LPM_MOD_IDLE;
+            TRACE_LOG_ERR("LPM should never come here");
+        }
+        else {
+            /* compute sleeping time */
+            nextTimerEvent -= bsp_getTick();
+            ret = nextTimerEvent;
+        }
+    }
+    return ret;
+}
+#endif /* #if (NETSTK_CFG_LPM_ENABLED == TRUE) */
+
 
 /*
  *  --- Local Functions ---------------------------------------------------- *
@@ -502,6 +548,14 @@ void emb6_init( s_ns_t* ps_ns, s_demo_t* ps_demos, e_nsErr_t* p_err )
         ps_stack = ps_nsTmp;
     }
 
+#if (NETSTK_CFG_LPM_ENABLED == TRUE)
+    /* initialize Low-Power-Management */
+    lpm_init();
+
+    /* register low-power management callback for the stack */
+    lpm_register(loc_stackIdle);
+#endif /* #if (NETSTK_CFG_LPM_ENABLED == TRUE) */
+
     /* initialize demo applications */
     ret = loc_demoInit( ps_dmsTmp );
     if( ret != 0 )
@@ -553,6 +607,11 @@ void emb6_process( int32_t us_delay )
           evproc_nextEvent();
           etimer_request_poll();
           bsp_delayUs(delay);
+
+#if (NETSTK_CFG_LPM_ENABLED == TRUE)
+          /* low power manager handler entry */
+          lpm_entry();
+#endif /* #if (NETSTK_CFG_LPM_ENABLED == TRUE) */
 
 #if UIP_CONF_IPV6_RPL
 #if EMB6_INIT_ROOT==TRUE
