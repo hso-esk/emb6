@@ -46,7 +46,7 @@
 #include "orchestra.h"
 #endif /* WITH_ORCHESTRA */
 
-#if (HAL_SUPPORT_RTIMER != TRUE)
+#if (HAL_SUPPORT_RTIMER != TRUE || HAL_USE_RTIMER != TRUE)
 #error 6tisch does not work without rtimer module
 #endif
 

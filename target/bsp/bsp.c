@@ -241,7 +241,7 @@ int8_t bsp_init (s_ns_t * ps_ns)
   bsp_numNestedCriticalSection = 0;
 
   /* Initialize rtimer module if supported*/
-#if (HAL_SUPPORT_RTIMER == TRUE)
+#if (HAL_SUPPORT_RTIMER == TRUE && HAL_USE_RTIMER == TRUE)
 bsp_rtimer_init();
 #endif
 
@@ -709,7 +709,7 @@ int8_t bsp_rtcGetTime( en_hal_rtc_t *p_rtc )
 }
 #endif /* #if defined(HAL_SUPPORT_RTC) */
 
-#if (HAL_SUPPORT_RTIMER == TRUE)
+#if (HAL_SUPPORT_RTIMER == TRUE && HAL_USE_RTIMER == TRUE)
 /*---------------------------------------------------------------------------*/
 /*
 * bsp_rtimer_init()
