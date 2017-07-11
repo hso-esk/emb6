@@ -762,7 +762,7 @@ void RFC_hw_Isr(void)
   if(interruptFlags & IRQ_HW_SYN_WORD)
   {
 	  cc1310.rx.is_receiving = 1;
-	  temp_timestamp = (uint32_t) RTIMER_NOW() - (uint32_t) US_TO_RTIMERTICKS(1500);
+	  temp_timestamp = (uint32_t) RTIMER_NOW() - (uint32_t) bsp_us_to_rtimerTiscks(1500);
   }
 
 

@@ -94,12 +94,12 @@
 #endif /* #ifndef SUPPORT_RTIMER */
 
 /* Delay between GO signal and SFD */
-#define RADIO_DELAY_BEFORE_TX ((unsigned)US_TO_RTIMERTICKS(81))
+#define RADIO_DELAY_BEFORE_TX ((unsigned)bsp_us_to_rtimerTiscks(81))
 /* Delay between GO signal and start listening.
  * This value is so small because the radio is constantly on within each timeslot. */
-#define RADIO_DELAY_BEFORE_RX ((unsigned)US_TO_RTIMERTICKS(15))
+#define RADIO_DELAY_BEFORE_RX ((unsigned)bsp_us_to_rtimerTiscks(15))
 /* Delay between the SFD finishes arriving and it is detected in software. */
-#define RADIO_DELAY_BEFORE_DETECT ((unsigned)US_TO_RTIMERTICKS(352))
+#define RADIO_DELAY_BEFORE_DETECT ((unsigned)bsp_us_to_rtimerTiscks(352))
 
 /* Timer conversion; radio is running at 4 MHz */
 #define RADIO_TIMER_SECOND   4000000u

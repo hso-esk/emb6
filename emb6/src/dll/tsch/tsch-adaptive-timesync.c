@@ -143,14 +143,14 @@ compensate_internal(uint32_t time_delta_usec, int32_t drift_ppm, int32_t *remain
   *remainder = (int32_t)(d - amount * TSCH_DRIFT_UNIT);
 
   amount += *tick_conversion_error;
-  amount_ticks = US_TO_RTIMERTICKS(amount);
-  *tick_conversion_error = amount - RTIMERTICKS_TO_US(amount_ticks);
+  amount_ticks = bsp_us_to_rtimerTiscks(amount);
+  *tick_conversion_error = amount - bsp_rtimerTick_to_us(amount_ticks);
 
-  if(ABS(amount_ticks) > RTIMER_ARCH_SECOND / 128) {
+  if(ABS(amount_ticks) > bsp_rtimer_arch_second() / 128) {
     TSCH_LOG_ADD(tsch_log_message,
         snprintf(log->message, sizeof(log->message),
             "!too big compensation %ld delta %ld", amount_ticks, time_delta_usec));
-    amount_ticks = (amount_ticks > 0 ? RTIMER_ARCH_SECOND : -RTIMER_ARCH_SECOND) / 128;
+    amount_ticks = (amount_ticks > 0 ? bsp_rtimer_arch_second() : -bsp_rtimer_arch_second()) / 128;
   }
 
   return amount_ticks;
@@ -161,7 +161,7 @@ int32_t
 tsch_timesync_adaptive_compensate(rtimer_clock_t time_delta_ticks)
 {
   int32_t result = 0;
-  uint32_t time_delta_usec = RTIMERTICKS_TO_US_64(time_delta_ticks);
+  uint32_t time_delta_usec = bsp_rtimerTick_to_us_64(time_delta_ticks);
 
   /* compensate, but not if the neighbor is not known */
   if(drift_ppm && last_timesource_neighbor != NULL) {

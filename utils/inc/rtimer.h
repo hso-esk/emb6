@@ -134,7 +134,7 @@ void rtimer_run_next(void);
  *
  * \hideinitializer
  */
-#define RTIMER_NOW() rtimer_arch_now()
+#define RTIMER_NOW() bsp_rtimer_arch_now()
 
 /**
  * \brief      Get the time that a task last was executed
@@ -149,7 +149,10 @@ void rtimer_run_next(void);
  */
 #define RTIMER_TIME(task) ((task)->time)
 
-#define RTIMER_SECOND  RTIMER_ARCH_SECOND
+#define RTIMER_SECOND            bsp_rtimer_arch_second()
+#define US_TO_RTIMERTICKS(US)    bsp_us_to_rtimerTiscks(US)
+#define RTIMERTICKS_TO_US(T)     bsp_rtimerTick_to_us(T)
+#define RTIMERTICKS_TO_US_64(T)  bsp_rtimerTick_to_us_64(T)
 
 /* RTIMER_GUARD_TIME is the minimum amount of rtimer ticks between
    the current time and the future time when a rtimer is scheduled.
@@ -158,7 +161,7 @@ void rtimer_run_next(void);
 #ifdef RTIMER_CONF_GUARD_TIME
 #define RTIMER_GUARD_TIME RTIMER_CONF_GUARD_TIME
 #else /* RTIMER_CONF_GUARD_TIME */
-#define RTIMER_GUARD_TIME (RTIMER_ARCH_SECOND >> 14)
+#define RTIMER_GUARD_TIME (bsp_rtimer_arch_second() >> 14)
 #endif /* RTIMER_CONF_GUARD_TIME */
 
 #endif /* RTIMER_H_ */

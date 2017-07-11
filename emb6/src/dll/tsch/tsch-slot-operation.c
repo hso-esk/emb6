@@ -852,7 +852,7 @@ static void tsch_rx_slot(struct rtimer *t)
 
               /* Build ACK frame */
               ack_len = tsch_packet_create_eack(ack_buf, sizeof(ack_buf),
-                  &source_address, frame.seq, (int16_t)RTIMERTICKS_TO_US(estimated_drift), do_nack);
+                  &source_address, frame.seq, (int16_t)bsp_rtimerTick_to_us(estimated_drift), do_nack);
 
               if(ack_len > 0) {
 #if LLSEC802154_ENABLED
