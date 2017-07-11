@@ -422,7 +422,8 @@ typedef struct uip_802154_longaddr
 /** 802.15.4 address */
 typedef uip_802154_longaddr uip_lladdr_t;
 
-
+/* rtimer clock_t*/
+typedef uint32_t rtimer_clock_t;
 
 typedef void (*mac_callback_t)( void *ptr, int status, int transmissions );
 typedef void (*nsTxCbFnct_t)( void *p_arg, e_nsErr_t *p_err );
