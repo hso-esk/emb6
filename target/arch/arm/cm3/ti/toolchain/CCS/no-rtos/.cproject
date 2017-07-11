@@ -858,13 +858,13 @@
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEBUGGING_MODEL.1090325584" name="Debugging model" superClass="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEBUGGING_MODEL" value="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEBUGGING_MODEL.SYMDEBUG__DWARF" valueType="enumerated"/>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEFINE.1757162518" name="Pre-define NAME (--define, -D)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEFINE" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="LOGGER_LEVEL=3"/>
-									<listOptionValue builtIn="false" value="HAL_USE_RTIMER=1"/>
 									<listOptionValue builtIn="false" value="QUEUEBUF_CONF_NUM=4"/>
 									<listOptionValue builtIn="false" value="LOGGER_DEMO_UDP_SOCKET=1"/>
 									<listOptionValue builtIn="false" value="DEMO_USE_UDP_SOCKET=1"/>
 									<listOptionValue builtIn="false" value="DEMO_UDP_SOCKET_ROLE_SERVER=1"/>
 									<listOptionValue builtIn="false" value="FRAME802154_CONF_VERSION=FRAME802154_IEEE802154E_2012"/>
 									<listOptionValue builtIn="false" value="TISCH_ROLE_6DR=1"/>
+									<listOptionValue builtIn="false" value="HAL_USE_RTIMER=1"/>
 									<listOptionValue builtIn="false" value="USE_TI_RTOS=0"/>
 									<listOptionValue builtIn="false" value="LOGGER_DEMO_6TISCH=1"/>
 									<listOptionValue builtIn="false" value="EMB6_INIT_ROOT=1"/>
@@ -994,7 +994,6 @@
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEBUGGING_MODEL.490422898" name="Debugging model" superClass="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEBUGGING_MODEL" value="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEBUGGING_MODEL.SYMDEBUG__DWARF" valueType="enumerated"/>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEFINE.1948381204" name="Pre-define NAME (--define, -D)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEFINE" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="LOGGER_DEMO_6TISCH=1"/>
-									<listOptionValue builtIn="false" value="HAL_USE_RTIMER=1"/>
 									<listOptionValue builtIn="false" value="TSCH_LOG_CONF_LEVEL=2"/>
 									<listOptionValue builtIn="false" value="LOGGER_LEVEL=3"/>
 									<listOptionValue builtIn="false" value="DEMO_UDP_SOCKET_ROLE_CLIENT=1"/>
@@ -1003,6 +1002,7 @@
 									<listOptionValue builtIn="false" value="QUEUEBUF_CONF_NUM=4"/>
 									<listOptionValue builtIn="false" value="FRAME802154_CONF_VERSION=FRAME802154_IEEE802154E_2012"/>
 									<listOptionValue builtIn="false" value="TISCH_ROLE_6LN=1"/>
+									<listOptionValue builtIn="false" value="HAL_USE_RTIMER=1"/>
 									<listOptionValue builtIn="false" value="USE_TI_RTOS=0"/>
 									<listOptionValue builtIn="false" value="EMB6_INIT_ROOT=0"/>
 									<listOptionValue builtIn="false" value="NET_USE_RPL=1"/>
