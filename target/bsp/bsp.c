@@ -721,7 +721,7 @@ void bsp_rtimer_init()
 /*
 * bsp_rtimer_arch_schedule()
 */
-void bsp_rtimer_arch_schedule(rtimer_clock_t t)
+void bsp_rtimer_schedule(rtimer_clock_t t)
 {
  hal_rtimer_arch_schedule(t);
 }

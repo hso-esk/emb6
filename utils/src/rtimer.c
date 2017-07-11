@@ -83,7 +83,7 @@ rtimer_set(struct rtimer *rtimer, rtimer_clock_t time,
   next_rtimer = rtimer;
 
   if(first == 1) {
-    bsp_rtimer_arch_schedule(time);
+    bsp_rtimer_schedule(time);
   }
   return RTIMER_OK;
 }
@@ -99,7 +99,7 @@ rtimer_run_next(void)
   next_rtimer = NULL;
   t->func(t, t->ptr);
   if(next_rtimer != NULL) {
-    bsp_rtimer_arch_schedule(next_rtimer->time);
+    bsp_rtimer_schedule(next_rtimer->time);
   }
   return;
 }

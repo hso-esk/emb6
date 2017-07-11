@@ -618,7 +618,7 @@ void bsp_rtimer_init();
  * \e t is an absolute time, in other words the task will be executed AT
  * time \e t, not IN \e t rtimer ticks.
  */
-void bsp_rtimer_arch_schedule(rtimer_clock_t t);
+void bsp_rtimer_schedule(rtimer_clock_t t);
 /*
  * bsp_rtimer_arch_now()
  * \brief Returns the current real-time clock time
