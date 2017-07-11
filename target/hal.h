@@ -66,6 +66,7 @@
 #include "emb6.h"
 #include "board_conf.h"
 
+
 /*
  * --- Macro Definitions --------------------------------------------------- *
  */
@@ -808,6 +809,19 @@ int8_t hal_rtcGetTime( en_hal_rtc_t *p_rtc );
 *
 */
 void hal_rtimer_init();
+
+void hal_rtimer_arch_schedule(rtimer_clock_t t);
+
+rtimer_clock_t hal_rtimer_arch_now();
+
+rtimer_clock_t hal_rtimer_arch_second();
+
+int32_t hal_us_to_rtimerTiscks(int32_t us);
+
+int32_t hal_rtimerTick_to_us(int32_t ticks);
+
+uint32_t hal_rtimerTick_to_us_64(uint32_t tiscks);
+
 #endif /* #if defined(HAL_SUPPORT_RTIMER) */
 
 #if (HAL_SUPPORT_MCU_SLEEP == TRUE)

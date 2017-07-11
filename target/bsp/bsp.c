@@ -718,6 +718,38 @@ void bsp_rtimer_init()
 {
   hal_rtimer_init();
 }
+/*
+* bsp_rtimer_arch_schedule()
+*/
+void bsp_rtimer_arch_schedule(rtimer_clock_t t)
+{
+ hal_rtimer_arch_schedule(t);
+}
+
+rtimer_clock_t bsp_rtimer_arch_now()
+{
+  return hal_rtimer_arch_now();
+}
+
+rtimer_clock_t bsp_rtimer_arch_second()
+{
+	return hal_rtimer_arch_second();
+}
+
+int32_t bsp_us_to_rtimerTiscks(int32_t us)
+{
+  return hal_us_to_rtimerTiscks(us);
+}
+
+int32_t bsp_rtimerTick_to_us(int32_t ticks)
+{
+  return hal_rtimerTick_to_us(ticks);
+}
+
+uint32_t bsp_rtimerTick_to_us_64(uint32_t ticks)
+{
+  return hal_rtimerTick_to_us_64(ticks);
+}
 
 #endif /* #if defined(HAL_SUPPORT_RTIMER) */
 
