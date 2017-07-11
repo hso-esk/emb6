@@ -42,7 +42,7 @@
 #include <driverlib/ioc.h>
 #include <xdc/runtime/System.h>
 #else
-#if (HAL_SUPPORT_RTIMER == TRUE && HAL_USE_RTIMER == TRUE)
+#if (HAL_SUPPORT_RTIMER == TRUE)
 #include "rtimer_arch.h"
 #endif
 #include "bsp/srf06eb_cc26xx/drivers/source/bsp_led.h"
@@ -684,7 +684,7 @@ int8_t hal_debugInit( void )
 
 /*! @} 6lowpan_mcu */
 
-#if (HAL_SUPPORT_RTIMER == TRUE && HAL_USE_RTIMER == TRUE)
+#if (HAL_SUPPORT_RTIMER == TRUE)
 /*---------------------------------------------------------------------------*/
 /*
 * hal_rtimer_init()
