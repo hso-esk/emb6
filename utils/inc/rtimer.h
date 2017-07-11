@@ -55,7 +55,7 @@
 
 #include "emb6.h"
 #include "bsp.h"
-
+#if (HAL_SUPPORT_RTIMER == TRUE)
 #ifndef RTIMER_CLOCK_DIFF
 //typedef unsigned short rtimer_clock_t;
 
@@ -164,6 +164,7 @@ void rtimer_run_next(void);
 #define RTIMER_GUARD_TIME (bsp_rtimer_arch_second() >> 14)
 #endif /* RTIMER_CONF_GUARD_TIME */
 
+#endif
 #endif /* RTIMER_H_ */
 
 /** @} */

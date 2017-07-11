@@ -53,7 +53,7 @@
 #else
 #define PRINTF(...)
 #endif
-
+#if (HAL_SUPPORT_RTIMER == TRUE)
 static struct rtimer *next_rtimer;
 
 /*---------------------------------------------------------------------------*/
@@ -104,5 +104,6 @@ rtimer_run_next(void)
   return;
 }
 /*---------------------------------------------------------------------------*/
+#endif
 
 /** @}*/
