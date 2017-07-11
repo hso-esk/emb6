@@ -243,7 +243,7 @@ tsch_reset(void)
   current_link = NULL;
   /* Reset timeslot timing to defaults */
   for(i = 0; i < tsch_ts_elements_count; i++) {
-    tsch_timing[i] = (rtimer_clock_t) US_TO_RTIMERTICKS(tsch_default_timing_us[i]);
+    tsch_timing[i] = (rtimer_clock_t) bsp_us_to_rtimerTiscks(tsch_default_timing_us[i]);
   }
 #ifdef TSCH_CALLBACK_LEAVING_NETWORK
   TSCH_CALLBACK_LEAVING_NETWORK();
@@ -530,9 +530,9 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
   /* TSCH timeslot timing */
   for(i = 0; i < tsch_ts_elements_count; i++) {
     if(ies.ie_tsch_timeslot_id == 0) {
-      tsch_timing[i] = (rtimer_clock_t) US_TO_RTIMERTICKS(tsch_default_timing_us[i]);
+      tsch_timing[i] = (rtimer_clock_t) bsp_us_to_rtimerTiscks(tsch_default_timing_us[i]);
     } else {
-      tsch_timing[i] = (rtimer_clock_t) US_TO_RTIMERTICKS(ies.ie_tsch_timeslot[i]);
+      tsch_timing[i] = (rtimer_clock_t) bsp_us_to_rtimerTiscks(ies.ie_tsch_timeslot[i]);
     }
   }
 
@@ -694,12 +694,12 @@ static void tsch_scan(void *ptr)
     is_packet_pending = tsch_pending_packet();
 
     t0 = RTIMER_NOW();
-    BUSYWAIT_UNTIL_ABS((is_packet_pending = tsch_pending_packet()), t0, RTIMER_SECOND);
+    BUSYWAIT_UNTIL_ABS((is_packet_pending = tsch_pending_packet()), t0, bsp_rtimer_arch_second());
 
     if(!is_packet_pending && tsch_receiving_packet()) {
       /* If we are currently receiving a packet, wait until end of reception */
       t0 = RTIMER_NOW();
-      BUSYWAIT_UNTIL_ABS((is_packet_pending = tsch_pending_packet()), t0, RTIMER_SECOND / 100);
+      BUSYWAIT_UNTIL_ABS((is_packet_pending = tsch_pending_packet()), t0, bsp_rtimer_arch_second() / 100);
     }
 
     if(is_packet_pending) {
