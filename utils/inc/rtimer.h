@@ -54,17 +54,17 @@
 #define RTIMER_H_
 
 #include "emb6.h"
-
+#include "bsp.h"
 
 #ifndef RTIMER_CLOCK_DIFF
 //typedef unsigned short rtimer_clock_t;
-typedef uint32_t rtimer_clock_t;
+
 #define RTIMER_CLOCK_DIFF(a,b)     ((int32_t)((a)-(b)))
 #endif /* RTIMER_CLOCK_DIFF */
 
 #define RTIMER_CLOCK_LT(a, b)      (RTIMER_CLOCK_DIFF((a),(b)) < 0)
 
-#include "rtimer_arch.h"
+
 
 /**
  * \brief      Initialize the real-time scheduler.
