@@ -111,7 +111,7 @@ static void _txDataCb( uint16_t len, void* p_param );
 static uint16_t _readRxBuf( uint8_t *p_data, uint16_t len );
 
 /*Read function to be used by the MAC for RX. */
-static size_t _serialMacRead( void *port_handle, char *frame_buffer,
+static size_t _serialMacRead( void *port_handle, uint8_t *frame_buffer,
     size_t frame_buffer_length );
 
 /* Function which returns the number of bytes waiting on  input to be
@@ -119,25 +119,25 @@ static size_t _serialMacRead( void *port_handle, char *frame_buffer,
 static size_t _serialMacReadWait( void *port_handle );
 
 /* Write function to be used by the MAC for TX. */
-static size_t _serialMacWrite( void *port_handle, char *frame_buffer,
+static size_t _serialMacWrite( void *port_handle, uint8_t *frame_buffer,
     size_t frame_buffer_length );
 
 /**
  * Function called by the serial MAC in case an RX frame event occurred.
  * For further details have a look at the function definitions. */
-static void _serialmac_rxframe_evt( void* mac_context, char* frame_buffer,
+static void _serialmac_rxframe_evt( void* mac_context, uint8_t* frame_buffer,
     size_t frame_buffer_length );
 
 /**
  * Function called by the serial MAC in case an RX buffer is requested.
  * For further details have a look at the function definitions. */
-static void _serialmac_rxbuf_evt( void* mac_context, char* frame_buffer,
+static void _serialmac_rxbuf_evt( void* mac_context, uint8_t* frame_buffer,
     size_t frame_buffer_length );
 
 /**
  * Function used to ignore incoming events from the serial MAC.
  * For further details have a look at the function definitions. */
-static void _serialmac_ignore_evt( void* mac_context, char* frame_buffer,
+static void _serialmac_ignore_evt( void* mac_context, uint8_t* frame_buffer,
     size_t frame_buffer_length );
 
 /** Called by the stack in case new data was available from the RX interface.
@@ -150,7 +150,7 @@ static void _event_callback( c_event_t ev, p_data_t data );
  */
 
 /** Serial MAC context */
-static struct sf_serialmac_ctx* p_macCtx;
+static struct sf_serialmac_ctx macCtx;
 
 /** Output frame buffer */
 static uint8_t a_frameBufTx[SERIALAPI_TX_BUF_LEN];
@@ -239,11 +239,11 @@ static void _rxDataCb( void* p_data )
 static void _txDataCb( uint16_t len, void* p_param )
 {
     /* send data */
-    sf_serialmac_tx_frame ( p_macCtx, len,
-            (const char *)p_frameBufTx, len );
+    sf_serialmac_tx_frame ( &macCtx, len,
+            p_frameBufTx, len );
 
     /* process tx */
-    sf_serialmac_hal_tx_callback( p_macCtx );
+    sf_serialmac_hal_tx_callback( &macCtx );
 }
 
 
@@ -287,7 +287,7 @@ static uint16_t _readRxBuf( uint8_t *p_data, uint16_t len )
 } /* _readRxBuf() */
 
 
-static size_t _serialMacRead( void *port_handle, char *frame_buffer,
+static size_t _serialMacRead( void *port_handle, uint8_t *frame_buffer,
     size_t frame_buffer_length )
 {
   /* read data from buffer */
@@ -303,7 +303,7 @@ static size_t _serialMacReadWait( void *port_handle )
 }
 
 /* Write function to be used by the MAC for TX. */
-static size_t _serialMacWrite( void *port_handle, char *frame_buffer,
+static size_t _serialMacWrite( void *port_handle, uint8_t *frame_buffer,
     size_t frame_buffer_length )
 {
   /* write data to UART */
@@ -320,7 +320,7 @@ static size_t _serialMacWrite( void *port_handle, char *frame_buffer,
  * \param   frame_buffer          Buffer holding the received frame.
  * \param   frame_buffer_length   Length of the frame.
  */
-static void _serialmac_rxframe_evt( void* mac_context, char* frame_buffer,
+static void _serialmac_rxframe_evt( void* mac_context, uint8_t* frame_buffer,
     size_t frame_buffer_length )
 {
   /* A frame has been received */
@@ -337,13 +337,17 @@ static void _serialmac_rxframe_evt( void* mac_context, char* frame_buffer,
  *          function to signal the need for buffer to store the payload
  *          of the frame.
  */
-static void _serialmac_rxbuf_evt( void* mac_context, char* frame_buffer,
+static void _serialmac_rxbuf_evt( void* mac_context, uint8_t* frame_buffer,
     size_t frame_buffer_length )
 {
   /* Start the receive procedure and provide a buffer for the
    * payload of the frame. */
-  sf_serialmac_rx_frame( mac_context, (char*)p_frameBufRx,
+  enum sf_serialmac_return ret = sf_serialmac_rx_frame( mac_context, p_frameBufRx,
       SERIALAPI_FRAMEBUF_MAX );
+
+  if( ret == SF_SERIALMAC_ERROR_BUFFER ) {
+    sf_serialmac_reset( &macCtx );
+  }
 }
 
 /**
@@ -353,7 +357,7 @@ static void _serialmac_rxbuf_evt( void* mac_context, char* frame_buffer,
  *          implementation. Therefore they can be ignored by registering
  *          this function.
  */
-static void _serialmac_ignore_evt( void* mac_context, char* frame_buffer,
+static void _serialmac_ignore_evt( void* mac_context, uint8_t* frame_buffer,
     size_t frame_buffer_length )
 {
   /* not required */
@@ -375,7 +379,7 @@ void _event_callback( c_event_t ev, p_data_t data )
   if( ev == EVENT_TYPE_SLIP_POLL )
   {
     /* Call RX handler from serial MAC*/
-    sf_serialmac_hal_rx_callback( p_macCtx );
+    sf_serialmac_hal_rx_callback( &macCtx );
   }
   else if( ev == EVENT_TYPE_STATUS_CHANGE )
   {
@@ -395,8 +399,6 @@ void _event_callback( c_event_t ev, p_data_t data )
 */
 int8_t demo_serialApiInit( void )
 {
-  p_macCtx = &_macCtx;
-
   /* Init the Rx-buffer variables. */
   bufferRxWrite = bufferRx;
   bufferRxRead = bufferRx;
@@ -415,9 +417,9 @@ int8_t demo_serialApiInit( void )
   bsp_periphIRQRegister( EN_HAL_PERIPHIRQ_SLIPUART_RX, _rxDataCb, NULL );
 
   /* Initialize the serial MAC */
-  sf_serialmac_init( p_macCtx, p_uart, _serialMacRead, _serialMacReadWait,
+  sf_serialmac_init( &macCtx, p_uart, _serialMacRead, _serialMacReadWait,
       _serialMacWrite, _serialmac_rxframe_evt, _serialmac_rxbuf_evt,
-      _serialmac_ignore_evt, _serialmac_ignore_evt );
+      _serialmac_ignore_evt, _serialmac_ignore_evt, _serialmac_ignore_evt );
 
   /* initialize serial API and register LWM2M */
   serialApiInit( p_frameBufTx, SERIALAPI_TX_BUF_LEN, _txDataCb, NULL );

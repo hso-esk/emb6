@@ -43,6 +43,7 @@ serialapi = {
       'serialapi/*',
       'serialapi/lwm2m-objects/*',
       'serial-interface-mac/*',
+      'serial-interface-mac/src/*',
       'serial-interface-mac/dep/crc/*',
     ],
 
