@@ -713,32 +713,54 @@ void hal_rtimer_init()
  */
 void hal_rtimer_arch_schedule(rtimer_clock_t t)
 {
+#if !USE_TI_RTOS
   rtimer_arch_schedule(t);
+#endif
 }
 
 rtimer_clock_t hal_rtimer_arch_now()
 {
+#if !USE_TI_RTOS
   return rtimer_arch_now();
+#else
+  return 0;
+#endif
 }
 
 rtimer_clock_t hal_rtimer_arch_second()
 {
+#if !USE_TI_RTOS
   return RTIMER_ARCH_SECOND;
+#else
+  return 0;
+#endif
 }
 
 int32_t hal_us_to_rtimerTiscks(int32_t us)
 {
+#if !USE_TI_RTOS
   return ARCH_US_TO_RTIMERTICKS(us);
+#else
+  return 0;
+#endif
 }
 
 int32_t hal_rtimerTick_to_us(int32_t ticks)
 {
+#if !USE_TI_RTOS
   return ARCH_RTIMERTICKS_TO_US(ticks);
+#else
+  return 0;
+#endif
 }
 
 uint32_t hal_rtimerTick_to_us_64(uint32_t ticks)
 {
+#if !USE_TI_RTOS
   return ARCH_RTIMERTICKS_TO_US_64(ticks);
+#else
+  return 0;
+#endif
 }
 
 #endif /* #if defined(HAL_SUPPORT_RTIMER) */
