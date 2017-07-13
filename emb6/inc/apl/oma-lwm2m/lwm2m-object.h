@@ -287,6 +287,17 @@ typedef struct lwm2m_object {
     static void lwm2m_delete_h_##name(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset, void* user) { \
       lwm2m_engine_delete_handler(&name, request, response, buffer, preferred_size, offset); }
 
+#define LWM2M_INIT_OBJECT(o)                                                                \
+    {                                                                                       \
+      for(int i = 0; i < o->count; i++) {                                                   \
+        for(int j = 0; j < (o->p_instances[i].count -1); j++) {                             \
+          o->p_instances[i].p_resources[j].p_next = &(o->p_instances[i].p_resources[j+1]);  \
+        }                                                                                   \
+        if( i< (o->count -1) )                                                              \
+          o->p_instances[i].p_next = &(o->p_instances[i+1]);                                \
+      }                                                                                     \
+    }                                                                                       \
+
 /* how do we register attributes in the above resource here ??? */
 
 int lwm2m_object_is_resource_string(const lwm2m_resource_t *resource);
