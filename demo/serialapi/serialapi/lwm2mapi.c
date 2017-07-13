@@ -1350,14 +1350,14 @@ static int32_t _hndl_res_wr( uint8_t* p_cmd, uint16_t cmdLen,
 
   if( ret == 0 )
   {
-    p_lwm2mInst = p_lwm2mObj->instances;
+    p_lwm2mInst = p_lwm2mObj->p_instances;
     int i = 0;
-    for( i = 0; i < p_lwm2mObj->count; i++ )
+    for( i = 0; (i < p_lwm2mObj->count) && (p_lwm2mInst != NULL); i++ )
     {
       if( p_lwm2mInst->id == instId )
         /* we found the according instance ID */
         break;
-      p_lwm2mInst++;
+      p_lwm2mInst = p_lwm2mInst->p_next;
     }
 
     if( i >= p_lwm2mObj->count )
@@ -1367,14 +1367,14 @@ static int32_t _hndl_res_wr( uint8_t* p_cmd, uint16_t cmdLen,
 
   if( ret == 0 )
   {
-    p_lwm2mRes = p_lwm2mInst->resources;
+    p_lwm2mRes = p_lwm2mInst->p_resources;
     int i = 0;
-    for( i = 0; i < p_lwm2mInst->count; i++ )
+    for( i = 0; (i < p_lwm2mInst->count) && (p_lwm2mRes != NULL); i++ )
     {
       if( p_lwm2mRes->id == resId )
         /* we found the according resource ID */
         break;
-      p_lwm2mRes++;
+      p_lwm2mRes = p_lwm2mRes->p_next;
     }
 
     if( i >= p_lwm2mInst->count )
