@@ -350,6 +350,7 @@ int8_t lwm2m_object_humidityBME280Init( f_lwm2m_resource_access_cb p_cb,
 
     /* register this device and its handlers - the handlers automatically
        sends in the object to handle */
+    LWM2M_INIT_OBJECT((&bme280_humidity));
     lwm2m_engine_register_object( &bme280_humidity );
 
     ret = 0;

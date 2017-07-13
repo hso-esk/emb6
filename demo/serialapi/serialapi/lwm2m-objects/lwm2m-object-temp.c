@@ -180,6 +180,7 @@ int8_t lwm2m_object_tempInit( void )
 
     /* register this device and its handlers - the handlers automatically
        sends in the object to handle */
+    LWM2M_INIT_OBJECT((&temperature));
     lwm2m_engine_register_object(&temperature);
 
     /* start periodic timer */

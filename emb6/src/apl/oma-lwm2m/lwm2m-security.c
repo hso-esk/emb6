@@ -106,6 +106,7 @@ lwm2m_security_init(void)
    * automatically sends in the object to handle.
    */
   PRINTF("*** Init lwm2m-security\n");
+  LWM2M_INIT_OBJECT((&security));
   lwm2m_engine_register_object(&security);
 }
 /*---------------------------------------------------------------------------*/
