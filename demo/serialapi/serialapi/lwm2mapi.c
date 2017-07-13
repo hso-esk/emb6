@@ -408,6 +408,16 @@ static int32_t _hndl_cfgSet( uint8_t* p_cmd, uint16_t cmdLen,
 static int32_t _hndl_cfgGet( uint8_t* p_cmd, uint16_t cmdLen,
     uint8_t* p_rpl, uint16_t rplLen );
 
+/** Callback function in case a LWM2M_START command was received. For further
+ * details have a look at the function definition.*/
+static int32_t _hndl_lwm2mStart( uint8_t* p_cmd, uint16_t cmdLen,
+    uint8_t* p_rpl, uint16_t rplLen );
+
+/** Callback function in case a LWM2M_STOP command was received. For further
+ * details have a look at the function definition.*/
+static int32_t _hndl_lwm2mStop( uint8_t* p_cmd, uint16_t cmdLen,
+    uint8_t* p_rpl, uint16_t rplLen );
+
 /** Callback function in case a STATUS_GET command was received. For further
  * details have a look at the function definition.*/
 static int32_t _hndl_statusGet( uint8_t* p_cmd, uint16_t cmdLen,
@@ -618,6 +628,16 @@ static int8_t _rx_data( uint8_t* p_data, uint16_t len )
     /* read configuration request */
     case e_lwm2m_api_type_cfg_get:
       f_hndl = _hndl_cfgGet;
+      break;
+
+    /* start request */
+    case e_lwm2m_api_type_start:
+      f_hndl = _hndl_lwm2mStart;
+      break;
+
+    /* stop request */
+    case e_lwm2m_api_type_stop:
+      f_hndl = _hndl_lwm2mStop;
       break;
 
     /* read status */
@@ -1165,6 +1185,75 @@ static int32_t _hndl_cfgGet( uint8_t* p_cmd, uint16_t cmdLen,
 
   if( ret == 0 )
     ret = p_txBuf - p_rpl;
+
+  return ret;
+}
+
+
+/**
+ * \brief   Callback function for a LWM2M_START command.
+ *
+ *          This function is called whenever a
+ *          LWM2M_START command was received
+ *
+ * \param   p_cmd   Further data of the command.
+ * \param   cmdLen  Length of the command data.
+ * \param   p_rpl   Pointer to store the response to.
+ * \param   rplLen  Length of the response buffer.
+ *
+ * \return  The length of the generated response or 0 if no response
+ *          has been generated.
+ */
+static int32_t _hndl_lwm2mStart( uint8_t* p_cmd, uint16_t cmdLen,
+    uint8_t* p_rpl, uint16_t rplLen )
+{
+  int32_t ret;
+  e_lwm2m_api_ret_t e_ret = e_lwm2m_api_ret_ok;
+
+  EMB6_ASSERT_RET( p_rpl != NULL, 0 );
+
+  if( (_status != e_lwm2m_api_status_started) ||
+      (_status != e_lwm2m_api_status_registered))
+    _startLWM2M();
+
+  /* set the according status */
+  EMB6_ASSERT_RET( p_rpl != NULL, -1 );
+  ret = _rsp_status( p_rpl, rplLen, e_lwm2m_api_type_ret,
+      e_ret );
+
+  return ret;
+}
+
+
+/**
+ * \brief   Callback function for a LWM2M_STOP command.
+ *
+ *          This function is called whenever a
+ *          LWM2M_STOP command was received
+ *
+ * \param   p_cmd   Further data of the command.
+ * \param   cmdLen  Length of the command data.
+ * \param   p_rpl   Pointer to store the response to.
+ * \param   rplLen  Length of the response buffer.
+ *
+ * \return  The length of the generated response or 0 if no response
+ *          has been generated.
+ */
+static int32_t _hndl_lwm2mStop( uint8_t* p_cmd, uint16_t cmdLen,
+    uint8_t* p_rpl, uint16_t rplLen )
+{
+  int32_t ret;
+  e_lwm2m_api_ret_t e_ret = e_lwm2m_api_ret_ok;
+
+  EMB6_ASSERT_RET( p_rpl != NULL, 0 );
+
+  if( _status != e_lwm2m_api_status_stopped )
+    _stopLWM2M();
+
+  /* set the according status */
+  EMB6_ASSERT_RET( p_rpl != NULL, -1 );
+  ret = _rsp_status( p_rpl, rplLen, e_lwm2m_api_type_ret,
+      e_ret );
 
   return ret;
 }
