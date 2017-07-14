@@ -877,6 +877,10 @@ static int _get_lwm2m_url( const uint16_t* p_id0,
 static int8_t _stopLWM2M( void )
 {
   int8_t ret = 0;
+
+  /* stop the LWM2M engine */
+  lwm2m_engine_stop();
+
   _status = e_lwm2m_api_status_stopped;
   return ret;
 }
