@@ -1421,8 +1421,10 @@ static int32_t _hndl_res_wr( uint8_t* p_cmd, uint16_t cmdLen,
         }
         else
         {
+          EMB6_ASSERT_RET( cmdLen < p_lwm2mRes->value.stringvar.size, -3 );
           memset( *p_lwm2mRes->value.stringvar.var, 0,
               p_lwm2mRes->value.stringvar.size);
+          *p_lwm2mRes->value.stringvar.len = cmdLen;
           LWM2M_API_GET_FIELD_MEM( *p_lwm2mRes->value.stringvar.var,
               p_data, cmdLen, cmdLen );
         }
