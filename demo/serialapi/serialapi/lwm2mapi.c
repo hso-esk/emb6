@@ -1629,6 +1629,11 @@ int8_t lwm2mApiInit( uint8_t* p_txBuf, uint16_t txBufLen,
 {
     int8_t ret = 0;
 
+
+    _serverIP = (uip_ipaddr_t){.u16 = {LWM2MAPI_SERVER_IP}};
+    _serverPort = LWM2MAPI_SERVER_PORT;
+    snprintf( _epName, sizeof(_epName), LWM2MAPI_ENDPOINT );
+
     /* set buffer description */
     _p_txBuf = p_txBuf;
     _txBufLen = txBufLen;
