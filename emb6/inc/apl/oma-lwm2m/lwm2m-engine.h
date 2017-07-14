@@ -64,6 +64,7 @@ typedef enum {
 typedef void(*f_lwm2m_engine_statch_cb)(uint8_t registered, void* p_data);
 
 void lwm2m_engine_init(char* epname, f_lwm2m_engine_statch_cb p_cb, void* p_data );
+void lwm2m_engine_stop( void );
 void lwm2m_engine_register_default_objects(void);
 void lwm2m_engine_use_bootstrap_server(int use);
 void lwm2m_engine_use_registration_server(int use);
