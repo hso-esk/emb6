@@ -1495,7 +1495,33 @@ static int32_t _hndl_res_wr( uint8_t* p_cmd, uint16_t cmdLen,
 
       /* Boolean write */
       case LWM2M_RESOURCE_TYPE_BOOLEAN_VARIABLE:
+      {
+        int32_t val;
+        if( cmdLen < sizeof(int32_t) )
+          ret = -2;
+
+        /* get the value */
+        EMB6_ASSERT_RET( cmdLen >= sizeof(val), -2 );
+        LWM2M_API_GET_FIELD( val, p_data, cmdLen, int32_t );
+        val = uip_ntohl( val );
+
+        if( ret == 0 )
+        {
+          if( typeB == LWM2M_RESOURCE_TYPE_CALLBACK )
+          {
+            EMB6_ASSERT_RET( p_lwm2mRes->value.callback.set != NULL, -1 );
+            if( p_lwm2mRes->value.callback.set( &val, sizeof(val) ) < 0 )
+              ret = -3;
+          }
+          else
+          {
+            /* write the value*/
+            val = val > 0 ? 1 : 0;
+            *p_lwm2mRes->value.booleanvar.var = val;
+          }
+        }
         break;
+      }
 
       default:
         ret = -1;
