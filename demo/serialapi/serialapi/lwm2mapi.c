@@ -126,11 +126,22 @@
 
 #if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE
 /** Maximum number of LWM2M objects */
-#define LWM2MAPI_OBJ_MAX                5
+#ifndef LWM2MAPI_OBJ_MAX
+#define LWM2MAPI_OBJ_MAX                10
+#endif /* #ifndef LWM2MAPI_OBJ_MAX */
+
 /** Maximum number of LWM2M instances */
-#define LWM2MAPI_INST_MAX               5
+#ifndef LWM2MAPI_INST_MAX
+#define LWM2MAPI_INST_MAX               10
+#endif /* #ifndef LWM2MAPI_INST_MAX */
+
 /** Maximum number of LWM2M resources */
-#define LWM2MAPI_RES_MAX                5
+#ifndef LWM2MAPI_RES_MAX
+#define LWM2MAPI_RES_MAX                100
+#endif /* #ifndef LWM2MAPI_RES_MAX */
+
+/** Maximum amount of LWM2M data */
+#define LWM2MAPI_DATA_MAX               (LWM2MAPI_RES_MAX * sizeof(float))
 #endif /* #if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE */
 
 
@@ -291,6 +302,32 @@ typedef enum
 
 
 /**
+ * \brief   LWM2M resource types.
+ */
+typedef enum
+{
+  /** Boolean variable type*/
+  e_lwm2m_api_restype_bool = 0x00,
+
+  /** Integer variable type*/
+  e_lwm2m_api_restype_int,
+
+  /** Float variable type*/
+  e_lwm2m_api_restype_float,
+
+  /** String variable type*/
+  e_lwm2m_api_restype_str,
+
+  /** Method type*/
+  e_lwm2m_api_restype_method,
+
+  /** undefined type */
+  e_lwm2m_api_restype_undef,
+
+} e_lwm2m_api_restype_t;
+
+
+/**
  * \brief   Specific configuration IDs.
  *
  *          The CFG_GET/SET command allow setting or reading the actual
@@ -325,6 +362,9 @@ typedef uint8_t lwm2mapi_frameID_t;
 
 /** Get/Set ID */
 typedef uint8_t lwm2mapi_cfg_getset_t;
+
+/** Get/Set ID */
+typedef uint8_t lwm2mapi_objres_crdel_t;
 
 /** IP address address configuration*/
 typedef uip_ipaddr_t lwm2mapi_cfg_ipaddr_t;
@@ -423,6 +463,30 @@ static int32_t _hndl_lwm2mStop( uint8_t* p_cmd, uint16_t cmdLen,
 static int32_t _hndl_statusGet( uint8_t* p_cmd, uint16_t cmdLen,
     uint8_t* p_rpl, uint16_t rplLen );
 
+#if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE
+
+/** Callback function in case a OBJ_CREATE command was received. For further
+ * details have a look at the function definition.*/
+static int32_t _hndl_obj_create( uint8_t* p_cmd, uint16_t cmdLen,
+    uint8_t* p_rpl, uint16_t rplLen );
+
+/** Callback function in case a OBJ_DELETE command was received. For further
+ * details have a look at the function definition.*/
+static int32_t _hndl_obj_delete( uint8_t* p_cmd, uint16_t cmdLen,
+    uint8_t* p_rpl, uint16_t rplLen );
+
+/** Callback function in case a RES_CREATE command was received. For further
+ * details have a look at the function definition.*/
+static int32_t _hndl_res_create( uint8_t* p_cmd, uint16_t cmdLen,
+    uint8_t* p_rpl, uint16_t rplLen );
+
+/** Callback function in case a RES_DELETE command was received. For further
+ * details have a look at the function definition.*/
+static int32_t _hndl_res_delete( uint8_t* p_cmd, uint16_t cmdLen,
+    uint8_t* p_rpl, uint16_t rplLen );
+
+#endif /* #if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE */
+
 /** Callback function in case a RESOURCE_WRITE command was received. For further
  * details have a look at the function definition.*/
 static int32_t _hndl_res_wr( uint8_t* p_cmd, uint16_t cmdLen,
@@ -474,12 +538,16 @@ static e_lwm2m_api_ret_t _status;
 #if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE
 /** Storage for Rest Resources */
 MEMB(lwm2mrestres_storage, resource_t, LWM2MAPI_OBJ_MAX );
+/** Container for dynamic objects */
+static const lwm2m_object_t* lwm2m_object_container[LWM2MAPI_OBJ_MAX];
 /** Storage for LWM2M Objects */
 MEMB(lwm2mobject_storage, lwm2m_object_t, LWM2MAPI_OBJ_MAX );
 /** Storage for LWM2M Instances */
 MEMB(lwm2minstance_storage, lwm2m_instance_t, LWM2MAPI_INST_MAX);
 /** Storage for LWM2M Resources */
 MEMB(lwm2mresource_storage, lwm2m_resource_t, LWM2MAPI_RES_MAX);
+/** Storage for LWM2M Resources */
+MEMB(lwm2mdata_storage, uint8_t, LWM2MAPI_DATA_MAX );
 #endif /* #if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE */
 
 
@@ -645,6 +713,30 @@ static int8_t _rx_data( uint8_t* p_data, uint16_t len )
       f_hndl = _hndl_statusGet;
       break;
 
+#if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE
+
+    /* create object */
+    case e_lwm2m_api_type_obj_create:
+      f_hndl = _hndl_obj_create;
+      break;
+
+    /* delete object */
+    case e_lwm2m_api_type_obj_delete:
+      f_hndl = _hndl_obj_delete;
+      break;
+
+    /* create resource */
+    case e_lwm2m_api_type_res_create:
+      f_hndl = _hndl_res_create;
+      break;
+
+    /* delete resource */
+    case e_lwm2m_api_type_res_delete:
+      f_hndl = _hndl_res_delete;
+      break;
+
+#endif /* #if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE */
+
     /* write request to a resource */
     case e_lwm2m_api_type_res_wr_req:
       f_hndl = _hndl_res_wr;
@@ -798,14 +890,6 @@ static int8_t _startLWM2M( void )
     int8_t ret = 0;
     uip_ipaddr_t tmpIP;
 
-#if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE
-    /* initialize memory */
-    memb_init( &lwm2mrestres_storage );
-    memb_init( &lwm2mobject_storage );
-    memb_init( &lwm2minstance_storage );
-    memb_init( &lwm2mresource_storage );
-#endif /* #if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE */
-
     LWM2MAPI_SERVER_IP_CONV( &tmpIP, _serverIP );
     lwm2m_engine_use_registration_server(1);
     lwm2m_engine_register_with_server( &tmpIP, uip_htons(_serverPort) );
@@ -833,87 +917,12 @@ static int8_t _startLWM2M( void )
 #endif /* #if LWM2MAPI_NIKI_EIS_OBJECTS */
 
 #if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE
-    /* TEST */
+    /* register dynamic objects */
+    for( int i = 0; i < LWM2MAPI_OBJ_MAX; i++ )
     {
-      ret = -1;
-
-      /* allocate memory for a resource and an object */
-      lwm2m_object_t* p_obj = (lwm2m_object_t* )memb_alloc( &lwm2mobject_storage );
-      if( p_obj != NULL )
-      {
-        resource_t* p_rest = (resource_t* )memb_alloc( &lwm2mrestres_storage );
-        *p_rest = (resource_t){NULL, NULL, HAS_SUB_RESOURCES | IS_OBSERVABLE, NULL,
-          lwm2m_get, lwm2m_post, lwm2m_put, lwm2m_delete, {NULL}, p_obj };
-
-        *p_obj = (lwm2m_object_t){ 3303, 0, LWM2M_OBJECT_PATH_STR(3303), p_rest, NULL};
-
-        /* allocate memory for an instance */
-        lwm2m_instance_t* p_inst = (lwm2m_instance_t*)memb_alloc( &lwm2minstance_storage );
-        if( p_inst != NULL )
-        {
-          *p_inst = (lwm2m_instance_t) {0, 0, LWM2M_INSTANCE_FLAG_USED, NULL};
-
-
-          /* allocate memory for the resources */
-          lwm2m_resource_t* p_res = memb_allocm( &lwm2mresource_storage, 5 );
-
-          if( p_res != NULL )
-          {
-            /* add resources to instance */
-            p_inst->count = 5;
-            p_inst->resources = p_res;
-
-            /* create the resources */
-            *p_res = (lwm2m_resource_t) {5700, LWM2M_RESOURCE_TYPE_FLOATFIX_VALUE,
-              .value.floatfix.value = (16.3 * LWM2M_FLOAT32_FRAC)};
-            p_res++;
-
-            /* create the resources */
-            *p_res = (lwm2m_resource_t) {5601, LWM2M_RESOURCE_TYPE_FLOATFIX_VALUE,
-              .value.floatfix.value = (8.7 * LWM2M_FLOAT32_FRAC)};
-            p_res++;
-
-            /* create the resources */
-            *p_res = (lwm2m_resource_t) {5602, LWM2M_RESOURCE_TYPE_FLOATFIX_VALUE,
-              .value.floatfix.value = (26.5 * LWM2M_FLOAT32_FRAC)};
-            p_res++;
-
-            /* create the resources */
-            *p_res = (lwm2m_resource_t) {5603, LWM2M_RESOURCE_TYPE_FLOATFIX_VALUE,
-              .value.floatfix.value = (0.0 * LWM2M_FLOAT32_FRAC)};
-            p_res++;
-
-            /* create the resources */
-            *p_res = (lwm2m_resource_t) {5604, LWM2M_RESOURCE_TYPE_FLOATFIX_VALUE,
-              .value.floatfix.value = (100.0 * LWM2M_FLOAT32_FRAC)};
-            p_res++;
-
-            ret = 0;
-          }
-
-
-          if( ret != 0 )
-            /* an error occurred and the instance must be deleted */
-            free( p_inst );
-          else
-          {
-            /* assign instance */
-            p_obj->instances = p_inst;
-            p_obj->count = 1;
-          }
-
-        }
-
-        if( ret != 0 )
-          /* an error occurred and the object must be deleted */
-          free( p_obj );
-        else
-          /* register object  */
-          lwm2m_engine_register_object( p_obj );
-      }
-
+      if(lwm2m_object_container[i] != NULL )
+        lwm2m_engine_register_object( lwm2m_object_container[i] );
     }
-    /** TEST END */
 #endif /* #if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE */
 
     _status = e_lwm2m_api_status_started;
@@ -1294,6 +1303,446 @@ static int32_t _hndl_statusGet( uint8_t* p_cmd, uint16_t cmdLen,
   return ret;
 }
 
+#if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE
+
+/**
+ * \brief   Callback to create a LWM2M object
+ *
+ * \param   p_cmd   Further data of the command.
+ * \param   cmdLen  Length of the command data.
+ * \param   p_rpl   Pointer to store the response to.
+ * \param   rplLen  Length of the response buffer.
+ *
+ * \return  The length of the generated response or 0 if no response
+ *          has been generated.
+ */
+static int32_t _hndl_obj_create( uint8_t* p_cmd, uint16_t cmdLen,
+    uint8_t* p_rpl, uint16_t rplLen )
+{
+  int i = 0;
+  int32_t ret = -1;
+  uint8_t* p_data = p_cmd;
+  uint8_t* p_txBuf = p_rpl;
+
+  int16_t objId;
+  int8_t instId;
+
+  const lwm2m_object_t* p_lwm2mObj = NULL;
+  lwm2m_instance_t* p_lwm2mInst = NULL;
+
+  lwm2m_object_t* p_lwm2mObjTmp = NULL;
+  lwm2m_instance_t* p_lwm2mInstTmp = NULL;
+  resource_t* p_restTmp = NULL;
+
+  EMB6_ASSERT_RET( p_cmd != NULL, 0 );
+  EMB6_ASSERT_RET( p_rpl != NULL, 0 );
+
+  /* get the object ID and instance ID */
+  EMB6_ASSERT_RET( cmdLen >= sizeof(uint16_t), -2 );
+  LWM2M_API_GET_FIELD( objId, p_data, cmdLen, uint16_t );
+  EMB6_ASSERT_RET( cmdLen >= sizeof(uint8_t), -2 );
+  LWM2M_API_GET_FIELD( instId, p_data, cmdLen, uint8_t );
+
+  objId = uip_ntohs( objId );
+
+  /* try to get the according object */
+  for( i = 0; i < LWM2MAPI_OBJ_MAX; i++ )
+  {
+    if((lwm2m_object_container[i] != NULL) &&
+        (lwm2m_object_container[i]->id == objId) )
+    {
+      p_lwm2mObj = lwm2m_object_container[i];
+      break;
+    }
+  }
+
+  if( p_lwm2mObj != NULL )
+  {
+    /* object already exists ... check for the instance */
+    p_lwm2mInst = p_lwm2mObj->p_instances;
+    for( i = 0; (i < p_lwm2mObj->count) && (p_lwm2mInst != NULL); i++ )
+    {
+      if( p_lwm2mInst->id == instId )
+        /* we found the according instance ID */
+        break;
+      p_lwm2mInst = p_lwm2mInst->p_next;
+    }
+
+    if( (i >= p_lwm2mObj->count) || (p_lwm2mInst == NULL) )
+      /* instance was not found */
+      p_lwm2mInst = NULL;
+  }
+
+  if( p_lwm2mObj == NULL )
+  {
+    /* allocate memory for an object */
+    p_lwm2mObjTmp = (lwm2m_object_t* )memb_alloc( &lwm2mobject_storage );
+
+    if( p_lwm2mObjTmp != NULL )
+    {
+      /* allocate memory for a resource */
+      p_restTmp = (resource_t* )memb_alloc( &lwm2mrestres_storage );
+      if( p_restTmp != NULL )
+      {
+        *p_restTmp = (resource_t){NULL, NULL, HAS_SUB_RESOURCES | IS_OBSERVABLE, NULL,
+          lwm2m_get, lwm2m_post, lwm2m_put, lwm2m_delete, {NULL}, p_lwm2mObjTmp };
+        *p_lwm2mObjTmp = (lwm2m_object_t){ objId, 0, {0}, p_restTmp, NULL};
+        snprintf( p_lwm2mObjTmp->path, 6, "%d", objId );
+        p_lwm2mObj = p_lwm2mObjTmp;
+      }
+    }
+  }
+
+  if( p_lwm2mObj != NULL )
+  {
+    if( p_lwm2mInst == NULL )
+    {
+      /* allocate memory for an instance */
+      p_lwm2mInstTmp = (lwm2m_instance_t*)memb_alloc( &lwm2minstance_storage );
+      p_lwm2mInst = p_lwm2mInstTmp;
+
+      if( p_lwm2mInst != NULL )
+      {
+        /* Initialize instance */
+        *p_lwm2mInst = (lwm2m_instance_t) {instId, 0, LWM2M_INSTANCE_FLAG_USED,NULL, NULL};
+
+        /* add instance to the object */
+        lwm2m_instance_t* p_i = p_lwm2mObj->p_instances;
+        while( (p_i != NULL) && (p_i->p_next != NULL) )
+          p_i = p_i->p_next;
+
+        if( p_i == NULL )
+          ((lwm2m_object_t*)(p_lwm2mObj))->p_instances = p_lwm2mInst;
+        else
+          p_i->p_next = p_lwm2mInst;
+        ((lwm2m_object_t*)(p_lwm2mObj))->count++;
+      }
+    }
+
+    if( p_lwm2mInst != NULL )
+    {
+      ret = 0;
+    }
+  }
+
+  /* set type of the response frame */
+  EMB6_ASSERT_RET( rplLen >= sizeof(lwm2mapi_frameID_t), -1 );
+  LWM2M_API_SET_FIELD( p_txBuf, rplLen, lwm2mapi_frameID_t,
+     e_lwm2m_api_type_obj_ret);
+
+  /* set Object ID of the response frame */
+  EMB6_ASSERT_RET( rplLen >= sizeof(uint16_t), -1 );
+  LWM2M_API_SET_FIELD( p_txBuf, rplLen, uint16_t, uip_ntohs( objId ));
+
+  /* set instance ID of the response frame */
+  EMB6_ASSERT_RET( rplLen >= sizeof(uint8_t), -1 );
+  LWM2M_API_SET_FIELD( p_txBuf, rplLen, uint8_t,  instId );
+
+  if( ret == 0 )
+  {
+    /* add object to container */
+    for( i = 0; i < LWM2MAPI_OBJ_MAX; i++ )
+    {
+      if(lwm2m_object_container[i] == NULL )
+      {
+        lwm2m_object_container[i] = p_lwm2mObj;
+        break;
+      }
+    }
+
+    /* set status OK */
+    EMB6_ASSERT_RET( rplLen >= sizeof(lwm2mapi_ret_t), -1 );
+    LWM2M_API_SET_FIELD( p_txBuf, rplLen, lwm2mapi_ret_t, e_lwm2m_api_ret_ok );
+  }
+  else
+  {
+    if( p_lwm2mObjTmp != NULL )
+      memb_free( &lwm2mobject_storage, p_lwm2mObjTmp );
+    if( p_lwm2mInstTmp != NULL )
+      memb_free( &lwm2minstance_storage, p_lwm2mInstTmp );
+    if( p_restTmp != NULL )
+      memb_free( &lwm2mrestres_storage, p_restTmp );
+
+    /* set status failure */
+    EMB6_ASSERT_RET( rplLen >= sizeof(lwm2mapi_ret_t), -1 );
+    LWM2M_API_SET_FIELD( p_txBuf, rplLen, lwm2mapi_ret_t, e_lwm2m_api_ret_error );
+  }
+
+  ret = p_txBuf - p_rpl;
+  return ret;
+}
+
+
+/**
+ * \brief   Callback to delete a LWM2M object
+ *
+ * \param   p_cmd   Further data of the command.
+ * \param   cmdLen  Length of the command data.
+ * \param   p_rpl   Pointer to store the response to.
+ * \param   rplLen  Length of the response buffer.
+ *
+ * \return  The length of the generated response or 0 if no response
+ *          has been generated.
+ */
+static int32_t _hndl_obj_delete( uint8_t* p_cmd, uint16_t cmdLen,
+    uint8_t* p_rpl, uint16_t rplLen )
+{
+#if 0
+  int32_t ret = 0;
+  uint8_t* p_data = p_cmd;
+  uint8_t* p_txBuf = p_rpl;
+  int i;
+#endif
+
+  EMB6_ASSERT_RET( p_cmd != NULL, 0 );
+  EMB6_ASSERT_RET( p_rpl != NULL, 0 );
+
+  return -1;
+}
+
+
+/**
+ * \brief   Callback to create a LWM2M resource
+ *
+ * \param   p_cmd   Further data of the command.
+ * \param   cmdLen  Length of the command data.
+ * \param   p_rpl   Pointer to store the response to.
+ * \param   rplLen  Length of the response buffer.
+ *
+ * \return  The length of the generated response or 0 if no response
+ *          has been generated.
+ */
+static int32_t _hndl_res_create( uint8_t* p_cmd, uint16_t cmdLen,
+    uint8_t* p_rpl, uint16_t rplLen )
+{
+  int i;
+  int32_t ret = -1;
+  uint8_t* p_data = p_cmd;
+  uint8_t* p_txBuf = p_rpl;
+
+  int16_t objId;
+  int8_t instId;
+  int16_t resId;
+  uint8_t type;
+  uint8_t varLen;
+
+  const lwm2m_object_t* p_lwm2mObj = NULL;
+  lwm2m_instance_t* p_lwm2mInst = NULL;
+
+  lwm2m_resource_t* p_res = NULL;
+  lwm2m_resource_t* p_instRes = NULL;
+  void* p_resData;
+
+  EMB6_ASSERT_RET( p_cmd != NULL, 0 );
+  EMB6_ASSERT_RET( p_rpl != NULL, 0 );
+
+  /* get the object ID, instance ID and resource ID, type and variable length*/
+  EMB6_ASSERT_RET( cmdLen >= sizeof(uint16_t), -2 );
+  LWM2M_API_GET_FIELD( objId, p_data, cmdLen, uint16_t );
+  EMB6_ASSERT_RET( cmdLen >= sizeof(uint8_t), -2 );
+  LWM2M_API_GET_FIELD( instId, p_data, cmdLen, uint8_t );
+  EMB6_ASSERT_RET( cmdLen >= sizeof(uint16_t), -2 );
+  LWM2M_API_GET_FIELD( resId, p_data, cmdLen, uint16_t );
+  EMB6_ASSERT_RET( cmdLen >= sizeof(uint8_t), -2 );
+  LWM2M_API_GET_FIELD( type, p_data, cmdLen, uint8_t );
+  EMB6_ASSERT_RET( cmdLen >= sizeof(uint8_t), -2 );
+  LWM2M_API_GET_FIELD( varLen, p_data, cmdLen, uint8_t );
+
+  objId = uip_ntohs( objId );
+  resId = uip_ntohs( resId );
+
+  /* try to get the according object */
+  for( i = 0; i < LWM2MAPI_OBJ_MAX; i++ )
+  {
+    if((lwm2m_object_container[i] != NULL) &&
+        (lwm2m_object_container[i]->id == objId) )
+    {
+      p_lwm2mObj = lwm2m_object_container[i];
+      break;
+    }
+  }
+
+  if( p_lwm2mObj != NULL )
+  {
+    /* object already exists ... check for the instance */
+    p_lwm2mInst = p_lwm2mObj->p_instances;
+    for( i = 0; (i < p_lwm2mObj->count) && (p_lwm2mInst != NULL); i++ )
+    {
+      if( p_lwm2mInst->id == instId )
+        /* we found the according instance ID */
+        break;
+      p_lwm2mInst = p_lwm2mInst->p_next;
+    }
+
+    if( (i >= p_lwm2mObj->count) || (p_lwm2mInst == NULL) )
+      /* instance was not found */
+      p_lwm2mInst = NULL;
+  }
+
+
+  if( p_lwm2mInst != NULL )
+  {
+    ret = -1;
+    /* allocate memory for the resources */
+    p_res = memb_allocm( &lwm2mresource_storage, 1 );
+    p_instRes = p_lwm2mInst->p_resources;
+
+    if( p_res != NULL )
+    {
+      switch( type )
+      {
+        case e_lwm2m_api_restype_bool:
+
+          varLen = sizeof(int);
+          /* try to allocate data storage for the resource data */
+          p_resData = memb_allocm( &lwm2mdata_storage, varLen );
+          if( p_resData != NULL )
+          {
+            memset( p_resData, 0, varLen );
+            *p_res = (lwm2m_resource_t) {resId, LWM2M_RESOURCE_TYPE_BOOLEAN_VARIABLE,
+                    .value.booleanvar.var = p_resData,
+                    .p_next = NULL};
+            ret = 0;
+          }
+          break;
+
+        case e_lwm2m_api_restype_int:
+
+          varLen = sizeof(int32_t);
+          /* try to allocate data storage for the resource data */
+          p_resData = memb_allocm( &lwm2mdata_storage, varLen );
+          if( p_resData != NULL )
+          {
+            memset( p_resData, 0, varLen );
+            *p_res = (lwm2m_resource_t) {resId, LWM2M_RESOURCE_TYPE_INT_VARIABLE,
+                    .value.integervar.var = p_resData,
+                    .p_next = NULL};
+            ret = 0;
+          }
+          break;
+
+        case e_lwm2m_api_restype_float:
+
+          varLen = sizeof(float);
+          /* try to allocate data storage for the resource data */
+          p_resData = memb_allocm( &lwm2mdata_storage, varLen );
+          if( p_resData != NULL )
+          {
+            memset( p_resData, 0, varLen );
+            *p_res = (lwm2m_resource_t) {resId, LWM2M_RESOURCE_TYPE_FLOATFIX_VARIABLE,
+                    .value.floatfixvar.var = p_resData,
+                    .p_next = NULL};
+            ret = 0;
+          }
+          break;
+
+        case e_lwm2m_api_restype_str:
+        {
+          /* try to allocate data storage for the resource data */
+          p_resData = memb_allocm( &lwm2mdata_storage, varLen +
+              sizeof(uint8_t*) + sizeof(uint16_t) );
+          if( p_resData != NULL )
+          {
+            memset( p_resData, 0, varLen );
+
+            *((uint8_t**)p_resData) =  (uint8_t*)(p_resData + sizeof(uint16_t) + sizeof(uint8_t*));
+            *p_res = (lwm2m_resource_t) {resId, LWM2M_RESOURCE_TYPE_STR_VARIABLE,
+                    .value.stringvar.size = varLen,
+                    .value.stringvar.len = p_resData + sizeof(uint8_t*),
+                    .value.stringvar.var = p_resData,
+                    .p_next = NULL};
+            ret = 0;
+          }
+          break;
+        }
+
+        default:
+          ret = -1;
+      }
+    }
+  }
+
+  if( ret == 0 )
+  {
+    while( (p_instRes != NULL) && (p_instRes->p_next != NULL) )
+      p_instRes = p_instRes->p_next;
+
+    if( p_instRes != NULL )
+      p_instRes->p_next = p_res;
+    else
+      p_lwm2mInst->p_resources = p_res;
+    p_lwm2mInst->count++;
+
+    ret = 0;
+  }
+
+  /* set type of the response frame */
+  EMB6_ASSERT_RET( rplLen >= sizeof(lwm2mapi_frameID_t), -1 );
+  LWM2M_API_SET_FIELD( p_txBuf, rplLen, lwm2mapi_frameID_t,
+     e_lwm2m_api_type_res_ret);
+
+  /* set Object ID of the response frame */
+  EMB6_ASSERT_RET( rplLen >= sizeof(uint16_t), -1 );
+  LWM2M_API_SET_FIELD( p_txBuf, rplLen, uint16_t, uip_ntohs( objId ));
+  /* set instance ID of the response frame */
+  EMB6_ASSERT_RET( rplLen >= sizeof(uint8_t), -1 );
+  LWM2M_API_SET_FIELD( p_txBuf, rplLen, uint8_t,  instId );
+  /* set Resource ID of the response frame */
+  EMB6_ASSERT_RET( rplLen >= sizeof(uint16_t), -1 );
+  LWM2M_API_SET_FIELD( p_txBuf, rplLen, uint16_t, uip_ntohs( resId ));
+
+  if( ret == 0 )
+  {
+    /* set status OK */
+    EMB6_ASSERT_RET( rplLen >= sizeof(lwm2mapi_ret_t), -1 );
+    LWM2M_API_SET_FIELD( p_txBuf, rplLen, lwm2mapi_ret_t, e_lwm2m_api_ret_ok );
+  }
+  else
+  {
+    if( p_res != NULL )
+      memb_free( &lwm2mresource_storage, p_res );
+    if( p_resData != NULL )
+      memb_free( &lwm2mdata_storage, p_resData );
+
+    /* set status OK */
+    EMB6_ASSERT_RET( rplLen >= sizeof(lwm2mapi_ret_t), -1 );
+    LWM2M_API_SET_FIELD( p_txBuf, rplLen, lwm2mapi_ret_t, e_lwm2m_api_ret_error );
+  }
+
+  ret = p_txBuf - p_rpl;
+  return ret;
+}
+
+
+/**
+ * \brief   Callback to delete a LWM2M resource
+ *
+ * \param   p_cmd   Further data of the command.
+ * \param   cmdLen  Length of the command data.
+ * \param   p_rpl   Pointer to store the response to.
+ * \param   rplLen  Length of the response buffer.
+ *
+ * \return  The length of the generated response or 0 if no response
+ *          has been generated.
+ */
+static int32_t _hndl_res_delete( uint8_t* p_cmd, uint16_t cmdLen,
+    uint8_t* p_rpl, uint16_t rplLen )
+{
+#if 0
+  int32_t ret = 0;
+  uint8_t* p_data = p_cmd;
+  uint8_t* p_txBuf = p_rpl;
+  int i;
+#endif
+
+  EMB6_ASSERT_RET( p_cmd != NULL, 0 );
+  EMB6_ASSERT_RET( p_rpl != NULL, 0 );
+
+  return -1;
+}
+
+#endif /* #if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE */
+
 
 /**
  * \brief   Callback to write a LWM2M resource.
@@ -1629,6 +2078,14 @@ int8_t lwm2mApiInit( uint8_t* p_txBuf, uint16_t txBufLen,
 {
     int8_t ret = 0;
 
+#if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE
+    /* initialize memory */
+    memb_init( &lwm2mrestres_storage );
+    memb_init( &lwm2mobject_storage );
+    memb_init( &lwm2minstance_storage );
+    memb_init( &lwm2mresource_storage );
+    memb_init( &lwm2mdata_storage );
+#endif /* #if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE */
 
     _serverIP = (uip_ipaddr_t){.u16 = {LWM2MAPI_SERVER_IP}};
     _serverPort = LWM2MAPI_SERVER_PORT;
