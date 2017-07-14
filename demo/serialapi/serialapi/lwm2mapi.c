@@ -1345,6 +1345,7 @@ static int32_t _hndl_obj_create( uint8_t* p_cmd, uint16_t cmdLen,
 
   EMB6_ASSERT_RET( p_cmd != NULL, 0 );
   EMB6_ASSERT_RET( p_rpl != NULL, 0 );
+  EMB6_ASSERT_RET( _status == e_lwm2m_api_status_stopped, -1 );
 
   /* get the object ID and instance ID */
   EMB6_ASSERT_RET( cmdLen >= sizeof(uint16_t), -2 );
@@ -1505,6 +1506,7 @@ static int32_t _hndl_obj_delete( uint8_t* p_cmd, uint16_t cmdLen,
 
   EMB6_ASSERT_RET( p_cmd != NULL, 0 );
   EMB6_ASSERT_RET( p_rpl != NULL, 0 );
+  EMB6_ASSERT_RET( _status == e_lwm2m_api_status_stopped, -1 );
 
   return -1;
 }
@@ -1544,6 +1546,7 @@ static int32_t _hndl_res_create( uint8_t* p_cmd, uint16_t cmdLen,
 
   EMB6_ASSERT_RET( p_cmd != NULL, 0 );
   EMB6_ASSERT_RET( p_rpl != NULL, 0 );
+  EMB6_ASSERT_RET( _status == e_lwm2m_api_status_stopped, -1 );
 
   /* get the object ID, instance ID and resource ID, type and variable length*/
   EMB6_ASSERT_RET( cmdLen >= sizeof(uint16_t), -2 );
@@ -1746,6 +1749,7 @@ static int32_t _hndl_res_delete( uint8_t* p_cmd, uint16_t cmdLen,
 
   EMB6_ASSERT_RET( p_cmd != NULL, 0 );
   EMB6_ASSERT_RET( p_rpl != NULL, 0 );
+  EMB6_ASSERT_RET( _status == e_lwm2m_api_status_stopped, -1 );
 
   return -1;
 }
