@@ -2085,6 +2085,7 @@ static void lwm2m_delete(void *request, void *response, uint8_t *buffer,
 int8_t lwm2mApiInit( uint8_t* p_txBuf, uint16_t txBufLen,
         void(*fn_tx)(uint16_t len, void* p_param), void* p_txParam )
 {
+    int i;
     int8_t ret = 0;
 
 #if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE
@@ -2094,6 +2095,10 @@ int8_t lwm2mApiInit( uint8_t* p_txBuf, uint16_t txBufLen,
     memb_init( &lwm2minstance_storage );
     memb_init( &lwm2mresource_storage );
     memb_init( &lwm2mdata_storage );
+
+    /* reset object container */
+    for( i = 0; i < LWM2MAPI_OBJ_MAX; i++ )
+      lwm2m_object_container[i] = NULL;
 #endif /* #if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE */
 
     _serverIP = (uip_ipaddr_t){.u16 = {LWM2MAPI_SERVER_IP}};
