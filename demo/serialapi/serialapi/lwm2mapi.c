@@ -127,7 +127,7 @@
 #if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE
 /** Maximum number of LWM2M objects */
 #ifndef LWM2MAPI_OBJ_MAX
-#define LWM2MAPI_OBJ_MAX                10
+#define LWM2MAPI_OBJ_MAX                MAX_OBJECTS
 #endif /* #ifndef LWM2MAPI_OBJ_MAX */
 
 /** Maximum number of LWM2M instances */
