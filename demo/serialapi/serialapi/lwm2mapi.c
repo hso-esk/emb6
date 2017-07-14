@@ -1790,6 +1790,7 @@ static int32_t _hndl_res_wr( uint8_t* p_cmd, uint16_t cmdLen,
 
   EMB6_ASSERT_RET( p_cmd != NULL, -1 );
   EMB6_ASSERT_RET( p_rpl != NULL, -1 );
+  EMB6_ASSERT_RET( _status > e_lwm2m_api_status_stopped, -1 );
 
   if( ret == 0 )
   {
