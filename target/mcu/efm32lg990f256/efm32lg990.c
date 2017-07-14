@@ -72,7 +72,9 @@
 #include "em_usart.h"
 #include "em_timer.h"
 #include "gpiointerrupt.h"
-
+#if (HAL_SUPPORT_RTIMER == TRUE)
+#include "rtimer_arch.h"
+#endif
 /*
  *  --- Macros ------------------------------------------------------------- *
  */
@@ -971,3 +973,60 @@ int8_t hal_debugInit( void )
 #endif /* #if (LOGGER_LEVEL > 0) && (HAL_SUPPORT_SLIPUART == FALSE) */
   return 0;
 } /* hal_debugInit() */
+
+#if (HAL_SUPPORT_RTIMER == TRUE)
+/*---------------------------------------------------------------------------*/
+/*
+* hal_rtimer_init()
+*
+* \brief   initialize rtimer module
+*
+*/
+void hal_rtimer_init()
+{
+  rtimer_arch_init();
+}
+
+/*
+ * hal_rtimer_arch_schedule()
+ * \brief Schedules an rtimer task to be triggered at time t
+ * \param t The time when the task will need executed.
+ *
+ * \e t is an absolute time, in other words the task will be executed AT
+ * time \e t, not IN \e t rtimer ticks.
+ *
+ * This function schedules a one-shot event with the AON RTC.
+ *
+ * This functions converts \e to a value suitable for the AON RTC.
+ */
+void hal_rtimer_arch_schedule(rtimer_clock_t t)
+{
+  rtimer_arch_schedule(t);
+}
+
+rtimer_clock_t hal_rtimer_arch_now()
+{
+  return rtimer_arch_now();
+}
+
+rtimer_clock_t hal_rtimer_arch_second()
+{
+  return RTIMER_ARCH_SECOND;
+}
+
+int32_t hal_us_to_rtimerTiscks(int32_t us)
+{
+  return 0;
+}
+
+int32_t hal_rtimerTick_to_us(int32_t ticks)
+{
+  return ARCH_RTIMERTICKS_TO_US(ticks);
+}
+
+uint32_t hal_rtimerTick_to_us_64(uint32_t ticks)
+{
+  return ARCH_RTIMERTICKS_TO_US_64(ticks);
+}
+
+#endif /* #if defined(HAL_SUPPORT_RTIMER) */
