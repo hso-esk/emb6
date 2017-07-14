@@ -289,8 +289,9 @@ typedef struct lwm2m_object {
 
 #define LWM2M_INIT_OBJECT(o)                                                                \
     {                                                                                       \
-      for(int i = 0; i < o->count; i++) {                                                   \
-        for(int j = 0; j < (o->p_instances[i].count -1); j++) {                             \
+      int i, j;                                                                              \
+      for(i = 0; i < o->count; i++) {                                                   \
+        for(j = 0; j < (o->p_instances[i].count -1); j++) {                             \
           o->p_instances[i].p_resources[j].p_next = &(o->p_instances[i].p_resources[j+1]);  \
         }                                                                                   \
         if( i< (o->count -1) )                                                              \

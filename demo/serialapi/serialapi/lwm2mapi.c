@@ -891,6 +891,7 @@ static int8_t _stopLWM2M( void )
  */
 static int8_t _startLWM2M( void )
 {
+    int i;
     int8_t ret = 0;
     uip_ipaddr_t tmpIP;
 
@@ -922,7 +923,7 @@ static int8_t _startLWM2M( void )
 
 #if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE
     /* register dynamic objects */
-    for( int i = 0; i < LWM2MAPI_OBJ_MAX; i++ )
+    for( i = 0; i < LWM2MAPI_OBJ_MAX; i++ )
     {
       if(lwm2m_object_container[i] != NULL )
         lwm2m_engine_register_object( lwm2m_object_container[i] );

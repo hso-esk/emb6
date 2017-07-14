@@ -391,6 +391,7 @@ lwm2m_engine_callback(c_event_t c_event, p_data_t p_data)
 void
 lwm2m_engine_init(char* epname, f_lwm2m_engine_statch_cb p_cb, void* p_data )
 {
+  int i;
   /* initialize REST engine */
   rest_init_engine();
 
@@ -398,7 +399,7 @@ lwm2m_engine_init(char* epname, f_lwm2m_engine_statch_cb p_cb, void* p_data )
   p_statch_cb = p_cb;
   p_statch_data = p_data;
 
-  for(int i = 0; i < MAX_OBJECTS; i++)
+  for(i = 0; i < MAX_OBJECTS; i++)
     objects[i] = NULL;
 
   /* register the default objects */
