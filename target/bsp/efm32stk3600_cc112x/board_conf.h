@@ -185,7 +185,8 @@
 /** LED1 pin index */
 #define EFM32_IO_PIN_LED1                   3
 
-
+/* Support rtimer */
+#define HAL_SUPPORT_RTIMER                  TRUE
 /*
  * --- Stack Macro Definitions ---------------------------------------------- *
  */
