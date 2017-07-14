@@ -215,7 +215,7 @@ typedef struct lwm2m_instance {
 typedef struct lwm2m_object {
   uint16_t id;
   uint16_t count;
-  const char *path;
+  char path[6];
   resource_t *coap_resource;
   lwm2m_instance_t *p_instances;
 } lwm2m_object_t;
