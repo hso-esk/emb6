@@ -72,6 +72,10 @@
 #include "lwm2m-object.h"
 
 
+#ifndef LWM2M_SERIAL_API_SUPPORT_DYN_OBJ
+#define LWM2M_SERIAL_API_SUPPORT_DYN_OBJ    TRUE
+#endif /* #ifndef LWM2M_SERIAL_API_SUPPORT_DYN_OBJ */
+
 #if LWM2MAPI_PARSIFAL_OBJECTS
 #include "lwm2m-objects/lwm2m-object-bme280-temp.h"
 #include "lwm2m-objects/lwm2m-object-bme280-humidity.h"
