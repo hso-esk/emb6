@@ -931,14 +931,9 @@
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
-			<name>demo/serialapi/serial-interface-mac/sf_serialmac.c</name>
-			<type>1</type>
-			<locationURI>PARENT-8-PROJECT_LOC/demo/serialapi/serial-interface-mac/sf_serialmac.c</locationURI>
-		</link>
-		<link>
-			<name>demo/serialapi/serial-interface-mac/sf_serialmac.h</name>
-			<type>1</type>
-			<locationURI>PARENT-8-PROJECT_LOC/demo/serialapi/serial-interface-mac/sf_serialmac.h</locationURI>
+			<name>demo/serialapi/serial-interface-mac/src</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
 			<name>demo/serialapi/serialapi/lwm2m-objects</name>
@@ -1654,6 +1649,16 @@
 			<name>demo/serialapi/serial-interface-mac/dep/crc</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>demo/serialapi/serial-interface-mac/src/sf_serialmac.c</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/demo/serialapi/serial-interface-mac/src/sf_serialmac.c</locationURI>
+		</link>
+		<link>
+			<name>demo/serialapi/serial-interface-mac/src/sf_serialmac.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/demo/serialapi/serial-interface-mac/src/sf_serialmac.h</locationURI>
 		</link>
 		<link>
 			<name>demo/serialapi/serialapi/lwm2m-objects/lwm2m-object-bme280-airpressure.c</name>
