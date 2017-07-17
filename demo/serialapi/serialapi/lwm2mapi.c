@@ -678,8 +678,10 @@ static int8_t _rx_data( uint8_t* p_data, uint16_t len )
   uint8_t* p_txBuf = _p_txBuf;
   uint16_t txBufLen = _txBufLen;
 
-
   fn_serialApiHndl_t f_hndl = NULL;
+
+  /* store actual status */
+  e_lwm2m_api_ret_t status = _status;
 
   /* A frame has been received */
   /* check parameters */
@@ -794,6 +796,16 @@ static int8_t _rx_data( uint8_t* p_data, uint16_t len )
     }
 
     ret = (p_txBuf - _p_txBuf);
+  }
+  else if( status != _status)
+  {
+    /* status seems to have changed */
+    p_txBuf = _p_txBuf;
+    txBufLen = _txBufLen;
+    ret = _hndl_statusGet( NULL, 0, p_txBuf, txBufLen );
+
+    if( ret > 0 )
+      p_txBuf += ret;
   }
 
   if( ret > 0 )
