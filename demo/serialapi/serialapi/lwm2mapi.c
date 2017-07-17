@@ -141,7 +141,7 @@
 
 /** Maximum number of LWM2M resources */
 #ifndef LWM2MAPI_RES_MAX
-#define LWM2MAPI_RES_MAX                100
+#define LWM2MAPI_RES_MAX                50
 #endif /* #ifndef LWM2MAPI_RES_MAX */
 
 /** Maximum amount of LWM2M data */
