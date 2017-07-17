@@ -754,7 +754,7 @@ static int8_t _rx_data( uint8_t* p_data, uint16_t len )
   /* call the according handler */
   if( f_hndl != NULL )
   {
-    ret = f_hndl( p_dataPtr, bufLeft, _p_txBuf, _txBufLen );
+    ret = f_hndl( p_dataPtr, bufLeft, p_txBuf, txBufLen );
     if( ret > 0 )
     {
         EMB6_ASSERT_RET( _fn_tx != NULL, -1 );
