@@ -128,6 +128,10 @@
 #endif /* #if CONF_USE_SERVER */
 #endif /* #if DEMO_USE_DTLS */
 
+#if DEMO_USE_6TISCH
+#include "demo_6tisch.h"
+#endif /* #if DEMO_USE_6TISCH */
+
 #if UIP_CONF_IPV6_RPL
 #include "rpl.h"
 #endif /* #if UIP_CONF_IPV6_RPL */
@@ -168,7 +172,7 @@
 
 /** Maximum number of demos */
 #ifndef EMB6_DEMOS_MAX
-#define EMB6_DEMOS_MAX                      10
+#define EMB6_DEMOS_MAX                      11
 #endif /* #ifndef EMB6_DEMOS_MAX */
 
 /** default delay for running the emb6 process in microseconds */
@@ -382,6 +386,10 @@ static s_demo_t* loc_demoAppsSet( void )
 #if DEMO_USE_APTB
     EMB6_DEMO_SET( ret, aptb, emb6_demos );
 #endif /* #if DEMO_USE_APTB */
+
+#if DEMO_USE_6TISCH
+    EMB6_DEMO_SET( ret, 6tisch, emb6_demos );
+#endif /* #if DEMO_USE_6TISCH */
 
 #if DEMO_USE_DTLS
     EMB6_DEMO_SET( ret, dtls, emb6_demos );

@@ -1019,6 +1019,11 @@ void uip_log(char *msg);
 #define LOGGER_RADIO                        FALSE
 #endif
 
+/** DEMO 6tisch example                 (see demo_6tisch.c) */
+#ifndef LOGGER_DEMO_6TISCH
+#define LOGGER_DEMO_6TISCH                  FALSE
+#endif
+
 /** DEMO UDP socket example                 (see demo_udp_socket.c) */
 #ifndef LOGGER_DEMO_UDP_SOCKET
 #define LOGGER_DEMO_UDP_SOCKET              FALSE

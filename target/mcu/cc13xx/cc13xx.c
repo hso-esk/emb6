@@ -42,9 +42,11 @@
 #include <driverlib/ioc.h>
 #include <xdc/runtime/System.h>
 #else
+#if (HAL_SUPPORT_RTIMER == TRUE)
+#include "rtimer_arch.h"
+#endif
 #include "bsp/srf06eb_cc26xx/drivers/source/bsp_led.h"
 #endif
-
 
 /*! Enable or disable logging. */
 #define     LOGGER_ENABLE        LOGGER_HAL
@@ -681,3 +683,84 @@ int8_t hal_debugInit( void )
 } /* hal_debugInit() */
 
 /*! @} 6lowpan_mcu */
+
+#if (HAL_SUPPORT_RTIMER == TRUE)
+/*---------------------------------------------------------------------------*/
+/*
+* hal_rtimer_init()
+*
+* \brief   initialize rtimer module
+*
+*/
+void hal_rtimer_init()
+{
+#if !USE_TI_RTOS
+  rtimer_arch_init();
+#endif
+}
+
+/*
+ * hal_rtimer_arch_schedule()
+ * \brief Schedules an rtimer task to be triggered at time t
+ * \param t The time when the task will need executed.
+ *
+ * \e t is an absolute time, in other words the task will be executed AT
+ * time \e t, not IN \e t rtimer ticks.
+ *
+ * This function schedules a one-shot event with the AON RTC.
+ *
+ * This functions converts \e to a value suitable for the AON RTC.
+ */
+void hal_rtimer_arch_schedule(rtimer_clock_t t)
+{
+#if !USE_TI_RTOS
+  rtimer_arch_schedule(t);
+#endif
+}
+
+rtimer_clock_t hal_rtimer_arch_now()
+{
+#if !USE_TI_RTOS
+  return rtimer_arch_now();
+#else
+  return 0;
+#endif
+}
+
+rtimer_clock_t hal_rtimer_arch_second()
+{
+#if !USE_TI_RTOS
+  return RTIMER_ARCH_SECOND;
+#else
+  return 0;
+#endif
+}
+
+int32_t hal_us_to_rtimerTiscks(int32_t us)
+{
+#if !USE_TI_RTOS
+  return ARCH_US_TO_RTIMERTICKS(us);
+#else
+  return 0;
+#endif
+}
+
+int32_t hal_rtimerTick_to_us(int32_t ticks)
+{
+#if !USE_TI_RTOS
+  return ARCH_RTIMERTICKS_TO_US(ticks);
+#else
+  return 0;
+#endif
+}
+
+uint32_t hal_rtimerTick_to_us_64(uint32_t ticks)
+{
+#if !USE_TI_RTOS
+  return ARCH_RTIMERTICKS_TO_US_64(ticks);
+#else
+  return 0;
+#endif
+}
+
+#endif /* #if defined(HAL_SUPPORT_RTIMER) */

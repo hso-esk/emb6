@@ -60,6 +60,7 @@ extern "C" {
 #else
 /* BoardSupportPacket */
 #include "bsp/srf06eb_cc26xx/drivers/source/bsp.h"
+#include "rtimer.h"
 #endif
 /*==============================================================================
                             DEFINES
@@ -84,9 +85,6 @@ static s_ns_t *ps_rf_netstk;
 
 st_cc1310_t cc1310;
 uint8_t RxBuff[RX_BUFF_SIZE];
-#if NETSTK_CFG_IEEE_802154G_EN
-uint8_t temp[129];
-#endif
 framer802154ll_attr_t frame;
 uint8_t ack[10];
 uint8_t ack_length;
@@ -163,6 +161,184 @@ bool sf_rf_6lowpan_init(void *p_netstk)
   return true;
 }
 
+uint8_t sf_rf_6lowpan_prepare_pkt(uint8_t *payload, uint16_t payload_len)
+{
+	  if (payload!=NULL && payload_len > 1)
+	  {
+	    cc1310.tx.p_cmdPropTxAdv->pPkt = payload;
+	    cc1310.tx.p_cmdPropTxAdv->pktLen = payload_len ;
+	  }
+	  else
+		return 0;
+  cc1310.tx.p_cmdPropTxAdv->pktLen += PHY_HEADER_LEN;
+  cc1310.tx.p_cmdPropTxAdv->pPkt -= PHY_HEADER_LEN;
+  sf_rf_init_tx(cc1310.tx.p_cmdPropTxAdv->pPkt, cc1310.tx.p_cmdPropTxAdv->pktLen);
+  return 1;
+}
+#if !USE_TI_RTOS
+uint8_t tx_cmd_done = 0;
+static void tx_cmd_done_cb(uint32_t l_flag)
+{
+  if(IRQ_LAST_COMMAND_DONE == (l_flag & IRQ_LAST_COMMAND_DONE))
+  {
+	  tx_cmd_done = 1;
+  }
+}
+#endif
+
+uint8_t sf_rf_transmit(void)
+{
+#if USE_TI_RTOS
+  RF_EventMask result ;
+#else
+  static rfc_cmdStatus_t cmdStatus;
+#endif
+
+  /* check if transceiver is not is sleepy mode */
+  if( sf_rf_get_Status() == RF_STATUS_SLEEP )
+    return 0;
+#if !USE_TI_RTOS
+  tx_cmd_done = 0;
+#endif
+  /* reset the rx flag */
+  cc1310.rx.is_receiving = 0;
+
+#if USE_TI_RTOS
+
+      /* Stop last cmd (usually it is Rx cmd ) */
+      RF_flushCmd(gps_rfHandle, gps_rf_cmdHandle, 1);
+      /* Send tx command  */
+      result = RF_runCmd(gps_rfHandle, (RF_Op*)cc1310.tx.p_cmdPropTxAdv, RF_PriorityNormal, NULL, 0);
+      if (!(result & RF_EventLastCmdDone))
+      {
+        return 0;
+      }
+#else
+      /* Stop last cmd (usually it is Rx cmd ) */
+      RFC_sendDirectCmd(CMDR_DIR_CMD(CMD_ABORT));
+      /* Send tx command  */
+      // cmdStatus = RFC_sendRadioOp((rfc_radioOp_t*)cc1310.tx.p_cmdPropTxAdv);
+      cmdStatus = RFC_sendRadioOp_nb((rfc_radioOp_t*)cc1310.tx.p_cmdPropTxAdv, tx_cmd_done_cb);
+
+      while(!tx_cmd_done);
+
+      /* Since we sent a blocking cmd then we check the state */
+      if(cmdStatus != RFC_CMDSTATUS_DONE)
+      {
+        return 0 ;
+      }
+#endif
+      return 1;
+}
+
+void set_polling_mode(void)
+{
+  cc1310.poll_mode=1;
+  /* activate timestamp*/
+  cc1310.rx.p_cmdPropRxAdv->rxConf.bAppendTimestamp=1;
+}
+
+uint8_t is_polling_mode(void)
+{
+  /* return is polling flag  */
+  return cc1310.poll_mode;
+}
+
+uint8_t receiving_packet(void)
+{
+ /* return is receiving flag  */
+ return cc1310.rx.is_receiving ;
+}
+
+ uint8_t pending_packet(void)
+{
+  uint8_t rv = 0;
+  volatile rfc_dataEntry_t *entry = (rfc_dataEntry_t *)cc1310.rx.p_currentDataEntry;
+
+  /* Go through all RX buffers and check their status */
+  do {
+    if(entry->status == DATA_ENTRY_FINISHED) {
+      rv += 1;
+    }
+    entry = (rfc_dataEntry_t *)entry->pNextEntry;
+  } while(entry != (rfc_dataEntry_t *)cc1310.rx.p_currentDataEntry);
+
+  /* If we didn't find an entry at status finished, no frames are pending */
+  return rv;
+}
+
+ uint8_t sf_rf_set_rx_buff_length(uint16_t i_len)
+ {
+   if (i_len > 1)
+   {
+     cc1310.rx.max_len_appBuff = i_len ;
+     return 1;
+   }
+   return 0;
+ }
+
+ uint8_t sf_rf_set_p_RX_buff(uint8_t *pc_data)
+ {
+   if (pc_data!=NULL)
+   {
+     cc1310.rx.p_appBuff = pc_data;
+     return 1;
+   }
+   return 0;
+ }
+
+ uint16_t sf_rf_read_frame()
+{
+	 volatile rfc_dataEntryGeneral_t *entry = cc1310.rx.p_currentDataEntry;
+	 uint8_t finish = 0;
+	 while(!finish && entry->status != DATA_ENTRY_FINISHED)
+	 {
+		 entry = (rfc_dataEntryGeneral_t *)entry->pNextEntry;
+		 if(entry == (rfc_dataEntryGeneral_t *)cc1310.rx.p_currentDataEntry)
+			 finish=1;
+	 }
+	 if(entry->status == DATA_ENTRY_FINISHED) {
+	    /* when we receive data */
+	#if NETSTK_CFG_IEEE_802154G_EN
+		uint8_t *p_data = (uint8_t*)(&cc1310.rx.p_currentDataEntry->data);
+		uint8_t tempData;
+
+	    /* FIXME flip PHR back */
+		tempData = p_data[0];
+		p_data[0] = p_data[1];
+		p_data[1] = tempData;
+
+	    cc1310.rx.LenLastPkt = phy_framer802154_getPktLen(p_data, PHY_HEADER_LEN) + PHY_HEADER_LEN;
+	    cc1310.rx.p_lastPkt = p_data;
+	#else
+	     /* FIXME this is not correct if the packet is lager 127 */
+	    cc1310.rx.LenLastPkt = *(uint8_t*)(&entry->data) + PHY_HEADER_LEN;
+	    cc1310.rx.p_lastPkt = (uint8_t*)(&entry->data);
+	#endif
+
+
+	    if(cc1310.rx.LenLastPkt > 0) {
+	      if(cc1310.rx.LenLastPkt <= cc1310.rx.max_len_appBuff + PHY_HEADER_LEN ) {
+	        memcpy(cc1310.rx.p_appBuff, cc1310.rx.p_lastPkt + PHY_HEADER_LEN , cc1310.rx.LenLastPkt - PHY_HEADER_LEN );
+	      }
+
+		   /* Get RSSI value from the queue : The RSSI is given on signed form in dBm.
+		    * If no RSSI is available, this is signaled with a special value of the RSSI (-128, or 0x80) */
+		  cc1310.rx.c_rssiValue=(uint8_t) cc1310.rx.p_lastPkt[cc1310.rx.LenLastPkt];
+	      packetbuf_set_attr(PACKETBUF_ATTR_RSSI, (int8_t)cc1310.rx.p_lastPkt[cc1310.rx.LenLastPkt]);
+	      packetbuf_set_attr(PACKETBUF_ATTR_LINK_QUALITY, 0x7F);
+	    }
+
+	    entry->status=DATA_ENTRY_PENDING;
+	   /* switch to the next entry */
+	   RFQueue_nextEntry();
+	   /* Get the current entry and it to pending state */
+	   cc1310.rx.p_currentDataEntry = (rfc_dataEntryGeneral_t*)RFQueue_getDataEntry();
+	   cc1310.rx.p_currentDataEntry->status=DATA_ENTRY_PENDING;
+	   return cc1310.rx.LenLastPkt - 2 - PHY_HEADER_LEN ; /* fixme: 2 bytes crc */
+	  }
+	  return 0;
+}
 
 uint8_t sf_rf_6lowpan_sendBlocking(uint8_t *pc_data, uint16_t  i_len)
 {
@@ -200,23 +376,16 @@ uint8_t sf_rf_6lowpan_sendBlocking(uint8_t *pc_data, uint16_t  i_len)
 
 void sf_rf_6lowpan_sleep(void)
 {
-    /* check if the radio is already in sleep mode */
-    if( sf_rf_get_Status() == RF_STATUS_SLEEP )
-        return;
-    /* Turn OFF radio core and disable interrupt */
-    sf_rf_switchState(RF_STATUS_SLEEP);
+    /* Stop RX command */
+    RFC_sendDirectCmd(CMDR_DIR_CMD(CMD_ABORT));
 }
 
 
 bool sf_rf_wake(void) //  called by the radio : cc13xx_On (e_nsErr_t *p_err)
 {
-  /* Init the driver */
-  if(sf_rf_switchState(RF_STATUS_INIT)!= ROUTINE_DONE)
-        return false;
   /* Turn radio to RX mode */
   if(sf_rf_switchState(RF_STATUS_RX_LISTEN)!= ROUTINE_DONE)
       return false;
-
   return true;
 }
 
@@ -416,6 +585,10 @@ uint8_t sf_rf_6lowpan_getRssi(void)
   return sf_rf_getRssi();
 }
 
+uint32_t sf_rf_6lowpan_getTimeStamp(void)
+{
+	return cc1310.rx.timeStamp;
+}
 
 E_RF_CCA_RESULT_t sf_rf_6lowpan_cca(uint8_t c_numOfRssiMeas)
 {
@@ -571,11 +744,41 @@ static bool rf_driver_init(void)
 #endif
 }
 
+#if !USE_TI_RTOS
+#define IRQN_HW_SYN_WORD           5
+#define IRQ_HW_SYN_WORD           (1U << IRQN_HW_SYN_WORD)
+uint32_t temp_timestamp;
+void RFC_hw_Isr(void)
+{
+  /* Read interrupt flags */
+  uint32_t interruptFlags = HWREG(RFC_DBELL_BASE + RFC_DBELL_O_RFHWIFG);
+
+  /*  Clear interrupt */
+  do{
+    HWREG(RFC_DBELL_BASE + RFC_DBELL_O_RFHWIFG) = ~interruptFlags;
+  }while(HWREG(RFC_DBELL_BASE + RFC_DBELL_O_RFHWIFG) & interruptFlags);
+
+  /* check the flag interrupt */
+  if(interruptFlags & IRQ_HW_SYN_WORD)
+  {
+	  cc1310.rx.is_receiving = 1;
+	  temp_timestamp = (uint32_t) RTIMER_NOW() - (uint32_t) bsp_us_to_rtimerTiscks(1500);
+  }
+
+
+}
+#endif
 
 static void rx_call_back(uint32_t l_flag)
 {
+  /* reset the rx flag */
+  cc1310.rx.is_receiving = 0;
+
   if(IRQ_RX_OK == (l_flag & IRQ_RX_OK))
   {
+#if !USE_TI_RTOS
+	  cc1310.rx.timeStamp = temp_timestamp;
+#endif
 #if CC13XX_RX_LED_ENABLED
          bsp_led( HAL_LED3, EN_BSP_LED_OP_BLINK );
 #endif /* #if CC13XX_RX_LED_ENABLED */
@@ -596,10 +799,13 @@ static void rx_call_back(uint32_t l_flag)
       }
       else
       {
+        if(!cc1310.poll_mode)
+        {
         /* signal complete reception interrupt */
         en_evprocResCode_t err = RF_SEM_POST(EVENT_TYPE_RF);
         /* handle the received packet */
         sf_rf_switchState(RF_STATUS_RX);
+        }
       }
       /* set RX mode again */
       sf_rf_switchState(RF_STATUS_RX_LISTEN);
@@ -702,6 +908,11 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
       RFC_enableCpe0Interrupt(IRQ_RX_BUF_FULL);
       RFC_enableCpe0Interrupt(IRQ_RX_IGNORED);
 
+      /* initialize HW int */
+      IntRegister(INT_RFC_HW_COMB, &RFC_hw_Isr);
+      IntEnable(INT_RFC_HW_COMB);
+      MB_EnableHWInts(IRQ_HW_SYN_WORD);
+
 #endif
 
       /* initialize RX queue */
@@ -711,6 +922,8 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
         return ROUTINE_ERROR_INIT_QUEUE ;
       }
 
+      /* reset the rx flag */
+      cc1310.rx.is_receiving = 0;
       /* reset the waiting for ACK flag */
       cc1310.tx.Tx_waiting_Ack=0;
       /* Initialize global variable. Set the lowest RSSI value as default -255dBm */
@@ -740,6 +953,8 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
       return ROUTINE_DONE;
 #endif
   case RF_STATUS_TX :
+	  /* reset the rx flag */
+	  cc1310.rx.is_receiving = 0;
       /* find out if ACK is required */
       cc1310.tx.Tx_waiting_Ack = packetbuf_attr(PACKETBUF_ATTR_MAC_ACK);
       if(cc1310.tx.Tx_waiting_Ack)
@@ -751,21 +966,10 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
       cc1310.tx.waitForAckTimeout = (uint16_t) packetbuf_attr(PACKETBUF_ATTR_MAC_ACK_WAIT_DURATION);
       }
 #if USE_TI_RTOS
-
-
-#if NETSTK_CFG_IEEE_802154G_EN
-      memcpy(temp,cc1310.tx.p_cmdPropTxAdv->pPkt,2);
-      /* Stop last cmd (usually it is Rx cmd ) */
-      RF_cancelCmd(gps_rfHandle, gps_rf_cmdHandle, 1);
-      memcpy(cc1310.tx.p_cmdPropTxAdv->pPkt, temp,2);
-      /* Send tx command  */
-      result = RF_runCmd(gps_rfHandle, (RF_Op*)cc1310.tx.p_cmdPropTxAdv, RF_PriorityNormal, NULL, 0);
-#else
       /* Stop last cmd (usually it is Rx cmd ) */
       RF_flushCmd(gps_rfHandle, gps_rf_cmdHandle, 1);
       /* Send tx command  */
       result = RF_runCmd(gps_rfHandle, (RF_Op*)cc1310.tx.p_cmdPropTxAdv, RF_PriorityNormal, NULL, 0);
-#endif
       if (!(result & RF_EventLastCmdDone))
       {
         return ROUTINE_ERROR_TX_CMD;
@@ -830,6 +1034,7 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
 #endif
   case RF_STATUS_RX_LISTEN :
     cc1310.rx.p_currentDataEntry=(rfc_dataEntryGeneral_t*)cc1310.rx.dataQueue.pCurrEntry;
+    cc1310.rx.p_currentDataEntry->status=DATA_ENTRY_PENDING;
     /* Set the Data Entity queue for received data */
     cc1310.rx.p_cmdPropRxAdv->pQueue = &cc1310.rx.dataQueue;
     /* Set rx statistics output struct */

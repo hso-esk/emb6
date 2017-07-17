@@ -53,7 +53,7 @@
 		<link>
 			<name>ccfg.c</name>
 			<type>1</type>
-			<locationURI>PARENT-8-PROJECT_LOC/ccfg.c</locationURI>
+			<locationURI>PARENT-8-PROJECT_LOC/target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/startup_files/ccfg.c</locationURI>
 		</link>
 		<link>
 			<name>demo</name>
@@ -77,6 +77,11 @@
 		</link>
 		<link>
 			<name>utils</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>demo/6tisch</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
@@ -204,6 +209,16 @@
 			<name>utils/src</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>demo/6tisch/demo_6tisch.c</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/demo/6tisch/demo_6tisch.c</locationURI>
+		</link>
+		<link>
+			<name>demo/6tisch/demo_6tisch.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/demo/6tisch/demo_6tisch.h</locationURI>
 		</link>
 		<link>
 			<name>demo/aptb/client</name>
@@ -616,6 +631,11 @@
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
+			<name>utils/inc/aes-128.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/utils/inc/aes-128.h</locationURI>
+		</link>
+		<link>
 			<name>utils/inc/cc-gcc.h</name>
 			<type>1</type>
 			<locationURI>PARENT-8-PROJECT_LOC/utils/inc/cc-gcc.h</locationURI>
@@ -624,6 +644,11 @@
 			<name>utils/inc/cc.h</name>
 			<type>1</type>
 			<locationURI>PARENT-8-PROJECT_LOC/utils/inc/cc.h</locationURI>
+		</link>
+		<link>
+			<name>utils/inc/ccm-star.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/utils/inc/ccm-star.h</locationURI>
 		</link>
 		<link>
 			<name>utils/inc/clist.h</name>
@@ -696,9 +721,19 @@
 			<locationURI>PARENT-8-PROJECT_LOC/utils/inc/ringbuffer.h</locationURI>
 		</link>
 		<link>
+			<name>utils/inc/ringbufindex.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/utils/inc/ringbufindex.h</locationURI>
+		</link>
+		<link>
 			<name>utils/inc/rt_tmr.h</name>
 			<type>1</type>
 			<locationURI>PARENT-8-PROJECT_LOC/utils/inc/rt_tmr.h</locationURI>
+		</link>
+		<link>
+			<name>utils/inc/rtimer.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/utils/inc/rtimer.h</locationURI>
 		</link>
 		<link>
 			<name>utils/inc/stimer.h</name>
@@ -714,6 +749,16 @@
 			<name>utils/inc/trace.h</name>
 			<type>1</type>
 			<locationURI>PARENT-8-PROJECT_LOC/utils/inc/trace.h</locationURI>
+		</link>
+		<link>
+			<name>utils/src/aes-128.c</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/utils/src/aes-128.c</locationURI>
+		</link>
+		<link>
+			<name>utils/src/ccm-star.c</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/utils/src/ccm-star.c</locationURI>
 		</link>
 		<link>
 			<name>utils/src/crc.c</name>
@@ -771,9 +816,19 @@
 			<locationURI>PARENT-8-PROJECT_LOC/utils/src/ringbuffer.c</locationURI>
 		</link>
 		<link>
+			<name>utils/src/ringbufindex.c</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/utils/src/ringbufindex.c</locationURI>
+		</link>
+		<link>
 			<name>utils/src/rt_tmr.c</name>
 			<type>1</type>
 			<locationURI>PARENT-8-PROJECT_LOC/utils/src/rt_tmr.c</locationURI>
+		</link>
+		<link>
+			<name>utils/src/rtimer.c</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/utils/src/rtimer.c</locationURI>
 		</link>
 		<link>
 			<name>utils/src/stimer.c</name>
@@ -1026,6 +1081,11 @@
 			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/readme</locationURI>
 		</link>
 		<link>
+			<name>emb6/inc/dll/tsch</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
 			<name>emb6/inc/net/dtls</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
@@ -1112,6 +1172,11 @@
 		</link>
 		<link>
 			<name>emb6/src/dll/mac</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>emb6/src/dll/tsch</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
@@ -1921,6 +1986,81 @@
 			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/mac/mac.h</locationURI>
 		</link>
 		<link>
+			<name>emb6/inc/dll/tsch/frame802154e-ie.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/tsch/frame802154e-ie.h</locationURI>
+		</link>
+		<link>
+			<name>emb6/inc/dll/tsch/mac-sequence.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/tsch/mac-sequence.h</locationURI>
+		</link>
+		<link>
+			<name>emb6/inc/dll/tsch/tsch-adaptive-timesync.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/tsch/tsch-adaptive-timesync.h</locationURI>
+		</link>
+		<link>
+			<name>emb6/inc/dll/tsch/tsch-asn.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/tsch/tsch-asn.h</locationURI>
+		</link>
+		<link>
+			<name>emb6/inc/dll/tsch/tsch-conf.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/tsch/tsch-conf.h</locationURI>
+		</link>
+		<link>
+			<name>emb6/inc/dll/tsch/tsch-log.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/tsch/tsch-log.h</locationURI>
+		</link>
+		<link>
+			<name>emb6/inc/dll/tsch/tsch-packet.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/tsch/tsch-packet.h</locationURI>
+		</link>
+		<link>
+			<name>emb6/inc/dll/tsch/tsch-private.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/tsch/tsch-private.h</locationURI>
+		</link>
+		<link>
+			<name>emb6/inc/dll/tsch/tsch-queue.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/tsch/tsch-queue.h</locationURI>
+		</link>
+		<link>
+			<name>emb6/inc/dll/tsch/tsch-rpl.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/tsch/tsch-rpl.h</locationURI>
+		</link>
+		<link>
+			<name>emb6/inc/dll/tsch/tsch-schedule.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/tsch/tsch-schedule.h</locationURI>
+		</link>
+		<link>
+			<name>emb6/inc/dll/tsch/tsch-security.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/tsch/tsch-security.h</locationURI>
+		</link>
+		<link>
+			<name>emb6/inc/dll/tsch/tsch-slot-operation.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/tsch/tsch-slot-operation.h</locationURI>
+		</link>
+		<link>
+			<name>emb6/inc/dll/tsch/tsch.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/tsch/tsch.h</locationURI>
+		</link>
+		<link>
+			<name>emb6/inc/dll/tsch/tsch_null_adaptive.h</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/inc/dll/tsch/tsch_null_adaptive.h</locationURI>
+		</link>
+		<link>
 			<name>emb6/inc/net/dtls/aes</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
@@ -2314,6 +2454,66 @@
 			<name>emb6/src/dll/mac/mac_smartmac.c</name>
 			<type>1</type>
 			<locationURI>PARENT-8-PROJECT_LOC/emb6/src/dll/mac/mac_smartmac.c</locationURI>
+		</link>
+		<link>
+			<name>emb6/src/dll/tsch/frame802154e-ie.c</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/src/dll/tsch/frame802154e-ie.c</locationURI>
+		</link>
+		<link>
+			<name>emb6/src/dll/tsch/mac-sequence.c</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/src/dll/tsch/mac-sequence.c</locationURI>
+		</link>
+		<link>
+			<name>emb6/src/dll/tsch/tsch-adaptive-timesync.c</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/src/dll/tsch/tsch-adaptive-timesync.c</locationURI>
+		</link>
+		<link>
+			<name>emb6/src/dll/tsch/tsch-log.c</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/src/dll/tsch/tsch-log.c</locationURI>
+		</link>
+		<link>
+			<name>emb6/src/dll/tsch/tsch-packet.c</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/src/dll/tsch/tsch-packet.c</locationURI>
+		</link>
+		<link>
+			<name>emb6/src/dll/tsch/tsch-queue.c</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/src/dll/tsch/tsch-queue.c</locationURI>
+		</link>
+		<link>
+			<name>emb6/src/dll/tsch/tsch-rpl.c</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/src/dll/tsch/tsch-rpl.c</locationURI>
+		</link>
+		<link>
+			<name>emb6/src/dll/tsch/tsch-schedule.c</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/src/dll/tsch/tsch-schedule.c</locationURI>
+		</link>
+		<link>
+			<name>emb6/src/dll/tsch/tsch-security.c</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/src/dll/tsch/tsch-security.c</locationURI>
+		</link>
+		<link>
+			<name>emb6/src/dll/tsch/tsch-slot-operation.c</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/src/dll/tsch/tsch-slot-operation.c</locationURI>
+		</link>
+		<link>
+			<name>emb6/src/dll/tsch/tsch.c</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/src/dll/tsch/tsch.c</locationURI>
+		</link>
+		<link>
+			<name>emb6/src/dll/tsch/tsch_null_adaptive.c</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/emb6/src/dll/tsch/tsch_null_adaptive.c</locationURI>
 		</link>
 		<link>
 			<name>emb6/src/net/dtls/aes</name>
@@ -4324,6 +4524,16 @@
 			<name>target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/rf_patches</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/rtimer_arch.c</name>
+			<type>1</type>
+			<locationURI>PARENT-3-PROJECT_LOC/device/cc13xx/rf_noRtos_lib/rtimer_arch.c</locationURI>
+		</link>
+		<link>
+			<name>target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/rtimer_arch.h</name>
+			<type>1</type>
+			<locationURI>PARENT-3-PROJECT_LOC/device/cc13xx/rf_noRtos_lib/rtimer_arch.h</locationURI>
 		</link>
 		<link>
 			<name>target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/sf_mcu_timer.c</name>

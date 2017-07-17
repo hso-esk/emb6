@@ -54,14 +54,16 @@ brd_conf = {
 
     # Transceiver source description
     'if'            : 'cc13xx',
-    'startupfile'   : 'cc13xxware_2_03_00_16456/startup_files/startup_gcc.c',
+    'startupfile'   : 'GCC/startup_gcc.c',
+    'scriptfile'    : 'GCC/cc13x0f128.lds'
 }
 
 std_conf = {
 
     # C code global defined symbols
     'CPPDEFINES' : [
-            '',
+            'USE_TI_RTOS=0',
+            'gcc=1',
     ],
 
     # GCC flags

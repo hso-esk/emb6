@@ -57,7 +57,6 @@
 #include "packetbuf.h"
 
 
-
 /* QUEUEBUF_NUM is the total number of queuebuf */
 #ifdef QUEUEBUF_CONF_NUM
 #define QUEUEBUF_NUM QUEUEBUF_CONF_NUM

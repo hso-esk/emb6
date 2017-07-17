@@ -599,5 +599,77 @@ int8_t bsp_rtcSetTime( en_hal_rtc_t *p_rtc );
 int8_t bsp_rtcGetTime( en_hal_rtc_t *p_rtc );
 #endif /* #if defined(HAL_SUPPORT_RTC) */
 
+
+#if (HAL_SUPPORT_RTIMER == TRUE)
+/*---------------------------------------------------------------------------*/
+/*
+* bsp_rtimer_init()
+*
+* \brief   initialize rtimer module
+*
+*/
+void bsp_rtimer_init();
+
+/*
+ * rtimer_arch_schedule()
+ * \brief Schedules an rtimer task to be triggered at time t
+ * \param t The time when the task will need executed.
+ *
+ * \e t is an absolute time, in other words the task will be executed AT
+ * time \e t, not IN \e t rtimer ticks.
+ */
+void bsp_rtimer_schedule(rtimer_clock_t t);
+/*
+ * bsp_rtimer_arch_now()
+ * \brief Returns the current real-time clock time
+ * \return The current rtimer time in ticks
+ *
+ * The value is read from the AON RTC counter and converted to a number of
+ * rtimer ticks
+ *
+ */
+rtimer_clock_t bsp_rtimer_arch_now();
+
+rtimer_clock_t bsp_rtimer_arch_second();
+
+int32_t bsp_us_to_rtimerTiscks(int32_t us);
+
+int32_t bsp_rtimerTick_to_us(int32_t ticks);
+
+uint32_t bsp_rtimerTick_to_us_64(uint32_t tiscks);
+
+#endif /* #if defined(HAL_SUPPORT_RTIMER) */
+
+#if (HAL_SUPPORT_MCU_SLEEP == TRUE)
+/**
+ * bsp_sleepDuration()
+ *
+ * \brief   Obtain remaining time of the low-power timer in ticks
+ *
+ * \return  Remaining time.
+ */
+clock_time_t bsp_sleepDuration( void );
+
+
+/**
+ * bsp_sleepEnter()
+ *
+ * \brief   Enter low-power mode
+ *
+ * \return  0 on success, otherwise -1.
+ */
+int8_t bsp_sleepEnter( uint32_t duration );
+
+
+/**
+ * bsp_adjustTick()
+ *
+ * \brief   Adjust system tick counter
+ *
+ * \return  0 on success, otherwise -1.
+ */
+int8_t bsp_adjustTick( clock_time_t ticks );
+#endif /* #if (HAL_SUPPORT_MCU_SLEEP == TRUE) */
+
 #endif /* __BSP_H__ */
 
