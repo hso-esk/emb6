@@ -38,6 +38,11 @@ void rtimer_arch_init(void)
 void
 rtimer_arch_schedule(rtimer_clock_t t)
 {
+  RTC_IntClear( RTC_IF_COMP1 );
+
+  RTC_CompareSet( 1, (t) & _RTC_COMP1_MASK );
+    // Start the timer system by enabling the compare interrupt.
+  RTC_IntEnable( RTC_IF_COMP1 );
 }
 
 /*============================================================================*/
