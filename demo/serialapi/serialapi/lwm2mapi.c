@@ -148,11 +148,6 @@
 #define LWM2MAPI_DATA_MAX               (LWM2MAPI_RES_MAX * sizeof(float))
 #endif /* #if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE */
 
-
-//#define LWM2M_SERVER_IP(ipaddr)             uip_ip6addr(ipaddr, 0xbbbb, 0x0000, 0x0000, 0x0000, 0x0a00, 0x27ff,0xfe23, 0x6fcd)
-//#define LWM2M_SERVER_IP(ipaddr)             uip_ip6addr(ipaddr, 0xbbbb, 0x0000, 0x0000, 0x0000,0x6eec, 0xebff,0xfe67, 0xea04)
-//#define LWM2M_SERVER_IP(ipaddr)             uip_ip6addr(ipaddr, 0x2001, 0x0db8, 0x0100, 0xf101, 0x0a00, 0x27ff, 0xfe23, 0x6fcd)
-
 /** default server ip */
 #define LWM2MAPI_SERVER_IP                  0xbbbb, 0x0000, 0x0000, 0x0000, \
                                             0x0a00, 0x27ff,0xfe23, 0x6fcd
