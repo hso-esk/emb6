@@ -584,8 +584,12 @@ void emb6_init( s_ns_t* ps_ns, s_demo_t* ps_demos, e_nsErr_t* p_err )
     evproc_regCallback( EVENT_TYPE_REQ_START, loc_event_callback );
     evproc_regCallback( EVENT_TYPE_REQ_STOP, loc_event_callback );
 
+#if EMB6_NO_AUTOSTART != TRUE
     /* enable stack per default */
     loc_set_status( STACK_STATUS_ACTIVE );
+#else
+    loc_set_status( STACK_STATUS_IDLE );
+#endif /* #if EMB6_NO_AUTOSTART != TRUE */
 
 } /* emb6_init() */
 
