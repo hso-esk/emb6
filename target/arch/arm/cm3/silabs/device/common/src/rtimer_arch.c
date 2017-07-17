@@ -97,7 +97,11 @@ rtimer_arch_now()
 ==============================================================================*/
 /*---------------------------------------------------------------------------*/
 /* The RTC interrupt handler */
-void RTCIntHandler(void)
+void RTC_IRQHandlerCB(uint32_t flags)
 {
-
+if ( flags & RTC_IF_COMP1 ) {
+  RTC_IntClear( RTC_IF_COMP1 );
+  RTC_IntDisable( RTC_IF_COMP1 );
+  rtimer_run_next();
+}
 }
