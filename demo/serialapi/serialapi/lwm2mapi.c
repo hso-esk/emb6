@@ -632,10 +632,12 @@ void _event_callback( c_event_t ev, p_data_t data )
 
       case STACK_STATUS_ACTIVE:
       {
+#if LWM2M_API_AUTOSTART
         /* start LWM2M */
         _startLWM2M();
         /* Call the status get handler */
         ret = _hndl_statusGet( NULL, 0, p_txBuf, txBufLen );
+#endif /* #if LWM2M_API_AUTOSTART */
         break;
       }
 
