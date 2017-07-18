@@ -19,6 +19,9 @@
 #include "em_cmu.h"
 #include "em_common.h"
 #include "em_int.h"
+#if (HAL_SUPPORT_RTIMER == TRUE)
+#include "rtimer_arch.h"
+#endif
 
 #if defined( _EFM_DEVICE )
 #include "em_rtc.h"
@@ -827,7 +830,11 @@ void RTCC_IRQHandler(void)
     wallClockTime    += TICKS_TO_SEC( ticks );
   }
 #endif
-
+  if ( flags & RTC_IF_COMP1 ) {
+	  RTC_IRQHandlerCB(flags);
+  }
+  RTC_INTCLEAR(RTC_ALL_INTS);
+  flags = RTC_INTGET();
   INT_Enable();
 }
 
