@@ -206,6 +206,13 @@
 #define NETSTK_SUPPORT_SW_RF_AUTOACK        TRUE
 #endif /* #if (NETSTK_SUPPORT_SW_MAC_AUTOACK == FALSE) */
 
+/* Delay between GO signal and SFD */
+#define RADIO_DELAY_BEFORE_TX ((unsigned)bsp_us_to_rtimerTiscks(81))
+/* Delay between GO signal and start listening.
+ * This value is so small because the radio is constantly on within each timeslot. */
+#define RADIO_DELAY_BEFORE_RX ((unsigned)bsp_us_to_rtimerTiscks(15))
+/* Delay between the SFD finishes arriving and it is detected in software. */
+#define RADIO_DELAY_BEFORE_DETECT ((unsigned)bsp_us_to_rtimerTiscks(352))
 
 /*
  *  --- Global Functions Definition ------------------------------------------*
