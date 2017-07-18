@@ -48,7 +48,7 @@
 #include "emb6.h"
 #include "rtimer.h"
 /*---------------------------------------------------------------------------*/
-#define RTIMER_ARCH_SECOND 65536
+#define RTIMER_ARCH_SECOND 32768
 
 /* HW oscillator frequency is 32 kHz, not 64 kHz and RTIMER_NOW() never returns
  * an odd value; so US_TO_RTIMERTICKS always rounds to the nearest even number.
