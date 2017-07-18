@@ -215,6 +215,17 @@ emb6 = {
         ]
     },
 
+    # The 6tisch layer handles the slotted network
+    'tsch' : {
+        'src' : [
+             'dll/tsch/*.c',
+        ],
+
+        'inc' : [
+             'dll/tsch/',
+        ]
+    },
+
     # The framer include the layout of the single frames on different layers.
     'framer' : {
         'src' : [

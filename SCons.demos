@@ -115,11 +115,11 @@ demos += [{
 # and the second (simple node) will start by scanning each (used) channel to capt beacons and start the slotted network.
 demos += [{
     'id'    : '6tisch_PAN',
-    'demo'  : ('6tisch_demo','pan_coordinator'),
+    'demo'  : ('6tisch','pan_coordinator'),
 }]
 demos += [{
     'id'    : '6tisch_Node',
-    'demo'  : ('6tisch_demo','simple_node'),
+    'demo'  : ('6tisch','simple_node'),
 }]
 
 # The External Interface application is used to interace with a border router (e.g.

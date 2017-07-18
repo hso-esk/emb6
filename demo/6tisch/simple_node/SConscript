@@ -38,7 +38,7 @@
 #
 ##
 
-udp_socket = {
+6tisch = {
 
     'demo' : [
        '../*',
@@ -71,4 +71,4 @@ udp_socket = {
     ]
 }
 
-Return('6tisch_demo')
+Return('6tisch')

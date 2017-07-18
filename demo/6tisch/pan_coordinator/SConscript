@@ -38,7 +38,7 @@
 #
 ##
 
-udp_socket = {
+tisch = {
 
     'demo' : [
        '../*',
@@ -63,7 +63,7 @@ udp_socket = {
     # C global defines
     'CPPDEFINES' : [
         ('QUEUEBUF_CONF_NUM',4),
-        ('FRAME802154_CONF_VERSION', FRAME802154_IEEE802154E_2012),
+        ('FRAME802154_CONF_VERSION', 'FRAME802154_IEEE802154E_2012'),
         ('TISCH_ROLE_6DR',1),
         ('LOGGER_DEMO_6TISCH',1),
         ('DEMO_USE_6TISCH',1)
@@ -73,5 +73,4 @@ udp_socket = {
     'CFLAGS' : [
     ]
 }
-
-Return('6tisch_demo')
+Return('tisch')
