@@ -40,7 +40,7 @@
 
 #include "tsch.h"
 #include "tsch-conf.h"
-#include "tsch/tsch-adaptive-timesync.h"
+#include "tsch-adaptive-timesync.h"
 #include "tsch-log.h"
 #include <stdio.h>
 #include "bsp.h"
