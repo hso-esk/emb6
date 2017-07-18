@@ -110,6 +110,17 @@ demos += [{
     'demo'  : ('udp_socket_simple','client'),
 }]
 
+# The 6tisch demo allows you to run a slotted network using two layers 6top + tsch. The Application can either act
+# as pan coordinator or simple node. The first will send beacons in order to inform other device about its existence
+# and the second (simple node) will start by scanning each (used) channel to capt beacons and start the slotted network.
+demos += [{
+    'id'    : '6tisch_PAN',
+    'demo'  : ('6tisch_demo','pan_coordinator'),
+}]
+demos += [{
+    'id'    : '6tisch_Node',
+    'demo'  : ('6tisch_demo','simple_node'),
+}]
 
 # The External Interface application is used to interace with a border router (e.g.
 # Cetic 6LBR) as a radio communication module. Therefore it runs the SLIP (Serial
