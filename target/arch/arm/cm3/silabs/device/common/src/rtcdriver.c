@@ -100,7 +100,7 @@
 #define RTC_DIVIDER                     ( cmuClkDiv_2 )
 #else
 // Assume 32kHz RTC/RTCC clock, cmuClkDiv_8 prescaler, 4 ticks per millisecond
-#define RTC_DIVIDER                     ( cmuClkDiv_8 )
+#define RTC_DIVIDER                     ( cmuClkDiv_1 )
 #endif
 #define RTC_CLOCK                       ( 32768U )
 #define MSEC_TO_TICKS_DIVIDER           ( 1000U * RTC_DIVIDER )
