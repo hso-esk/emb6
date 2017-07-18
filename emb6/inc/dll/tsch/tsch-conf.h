@@ -185,7 +185,7 @@
 #ifdef TSCH_CONF_HW_FRAME_FILTERING
 #define TSCH_HW_FRAME_FILTERING TSCH_CONF_HW_FRAME_FILTERING
 #else /* TSCH_CONF_HW_FRAME_FILTERING */
-#define TSCH_HW_FRAME_FILTERING 1
+#define TSCH_HW_FRAME_FILTERING 0
 #endif /* TSCH_CONF_HW_FRAME_FILTERING */
 
 /* Keep radio always on within TSCH timeslot (1) or turn it off between packet and ACK? (0) */
