@@ -134,7 +134,7 @@ void rtimer_run_next(void);
  *
  * \hideinitializer
  */
-#define RTIMER_NOW() bsp_rtimer_arch_now()
+#define RTIMER_NOW() bsp_rtimer_now()
 
 /**
  * \brief      Get the time that a task last was executed

@@ -726,7 +726,7 @@ void bsp_rtimer_schedule(rtimer_clock_t t)
  hal_rtimer_arch_schedule(t);
 }
 
-rtimer_clock_t bsp_rtimer_arch_now()
+rtimer_clock_t bsp_rtimer_now()
 {
   return hal_rtimer_arch_now();
 }
