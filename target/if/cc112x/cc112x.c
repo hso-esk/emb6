@@ -2504,6 +2504,79 @@ static void rf_getTimestamp(uint32_t *p_val, e_nsErr_t *p_err) {
   *p_val = rf_ctx.timeStamp;
 }
 
+/*!
+ * @brief   This function prepare the radio with a packet to be sent.
+ *
+ * @param   payload             Point to buffer storing data to send.
+ * @param   payload_len         Length of data to send.
+ * @param   p_err               Pointer to result enum.
+ */
+static void rf_prepare(uint8_t *payload, uint16_t payload_len, e_nsErr_t *p_err)
+{
+  #if NETSTK_CFG_ARG_CHK_EN
+  if ((p_err == NULL) || (payload == NULL) || (payload_len == 0))
+  {
+    *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+    return;
+  }
+  #endif
+  if(1)
+	  *p_err = NETSTK_ERR_NONE;
+  else
+	  *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+}
+
+/*!
+ * @brief   This function Send the packet that has previously been prepared
+ *
+ * @param   p_err       Pointer to result enum.
+ */
+static void rf_transmit(e_nsErr_t *p_err)
+{
+  #if NETSTK_CFG_ARG_CHK_EN
+  if (p_err == NULL)
+  {
+	*p_err = NETSTK_ERR_INVALID_ARGUMENT;
+    return;
+  }
+  #endif
+
+  if(1)
+  {
+    *p_err = NETSTK_ERR_NONE;
+  }
+  else
+	 *p_err = NETSTK_ERR_RF_XXX;
+}
+
+
+/*!
+ * @brief   This function read a received packet into a buffer
+ *
+ * @param   buf         Point to buffer.
+ * @param   buf_len     max buffer Length.
+ *
+ * @return  Length of received data.
+ */
+static uint16_t rf_read(uint8_t *buf, uint16_t buf_len)
+{
+  #if NETSTK_CFG_ARG_CHK_EN
+  if ((buf == NULL) || (buf_len < 1))
+  {
+    return 0;
+  }
+  #endif
+
+ /* if(is_polling_mode())
+  {
+	sf_rf_set_rx_buff_length(buf_len);
+	sf_rf_set_p_RX_buff(buf);
+    return (uint16_t) sf_rf_read_frame();
+  }
+  */
+  return 0;
+}
+
 
 /*
  ********************************************************************************
@@ -2518,6 +2591,9 @@ const s_nsRF_t rf_driver_ticc112x = {
     rf_send,
     rf_recv,
     rf_ioctl,
+    rf_prepare,
+    rf_transmit,
+	rf_read,
 };
 
 
