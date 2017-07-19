@@ -1016,7 +1016,7 @@ rtimer_clock_t hal_rtimer_arch_second()
 
 int32_t hal_us_to_rtimerTiscks(int32_t us)
 {
-  return 0;
+  return ARCH_US_TO_RTIMERTICKS(us);
 }
 
 int32_t hal_rtimerTick_to_us(int32_t ticks)
