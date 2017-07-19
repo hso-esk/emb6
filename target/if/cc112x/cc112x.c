@@ -303,6 +303,8 @@ struct s_rf_ctx {
   */
   int8_t  rxRSSI;
   uint8_t rxLQI;
+  /* Time Stamp value  */
+  uint32_t timeStamp;
   framer802154ll_attr_t rxFrame;
 
   /* TX state attributes */
@@ -409,6 +411,7 @@ static void rf_txPowerGet(int8_t *p_power, e_nsErr_t *p_err);
 static void rf_chanNumSet(uint8_t chan_num, e_nsErr_t *p_err);
 static void rf_opModeSet(e_nsRfOpMode mode, e_nsErr_t *p_err);
 static void rf_readRSSI(int8_t *p_val, e_nsErr_t *p_err);
+static void rf_getTimestamp(uint32_t *p_val, e_nsErr_t *p_err);
 
 
 /*
@@ -835,7 +838,9 @@ static void rf_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err) {
     case NETSTK_CMD_RF_RSSI_GET:
       rf_readRSSI(p_val, p_err);
       break;
-
+    case NETSTK_CMD_RF_TIMESTAMP_GET:
+      rf_getTimestamp((uint32_t*)p_val, p_err);
+      break;
     case NETSTK_CMD_RF_RF_SWITCH_SET:
     case NETSTK_CMD_RF_ANT_DIV_SET:
     case NETSTK_CMD_RF_SENS_SET:
@@ -1306,7 +1311,7 @@ static void rf_rx_sync(struct s_rf_ctx *p_ctx) {
 
   p_ctx->state = RF_STATE_RX_SYNC;
   CC112x_LED_RX_ON();
-
+  rf_ctx.timeStamp = (uint32_t) bsp_rtimer_arch_now() - (uint32_t) bsp_us_to_rtimerTiscks(1500);
   /* configure RF interrupt */
   rf_intConfig(RF_IOCFG_RXFIFO_THR, RF_INT_RXFIFO_THR, RF_INT_EDGE_RXFIFO_THR, rf_rxFifoThresholdISR);
 }
@@ -2487,6 +2492,16 @@ static void rf_opModeSet(e_nsRfOpMode mode, e_nsErr_t *p_err) {
 static void rf_readRSSI(int8_t *p_val, e_nsErr_t *p_err) {
   /* get real RSSI from most recently received frame */
   *p_val = rf_ctx.rxRSSI;
+}
+
+/**
+ * @brief   Read last packet time stamp
+ * @param p_val   point to variable storing time stamp
+ * @param p_err   point to variable storing returned error code
+ */
+static void rf_getTimestamp(uint32_t *p_val, e_nsErr_t *p_err) {
+  /* get real RSSI from most recently received frame */
+  *p_val = rf_ctx.timeStamp;
 }
 
 
