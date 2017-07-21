@@ -1311,7 +1311,7 @@ static void rf_rx_sync(struct s_rf_ctx *p_ctx) {
 
   p_ctx->state = RF_STATE_RX_SYNC;
   CC112x_LED_RX_ON();
-  rf_ctx.timeStamp = (uint32_t) bsp_rtimer_arch_now() - (uint32_t) bsp_us_to_rtimerTiscks(1500);
+  rf_ctx.timeStamp = (uint32_t) bsp_rtimer_now() - (uint32_t) bsp_us_to_rtimerTiscks(1500);
   /* configure RF interrupt */
   rf_intConfig(RF_IOCFG_RXFIFO_THR, RF_INT_RXFIFO_THR, RF_INT_EDGE_RXFIFO_THR, rf_rxFifoThresholdISR);
 }
