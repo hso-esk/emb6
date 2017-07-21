@@ -774,8 +774,6 @@ void RTCC_IRQHandler(void)
 {
   uint32_t flags, timeElapsed, cnt, timeToNextTimerCompletion;
 
-  INT_Disable();
-
   // CNT will normally be COMP0+1 at this point,
   // unless IRQ latency exceeded one tick period.
 
@@ -835,7 +833,6 @@ void RTCC_IRQHandler(void)
   }
   RTC_INTCLEAR(RTC_ALL_INTS);
   flags = RTC_INTGET();
-  INT_Enable();
 }
 
 static void checkAllTimers( uint32_t timeElapsed )
