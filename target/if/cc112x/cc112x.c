@@ -551,7 +551,11 @@ static void rf_off(e_nsErr_t *p_err) {
   }
 }
 
-
+/* Required variable for tx fct*/
+uint32_t tickstart;
+uint32_t txTimeout;
+uint8_t enterRx;
+uint8_t exitTx;
 /**
  * @brief handle transmission request from upper layer
  * @param p_data    point to buffer holding frame to send
@@ -569,10 +573,6 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
   }
 #endif
 
-  uint32_t tickstart;
-  uint32_t txTimeout;
-  uint8_t enterRx;
-  uint8_t exitTx;
   struct s_rf_ctx *p_ctx = &rf_ctx;
 
   if (RF_IS_RX_BUSY() == TRUE) {
@@ -603,6 +603,8 @@ static void rf_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err) {
   enterRx = TRUE;
   exitTx = TRUE;
   txTimeout = packetbuf_attr(PACKETBUF_ATTR_PHY_TXTIMEOUT);
+
+  txTimeout = 20;
 
   /* give radio enough time to perform TXONCCA */
   bsp_delayUs(100);
@@ -766,6 +768,14 @@ static void rf_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err) {
       }
       else {
         *((uint8_t *) p_val) = RF_IS_RX_BUSY() || p_ctx->rxBytesCounter;
+      }
+      break;
+    case NETSTK_CMD_RF_RX_PENDING:
+      if (p_val == NULL) {
+        *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+      }
+      else {
+        *((uint8_t *) p_val) = p_ctx->rxBytesCounter;
       }
       break;
 
@@ -2520,10 +2530,21 @@ static void rf_prepare(uint8_t *payload, uint16_t payload_len, e_nsErr_t *p_err)
     return;
   }
   #endif
-  if(1)
-	  *p_err = NETSTK_ERR_NONE;
-  else
-	  *p_err = NETSTK_ERR_INVALID_ARGUMENT;
+
+  struct s_rf_ctx *p_ctx = &rf_ctx;
+
+  /* set TX process attributes */
+  p_ctx->txDataPtr = payload - PHY_HEADER_LEN ;
+  p_ctx->txDataLen = payload_len + PHY_HEADER_LEN;
+  p_ctx->txNumRemBytes = payload_len + PHY_HEADER_LEN;
+  p_ctx->txStatus = RF_TX_STATUS_NONE;
+  enterRx = TRUE;
+  exitTx = TRUE;
+  txTimeout = packetbuf_attr(PACKETBUF_ATTR_PHY_TXTIMEOUT);
+
+  p_ctx->txDataPtr[0] = p_ctx->txDataLen - PHY_HEADER_LEN ;
+  /* write as many bytes to TXFIFO as possible */
+  rf_writeTxFifo(p_ctx, RF_CFG_FIFO_SIZE, p_err);
 }
 
 /*!
@@ -2541,12 +2562,114 @@ static void rf_transmit(e_nsErr_t *p_err)
   }
   #endif
 
-  if(1)
-  {
-    *p_err = NETSTK_ERR_NONE;
+  struct s_rf_ctx *p_ctx = &rf_ctx;
+
+  if (RF_IS_RX_BUSY() == TRUE) {
+    /* radio is in middle of packet reception process */
+    *p_err = NETSTK_ERR_CHANNEL_ACESS_FAILURE;
+    return;
   }
-  else
-	 *p_err = NETSTK_ERR_RF_XXX;
+
+  /* put radio back to RX state if eWOR is enabled */
+  if (p_ctx->cfgWOREnabled == TRUE) {
+    if (rf_gotoRx(p_ctx) == FALSE) {
+      /* radio is in middle of packet reception process */
+      *p_err = NETSTK_ERR_CHANNEL_ACESS_FAILURE;
+      return;
+    }
+  }
+
+  /* simply issue the radio transmission command right away */
+  cc112x_spiCmdStrobe(CC112X_STX);
+
+  txTimeout = 20000;
+  /* give radio enough time to perform TXONCCA */
+  bsp_delayUs(200);
+  if (RF_READ_CHIP_STATE() != RF_STATE_TX) {
+    /* TXONCCA failed */
+    p_ctx->txErr = NETSTK_ERR_TX_COLLISION;
+    rf_tx_term(p_ctx);
+  }
+  else {
+    /* wait for complete transmission of the frame until timeout */
+    tickstart = bsp_rtimer_now();
+    do {
+      /* was the frame transmitted successfully? */
+      if ((p_ctx->txStatus == RF_TX_STATUS_DONE) ||
+          (p_ctx->txStatus == RF_TX_STATUS_WFA)) {
+        break;
+      }
+
+      /* was a frame being received? */
+      if (RF_IS_RX_BUSY() == TRUE) {
+        p_ctx->txErr = NETSTK_ERR_TX_COLLISION;
+        TRACE_LOG_ERR("<TX> TXONCCA failed, this is not supported to happen");
+        rf_tx_term(p_ctx);
+        break;
+      }
+
+      /* radio should enter TX state after preamble is sent */
+      if ((bsp_rtimer_now() - tickstart) > bsp_us_to_rtimerTiscks(6000)) {
+        if ((p_ctx->state & RF_STATE_MASK) != RF_STATE_TX) {
+          /* check if transceiver was reset */
+          rf_chkReset(p_ctx);
+
+          p_ctx->txErr = NETSTK_ERR_TX_COLLISION;
+          rf_tx_term(p_ctx);
+          break;
+        }
+      }
+    } while ((bsp_rtimer_now() - tickstart) < bsp_us_to_rtimerTiscks(txTimeout));
+  }
+
+  if (p_ctx->txStatus == RF_TX_STATUS_DONE) {
+    if (p_ctx->txErr == NETSTK_ERR_FATAL) {
+      /* exception was thrown and radio was already put to RX_IDLE state or
+       * channel was detected busy and radio was already put to RX_SYNC state */
+      enterRx = FALSE;
+    }
+  }
+#if (NETSTK_SUPPORT_SW_RF_AUTOACK == TRUE)
+  else if (p_ctx->txStatus == RF_TX_STATUS_WFA) {
+    /* reset TX status to default before waiting for ACK */
+    p_ctx->txErr = NETSTK_ERR_TX_NOACK;
+
+    /* wait for ACK for at most ackWaitDuration */
+    packetbuf_attr_t waitForAckTimeout;
+    waitForAckTimeout = packetbuf_attr(PACKETBUF_ATTR_MAC_ACK_WAIT_DURATION);
+    if (p_ctx->cfgWOREnabled == TRUE) {
+      waitForAckTimeout += 300; // compromise ackWaitDuration
+    }
+    bsp_delayUs(waitForAckTimeout);
+  }
+#endif /* #if (NETSTK_SUPPORT_SW_RF_AUTOACK == TRUE) */
+  else {
+    /* packet failed to be transmit within timeout */
+    p_ctx->txErr = NETSTK_ERR_TX_TIMEOUT;
+    TRACE_LOG_ERR("<TX> timeout");
+
+    /* check if transceiver was reset */
+    rf_chkReset(p_ctx);
+  }
+
+  /* set return error code */
+  *p_err = p_ctx->txErr;
+
+  /* is chip already set to idle listening */
+  if (p_ctx->txErr == NETSTK_ERR_TX_NOACK) {
+    p_ctx->state = RF_STATE_RX_IDLE;
+    enterRx = FALSE;
+  }
+
+  /* exit TX state */
+  if (exitTx == TRUE) {
+    rf_tx_exit(p_ctx);
+  }
+
+  /* need to enter RX state? */
+  if (enterRx == TRUE) {
+    rf_rx_entry(p_ctx);
+  }
 }
 
 
