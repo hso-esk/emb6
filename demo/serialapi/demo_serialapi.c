@@ -89,7 +89,7 @@
 
 
 /** Maximum length of a serial API frame */
-#define SERIALAPI_FRAMEBUF_MAX              255
+#define SERIALAPI_FRAMEBUF_MAX              200
 
 /** Length of the input buffer */
 #define SERIALAPI_RX_BUF_LEN                SERIALAPI_FRAMEBUF_MAX
