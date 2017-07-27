@@ -93,7 +93,7 @@ uint8_t framer802154ll_createAck(framer802154ll_attr_t *p_frame, uint8_t *p_buf,
   uint8_t *p = p_buf;
   uint8_t *p_mhr = &p_buf[PHY_HEADER_LEN];
   uint8_t ack_len;
-  uint32_t ack_crc;
+  uint32_t ack_crc = 0;
 
   /* PHR */
 #if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
@@ -125,13 +125,17 @@ uint8_t framer802154ll_createAck(framer802154ll_attr_t *p_frame, uint8_t *p_buf,
   /* MFR */
   if (p_frame->crc_len == 2) {
     /* 16-bit CRC */
+#if !defined(NETSTK_SUPPORT_HW_CRC)
     ack_crc = crc_16_calc(p_mhr, 3);
+#endif /* #if !defined(NETSTK_SUPPORT_HW_CRC) */
     *p++ = (ack_crc & 0xFF00u) >> 8;
     *p++ = (ack_crc & 0x00FFu);
   }
   else {
     /* 32-bit CRC */
+#if !defined(NETSTK_SUPPORT_HW_CRC)
     ack_crc = crc_32_calc(p_mhr, 3);
+#endif /* #if !defined(NETSTK_SUPPORT_HW_CRC) */
     *p++ = (ack_crc & 0xFF000000u) >> 24;
     *p++ = (ack_crc & 0x00FF0000u) >> 16;
     *p++ = (ack_crc & 0x0000FF00u) >> 8;
@@ -224,6 +228,7 @@ uint8_t framer802154ll_addrFilter(framer802154ll_attr_t *p_frame, uint8_t *p_buf
   return TRUE;
 }
 
+#if !defined(NETSTK_SUPPORT_HW_CRC)
 uint32_t framer802154ll_crcInit(framer802154ll_attr_t *p_frame) {
   if (p_frame->crc_len == 2) {
     return CRC16_INIT;
@@ -274,4 +279,4 @@ uint8_t framer802154ll_crcFilter(framer802154ll_attr_t *p_frame, uint32_t actCRC
   is_matched = (expCRC == actCRC);
   return is_matched;
 }
-
+#endif /* #if !defined(NETSTK_SUPPORT_HW_CRC) */
