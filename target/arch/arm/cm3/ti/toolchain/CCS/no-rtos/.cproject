@@ -1953,14 +1953,14 @@
 									<listOptionValue builtIn="false" value="CRC_TABLE=0"/>
 									<listOptionValue builtIn="false" value="LWM2MAPI_PARSIFAL_OBJECTS=0"/>
 									<listOptionValue builtIn="false" value="LWM2MAPI_NIKI_EMETER_OBJECTS=0"/>
-									<listOptionValue builtIn="false" value="LWM2MAPI_NIKI_EIS_OBJECTS=1"/>
+									<listOptionValue builtIn="false" value="LWM2MAPI_NIKI_EIS_OBJECTS=0"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_MANUFACTURER=\&quot;ivESK/HSG\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_TYPE=\&quot;EIS\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_MODEL_NUMBER=\&quot;NIKI4.0\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SERIAL_NO=\&quot;20170407-0001\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_HW_VERSION=\&quot;R1\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_FIRMWARE_VERSION=\&quot;v0.1.3\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SW_VERSION=\&quot;v0.1.3\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_FIRMWARE_VERSION=\&quot;v1.0RC1\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SW_VERSION=\&quot;v1.0RC1\&quot;"/>
 								</option>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DEBUGGING_MODEL.4318987" name="Debugging model" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DEBUGGING_MODEL" value="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DEBUGGING_MODEL.SYMDEBUG__DWARF" valueType="enumerated"/>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DIAG_WARNING.1944290313" name="Treat diagnostic &lt;id&gt; as warning (--diag_warning, -pdsw)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DIAG_WARNING" valueType="stringList">
@@ -2000,7 +2000,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="demo/coap|target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/startup_files/ccfg.c|target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/startup_files/startup_keil.s|target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/startup_files/startup_iar.c|target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/startup_files/startup_gcc.c|target/arch/arm/cm3/ti/device/cc13xx/ti_rtos_src|src|target/arch/msp430|target/bsp/mosesstick|demo/mdns|target/if/native|target/mcu/atmega1281|demo/aptb|target/mcu/samd20|target/if/cc112x|emb6/src/apl/dns|target/mcu/efm32lg840f256|target/arch/avr|target/if/at86rf212b|target/bsp/ti_trxeb_cc120x|target/mcu/native|demo/lwm2m|target/mcu/samd21|target/bsp/efm32stk3600_cc112x|emb6/src/net/slip|target/bsp/efm32stk3600_rf212b|target/if/at86rf212|target/bsp/atany900_pro5|target/bsp/samd20xpro_rf212|emb6/src/net/dtls|target/bsp/native|target/arch/native|demo/udp_socket|target/bsp/atany900_basic|demo/dtls|demo/udp_socket_simple|target/if/at86rf230|target/bsp/samd20xpro_rf212b|target/bsp/moses|demo/extif|target/arch/arm/cm3/silabs|target/bsp/ti_trxeb_cc112x|demo/coap/client|target/mcu/template|target/arch/arm/cm0plus|emb6/src/net/ipv6/multicast/esmrf.c|target/bsp/template|target/mcu/efm32lg990f256|target/mcu/msp430f5438a|target/bsp/efm32stk3600_cc120x|CC1310DK_7XD.cmd|target/if/cc120x|target/bsp/atany900" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="demo/6tisch|emb6/src/dll/tsch|demo/coap|target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/startup_files/ccfg.c|target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/startup_files/startup_keil.s|target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/startup_files/startup_iar.c|target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/startup_files/startup_gcc.c|target/arch/arm/cm3/ti/device/cc13xx/ti_rtos_src|src|target/arch/msp430|target/bsp/mosesstick|demo/mdns|target/if/native|target/mcu/atmega1281|demo/aptb|target/mcu/samd20|target/if/cc112x|emb6/src/apl/dns|target/mcu/efm32lg840f256|target/arch/avr|target/if/at86rf212b|target/bsp/ti_trxeb_cc120x|target/mcu/native|demo/lwm2m|target/mcu/samd21|target/bsp/efm32stk3600_cc112x|emb6/src/net/slip|target/bsp/efm32stk3600_rf212b|target/if/at86rf212|target/bsp/atany900_pro5|target/bsp/samd20xpro_rf212|emb6/src/net/dtls|target/bsp/native|target/arch/native|demo/udp_socket|target/bsp/atany900_basic|demo/dtls|demo/udp_socket_simple|target/if/at86rf230|target/bsp/samd20xpro_rf212b|target/bsp/moses|demo/extif|target/arch/arm/cm3/silabs|target/bsp/ti_trxeb_cc112x|demo/coap/client|target/mcu/template|target/arch/arm/cm0plus|emb6/src/net/ipv6/multicast/esmrf.c|target/bsp/template|target/mcu/efm32lg990f256|target/mcu/msp430f5438a|target/bsp/efm32stk3600_cc120x|CC1310DK_7XD.cmd|target/if/cc120x|target/bsp/atany900" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -2099,15 +2099,15 @@
 									<listOptionValue builtIn="false" value="UART_IOID_TXD=IOID_8"/>
 									<listOptionValue builtIn="false" value="CRC_TABLE=0"/>
 									<listOptionValue builtIn="false" value="LWM2MAPI_PARSIFAL_OBJECTS=0"/>
-									<listOptionValue builtIn="false" value="LWM2MAPI_NIKI_EMETER_OBJECTS=1"/>
+									<listOptionValue builtIn="false" value="LWM2MAPI_NIKI_EMETER_OBJECTS=0"/>
 									<listOptionValue builtIn="false" value="LWM2MAPI_NIKI_EIS_OBJECTS=0"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_MANUFACTURER=\&quot;ivESK/HSG\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_TYPE=\&quot;E-METER\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_MODEL_NUMBER=\&quot;NIKI4.0\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SERIAL_NO=\&quot;20170407-0001\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_HW_VERSION=\&quot;R1\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_FIRMWARE_VERSION=\&quot;v0.1.3\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SW_VERSION=\&quot;v0.1.3\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_FIRMWARE_VERSION=\&quot;v1.0RC1\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SW_VERSION=\&quot;v1.0RC1\&quot;"/>
 								</option>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DEBUGGING_MODEL.76218622" name="Debugging model" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DEBUGGING_MODEL" value="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DEBUGGING_MODEL.SYMDEBUG__DWARF" valueType="enumerated"/>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DIAG_WARNING.1541379551" name="Treat diagnostic &lt;id&gt; as warning (--diag_warning, -pdsw)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DIAG_WARNING" valueType="stringList">
@@ -2147,7 +2147,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="demo/coap|target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/startup_files/ccfg.c|target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/startup_files/startup_keil.s|target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/startup_files/startup_iar.c|target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/startup_files/startup_gcc.c|target/arch/arm/cm3/ti/device/cc13xx/ti_rtos_src|src|target/arch/msp430|target/bsp/mosesstick|demo/mdns|target/if/native|target/mcu/atmega1281|demo/aptb|target/mcu/samd20|target/if/cc112x|emb6/src/apl/dns|target/mcu/efm32lg840f256|target/arch/avr|target/if/at86rf212b|target/bsp/ti_trxeb_cc120x|target/mcu/native|demo/lwm2m|target/mcu/samd21|target/bsp/efm32stk3600_cc112x|emb6/src/net/slip|target/bsp/efm32stk3600_rf212b|target/if/at86rf212|target/bsp/atany900_pro5|target/bsp/samd20xpro_rf212|emb6/src/net/dtls|target/bsp/native|target/arch/native|demo/udp_socket|target/bsp/atany900_basic|demo/dtls|demo/udp_socket_simple|target/if/at86rf230|target/bsp/samd20xpro_rf212b|target/bsp/moses|demo/extif|target/arch/arm/cm3/silabs|target/bsp/ti_trxeb_cc112x|demo/coap/client|target/mcu/template|target/arch/arm/cm0plus|emb6/src/net/ipv6/multicast/esmrf.c|target/bsp/template|target/mcu/efm32lg990f256|target/mcu/msp430f5438a|target/bsp/efm32stk3600_cc120x|CC1310DK_7XD.cmd|target/if/cc120x|target/bsp/atany900" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="demo/6tisch|emb6/src/dll/tsch|demo/coap|target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/startup_files/ccfg.c|target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/startup_files/startup_keil.s|target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/startup_files/startup_iar.c|target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/startup_files/startup_gcc.c|target/arch/arm/cm3/ti/device/cc13xx/ti_rtos_src|src|target/arch/msp430|target/bsp/mosesstick|demo/mdns|target/if/native|target/mcu/atmega1281|demo/aptb|target/mcu/samd20|target/if/cc112x|emb6/src/apl/dns|target/mcu/efm32lg840f256|target/arch/avr|target/if/at86rf212b|target/bsp/ti_trxeb_cc120x|target/mcu/native|demo/lwm2m|target/mcu/samd21|target/bsp/efm32stk3600_cc112x|emb6/src/net/slip|target/bsp/efm32stk3600_rf212b|target/if/at86rf212|target/bsp/atany900_pro5|target/bsp/samd20xpro_rf212|emb6/src/net/dtls|target/bsp/native|target/arch/native|demo/udp_socket|target/bsp/atany900_basic|demo/dtls|demo/udp_socket_simple|target/if/at86rf230|target/bsp/samd20xpro_rf212b|target/bsp/moses|demo/extif|target/arch/arm/cm3/silabs|target/bsp/ti_trxeb_cc112x|demo/coap/client|target/mcu/template|target/arch/arm/cm0plus|emb6/src/net/ipv6/multicast/esmrf.c|target/bsp/template|target/mcu/efm32lg990f256|target/mcu/msp430f5438a|target/bsp/efm32stk3600_cc120x|CC1310DK_7XD.cmd|target/if/cc120x|target/bsp/atany900" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -2242,7 +2242,7 @@
 									<listOptionValue builtIn="false" value="HAL_SUPPORT_SLIPUART=1"/>
 									<listOptionValue builtIn="false" value="HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX=1"/>
 									<listOptionValue builtIn="false" value="CRC_TABLE=0"/>
-									<listOptionValue builtIn="false" value="LWM2MAPI_PARSIFAL_OBJECTS=1"/>
+									<listOptionValue builtIn="false" value="LWM2MAPI_PARSIFAL_OBJECTS=0"/>
 									<listOptionValue builtIn="false" value="LWM2MAPI_NIKI_EMETER_OBJECTS=0"/>
 									<listOptionValue builtIn="false" value="LWM2MAPI_NIKI_EIS_OBJECTS=0"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_MANUFACTURER=\&quot;SF/HSG\&quot;"/>
@@ -2250,8 +2250,8 @@
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_MODEL_NUMBER=\&quot;PARSIFAL\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SERIAL_NO=\&quot;20170407-0001\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_HW_VERSION=\&quot;R1\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_FIRMWARE_VERSION=\&quot;v0.1.3\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SW_VERSION=\&quot;v0.1.3\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_FIRMWARE_VERSION=\&quot;v1.0RC1\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SW_VERSION=\&quot;v1.0RC1\&quot;"/>
 								</option>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DEBUGGING_MODEL.2139717440" name="Debugging model" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DEBUGGING_MODEL" value="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DEBUGGING_MODEL.SYMDEBUG__DWARF" valueType="enumerated"/>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DIAG_WARNING.1220280357" name="Treat diagnostic &lt;id&gt; as warning (--diag_warning, -pdsw)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DIAG_WARNING" valueType="stringList">
@@ -2291,7 +2291,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="demo/coap|target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/startup_files/ccfg.c|target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/startup_files/startup_keil.s|target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/startup_files/startup_iar.c|target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/startup_files/startup_gcc.c|target/arch/arm/cm3/ti/device/cc13xx/ti_rtos_src|src|target/arch/msp430|target/bsp/mosesstick|demo/mdns|target/if/native|target/mcu/atmega1281|demo/aptb|target/mcu/samd20|target/if/cc112x|emb6/src/apl/dns|target/mcu/efm32lg840f256|target/arch/avr|target/if/at86rf212b|target/bsp/ti_trxeb_cc120x|target/mcu/native|demo/lwm2m|target/mcu/samd21|target/bsp/efm32stk3600_cc112x|emb6/src/net/slip|target/bsp/efm32stk3600_rf212b|target/if/at86rf212|target/bsp/atany900_pro5|target/bsp/samd20xpro_rf212|emb6/src/net/dtls|target/bsp/native|target/arch/native|demo/udp_socket|target/bsp/atany900_basic|demo/dtls|demo/udp_socket_simple|target/if/at86rf230|target/bsp/samd20xpro_rf212b|target/bsp/moses|demo/extif|target/arch/arm/cm3/silabs|target/bsp/ti_trxeb_cc112x|demo/coap/client|target/mcu/template|target/arch/arm/cm0plus|emb6/src/net/ipv6/multicast/esmrf.c|target/bsp/template|target/mcu/efm32lg990f256|target/mcu/msp430f5438a|target/bsp/efm32stk3600_cc120x|CC1310DK_7XD.cmd|target/if/cc120x|target/bsp/atany900" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="demo/6tisch|emb6/src/dll/tsch|demo/coap|target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/startup_files/ccfg.c|target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/startup_files/startup_keil.s|target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/startup_files/startup_iar.c|target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib/startup_files/startup_gcc.c|target/arch/arm/cm3/ti/device/cc13xx/ti_rtos_src|src|target/arch/msp430|target/bsp/mosesstick|demo/mdns|target/if/native|target/mcu/atmega1281|demo/aptb|target/mcu/samd20|target/if/cc112x|emb6/src/apl/dns|target/mcu/efm32lg840f256|target/arch/avr|target/if/at86rf212b|target/bsp/ti_trxeb_cc120x|target/mcu/native|demo/lwm2m|target/mcu/samd21|target/bsp/efm32stk3600_cc112x|emb6/src/net/slip|target/bsp/efm32stk3600_rf212b|target/if/at86rf212|target/bsp/atany900_pro5|target/bsp/samd20xpro_rf212|emb6/src/net/dtls|target/bsp/native|target/arch/native|demo/udp_socket|target/bsp/atany900_basic|demo/dtls|demo/udp_socket_simple|target/if/at86rf230|target/bsp/samd20xpro_rf212b|target/bsp/moses|demo/extif|target/arch/arm/cm3/silabs|target/bsp/ti_trxeb_cc112x|demo/coap/client|target/mcu/template|target/arch/arm/cm0plus|emb6/src/net/ipv6/multicast/esmrf.c|target/bsp/template|target/mcu/efm32lg990f256|target/mcu/msp430f5438a|target/bsp/efm32stk3600_cc120x|CC1310DK_7XD.cmd|target/if/cc120x|target/bsp/atany900" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
