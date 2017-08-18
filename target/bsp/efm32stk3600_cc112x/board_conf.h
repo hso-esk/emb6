@@ -214,6 +214,38 @@
 /* Delay between the SFD finishes arriving and it is detected in software. */
 #define RADIO_DELAY_BEFORE_DETECT ((unsigned)bsp_us_to_rtimerTiscks(352))
 
+
+/* The PHY header (preamble + SFD, 4+1 bytes) duration is equivalent to 10 symbols */
+#define RADIO_IEEE_802154_PHY_HEADER_DURATION_USEC 160
+
+/* Do not turn off TSCH within a timeslot: not enough time */
+#define TSCH_CONF_RADIO_ON_DURING_TIMESLOT 1
+
+/* Disable TSCH frame filtering */
+#define TSCH_CONF_HW_FRAME_FILTERING	0
+
+/* Use hardware timestamps */
+#ifndef TSCH_CONF_RESYNC_WITH_SFD_TIMESTAMPS
+#define TSCH_CONF_RESYNC_WITH_SFD_TIMESTAMPS 1
+#define TSCH_CONF_TIMESYNC_REMOVE_JITTER 0
+#endif
+
+#ifndef TSCH_CONF_BASE_DRIFT_PPM
+/* The drift compared to "true" 10ms slots.
+ * Enable adaptive sync to enable compensation for this. */
+#define TSCH_CONF_BASE_DRIFT_PPM  0 // -977
+#endif
+
+/* 10 times per second */
+#ifndef TSCH_CONF_CHANNEL_SCAN_DURATION
+#define TSCH_CONF_CHANNEL_SCAN_DURATION (bsp_getTRes() / 10)
+#endif
+
+#ifndef TSCH_CONF_RX_WAIT
+#define TSCH_CONF_RX_WAIT  5800
+#endif
+
+#define CCA_ENABLED   0
 /*
  *  --- Global Functions Definition ------------------------------------------*
  */
