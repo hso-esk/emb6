@@ -1020,6 +1020,9 @@ static void tsch_slot_operation(struct rtimer *t, void *ptr)
         prev_slot_start = current_slot_start;
         current_slot_start += time_to_next_active_slot;
         current_slot_start += tsch_timesync_adaptive_compensate(time_to_next_active_slot);
+#if TIMER_24_BIT
+        current_slot_start &= (0xFFFFFF);
+#endif
       } while(!tsch_schedule_slot_operation(t, prev_slot_start, time_to_next_active_slot, "main"));
     }
     tsch_in_slot_operation = 0;

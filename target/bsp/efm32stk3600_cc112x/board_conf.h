@@ -246,6 +246,11 @@
 #endif
 
 #define CCA_ENABLED   0
+
+#ifndef TIMER_24_BIT
+#define TIMER_24_BIT                       TRUE
+#endif
+
 /*
  *  --- Global Functions Definition ------------------------------------------*
  */
