@@ -18,7 +18,7 @@ static void init(s_ns_t *p_netstk)
   pdllsec_netstk = p_netstk;
   /* TODO to remove if we adapt tsch struct with mac driver struct */
   tschmac_driver.init(p_netstk,&err);
-  //pdllsec_netstk->dllc->ioctrl(NETSTK_CMD_RX_CBFNT_SET, (void *) dllsec_input, &err);
+
 }
 /*---------------------------------------------------------------------------*/
 static void
