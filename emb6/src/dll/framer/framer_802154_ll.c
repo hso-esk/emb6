@@ -60,7 +60,8 @@ uint16_t framer802154ll_parse(framer802154ll_attr_t *p_frame, uint8_t *p_buf, ui
 
   /* frame type filtering */
   frameType = p_mhr[0] & 0x07;
-  if ((frameType != FRAME802154_DATAFRAME) &&
+  if ((frameType != FRAME802154_BEACONFRAME) &&
+	  (frameType != FRAME802154_DATAFRAME) &&
       (frameType != FRAME802154_ACKFRAME) &&
       (frameType != FRAME802154_CMDFRAME) &&
       (frameType != SMARTMAC_FRAME_STROBE)) {
