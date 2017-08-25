@@ -82,10 +82,10 @@
 #define TSCH_DEBUG_TX_EVENT()
 #endif
 #ifndef TSCH_DEBUG_SLOT_START
-#define TSCH_DEBUG_SLOT_START() bsp_led(HAL_LED3, EN_BSP_LED_OP_ON)
+#define TSCH_DEBUG_SLOT_START() bsp_led(HAL_LED0, EN_BSP_LED_OP_ON)
 #endif
 #ifndef TSCH_DEBUG_SLOT_END
-#define TSCH_DEBUG_SLOT_END()   bsp_led(HAL_LED3, EN_BSP_LED_OP_OFF)
+#define TSCH_DEBUG_SLOT_END()   bsp_led(HAL_LED0, EN_BSP_LED_OP_OFF)
 #endif
 
 /* Check if TSCH_MAX_INCOMING_PACKETS is power of two */
@@ -515,6 +515,9 @@ static void tsch_tx_slot(struct rtimer *t)
       }
 #endif /* LLSEC802154_ENABLED */
 
+      pmac_netstk->rf->ioctrl(NETSTK_CMD_RF_OP_MODE_SET, &mac_phy_config.op_mode, &err);
+     // pmac_netstk->rf->ioctrl(NETSTK_CMD_RF_CHAN_NUM_SET, &mac_phy_config.chan_num, &err);
+
       /* prepare packet to send: copy to radio buffer */
       pmac_netstk->rf->prepare((uint8_t *) packet, (uint16_t) packet_len, &err);
       if(packet_ready && (err == NETSTK_ERR_NONE)){
@@ -572,8 +575,8 @@ static void tsch_tx_slot(struct rtimer *t)
               NETSTACK_RADIO.get_value(RADIO_PARAM_RX_MODE, &radio_rx_mode);
               NETSTACK_RADIO.set_value(RADIO_PARAM_RX_MODE, radio_rx_mode & (~RADIO_RX_MODE_ADDRESS_FILTER));
 #endif /* TSCH_HW_FRAME_FILTERING */
-              /* Unicast: wait for ack after tx: sleep until ack time */
               tsch_radio_on(TSCH_RADIO_CMD_ON_FORCE);
+              /* Unicast: wait for ack after tx: sleep until ack time */
               BUSYWAIT_UNTIL_ABS(0, current_slot_start, tsch_timing[tsch_ts_tx_offset] + tx_duration + tsch_timing[tsch_ts_rx_ack_delay] - RADIO_DELAY_BEFORE_RX);
               TSCH_DEBUG_TX_EVENT();
               tsch_radio_on(TSCH_RADIO_CMD_ON_WITHIN_TIMESLOT);
@@ -839,11 +842,17 @@ static void tsch_rx_slot(struct rtimer *t)
 #endif
 
             if(frame.fcf.ack_required) {
+#if 1
+             static uint8_t _ackbuf[TSCH_PACKET_MAX_LEN];
+             static int ack_len;
+             uint8_t *ack_buf = &_ackbuf[1];
+#else
               static uint8_t ack_buf[TSCH_PACKET_MAX_LEN];
               static int ack_len;
+#endif
 
               /* Build ACK frame */
-              ack_len = tsch_packet_create_eack(ack_buf, sizeof(ack_buf),
+              ack_len = tsch_packet_create_eack(ack_buf, sizeof(_ackbuf),
                   &source_address, frame.seq, (int16_t)bsp_rtimerTick_to_us(estimated_drift), do_nack);
 
               if(ack_len > 0) {
@@ -858,7 +867,7 @@ static void tsch_rx_slot(struct rtimer *t)
                 pmac_netstk->rf->prepare((uint8_t *) ack_buf, (uint16_t) ack_len, &err);
 
                 /* Wait for time to ACK and transmit ACK */
-                BUSYWAIT_UNTIL_ABS(0, rx_start_time, packet_duration + tsch_timing[tsch_ts_tx_ack_delay] - RADIO_DELAY_BEFORE_TX);
+                //BUSYWAIT_UNTIL_ABS(0, rx_start_time, packet_duration + tsch_timing[tsch_ts_tx_ack_delay] - RADIO_DELAY_BEFORE_TX);
                 TSCH_DEBUG_RX_EVENT();
                 pmac_netstk->rf->transmit(&err);
                 tsch_radio_off(TSCH_RADIO_CMD_OFF_WITHIN_TIMESLOT);

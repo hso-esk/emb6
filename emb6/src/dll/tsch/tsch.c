@@ -279,7 +279,8 @@ keepalive_send(void *ptr)
     /* Simply send an empty packet */
     packetbuf_clear();
     packetbuf_set_addr(PACKETBUF_ADDR_RECEIVER, &n->addr);
-    pmac_netstk->dllsec->send(keepalive_packet_sent, NULL);
+    //pmac_netstk->dllsec->send(keepalive_packet_sent, NULL);
+    tschmac_driver.send(keepalive_packet_sent,NULL);
     PRINTF("TSCH: sending KA to %u\n",
            TSCH_LOG_ID_FROM_LINKADDR(&n->addr));
   }
@@ -682,6 +683,7 @@ static void tsch_scan(void *ptr)
       uint8_t scan_channel = TSCH_JOIN_HOPPING_SEQUENCE[
           random_rand() % sizeof(TSCH_JOIN_HOPPING_SEQUENCE)];
       if(current_channel != scan_channel) {
+        pmac_netstk->rf->ioctrl(NETSTK_CMD_RF_OP_MODE_SET, &mac_phy_config.op_mode, &err);
         pmac_netstk->phy->ioctrl(NETSTK_CMD_RF_CHAN_NUM_SET, &scan_channel, &err);
         current_channel = scan_channel;
         PRINTF("TSCH: scanning on channel %u\n", scan_channel);
@@ -701,7 +703,8 @@ static void tsch_scan(void *ptr)
       t0 = RTIMER_NOW();
       BUSYWAIT_UNTIL_ABS((is_packet_pending = tsch_pending_packet()), t0, bsp_rtimer_arch_second() / 100);
     }
-
+    while(!tsch_pending_packet());
+    is_packet_pending = tsch_pending_packet();
     if(is_packet_pending) {
       /* Read packet */
       input_eb.len = (int) pmac_netstk->rf->read(input_eb.payload, (uint16_t) TSCH_PACKET_MAX_LEN);

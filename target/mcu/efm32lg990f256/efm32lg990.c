@@ -486,6 +486,29 @@ int8_t hal_init( void )
   /* initialize external interrupts */
   GPIOINT_Init();
 
+#if 1
+  NVIC_SetPriorityGrouping(4);
+#if defined(HAL_SUPPORT_SLIPUART)
+  NVIC_SetPriority(USART0_TX_IRQn, 1);
+  NVIC_SetPriority(USART0_RX_IRQn, 0);
+#endif /* #if defined(HAL_SUPPORT_SLIPUART) */
+
+  NVIC_SetPriority(GPIO_ODD_IRQn, 1);
+  NVIC_SetPriority(GPIO_EVEN_IRQn, 1);
+
+  NVIC_SetPriority(TIMER1_IRQn, 3);
+  NVIC_SetPriority(RTC_IRQn, 4);
+
+#else
+  uint8_t prio;
+  NVIC_SetPriority(RTC_IRQn,2);
+  NVIC_SetPriority(GPIO_EVEN_IRQn,0);
+  NVIC_SetPriority(GPIO_ODD_IRQn,0);
+  prio=NVIC_GetPriority(RTC_IRQn);
+  prio=NVIC_GetPriority(GPIO_EVEN_IRQn);
+  prio=NVIC_GetPriority(GPIO_ODD_IRQn);
+#endif
+
   return 0;
 } /* hal_init() */
 

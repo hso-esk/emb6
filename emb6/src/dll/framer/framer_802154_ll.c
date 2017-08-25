@@ -59,6 +59,9 @@ uint16_t framer802154ll_parse(framer802154ll_attr_t *p_frame, uint8_t *p_buf, ui
   p_mhr = &p_buf[PHY_HEADER_LEN];
 
   /* frame type filtering */
+
+  // TODO add support for TISCH frame type !!!!!! emm ok
+
   frameType = p_mhr[0] & 0x07;
   if ((frameType != FRAME802154_BEACONFRAME) &&
 	  (frameType != FRAME802154_DATAFRAME) &&
@@ -70,6 +73,12 @@ uint16_t framer802154ll_parse(framer802154ll_attr_t *p_frame, uint8_t *p_buf, ui
   }
 
   p_frame->is_ack_required = (p_mhr[0] & 0x20) >> 5;
+
+  // TODO shift by 1 if the seq no is not included ...
+#if 1
+  uint8_t sequence_number_suppression = p_mhr[1] & 1;
+#endif
+
   p_frame->seq_no = p_mhr[2];
   p_frame->min_addr_len = 2;
 
@@ -153,6 +162,13 @@ uint8_t framer802154ll_addrFilter(framer802154ll_attr_t *p_frame, uint8_t *p_buf
   uint8_t destAddrLen;
   uint16_t destPANId;
   packetbuf_attr_t dev_pan_id;
+
+  // skip filtering for beacon frame
+  if (FRAME802154_BEACONFRAME == (p_buf[PHY_HEADER_LEN] & 0x07)) {
+	return TRUE;
+  }
+
+  return TRUE;
 
   if (p_frame->min_addr_len > 0) {
     /* set destination addressing fields to zero */

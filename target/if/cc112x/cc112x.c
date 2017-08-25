@@ -68,6 +68,9 @@
 #define  LOGGER_ENABLE        LOGGER_RADIO
 #include "logger.h"
 
+#undef NETSTK_SUPPORT_SW_RF_AUTOACK
+#define NETSTK_SUPPORT_SW_RF_AUTOACK FALSE
+
 #if (NETSTK_SUPPORT_SW_RF_AUTOACK == TRUE)
 #include "crc.h"
 #endif /* #if (NETSTK_SUPPORT_SW_RF_AUTOACK == TRUE) */
@@ -307,6 +310,8 @@ struct s_rf_ctx {
   uint32_t timeStamp;
   /* polling mode flag  */
   uint8_t is_polling_mode;
+  /* is pending flag  */
+  uint8_t is_pending;
   /* length of the last packet */
   uint16_t last_pkt_length;
   /* RX frame */
@@ -492,6 +497,7 @@ static void rf_init(void *p_netstk, e_nsErr_t *p_err)
   p_ctx->cfgFreqChanNum = 0;
   p_ctx->cfgOpMode = NETSTK_RF_OP_MODE_CSM;
   p_ctx->is_polling_mode=0;
+  p_ctx->is_pending=0;
 
   /* transition to SLEEP state */
   rf_sleep_entry(p_ctx);
@@ -520,6 +526,8 @@ static void rf_on(e_nsErr_t *p_err)
     /* and enters ON state */
     rf_on_entry(p_ctx);
   }
+  /* and enters ON state */
+  rf_on_entry(p_ctx);
 
   /* indicate successful operation */
   *p_err = NETSTK_ERR_NONE;
@@ -541,7 +549,7 @@ static void rf_off(e_nsErr_t *p_err) {
 
   /* set default return error code */
   *p_err = NETSTK_ERR_NONE;
-
+  return;
   /* is the driver on? */
   if ((p_ctx->state & RF_STATE_MASK) != RF_STATE_SLEEP) {
     if (RF_IS_RX_BUSY() == TRUE) {
@@ -724,13 +732,16 @@ static void rf_recv(uint8_t *p_buf, uint16_t len, e_nsErr_t *p_err) {
   /* set default error code */
   *p_err = NETSTK_ERR_NONE;
 
-  /* signal upper layer */
-  p_ctx->p_netstk->phy->recv(p_ctx->rxBuf, p_ctx->rxBytesCounter, p_err);
+  if(!p_ctx->is_polling_mode)
+  {
+    /* signal upper layer */
+    p_ctx->p_netstk->phy->recv(p_ctx->rxBuf, p_ctx->rxBytesCounter, p_err);
 
-  /* is the frame discarded by upper layers? */
-  if (*p_err != NETSTK_ERR_NONE) {
-    TRACE_LOG_ERR("<RXFINI> discarded e=-%d", *p_err);
-    trace_printHex("", p_ctx->rxBuf, p_ctx->rxBytesCounter);
+    /* is the frame discarded by upper layers? */
+    if (*p_err != NETSTK_ERR_NONE) {
+      TRACE_LOG_ERR("<RXFINI> discarded e=-%d", *p_err);
+      trace_printHex("", p_ctx->rxBuf, p_ctx->rxBytesCounter);
+    }
   }
 
   /* exit and re-enter RX state */
@@ -782,7 +793,7 @@ static void rf_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err) {
         *p_err = NETSTK_ERR_INVALID_ARGUMENT;
       }
       else {
-        *((uint8_t *) p_val) = p_ctx->rxBytesCounter;
+        *((uint8_t *) p_val) = p_ctx->is_pending;
       }
       break;
 
@@ -1207,7 +1218,8 @@ static void rf_pktRxTxEndISR(void *p_arg) {
         case RF_STATE_TX_RXACK_SYNC:
           if (marc_status == RF_MARC_STATUS_RX_FINI) {
             /* verify acknowledgment */
-            rf_tx_rxAckFini(p_ctx);
+             //rf_tx_rxAckFini(p_ctx);
+        	 // rf_rx_chksum(p_ctx);
           } else {
             TRACE_LOG_ERR("<E> exception ds=%02x, ms=%02x, cs=%02x", p_ctx->state, marc_status, chip_state);
             rf_exceptionHandler(p_ctx, marc_status, chip_state);
@@ -1378,7 +1390,7 @@ static void rf_rx_chksum(struct s_rf_ctx *p_ctx) {
   /* checksum verification is handled by upper layer */
   isChecksumOK = TRUE;
 #endif /* #if (NETSTK_SUPPORT_SW_RF_AUTOACK == TRUE) */
-
+  isChecksumOK = TRUE;
   /* is checksum valid? */
   if (isChecksumOK == TRUE) {
 #if (NETSTK_SUPPORT_SW_RF_AUTOACK == TRUE)
@@ -1699,6 +1711,14 @@ static void rf_eventHandler(c_event_t c_event, p_data_t p_data) {
  */
 static void rf_exceptionHandler(struct s_rf_ctx *p_ctx, uint8_t marcStatus, e_rfState_t chipState) {
 
+  uint8_t numRxBytes;
+  uint8_t buf[128] = {0};
+
+  cc112x_spiRegRead(CC112X_NUM_RXBYTES, &numRxBytes, 1);
+  if (numRxBytes)
+	  cc112x_spiRxFifoRead(buf, numRxBytes);
+  uint8_t rf_state = RF_READ_CHIP_STATE();
+
   /* terminate TX process */
   p_ctx->txErr = NETSTK_ERR_FATAL;
   rf_tx_term(p_ctx);
@@ -2012,7 +2032,7 @@ static uint8_t rf_filterAddr(struct s_rf_ctx *p_ctx) {
   }
   else {
     /* does incoming frame require ACK? */
-    p_ctx->rxReqAck = p_ctx->rxFrame.is_ack_required;
+    p_ctx->rxReqAck = FALSE; // p_ctx->rxFrame.is_ack_required;
     if (p_ctx->rxReqAck == TRUE) {
       /* write the ACK to send into TX FIFO */
       ack_len = framer802154ll_createAck(&p_ctx->rxFrame, ack, sizeof(ack));
@@ -2682,24 +2702,30 @@ static void rf_transmit(e_nsErr_t *p_err)
     rf_chkReset(p_ctx);
   }
 
+  /* indicate TX process has finished */
+  p_ctx->txStatus = RF_TX_STATUS_DONE;
   /* set return error code */
+  p_ctx->txErr = NETSTK_ERR_NONE;
+
   *p_err = p_ctx->txErr;
 
+
+
   /* is chip already set to idle listening */
-  if (p_ctx->txErr == NETSTK_ERR_TX_NOACK) {
-    p_ctx->state = RF_STATE_RX_IDLE;
-    enterRx = FALSE;
-  }
+ // if (p_ctx->txErr == NETSTK_ERR_TX_NOACK) {
+//    p_ctx->state = RF_STATE_RX_IDLE;
+ //   enterRx = FALSE;
+//  }
 
   /* exit TX state */
-  if (exitTx == TRUE) {
+ // if (exitTx == TRUE) {
     rf_tx_exit(p_ctx);
-  }
+ // }
 
   /* need to enter RX state? */
-  if (enterRx == TRUE) {
+//  if (enterRx == TRUE) {
     rf_rx_entry(p_ctx);
-  }
+ // }
 }
 
 
