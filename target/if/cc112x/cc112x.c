@@ -307,6 +307,9 @@ struct s_rf_ctx {
   uint32_t timeStamp;
   /* polling mode flag  */
   uint8_t is_polling_mode;
+  /* length of the last packet */
+  uint16_t last_pkt_length;
+  /* RX frame */
   framer802154ll_attr_t rxFrame;
 
   /* TX state attributes */
@@ -1384,6 +1387,9 @@ static void rf_rx_chksum(struct s_rf_ctx *p_ctx) {
     if (p_ctx->rxReqAck == FALSE) {
       /* signal upper layer */
       evproc_putEvent(E_EVPROC_HEAD, EVENT_TYPE_RF, p_ctx);
+      p_ctx->last_pkt_length=p_ctx->rxBytesCounter;
+      p_ctx->is_pending=1;
+      p_ctx->rxBytesCounter=0;
     }
   }
   else {
@@ -2691,6 +2697,9 @@ static void rf_transmit(e_nsErr_t *p_err)
  */
 static uint16_t rf_read(uint8_t *buf, uint16_t buf_len)
 {
+  struct s_rf_ctx *p_ctx = &rf_ctx;
+  uint16_t length;
+
   #if NETSTK_CFG_ARG_CHK_EN
   if ((buf == NULL) || (buf_len < 1))
   {
@@ -2698,14 +2707,23 @@ static uint16_t rf_read(uint8_t *buf, uint16_t buf_len)
   }
   #endif
 
- /* if(is_polling_mode())
+  if(p_ctx->is_pending == 0)
+	  return 0;
+
+  if(p_ctx->last_pkt_length <= buf_len + PHY_HEADER_LEN )
   {
-	sf_rf_set_rx_buff_length(buf_len);
-	sf_rf_set_p_RX_buff(buf);
-    return (uint16_t) sf_rf_read_frame();
+    memcpy(buf, p_ctx->rxBuf + PHY_HEADER_LEN , p_ctx->last_pkt_length - PHY_HEADER_LEN );
   }
-  */
-  return 0;
+  /* save length */
+  length = p_ctx->last_pkt_length - PHY_HEADER_LEN;
+
+  p_ctx->is_pending=0;
+  p_ctx->last_pkt_length=0;
+  /* exit and re-enter RX state */
+  rf_rx_exit(p_ctx);
+  rf_rx_entry(p_ctx);
+
+  return length ;
 }
 
 static void rf_set_polling_mode(void)
