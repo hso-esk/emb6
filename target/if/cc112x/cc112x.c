@@ -305,6 +305,8 @@ struct s_rf_ctx {
   uint8_t rxLQI;
   /* Time Stamp value  */
   uint32_t timeStamp;
+  /* polling mode flag  */
+  uint8_t is_polling_mode;
   framer802154ll_attr_t rxFrame;
 
   /* TX state attributes */
@@ -412,6 +414,7 @@ static void rf_chanNumSet(uint8_t chan_num, e_nsErr_t *p_err);
 static void rf_opModeSet(e_nsRfOpMode mode, e_nsErr_t *p_err);
 static void rf_readRSSI(int8_t *p_val, e_nsErr_t *p_err);
 static void rf_getTimestamp(uint32_t *p_val, e_nsErr_t *p_err);
+static void rf_set_polling_mode(void);
 
 
 /*
@@ -485,6 +488,7 @@ static void rf_init(void *p_netstk, e_nsErr_t *p_err)
   /* configure operating mode and channel number */
   p_ctx->cfgFreqChanNum = 0;
   p_ctx->cfgOpMode = NETSTK_RF_OP_MODE_CSM;
+  p_ctx->is_polling_mode=0;
 
   /* transition to SLEEP state */
   rf_sleep_entry(p_ctx);
@@ -784,7 +788,10 @@ static void rf_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err) {
       break;
 
     case NETSTK_CMD_RF_OP_MODE_SET:
-      rf_opModeSet(*((e_nsRfOpMode *) p_val), p_err);
+      if(*(uint8_t*)p_val & 0x04)
+        rf_set_polling_mode();
+      else
+        rf_opModeSet(*((e_nsRfOpMode *) p_val), p_err);
       break;
 
     case NETSTK_CMD_RF_WOR_EN:
@@ -835,16 +842,17 @@ static void rf_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err) {
         *p_err = NETSTK_ERR_INVALID_ARGUMENT;
       }
       break;
-
     case NETSTK_CMD_RX_BUF_READ:
-      /*
-       * Signal upper layer if a packet has arrived by the time this
-       * command is issued.
-       * Trigger event-process manually
-       */
-      rf_eventHandler(EVENT_TYPE_RF, NULL);
+      if(!p_ctx->is_polling_mode)
+      {
+        /*
+         * Signal upper layer if a packet has arrived by the time this
+         * command is issued.
+         * Trigger event-process manually
+         */
+        rf_eventHandler(EVENT_TYPE_RF, NULL);
+      }
       break;
-
     case NETSTK_CMD_RF_RSSI_GET:
       rf_readRSSI(p_val, p_err);
       break;
@@ -2700,6 +2708,11 @@ static uint16_t rf_read(uint8_t *buf, uint16_t buf_len)
   return 0;
 }
 
+static void rf_set_polling_mode(void)
+{
+  struct s_rf_ctx *p_ctx = &rf_ctx;
+  p_ctx->is_polling_mode=1;
+}
 
 /*
  ********************************************************************************
