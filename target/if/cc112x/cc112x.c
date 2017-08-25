@@ -952,7 +952,9 @@ static void rf_pktRxTxBeginISR(void *p_arg) {
         case RF_STATE_RX_FINI:
           if ((marc_status == RF_MARC_STATUS_NO_FAILURE) && (p_ctx->rxReqAck == TRUE)) {
             /* SYNC words of ACK frame were transmitted */
+#if NETSTK_SUPPORT_SW_RF_AUTOACK
             rf_rx_txAckSync(p_ctx);
+#endif
           } else {
             TRACE_LOG_ERR("<B> exception ds=%02x, ms=%02x, cs=%02x", p_ctx->state, marc_status, chip_state);
             rf_exceptionHandler(p_ctx, marc_status, chip_state);
@@ -962,7 +964,9 @@ static void rf_pktRxTxBeginISR(void *p_arg) {
         case RF_STATE_TX_FINI:
           if ((marc_status == RF_MARC_STATUS_NO_FAILURE) && (p_ctx->txReqAck == TRUE)) {
             /* the incoming frame can be the ACK */
+#if NETSTK_SUPPORT_SW_RF_AUTOACK
             rf_tx_rxAckSync(p_ctx);
+#endif
           } else {
             TRACE_LOG_ERR("<B> exception ds=%02x, ms=%02x, cs=%02x", p_ctx->state, marc_status, chip_state);
             rf_exceptionHandler(p_ctx, marc_status, chip_state);
@@ -1181,7 +1185,9 @@ static void rf_pktRxTxEndISR(void *p_arg) {
         case RF_STATE_RX_TXACK_SYNC:
           if (marc_status == RF_MARC_STATUS_TX_FINI) {
             /* a responding ACK was successfully transmitted then signal upper layer */
+#if NETSTK_SUPPORT_SW_RF_AUTOACK
             rf_rx_txAckFini(p_ctx);
+#endif
           } else {
             TRACE_LOG_ERR("<E> exception ds=%02x, ms=%02x, cs=%02x", p_ctx->state, marc_status, chip_state);
             rf_exceptionHandler(p_ctx, marc_status, chip_state);
@@ -1485,7 +1491,12 @@ static void rf_tx_entry(struct s_rf_ctx *p_ctx) {
   CC112x_LED_RX_ON();
   p_ctx->txErr = NETSTK_ERR_NONE;
   p_ctx->txStatus = RF_TX_STATUS_NONE;
+
+#if NETSTK_SUPPORT_SW_RF_AUTOACK
   p_ctx->txReqAck = packetbuf_attr(PACKETBUF_ATTR_MAC_ACK);
+#else
+  p_ctx->txReqAck = FALSE;
+#endif
 }
 
 
