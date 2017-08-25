@@ -732,6 +732,9 @@ static void tsch_rx_slot(struct rtimer *t)
     uint8_t packet_seen;
 
     expected_rx_time = current_slot_start + tsch_timing[tsch_ts_tx_offset];
+#if TIMER_24_BIT
+    expected_rx_time &= (0xFFFFFF);
+#endif
     /* Default start time: expected Rx time */
     rx_start_time = expected_rx_time;
 
