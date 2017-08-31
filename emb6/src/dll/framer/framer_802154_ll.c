@@ -69,8 +69,36 @@ uint16_t framer802154ll_parse(framer802154ll_attr_t *p_frame, uint8_t *p_buf, ui
     return 0;
   }
 
-  p_frame->is_ack_required = (p_mhr[0] & 0x20) >> 5;
-  p_frame->seq_no = p_mhr[2];
+  // check frame version and ACK-required fields
+  uint8_t frame_version = (p_mhr[1] >> 4) & 3;
+  uint8_t seq_no_compressed = p_mhr[1] & 1;
+
+  // Auto-ACK feature of radio is currently not supported for frame
+  // version 0b10 with sequence number suppressed
+  if (FRAME802154_IEEE802154E_2012 == frame_version) {
+    if (1 == seq_no_compressed) {
+      p_frame->is_ack_required = 0;
+      p_frame->seq_no = 0;
+    }
+    else {
+      p_frame->is_ack_required = (p_mhr[0] & 0x20) >> 5;
+      p_frame->seq_no = p_mhr[2];
+    }
+  }
+  else if ((FRAME802154_IEEE802154_2003 == frame_version)
+          || (FRAME802154_IEEE802154_2006 == frame_version)) {
+    // IEEE Std 802.15.4-2015, 7.2.1.6
+    // "If the frame version field is 0b00 or 0b01, the sequence number
+    // suppression field shall zero". In other word, sequence number
+    // shall be present
+    p_frame->is_ack_required = (p_mhr[0] & 0x20) >> 5;
+    p_frame->seq_no = p_mhr[2];
+  }
+  else {
+    /* unsupported frame version */
+    return 0;
+  }
+
   p_frame->min_addr_len = 2;
 
   /* destination address and destination PAN ID (2) */
