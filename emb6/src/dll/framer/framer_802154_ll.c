@@ -162,7 +162,7 @@ uint8_t framer802154ll_createAck(framer802154ll_attr_t *p_frame, uint8_t *p_buf,
   }
   else {
     /* 32-bit CRC */
-#if !defined(NETSTK_SUPPORT_HW_CRC)
+#if !defined(NETSTK_SUPPORT_HW_CRC) && (NETSTK_CFG_IEEE_802154G_EN == TRUE)
     ack_crc = crc_32_calc(p_mhr, 3);
 #endif /* #if !defined(NETSTK_SUPPORT_HW_CRC) */
     *p++ = (ack_crc & 0xFF000000u) >> 24;
@@ -279,23 +279,31 @@ uint8_t framer802154ll_addrFilter(framer802154ll_attr_t *p_frame, uint8_t *p_buf
 
 #if !defined(NETSTK_SUPPORT_HW_CRC)
 uint32_t framer802154ll_crcInit(framer802154ll_attr_t *p_frame) {
+#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
   if (p_frame->crc_len == 2) {
+#endif
     return CRC16_INIT;
+#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
   } else {
     return CRC32_INIT;
   }
+#endif
 }
 
 uint32_t framer802154ll_crcUpdate(framer802154ll_attr_t *p_frame, uint8_t *p_data, uint16_t len, uint32_t curCRC) {
+#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
   if (p_frame->crc_len == 2) {
+#endif
     return crc_16_updateN(curCRC, p_data, len);
-  }
-  else {
+#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
+  } else {
     return crc_32_updateN(curCRC, p_data, len);
   }
+#endif
 }
 
 uint32_t framer802154ll_crcFinal(framer802154ll_attr_t *p_frame, uint32_t curCRC) {
+#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
   if (p_frame->crc_len == 4) {
     uint16_t len;
     len = p_frame->tot_len - p_frame->crc_len - PHY_HEADER_LEN;
@@ -304,7 +312,7 @@ uint32_t framer802154ll_crcFinal(framer802154ll_attr_t *p_frame, uint32_t curCRC
     }
     curCRC ^= CRC32_INIT;
   }
-
+#endif
   return curCRC;
 }
 
@@ -313,10 +321,13 @@ uint8_t framer802154ll_crcFilter(framer802154ll_attr_t *p_frame, uint32_t actCRC
   uint32_t expCRC = 0;
   uint8_t is_matched;
 
+#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
   if (p_frame->crc_len == 2) {
+#endif
     /* 16-bit CRC */
     expCRC = ((p_expCRC[0] << 8) & 0xFF00) |
              ((p_expCRC[1]     ) & 0x00FF);
+#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
   } else {
     /* 32-bit CRC */
     expCRC = (((uint32_t)p_expCRC[0] << 24) & 0xFF000000) |
@@ -324,6 +335,7 @@ uint8_t framer802154ll_crcFilter(framer802154ll_attr_t *p_frame, uint32_t actCRC
              (((uint32_t)p_expCRC[2] <<  8) & 0x0000FF00) |
              (((uint32_t)p_expCRC[3]      ) & 0x000000FF);
   }
+#endif
 
   is_matched = (expCRC == actCRC);
   return is_matched;

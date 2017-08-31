@@ -195,6 +195,7 @@ static void dllc_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 
   /* write footer */
   p_mfr = p_data + len;
+#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
   fcs_len = packetbuf_attr(PACKETBUF_ATTR_MAC_FCS_LEN);
   if (fcs_len == 4) {
     /* 32-bit CRC */
@@ -204,11 +205,14 @@ static void dllc_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     p_mfr[2] = (fcs & 0x0000FF00u) >> 8;
     p_mfr[3] = (fcs & 0x000000FFu);
   } else {
+#endif
     /* 16-bit CRC */
     fcs = crc_16_calc(p_data, len);
     p_mfr[0] = (fcs & 0xFF00u) >> 8;
     p_mfr[1] = (fcs & 0x00FFu);
+#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
   }
+#endif
   len += fcs_len;
 #endif /* #if !defined(NETSTK_SUPPORT_HW_CRC) */
 
