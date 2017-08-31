@@ -186,23 +186,43 @@ uint8_t framer802154ll_addrFilter(framer802154ll_attr_t *p_frame, uint8_t *p_buf
   uint16_t destPANId;
   packetbuf_attr_t dev_pan_id;
 
+  uint8_t *p_mhr = &p_buf[PHY_HEADER_LEN];
+  uint8_t frame_type = p_mhr[0] & 0x07;
+  uint8_t seq_no_suppressed = p_mhr[1] & 1;
+
   if (p_frame->min_addr_len > 0) {
     /* set destination addressing fields to zero */
     destPANId = 0;
     memset(destAddr, 0, sizeof(destAddr));
 
     /* verify destination PAN Id */
-    p = &p_buf[PHY_HEADER_LEN + 3];
+    if (1 == seq_no_suppressed)
+      p = &p_buf[PHY_HEADER_LEN + 2]; // sequence number is suppressed
+    else
+      p = &p_buf[PHY_HEADER_LEN + 3]; // sequence number is present
+
     destPANId = p[0] | (p[1] << 8);
+    dev_pan_id = packetbuf_attr(PACKETBUF_ATTR_MAC_PAN_ID);
 
     /* is destination PAN ID a broadcast ID */
     if (destPANId == FRAME802154_BROADCASTPANDID) {
-      /* then frame is always accepted */
+      if (FRAME802154_BEACONFRAME == frame_type) {
+        // IEEE Std 802.15.4-2015, 6.7.2 Reception and rejection, page 102
+        // "If the frame type indicates that the frame is a beacon frame, the
+        // source PAN ID shall match macPanId unless macPanId is equal to the
+        // broadcast PAN ID, in which case the beacon frame shall be accepted
+        // regardless of the source PAN ID"
+        uint16_t srcPANId = p[2] | (p[3] << 8);
+        if ((dev_pan_id != FRAME802154_BROADCASTPANDID) && (dev_pan_id != srcPANId)) {
+          return FALSE;
+        }
+      }
+
+      /* frame is accepted */
       return TRUE;
     }
 
     /* is destination PAN Id different from source PAN Id? */
-    dev_pan_id = packetbuf_attr(PACKETBUF_ATTR_MAC_PAN_ID);
     if (destPANId != dev_pan_id) {
       /* then discard the frame */
       TRACE_LOG_ERR("+++ LLFRAMER: invalid destPANId %04x", destPANId);
