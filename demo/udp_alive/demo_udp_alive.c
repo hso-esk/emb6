@@ -325,6 +325,7 @@ int8_t demo_udpAliveConf(s_ns_t* p_netstk)
 int8_t demo_udpAliveInit(void)
 {
     LOG2_INFO( "Enter demo_udpAliveInit() function" );
+    memset( &st_udp_socket, 0, sizeof(st_udp_socket) );
 
     /* set the pointer to the udp-socket */
     pst_udp_socket = &st_udp_socket;
