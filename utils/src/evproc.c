@@ -288,6 +288,7 @@ en_evprocResCode_t evproc_regCallback( c_event_t c_eventType,
     pfn_callback_t pfn_callback )
 {
     uint8_t i,j;
+    uint8_t pos = MAX_CALLBACK_COUNT;
 
     /* If event process wasn't initialized before do it now. */
     if (!c_isInit)
@@ -313,12 +314,11 @@ en_evprocResCode_t evproc_regCallback( c_event_t c_eventType,
             {
                 /* If "j" callback from registration list points to NULL
                  * it means that end of a list has been reached. */
-                if( pst_regList[i].pfn_callbList[j] == NULL )
+                if( (pst_regList[i].pfn_callbList[j] == NULL) &&
+                    (pos == MAX_CALLBACK_COUNT) )
                 {
-                    /* Given function pointer for a given event type has been added */
-                    LOG_INFO("new callback for (%d) event with callback %p\n\r", c_eventType, (void*)pfn_callback);
-                    pst_regList[i].pfn_callbList[j] = pfn_callback;
-                    return E_SUCCESS;
+                    /* empty slot found */
+                    pos = j;
                 }
 
                 /* If "j" callback is equal to a given function pointer
@@ -327,15 +327,31 @@ en_evprocResCode_t evproc_regCallback( c_event_t c_eventType,
                 if( pst_regList[i].pfn_callbList[j] == pfn_callback )
                 {
                     LOG_ERR(" (%d) already registered\n\r",c_eventType);
-                    return E_FUNC_IN_LIST;
+                    pos = MAX_CALLBACK_COUNT;
+                    break;
                 }
             }
 
-            /* If end of the registration list has been reached and
-             * c_callbI index are equal to a maximum allowed callbacks
-             * generate an error. */
-            LOG_ERR("limit is reached (%d)\n\r", MAX_CALLBACK_COUNT);
-            return E_END_OF_LIST;
+            if( j < MAX_CALLBACK_COUNT )
+            {
+                /* function was already registered */
+                return E_FUNC_IN_LIST;
+            }
+            else if( pos < MAX_CALLBACK_COUNT )
+            {
+                /* Given function pointer for a given event type has been added */
+                LOG_INFO("new callback for (%d) event with callback %p\n\r", c_eventType, (void*)pfn_callback);
+                pst_regList[i].pfn_callbList[pos] = pfn_callback;
+                return E_SUCCESS;
+            }
+            else
+            {
+                /* If end of the registration list has been reached and
+                 * c_callbI index are equal to a maximum allowed callbacks
+                 * generate an error. */
+                LOG_ERR("limit is reached (%d)\n\r", MAX_CALLBACK_COUNT);
+                return E_END_OF_LIST;
+            }
         }
     }
 

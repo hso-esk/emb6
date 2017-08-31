@@ -62,13 +62,14 @@
 /*---------------------------------------------------------------------------*/
 /*- Variables ---------------------------------------------------------------*/
 /*---------------------------------------------------------------------------*/
-static  struct  udp_socket          st_udp_socket;
-        struct  udp_socket*         pst_udp_socket;
+static struct udp_socket st_udp_socket;
+static struct udp_socket* pst_udp_socket;
 
-static          uint16_t            current_mid = 0;
+static uint16_t current_mid = 0;
 
-                coap_status_t       erbium_status_code = NO_ERROR;
-                char*               coap_error_message = "";
+coap_status_t erbium_status_code = NO_ERROR;
+char* coap_error_message = "";
+
 /*---------------------------------------------------------------------------*/
 /*- Local helper functions --------------------------------------------------*/
 /*---------------------------------------------------------------------------*/
