@@ -63,6 +63,7 @@ uint16_t framer802154ll_parse(framer802154ll_attr_t *p_frame, uint8_t *p_buf, ui
   if ((frameType != FRAME802154_DATAFRAME) &&
       (frameType != FRAME802154_ACKFRAME) &&
       (frameType != FRAME802154_CMDFRAME) &&
+      (frameType != FRAME802154_BEACONFRAME) &&
       (frameType != SMARTMAC_FRAME_STROBE)) {
     /* unsupported frame types */
     return 0;
