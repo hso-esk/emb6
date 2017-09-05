@@ -121,11 +121,11 @@
 
 
 /** minimum packet length is equal to size of sequence number (4 bytes) */
-#define DEMO_UDP_PKT_LEN_MIN            (  4u )
+#define DEMO_UDP_PKT_LEN_MIN            (  4u ) // 80u to test fragmentation (threshold ~ 84 bytes )
 
 #ifndef DEMO_UDP_PKT_LEN_MAX
 /** maximum packet length */
-#define DEMO_UDP_PKT_LEN_MAX            ( 40u )
+#define DEMO_UDP_PKT_LEN_MAX            ( 40u ) // 90u to test fragmentation (threshold ~ 84 bytes )
 #endif /* #ifndef DEMO_UDP_PKT_LEN_MAX */
 
 
@@ -296,6 +296,18 @@ static void udp_socket_tx(uint32_t seq)
   uip_ipaddr_copy(&pudp_socket_conn->ripaddr, &UIP_IP_BUF->srcipaddr);
   uip_udp_packet_send(pudp_socket_conn, payload, payload_len);
   uip_create_unspecified(&pudp_socket_conn->ripaddr);
+  /*
+   * Logging
+   */
+#if LOGGER_ENABLE
+  LOG_RAW("UDP Sending...  : ");
+  uint16_t len = payload_len;
+  uint8_t *p_data = payload;
+  while (len--) {
+    LOG_RAW("%02x ", *p_data++);
+  }
+  LOG_RAW("\r\n");
+#endif
 
 #else
   uint16_t payload_len;
@@ -337,21 +349,21 @@ static void udp_socket_tx(uint32_t seq)
 
       uip_udp_packet_send(pudp_socket_conn, payload, payload_len);
       uip_create_unspecified(&pudp_socket_conn->ripaddr);
+      /*
+       * Logging
+       */
+    #if LOGGER_ENABLE
+      LOG_RAW("UDP Sending...  : ");
+      uint16_t len = payload_len;
+      uint8_t *p_data = payload;
+      while (len--) {
+        LOG_RAW("%02x ", *p_data++);
+      }
+      LOG_RAW("\r\n");
+    #endif
+
     }
   }
-#endif
-
-  /*
-   * Logging
-   */
-#if LOGGER_ENABLE
-  LOG_RAW("UDP Sending...  : ");
-  uint16_t len = payload_len;
-  uint8_t *p_data = payload;
-  while (len--) {
-    LOG_RAW("%02x ", *p_data++);
-  }
-  LOG_RAW("\r\n");
 #endif
 }
 

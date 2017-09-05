@@ -48,8 +48,10 @@
 
 #include <stdint.h>
 #include "crc.h"
+#include "emb6.h"
+#include "board_conf.h"
 
-
+#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
 static uint32_t crc32_table[256] = {
     0x00000000u, 0x04c11db7u, 0x09823b6eu, 0x0d4326d9u,
     0x130476dcu, 0x17c56b6bu, 0x1a864db2u, 0x1e475005u,
@@ -116,6 +118,7 @@ static uint32_t crc32_table[256] = {
     0xafb010b1u, 0xab710d06u, 0xa6322bdfu, 0xa2f33668u,
     0xbcb4666du, 0xb8757bdau, 0xb5365d03u, 0xb1f740b4u,
 };
+#endif /* #if (NETSTK_CFG_IEEE_802154G_EN == TRUE) */
 
 /**
  * @brief   Calculate 16-bit ITU-T CRC over an array
@@ -165,7 +168,7 @@ uint16_t crc_16_calc(uint8_t *p_data, uint16_t len) {
   return crc_res;
 }
 
-
+#if (NETSTK_CFG_IEEE_802154G_EN == TRUE)
 /**
  * @brief   Update 32-bit ITU-T CRC
  *
@@ -212,3 +215,4 @@ uint32_t crc_32_calc(uint8_t *p_data, uint16_t len) {
 
   return crc_res;
 }
+#endif /* #if (NETSTK_CFG_IEEE_802154G_EN == TRUE) */

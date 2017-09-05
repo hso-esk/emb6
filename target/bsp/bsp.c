@@ -240,6 +240,11 @@ int8_t bsp_init (s_ns_t * ps_ns)
   /* initialize local variables */
   bsp_numNestedCriticalSection = 0;
 
+  /* Initialize rtimer module if supported*/
+#if (HAL_SUPPORT_RTIMER == TRUE)
+bsp_rtimer_init();
+#endif
+
   /* Normal exit*/
   return 0;
 }/* bsp_init() */
@@ -703,3 +708,78 @@ int8_t bsp_rtcGetTime( en_hal_rtc_t *p_rtc )
   return hal_rtcGetTime(p_rtc);
 }
 #endif /* #if defined(HAL_SUPPORT_RTC) */
+
+#if (HAL_SUPPORT_RTIMER == TRUE)
+/*---------------------------------------------------------------------------*/
+/*
+* bsp_rtimer_init()
+*/
+void bsp_rtimer_init()
+{
+  hal_rtimer_init();
+}
+/*
+* bsp_rtimer_arch_schedule()
+*/
+void bsp_rtimer_schedule(rtimer_clock_t t)
+{
+ hal_rtimer_arch_schedule(t);
+}
+
+rtimer_clock_t bsp_rtimer_arch_now()
+{
+  return hal_rtimer_arch_now();
+}
+
+rtimer_clock_t bsp_rtimer_arch_second()
+{
+	return hal_rtimer_arch_second();
+}
+
+int32_t bsp_us_to_rtimerTiscks(int32_t us)
+{
+  return hal_us_to_rtimerTiscks(us);
+}
+
+int32_t bsp_rtimerTick_to_us(int32_t ticks)
+{
+  return hal_rtimerTick_to_us(ticks);
+}
+
+uint32_t bsp_rtimerTick_to_us_64(uint32_t ticks)
+{
+  return hal_rtimerTick_to_us_64(ticks);
+}
+
+#endif /* #if defined(HAL_SUPPORT_RTIMER) */
+
+#if (HAL_SUPPORT_MCU_SLEEP == TRUE)
+/*---------------------------------------------------------------------------*/
+/*
+* bsp_sleepDuration()
+*/
+clock_time_t bsp_sleepDuration( void )
+{
+  return hal_sleepDuration();
+} /* bsp_sleepDuration() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* bsp_sleepEnter()
+*/
+int8_t bsp_sleepEnter( uint32_t duration )
+{
+  return hal_sleepEnter(duration);
+} /* bsp_sleepEnter() */
+
+
+/*---------------------------------------------------------------------------*/
+/*
+* bsp_adjustTick()
+*/
+int8_t bsp_adjustTick( clock_time_t ticks )
+{
+  return hal_adjustTick(ticks);
+} /* bsp_adjustTick */
+#endif /* #if (HAL_SUPPORT_MCU_SLEEP == TRUE) */

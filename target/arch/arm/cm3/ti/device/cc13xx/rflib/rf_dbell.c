@@ -85,6 +85,8 @@ typedef struct
 __no_init mbIntCback_t mbIntCbackTable[NUM_MAILBOX_INTERRUPTS];
 #elif defined(__TI_COMPILER_VERSION__)
 mbIntCback_t mbIntCbackTable[NUM_MAILBOX_INTERRUPTS];
+#else
+mbIntCback_t mbIntCbackTable[NUM_MAILBOX_INTERRUPTS];
 #endif
 
 /*******************************************************************************

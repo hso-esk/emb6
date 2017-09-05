@@ -54,7 +54,7 @@
 		<link>
 			<name>ccfg.c</name>
 			<type>1</type>
-			<locationURI>REPO_ROOT_DIR/ccfg.c</locationURI>
+			<locationURI>REPO_ROOT_DIR/target/arch/arm/cm3/ti/device/cc13xx/startup_files/ccfg.c</locationURI>
 		</link>
 		<link>
 			<name>demo</name>

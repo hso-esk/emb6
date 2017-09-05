@@ -935,7 +935,6 @@ ra_input(void)
       if((uip_ntohl(nd6_opt_prefix_info->validlt) >=
           uip_ntohl(nd6_opt_prefix_info->preferredlt))
     	 && (!uip_is_addr_linklocal(&nd6_opt_prefix_info->prefix))) {
-      }
         /* on-link flag related processing */
         if(nd6_opt_prefix_info->flagsreserved1 & UIP_ND6_RA_FLAG_ONLINK) {
           prefix =

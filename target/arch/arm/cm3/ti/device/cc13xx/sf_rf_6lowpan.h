@@ -102,6 +102,7 @@ typedef struct
 
   /** Pointer to the buffer of the higher layer: used to copy received data from queue */
   uint8_t *p_appBuff;
+  uint16_t  max_len_appBuff;
   /** Receive dataQueue for RF Core to fill in data */
   dataQueue_t dataQueue;
   /** Pointer to the current data entry */
@@ -113,6 +114,10 @@ typedef struct
   rfc_CMD_PROP_RX_ADV_t* p_cmdPropRxAdv;
   /* Meassured RSSI value */
   uint8_t c_rssiValue;
+  /* Time Stamp value  */
+  uint32_t timeStamp;
+  /* is receiving flag */
+  uint8_t is_receiving;
 } st_rx_cmd_t;
 
 typedef struct
@@ -147,6 +152,8 @@ typedef struct
   st_tx_cmd_t   tx;
   st_rx_cmd_t   rx;
   st_cca_cmd_t  cca;
+  /* Are we currently in poll mode? */
+  uint8_t poll_mode;
 } st_cc1310_t;
 
 
@@ -231,6 +238,15 @@ uint8_t sf_rf_6lowpan_getRssi(void);
 
 /*============================================================================*/
 /**
+ * @brief  Request the last received Timestamp value.
+ *
+ * \return    Timestamp value
+ */
+/*============================================================================*/
+uint32_t sf_rf_6lowpan_getTimeStamp(void);
+
+/*============================================================================*/
+/**
  * @brief  Preform a clear channel assesment
  *
  * @param c_numOfRssiMeas Number of consecutive RSSI measurements below the
@@ -247,9 +263,17 @@ E_RF_CCA_RESULT_t sf_rf_6lowpan_cca(uint8_t c_numOfRssiMeas);
  * @brief  Eventhandler of the CC13xx used by the emb6 stack.
  */
 /*============================================================================*/
-
-bool sf_rf_6lowpan_chanNumSet(uint8_t chan_num);
-
 void cc13xx_eventHandler(c_event_t c_event, p_data_t p_data);
+
+bool    sf_rf_6lowpan_chanNumSet(uint8_t chan_num);
+uint8_t sf_rf_set_rx_buff_length(uint16_t i_len);
+uint8_t sf_rf_set_p_RX_buff(uint8_t *pc_data);
+uint8_t sf_rf_6lowpan_prepare_pkt(uint8_t *payload, uint16_t payload_len);
+uint8_t sf_rf_transmit(void);
+void    set_polling_mode(void);
+uint8_t is_polling_mode(void);
+uint8_t receiving_packet(void);
+uint8_t pending_packet(void);
+uint16_t sf_rf_read_frame();
 
 #endif /* __SF_RF_6LOWPAN_H__ */

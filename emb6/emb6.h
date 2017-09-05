@@ -235,6 +235,7 @@ typedef enum
     NETSTK_CMD_TX_CBARG_SET,
     NETSTK_CMD_RX_CBFNT_SET,
     NETSTK_CMD_RX_BUF_READ,
+    NETSTK_CMD_IS_BUSY,
 
     /*
      * DLLC command codes
@@ -266,10 +267,12 @@ typedef enum
     NETSTK_CMD_RF_SENS_SET,
     NETSTK_CMD_RF_SENS_GET,
     NETSTK_CMD_RF_RSSI_GET,
+	NETSTK_CMD_RF_TIMESTAMP_GET,
     NETSTK_CMD_RF_CCA_GET,
     NETSTK_CMD_RF_ANT_DIV_SET,
     NETSTK_CMD_RF_RF_SWITCH_SET,
     NETSTK_CMD_RF_IS_RX_BUSY,
+	NETSTK_CMD_RF_RX_PENDING,
     NETSTK_CMD_RF_IS_TX_BUSY,
     NETSTK_CMD_RF_SYNC_SET,
     NETSTK_CMD_RF_SYNC_GET,
@@ -419,7 +422,8 @@ typedef struct uip_802154_longaddr
 /** 802.15.4 address */
 typedef uip_802154_longaddr uip_lladdr_t;
 
-
+/* rtimer clock_t*/
+typedef uint32_t rtimer_clock_t;
 
 typedef void (*mac_callback_t)( void *ptr, int status, int transmissions );
 typedef void (*nsTxCbFnct_t)( void *p_arg, e_nsErr_t *p_err );
@@ -434,6 +438,7 @@ typedef struct s_nsHeadComp s_nsHeadComp_t;
 typedef struct s_nsDllsec s_nsDllsec_t;
 typedef struct s_nsFramer s_nsFramer_t;
 typedef struct s_nsModuleDrv s_nsModuleDrv_t;
+typedef struct s_nsRadioDrv  s_nsRadioDrv_t;
 
 
 /**
@@ -508,7 +513,6 @@ struct s_nsDllsec
 
 };
 
-
 /**
  * \brief   Netstack submodule driver structure declaration
  */
@@ -534,7 +538,42 @@ struct s_nsModuleDrv
 
     /** IO control */
     void (*ioctrl)(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
+};
 
+/**
+ * \brief   Netstack submodule driver structure declaration
+ */
+struct s_nsRadioDrv
+{
+    /** Driver name */
+    char *name;
+
+    /** Initialization handler */
+    void (*init)(void *p_netstk, e_nsErr_t *p_err);
+
+    /** Turn the driver on */
+    void (*on)(e_nsErr_t *p_err);
+
+    /** Turn the driver off */
+    void (*off)(e_nsErr_t *p_err);
+
+    /** Data transmission handler */
+    void (*send)(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
+
+    /** Data reception handler */
+    void (*recv)(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err);
+
+    /** IO control */
+    void (*ioctrl)(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
+
+    /** Prepare the radio with a packet to be sent. */
+    void (* prepare)(uint8_t *payload, uint16_t payload_len, e_nsErr_t *p_err);
+
+    /** Send the packet that has previously been prepared. */
+    void (* transmit)(e_nsErr_t *p_err);
+
+    /** Read a received packet into a buffer. */
+    uint16_t (* read)(uint8_t *buf, uint16_t buf_len);
 };
 
 
@@ -548,7 +587,7 @@ typedef s_nsModuleDrv_t s_nsMAC_t;
 typedef s_nsModuleDrv_t s_nsPHY_t;
 
 /** Radio driver forward declaration */
-typedef s_nsModuleDrv_t s_nsRF_t;
+typedef s_nsRadioDrv_t s_nsRF_t;
 
 
 /**
@@ -652,6 +691,7 @@ extern const s_nsHeadComp_t hc_driver_slipnet;
 
 /* Supported link layer security handlers */
 extern const s_nsDllsec_t dllsec_driver_null;
+extern const s_nsDllsec_t dllsec_tsch_adaptive_driver;
 
 
 /* Supported framers */
@@ -662,11 +702,13 @@ extern const s_nsFramer_t framer_nullframer;
 /* Supported dllc drivers */
 extern const s_nsDLLC_t dllc_driver_null;
 extern const s_nsDLLC_t dllc_driver_802154;
+extern const s_nsDLLC_t dll_tsch_adaptive_driver;
 
 /* Supported mac drivers */
 extern const s_nsMAC_t mac_driver_null;
 extern const s_nsMAC_t mac_driver_802154;
 extern const s_nsMAC_t mac_driver_smartmac;
+extern const s_nsMAC_t mac_tsch_adaptive_driver;
 
 /* Supported phy drivers */
 extern const s_nsPHY_t phy_driver_null;

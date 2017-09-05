@@ -5,6 +5,7 @@
  */
 
 #include "emb6.h"
+#include "board_conf.h"
 #include "phy_framer_802154.h"
 #include "framer_smartmac.h"
 #include "packetbuf.h"
