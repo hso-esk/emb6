@@ -197,6 +197,10 @@ typedef enum
     * configuration to connect to the bootstrap server. */
   e_lwm2m_api_type_bs = 0x33,
 
+  /** Reset the LWM2M layer. All resources will be deleted and
+    * all configurations will be reset to default. */
+  e_lwm2m_api_type_reset = 0x3f,
+
   /** Get the Status of the LWM2M module.  */
   e_lwm2m_api_type_status_get = 0x40,
 
@@ -457,6 +461,11 @@ static int32_t _hndl_lwm2mStart( uint8_t* p_cmd, uint16_t cmdLen,
 static int32_t _hndl_lwm2mStop( uint8_t* p_cmd, uint16_t cmdLen,
     uint8_t* p_rpl, uint16_t rplLen );
 
+/** Callback function in case a LWM2M_RESET command was received. For further
+ * details have a look at the function definition.*/
+static int32_t _hndl_lwm2mReset( uint8_t* p_cmd, uint16_t cmdLen,
+    uint8_t* p_rpl, uint16_t rplLen );
+
 /** Callback function in case a STATUS_GET command was received. For further
  * details have a look at the function definition.*/
 static int32_t _hndl_statusGet( uint8_t* p_cmd, uint16_t cmdLen,
@@ -709,6 +718,11 @@ static int8_t _rx_data( uint8_t* p_data, uint16_t len )
     /* stop request */
     case e_lwm2m_api_type_stop:
       f_hndl = _hndl_lwm2mStop;
+      break;
+
+    /* reset request */
+    case e_lwm2m_api_type_reset:
+      f_hndl = _hndl_lwm2mReset;
       break;
 
     /* read status */
@@ -1276,6 +1290,43 @@ static int32_t _hndl_lwm2mStop( uint8_t* p_cmd, uint16_t cmdLen,
 
   if( _status != e_lwm2m_api_status_stopped )
     _stopLWM2M();
+
+  /* set the according status */
+  EMB6_ASSERT_RET( p_rpl != NULL, -1 );
+  ret = _rsp_status( p_rpl, rplLen, e_lwm2m_api_type_ret,
+      e_ret );
+
+  return ret;
+}
+
+
+/**
+ * \brief   Callback function for a LWM2M_RESET command.
+ *
+ *          This function is called whenever a
+ *          LWM2M_RESET command was received
+ *
+ * \param   p_cmd   Further data of the command.
+ * \param   cmdLen  Length of the command data.
+ * \param   p_rpl   Pointer to store the response to.
+ * \param   rplLen  Length of the response buffer.
+ *
+ * \return  The length of the generated response or 0 if no response
+ *          has been generated.
+ */
+static int32_t _hndl_lwm2mReset( uint8_t* p_cmd, uint16_t cmdLen,
+    uint8_t* p_rpl, uint16_t rplLen )
+{
+  int32_t ret;
+  e_lwm2m_api_ret_t e_ret = e_lwm2m_api_ret_ok;
+
+  EMB6_ASSERT_RET( p_rpl != NULL, 0 );
+
+  if( _status != e_lwm2m_api_status_stopped )
+    _stopLWM2M();
+
+  /* Initialize layer */
+  lwm2mApiInit(_p_txBuf, _txBufLen, _fn_tx, _p_txParam);
 
   /* set the according status */
   EMB6_ASSERT_RET( p_rpl != NULL, -1 );
