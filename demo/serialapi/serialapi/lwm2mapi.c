@@ -2016,7 +2016,7 @@ static int32_t _hndl_res_wr( uint8_t* p_cmd, uint16_t cmdLen,
           ret = -2;
 
         /* get the value */
-        EMB6_ASSERT_RET( cmdLen >= sizeof(int32_t), -2 );
+        EMB6_ASSERT_RET( cmdLen >= sizeof(val), -2 );
         LWM2M_API_GET_FIELD( val, p_data, cmdLen, int32_t );
         val = uip_ntohl( val );
 
