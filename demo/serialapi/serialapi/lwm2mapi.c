@@ -1596,6 +1596,7 @@ static int32_t _hndl_res_create( uint8_t* p_cmd, uint16_t cmdLen,
   int16_t resId;
   uint8_t type;
   uint8_t varLen;
+  uint8_t access;
 
   const lwm2m_object_t* p_lwm2mObj = NULL;
   lwm2m_instance_t* p_lwm2mInst = NULL;
@@ -1619,6 +1620,8 @@ static int32_t _hndl_res_create( uint8_t* p_cmd, uint16_t cmdLen,
   LWM2M_API_GET_FIELD( type, p_data, cmdLen, uint8_t );
   EMB6_ASSERT_RET( cmdLen >= sizeof(uint8_t), -2 );
   LWM2M_API_GET_FIELD( varLen, p_data, cmdLen, uint8_t );
+  EMB6_ASSERT_RET( cmdLen >= sizeof(uint8_t), -2 );
+  LWM2M_API_GET_FIELD( access, p_data, cmdLen, uint8_t );
 
   objId = uip_ntohs( objId );
   resId = uip_ntohs( resId );
