@@ -1677,7 +1677,20 @@ static int32_t _hndl_res_create( uint8_t* p_cmd, uint16_t cmdLen,
             *p_res = (lwm2m_resource_t) {resId, LWM2M_RESOURCE_TYPE_BOOLEAN_VARIABLE,
                     .value.booleanvar.var = p_resData,
                     .p_next = NULL};
-            ret = 0;
+
+            if( (cmdLen > 0) && (cmdLen < varLen) )
+              ret = -2;
+            else
+              ret = 0;
+
+            if( (ret == 0) && (cmdLen > 0) )
+            {
+              int val;
+              /* get the value */
+              LWM2M_API_GET_FIELD( val, p_data, cmdLen, int );
+              val = uip_ntohl( val );
+              memcpy( p_resData, &val, sizeof(int) );
+            }
           }
           break;
 
@@ -1692,7 +1705,21 @@ static int32_t _hndl_res_create( uint8_t* p_cmd, uint16_t cmdLen,
             *p_res = (lwm2m_resource_t) {resId, LWM2M_RESOURCE_TYPE_INT_VARIABLE,
                     .value.integervar.var = p_resData,
                     .p_next = NULL};
-            ret = 0;
+
+            if( (cmdLen > 0) && (cmdLen < varLen) )
+              ret = -2;
+            else
+              ret = 0;
+
+            if( (ret == 0) && (cmdLen > 0) )
+            {
+              int32_t val;
+              /* get the value */
+              LWM2M_API_GET_FIELD( val, p_data, cmdLen, int32_t );
+              val = uip_ntohl( val );
+              memcpy( p_resData, &val, sizeof(int32_t) );
+            }
+
           }
           break;
 
@@ -1707,12 +1734,25 @@ static int32_t _hndl_res_create( uint8_t* p_cmd, uint16_t cmdLen,
             *p_res = (lwm2m_resource_t) {resId, LWM2M_RESOURCE_TYPE_FLOATFIX_VARIABLE,
                     .value.floatfixvar.var = p_resData,
                     .p_next = NULL};
-            ret = 0;
+
+            if( (cmdLen > 0) && (cmdLen < varLen) )
+              ret = -2;
+            else
+              ret = 0;
+
+            if( (ret == 0) && (cmdLen > 0) )
+            {
+              int32_t val;
+              /* get the value */
+              LWM2M_API_GET_FIELD( val, p_data, cmdLen, int32_t );
+              val = uip_ntohl( val );
+              memcpy( p_resData, &val, sizeof(int32_t) );
+            }
           }
           break;
 
         case e_lwm2m_api_restype_str:
-        {
+
           /* try to allocate data storage for the resource data */
           p_resData = memb_allocm( &lwm2mdata_storage, varLen +
               sizeof(uint8_t*) + sizeof(uint16_t) );
@@ -1726,10 +1766,23 @@ static int32_t _hndl_res_create( uint8_t* p_cmd, uint16_t cmdLen,
                     .value.stringvar.len = p_resData + sizeof(uint8_t*),
                     .value.stringvar.var = p_resData,
                     .p_next = NULL};
-            ret = 0;
+
+            if( (cmdLen > 0) && (cmdLen > p_res->value.stringvar.size) )
+              ret = -2;
+            else
+              ret = 0;
+
+            if( (ret == 0) && (cmdLen > 0) )
+            {
+              memset( *p_res->value.stringvar.var, 0,
+                  p_res->value.stringvar.size);
+              *p_res->value.stringvar.len = cmdLen;
+              LWM2M_API_GET_FIELD_MEM( *p_res->value.stringvar.var,
+                  p_data, cmdLen, cmdLen );
+            }
           }
           break;
-        }
+
 
         default:
           ret = -1;
