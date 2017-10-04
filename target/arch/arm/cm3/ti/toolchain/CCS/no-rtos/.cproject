@@ -78,6 +78,7 @@
 								</option>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEBUGGING_MODEL.921767468" name="Debugging model" superClass="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEBUGGING_MODEL" value="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEBUGGING_MODEL.SYMDEBUG__DWARF" valueType="enumerated"/>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEFINE.245415903" name="Pre-define NAME (--define, -D)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEFINE" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="NETSTK_CFG_IEEE_802154G_EN=1"/>
 									<listOptionValue builtIn="false" value="LOGGER_LEVEL=3"/>
 									<listOptionValue builtIn="false" value="USE_TI_RTOS=0"/>
 									<listOptionValue builtIn="false" value="LOGGER_DEMO_UDP_SOCKET=1"/>
@@ -207,6 +208,7 @@
 								</option>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEBUGGING_MODEL.675076759" name="Debugging model" superClass="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEBUGGING_MODEL" value="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEBUGGING_MODEL.SYMDEBUG__DWARF" valueType="enumerated"/>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEFINE.1440259639" name="Pre-define NAME (--define, -D)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEFINE" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="NETSTK_CFG_IEEE_802154G_EN=1"/>
 									<listOptionValue builtIn="false" value="LOGGER_LEVEL=3"/>
 									<listOptionValue builtIn="false" value="USE_TI_RTOS=0"/>
 									<listOptionValue builtIn="false" value="LOGGER_DEMO_UDP_SOCKET=1"/>
@@ -336,6 +338,7 @@
 								</option>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEBUGGING_MODEL.2011171610" name="Debugging model" superClass="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEBUGGING_MODEL" value="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEBUGGING_MODEL.SYMDEBUG__DWARF" valueType="enumerated"/>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEFINE.577715243" name="Pre-define NAME (--define, -D)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEFINE" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="NETSTK_CFG_IEEE_802154G_EN=1"/>
 									<listOptionValue builtIn="false" value="DEMO_USE_COAP=1"/>
 									<listOptionValue builtIn="false" value="CONF_USE_SERVER=1"/>
 									<listOptionValue builtIn="false" value="DEMO_USE_UDPALIVE=1"/>
@@ -463,6 +466,7 @@
 								</option>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEBUGGING_MODEL.1680558152" name="Debugging model" superClass="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEBUGGING_MODEL" value="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEBUGGING_MODEL.SYMDEBUG__DWARF" valueType="enumerated"/>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEFINE.908467096" name="Pre-define NAME (--define, -D)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEFINE" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="NETSTK_CFG_IEEE_802154G_EN=1"/>
 									<listOptionValue builtIn="false" value="LOGGER_LEVEL=0"/>
 									<listOptionValue builtIn="false" value="DEMO_USE_EXTIF=1"/>
 									<listOptionValue builtIn="false" value="HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX=1"/>

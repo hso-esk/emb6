@@ -56,6 +56,7 @@
 #define LWM2M_FLOAT32_FRAC (1L << LWM2M_FLOAT32_BITS)
 
 #define LWM2M_ENDPOINT_NAME_MAX   64
+#define LWM2M_RDDATE_LEN_MAX      255
 
 /* LWM2M / CoAP Content-Formats */
 typedef enum {

@@ -80,7 +80,7 @@
 
 static const lwm2m_object_t *objects[MAX_OBJECTS];
 static char endpoint[LWM2M_ENDPOINT_NAME_MAX];
-static char rd_data[128]; /* allocate some data for the RD */
+static char rd_data[LWM2M_RDDATE_LEN_MAX]; /* allocate some data for the RD */
 
 static uip_ipaddr_t server_ipaddr;
 static uint16_t server_port = REMOTE_PORT;
