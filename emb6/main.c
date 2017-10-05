@@ -542,8 +542,9 @@ int main(void)
     if (argc > 1) {
       emb6_startupParams.ui_macAddr = loc_parseMac(argv[1], MAC_ADDR_WORD);
     }
+    else
 #endif /* #if defined(MAIN_WITH_ARGS) */
-    emb6_startupParams.ui_macAddr = loc_parseMac(NULL, MAC_ADDR_WORD);
+	emb6_startupParams.ui_macAddr = loc_parseMac(NULL, MAC_ADDR_WORD);
     emb6_startupParams.p_demos = loc_demoAppsSet();
 
 #if USE_FREERTOS
