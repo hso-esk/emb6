@@ -887,6 +887,8 @@ rtimer_clock_t t;
   /* configure stack MAC address */
   memcpy(&uip_lladdr.addr, &mac_phy_config.mac_address, 8);
   linkaddr_set_node_addr((linkaddr_t *) mac_phy_config.mac_address);
+  packetbuf_set_attr(PACKETBUF_ATTR_MAC_PAN_ID, mac_phy_config.pan_id);
+  packetbuf_set_attr(PACKETBUF_ATTR_MAC_FCS_LEN, mac_phy_config.fcs_len);
 
   uint8_t radio_rx_mode = 0;
   /* Disable radio in frame filtering */
