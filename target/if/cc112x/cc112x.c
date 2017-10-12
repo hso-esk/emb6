@@ -71,7 +71,8 @@
 #undef NETSTK_SUPPORT_SW_RF_AUTOACK
 #define NETSTK_SUPPORT_SW_RF_AUTOACK FALSE
 
-#if (NETSTK_SUPPORT_SW_RF_AUTOACK == TRUE)
+
+#if (NETSTK_SUPPORT_SW_RF_AUTOACK == TRUE || RADIO_SUPPORT_SW_CRC == TRUE)
 #include "crc.h"
 #endif /* #if (NETSTK_SUPPORT_SW_RF_AUTOACK == TRUE) */
 
@@ -424,6 +425,11 @@ static void rf_readRSSI(int8_t *p_val, e_nsErr_t *p_err);
 static void rf_getTimestamp(uint32_t *p_val, e_nsErr_t *p_err);
 static void rf_set_polling_mode(void);
 
+#if (RADIO_SUPPORT_SW_CRC == TRUE)
+static uint8_t radio_calculate_Crc(uint8_t *p_crc, uint8_t *p_data, uint16_t len);
+static uint16_t radio_crc16(uint8_t *p_data, uint16_t len);
+static uint32_t radio_crc32(uint8_t *p_data, uint16_t len);
+#endif
 
 /*
 ********************************************************************************
@@ -1373,7 +1379,7 @@ static void rf_rx_chksum(struct s_rf_ctx *p_ctx) {
     p_ctx->rxNumRemBytes = 0;
   }
 
-#if (NETSTK_SUPPORT_SW_RF_AUTOACK == TRUE)
+#if (NETSTK_SUPPORT_SW_RF_AUTOACK == TRUE || RADIO_SUPPORT_SW_CRC == TRUE )
   /* update checksum */
   if (p_ctx->rxLastDataPtr > (p_ctx->rxFrame.crc_len + p_ctx->rxLastChksumPtr)) {
     numChksumBytes = p_ctx->rxLastDataPtr - (p_ctx->rxLastChksumPtr + p_ctx->rxFrame.crc_len);
@@ -1390,7 +1396,6 @@ static void rf_rx_chksum(struct s_rf_ctx *p_ctx) {
   /* checksum verification is handled by upper layer */
   isChecksumOK = TRUE;
 #endif /* #if (NETSTK_SUPPORT_SW_RF_AUTOACK == TRUE) */
-  isChecksumOK = TRUE;
   /* is checksum valid? */
   if (isChecksumOK == TRUE) {
 #if (NETSTK_SUPPORT_SW_RF_AUTOACK == TRUE)
@@ -2592,9 +2597,20 @@ static void rf_prepare(uint8_t *payload, uint16_t payload_len, e_nsErr_t *p_err)
   exitTx = TRUE;
   txTimeout = packetbuf_attr(PACKETBUF_ATTR_PHY_TXTIMEOUT);
 
+#if (RADIO_SUPPORT_SW_CRC == TRUE)
+  uint8_t crc[4];
+  uint8_t crc_length=0;
+  crc_length=radio_calculate_Crc(crc,p_ctx->txDataPtr + PHY_HEADER_LEN , p_ctx->txDataLen - PHY_HEADER_LEN);
+  p_ctx->txDataPtr[0] = p_ctx->txDataLen - PHY_HEADER_LEN + crc_length ;
+#else
   p_ctx->txDataPtr[0] = p_ctx->txDataLen - PHY_HEADER_LEN ;
+#endif
   /* write as many bytes to TXFIFO as possible */
   rf_writeTxFifo(p_ctx, RF_CFG_FIFO_SIZE, p_err);
+#if (RADIO_SUPPORT_SW_CRC == TRUE)
+  /* write the CRC bytes to the  txFIFO  */
+  cc112x_spiTxFifoWrite(crc, crc_length);
+#endif
 }
 
 /*!
@@ -2773,6 +2789,81 @@ static void rf_set_polling_mode(void)
   struct s_rf_ctx *p_ctx = &rf_ctx;
   p_ctx->is_polling_mode=1;
 }
+
+#if (RADIO_SUPPORT_SW_CRC == TRUE)
+
+/**
+ * @brief   Calculate PHY checksum
+ * @return  CRC length
+ */
+static uint8_t radio_calculate_Crc(uint8_t *p_crc, uint8_t *p_data, uint16_t len)
+{
+  uint32_t crc = 0;
+  packetbuf_attr_t fcs_len;
+
+  fcs_len = packetbuf_attr(PACKETBUF_ATTR_MAC_FCS_LEN);
+  if (fcs_len == 4) {
+    crc = radio_crc32(p_data, len);
+    p_crc[0] = (crc & 0xFF000000u) >> 24;
+    p_crc[1] = (crc & 0x00FF0000u) >> 16;
+    p_crc[2] = (crc & 0x0000FF00u) >> 8;
+    p_crc[3] = (crc & 0x000000FFu);
+  } else {
+    crc = radio_crc16(p_data, len);
+    p_crc[0] = (crc & 0xFF00u) >> 8;
+    p_crc[1] = (crc & 0x00FFu);
+  }
+  return fcs_len;
+}
+
+/**
+ * @brief   Compute CRC-16 over a byte stream
+ * @param   p_data  Point to first byte of the stream
+ * @param   len     Length of the stream
+ * @return  CRC-16 value of the stream
+ */
+static uint16_t radio_crc16(uint8_t *p_data, uint16_t len)
+{
+  uint16_t ix;
+  uint32_t crc_res;
+
+  /* calculate CRC */
+  crc_res = CRC16_INIT;
+  for (ix = 0; ix < len; ix++) {
+    crc_res = crc_16_update(crc_res, p_data[ix]);
+  }
+
+  return crc_res;
+}
+
+
+/**
+ * @brief   Compute CRC-32 over a byte stream
+ * @param   p_data  Point to first byte of the stream
+ * @param   len     Length of the stream
+ * @return  CRC-32 value of the stream
+ */
+static uint32_t radio_crc32(uint8_t *p_data, uint16_t len)
+{
+  uint16_t ix;
+  uint32_t crc_res;
+
+  /* calculate CRC */
+  crc_res = CRC32_INIT;
+  for (ix = 0; ix < len; ix++) {
+    crc_res = crc_32_update(crc_res, p_data[ix]);
+  }
+
+  /* add padding when length is less than 4 octets.
+   * See IEEE-802.15.4g-2012, 5.2.1.9 */
+  if (len < 4) {
+    crc_res = crc_32_update(crc_res, 0x00);
+  }
+  crc_res ^= CRC32_INIT;
+
+  return crc_res;
+}
+#endif /* #if (NETSTK_SUPPORT_SW_MAC_AUTOACK == TRUE) */
 
 /*
  ********************************************************************************
