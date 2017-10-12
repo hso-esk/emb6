@@ -1412,7 +1412,11 @@ static void rf_rx_chksum(struct s_rf_ctx *p_ctx) {
     if (p_ctx->rxReqAck == FALSE) {
       /* signal upper layer */
       evproc_putEvent(E_EVPROC_HEAD, EVENT_TYPE_RF, p_ctx);
+#if (NETSTK_SUPPORT_SW_RF_AUTOACK == TRUE || RADIO_SUPPORT_SW_CRC == TRUE )
+      p_ctx->last_pkt_length=p_ctx->rxBytesCounter - p_ctx->rxFrame.crc_len;
+#else
       p_ctx->last_pkt_length=p_ctx->rxBytesCounter;
+#endif
       p_ctx->is_pending=1;
       p_ctx->rxBytesCounter=0;
     }
