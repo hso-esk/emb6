@@ -1520,6 +1520,9 @@ static int32_t _hndl_obj_create( uint8_t* p_cmd, uint16_t cmdLen,
       }
     }
 
+    /* link object to LWM2M engine */
+    lwm2m_engine_register_object( p_lwm2mObj );
+
     /* set status OK */
     EMB6_ASSERT_RET( rplLen >= sizeof(lwm2mapi_ret_t), -1 );
     LWM2M_API_SET_FIELD( p_txBuf, rplLen, lwm2mapi_ret_t, e_lwm2m_api_ret_ok );
