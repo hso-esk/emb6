@@ -67,7 +67,7 @@
  */
 
 /** Default Lifetime */
-#define LWM2M_SERVER_LIFETIME           86400
+#define LWM2M_SERVER_LIFETIME_DEFAULT   300
 /** Default bindig */
 #define LWM2M_SERVER_BINDING            "U"
 
@@ -145,7 +145,7 @@ int8_t lwm2m_server_init( void )
   int ret = -1;
 
   /* set default lifetime */
-  lifetime = LWM2M_SERVER_LIFETIME;
+  lifetime = LWM2M_SERVER_LIFETIME_DEFAULT;
 
   /**
    * Register this device and its handlers - the handlers

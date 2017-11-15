@@ -75,11 +75,15 @@
 #endif /* LWM2M_DEVICE_MODEL_NUMBER */
 #endif /* LWM2M_ENGINE_CLIENT_ENDPOINT_PREFIX */
 
+#define LWM2M_HANDLER_TIMEOUT       5
+#define LWM2M_LOCATION_PATH_MAX     64
+
 #define REMOTE_PORT        UIP_HTONS(COAP_DEFAULT_PORT)
 #define BS_REMOTE_PORT     UIP_HTONS(5685)
 
 static const lwm2m_object_t *objects[MAX_OBJECTS];
 static char endpoint[LWM2M_ENDPOINT_NAME_MAX];
+static char updatepoint[LWM2M_ENDPOINT_NAME_MAX];
 static char rd_data[LWM2M_RDDATE_LEN_MAX]; /* allocate some data for the RD */
 
 static uip_ipaddr_t server_ipaddr;
@@ -122,11 +126,45 @@ client_registration_handler(void *response)
 {
   if( response != NULL )
   {
-    uint8_t code = ((coap_packet_t *)response)->code;
+    volatile uint8_t code = ((coap_packet_t *)response)->code;
     if( code == CREATED_2_01)
     {
-      /* client is registered */
+      /* store the registration path */
+      if( ((coap_packet_t *)response)->location_path_len < sizeof(updatepoint) )
+      {
+        memset(updatepoint, 0, sizeof(updatepoint));
+        memcpy( updatepoint, ((coap_packet_t *)response)->location_path,
+            ((coap_packet_t *)response)->location_path_len );
+
+        /* client is registered */
+        registered = 1;
+
+        if( p_statch_cb != NULL )
+        {
+          /* call status update callback */
+          p_statch_cb( registered, p_statch_data );
+        }
+      }
+    }
+  }
+}
+
+/*---------------------------------------------------------------------------*/
+static void
+client_update_handler(void *response)
+{
+  if( response != NULL )
+  {
+    volatile uint8_t code = ((coap_packet_t *)response)->code;
+    if( code == CHANGED_2_04)
+    {
+      /* everything is still fine */
       registered = 1;
+    }
+    else
+    {
+      /* update failed .... delete the registration */
+      registered = 0;
 
       if( p_statch_cb != NULL )
       {
@@ -346,7 +384,6 @@ lwm2m_engine_callback(c_event_t c_event, p_data_t p_data)
         int pos;
         int len, i, j;
 
-        /* prepare request, TID is set by COAP_BLOCKING_REQUEST() */
         coap_init_message(request, COAP_TYPE_CON, COAP_POST, 0);
         coap_set_header_uri_path(request, "/rd");
         coap_set_header_uri_query(request, endpoint);
@@ -380,8 +417,32 @@ lwm2m_engine_callback(c_event_t c_event, p_data_t p_data)
         coap_nonblocking_request(&server_ipaddr, server_port, request,
             client_registration_handler);
       }
-      /* for now only register once...   registered = 0; */
-      etimer_set(&et, 15 * bsp_getTRes(), lwm2m_engine_callback);
+      else if ( use_registration && registered &&
+          update_registration_server() )
+      {
+        coap_init_message(request, COAP_TYPE_CON, COAP_POST, 0);
+        coap_set_header_uri_path(request, updatepoint);
+
+        PRINTF("Registering with [");
+        PRINT6ADDR(&server_ipaddr);
+        PRINTF("]:%u lwm2m updatepoint '%s'\n", uip_ntohs(server_port),
+               endpoint );
+
+        coap_nonblocking_request(&server_ipaddr, server_port, request,
+            client_update_handler);
+      }
+
+      if( registered == 1 )
+      {
+
+        etimer_set(&et, (lwm2m_server_getLifetime() / 3) * bsp_getTRes(),
+            lwm2m_engine_callback);
+      }
+      else
+      {
+        etimer_set(&et, LWM2M_HANDLER_TIMEOUT * bsp_getTRes(),
+            lwm2m_engine_callback);
+      }
     }
   }
 }
@@ -461,7 +522,7 @@ lwm2m_engine_init(char* epname, f_lwm2m_engine_statch_cb p_cb, void* p_data )
 #endif /* LWM2M_ENGINE_CLIENT_ENDPOINT_NAME */
 
   /* start timer for local lwm2m engine callback */
-  etimer_set(&et, 5 * bsp_getTRes(), lwm2m_engine_callback);
+  etimer_set(&et, LWM2M_HANDLER_TIMEOUT * bsp_getTRes(), lwm2m_engine_callback);
 }
 /*---------------------------------------------------------------------------*/
 void
