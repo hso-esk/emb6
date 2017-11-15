@@ -151,6 +151,7 @@ int8_t lwm2m_server_init( void )
    * Register this device and its handlers - the handlers
    * automatically sends in the object to handle
    */
+  LWM2M_INIT_OBJECT((&server));
   lwm2m_engine_register_object(&server);
 
   ret = 0;

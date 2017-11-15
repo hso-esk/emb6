@@ -191,6 +191,7 @@ lwm2m_device_init(void)
    * automatically sends in the object to handle.
    */
   PRINTF("*** Init lwm2m-device\n");
+  LWM2M_INIT_OBJECT((&device));
   lwm2m_engine_register_object(&device);
 }
 /*---------------------------------------------------------------------------*/
