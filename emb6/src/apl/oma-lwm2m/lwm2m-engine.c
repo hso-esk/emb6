@@ -75,6 +75,7 @@
 #endif /* LWM2M_DEVICE_MODEL_NUMBER */
 #endif /* LWM2M_ENGINE_CLIENT_ENDPOINT_PREFIX */
 
+#define LWM2M_HANDLER_TIMEOUT       5
 #define REMOTE_PORT        UIP_HTONS(COAP_DEFAULT_PORT)
 #define BS_REMOTE_PORT     UIP_HTONS(5685)
 
@@ -461,7 +462,7 @@ lwm2m_engine_init(char* epname, f_lwm2m_engine_statch_cb p_cb, void* p_data )
 #endif /* LWM2M_ENGINE_CLIENT_ENDPOINT_NAME */
 
   /* start timer for local lwm2m engine callback */
-  etimer_set(&et, 5 * bsp_getTRes(), lwm2m_engine_callback);
+  etimer_set(&et, LWM2M_HANDLER_TIMEOUT * bsp_getTRes(), lwm2m_engine_callback);
 }
 /*---------------------------------------------------------------------------*/
 void
