@@ -199,6 +199,7 @@ typedef struct lwm2m_resource {
     lwm2m_value_callback_t callback;
     /* lwm2m_resource *resources[];  TO BE ADDED LATER*/
   } value;
+  struct lwm2m_resource* p_next;
 } lwm2m_resource_t;
 
 #define LWM2M_INSTANCE_FLAG_USED 1
@@ -207,7 +208,8 @@ typedef struct lwm2m_instance {
   uint16_t id;
   uint16_t count;
   uint16_t flag;
-  const lwm2m_resource_t *resources;
+  lwm2m_resource_t *p_resources;
+  struct lwm2m_instance* p_next;
 } lwm2m_instance_t;
 
 typedef struct lwm2m_object {
@@ -215,56 +217,56 @@ typedef struct lwm2m_object {
   uint16_t count;
   const char *path;
   resource_t *coap_resource;
-  lwm2m_instance_t *instances;
+  lwm2m_instance_t *p_instances;
 } lwm2m_object_t;
 
 #define LWM2M_RESOURCES(name, ...)                              \
-  static const lwm2m_resource_t name[] = { __VA_ARGS__ }
+  static lwm2m_resource_t name[] = { __VA_ARGS__ }
 
 #define LWM2M_RESOURCE_STRING(id, s)                                    \
-  { id, LWM2M_RESOURCE_TYPE_STR_VALUE, .value.string.len = sizeof(s) - 1, .value.string.value = (uint8_t *) s }
+  { id, LWM2M_RESOURCE_TYPE_STR_VALUE, .value.string.len = sizeof(s) - 1, .value.string.value = (uint8_t *) s, .p_next = NULL }
 
 #define LWM2M_RESOURCE_STRING_VAR(id, s, l, v)                           \
-  { id, LWM2M_RESOURCE_TYPE_STR_VARIABLE, .value.stringvar.size = (s), .value.stringvar.len = (l), .value.stringvar.var = (v) }
+  { id, LWM2M_RESOURCE_TYPE_STR_VARIABLE, .value.stringvar.size = (s), .value.stringvar.len = (l), .value.stringvar.var = (v), .p_next = NULL }
 
 #define LWM2M_RESOURCE_STRING_VAR_ARR(id, c, s, l, v)                   \
-  { id, LWM2M_RESOURCE_TYPE_STR_VARIABLE_ARRAY, .value.stringvararr.count = c, .value.stringvararr.size = s, .value.stringvararr.len = l, .value.stringvararr.var = (uint8_t *) v }
+  { id, LWM2M_RESOURCE_TYPE_STR_VARIABLE_ARRAY, .value.stringvararr.count = c, .value.stringvararr.size = s, .value.stringvararr.len = l, .value.stringvararr.var = (uint8_t *) v, .p_next = NULL }
 
 #define LWM2M_RESOURCE_INTEGER(id, v)                                   \
-  { id, LWM2M_RESOURCE_TYPE_INT_VALUE, .value.integer.value = (v) }
+  { id, LWM2M_RESOURCE_TYPE_INT_VALUE, .value.integer.value = (v), .p_next = NULL }
 
 #define LWM2M_RESOURCE_INTEGER_VAR(id, v)                               \
-  { id, LWM2M_RESOURCE_TYPE_INT_VARIABLE, .value.integervar.var = (v) }
+  { id, LWM2M_RESOURCE_TYPE_INT_VARIABLE, .value.integervar.var = (v), .p_next = NULL }
 
 #define LWM2M_RESOURCE_INTEGER_VAR_ARR(id, c, v)                        \
-  { id, LWM2M_RESOURCE_TYPE_INT_VARIABLE_ARRAY, .value.integervararr.count = (c), .value.integervararr.var = (v) }
+  { id, LWM2M_RESOURCE_TYPE_INT_VARIABLE_ARRAY, .value.integervararr.count = (c), .value.integervararr.var = (v), .p_next = NULL }
 
 #define LWM2M_RESOURCE_FLOATFIX(id, v)                                   \
-  { id, LWM2M_RESOURCE_TYPE_FLOATFIX_VALUE, .value.floatfix.value = (v) }
+  { id, LWM2M_RESOURCE_TYPE_FLOATFIX_VALUE, .value.floatfix.value = (v), .p_next = NULL }
 
 #define LWM2M_RESOURCE_FLOATFIX_VAR(id, v)                              \
-  { id, LWM2M_RESOURCE_TYPE_FLOATFIX_VARIABLE, .value.floatfixvar.var = (v) }
+  { id, LWM2M_RESOURCE_TYPE_FLOATFIX_VARIABLE, .value.floatfixvar.var = (v), .p_next = NULL }
 
 #define LWM2M_RESOURCE_FLOATFIX_VAR_ARR(id, c, v)                       \
-  { id, LWM2M_RESOURCE_TYPE_FLOATFIX_VARIABLE_ARRAY, .value.floatfixvararr.count = (c), .value.floatfixvararr.var = (v) }
+  { id, LWM2M_RESOURCE_TYPE_FLOATFIX_VARIABLE_ARRAY, .value.floatfixvararr.count = (c), .value.floatfixvararr.var = (v), .p_next = NULL }
 
 #define LWM2M_RESOURCE_BOOLEAN(id, v)                                   \
-  { id, LWM2M_RESOURCE_TYPE_BOOLEAN_VALUE, .value.boolean.value = (v) }
+  { id, LWM2M_RESOURCE_TYPE_BOOLEAN_VALUE, .value.boolean.value = (v), .p_next = NULL }
 
 #define LWM2M_RESOURCE_BOOLEAN_VAR(id, v)                                   \
-  { id, LWM2M_RESOURCE_TYPE_BOOLEAN_VARIABLE, .value.booleanvar.var = (v) }
+  { id, LWM2M_RESOURCE_TYPE_BOOLEAN_VARIABLE, .value.booleanvar.var = (v), .p_next = NULL }
 
 #define LWM2M_RESOURCE_BOOLEAN_VAR_ARR(id, c, v)                        \
-  { id, LWM2M_RESOURCE_TYPE_BOOLEAN_VARIABLE_ARRAY, .value.booleanvararr.count = (c), .value.booleanvararr.var = (v) }
+  { id, LWM2M_RESOURCE_TYPE_BOOLEAN_VARIABLE_ARRAY, .value.booleanvararr.count = (c), .value.booleanvararr.var = (v), .p_next = NULL }
 
 #define LWM2M_RESOURCE_CALLBACK(id, stype, ...)                                \
   { id, LWM2M_RESOURCE_TYPE_CALLBACK, stype, .value.callback = __VA_ARGS__ }
 
 #define LWM2M_INSTANCE(id, resources)                           \
-  { id, sizeof(resources)/sizeof(lwm2m_resource_t), LWM2M_INSTANCE_FLAG_USED, resources }
+  { id, sizeof(resources)/sizeof(lwm2m_resource_t), LWM2M_INSTANCE_FLAG_USED, resources, .p_next = NULL }
 
 #define LWM2M_INSTANCE_UNUSED(id, resources)                      \
-  { id, sizeof(resources)/sizeof(lwm2m_resource_t), 0, resources }
+  { id, sizeof(resources)/sizeof(lwm2m_resource_t), 0, resources, .p_next = NULL }
 
 #define LWM2M_INSTANCES(name, ...)                              \
   static lwm2m_instance_t name[] = { __VA_ARGS__ }

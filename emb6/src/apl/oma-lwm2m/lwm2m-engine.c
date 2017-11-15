@@ -361,15 +361,17 @@ lwm2m_engine_callback(c_event_t c_event, p_data_t p_data)
         pos = 0;
         for(i = 0; i < MAX_OBJECTS; i++) {
           if(objects[i] != NULL) {
-            for(j = 0; j < objects[i]->count; j++) {
-              if(objects[i]->instances[j].flag & LWM2M_INSTANCE_FLAG_USED) {
+            lwm2m_instance_t *p_inst = objects[i]->p_instances;
+            for(j = 0; j < (objects[i]->count) && (p_inst != NULL); j++) {
+              if(p_inst->flag & LWM2M_INSTANCE_FLAG_USED) {
                 len = snprintf(&rd_data[pos], sizeof(rd_data) - pos,
                                "%s<%d/%d>", pos > 0 ? "," : "",
-                               objects[i]->id, objects[i]->instances[j].id);
+                               objects[i]->id, p_inst->id);
                 if(len > 0 && len < sizeof(rd_data) - pos) {
                   pos += len;
                 }
               }
+              p_inst = p_inst->p_next;
             }
           }
         }
@@ -571,12 +573,14 @@ get_first_instance_of_object(uint16_t id, lwm2m_context_t *context)
   memset(context, 0, sizeof(lwm2m_context_t));
   context->object_id = id;
 
-  for(i = 0; i < object->count; i++) {
-    if(object->instances[i].flag & LWM2M_INSTANCE_FLAG_USED) {
-      context->object_instance_id = object->instances[i].id;
+  lwm2m_instance_t *p_inst = object->p_instances;
+  for(i = 0; i < (object->count) && (p_inst != NULL); i++) {
+    if(p_inst->flag & LWM2M_INSTANCE_FLAG_USED) {
+      context->object_instance_id = p_inst->id;
       context->object_instance_index = i;
-      return &object->instances[i];
+      return p_inst;
     }
+    p_inst = p_inst->p_next;
   }
   return NULL;
 }
@@ -587,14 +591,16 @@ get_instance(const lwm2m_object_t *object, lwm2m_context_t *context, int depth)
   int i;
   if(depth > 1) {
     PRINTF("lwm2m: searching for instance %u\n", context->object_instance_id);
-    for(i = 0; i < object->count; i++) {
+    lwm2m_instance_t *p_inst = object->p_instances;
+    for(i = 0; i < (object->count) && (p_inst != NULL); i++) {
       PRINTF("  Instance %d -> %u (used: %d)\n", i, object->instances[i].id,
              (object->instances[i].flag & LWM2M_INSTANCE_FLAG_USED) != 0);
-      if(object->instances[i].id == context->object_instance_id &&
-         object->instances[i].flag & LWM2M_INSTANCE_FLAG_USED) {
-        context->object_instance_index = i;
-        return &object->instances[i];
+      if((p_inst->id == context->object_instance_id) &&
+         (p_inst->flag & LWM2M_INSTANCE_FLAG_USED)) {
+          context->object_instance_index = i;
+          return p_inst;
       }
+      p_inst = p_inst->p_next;
     }
   }
   return NULL;
@@ -606,12 +612,14 @@ get_resource(const lwm2m_instance_t *instance, lwm2m_context_t *context)
   int i;
   if(instance != NULL) {
     PRINTF("lwm2m: searching for resource %u\n", context->resource_id);
-    for(i = 0; i < instance->count; i++) {
+    const lwm2m_resource_t *p_res = instance->p_resources;
+    for(i = 0; i < (instance->count) && (p_res != NULL); i++) {
       PRINTF("  Resource %d -> %u\n", i, instance->resources[i].id);
-      if(instance->resources[i].id == context->resource_id) {
+      if(p_res->id == context->resource_id) {
         context->resource_index = i;
-        return &instance->resources[i];
+        return p_res;
       }
+      p_res = p_res->p_next;
     }
   }
   return NULL;
@@ -634,11 +642,12 @@ write_object_instances_link(const lwm2m_object_t *object,
     return -1;
   }
 
-  for(i = 0; i < object->count; i++) {
-    if((object->instances[i].flag & LWM2M_INSTANCE_FLAG_USED) == 0) {
+  lwm2m_instance_t *p_inst = object->p_instances;
+  for(i = 0; i < (object->count) && (p_inst != NULL); i++) {
+    if((p_inst->flag & LWM2M_INSTANCE_FLAG_USED) == 0) {
       continue;
     }
-    instance = &object->instances[i];
+    instance = p_inst;
     PRINTF(",</%d/%d>", object->id, instance->id);
 
     len = snprintf(&buffer[rdlen], size - rdlen,
@@ -647,6 +656,7 @@ write_object_instances_link(const lwm2m_object_t *object,
     if(len < 0 || rdlen >= size) {
       return -1;
     }
+    p_inst = p_inst->p_next;
   }
   return rdlen;
 }
@@ -666,8 +676,9 @@ write_rd_link_data(const lwm2m_object_t *object,
     return -1;
   }
 
-  for(i = 0; i < instance->count; i++) {
-    resource = &instance->resources[i];
+  const lwm2m_resource_t *p_res = instance->p_resources;
+  for(i = 0; i < (instance->count) && (p_res != NULL); i++) {
+    resource = p_res;
     PRINTF(",<%d/%d/%d>", object->id, instance->id, resource->id);
 
     len = snprintf(&buffer[rdlen], size - rdlen,
@@ -676,6 +687,8 @@ write_rd_link_data(const lwm2m_object_t *object,
     if(len < 0 || rdlen >= size) {
       return -1;
     }
+
+    p_res = p_res->p_next;
   }
   return rdlen;
 }
@@ -696,8 +709,9 @@ write_rd_json_data(const lwm2m_context_t *context,
     return -1;
   }
 
-  for(i = 0, len = 0; i < instance->count; i++) {
-    resource = &instance->resources[i];
+  const lwm2m_resource_t *p_res = instance->p_resources;
+  for(i = 0; i < (instance->count) && (p_res != NULL); i++) {
+    resource = p_res;
     len = 0;
     if(lwm2m_object_is_resource_string(resource)) {
       const uint8_t *value;
@@ -819,6 +833,7 @@ write_rd_json_data(const lwm2m_context_t *context,
     if(len > 0) {
       s = ",";
     }
+    p_res = p_res->p_next;
   }
   PRINTF("]}\n");
   len = snprintf(&buffer[rdlen], size - rdlen, "]}");
@@ -973,17 +988,19 @@ lwm2m_engine_handler(const lwm2m_object_t *object,
       PRINTF(">>> CREATE ? %d/%d\n", context.object_id,
              context.object_instance_id);
 
-      for(i = 0; i < object->count; i++) {
-        if((object->instances[i].flag & LWM2M_INSTANCE_FLAG_USED) == 0) {
+      lwm2m_instance_t *p_inst = object->p_instances;
+      for(i = 0; i < (object->count) && (p_inst != NULL); i++) {
+        if((p_inst->flag & LWM2M_INSTANCE_FLAG_USED) == 0) {
           /* allocate this instance */
-          object->instances[i].flag |= LWM2M_INSTANCE_FLAG_USED;
-          object->instances[i].id = context.object_instance_id;
+          p_inst->flag |= LWM2M_INSTANCE_FLAG_USED;
+          p_inst->id = context.object_instance_id;
           context.object_instance_index = i;
           PRINTF("Created instance: %d\n", context.object_instance_id);
           REST.set_response_status(response, CREATED_2_01);
-          instance = &object->instances[i];
+          instance = p_inst;
           break;
         }
+        p_inst = p_inst->p_next;
       }
 
       if(instance == NULL) {
