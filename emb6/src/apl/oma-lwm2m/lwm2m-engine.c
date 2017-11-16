@@ -933,6 +933,7 @@ lwm2m_engine_select_writer(lwm2m_context_t *context, unsigned int accept)
     case LWM2M_TEXT_PLAIN:
     case TEXT_PLAIN:
       context->writer = &lwm2m_plain_text_writer;
+      accept = TEXT_PLAIN;
       break;
     case LWM2M_JSON:
     case LWM2M_OLD_JSON:
@@ -943,7 +944,7 @@ lwm2m_engine_select_writer(lwm2m_context_t *context, unsigned int accept)
       PRINTF("Unknown Accept type %u, using LWM2M plain text\n", accept);
       context->writer = &lwm2m_plain_text_writer;
       /* Set the response type to plain text */
-      accept = LWM2M_TEXT_PLAIN;
+      accept = TEXT_PLAIN;
       break;
   }
   return accept;
