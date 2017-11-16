@@ -594,6 +594,14 @@ void _lwm2m_engine_statch_cb( uint8_t registered, void* p_data )
     /* Call the status get handler */
     ret = _hndl_statusGet( NULL, 0, p_txBuf, txBufLen );
   }
+  else if( (_status == e_lwm2m_api_status_registered) &&
+      lwm2m_engine_is_registered() == 0 )
+  {
+    /* set status as registered */
+    _status = e_lwm2m_api_status_started;
+    /* Call the status get handler */
+    ret = _hndl_statusGet( NULL, 0, p_txBuf, txBufLen );
+  }
 
   if( ret > 0 )
   {
