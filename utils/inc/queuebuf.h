@@ -54,6 +54,7 @@
 #ifndef QUEUEBUF_H_
 #define QUEUEBUF_H_
 
+#include "emb6.h"
 #include "packetbuf.h"
 
 
