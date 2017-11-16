@@ -494,6 +494,7 @@
 #define RPL_NS_CONF_LINK_NUM 20
 #endif /* RPL_NS_CONF_LINK_NUM */
 
+
 /*=============================================================================
                                   uIP SECTION
 ===============================================================================*/
@@ -970,6 +971,18 @@ void uip_log(char *msg);
 #else /* UIP_CONF_BYTE_ORDER */
 #define UIP_BYTE_ORDER                      (UIP_LITTLE_ENDIAN)
 #endif /* UIP_CONF_BYTE_ORDER */
+
+
+
+ /*=============================================================================
+                                   UTILS SECTION
+ ===============================================================================*/
+
+ /* QUEUEBUF_NUM is the total number of queuebuf */
+ #ifndef QUEUEBUF_CONF_NUM
+ #define QUEUEBUF_CONF_NUM                  4
+ #endif /* QUEUEBUF_CONF_NUM */
+
 
  /*=============================================================================
                                  DEBUG ENABLER SECTION
