@@ -136,16 +136,16 @@
 
 /** Maximum number of LWM2M instances */
 #ifndef LWM2MAPI_INST_MAX
-#define LWM2MAPI_INST_MAX               10
+#define LWM2MAPI_INST_MAX               20
 #endif /* #ifndef LWM2MAPI_INST_MAX */
 
 /** Maximum number of LWM2M resources */
 #ifndef LWM2MAPI_RES_MAX
-#define LWM2MAPI_RES_MAX                50
+#define LWM2MAPI_RES_MAX                120
 #endif /* #ifndef LWM2MAPI_RES_MAX */
 
 /** Maximum amount of LWM2M data */
-#define LWM2MAPI_DATA_MAX               (LWM2MAPI_RES_MAX * sizeof(float))
+#define LWM2MAPI_DATA_MAX               (LWM2MAPI_RES_MAX * sizeof(float) * 2)
 #endif /* #if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE */
 
 /** default server ip */
