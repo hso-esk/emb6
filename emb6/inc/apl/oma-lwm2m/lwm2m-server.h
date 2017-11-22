@@ -94,6 +94,17 @@ int32_t lwm2m_server_getLifetime( void );
 
 
 /**
+ * \brief   Set the LWM2M client lifetime.
+ *
+ *          LWM2M clients have a specific lifetime. After this lifetime
+ *          has expired they must update the registration at the server
+ *          otherwise they get deleted.
+ *
+ */
+void lwm2m_server_setLifetime( int32_t lt );
+
+
+/**
  * \brief   Get the LWM2M binding.
  *
  *          LWM2M supports different bindings This function returns
