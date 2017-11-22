@@ -913,6 +913,93 @@ write_rd_json_data(const lwm2m_context_t *context,
 
   return rdlen;
 }
+
+/*---------------------------------------------------------------------------*/
+static int
+write_rd_tvl_data(const lwm2m_context_t *context,
+                   const lwm2m_object_t *object,
+                   const lwm2m_instance_t *instance,
+                   char *buffer, size_t size)
+{
+  const lwm2m_resource_t *resource;
+  int len, rdlen, i;
+  lwm2m_context_t ctx;
+  ctx.writer = &oma_tlv_writer;
+
+  rdlen = 0;
+  const lwm2m_resource_t *p_res = instance->p_resources;
+  for(i = 0; i < (instance->count) && (p_res != NULL); i++) {
+    resource = p_res;
+    len = 0;
+    if(lwm2m_object_is_resource_string(resource)) {
+
+      const uint8_t *value;
+      uint16_t slen;
+      value = lwm2m_object_get_resource_string(resource, context);
+      slen = lwm2m_object_get_resource_strlen(resource, context);
+      if(value != NULL) {
+        ctx.resource_id = resource->id;
+        len = ctx.writer->write_string( &ctx, (uint8_t*)&buffer[rdlen], size - rdlen,
+            (const char*)value, slen);
+      }
+
+
+    } else if(lwm2m_object_is_resource_int(resource)) {
+
+      int32_t value;
+      if(lwm2m_object_get_resource_int(resource, context, &value)) {
+        ctx.resource_id = resource->id;
+        len = ctx.writer->write_int( &ctx, (uint8_t*)&buffer[rdlen], size - rdlen,
+            value);
+      }
+
+    } else if(lwm2m_object_is_resource_floatfix(resource)) {
+
+      int32_t value;
+      if(lwm2m_object_get_resource_floatfix(resource, context, &value)) {
+        ctx.resource_id = resource->id;
+        len = ctx.writer->write_float32fix( &ctx, (uint8_t*)&buffer[rdlen], size - rdlen,
+            value, LWM2M_FLOAT32_BITS );
+      }
+
+
+    } else if(lwm2m_object_is_resource_boolean(resource)) {
+
+      int value;
+      if(lwm2m_object_get_resource_boolean(resource, context, &value)) {
+        ctx.resource_id = resource->id;
+        len = ctx.writer->write_boolean( &ctx, (uint8_t*)&buffer[rdlen], size - rdlen,
+            value );
+      }
+
+
+    } else if(lwm2m_object_is_resource_callback(resource)) {
+
+      ctx.resource_id = resource->id;
+      if( resource->value.callback.read != NULL ) {
+        len = resource->value.callback.read (&ctx, (uint8_t*)&buffer[rdlen], size - rdlen );
+      }
+    }
+
+    if(len < 0) {
+      return -1;
+    }
+
+    rdlen += len;
+    if(len < 0 || rdlen >= size) {
+      return -1;
+    }
+
+    p_res = p_res->p_next;
+  }
+
+  if(len < 0 || rdlen >= size) {
+    return -1;
+  }
+
+  return rdlen;
+}
+
 /*---------------------------------------------------------------------------*/
 /**
  * @brief  Set the writer pointer to the proper writer based on the Accept: header
@@ -1242,21 +1329,28 @@ lwm2m_engine_handler(const lwm2m_object_t *object,
       if(accept == APPLICATION_LINK_FORMAT) {
         rdlen = write_rd_link_data(object, instance,
                                    (char *)buffer, preferred_size);
-      } else {
+        accept = APPLICATION_LINK_FORMAT;
+
+      } else if(accept == LWM2M_JSON) {
         rdlen = write_rd_json_data(&context, object, instance,
                                    (char *)buffer, preferred_size);
+        accept = LWM2M_JSON;
+      }
+      else if( accept == LWM2M_TLV )
+      {
+        rdlen = write_rd_tvl_data(&context, object, instance,
+            (char *)buffer, preferred_size);
+        accept = LWM2M_TLV;
       }
       if(rdlen < 0) {
         PRINTF("Failed to generate instance response\n");
         REST.set_response_status(response, SERVICE_UNAVAILABLE_5_03);
         return;
       }
+
       REST.set_response_payload(response, buffer, rdlen);
-      if(accept == APPLICATION_LINK_FORMAT) {
-        REST.set_header_content_type(response, REST.type.APPLICATION_LINK_FORMAT);
-      } else {
-        REST.set_header_content_type(response, LWM2M_JSON);
-      }
+      REST.set_header_content_type(response, accept);
+
     }
   } else if(depth == 1) {
     /* produce a list of instances */
