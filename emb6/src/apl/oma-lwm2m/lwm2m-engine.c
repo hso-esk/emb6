@@ -927,17 +927,13 @@ lwm2m_engine_select_writer(lwm2m_context_t *context, unsigned int accept)
 {
   switch(accept) {
     case LWM2M_TLV:
-    case LWM2M_OLD_TLV:
       context->writer = &oma_tlv_writer;
       break;
-    case LWM2M_TEXT_PLAIN:
     case TEXT_PLAIN:
       context->writer = &lwm2m_plain_text_writer;
       accept = TEXT_PLAIN;
       break;
     case LWM2M_JSON:
-    case LWM2M_OLD_JSON:
-    case APPLICATION_JSON:
       context->writer = &lwm2m_json_writer;
       break;
     default:
@@ -961,10 +957,8 @@ lwm2m_engine_select_reader(lwm2m_context_t *context, unsigned int content_format
 {
   switch(content_format) {
     case LWM2M_TLV:
-    case LWM2M_OLD_TLV:
       context->reader = &oma_tlv_reader;
       break;
-    case LWM2M_TEXT_PLAIN:
     case TEXT_PLAIN:
       context->reader = &lwm2m_plain_text_reader;
       break;
@@ -1000,10 +994,10 @@ lwm2m_engine_handler(const lwm2m_object_t *object,
   len = REST.get_url(request, &url);
   if(!REST.get_header_content_type(request, &format)) {
     PRINTF("No format given. Assume text plain...\n");
-    format = LWM2M_TEXT_PLAIN;
+    format = TEXT_PLAIN;
   } else if(format == TEXT_PLAIN) {
     /* CoAP content format text plain - assume LWM2M text plain */
-    format = LWM2M_TEXT_PLAIN;
+    format = TEXT_PLAIN;
   }
   if(!REST.get_header_accept(request, &accept)) {
     PRINTF("No Accept header, using same as Content-format...\n");
@@ -1153,7 +1147,7 @@ lwm2m_engine_handler(const lwm2m_object_t *object,
       if(lwm2m_object_is_resource_callback(resource)) {
         if(resource->value.callback.write != NULL) {
           /* pick a reader ??? */
-          if(format == LWM2M_TEXT_PLAIN) {
+          if(format == TEXT_PLAIN) {
             /* a string */
             const uint8_t *data;
             int plen = REST.get_request_payload(request, &data);
