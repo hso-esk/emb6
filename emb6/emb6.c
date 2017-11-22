@@ -155,7 +155,11 @@ s_mac_phy_conf_t mac_phy_config = {
     .modulation = MODULATION_BPSK20,
 
     /* CRC size (16Bit or 32it) */
+#if NETSTK_CFG_IEEE_802154G_EN
+    .fcs_len = 4,
+#else
     .fcs_len = 2,
+#endif /* #if NETSTK_CFG_IEEE_802154G_EN */
 
     /* IEEE802.15.4g operation mode */
     .op_mode = NETSTK_RF_OP_MODE_1,
