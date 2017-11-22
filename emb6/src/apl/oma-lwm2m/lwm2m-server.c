@@ -170,6 +170,15 @@ int32_t lwm2m_server_getLifetime( void )
 
 /*---------------------------------------------------------------------------*/
 /*
+* lwm2m_server_setLifetime()
+*/
+void lwm2m_server_setLifetime( int32_t lt )
+{
+    lifetime = lt;
+} /* lwm2m_server_getLifetime() */
+
+/*---------------------------------------------------------------------------*/
+/*
 * lwm2m_server_getBinding()
 */
 char* lwm2m_server_getBinding( void )

@@ -62,7 +62,7 @@ LIST(observers_list);
 /*---------------------------------------------------------------------------*/
 static coap_observer_t *
 add_observer(uip_ipaddr_t *addr, uint16_t port, const uint8_t *token,
-             size_t token_len, const char *uri, int uri_len)
+             size_t token_len, const char *uri, int uri_len, unsigned int accept)
 {
   /* Remove existing observe relationship, if any. */
   coap_remove_observer_by_uri(addr, port, uri);
@@ -81,6 +81,7 @@ add_observer(uip_ipaddr_t *addr, uint16_t port, const uint8_t *token,
     o->token_len = token_len;
     memcpy(o->token, token, token_len);
     o->last_mid = 0;
+    o->accept = accept;
 
     PRINTF("Adding observer (%u/%u) for /%s [0x%02X%02X]\n",
            list_length(observers_list) + 1, COAP_MAX_OBSERVERS,
@@ -246,6 +247,7 @@ coap_notify_observers_sub(resource_t *resource, const char *subpath)
         /* prepare response */
         notification->mid = transaction->mid;
 
+        coap_set_header_content_format(request, obs->accept);
         resource->get_handler(request, notification,
                               transaction->packet + COAP_MAX_HEADER_SIZE,
                               REST_MAX_CHUNK_SIZE, NULL, resource->p_user );
@@ -276,7 +278,8 @@ coap_observe_handler(resource_t *resource, void *request, void *response)
       if(coap_req->observe == 0) {
          obs = add_observer(&UIP_IP_BUF->srcipaddr, UIP_UDP_BUF->srcport,
                             coap_req->token, coap_req->token_len,
-                            coap_req->uri_path, coap_req->uri_path_len);
+                            coap_req->uri_path, coap_req->uri_path_len,
+                            coap_req->accept );
        if(obs) {
           coap_set_header_observe(coap_res, (obs->obs_counter)++);
           /*
