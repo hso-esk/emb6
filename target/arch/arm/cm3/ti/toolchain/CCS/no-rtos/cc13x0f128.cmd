@@ -109,6 +109,22 @@ SECTIONS
     .nonretenvar    :   > SRAM
     .gpram          :   > GPRAM
 
+	.bss:transactions_memb_memb_mem			:	> GPRAM
+
+    /*.bss:observers_memb_memb_mem			:	> GPRAM */
+
+    .bss:lwm2mresource_storage_memb_mem		:	> GPRAM
+    .bss:lwm2mresource_storage_memb_count	:	> GPRAM
+
+    .bss:lwm2mdata_storage_memb_mem			:	> GPRAM
+    .bss:lwm2mdata_storage_memb_count		:	> GPRAM
+
+    /*.bss:lwm2mobject_storage_memb_mem		:	> GPRAM
+    .bss:lwm2mobject_storage_memb_count		:	> GPRAM
+
+    .bss:lwm2minstance_storage_memb_mem		:	> GPRAM
+    .bss:lwm2minstance_storage_memb_count	:	> GPRAM*/
+
 #ifdef __TI_COMPILER_VERSION__
 #if __TI_COMPILER_VERSION__ >= 15009000
 /*  Hide section from older compilers not supporting the "ramfunc" attribute.

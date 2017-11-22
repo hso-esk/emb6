@@ -1939,6 +1939,7 @@
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/target/mcu/cc13xx/target_conf.h&quot;"/>
 								</option>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DEFINE.73866337" name="Pre-define NAME (--define, -D)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DEFINE" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="SET_CCFG_SIZE_AND_DIS_FLAGS_DIS_GPRAM=0"/>
 									<listOptionValue builtIn="false" value="DEMO_USE_SERIALAPI=1"/>
 									<listOptionValue builtIn="false" value="DEMO_USE_UDPALIVE=1"/>
 									<listOptionValue builtIn="false" value="USE_TI_RTOS=0"/>
@@ -2087,6 +2088,7 @@
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/target/mcu/cc13xx/target_conf.h&quot;"/>
 								</option>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DEFINE.600724892" name="Pre-define NAME (--define, -D)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DEFINE" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="SET_CCFG_SIZE_AND_DIS_FLAGS_DIS_GPRAM=0"/>
 									<listOptionValue builtIn="false" value="DEMO_USE_SERIALAPI=1"/>
 									<listOptionValue builtIn="false" value="DEMO_USE_UDPALIVE=1"/>
 									<listOptionValue builtIn="false" value="USE_TI_RTOS=0"/>
@@ -2384,6 +2386,7 @@
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/target/mcu/cc13xx/target_conf.h&quot;"/>
 								</option>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DEFINE.1152926058" name="Pre-define NAME (--define, -D)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DEFINE" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="SET_CCFG_SIZE_AND_DIS_FLAGS_DIS_GPRAM=0"/>
 									<listOptionValue builtIn="false" value="DEMO_USE_SERIALAPI=1"/>
 									<listOptionValue builtIn="false" value="DEMO_USE_UDPALIVE=1"/>
 									<listOptionValue builtIn="false" value="USE_TI_RTOS=0"/>
@@ -2533,6 +2536,7 @@
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/target/mcu/cc13xx/target_conf.h&quot;"/>
 								</option>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DEFINE.1597125102" name="Pre-define NAME (--define, -D)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DEFINE" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="SET_CCFG_SIZE_AND_DIS_FLAGS_DIS_GPRAM=0"/>
 									<listOptionValue builtIn="false" value="DEMO_USE_SERIALAPI=1"/>
 									<listOptionValue builtIn="false" value="DEMO_USE_UDPALIVE=1"/>
 									<listOptionValue builtIn="false" value="USE_TI_RTOS=0"/>
@@ -2677,6 +2681,7 @@
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/target/mcu/cc13xx/target_conf.h&quot;"/>
 								</option>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DEFINE.1048572161" name="Pre-define NAME (--define, -D)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DEFINE" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="SET_CCFG_SIZE_AND_DIS_FLAGS_DIS_GPRAM=0"/>
 									<listOptionValue builtIn="false" value="DEMO_USE_SERIALAPI=1"/>
 									<listOptionValue builtIn="false" value="DEMO_USE_UDPALIVE=1"/>
 									<listOptionValue builtIn="false" value="USE_TI_RTOS=0"/>
