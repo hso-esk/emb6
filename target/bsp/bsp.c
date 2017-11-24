@@ -783,3 +783,26 @@ int8_t bsp_adjustTick( clock_time_t ticks )
   return hal_adjustTick(ticks);
 } /* bsp_adjustTick */
 #endif /* #if (HAL_SUPPORT_MCU_SLEEP == TRUE) */
+
+
+#if defined(HAL_SUPPORT_NVM)
+/*---------------------------------------------------------------------------*/
+/*
+* bsp_nvmWrite()
+*/
+int8_t bsp_nvmWrite( uint8_t *pc_data, uint16_t i_len, uint32_t l_addr )
+{
+  EMB6_ASSERT_RET( pc_data != NULL, -1 );
+  return hal_nvmWrite( pc_data, i_len, l_addr );
+}
+
+/*---------------------------------------------------------------------------*/
+/*
+* bsp_nvmRead()
+*/
+int8_t bsp_nvmRead( uint8_t *pc_data, uint16_t i_len, uint32_t l_addr )
+{
+  EMB6_ASSERT_RET( pc_data != NULL, -1 );
+  return hal_nvmRead( pc_data, i_len, l_addr );
+}
+#endif /* #if defined(HAL_SUPPORT_NVM) */

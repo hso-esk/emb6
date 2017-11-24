@@ -682,6 +682,26 @@ int8_t hal_debugInit( void )
   return 0;
 } /* hal_debugInit() */
 
+/*---------------------------------------------------------------------------*/
+/*
+* hal_nvmWrite()
+*/
+int8_t hal_nvmWrite( uint8_t *pc_data, uint16_t i_len, uint32_t l_addr )
+{
+  EMB6_ASSERT_RET( pc_data != NULL, -1 );
+  return sf_mcu_datamemory_write( pc_data, i_len, l_addr );
+} /* hal_nvmWrite() */
+
+/*---------------------------------------------------------------------------*/
+/*
+* hal_nvmRead()
+*/
+int8_t hal_nvmRead( uint8_t *pc_data, uint16_t i_len, uint32_t l_addr )
+{
+  EMB6_ASSERT_RET( pc_data != NULL, -1 );
+  return sf_mcu_datamemory_read( pc_data, i_len, l_addr );
+}
+
 /*! @} 6lowpan_mcu */
 
 #if (HAL_SUPPORT_RTIMER == TRUE)

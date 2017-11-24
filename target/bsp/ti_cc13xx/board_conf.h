@@ -86,6 +86,20 @@
 #define HAL_SUPPORT_LED3                    TRUE
 #endif /* #ifndef HAL_SUPPORT_LED3 */
 
+/* Enable the flash memory. */
+#ifndef HAL_SUPPORT_NVM_FLASH
+#define HAL_SUPPORT_NVM_FLASH               TRUE
+#endif /* #ifndef HAL_SUPPORT_NVM_FLASH */
+
+/* Enable the flash memory. */
+#ifndef HAL_SUPPORT_NVM_EEPROM
+#define HAL_SUPPORT_NVM_EEPROM              FALSE
+#endif /* #ifndef HAL_SUPPORT_NVM_EEPROM */
+
+/* Defines the data type of the NVM offset. */
+#define MNVM_OFFSET_TYPE                    uint32_t
+
+
 /* --------------------------------------------------------------------- */
 /* TSCH related defines */
 
