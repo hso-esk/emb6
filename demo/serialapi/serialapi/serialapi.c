@@ -89,14 +89,23 @@
       dstlen -= size;                                       \
     } while (0);
 
-#define SERIAL_API_GET_FIELD( dst, src, srclen, type)        \
+
+#define SERIAL_API_SET_FIELD_STR( dst, dstlen, str)         \
+    do{                                                     \
+      int len;                                              \
+      len = snprintf((char*)dst, dstlen, "%s", str );       \
+      dst += len;                                           \
+      dstlen -= len;                                        \
+    } while (0);
+
+#define SERIAL_API_GET_FIELD( dst, src, srclen, type)       \
     do{                                                     \
       dst = *((type*)(src));                                \
       src += sizeof(type);                                  \
       srclen -= sizeof(type);                               \
     } while (0);
 
-#define SERIAL_API_GET_FIELD_MEM( dst, src, srclen, size)    \
+#define SERIAL_API_GET_FIELD_MEM( dst, src, srclen, size)   \
     do{                                                     \
       memcpy(dst, src, size);                               \
       src += size;                                          \
@@ -121,6 +130,12 @@ typedef enum
   /** A host can use this device to check the availability of a device
    * and vice versa. */
   e_serial_api_type_ping = 0x10,
+
+  /** A host can use this device to check the version of the device. */
+  e_serial_api_type_vers_get = 0x11,
+
+  /** Response to a version request. */
+  e_serial_api_type_vers_rsp = 0x12,
 
   /** Set a configuration parameter. */
   e_serial_api_type_cfg_set = 0x20,
@@ -335,6 +350,11 @@ static int32_t _rsp_status( uint8_t* p_rpl, uint16_t rplLen,
 static int32_t _hndl_ping( uint8_t* p_cmd, uint16_t cmdLen,
     uint8_t* p_rpl, uint16_t rplLen );
 
+/** Callback function in case a VERSION_GET command was received. For further
+ * details have a look at the function definition.*/
+static int32_t _hndl_vers( uint8_t* p_cmd, uint16_t cmdLen,
+    uint8_t* p_rpl, uint16_t rplLen );
+
 /** Callback function in case a CFG_GET command was received. For further
  * details have a look at the function definition.*/
 static int32_t _hndl_cfgSet( uint8_t* p_cmd, uint16_t cmdLen,
@@ -477,6 +497,12 @@ static int8_t _rx_data( uint8_t* p_data, uint16_t len )
      * RET frame to indicate that the device is alive. */
     case e_serial_api_type_ping:
       f_hndl = _hndl_ping;
+      break;
+
+    /* The version info was requested from the host. Reply with the
+     * according response */
+    case e_serial_api_type_vers_get:
+      f_hndl = _hndl_vers;
       break;
 
     /* A configuration value shall be set. Get the type and value
@@ -633,6 +659,46 @@ static int32_t _hndl_ping( uint8_t* p_cmd, uint16_t cmdLen,
   EMB6_ASSERT_RET( p_rpl != NULL, -1 );
   ret = _rsp_status( p_rpl, rplLen, e_serial_api_type_ret,
       e_serial_api_ret_ok );
+
+  return ret;
+}
+
+
+/**
+ * \brief   Callback function for VERSION_GET commands.
+ *
+ *          This function is called whenever a VERSION_GET command was received. It
+ *          replies with a VERSION_RSP response to indicate that the device
+ *          is available.
+ *
+ * \param   p_cmd   Further data of the command.
+ * \param   cmdLen  Length of the command data.
+ * \param   p_rpl   Pointer to store the response to.
+ * \param   rplLen  Length of the response buffer.
+ *
+ * \return  The length of the generated response or 0 if no response
+ *          has been generated.
+ */
+static int32_t _hndl_vers( uint8_t* p_cmd, uint16_t cmdLen,
+    uint8_t* p_rpl, uint16_t rplLen )
+{
+  int32_t ret = 0;
+  uint8_t* p_data = p_cmd;
+  uint8_t* p_txBuf = p_rpl;
+
+  EMB6_ASSERT_RET( p_cmd != NULL, -1 );
+  EMB6_ASSERT_RET( p_rpl != NULL, -1 );
+
+  EMB6_ASSERT_RET( rplLen >= sizeof(serialapi_frameID_t), -1 );
+  SERIAL_API_SET_FIELD( p_txBuf, rplLen, serialapi_frameID_t,
+      e_serial_api_type_vers_rsp );
+
+  /* set version */
+  EMB6_ASSERT_RET( rplLen >= strlen(LWM2M_DEVICE_FIRMWARE_VERSION), -1 );
+  SERIAL_API_SET_FIELD_STR( p_txBuf, rplLen, LWM2M_DEVICE_FIRMWARE_VERSION);
+
+  if( ret == 0 )
+    ret = p_txBuf - p_rpl;
 
   return ret;
 }
