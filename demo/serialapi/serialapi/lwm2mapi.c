@@ -68,6 +68,7 @@
 #include "memb.h"
 #include "lwm2mapi.h"
 #include "lwm2m-device.h"
+#include "lwm2m-server.h"
 #include "lwm2m-engine.h"
 #include "lwm2m-object.h"
 
@@ -352,7 +353,11 @@ typedef enum
 
   /** Name of the LWM2M client. The server instance will
     * use this name for identification. */
-  e_lwm2m_api_cfgid_cliname
+  e_lwm2m_api_cfgid_cliname,
+
+  /** Update interval of the LWM2M client. This is used to detect
+   * a disconnected device. */
+  e_lwm2m_api_cfgid_updt_itv
 
 } e_serial_api_cfgid_t;
 
@@ -377,6 +382,9 @@ typedef uint16_t lwm2mapi_cfg_port_t;
 
 /** Client Name configuration */
 typedef char lwm2mapi_cfg_cliname_t[LWM2M_ENDPOINT_NAME_MAX];
+
+/** Update interval configuration */
+typedef uint32_t lwm2mapi_cfg_updt_itv_t;
 
 /** Format of a general RET response. */
 typedef uint8_t lwm2mapi_ret_t;
@@ -1094,6 +1102,7 @@ static int32_t _hndl_cfgSet( uint8_t* p_cmd, uint16_t cmdLen,
 {
   int32_t ret = 0;
   uint8_t* p_data = p_cmd;
+  int32_t _updtItv = 0;
   int i;
 
   EMB6_ASSERT_RET( p_cmd != NULL, 0 );
@@ -1144,6 +1153,16 @@ static int32_t _hndl_cfgSet( uint8_t* p_cmd, uint16_t cmdLen,
           cmdLen );
       break;
 
+    case e_lwm2m_api_cfgid_updt_itv:
+
+      /* get the configuration value */
+      EMB6_ASSERT_RET( (cmdLen >= sizeof(lwm2mapi_cfg_updt_itv_t)), -3 );
+      LWM2M_API_GET_FIELD( _updtItv, p_data,
+          cmdLen, lwm2mapi_cfg_updt_itv_t );
+
+      _updtItv = uip_htonl( _updtItv );
+      lwm2m_server_setLifetime( _updtItv );
+      break;
 
     default:
       ret = -3;
@@ -1225,6 +1244,14 @@ static int32_t _hndl_cfgGet( uint8_t* p_cmd, uint16_t cmdLen,
       EMB6_ASSERT_RET( rplLen >= sizeof(lwm2mapi_cfg_cliname_t), -1 );
       LWM2M_API_SET_FIELD_MEM( p_txBuf, rplLen, _epName,
           strlen( _epName ) );
+      break;
+
+    case e_lwm2m_api_cfgid_updt_itv:
+
+      /* set the configuration value */
+      EMB6_ASSERT_RET( rplLen >= sizeof(lwm2mapi_cfg_updt_itv_t), -1 );
+      LWM2M_API_SET_FIELD( p_txBuf, rplLen, lwm2mapi_cfg_updt_itv_t,
+          uip_htonl( lwm2m_server_getLifetime() ) );
       break;
 
     default:
