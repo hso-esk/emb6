@@ -443,10 +443,12 @@ static int8_t _stopLWM2M( void );
  * For further details have a look at the function definitions. */
 static int8_t _startLWM2M( void );
 
+#if (LWM2MAPI_PARSIFAL_OBJECTS || LWM2MAPI_NIKI_EMETER_OBJECTS || LWM2MAPI_NIKI_EIS_OBJECTS)
 /** Callback for LWM2M instance or resource access.
  * For further details have a look at the function definitions. */
 static void _lwm2m_resource_access_cb( uint16_t objID, uint16_t instId, uint16_t resID,
     uint8_t type, void* val, uint16_t len, void* p_user  );
+#endif /* #if (LWM2MAPI_PARSIFAL_OBJECTS || LWM2MAPI_NIKI_EMETER_OBJECTS || LWM2MAPI_NIKI_EIS_OBJECTS) */
 
 
 /** Callback function in case a CFG_GET command was received. For further
@@ -978,6 +980,7 @@ static int8_t _startLWM2M( void )
 }
 
 
+#if (LWM2MAPI_PARSIFAL_OBJECTS || LWM2MAPI_NIKI_EMETER_OBJECTS || LWM2MAPI_NIKI_EIS_OBJECTS)
 /**
  * \brief   Callback issued if a LWM2M instance or resource was accessed.
  *
@@ -1084,6 +1087,7 @@ static void _lwm2m_resource_access_cb( uint16_t objID, uint16_t instId, uint16_t
       _fn_tx( ret, _p_txParam );
   }
 }
+#endif /* #if (LWM2MAPI_PARSIFAL_OBJECTS || LWM2MAPI_NIKI_EMETER_OBJECTS || LWM2MAPI_NIKI_EIS_OBJECTS) */
 
 
 /**
@@ -1798,10 +1802,10 @@ static int32_t _hndl_res_create( uint8_t* p_cmd, uint16_t cmdLen,
           {
             memset( p_resData, 0, varLen );
 
-            *((uint8_t**)p_resData) =  (uint8_t*)(p_resData + sizeof(uint16_t) + sizeof(uint8_t*));
+            *((uint8_t**)p_resData) =  (uint8_t*)((uint8_t*)p_resData + sizeof(uint16_t) + sizeof(uint8_t*));
             *p_res = (lwm2m_resource_t) {resId, LWM2M_RESOURCE_TYPE_STR_VARIABLE,
                     .value.stringvar.size = varLen,
-                    .value.stringvar.len = p_resData + sizeof(uint8_t*),
+                    .value.stringvar.len = (uint16_t*)((uint8_t*)p_resData + sizeof(uint8_t*)),
                     .value.stringvar.var = p_resData,
                     .p_next = NULL};
 
