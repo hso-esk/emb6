@@ -532,6 +532,9 @@ static void lwm2m_delete(void *request, void *response, uint8_t *buffer,
     uint16_t preferred_size, int32_t *offset, void* p_user);
 #endif /* #if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE */
 
+static int32_t _wr_res( const lwm2m_resource_t* p_lwm2mRes, uint8_t** p_cmd,
+    uint16_t* p_cmdLen, uint8_t* varLen );
+
 
 /*
  *  --- Local Variables ---------------------------------------------------- *
@@ -2167,6 +2170,155 @@ static int32_t _hndl_res_wr( uint8_t* p_cmd, uint16_t cmdLen,
   return ret;
 }
 
+
+static int32_t _wr_res( const lwm2m_resource_t* p_lwm2mRes, uint8_t** p_cmd,
+    uint16_t* p_cmdLen, uint8_t* varLen )
+{
+  int32_t ret = 0;
+  uint8_t typeA;
+  uint8_t typeB;
+
+
+  if( p_lwm2mRes->type == LWM2M_RESOURCE_TYPE_CALLBACK )
+  {
+    typeA = p_lwm2mRes->subtype;
+    typeB = p_lwm2mRes->type;
+  }
+  else
+  {
+    typeA = p_lwm2mRes->type;
+    typeB = p_lwm2mRes->subtype;
+  }
+
+  /* resource was found. Now we can read the value from it */
+  switch( typeA )
+  {
+    /* String Write */
+    case LWM2M_RESOURCE_TYPE_STR_VARIABLE:
+
+      EMB6_ASSERT_RET( *p_cmdLen > 0, -2 );
+      if( varLen == NULL )
+        EMB6_ASSERT_RET( *p_cmdLen < p_lwm2mRes->value.stringvar.size, -2 );
+      else
+        EMB6_ASSERT_RET( *varLen < p_lwm2mRes->value.stringvar.size, -2 );
+
+      if( typeB == LWM2M_RESOURCE_TYPE_CALLBACK )
+      {
+        EMB6_ASSERT_RET( p_lwm2mRes->value.callback.set != NULL, -1 );
+        if( p_lwm2mRes->value.callback.set( *p_cmd, *p_cmdLen ) < 0 )
+          ret = -3;
+      }
+      else
+      {
+        EMB6_ASSERT_RET( *p_cmdLen < p_lwm2mRes->value.stringvar.size, -3 );
+        memset( *p_lwm2mRes->value.stringvar.var, 0,
+            p_lwm2mRes->value.stringvar.size);
+        *p_lwm2mRes->value.stringvar.len = *p_cmdLen;
+        LWM2M_API_GET_FIELD_MEM( *p_lwm2mRes->value.stringvar.var,
+            *p_cmd, *p_cmdLen, *varLen );
+      }
+      break;
+
+    /* Integer write */
+    case LWM2M_RESOURCE_TYPE_INT_VARIABLE:
+    {
+      int32_t val;
+      if( *p_cmdLen < sizeof(val) )
+        ret = -2;
+
+      /* get the value */
+      EMB6_ASSERT_RET( *p_cmdLen >= sizeof(val), -2 );
+      LWM2M_API_GET_FIELD( val, *p_cmd, *p_cmdLen, int32_t );
+      val = uip_ntohl( val );
+
+      if( ret == 0 )
+      {
+        if( typeB == LWM2M_RESOURCE_TYPE_CALLBACK )
+        {
+          EMB6_ASSERT_RET( p_lwm2mRes->value.callback.set != NULL, -1 );
+          if( p_lwm2mRes->value.callback.set( &val, sizeof(val) ) < 0 )
+            ret = -3;
+        }
+        else
+        {
+          /* write the value*/
+          *p_lwm2mRes->value.integervar.var = val;
+        }
+      }
+      break;
+    }
+
+    /* Float write */
+    case LWM2M_RESOURCE_TYPE_FLOATFIX_VARIABLE:
+    {
+      union {
+        float        f;
+        unsigned int i;
+      } val;
+
+      if( *p_cmdLen < sizeof(val) )
+        ret = -2;
+
+      /* get the value */
+      EMB6_ASSERT_RET( *p_cmdLen >= sizeof(val), -2 );
+      LWM2M_API_GET_FIELD_MEM( &val, *p_cmd, *p_cmdLen, sizeof(val) );
+      val.i = uip_ntohl( val.i );
+      val.i = val.f * LWM2M_FLOAT32_FRAC;
+
+      if( ret == 0 )
+      {
+        if( typeB == LWM2M_RESOURCE_TYPE_CALLBACK )
+        {
+          EMB6_ASSERT_RET( p_lwm2mRes->value.callback.set != NULL, -1 );
+          if( p_lwm2mRes->value.callback.set( &val, sizeof(val) ) < 0 )
+            ret = -3;
+        }
+        else
+        {
+          /* write the value*/
+          *p_lwm2mRes->value.floatfixvar.var = val.i;
+        }
+      }
+      break;
+    }
+
+    /* Boolean write */
+    case LWM2M_RESOURCE_TYPE_BOOLEAN_VARIABLE:
+    {
+      int32_t val;
+      if( *p_cmdLen < sizeof(int32_t) )
+        ret = -2;
+
+      /* get the value */
+      EMB6_ASSERT_RET( *p_cmdLen >= sizeof(val), -2 );
+      LWM2M_API_GET_FIELD( val, *p_cmd, *p_cmdLen, int32_t );
+      val = uip_ntohl( val );
+
+      if( ret == 0 )
+      {
+        if( typeB == LWM2M_RESOURCE_TYPE_CALLBACK )
+        {
+          EMB6_ASSERT_RET( p_lwm2mRes->value.callback.set != NULL, -1 );
+          if( p_lwm2mRes->value.callback.set( &val, sizeof(val) ) < 0 )
+            ret = -3;
+        }
+        else
+        {
+          /* write the value*/
+          val = val > 0 ? 1 : 0;
+          *p_lwm2mRes->value.booleanvar.var = val;
+        }
+      }
+      break;
+    }
+
+    default:
+      ret = -1;
+      break;
+  }
+
+  return ret;
+}
 
 #if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE
 /**
