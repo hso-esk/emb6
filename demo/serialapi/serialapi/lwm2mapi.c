@@ -262,6 +262,14 @@ typedef enum
     * LWM2M2_RES_WR_RSP. */
   e_lwm2m_api_type_res_wr_rsp,
 
+  /** Write request to a LWM2M instance. Both device and host use this
+    * command e.g. to set configurations or stored values. */
+  e_lwm2m_api_type_inst_wr_req,
+
+  /** The host/device has to answer to a LWM2M2_INST_WR_REQ using a
+    * LWM2M2_RES_WR_RSP. */
+  e_lwm2m_api_type_inst_wr_rsp,
+
   e_lwm2m_api_type_max
 
 } e_lwm2m_api_type_t;
@@ -443,6 +451,7 @@ static int8_t _stopLWM2M( void );
  * For further details have a look at the function definitions. */
 static int8_t _startLWM2M( void );
 
+
 #if (LWM2MAPI_PARSIFAL_OBJECTS || LWM2MAPI_NIKI_EMETER_OBJECTS || LWM2MAPI_NIKI_EIS_OBJECTS)
 /** Callback for LWM2M instance or resource access.
  * For further details have a look at the function definitions. */
@@ -508,6 +517,11 @@ static int32_t _hndl_res_delete( uint8_t* p_cmd, uint16_t cmdLen,
 /** Callback function in case a RESOURCE_WRITE command was received. For further
  * details have a look at the function definition.*/
 static int32_t _hndl_res_wr( uint8_t* p_cmd, uint16_t cmdLen,
+    uint8_t* p_rpl, uint16_t rplLen );
+
+/** Callback function in case a INSTANCE_WRITE command was received. For further
+ * details have a look at the function definition.*/
+static int32_t _hndl_inst_wr( uint8_t* p_cmd, uint16_t cmdLen,
     uint8_t* p_rpl, uint16_t rplLen );
 
 #if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE
@@ -778,6 +792,11 @@ static int8_t _rx_data( uint8_t* p_data, uint16_t len )
     /* write request to a resource */
     case e_lwm2m_api_type_res_wr_req:
       f_hndl = _hndl_res_wr;
+      break;
+
+    /* write request to an instance */
+    case e_lwm2m_api_type_inst_wr_req:
+      f_hndl = _hndl_inst_wr;
       break;
 
     default:
@@ -1935,11 +1954,9 @@ static int32_t _hndl_res_wr( uint8_t* p_cmd, uint16_t cmdLen,
   int32_t ret = 0;
   uint8_t* p_data = p_cmd;
 
-  int16_t objId;
-  int8_t instId;
-  int16_t resId;
-  uint8_t typeA;
-  uint8_t typeB;
+  uint16_t objId;
+  uint8_t instId;
+  uint16_t resId;
 
   const lwm2m_object_t* p_lwm2mObj;
   lwm2m_instance_t* p_lwm2mInst;
@@ -2016,139 +2033,139 @@ static int32_t _hndl_res_wr( uint8_t* p_cmd, uint16_t cmdLen,
 
   if( ret == 0 )
   {
-    if( p_lwm2mRes->type == LWM2M_RESOURCE_TYPE_CALLBACK )
+    /* write the resource value */
+    ret = _wr_res( p_lwm2mRes, &p_data, &cmdLen, NULL );
+  }
+
+  if( ret == 0 )
+  {
+
+    if( _status == e_lwm2m_api_status_registered )
     {
-      typeA = p_lwm2mRes->subtype;
-      typeB = p_lwm2mRes->type;
+      /* Notify all observers */
+      lwm2m_object_notify_observers( p_lwm2mObj, p_url );
+
     }
-    else
+
+    EMB6_ASSERT_RET( p_rpl != NULL, -1 );
+    ret = _rsp_status( p_rpl, rplLen, e_lwm2m_api_type_ret,
+        e_lwm2m_api_ret_ok );
+  }
+
+  return ret;
+}
+
+
+/**
+ * \brief   Callback to write a LWM2M instance.
+ *
+ * \param   p_cmd   Further data of the command.
+ * \param   cmdLen  Length of the command data.
+ * \param   p_rpl   Pointer to store the response to.
+ * \param   rplLen  Length of the response buffer.
+ *
+ * \return  The length of the generated response or 0 if no response
+ *          has been generated.
+ */
+static int32_t _hndl_inst_wr( uint8_t* p_cmd, uint16_t cmdLen,
+    uint8_t* p_rpl, uint16_t rplLen )
+{
+  int32_t ret = 0;
+  uint8_t* p_data = p_cmd;
+
+  uint16_t objId;
+  uint8_t instId;
+  uint8_t resNum;
+  uint16_t resId;
+  uint8_t resSize;
+
+  const lwm2m_object_t* p_lwm2mObj;
+  lwm2m_instance_t* p_lwm2mInst;
+  const lwm2m_resource_t* p_lwm2mRes;
+
+
+  char* p_url;
+  int urlLen = 0;
+
+  EMB6_ASSERT_RET( p_cmd != NULL, -1 );
+  EMB6_ASSERT_RET( p_rpl != NULL, -1 );
+
+  if( ret == 0 )
+  {
+    /* get the object ID, instance ID and resource ID*/
+    EMB6_ASSERT_RET( cmdLen >= sizeof(uint16_t), -2 );
+    LWM2M_API_GET_FIELD( objId, p_data, cmdLen, uint16_t );
+    EMB6_ASSERT_RET( cmdLen >= sizeof(uint8_t), -2 );
+    LWM2M_API_GET_FIELD( instId, p_data, cmdLen, uint8_t );
+    EMB6_ASSERT_RET( cmdLen >= sizeof(uint16_t), -2 );
+    LWM2M_API_GET_FIELD( resNum, p_data, cmdLen, uint16_t );
+
+    objId = uip_ntohs( objId );
+
+    /* try to get the according object */
+    p_lwm2mObj = lwm2m_engine_get_object( objId );
+    if( p_lwm2mObj == NULL )
+      ret = -1;
+  }
+
+  if( ret == 0 )
+  {
+    p_lwm2mInst = p_lwm2mObj->p_instances;
+    int i = 0;
+    for( i = 0; (i < p_lwm2mObj->count) && (p_lwm2mInst != NULL); i++ )
     {
-      typeA = p_lwm2mRes->type;
-      typeB = p_lwm2mRes->subtype;
+      if( p_lwm2mInst->id == instId )
+        /* we found the according instance ID */
+        break;
+      p_lwm2mInst = p_lwm2mInst->p_next;
     }
 
-    /* resource was found. Now we can read the value from it */
-    switch( typeA )
+    if( i >= p_lwm2mObj->count )
+      /* instance was not found */
+      ret = -1;
+  }
+
+  if( ret == 0 )
+  {
+    /* get the URL */
+    urlLen = _get_lwm2m_url( &p_lwm2mInst->id, NULL, NULL,
+        &p_url );
+    if( urlLen == 0)
+      ret = -1;
+  }
+
+  if( ret == 0 )
+  {
+    int i = 0;
+    for( i = 0; i < resNum; i++ )
     {
-      /* String Write */
-      case LWM2M_RESOURCE_TYPE_STR_VARIABLE:
+      EMB6_ASSERT_RET( cmdLen >= sizeof(uint16_t), -2 );
+      LWM2M_API_GET_FIELD( resId, p_data, cmdLen, uint16_t );
+      LWM2M_API_GET_FIELD( resSize, p_data, cmdLen, uint8_t );
+      resId = uip_ntohs( resId );
 
-        EMB6_ASSERT_RET( cmdLen > 0, -2 );
-        EMB6_ASSERT_RET( cmdLen < p_lwm2mRes->value.stringvar.size, -2 );
 
-        if( typeB == LWM2M_RESOURCE_TYPE_CALLBACK )
-        {
-          EMB6_ASSERT_RET( p_lwm2mRes->value.callback.set != NULL, -1 );
-          if( p_lwm2mRes->value.callback.set( p_data, cmdLen ) < 0 )
-            ret = -3;
-        }
-        else
-        {
-          EMB6_ASSERT_RET( cmdLen < p_lwm2mRes->value.stringvar.size, -3 );
-          memset( *p_lwm2mRes->value.stringvar.var, 0,
-              p_lwm2mRes->value.stringvar.size);
-          *p_lwm2mRes->value.stringvar.len = cmdLen;
-          LWM2M_API_GET_FIELD_MEM( *p_lwm2mRes->value.stringvar.var,
-              p_data, cmdLen, cmdLen );
-        }
-        break;
-
-      /* Integer write */
-      case LWM2M_RESOURCE_TYPE_INT_VARIABLE:
+      p_lwm2mRes = p_lwm2mInst->p_resources;
+      int j = 0;
+      for( j = 0; (j < p_lwm2mInst->count) && (p_lwm2mRes != NULL); i++ )
       {
-        int32_t val;
-        if( cmdLen < sizeof(val) )
-          ret = -2;
-
-        /* get the value */
-        EMB6_ASSERT_RET( cmdLen >= sizeof(val), -2 );
-        LWM2M_API_GET_FIELD( val, p_data, cmdLen, int32_t );
-        val = uip_ntohl( val );
-
-        if( ret == 0 )
-        {
-          if( typeB == LWM2M_RESOURCE_TYPE_CALLBACK )
-          {
-            EMB6_ASSERT_RET( p_lwm2mRes->value.callback.set != NULL, -1 );
-            if( p_lwm2mRes->value.callback.set( &val, sizeof(val) ) < 0 )
-              ret = -3;
-          }
-          else
-          {
-            /* write the value*/
-            *p_lwm2mRes->value.integervar.var = val;
-          }
-        }
-        break;
+        if( p_lwm2mRes->id == resId )
+          /* we found the according resource ID */
+          break;
+        p_lwm2mRes = p_lwm2mRes->p_next;
       }
 
-      /* Float write */
-      case LWM2M_RESOURCE_TYPE_FLOATFIX_VARIABLE:
+      if( j >= p_lwm2mInst->count )
       {
-        union {
-          float        f;
-          unsigned int i;
-        } val;
-
-        if( cmdLen < sizeof(val) )
-          ret = -2;
-
-        /* get the value */
-        EMB6_ASSERT_RET( cmdLen >= sizeof(val), -2 );
-        LWM2M_API_GET_FIELD_MEM( &val, p_data, cmdLen, sizeof(val) );
-        val.i = uip_ntohl( val.i );
-        val.i = val.f * LWM2M_FLOAT32_FRAC;
-
-        if( ret == 0 )
-        {
-          if( typeB == LWM2M_RESOURCE_TYPE_CALLBACK )
-          {
-            EMB6_ASSERT_RET( p_lwm2mRes->value.callback.set != NULL, -1 );
-            if( p_lwm2mRes->value.callback.set( &val, sizeof(val) ) < 0 )
-              ret = -3;
-          }
-          else
-          {
-            /* write the value*/
-            *p_lwm2mRes->value.floatfixvar.var = val.i;
-          }
-        }
-        break;
-      }
-
-      /* Boolean write */
-      case LWM2M_RESOURCE_TYPE_BOOLEAN_VARIABLE:
-      {
-        int32_t val;
-        if( cmdLen < sizeof(int32_t) )
-          ret = -2;
-
-        /* get the value */
-        EMB6_ASSERT_RET( cmdLen >= sizeof(val), -2 );
-        LWM2M_API_GET_FIELD( val, p_data, cmdLen, int32_t );
-        val = uip_ntohl( val );
-
-        if( ret == 0 )
-        {
-          if( typeB == LWM2M_RESOURCE_TYPE_CALLBACK )
-          {
-            EMB6_ASSERT_RET( p_lwm2mRes->value.callback.set != NULL, -1 );
-            if( p_lwm2mRes->value.callback.set( &val, sizeof(val) ) < 0 )
-              ret = -3;
-          }
-          else
-          {
-            /* write the value*/
-            val = val > 0 ? 1 : 0;
-            *p_lwm2mRes->value.booleanvar.var = val;
-          }
-        }
-        break;
-      }
-
-      default:
+        /* resource was not found */
         ret = -1;
         break;
+      }
+      else
+      {
+        /* Resource was found. Write the resource value */
+        ret = _wr_res( p_lwm2mRes, &p_data, &cmdLen, &resSize );
+      }
     }
   }
 
