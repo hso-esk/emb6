@@ -57,6 +57,19 @@
 /*! Needed for TI driverlib. */
 #define RFC_INCLUDE_GFSK
 
+/*========================= NVM MEMORY =======================================*/
+/*! Flash defines: For the CC1350 one flash page is 4096byte */
+#define SECTOR_SIZE                4096U
+/*! The CC1350 has at least 32 flash pages (0-31). We will write our stuff on the
+   penultimate page. */
+#define SECTOR_TO_USE              30U
+/*! The absolute start address of the nvm memory. */
+#define TARGET_NVM_START_ADDR      (FLASHMEM_BASE + \
+                                   (SECTOR_TO_USE * SECTOR_SIZE))
+/*! The absolute end-address of the nvm memory. (The last addressable byte).
+    For now the usable memory is limited to 512 byte. */
+#define TARGET_NVM_END_ADDR        TARGET_NVM_START_ADDR + 512U
+
 /*========================= PLATFROM =========================================*/
 /*! Platform interfaces: Definition of RX pin and TX pin. */
 #ifndef UART_IOID_RXD

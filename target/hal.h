@@ -854,4 +854,36 @@ int8_t hal_sleepEnter( uint32_t duration );
  */
 int8_t hal_adjustTick( uint32_t ticks );
 #endif /* #if (HAL_SUPPORT_MCU_SLEEP == TRUE) */
+
+
+/**
+ * hal_nvmWrite()
+ *
+ * \brief   Writes bytes into the flash memory.
+ *
+ *      XXX
+ *
+ * \param  l_addr       Start address of the memory to write into.
+ * \param  *pc_data     Bytes to write into the data memory.
+ * \param  i_len        Number of bytes to write.
+ * \return Returns the number of bytes written or negative value on error.
+ */
+int8_t hal_nvmWrite( uint8_t *pc_data, uint16_t i_len, uint32_t l_addr );
+
+
+/**
+ * hal_nvmRead()
+ *
+ * \brief   Reads bytes from the flash memory.
+ *
+ *      XXX
+ *
+ * \param  l_addr   Address of the memory to read out.
+ * \param  *pc_data Memory to write the read data into.
+ * \param  i_len    Number of bytes to read.
+ * \return Returns the number of bytes read or negative value on error.
+ */
+int8_t hal_nvmRead( uint8_t *pc_data, uint16_t i_len, uint32_t l_addr );
+
+
 #endif /* __HAL_H__ */

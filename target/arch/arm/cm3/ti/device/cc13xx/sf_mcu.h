@@ -33,7 +33,17 @@
 /*==============================================================================
                             DEFINES
 ==============================================================================*/
+/*========================= FLASH ============================================*/
+/*! Calculate the size of the nvm space available for the device. Note that the
+   available space and the SECTOR_SIZE is not the same. To save RAM the
+   available space is normally smaler than a flash page! */
+#define MCU_INFOFLASH_SIZE         (TARGET_NVM_END_ADDR - TARGET_NVM_START_ADDR)
 
+/* Currently it is only supported to write on more than one page so this check
+   is necessary */
+#if (MCU_INFOFLASH_SIZE > SECTOR_SIZE)
+#error Currently we do not support more than one flash page
+#endif /* (MCU_INFOFLASH_SIZE > SECTOR_SIZE) */
 /*==============================================================================
                             FUNCTIONS
 ==============================================================================*/
@@ -52,6 +62,28 @@ bool sf_mcu_init(void);
  */
 /*============================================================================*/
 void sf_mcu_reset(void);
+
+/*============================================================================*/
+/*!
+ * @brief  Writes bytes into the data memory.
+ * @param  l_addr       Start address of the memory to write into.
+ * @param  *pc_data     Bytes to write into the data memory.
+ * @param  i_len        Number of bytes to write.
+ * @return Returns the number of bytes written.
+ */
+/*============================================================================*/
+uint16_t sf_mcu_datamemory_write(uint8_t *pc_data, uint16_t i_len, uint32_t l_addr);
+
+/*============================================================================*/
+/*!
+ * @brief  Reads bytes from the data memory.
+ * @param  l_addr   Address of the memory to read out.
+ * @param  *pc_data Memory to write the read data into.
+ * @param  i_len    Number of bytes to read.
+ * @return Returns the number of bytes read.
+ */
+/*============================================================================*/
+uint16_t sf_mcu_datamemory_read(uint8_t *pc_data, uint16_t i_len, uint32_t l_addr);
 
 /*============================================================================*/
 /*!

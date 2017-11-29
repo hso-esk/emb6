@@ -671,5 +671,36 @@ int8_t bsp_sleepEnter( uint32_t duration );
 int8_t bsp_adjustTick( clock_time_t ticks );
 #endif /* #if (HAL_SUPPORT_MCU_SLEEP == TRUE) */
 
+#if defined(HAL_SUPPORT_NVM)
+/**
+ * bsp_nvmWrite()
+ *
+ * \brief   Writes bytes into the flash memory.
+ *
+ *      XXX
+ *
+ * \param  l_addr       Start address of the memory to write into.
+ * \param  *pc_data     Bytes to write into the data memory.
+ * \param  i_len        Number of bytes to write.
+ * \return Returns the number of bytes written or negative value on error.
+ */
+int8_t bsp_nvmWrite( uint8_t *pc_data, uint16_t i_len, uint32_t l_addr );
+
+
+/**
+ * bsp_nvmRead()
+ *
+ * \brief   Reads bytes from the flash memory.
+ *
+ *      XXX
+ *
+ * \param  l_addr   Address of the memory to read out.
+ * \param  *pc_data Memory to write the read data into.
+ * \param  i_len    Number of bytes to read.
+ * \return Returns the number of bytes read or negative value on error.
+ */
+int8_t bsp_nvmRead( uint8_t *pc_data, uint16_t i_len, uint32_t l_addr );
+#endif /* #if defined(HAL_SUPPORT_NVM) */
+
 #endif /* __BSP_H__ */
 
