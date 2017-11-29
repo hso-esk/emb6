@@ -2210,19 +2210,26 @@ static int32_t _wr_res( const lwm2m_resource_t* p_lwm2mRes, uint8_t** p_cmd,
   /* resource was found. Now we can read the value from it */
   switch( typeA )
   {
+    int len;
     /* String Write */
     case LWM2M_RESOURCE_TYPE_STR_VARIABLE:
 
       EMB6_ASSERT_RET( *p_cmdLen > 0, -2 );
       if( varLen == NULL )
+      {
         EMB6_ASSERT_RET( *p_cmdLen < p_lwm2mRes->value.stringvar.size, -2 );
+        len = *p_cmdLen;
+      }
       else
+      {
         EMB6_ASSERT_RET( *varLen < p_lwm2mRes->value.stringvar.size, -2 );
+        len = *varLen;
+      }
 
       if( typeB == LWM2M_RESOURCE_TYPE_CALLBACK )
       {
         EMB6_ASSERT_RET( p_lwm2mRes->value.callback.set != NULL, -1 );
-        if( p_lwm2mRes->value.callback.set( *p_cmd, *p_cmdLen ) < 0 )
+        if( p_lwm2mRes->value.callback.set( *p_cmd, len ) < 0 )
           ret = -3;
       }
       else
@@ -2232,7 +2239,7 @@ static int32_t _wr_res( const lwm2m_resource_t* p_lwm2mRes, uint8_t** p_cmd,
             p_lwm2mRes->value.stringvar.size);
         *p_lwm2mRes->value.stringvar.len = *p_cmdLen;
         LWM2M_API_GET_FIELD_MEM( *p_lwm2mRes->value.stringvar.var,
-            *p_cmd, *p_cmdLen, *varLen );
+            *p_cmd, *p_cmdLen, len );
       }
       break;
 
