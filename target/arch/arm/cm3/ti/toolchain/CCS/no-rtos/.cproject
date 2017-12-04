@@ -1898,7 +1898,7 @@
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo/serialapi/serialapi&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo/serialapi/serialapi/lwm2m-objects&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo/serialapi/serial-interface-mac/src&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo/serialapi/serial-interface-mac/dep/crc&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo/serialapi/crc&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo/udp_alive&quot;"/>
@@ -2050,7 +2050,7 @@
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo/serialapi/serialapi&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo/serialapi/serialapi/lwm2m-objects&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo/serialapi/serial-interface-mac/src&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo/serialapi/serial-interface-mac/dep/crc&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo/serialapi/crc&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo/udp_alive&quot;"/>
@@ -2203,7 +2203,7 @@
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo/serialapi/serialapi&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo/serialapi/serialapi/lwm2m-objects&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo/serialapi/serial-interface-mac/src&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo/serialapi/serial-interface-mac/dep/crc&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo/crc&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo/udp_alive&quot;"/>
@@ -2355,7 +2355,7 @@
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo/serialapi/serialapi&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo/serialapi/serialapi/lwm2m-objects&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo/serialapi/serial-interface-mac/src&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo/serialapi/serial-interface-mac/dep/crc&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo/serialapi/crc&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo/udp_alive&quot;"/>
@@ -2508,7 +2508,7 @@
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo/serialapi/serialapi&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo/serialapi/serialapi/lwm2m-objects&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo/serialapi/serial-interface-mac/src&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo/serialapi/serial-interface-mac/dep/crc&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo/serialapi/crc&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo/udp_alive&quot;"/>
@@ -2656,7 +2656,7 @@
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo/serialapi/serialapi&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo/serialapi/serialapi/lwm2m-objects&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo/serialapi/serial-interface-mac/src&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo/serialapi/serial-interface-mac/dep/crc&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo/serialapi/crc&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/target/arch/arm/cm3/ti/device/cc13xx/rf_noRtos_lib&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${REPO_ROOT_DIR}/demo/udp_alive&quot;"/>

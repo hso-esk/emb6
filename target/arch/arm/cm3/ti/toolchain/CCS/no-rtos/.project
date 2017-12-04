@@ -316,6 +316,11 @@
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
+			<name>demo/serialapi/crc</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
 			<name>demo/serialapi/demo_serialapi.c</name>
 			<type>1</type>
 			<locationURI>PARENT-8-PROJECT_LOC/demo/serialapi/demo_serialapi.c</locationURI>
@@ -981,9 +986,14 @@
 			<locationURI>REPO_ROOT_DIR/demo/mdns/server/demo_mdns_srv.h</locationURI>
 		</link>
 		<link>
-			<name>demo/serialapi/serial-interface-mac/dep</name>
-			<type>2</type>
-			<locationURI>virtual:/virtual</locationURI>
+			<name>demo/serialapi/crc/sf_crc.c</name>
+			<type>1</type>
+			<location>/home/mschappa/Data/hso/projects/niki/devel/emb6-niki-github/demo/serialapi/crc/sf_crc.c</location>
+		</link>
+		<link>
+			<name>demo/serialapi/crc/sf_crc.h</name>
+			<type>1</type>
+			<location>/home/mschappa/Data/hso/projects/niki/devel/emb6-niki-github/demo/serialapi/crc/sf_crc.h</location>
 		</link>
 		<link>
 			<name>demo/serialapi/serial-interface-mac/src</name>
@@ -1709,11 +1719,6 @@
 			<name>demo/coap/server/resources/res-tick.c</name>
 			<type>1</type>
 			<locationURI>REPO_ROOT_DIR/demo/coap/server/resources/res-tick.c</locationURI>
-		</link>
-		<link>
-			<name>demo/serialapi/serial-interface-mac/dep/crc</name>
-			<type>2</type>
-			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
 			<name>demo/serialapi/serial-interface-mac/src/sf_serialmac.c</name>
@@ -2739,16 +2744,6 @@
 			<name>target/arch/native/generic/generic</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
-		</link>
-		<link>
-			<name>demo/serialapi/serial-interface-mac/dep/crc/sf_crc.c</name>
-			<type>1</type>
-			<locationURI>PARENT-8-PROJECT_LOC/demo/serialapi/serial-interface-mac/dep/crc/sf_crc.c</locationURI>
-		</link>
-		<link>
-			<name>demo/serialapi/serial-interface-mac/dep/crc/sf_crc.h</name>
-			<type>1</type>
-			<locationURI>PARENT-8-PROJECT_LOC/demo/serialapi/serial-interface-mac/dep/crc/sf_crc.h</locationURI>
 		</link>
 		<link>
 			<name>emb6/inc/net/dtls/aes/rijndael.h</name>
