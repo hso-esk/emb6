@@ -345,8 +345,49 @@ static void _serialmac_rxbuf_evt( void* mac_context, uint8_t* frame_buffer,
   enum sf_serialmac_return ret = sf_serialmac_rx_frame( mac_context, p_frameBufRx,
       SERIALAPI_FRAMEBUF_MAX );
 
-  if( ret == SF_SERIALMAC_ERROR_BUFFER ) {
+  if( (ret == SF_SERIALMAC_RETURN_ERROR_BUFFER) ||
+      (ret == SF_SERIALMAC_RETURN_ERROR_RW_PENDING) ||
+      (ret == SF_SERIALMAC_RETURN_ERROR_NPE)) {
     sf_serialmac_reset( &macCtx );
+  }
+}
+
+
+/**
+ * \brief   Common function to handle error events.
+ *
+ *          Whenever an error occurs on the serial mac this event
+ *          will be triggered. This function handles the according
+ *          error.
+ */
+static void _serialmac_err_evt( void *mac_context,
+    enum sf_serialmac_error error )
+{
+  switch( error )
+  {
+
+    /** The CRC of a received frame is not valid. */
+    case SF_SERIALMAC_ERROR_INVALID_CRC:
+      /* TODO: reply with an error frame. */
+      break;
+
+    /**
+      * The first received byte is not a SYNC BYTE.
+      * After this indication the control is handed back to the upper layer.
+      */
+    case SF_SERIALMAC_ERROR_INVALID_SYNC_BYTE:
+      /* reset the serial MAC */
+      sf_serialmac_reset( &macCtx );
+      break;
+
+    /**
+      * The validation of the LENGTH and the INVERTED LENGTH field failed.
+      * Upper layer has to decide how this problem is treated.
+      */
+    case SF_SERIALMAC_ERROR_LENGTH_VERIFICATION_FAILED:
+
+      /* TODO: reply with an error frame. */
+      break;
   }
 }
 
@@ -419,7 +460,8 @@ int8_t demo_serialApiInit( void )
   /* Initialize the serial MAC */
   sf_serialmac_init( &macCtx, p_uart, _serialMacRead, _serialMacReadWait,
       _serialMacWrite, _serialmac_rxframe_evt, _serialmac_rxbuf_evt,
-      _serialmac_ignore_evt, _serialmac_ignore_evt, _serialmac_ignore_evt );
+      _serialmac_ignore_evt, _serialmac_ignore_evt, _serialmac_ignore_evt,
+      _serialmac_err_evt );
 
   /* initialize serial API and register LWM2M */
   serialApiInit( p_frameBufTx, SERIALAPI_TX_BUF_LEN, _txDataCb, NULL );
