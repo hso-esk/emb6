@@ -988,12 +988,12 @@
 		<link>
 			<name>demo/serialapi/crc/sf_crc.c</name>
 			<type>1</type>
-			<location>/home/mschappa/Data/hso/projects/niki/devel/emb6-niki-github/demo/serialapi/crc/sf_crc.c</location>
+			<locationURI>REPO_ROOT_DIR/demo/serialapi/crc/sf_crc.c</locationURI>
 		</link>
 		<link>
 			<name>demo/serialapi/crc/sf_crc.h</name>
 			<type>1</type>
-			<location>/home/mschappa/Data/hso/projects/niki/devel/emb6-niki-github/demo/serialapi/crc/sf_crc.h</location>
+			<locationURI>REPO_ROOT_DIR/demo/serialapi/crc/sf_crc.h</locationURI>
 		</link>
 		<link>
 			<name>demo/serialapi/serial-interface-mac/src</name>
