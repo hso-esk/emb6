@@ -368,7 +368,8 @@ static void _serialmac_err_evt( void *mac_context,
 
     /** The CRC of a received frame is not valid. */
     case SF_SERIALMAC_ERROR_INVALID_CRC:
-      /* TODO: reply with an error frame. */
+      serialApiInput( (uint8_t*)&error, NULL, FALSE );
+      sf_serialmac_reset( &macCtx );
       break;
 
     /**
@@ -376,7 +377,7 @@ static void _serialmac_err_evt( void *mac_context,
       * After this indication the control is handed back to the upper layer.
       */
     case SF_SERIALMAC_ERROR_INVALID_SYNC_BYTE:
-      /* reset the serial MAC */
+      serialApiInput( (uint8_t*)&error, NULL, FALSE );
       sf_serialmac_reset( &macCtx );
       break;
 
@@ -385,8 +386,8 @@ static void _serialmac_err_evt( void *mac_context,
       * Upper layer has to decide how this problem is treated.
       */
     case SF_SERIALMAC_ERROR_LENGTH_VERIFICATION_FAILED:
-
-      /* TODO: reply with an error frame. */
+      serialApiInput( (uint8_t*)&error, NULL, FALSE );
+      sf_serialmac_reset( &macCtx );
       break;
   }
 }
