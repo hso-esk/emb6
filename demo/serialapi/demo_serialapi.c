@@ -461,7 +461,7 @@ int8_t demo_serialApiInit( void )
   sf_serialmac_init( &macCtx, p_uart, _serialMacRead, _serialMacReadWait,
       _serialMacWrite, _serialmac_rxframe_evt, _serialmac_rxbuf_evt,
       _serialmac_ignore_evt, _serialmac_ignore_evt, _serialmac_ignore_evt,
-      _serialmac_err_evt );
+      _serialmac_err_evt, FALSE );
 
   /* initialize serial API and register LWM2M */
   serialApiInit( p_frameBufTx, SERIALAPI_TX_BUF_LEN, _txDataCb, NULL );
