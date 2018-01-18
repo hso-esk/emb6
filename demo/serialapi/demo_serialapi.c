@@ -182,6 +182,20 @@ volatile bool bufferRxOverflow;
 
 
 /**
+ * \brief   Initialize local buffer.
+ *
+ *          This function initializes the local buffer of
+ *          the serial API.
+ */
+static void _bufInit( void )
+{
+  bufferRxWrite = bufferRx;
+  bufferRxRead = bufferRx;
+  bufferRxLen = 0U;
+  bufferRxOverflow = false;
+}
+
+/**
  * \brief   Callback if new data is available on the interface.
  *
  *          This function shall be called if new data is available on the
@@ -443,10 +457,7 @@ void _event_callback( c_event_t ev, p_data_t data )
 int8_t demo_serialApiInit( void )
 {
   /* Init the Rx-buffer variables. */
-  bufferRxWrite = bufferRx;
-  bufferRxRead = bufferRx;
-  bufferRxLen = 0U;
-  bufferRxOverflow = false;
+  _bufInit();
 
   /* set rx and tx frame buffer pointer */
   p_frameBufRx = a_frameBufRx;
