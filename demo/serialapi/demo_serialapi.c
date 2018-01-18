@@ -364,6 +364,7 @@ static void _serialmac_rxbuf_evt( void* mac_context, uint8_t* frame_buffer,
       (ret == SF_SERIALMAC_RETURN_ERROR_NPE)) {
     serialApiInput( (uint8_t*)&ret, NULL, FALSE );
     sf_serialmac_reset( &macCtx );
+    _bufInit();
   }
 }
 
@@ -385,6 +386,7 @@ static void _serialmac_err_evt( void *mac_context,
     case SF_SERIALMAC_ERROR_INVALID_CRC:
       serialApiInput( (uint8_t*)&error, NULL, FALSE );
       sf_serialmac_reset( &macCtx );
+      _bufInit();
       break;
 
     /**
@@ -394,6 +396,7 @@ static void _serialmac_err_evt( void *mac_context,
     case SF_SERIALMAC_ERROR_INVALID_SYNC_BYTE:
       serialApiInput( (uint8_t*)&error, NULL, FALSE );
       sf_serialmac_reset( &macCtx );
+      _bufInit();
       break;
 
     /**
@@ -403,6 +406,7 @@ static void _serialmac_err_evt( void *mac_context,
     case SF_SERIALMAC_ERROR_LENGTH_VERIFICATION_FAILED:
       serialApiInput( (uint8_t*)&error, NULL, FALSE );
       sf_serialmac_reset( &macCtx );
+      _bufInit();
       break;
   }
 }
