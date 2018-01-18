@@ -348,6 +348,7 @@ static void _serialmac_rxbuf_evt( void* mac_context, uint8_t* frame_buffer,
   if( (ret == SF_SERIALMAC_RETURN_ERROR_BUFFER) ||
       (ret == SF_SERIALMAC_RETURN_ERROR_RW_PENDING) ||
       (ret == SF_SERIALMAC_RETURN_ERROR_NPE)) {
+    serialApiInput( (uint8_t*)&ret, NULL, FALSE );
     sf_serialmac_reset( &macCtx );
   }
 }
