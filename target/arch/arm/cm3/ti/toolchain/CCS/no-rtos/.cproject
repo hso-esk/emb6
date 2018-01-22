@@ -1958,10 +1958,10 @@
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_MANUFACTURER=\&quot;ivESK/HSG\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_TYPE=\&quot;EIS\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_MODEL_NUMBER=\&quot;NIKI4.0\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SERIAL_NO=\&quot;20171128-0001\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SERIAL_NO=\&quot;20180122-0001\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_HW_VERSION=\&quot;R1\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_FIRMWARE_VERSION=\&quot;v1.1.0\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SW_VERSION=\&quot;v1.1.0\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_FIRMWARE_VERSION=\&quot;v1.1.1\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SW_VERSION=\&quot;v1.1.1\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_ENGINE_CONF_MAX_OBJECTS=20"/>
 									<listOptionValue builtIn="false" value="COAP_MAX_OBSERVERS=50"/>
 									<listOptionValue builtIn="false" value="SF_SERIALMAC_INVERTED_LENGTH_RUNTIME_SEL=1"/>
@@ -1974,8 +1974,8 @@
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DISPLAY_ERROR_NUMBER.1490140154" name="Emit diagnostic identifier numbers (--display_error_number, -pden)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DISPLAY_ERROR_NUMBER" value="true" valueType="boolean"/>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.OPT_FOR_SPEED.1424443218" name="Speed vs. size trade-offs (--opt_for_speed, -mf)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.OPT_FOR_SPEED" value="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.OPT_FOR_SPEED.0" valueType="enumerated"/>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.OPT_LEVEL.1978434119" name="Optimization level (--opt_level, -O)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.OPT_LEVEL" value="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.OPT_LEVEL.0" valueType="enumerated"/>
-								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_FUNC_SUBSECTIONS.1102763018" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_FUNC_SUBSECTIONS" value="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_FUNC_SUBSECTIONS.on" valueType="enumerated"/>
-								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_DATA_SUBSECTIONS.224564018" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_DATA_SUBSECTIONS" value="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_DATA_SUBSECTIONS.on" valueType="enumerated"/>
+								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_FUNC_SUBSECTIONS.1102763018" name="Place each function in a separate subsection (--gen_func_subsections, -ms)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_FUNC_SUBSECTIONS" value="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_FUNC_SUBSECTIONS.on" valueType="enumerated"/>
+								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_DATA_SUBSECTIONS.224564018" name="Place structs and arrays in separate subsections (--gen_data_subsections)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_DATA_SUBSECTIONS" value="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_DATA_SUBSECTIONS.on" valueType="enumerated"/>
 								<inputType id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compiler.inputType__C_SRCS.1419971367" name="C Sources" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compiler.inputType__C_SRCS"/>
 								<inputType id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compiler.inputType__CPP_SRCS.268315736" name="C++ Sources" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compiler.inputType__CPP_SRCS"/>
 								<inputType id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compiler.inputType__ASM_SRCS.305950723" name="Assembly Sources" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compiler.inputType__ASM_SRCS"/>
@@ -2114,10 +2114,10 @@
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_MANUFACTURER=\&quot;ivESK/HSG\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_TYPE=\&quot;E-METER\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_MODEL_NUMBER=\&quot;NIKI4.0\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SERIAL_NO=\&quot;20171128-0001\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SERIAL_NO=\&quot;20180122-0001\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_HW_VERSION=\&quot;R1\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_FIRMWARE_VERSION=\&quot;v1.1.0\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SW_VERSION=\&quot;v1.1.0\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_FIRMWARE_VERSION=\&quot;v1.1.1\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SW_VERSION=\&quot;v1.1.1\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_ENGINE_CONF_MAX_OBJECTS=20"/>
 									<listOptionValue builtIn="false" value="COAP_MAX_OBSERVERS=50"/>
 									<listOptionValue builtIn="false" value="SF_SERIALMAC_INVERTED_LENGTH_RUNTIME_SEL=1"/>
@@ -2130,8 +2130,8 @@
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DISPLAY_ERROR_NUMBER.1211721423" name="Emit diagnostic identifier numbers (--display_error_number, -pden)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DISPLAY_ERROR_NUMBER" value="true" valueType="boolean"/>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.OPT_LEVEL.209880480" name="Optimization level (--opt_level, -O)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.OPT_LEVEL" value="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.OPT_LEVEL.0" valueType="enumerated"/>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.OPT_FOR_SPEED.1386296730" name="Speed vs. size trade-offs (--opt_for_speed, -mf)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.OPT_FOR_SPEED" value="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.OPT_FOR_SPEED.0" valueType="enumerated"/>
-								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_FUNC_SUBSECTIONS.962458950" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_FUNC_SUBSECTIONS" value="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_FUNC_SUBSECTIONS.on" valueType="enumerated"/>
-								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_DATA_SUBSECTIONS.604328319" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_DATA_SUBSECTIONS" value="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_DATA_SUBSECTIONS.on" valueType="enumerated"/>
+								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_FUNC_SUBSECTIONS.962458950" name="Place each function in a separate subsection (--gen_func_subsections, -ms)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_FUNC_SUBSECTIONS" value="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_FUNC_SUBSECTIONS.on" valueType="enumerated"/>
+								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_DATA_SUBSECTIONS.604328319" name="Place structs and arrays in separate subsections (--gen_data_subsections)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_DATA_SUBSECTIONS" value="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_DATA_SUBSECTIONS.on" valueType="enumerated"/>
 								<inputType id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compiler.inputType__C_SRCS.1693154272" name="C Sources" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compiler.inputType__C_SRCS"/>
 								<inputType id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compiler.inputType__CPP_SRCS.1240126925" name="C++ Sources" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compiler.inputType__CPP_SRCS"/>
 								<inputType id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compiler.inputType__ASM_SRCS.1749983087" name="Assembly Sources" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compiler.inputType__ASM_SRCS"/>
@@ -2267,10 +2267,10 @@
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_MANUFACTURER=\&quot;SF/HSG\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_TYPE=\&quot;GENERIC\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_MODEL_NUMBER=\&quot;PARSIFAL\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SERIAL_NO=\&quot;20171128-0001\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SERIAL_NO=\&quot;20180122-0001\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_HW_VERSION=\&quot;R1\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_FIRMWARE_VERSION=\&quot;v1.1.0\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SW_VERSION=\&quot;v1.1.0\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_FIRMWARE_VERSION=\&quot;v1.1.1\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SW_VERSION=\&quot;v1.1.1\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_ENGINE_CONF_MAX_OBJECTS=20"/>
 									<listOptionValue builtIn="false" value="COAP_MAX_OBSERVERS=50"/>
 									<listOptionValue builtIn="false" value="SF_SERIALMAC_INVERTED_LENGTH_RUNTIME_SEL=1"/>
@@ -2425,10 +2425,10 @@
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_MANUFACTURER=\&quot;SF/HSG\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_TYPE=\&quot;GENERIC\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_MODEL_NUMBER=\&quot;AMELI\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SERIAL_NO=\&quot;20171128-0001\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SERIAL_NO=\&quot;20180122-0001\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_HW_VERSION=\&quot;R1\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_FIRMWARE_VERSION=\&quot;v1.1.0\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SW_VERSION=\&quot;v1.1.0\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_FIRMWARE_VERSION=\&quot;v1.1.1\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SW_VERSION=\&quot;v1.1.1\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_ENGINE_CONF_MAX_OBJECTS=20"/>
 									<listOptionValue builtIn="false" value="COAP_MAX_OBSERVERS=50"/>
 									<listOptionValue builtIn="false" value="SF_SERIALMAC_INVERTED_LENGTH_RUNTIME_SEL=1"/>
@@ -2439,8 +2439,8 @@
 								</option>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DIAG_WRAP.1222405782" name="Wrap diagnostic messages (--diag_wrap)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DIAG_WRAP" value="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DIAG_WRAP.off" valueType="enumerated"/>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DISPLAY_ERROR_NUMBER.1774629186" name="Emit diagnostic identifier numbers (--display_error_number, -pden)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DISPLAY_ERROR_NUMBER" value="true" valueType="boolean"/>
-								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_FUNC_SUBSECTIONS.224627589" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_FUNC_SUBSECTIONS" value="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_FUNC_SUBSECTIONS.on" valueType="enumerated"/>
-								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_DATA_SUBSECTIONS.1294764017" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_DATA_SUBSECTIONS" value="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_DATA_SUBSECTIONS.on" valueType="enumerated"/>
+								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_FUNC_SUBSECTIONS.224627589" name="Place each function in a separate subsection (--gen_func_subsections, -ms)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_FUNC_SUBSECTIONS" value="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_FUNC_SUBSECTIONS.on" valueType="enumerated"/>
+								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_DATA_SUBSECTIONS.1294764017" name="Place structs and arrays in separate subsections (--gen_data_subsections)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_DATA_SUBSECTIONS" value="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_DATA_SUBSECTIONS.on" valueType="enumerated"/>
 								<inputType id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compiler.inputType__C_SRCS.1316292494" name="C Sources" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compiler.inputType__C_SRCS"/>
 								<inputType id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compiler.inputType__CPP_SRCS.39663165" name="C++ Sources" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compiler.inputType__CPP_SRCS"/>
 								<inputType id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compiler.inputType__ASM_SRCS.757908588" name="Assembly Sources" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compiler.inputType__ASM_SRCS"/>
@@ -2578,10 +2578,10 @@
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_MANUFACTURER=\&quot;ivESK/HSG\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_TYPE=\&quot;GENERIC\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_MODEL_NUMBER=\&quot;SENSORSIM\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SERIAL_NO=\&quot;20171128-0001\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SERIAL_NO=\&quot;20180122-0001\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_HW_VERSION=\&quot;R1\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_FIRMWARE_VERSION=\&quot;v1.1.0\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SW_VERSION=\&quot;v1.1.0\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_FIRMWARE_VERSION=\&quot;v1.1.1\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SW_VERSION=\&quot;v1.1.1\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_ENGINE_CONF_MAX_OBJECTS=20"/>
 									<listOptionValue builtIn="false" value="COAP_MAX_OBSERVERS=50"/>
 									<listOptionValue builtIn="false" value="SF_SERIALMAC_INVERTED_LENGTH_RUNTIME_SEL=1"/>
@@ -2730,10 +2730,10 @@
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_MANUFACTURER=\&quot;ivESK/HSG\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_TYPE=\&quot;GENERIC\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_MODEL_NUMBER=\&quot;SENSORSIM-STATIC\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SERIAL_NO=\&quot;20171128-0001\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SERIAL_NO=\&quot;20180122-0001\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_HW_VERSION=\&quot;R1\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_FIRMWARE_VERSION=\&quot;v1.1.0\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SW_VERSION=\&quot;v1.1.0\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_FIRMWARE_VERSION=\&quot;v1.1.1\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SW_VERSION=\&quot;v1.1.1\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_ENGINE_CONF_MAX_OBJECTS=20"/>
 									<listOptionValue builtIn="false" value="COAP_MAX_OBSERVERS=50"/>
 									<listOptionValue builtIn="false" value="SF_SERIALMAC_INVERTED_LENGTH_RUNTIME_SEL=1"/>
@@ -2746,8 +2746,8 @@
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DISPLAY_ERROR_NUMBER.2143102518" name="Emit diagnostic identifier numbers (--display_error_number, -pden)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DISPLAY_ERROR_NUMBER" value="true" valueType="boolean"/>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.OPT_LEVEL.79698349" name="Optimization level (--opt_level, -O)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.OPT_LEVEL" value="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.OPT_LEVEL.0" valueType="enumerated"/>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.OPT_FOR_SPEED.1054439268" name="Speed vs. size trade-offs (--opt_for_speed, -mf)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.OPT_FOR_SPEED" value="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.OPT_FOR_SPEED.0" valueType="enumerated"/>
-								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_FUNC_SUBSECTIONS.1930422611" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_FUNC_SUBSECTIONS" value="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_FUNC_SUBSECTIONS.on" valueType="enumerated"/>
-								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_DATA_SUBSECTIONS.261178613" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_DATA_SUBSECTIONS" value="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_DATA_SUBSECTIONS.on" valueType="enumerated"/>
+								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_FUNC_SUBSECTIONS.1930422611" name="Place each function in a separate subsection (--gen_func_subsections, -ms)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_FUNC_SUBSECTIONS" value="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_FUNC_SUBSECTIONS.on" valueType="enumerated"/>
+								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_DATA_SUBSECTIONS.261178613" name="Place structs and arrays in separate subsections (--gen_data_subsections)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_DATA_SUBSECTIONS" value="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.GEN_DATA_SUBSECTIONS.on" valueType="enumerated"/>
 								<inputType id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compiler.inputType__C_SRCS.980646853" name="C Sources" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compiler.inputType__C_SRCS"/>
 								<inputType id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compiler.inputType__CPP_SRCS.530064040" name="C++ Sources" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compiler.inputType__CPP_SRCS"/>
 								<inputType id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compiler.inputType__ASM_SRCS.1944742414" name="Assembly Sources" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compiler.inputType__ASM_SRCS"/>
