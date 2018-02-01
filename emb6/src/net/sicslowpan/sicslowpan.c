@@ -107,6 +107,12 @@ void uip_log(char *msg);
 #define UIP_LOG(m)
 #endif /* UIP_LOGGING == 1 */
 
+#ifdef SICSLOWPAN_CONF_MAX_MAC_TRANSMISSIONS
+#define SICSLOWPAN_MAX_MAC_TRANSMISSIONS SICSLOWPAN_CONF_MAX_MAC_TRANSMISSIONS
+#else
+#define SICSLOWPAN_MAX_MAC_TRANSMISSIONS 4
+#endif
+
 #ifndef SICSLOWPAN_COMPRESSION
 #ifdef SICSLOWPAN_CONF_COMPRESSION
 #define SICSLOWPAN_COMPRESSION SICSLOWPAN_CONF_COMPRESSION
@@ -1271,6 +1277,11 @@ send_packet(linkaddr_t *dest)
   packetbuf_set_addr(PACKETBUF_ADDR_SENDER,(void*)&uip_lladdr);
 #endif
 
+  /* Force acknowledge from sender */
+#if SICSLOWPAN_CONF_ACK_ALL
+  packetbuf_set_attr(PACKETBUF_ATTR_RELIABLE, 1);
+#endif
+
     if ((p_ns != NULL) && (p_ns->dllsec != NULL)) {
         /* Provide a callback function to receive the result of
          a packet transmission. */
@@ -1307,6 +1318,9 @@ static uint8_t output(const uip_lladdr_t *localdest)
   /* reset packetbuf buffer */
   packetbuf_clear();
   packetbuf_ptr = packetbuf_dataptr();
+
+  packetbuf_set_attr(PACKETBUF_ATTR_MAX_MAC_TRANSMISSIONS,
+      SICSLOWPAN_MAX_MAC_TRANSMISSIONS);
 
   if(callback) {
     /* call the attribution when the callback comes, but set attributes
