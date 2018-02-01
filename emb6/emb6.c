@@ -98,6 +98,8 @@
 static s_ns_t* ps_stack;
 /** Pointer to the demo structures */
 static s_demo_t* ps_dms;
+/** Heartbeat Timer */
+static struct ctimer s_hbTimer;
 
 
 /*
@@ -429,6 +431,22 @@ static int8_t loc_dagRootInit( void )
 
 
 /**
+ * \brief   Callback function for the heartbeat timer.
+ *
+ *          This function toggles the heartbeat led and
+ *          resets the according timer.
+ *
+ */
+static void loc_heartbeat( void* ptr )
+{
+
+  /* toggle LED */
+  bsp_led(HAL_LED0, EN_BSP_LED_OP_TOGGLE);
+  ctimer_reset( &s_hbTimer );
+}
+
+
+/**
  * \brief   Set the stack status.
  *
  *          This function sets the according status variable and
@@ -594,6 +612,10 @@ void emb6_init( s_ns_t* ps_ns, s_demo_t* ps_demos, e_nsErr_t* p_err )
 #else
     loc_set_status( STACK_STATUS_IDLE );
 #endif /* #if EMB6_NO_AUTOSTART != TRUE */
+
+
+    /* start Heartbeat-Timer */
+    ctimer_set( &s_hbTimer, 500 , loc_heartbeat , NULL );
 
 } /* emb6_init() */
 
