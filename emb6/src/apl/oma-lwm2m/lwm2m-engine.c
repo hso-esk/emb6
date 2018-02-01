@@ -75,8 +75,10 @@
 #endif /* LWM2M_DEVICE_MODEL_NUMBER */
 #endif /* LWM2M_ENGINE_CLIENT_ENDPOINT_PREFIX */
 
-#define LWM2M_HANDLER_TIMEOUT       5
-#define LWM2M_LOCATION_PATH_MAX     64
+#define LWM2M_HANDLER_TIMEOUT               5
+#define LWM2M_HANDLER_UPDATE_PER_LIFETIME   3
+#define LWM2M_HANDLER_MAX_UPDATE_ERROR      3
+#define LWM2M_LOCATION_PATH_MAX             64
 
 #define REMOTE_PORT        UIP_HTONS(COAP_DEFAULT_PORT)
 #define BS_REMOTE_PORT     UIP_HTONS(5685)
@@ -97,6 +99,7 @@ static uint8_t use_registration = 0;
 static uint8_t has_registration_server_info = 0;
 static uint8_t registered = 0;
 static uint8_t bootstrapped = 0; /* bootstrap made... */
+static uint8_t registerErrors = 0;
 
 static struct etimer et;
 static f_lwm2m_engine_statch_cb p_statch_cb;
@@ -108,6 +111,8 @@ void lwm2m_security_init(void);
 static const lwm2m_instance_t *get_first_instance_of_object(uint16_t id, lwm2m_context_t *context);
 static const lwm2m_instance_t *get_instance(const lwm2m_object_t *object, lwm2m_context_t *context, int depth);
 static const lwm2m_resource_t *get_resource(const lwm2m_instance_t *instance, lwm2m_context_t *context);
+static void lwm2m_engine_callback(c_event_t c_event, p_data_t p_data);
+
 /*---------------------------------------------------------------------------*/
 static void
 client_chunk_handler(void *response)
@@ -138,6 +143,11 @@ client_registration_handler(void *response)
 
         /* client is registered */
         registered = 1;
+        registerErrors = 0;
+
+        etimer_stop(&et);
+        etimer_set(&et, (lwm2m_server_getLifetime() / LWM2M_HANDLER_UPDATE_PER_LIFETIME)
+            * bsp_getTRes(), lwm2m_engine_callback);
 
         if( p_statch_cb != NULL )
         {
@@ -160,16 +170,31 @@ client_update_handler(void *response)
     {
       /* everything is still fine */
       registered = 1;
+      registerErrors = 0;
+
+      etimer_stop(&et);
+      etimer_set(&et, (lwm2m_server_getLifetime() / LWM2M_HANDLER_UPDATE_PER_LIFETIME)
+          * bsp_getTRes(), lwm2m_engine_callback);
     }
     else
     {
-      /* update failed .... delete the registration */
-      registered = 0;
+      /* update failed */
+      registerErrors++;
 
-      if( p_statch_cb != NULL )
+      etimer_stop(&et);
+      etimer_set(&et, LWM2M_HANDLER_TIMEOUT * bsp_getTRes(),
+          lwm2m_engine_callback);
+
+      if( registerErrors > LWM2M_HANDLER_MAX_UPDATE_ERROR )
       {
-        /* call status update callback */
-        p_statch_cb( registered, p_statch_data );
+        /* delete registration */
+        registered = 0;
+
+        if( p_statch_cb != NULL )
+        {
+          /* call status update callback */
+          p_statch_cb( registered, p_statch_data );
+        }
       }
     }
   }
@@ -289,7 +314,7 @@ update_bootstrap_server(void)
 }
 
 /*---------------------------------------------------------------------------*/
-void
+static void
 lwm2m_engine_callback(c_event_t c_event, p_data_t p_data)
 {
   static coap_packet_t request[1];      /* This way the packet can be treated as pointer as usual. */
@@ -434,12 +459,13 @@ lwm2m_engine_callback(c_event_t c_event, p_data_t p_data)
 
       if( registered == 1 )
       {
-
-        etimer_set(&et, (lwm2m_server_getLifetime() / 3) * bsp_getTRes(),
-            lwm2m_engine_callback);
+        etimer_stop(&et);
+        etimer_set(&et, (lwm2m_server_getLifetime() / LWM2M_HANDLER_UPDATE_PER_LIFETIME) *
+            bsp_getTRes(), lwm2m_engine_callback);
       }
       else
       {
+        etimer_stop(&et);
         etimer_set(&et, LWM2M_HANDLER_TIMEOUT * bsp_getTRes(),
             lwm2m_engine_callback);
       }
