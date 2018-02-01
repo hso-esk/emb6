@@ -632,6 +632,9 @@ void emb6_process( int32_t us_delay )
     /* Attention: emb6 main process loop !! do not change !! */
     do
     {
+        /* Clear Watchdg */
+        bsp_watchdog( EN_BSP_WD_RESET );
+
         if( ps_stack != NULL )
         {
           evproc_nextEvent();

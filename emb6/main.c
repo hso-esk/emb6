@@ -467,7 +467,9 @@ static void emb6_task( void* p_params )
 #if USE_FREERTOS
         emb6_process(-1);
 #else
+        bsp_watchdog( EN_BSP_WD_START );
         emb6_process(EMB6_PROC_DELAY);
+        bsp_watchdog( EN_BSP_WD_RESET );
 #endif /* #if USE_FREERTOS */
     }
 
