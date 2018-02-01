@@ -36,6 +36,7 @@
 #include "sf_uart.h"
 #include "driverlib/interrupt.h"
 #include "rt_tmr.h"
+#include "driverlib/watchdog.h"
 
 #if USE_TI_RTOS
 #include <ti/drivers/PIN.h>
@@ -71,6 +72,9 @@
 /*! Compares X with @ref MCU_INIT_STATUS_OK. */
 #define MCU_INIT_RET_STATUS_CHECK(X)            ( X == MCU_INIT_STATUS_OK )
 
+#define WATCHDOG_TOT                            (2000.0)
+#define WATCHDOG_VAL                            (WATCHDOG_TOT*1.5*1000)
+
 /*============================================================================*/
 /*                                ENUMS                                       */
 /*============================================================================*/
@@ -85,12 +89,14 @@
 static int8_t _hal_uart_init();
 static int8_t _hal_systick(void);
 static void _hal_isrSysTick(uint32_t l_count);
+static void _hal_watchdog_handler( void );
 /*============================================================================*/
 /*                           LOCAL VARIABLES                                  */
 /*============================================================================*/
 
 /*! Hal tick counter */
 static clock_time_t volatile hal_ticks;
+static uint8_t volatile hal_watchdog_pending;
 
 
 /**
@@ -270,6 +276,29 @@ static void _hal_uartRxCb( uint8_t c )
 
 #endif /* #if defined(HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX) */
 #endif /* #if defined(HAL_SUPPORT_UART) */
+
+
+/*!
+ * @brief  Watchdog interrupt handler.
+ *
+ */
+static void _hal_watchdog_handler( void )
+{
+
+  /* Clear the Watchdog timeout once */
+  WatchdogIntClear();
+
+  /* Check if the watchdog interrupt has already been run once */
+  if(hal_watchdog_pending) {
+    /* If so hang and wait for the coming reset */
+    while(1);
+  }
+  else {
+    /* Flag that we've run the Watchdog interrupt once */
+    hal_watchdog_pending = 1;
+
+  }
+}
 
 /*==============================================================================
                              API FUNCTIONS
@@ -475,7 +504,7 @@ int8_t hal_pinGet(void * p_pin)
 /*============================================================================*/
 int8_t hal_watchdogReset(void)
 {
-  /* Not needed because the stack will not use this function */
+    hal_watchdog_pending = 0;
     return 0;
 } /* hal_watchdogReset() */
 
@@ -484,7 +513,16 @@ int8_t hal_watchdogReset(void)
 /*============================================================================*/
 int8_t hal_watchdogStart(void)
 {
-  /* Not needed because the stack will not use this function */
+    /* register watchdog interrupt handler */
+    WatchdogIntRegister( _hal_watchdog_handler );
+
+    /* enable watchdog reset and set timeout */
+    WatchdogResetEnable();
+    WatchdogReloadSet(WATCHDOG_VAL);
+
+    /* enable watchdog and allow debug stall */
+    WatchdogStallEnable();
+    WatchdogEnable();
     return 0;
 } /* hal_watchdogStart() */
 
@@ -493,7 +531,7 @@ int8_t hal_watchdogStart(void)
 /*============================================================================*/
 int8_t hal_watchdogStop(void)
 {
-  /* Not needed because the stack will not use this function */
+    WatchdogResetDisable();
     return 0 ;
 } /* hal_watchdogStop() */
 
