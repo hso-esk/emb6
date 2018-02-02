@@ -41,7 +41,7 @@
 
 
 #undef QUEUEBUF_CONF_NUM
-#define QUEUEBUF_CONF_NUM                      4
+#define QUEUEBUF_CONF_NUM                   4
 
 #undef UIP_CONF_BUFFER_SIZE
 #define UIP_CONF_BUFFER_SIZE                140
@@ -61,14 +61,14 @@
 #define NULLRDC_CONF_802154_AUTOACK         FALSE
 
 #undef UART1_CONF_RX_WITH_DMA
-#define UART1_CONF_RX_WITH_DMA               TRUE
+#define UART1_CONF_RX_WITH_DMA              TRUE
 
 #undef UART1_CONF_TX_WITH_INTERRUPT
-#define UART1_CONF_TX_WITH_INTERRUPT         TRUE
+#define UART1_CONF_TX_WITH_INTERRUPT        TRUE
 
-#define UART1_CONF_TXBUFSIZE                 512
+#define UART1_CONF_TXBUFSIZE                512
 
-#define UART1_CONF_RXBUFSIZE                 512
+#define UART1_CONF_RXBUFSIZE                512
 
 #define SLIP_CONF_TCPIP_INPUT()
 

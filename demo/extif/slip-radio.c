@@ -49,14 +49,27 @@
 #define PRINTSHORT(...)
 #endif
 
+static int chan_num = 26;
+
 int
 cmd_handler_rf(const uint8_t *data, int len)
 {
+  e_nsErr_t err;
+  const s_ns_t* ps_stack = emb6_get();
+  if( (ps_stack == NULL) || (ps_stack->rf == NULL) )
+    return 0;
+
   if(data[0] == '!') {
     if(data[1] == 'C' && len == 3) {
       PRINTF("CMD: Setting channel: %d\n", data[2]);
-      //rf230_set_channel(data[2]);
-      return 1;
+      ps_stack->rf->ioctrl(NETSTK_CMD_RF_CHAN_NUM_SET, (void*)&data[2], &err );
+      if( err == NETSTK_ERR_NONE )
+      {
+        chan_num = data[2];
+        return 1;
+      }
+      else
+        return 0;
     }
   } else if(data[0] == '?') {
     if(data[1] == 'C' && len == 2) {
@@ -64,7 +77,7 @@ cmd_handler_rf(const uint8_t *data, int len)
       PRINTF("CMD: Getting channel: %d\n", data[2]);
       buf[0] = '!';
       buf[1] = 'C';
-      buf[2] = 26;
+      buf[2] = chan_num;
       cmd_send(buf, 3);
       return 1;
     }
