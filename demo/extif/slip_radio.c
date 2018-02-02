@@ -60,7 +60,7 @@ int packet_pos;
 static int slip_radio_cmd_handler(const uint8_t *data, int len);
 
 
-int cmd_handler_rf230(const uint8_t *data, int len);
+int cmd_handler_rf(const uint8_t *data, int len);
 
 /*---------------------------------------------------------------------------*/
 #ifdef CMD_CONF_HANDLERS

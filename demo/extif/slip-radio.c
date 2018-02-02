@@ -50,7 +50,7 @@
 #endif
 
 int
-cmd_handler_rf230(const uint8_t *data, int len)
+cmd_handler_rf(const uint8_t *data, int len)
 {
   if(data[0] == '!') {
     if(data[1] == 'C' && len == 3) {
