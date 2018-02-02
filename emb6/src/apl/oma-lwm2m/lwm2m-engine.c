@@ -190,6 +190,9 @@ client_update_handler(void *response)
         /* delete registration */
         registered = 0;
 
+        /* remove observer */
+        coap_remove_observer_by_client( &server_ipaddr, server_port );
+
         if( p_statch_cb != NULL )
         {
           /* call status update callback */
