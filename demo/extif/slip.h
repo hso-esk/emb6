@@ -54,7 +54,7 @@
 
 #define CMD_CONF_OUTPUT                     slip_radio_cmd_output
 
-#define CMD_CONF_HANDLERS                     slip_radio_cmd_handler,cmd_handler_rf230
+#define CMD_CONF_HANDLERS                   slip_radio_cmd_handler,cmd_handler_rf
 
 
 #undef NULLRDC_CONF_802154_AUTOACK
