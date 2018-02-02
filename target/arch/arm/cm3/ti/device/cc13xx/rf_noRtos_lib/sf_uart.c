@@ -60,9 +60,14 @@
 #endif /* #ifndef UART_TX_BLOCKING */
 
 /*! Sets the length of the Rx ringbuffer. */
+#ifndef UART_BUFFER_RX_LEN
 #define UART_BUFFER_RX_LEN          128U
+#endif /* #ifndef UART_BUFFER_RX_LEN */
+
 /*! Sets the length of the Tx ringbuffer. */
+#ifndef UART_BUFFER_TX_LEN
 #define UART_BUFFER_TX_LEN          128U
+#endif /* #ifndef UART_BUFFER_TX_LEN */
 
 /*! Default baudrate used for the uart */
 #ifndef UART_DEFAULT_BAUD
