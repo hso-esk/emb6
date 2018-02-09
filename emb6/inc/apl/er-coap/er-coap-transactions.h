@@ -72,6 +72,7 @@ typedef struct coap_transaction {
 
 /* void coap_register_as_transaction_handler(void); */    /* not needed */
 
+void coap_init_transactions(void);
 void coap_use_prio_transaction(void);
 void coap_use_nonprio_transaction(void);
 coap_transaction_t *coap_new_transaction(uint16_t mid, uip_ipaddr_t *addr,

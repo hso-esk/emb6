@@ -74,6 +74,14 @@ static struct memb* tmem = &transactions_memb;
 /*---------------------------------------------------------------------------*/
 /*- Internal API ------------------------------------------------------------*/
 
+void
+coap_init_transactions(void)
+{
+  memb_init(&transactions_memb);
+  memb_init(&transactions_prio_memb);
+  list_init(transactions_list);
+}
+
 /*---------------------------------------------------------------------------*/
 void
 coap_use_prio_transaction(void)

@@ -341,6 +341,7 @@ coap_init_engine(void)
   PRINTF("Starting %s receiver...\n\r", coap_rest_implementation.name);
   rest_activate_resource(&res_well_known_core, ".well-known/core");
 
+  coap_init_transactions();
   coap_init_connection(SERVER_LISTEN_PORT,
                       (udp_socket_input_callback_t)coap_receive);
 }
