@@ -376,16 +376,23 @@ uint8_t sf_rf_6lowpan_sendBlocking(uint8_t *pc_data, uint16_t  i_len)
 
 void sf_rf_6lowpan_sleep(void)
 {
-    /* Stop RX command */
-    RFC_sendDirectCmd(CMDR_DIR_CMD(CMD_ABORT));
+    /* check if the radio is already in sleep mode */
+    if( sf_rf_get_Status() == RF_STATUS_SLEEP )
+        return;
+    /* Turn OFF radio core and disable interrupt */
+    sf_rf_switchState(RF_STATUS_SLEEP);
 }
 
 
 bool sf_rf_wake(void) //  called by the radio : cc13xx_On (e_nsErr_t *p_err)
 {
+  /* Init the driver */
+  if(sf_rf_switchState(RF_STATUS_INIT)!= ROUTINE_DONE)
+        return false;
   /* Turn radio to RX mode */
   if(sf_rf_switchState(RF_STATUS_RX_LISTEN)!= ROUTINE_DONE)
       return false;
+
   return true;
 }
 
