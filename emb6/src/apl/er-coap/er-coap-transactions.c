@@ -66,17 +66,36 @@
 
 /*---------------------------------------------------------------------------*/
 MEMB(transactions_memb, coap_transaction_t, COAP_MAX_OPEN_TRANSACTIONS);
+MEMB(transactions_prio_memb, coap_transaction_t, 1);
 LIST(transactions_list);
+
+static struct memb* tmem = &transactions_memb;
 
 /*---------------------------------------------------------------------------*/
 /*- Internal API ------------------------------------------------------------*/
+
+/*---------------------------------------------------------------------------*/
+void
+coap_use_prio_transaction(void)
+{
+  tmem = &transactions_prio_memb;
+}
+
+/*---------------------------------------------------------------------------*/
+void
+coap_use_nonprio_transaction(void)
+{
+  tmem = &transactions_memb;
+}
+
 /*---------------------------------------------------------------------------*/
 coap_transaction_t *
 coap_new_transaction(uint16_t mid, uip_ipaddr_t *addr, uint16_t port)
 {
-  coap_transaction_t *t = memb_alloc(&transactions_memb);
+  coap_transaction_t *t = memb_alloc(tmem);
 
   if(t) {
+    t->mem = tmem;
     t->mid = mid;
     t->retrans_counter = 0;
 
@@ -144,12 +163,16 @@ coap_send_transaction(coap_transaction_t *t)
 void
 coap_clear_transaction(coap_transaction_t *t)
 {
+  struct memb* mem;
   if(t) {
     PRINTF("Freeing transaction %u: %p\n\r", t->mid, t);
 
+    mem = t->mem;
     etimer_stop(&t->retrans_timer);
     list_remove(transactions_list, t);
-    memb_free(&transactions_memb, t);
+
+    if( mem )
+      memb_free(mem, t);
   }
 }
 coap_transaction_t *
