@@ -896,7 +896,7 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
       if(returnValue == RFC_OK)
       {
         /* Send CMD_FS command to RF Core */
-        for(i; i<0x7FFF;i++);
+        for(i = 0; i<0x7FFF;i++);
         cmdStatus = RFC_sendRadioOp(cc1310.conf.ps_cmdFs);
         if(cmdStatus != RFC_CMDSTATUS_DONE)
         {
@@ -1030,7 +1030,11 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
           cmdStatus=RFC_sendRadioOp_nb((rfc_radioOp_t*)cc1310.rx.p_cmdPropRxAdv , NULL);
           /* FIXME wait for ACK */
           //bsp_delay_us(cc1310.tx.waitForAckTimeout);
-          for(i; i<0x2FFD;i++); // 3 ms
+          for(i= 0; i<0x4FFD;i++)
+          {
+            if( cc1310.tx.Ack_received )
+              break;
+          }
           /* stop waiting for ACK */
           cc1310.tx.Tx_waiting_Ack=0;
           if(cc1310.tx.Ack_received)
