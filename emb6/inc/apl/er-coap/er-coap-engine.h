@@ -73,7 +73,7 @@ struct request_state_t {
   nonblocking_response_handler request_callback;
 };
 
-void coap_nonblocking_request (uip_ipaddr_t *remote_ipaddr, uint16_t remote_port,
+coap_transaction_t* coap_nonblocking_request (uip_ipaddr_t *remote_ipaddr, uint16_t remote_port,
             coap_packet_t *request,
             nonblocking_response_handler request_callback);
 /*---------------------------------------------------------------------------*/

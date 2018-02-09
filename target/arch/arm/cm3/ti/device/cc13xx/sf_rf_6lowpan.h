@@ -129,7 +129,7 @@ typedef struct
   /** Time out for waiting ACK  */
     uint16_t waitForAckTimeout;
   /** flag to set when an is received */
-    uint8_t Ack_received;
+    volatile uint8_t Ack_received;
   /** Signal Strength */
     uint8_t signalStrength;
   /** Pointer to the current tx command */

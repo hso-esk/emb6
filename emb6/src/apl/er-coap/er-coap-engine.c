@@ -68,7 +68,7 @@ static struct request_state_t request_state;
  =============================================================================*/
 
 void _coap_nonblocking_request_task(struct request_state_t *state);
-void _coap_nonblocking_request_start(struct request_state_t *state);
+coap_transaction_t* _coap_nonblocking_request_start(struct request_state_t *state);
 
 /*==============================================================================
                                 LOCAL FUNCTIONS
@@ -341,6 +341,7 @@ coap_init_engine(void)
   PRINTF("Starting %s receiver...\n\r", coap_rest_implementation.name);
   rest_activate_resource(&res_well_known_core, ".well-known/core");
 
+  coap_init_transactions();
   coap_init_connection(SERVER_LISTEN_PORT,
                       (udp_socket_input_callback_t)coap_receive);
 }
@@ -366,7 +367,7 @@ coap_nonblocking_request_callback(void *callback_data, void *response)
   _coap_nonblocking_request_task(state);
 }
 /*---------------------------------------------------------------------------*/
-void
+coap_transaction_t*
 coap_nonblocking_request(uip_ipaddr_t *remote_ipaddr, uint16_t remote_port,
             coap_packet_t *request,
             nonblocking_response_handler request_callback)
@@ -383,10 +384,10 @@ coap_nonblocking_request(uip_ipaddr_t *remote_ipaddr, uint16_t remote_port,
       state->request = request;
       state->request_callback = request_callback;
 
-      _coap_nonblocking_request_start(state);
+      return _coap_nonblocking_request_start(state);
 }
 /*---------------------------------------------------------------------------*/
-void
+coap_transaction_t*
 _coap_nonblocking_request_start(struct request_state_t *state)
 {
     state->request->mid = coap_get_mid();
@@ -404,8 +405,10 @@ _coap_nonblocking_request_start(struct request_state_t *state)
 
       coap_send_transaction(state->transaction);
       PRINTF("Requested #%lu (MID %u)\n\r", state->block_num, state->request->mid);
+      return state->transaction;
     } else {
           PRINTF("Could not allocate transaction buffer");
+          return NULL;
     }
 }
 /*---------------------------------------------------------------------------*/

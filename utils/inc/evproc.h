@@ -141,6 +141,9 @@ typedef enum
    /** tsch process event  */
    EVENT_TYPE_TISCH_PROCESS,
 
+   /** LWM2M Event */
+   EVENT_TYPE_LWM2M,
+
    /** MAX identifier */
    EVENT_TYPE_MAX
 

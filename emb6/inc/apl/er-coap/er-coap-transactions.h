@@ -66,10 +66,15 @@ typedef struct coap_transaction {
   uint16_t packet_len;
   uint8_t packet[COAP_MAX_PACKET_SIZE + 1];     /* +1 for the terminating '\0' which will not be sent
                                                  * Use snprintf(buf, len+1, "", ...) to completely fill payload */
+  struct memb* mem;
+
 } coap_transaction_t;
 
 /* void coap_register_as_transaction_handler(void); */    /* not needed */
 
+void coap_init_transactions(void);
+void coap_use_prio_transaction(void);
+void coap_use_nonprio_transaction(void);
 coap_transaction_t *coap_new_transaction(uint16_t mid, uip_ipaddr_t *addr,
                                          uint16_t port);
 void coap_send_transaction(coap_transaction_t *t);

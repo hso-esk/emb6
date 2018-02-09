@@ -376,16 +376,23 @@ uint8_t sf_rf_6lowpan_sendBlocking(uint8_t *pc_data, uint16_t  i_len)
 
 void sf_rf_6lowpan_sleep(void)
 {
-    /* Stop RX command */
-    RFC_sendDirectCmd(CMDR_DIR_CMD(CMD_ABORT));
+    /* check if the radio is already in sleep mode */
+    if( sf_rf_get_Status() == RF_STATUS_SLEEP )
+        return;
+    /* Turn OFF radio core and disable interrupt */
+    sf_rf_switchState(RF_STATUS_SLEEP);
 }
 
 
 bool sf_rf_wake(void) //  called by the radio : cc13xx_On (e_nsErr_t *p_err)
 {
+  /* Init the driver */
+  if(sf_rf_switchState(RF_STATUS_INIT)!= ROUTINE_DONE)
+        return false;
   /* Turn radio to RX mode */
   if(sf_rf_switchState(RF_STATUS_RX_LISTEN)!= ROUTINE_DONE)
       return false;
+
   return true;
 }
 
@@ -889,7 +896,7 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
       if(returnValue == RFC_OK)
       {
         /* Send CMD_FS command to RF Core */
-        for(i; i<0x7FFF;i++);
+        for(i = 0; i<0x7FFF;i++);
         cmdStatus = RFC_sendRadioOp(cc1310.conf.ps_cmdFs);
         if(cmdStatus != RFC_CMDSTATUS_DONE)
         {
@@ -1023,7 +1030,11 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
           cmdStatus=RFC_sendRadioOp_nb((rfc_radioOp_t*)cc1310.rx.p_cmdPropRxAdv , NULL);
           /* FIXME wait for ACK */
           //bsp_delay_us(cc1310.tx.waitForAckTimeout);
-          for(i; i<0x2FFD;i++); // 3 ms
+          for(i= 0; i<0x4FFD;i++)
+          {
+            if( cc1310.tx.Ack_received )
+              break;
+          }
           /* stop waiting for ACK */
           cc1310.tx.Tx_waiting_Ack=0;
           if(cc1310.tx.Ack_received)

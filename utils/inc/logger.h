@@ -69,12 +69,16 @@
 #ifndef LOGGER_H_
 #define LOGGER_H_
 
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <ctype.h>
 #include "bsp.h"
 #include "trace.h"
+
+#if (LOGGER_ENABLE && LOGGER_LEVEL)
+
 
 #define IPV6ADDR_LEN    16
 #ifndef HEXDUMP_COLS
@@ -183,6 +187,8 @@ inline static void log_hexdump(const void* p_buf, uint32_t l_len)
         }
     }
 }
+
+#endif /*#if (LOGGER_ENABLE && LOGGER_LEVEL) */
 
 
 #define LOG2_OK(msg, ...)       LOGGER_OK(2,msg, ##__VA_ARGS__)
