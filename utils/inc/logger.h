@@ -188,6 +188,9 @@ inline static void log_hexdump(const void* p_buf, uint32_t l_len)
     }
 }
 
+#else
+#define log_hexdump(a,b)      (void)0
+#define log_ip6addr(a)        (void)0
 #endif /*#if (LOGGER_ENABLE && LOGGER_LEVEL) */
 
 
