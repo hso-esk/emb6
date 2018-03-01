@@ -264,7 +264,7 @@ typedef enum
 
   /** Write request to a LWM2M instance. Both device and host use this
     * command e.g. to set configurations or stored values. */
-  e_lwm2m_api_type_inst_wr_req,
+  e_lwm2m_api_type_inst_wr_req = 0x92,
 
   /** The host/device has to answer to a LWM2M2_INST_WR_REQ using a
     * LWM2M2_RES_WR_RSP. */
