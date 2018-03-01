@@ -2147,7 +2147,7 @@ static int32_t _hndl_inst_wr( uint8_t* p_cmd, uint16_t cmdLen,
 
       p_lwm2mRes = p_lwm2mInst->p_resources;
       int j = 0;
-      for( j = 0; (j < p_lwm2mInst->count) && (p_lwm2mRes != NULL); i++ )
+      for( j = 0; (j < p_lwm2mInst->count) && (p_lwm2mRes != NULL); j++ )
       {
         if( p_lwm2mRes->id == resId )
           /* we found the according resource ID */
