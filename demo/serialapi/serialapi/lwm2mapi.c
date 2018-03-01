@@ -2098,7 +2098,7 @@ static int32_t _hndl_inst_wr( uint8_t* p_cmd, uint16_t cmdLen,
     EMB6_ASSERT_RET( cmdLen >= sizeof(uint8_t), -2 );
     LWM2M_API_GET_FIELD( instId, p_data, cmdLen, uint8_t );
     EMB6_ASSERT_RET( cmdLen >= sizeof(uint16_t), -2 );
-    LWM2M_API_GET_FIELD( resNum, p_data, cmdLen, uint16_t );
+    LWM2M_API_GET_FIELD( resNum, p_data, cmdLen, uint8_t );
 
     objId = uip_ntohs( objId );
 
