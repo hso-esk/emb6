@@ -2165,6 +2165,8 @@ static int32_t _hndl_inst_wr( uint8_t* p_cmd, uint16_t cmdLen,
       {
         /* Resource was found. Write the resource value */
         ret = _wr_res( p_lwm2mRes, &p_data, &cmdLen, &resSize );
+        if(ret != 0)
+            break;
       }
     }
   }
