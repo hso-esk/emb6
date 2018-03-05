@@ -472,7 +472,10 @@
 									<listOptionValue builtIn="false" value="HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX=1"/>
 									<listOptionValue builtIn="false" value="USE_TI_RTOS=0"/>
 									<listOptionValue builtIn="false" value="HAL_SUPPORT_SLIPUART=1"/>
-									<listOptionValue builtIn="false" value="MAC_ADDR_WORD=0x00aa"/>
+									<listOptionValue builtIn="false" value="MAC_ADDR_WORD=0xcafe"/>
+									<listOptionValue builtIn="false" value="UART_BUFFER_RX_LEN=512"/>
+									<listOptionValue builtIn="false" value="UART_BUFFER_TX_LEN=512"/>
+									<listOptionValue builtIn="false" value="UART_DEFAULT_BAUD=230400"/>
 								</option>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DIAG_WRAP.1288782989" name="Wrap diagnostic messages (--diag_wrap)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DIAG_WRAP" value="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DIAG_WRAP.off" valueType="enumerated"/>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DIAG_WARNING.822348940" name="Treat diagnostic &lt;id&gt; as warning (--diag_warning, -pdsw)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DIAG_WARNING" valueType="stringList">
