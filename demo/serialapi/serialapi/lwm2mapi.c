@@ -262,9 +262,18 @@ typedef enum
     * LWM2M2_RES_WR_RSP. */
   e_lwm2m_api_type_res_wr_rsp,
 
+  /** Read request initiated by the device. The Device calls this
+   * function whenever it receives an according request from the
+   * associated LWM2M server. */
+  e_lwm2m_api_type_inst_rd_req = 0x90,
+
+  /** The device/host has to answer to a LWM2M2_RES_RD_REQ using a
+    * LWM2M2_RES_RD_RSP. */
+  e_lwm2m_api_type_inst_rd_rsp,
+
   /** Write request to a LWM2M instance. Both device and host use this
     * command e.g. to set configurations or stored values. */
-  e_lwm2m_api_type_inst_wr_req = 0x92,
+  e_lwm2m_api_type_inst_wr_req,
 
   /** The host/device has to answer to a LWM2M2_INST_WR_REQ using a
     * LWM2M2_RES_WR_RSP. */
@@ -546,6 +555,8 @@ static void lwm2m_delete(void *request, void *response, uint8_t *buffer,
     uint16_t preferred_size, int32_t *offset, void* p_user);
 #endif /* #if LWM2M_SERIAL_API_SUPPORT_DYN_OBJ == TRUE */
 
+
+/** Write data to a resources depending on the command */
 static int32_t _wr_res( const lwm2m_resource_t* p_lwm2mRes, uint8_t** p_cmd,
     uint16_t* p_cmdLen, uint8_t* varLen );
 
