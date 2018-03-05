@@ -49,8 +49,8 @@ uint32_t pOverrides[] =
     0x10210000, // new CRC16 poly: CRC-16-CCITT normal form, 0x1021 is x^16 + x^15 + x^5 + 1
     0xC0040051, // CRC initialization (address)
     0x00000000, // CRC initialization (value)
-   //0xC0040061, // override to set the “crcXor” setting (4-byte value)
-   //0xFFFFFFFF, // new “crcXor” value to use (default is 0x00000000)
+   //0xC0040061, // override to set the ï¿½crcXorï¿½ setting (4-byte value)
+   //0xFFFFFFFF, // new ï¿½crcXorï¿½ value to use (default is 0x00000000)
 #endif
 // override_synth.xml
     ADI_HALFREG_OVERRIDE(0,61,0xF,0xD),
@@ -98,10 +98,14 @@ rfc_CMD_PROP_RADIO_DIV_SETUP_t RF_802_15_4_cmdPropRadioDivSetup =
     .condition.rule = 0x1,
     .condition.nSkip = 0x0,
     .modulation.modType = 0x1,
-    .modulation.deviation = 0x64,
-    .symbolRate.preScale = 0xf, // 0x6 Configuration for 250kbps
-    .symbolRate.rateWord = 0x8000, // 0x10000 Configuration for 250kbps
-    .rxBw = 0x24,
+    //.modulation.deviation = 0x64,
+    .modulation.deviation = 0x1f4,
+    //.symbolRate.preScale = 0xf,
+    .symbolRate.preScale = 0x6,
+    //.symbolRate.rateWord = 0x8000,
+    .symbolRate.rateWord = 0x10000,
+    //.rxBw = 0x24,
+    .rxBw = 0x2C,
     .preamConf.nPreamBytes = 0x3,
     .preamConf.preamMode = 0x0,
     .formatConf.nSwBits = 0x10,
