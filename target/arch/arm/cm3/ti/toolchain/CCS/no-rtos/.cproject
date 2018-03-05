@@ -1966,7 +1966,7 @@
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_FIRMWARE_VERSION=\&quot;v1.1.1\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SW_VERSION=\&quot;v1.1.1\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_ENGINE_CONF_MAX_OBJECTS=20"/>
-									<listOptionValue builtIn="false" value="COAP_MAX_OBSERVERS=50"/>
+									<listOptionValue builtIn="false" value="COAP_MAX_OBSERVERS=40"/>
 									<listOptionValue builtIn="false" value="SF_SERIALMAC_INVERTED_LENGTH_RUNTIME_SEL=1"/>
 								</option>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DEBUGGING_MODEL.4318987" name="Debugging model" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DEBUGGING_MODEL" value="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DEBUGGING_MODEL.SYMDEBUG__DWARF" valueType="enumerated"/>
@@ -2122,7 +2122,7 @@
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_FIRMWARE_VERSION=\&quot;v1.1.1\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SW_VERSION=\&quot;v1.1.1\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_ENGINE_CONF_MAX_OBJECTS=20"/>
-									<listOptionValue builtIn="false" value="COAP_MAX_OBSERVERS=50"/>
+									<listOptionValue builtIn="false" value="COAP_MAX_OBSERVERS=40"/>
 									<listOptionValue builtIn="false" value="SF_SERIALMAC_INVERTED_LENGTH_RUNTIME_SEL=1"/>
 								</option>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DEBUGGING_MODEL.76218622" name="Debugging model" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DEBUGGING_MODEL" value="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DEBUGGING_MODEL.SYMDEBUG__DWARF" valueType="enumerated"/>
@@ -2275,7 +2275,7 @@
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_FIRMWARE_VERSION=\&quot;v1.1.1\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SW_VERSION=\&quot;v1.1.1\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_ENGINE_CONF_MAX_OBJECTS=20"/>
-									<listOptionValue builtIn="false" value="COAP_MAX_OBSERVERS=50"/>
+									<listOptionValue builtIn="false" value="COAP_MAX_OBSERVERS=40"/>
 									<listOptionValue builtIn="false" value="SF_SERIALMAC_INVERTED_LENGTH_RUNTIME_SEL=1"/>
 								</option>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DEBUGGING_MODEL.2139717440" name="Debugging model" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DEBUGGING_MODEL" value="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DEBUGGING_MODEL.SYMDEBUG__DWARF" valueType="enumerated"/>
@@ -2433,7 +2433,7 @@
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_FIRMWARE_VERSION=\&quot;v1.1.1\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SW_VERSION=\&quot;v1.1.1\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_ENGINE_CONF_MAX_OBJECTS=20"/>
-									<listOptionValue builtIn="false" value="COAP_MAX_OBSERVERS=50"/>
+									<listOptionValue builtIn="false" value="COAP_MAX_OBSERVERS=40"/>
 									<listOptionValue builtIn="false" value="SF_SERIALMAC_INVERTED_LENGTH_RUNTIME_SEL=1"/>
 								</option>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DEBUGGING_MODEL.2003826753" name="Debugging model" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DEBUGGING_MODEL" value="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DEBUGGING_MODEL.SYMDEBUG__DWARF" valueType="enumerated"/>
@@ -2586,7 +2586,7 @@
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_FIRMWARE_VERSION=\&quot;v1.1.1\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SW_VERSION=\&quot;v1.1.1\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_ENGINE_CONF_MAX_OBJECTS=20"/>
-									<listOptionValue builtIn="false" value="COAP_MAX_OBSERVERS=50"/>
+									<listOptionValue builtIn="false" value="COAP_MAX_OBSERVERS=40"/>
 									<listOptionValue builtIn="false" value="SF_SERIALMAC_INVERTED_LENGTH_RUNTIME_SEL=1"/>
 								</option>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DEBUGGING_MODEL.2024191902" name="Debugging model" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DEBUGGING_MODEL" value="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DEBUGGING_MODEL.SYMDEBUG__DWARF" valueType="enumerated"/>
@@ -2738,7 +2738,7 @@
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_FIRMWARE_VERSION=\&quot;v1.1.1\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SW_VERSION=\&quot;v1.1.1\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_ENGINE_CONF_MAX_OBJECTS=20"/>
-									<listOptionValue builtIn="false" value="COAP_MAX_OBSERVERS=50"/>
+									<listOptionValue builtIn="false" value="COAP_MAX_OBSERVERS=40"/>
 									<listOptionValue builtIn="false" value="SF_SERIALMAC_INVERTED_LENGTH_RUNTIME_SEL=1"/>
 								</option>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DEBUGGING_MODEL.918416053" name="Debugging model" superClass="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DEBUGGING_MODEL" value="com.ti.ccstudio.buildDefinitions.TMS470_16.9.compilerID.DEBUGGING_MODEL.SYMDEBUG__DWARF" valueType="enumerated"/>
