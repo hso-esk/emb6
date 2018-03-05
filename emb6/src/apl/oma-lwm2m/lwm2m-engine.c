@@ -89,9 +89,8 @@
 /* Timeout for a registration to complete */
 #define LWM2M_TIMEOUT_REGISTRATION                      5
 /* How many updates shall be performed during the lifetime */
-#define LWM2M_UPDATES_PER_LIFETIME                      10
-/* How many updates shall be performed during the lifetime */
-#define LWM2M_INTERVAL_UPDATE                           (lwm2m_server_getLifetime() / LWM2M_UPDATES_PER_LIFETIME)
+#define LWM2M_INTERVAL_UPDATE                           ((lwm2m_server_getLifetime() / 2) + \
+                                                         bsp_getrand(0, (lwm2m_server_getLifetime() / 4) ))
 /* Timeout for a registration to complete */
 #define LWM2M_TIMEOUT_UPDATE                            5
 /* Maximum number of error allowed during update */
