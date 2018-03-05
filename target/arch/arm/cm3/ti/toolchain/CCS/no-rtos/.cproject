@@ -1949,6 +1949,7 @@
 									<listOptionValue builtIn="false" value="USE_TI_RTOS=0"/>
 									<listOptionValue builtIn="false" value="EMB6_INIT_ROOT=0"/>
 									<listOptionValue builtIn="false" value="NET_USE_RPL=1"/>
+									<listOptionValue builtIn="false" value="RPL_CONF_LEAF_ONLY=1"/>
 									<listOptionValue builtIn="false" value="MAC_ADDR_WORD=0x00bb"/>
 									<listOptionValue builtIn="false" value="HAL_SUPPORT_SLIPUART=1"/>
 									<listOptionValue builtIn="false" value="HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX=1"/>
@@ -2105,6 +2106,7 @@
 									<listOptionValue builtIn="false" value="USE_TI_RTOS=0"/>
 									<listOptionValue builtIn="false" value="EMB6_INIT_ROOT=0"/>
 									<listOptionValue builtIn="false" value="NET_USE_RPL=1"/>
+									<listOptionValue builtIn="false" value="RPL_CONF_LEAF_ONLY=1"/>
 									<listOptionValue builtIn="false" value="MAC_ADDR_WORD=0x00bb"/>
 									<listOptionValue builtIn="false" value="HAL_SUPPORT_SLIPUART=1"/>
 									<listOptionValue builtIn="false" value="HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX=1"/>
@@ -2262,6 +2264,7 @@
 									<listOptionValue builtIn="false" value="USE_TI_RTOS=0"/>
 									<listOptionValue builtIn="false" value="EMB6_INIT_ROOT=0"/>
 									<listOptionValue builtIn="false" value="NET_USE_RPL=1"/>
+									<listOptionValue builtIn="false" value="RPL_CONF_LEAF_ONLY=1"/>
 									<listOptionValue builtIn="false" value="MAC_ADDR_WORD=0x00bb"/>
 									<listOptionValue builtIn="false" value="HAL_SUPPORT_SLIPUART=1"/>
 									<listOptionValue builtIn="false" value="HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX=1"/>
@@ -2418,6 +2421,7 @@
 									<listOptionValue builtIn="false" value="USE_TI_RTOS=0"/>
 									<listOptionValue builtIn="false" value="EMB6_INIT_ROOT=0"/>
 									<listOptionValue builtIn="false" value="NET_USE_RPL=1"/>
+									<listOptionValue builtIn="false" value="RPL_CONF_LEAF_ONLY=1"/>
 									<listOptionValue builtIn="false" value="MAC_ADDR_WORD=0x00bb"/>
 									<listOptionValue builtIn="false" value="HAL_SUPPORT_SLIPUART=1"/>
 									<listOptionValue builtIn="false" value="HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX=1"/>
@@ -2575,6 +2579,7 @@
 									<listOptionValue builtIn="false" value="USE_TI_RTOS=0"/>
 									<listOptionValue builtIn="false" value="EMB6_INIT_ROOT=0"/>
 									<listOptionValue builtIn="false" value="NET_USE_RPL=1"/>
+									<listOptionValue builtIn="false" value="RPL_CONF_LEAF_ONLY=1"/>
 									<listOptionValue builtIn="false" value="MAC_ADDR_WORD=0x00bb"/>
 									<listOptionValue builtIn="false" value="HAL_SUPPORT_SLIPUART=1"/>
 									<listOptionValue builtIn="false" value="HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX=1"/>
@@ -2727,6 +2732,7 @@
 									<listOptionValue builtIn="false" value="USE_TI_RTOS=0"/>
 									<listOptionValue builtIn="false" value="EMB6_INIT_ROOT=0"/>
 									<listOptionValue builtIn="false" value="NET_USE_RPL=1"/>
+									<listOptionValue builtIn="false" value="RPL_CONF_LEAF_ONLY=1"/>
 									<listOptionValue builtIn="false" value="MAC_ADDR_WORD=0x00bb"/>
 									<listOptionValue builtIn="false" value="HAL_SUPPORT_SLIPUART=1"/>
 									<listOptionValue builtIn="false" value="HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX=1"/>
