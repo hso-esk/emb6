@@ -335,9 +335,10 @@ uint16_t sf_uart_write(uint8_t *pc_data, uint16_t i_len)
   }/* if...else */
 
   loc_writeUartTxFifo();
-#endif /* #ifdef UART_TX_BLOCKING */
+
   /* Enable TX interrupt of UART module */
   UARTIntEnable(UART0_BASE, UART_INT_TX);
+#endif /* #ifdef UART_TX_BLOCKING */
 
   /*! Return the number of bytes written until the loop was left. */
   return i;
