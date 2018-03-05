@@ -339,13 +339,13 @@ uint32_t bsp_getrand( uint32_t min, uint32_t max )
   uint32_t ret;
 
   if(min == 0 && max == 0)
-    return ((uint32_t) random_rand());
+    return (uint32_t) hal_getrand();
 
   if( max <= min )
     return 0;
 
   /* generate random number in a range of min to max */
-  ret = (uint32_t) random_rand();
+  ret = (uint32_t) hal_getrand();
   ret = ret % max;
   return ret;
 } /* bsp_getrand() */

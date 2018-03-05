@@ -207,8 +207,8 @@ void loc_readUartRxFifo(void)
 *******************************************************************************/
 void UART0IntHandler(void)
 {
-  uint32_t l_intStatus;
-  l_intStatus = UARTIntStatus(UART0_BASE, false);
+  volatile uint32_t l_intStatus;
+  l_intStatus = UARTIntStatus(UART0_BASE, true);
   
   if((l_intStatus & UART_INT_TX) == UART_INT_TX)
   {
@@ -226,6 +226,13 @@ void UART0IntHandler(void)
 
     /* Clear the UART interrupt flag. */
     UARTIntClear(UART0_BASE, UART_INT_RX);
+  }/* if */
+
+  l_intStatus = UARTIntStatus(UART0_BASE, false);
+  if((l_intStatus & UART_INT_OE) == UART_INT_OE)
+  {
+    /* Clear the UART interrupt flag. */
+    UARTIntClear(UART0_BASE, UART_INT_OE);
   }/* if */
 }
 /*==============================================================================
@@ -335,9 +342,10 @@ uint16_t sf_uart_write(uint8_t *pc_data, uint16_t i_len)
   }/* if...else */
 
   loc_writeUartTxFifo();
-#endif /* #ifdef UART_TX_BLOCKING */
+
   /* Enable TX interrupt of UART module */
   UARTIntEnable(UART0_BASE, UART_INT_TX);
+#endif /* #ifdef UART_TX_BLOCKING */
 
   /*! Return the number of bytes written until the loop was left. */
   return i;
