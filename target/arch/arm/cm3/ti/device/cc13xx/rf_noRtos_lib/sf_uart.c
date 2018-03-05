@@ -207,8 +207,8 @@ void loc_readUartRxFifo(void)
 *******************************************************************************/
 void UART0IntHandler(void)
 {
-  uint32_t l_intStatus;
-  l_intStatus = UARTIntStatus(UART0_BASE, false);
+  volatile uint32_t l_intStatus;
+  l_intStatus = UARTIntStatus(UART0_BASE, true);
   
   if((l_intStatus & UART_INT_TX) == UART_INT_TX)
   {
