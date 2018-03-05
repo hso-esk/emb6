@@ -29,6 +29,17 @@
 #include <driverlib/rf_common_cmd.h>
 #include <driverlib/rf_prop_cmd.h>
 #include "bsp.h"
+
+
+#define CC13XX_50KBPS           1
+#define CC13XX_250KBPS          2
+
+#ifndef CC13XX_DATARATE
+#define CC13XX_DATARATE         CC13XX_50KBPS
+#endif
+
+
+
 //#include <ti/drivers/rf/RF.h>
 
 
@@ -98,14 +109,19 @@ rfc_CMD_PROP_RADIO_DIV_SETUP_t RF_802_15_4_cmdPropRadioDivSetup =
     .condition.rule = 0x1,
     .condition.nSkip = 0x0,
     .modulation.modType = 0x1,
-    //.modulation.deviation = 0x64,
+#if CC13XX_DATARATE == CC13XX_50KBPS
+    .modulation.deviation = 0x64,
+    .symbolRate.preScale = 0xf,
+    .symbolRate.rateWord = 0x8000,
+    .rxBw = 0x24,
+#elif CC13XX_DATARATE == CC13XX_250KBPS
     .modulation.deviation = 0x1f4,
-    //.symbolRate.preScale = 0xf,
     .symbolRate.preScale = 0x6,
-    //.symbolRate.rateWord = 0x8000,
     .symbolRate.rateWord = 0x10000,
-    //.rxBw = 0x24,
     .rxBw = 0x2C,
+#else
+#error Invalid RF configuration
+#endif
     .preamConf.nPreamBytes = 0x3,
     .preamConf.preamMode = 0x0,
     .formatConf.nSwBits = 0x10,
