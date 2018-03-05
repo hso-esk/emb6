@@ -227,6 +227,13 @@ void UART0IntHandler(void)
     /* Clear the UART interrupt flag. */
     UARTIntClear(UART0_BASE, UART_INT_RX);
   }/* if */
+
+  l_intStatus = UARTIntStatus(UART0_BASE, false);
+  if((l_intStatus & UART_INT_OE) == UART_INT_OE)
+  {
+    /* Clear the UART interrupt flag. */
+    UARTIntClear(UART0_BASE, UART_INT_OE);
+  }/* if */
 }
 /*==============================================================================
                             FUNCTIONS
