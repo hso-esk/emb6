@@ -808,8 +808,6 @@ static void rx_call_back(uint32_t l_flag)
       {
         if(!cc1310.poll_mode)
         {
-        /* signal complete reception interrupt */
-        en_evprocResCode_t err = RF_SEM_POST(EVENT_TYPE_RF);
         /* handle the received packet */
         sf_rf_switchState(RF_STATUS_RX);
         }
@@ -1095,47 +1093,53 @@ static uint8_t sf_rf_switchState(e_rf_status_t state)
 #endif
     /* parse the received packet to check whether it requires ACK or not */
     framer802154ll_parse(&frame, cc1310.rx.p_lastPkt , cc1310.rx.LenLastPkt );
-
-   if(frame.is_ack_required)
+    /* check if the frame is valid */
+   if(framer802154ll_addrFilter(&frame, cc1310.rx.p_lastPkt , cc1310.rx.LenLastPkt ))
    {
-    /* create the ACK  */
-    ack_length=framer802154ll_createAck(&frame,ack, sizeof(ack));
+	 /* signal complete reception interrupt */
+	 en_evprocResCode_t err = RF_SEM_POST(EVENT_TYPE_RF);
+	 /* check if ACK is requested */
+     if(frame.is_ack_required)
+     {
+      /* create the ACK  */
+      ack_length=framer802154ll_createAck(&frame,ack, sizeof(ack));
 #if !NETSTK_CFG_IEEE_802154G_EN
-    /* configure ACK length and ptr */
-    cc1310.tx.p_cmdPropTxAdv->pktLen = ack_length - frame.crc_len;
-    cc1310.tx.p_cmdPropTxAdv->pPkt = ack;
+      /* configure ACK length and ptr */
+      cc1310.tx.p_cmdPropTxAdv->pktLen = ack_length - frame.crc_len;
+      cc1310.tx.p_cmdPropTxAdv->pPkt = ack;
 #else
-    /* configure ACK length and ptr */
-    cc1310.tx.p_cmdPropTxAdv->pPkt = ack;
-    cc1310.tx.p_cmdPropTxAdv->pktLen = ack_length - frame.crc_len  ;
-    /* FIXME overwrite PHR */
-    uint16_t transmitLen = cc1310.tx.p_cmdPropTxAdv->pktLen - PHY_HEADER_LEN;
-    uint16_t totalLen = transmitLen + frame.crc_len;
-    /* FIXME only support CRC-32 */
-	cc1310.tx.p_cmdPropTxAdv->pPkt[0] = totalLen & 0xFF;
-	/* check whether the 32-bits and 16-bits CRC is used // 0x10: 16-bits CRC and 0x00 : 32-bits CRC */
-	if(frame.crc_len == 2)
-      cc1310.tx.p_cmdPropTxAdv->pPkt[1] = (totalLen >> 8) + 0x10  ;
-	else
-	  cc1310.tx.p_cmdPropTxAdv->pPkt[1] = (totalLen >> 8) + 0x00  ;
+      /* configure ACK length and ptr */
+      cc1310.tx.p_cmdPropTxAdv->pPkt = ack;
+      cc1310.tx.p_cmdPropTxAdv->pktLen = ack_length - frame.crc_len  ;
+      /* FIXME overwrite PHR */
+      uint16_t transmitLen = cc1310.tx.p_cmdPropTxAdv->pktLen - PHY_HEADER_LEN;
+      uint16_t totalLen = transmitLen + frame.crc_len;
+      /* FIXME only support CRC-32 */
+	  cc1310.tx.p_cmdPropTxAdv->pPkt[0] = totalLen & 0xFF;
+	  /* check whether the 32-bits and 16-bits CRC is used // 0x10: 16-bits CRC and 0x00 : 32-bits CRC */
+	  if(frame.crc_len == 2)
+        cc1310.tx.p_cmdPropTxAdv->pPkt[1] = (totalLen >> 8) + 0x10  ;
+	  else
+	    cc1310.tx.p_cmdPropTxAdv->pPkt[1] = (totalLen >> 8) + 0x00  ;
 #endif
 #if USE_TI_RTOS
 
-    /* Send tx command  */
-    RF_postCmd(gps_rfHandle, (RF_Op*)cc1310.tx.p_cmdPropTxAdv, RF_PriorityHighest, NULL , 0 );
-    /* wait the command until it finish */
-    for(i; i<0x0FFD;i++);
+      /* Send tx command  */
+      RF_postCmd(gps_rfHandle, (RF_Op*)cc1310.tx.p_cmdPropTxAdv, RF_PriorityHighest, NULL , 0 );
+      /* wait the command until it finish */
+      for(i; i<0x0FFD;i++);
 
 #else
-    /* Send Tx command to send the ACK */
-    RFC_sendRadioOp_nb((rfc_radioOp_t*)cc1310.tx.p_cmdPropTxAdv,NULL);
-    /* wait for the command until finish */
-    uint16_t wdog = 0xFFFF;
-    while(cc1310.tx.p_cmdPropTxAdv->status != PROP_DONE_OK && wdog)
-    {
-      wdog--;
-    }
+      /* Send Tx command to send the ACK */
+      RFC_sendRadioOp_nb((rfc_radioOp_t*)cc1310.tx.p_cmdPropTxAdv,NULL);
+      /* wait for the command until finish */
+      uint16_t wdog = 0xFFFF;
+      while(cc1310.tx.p_cmdPropTxAdv->status != PROP_DONE_OK && wdog)
+      {
+        wdog--;
+      }
 #endif
+      }
     }
    /* Get RSSI value from the queue : The RSSI is given on signed form in dBm.
     * If no RSSI is available, this is signaled with a special value of the RSSI (-128, or 0x80) */
