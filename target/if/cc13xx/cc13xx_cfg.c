@@ -32,13 +32,10 @@
 
 
 #define CC13XX_50KBPS           1
-#define CC13XX_250KBPS          2
-
-#ifndef CC13XX_DATARATE
-#define CC13XX_DATARATE         CC13XX_50KBPS
-#endif
-
-
+#define CC13XX_100KBPS          2
+#define CC13XX_150KBPS          3
+#define CC13XX_200KBPS          4
+#define CC13XX_250KBPS          5
 
 //#include <ti/drivers/rf/RF.h>
 
@@ -114,6 +111,21 @@ rfc_CMD_PROP_RADIO_DIV_SETUP_t RF_802_15_4_cmdPropRadioDivSetup =
     .symbolRate.preScale = 0xf,
     .symbolRate.rateWord = 0x8000,
     .rxBw = 0x24,
+#elif CC13XX_DATARATE == CC13XX_100KBPS
+    .modulation.deviation = 0xC8,
+    .symbolRate.preScale = 0xf,
+    .symbolRate.rateWord = 0x10000,
+    .rxBw = 0x28,
+#elif CC13XX_DATARATE == CC13XX_150KBPS
+    .modulation.deviation = 0x12C,
+    .symbolRate.preScale = 0x5,
+    .symbolRate.rateWord = 0x8000,
+    .rxBw = 0x29,
+#elif CC13XX_DATARATE == CC13XX_200KBPS
+    .modulation.deviation = 0x190,
+    .symbolRate.preScale = 0xF,
+    .symbolRate.rateWord = 0x20000,
+    .rxBw = 0x2B,
 #elif CC13XX_DATARATE == CC13XX_250KBPS
     .modulation.deviation = 0x1f4,
     .symbolRate.preScale = 0x6,
