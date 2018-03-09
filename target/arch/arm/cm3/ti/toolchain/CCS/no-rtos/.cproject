@@ -1956,6 +1956,7 @@
 									<listOptionValue builtIn="false" value="UART_IOID_RXD=IOID_9"/>
 									<listOptionValue builtIn="false" value="UART_IOID_TXD=IOID_8"/>
 									<listOptionValue builtIn="false" value="CRC_TABLE=0"/>
+									<listOptionValue builtIn="false" value="CC13XX_DATARATE=CC13XX_200KBPS"/>
 									<listOptionValue builtIn="false" value="LWM2MAPI_PARSIFAL_OBJECTS=0"/>
 									<listOptionValue builtIn="false" value="LWM2MAPI_NIKI_EMETER_OBJECTS=0"/>
 									<listOptionValue builtIn="false" value="LWM2MAPI_NIKI_EIS_OBJECTS=0"/>
@@ -2114,6 +2115,7 @@
 									<listOptionValue builtIn="false" value="UART_IOID_RXD=IOID_9"/>
 									<listOptionValue builtIn="false" value="UART_IOID_TXD=IOID_8"/>
 									<listOptionValue builtIn="false" value="CRC_TABLE=0"/>
+									<listOptionValue builtIn="false" value="CC13XX_DATARATE=CC13XX_200KBPS"/>
 									<listOptionValue builtIn="false" value="LWM2MAPI_PARSIFAL_OBJECTS=0"/>
 									<listOptionValue builtIn="false" value="LWM2MAPI_NIKI_EMETER_OBJECTS=0"/>
 									<listOptionValue builtIn="false" value="LWM2MAPI_NIKI_EIS_OBJECTS=0"/>
@@ -2269,6 +2271,7 @@
 									<listOptionValue builtIn="false" value="HAL_SUPPORT_SLIPUART=1"/>
 									<listOptionValue builtIn="false" value="HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX=1"/>
 									<listOptionValue builtIn="false" value="CRC_TABLE=0"/>
+									<listOptionValue builtIn="false" value="CC13XX_DATARATE=CC13XX_200KBPS"/>
 									<listOptionValue builtIn="false" value="LWM2MAPI_PARSIFAL_OBJECTS=0"/>
 									<listOptionValue builtIn="false" value="LWM2MAPI_NIKI_EMETER_OBJECTS=0"/>
 									<listOptionValue builtIn="false" value="LWM2MAPI_NIKI_EIS_OBJECTS=0"/>
@@ -2429,6 +2432,7 @@
 									<listOptionValue builtIn="false" value="UART_IOID_RXD=IOID_11"/>
 									<listOptionValue builtIn="false" value="UART_IOID_TXD=IOID_10"/>
 									<listOptionValue builtIn="false" value="CRC_TABLE=0"/>
+									<listOptionValue builtIn="false" value="CC13XX_DATARATE=CC13XX_200KBPS"/>
 									<listOptionValue builtIn="false" value="LWM2MAPI_PARSIFAL_OBJECTS=0"/>
 									<listOptionValue builtIn="false" value="LWM2MAPI_NIKI_EMETER_OBJECTS=0"/>
 									<listOptionValue builtIn="false" value="LWM2MAPI_NIKI_EIS_OBJECTS=0"/>
@@ -2584,6 +2588,7 @@
 									<listOptionValue builtIn="false" value="HAL_SUPPORT_SLIPUART=1"/>
 									<listOptionValue builtIn="false" value="HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX=1"/>
 									<listOptionValue builtIn="false" value="CRC_TABLE=0"/>
+									<listOptionValue builtIn="false" value="CC13XX_DATARATE=CC13XX_200KBPS"/>
 									<listOptionValue builtIn="false" value="LWM2MAPI_PARSIFAL_OBJECTS=0"/>
 									<listOptionValue builtIn="false" value="LWM2MAPI_NIKI_EMETER_OBJECTS=0"/>
 									<listOptionValue builtIn="false" value="LWM2MAPI_NIKI_EIS_OBJECTS=0"/>
@@ -2738,6 +2743,7 @@
 									<listOptionValue builtIn="false" value="HAL_SUPPORT_SLIPUART=1"/>
 									<listOptionValue builtIn="false" value="HAL_SUPPORT_PERIPHIRQ_SLIPUART_RX=1"/>
 									<listOptionValue builtIn="false" value="CRC_TABLE=0"/>
+									<listOptionValue builtIn="false" value="CC13XX_DATARATE=CC13XX_200KBPS"/>
 									<listOptionValue builtIn="false" value="LWM2MAPI_PARSIFAL_OBJECTS=0"/>
 									<listOptionValue builtIn="false" value="LWM2MAPI_NIKI_EMETER_OBJECTS=0"/>
 									<listOptionValue builtIn="false" value="LWM2MAPI_NIKI_EIS_OBJECTS=1"/>
