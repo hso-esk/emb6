@@ -86,14 +86,13 @@
 
 /* Interval of the LWM2M handler */
 #define LWM2M_INTERVAL_EVENT_HANDLER                    5
-/* Timoeut for a registration to complete */
-#define LWM2M_TIMEOUT_REGISTRATION                      3
+/* Timeout for a registration to complete */
+#define LWM2M_TIMEOUT_REGISTRATION                      10
 /* How many updates shall be performed during the lifetime */
-#define LWM2M_UPDATES_PER_LIFETIME                      10
-/* How many updates shall be performed during the lifetime */
-#define LWM2M_INTERVAL_UPDATE                           (lwm2m_server_getLifetime() / LWM2M_UPDATES_PER_LIFETIME)
-/* Timoeut for a registration to complete */
-#define LWM2M_TIMEOUT_UPDATE                            3
+#define LWM2M_INTERVAL_UPDATE                           ((lwm2m_server_getLifetime() / 2) + \
+                                                         bsp_getrand(0, (lwm2m_server_getLifetime() / 4) ))
+/* Timeout for a registration to complete */
+#define LWM2M_TIMEOUT_UPDATE                            10
 /* Maximum number of error allowed during update */
 #define LWM2M_ERRMAX_UPDATE                             5
 
