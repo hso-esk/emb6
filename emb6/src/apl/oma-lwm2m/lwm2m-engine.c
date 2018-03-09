@@ -87,12 +87,12 @@
 /* Interval of the LWM2M handler */
 #define LWM2M_INTERVAL_EVENT_HANDLER                    5
 /* Timeout for a registration to complete */
-#define LWM2M_TIMEOUT_REGISTRATION                      5
+#define LWM2M_TIMEOUT_REGISTRATION                      10
 /* How many updates shall be performed during the lifetime */
 #define LWM2M_INTERVAL_UPDATE                           ((lwm2m_server_getLifetime() / 2) + \
                                                          bsp_getrand(0, (lwm2m_server_getLifetime() / 4) ))
 /* Timeout for a registration to complete */
-#define LWM2M_TIMEOUT_UPDATE                            5
+#define LWM2M_TIMEOUT_UPDATE                            10
 /* Maximum number of error allowed during update */
 #define LWM2M_ERRMAX_UPDATE                             5
 
@@ -130,6 +130,8 @@ typedef enum E_LWM2M_ENGINE_STATE_T
   E_LWM2M_ENGINE_STATE_INIT,
   /** Engine is idle */
   E_LWM2M_ENGINE_STATE_IDLE,
+  /** Random delay of the engine */
+  E_LWM2M_ENGINE_STATE_DELAY,
   /** Engine is bootstrapping */
   E_LWM2M_ENGINE_STATE_BS,
   /** Engine waits for bootstrapping response */
@@ -284,6 +286,10 @@ static void _lwm2m_update_callback( void* response );
 /* Callback for handling timer of the LWM2M engine.
  * For further details see the function description */
 static void _lwm2m_engine_timer_handler(c_event_t c_event, p_data_t p_data);
+
+/* Callback for handling timer of the LWM2M engine.
+ * For further details see the function description */
+static void _lwm2m_engine_tot_timer_handler(c_event_t c_event, p_data_t p_data);
 
 /* Callback for handling events of the LWM2M engine.
  * For further details see the function description */
@@ -1053,6 +1059,18 @@ _lwm2m_engine_timer_handler(c_event_t c_event, p_data_t p_data)
 
 /*---------------------------------------------------------------------------*/
 static void
+_lwm2m_engine_tot_timer_handler(c_event_t c_event, p_data_t p_data)
+{
+  if( (c_event == EVENT_TYPE_TIMER_EXP) && etimer_expired(&_ctx.tot_timer) )
+  {
+    etimer_stop( &_ctx.tot_timer );
+    /* call the internal event handler */
+    evproc_putEvent( E_EVPROC_EXEC, EVENT_TYPE_LWM2M, NULL );
+  }
+}
+
+/*---------------------------------------------------------------------------*/
+static void
 _lwm2m_engine_event_handler(c_event_t c_event, p_data_t p_data)
 {
 
@@ -1094,9 +1112,27 @@ _lwm2m_engine_event_handler(c_event_t c_event, p_data_t p_data)
                 (_ctx.statusFlag & LWM2M_STATUS_FLAG_HAS_REG_SERVER_INFO) )
             {
                 /* we can start the registration procedure */
-                _ctx.state = E_LWM2M_ENGINE_STATE_REG;
+                _ctx.state = E_LWM2M_ENGINE_STATE_DELAY;
                 evproc_putEvent( E_EVPROC_TAIL, EVENT_TYPE_LWM2M, NULL );
+
+                etimer_set( &_ctx.tot_timer, bsp_getrand(0, 5 * bsp_getTRes()),
+                            _lwm2m_engine_tot_timer_handler );
             }
+        }
+        break;
+
+
+      case E_LWM2M_ENGINE_STATE_DELAY:
+
+        if( etimer_expired( &_ctx.tot_timer ) )
+        {
+            /* we only come here if the update interval was triggered */
+            _ctx.state = E_LWM2M_ENGINE_STATE_REG;
+            evproc_putEvent( E_EVPROC_TAIL, EVENT_TYPE_LWM2M, NULL );
+
+            /* set the timeout timer to the according wait
+             * interval */
+            etimer_stop( &_ctx.tot_timer );
         }
         break;
 
