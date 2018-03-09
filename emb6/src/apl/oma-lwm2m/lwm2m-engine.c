@@ -1271,8 +1271,14 @@ _lwm2m_engine_event_handler(c_event_t c_event, p_data_t p_data)
           if( _ctx.statusFlag & LWM2M_STATUS_FLAG_UPDATED )
           {
               /* the client was registered successfully */
-              _ctx.state = E_LWM2M_ENGINE_STATE_REG_WAIT;
+              _ctx.state = E_LWM2M_ENGINE_STATE_READY;
               _ctx.statusFlag &= ~LWM2M_STATUS_FLAG_UPDATE_ERROR;
+
+              /* set the timeout timer to the according wait
+               * interval */
+              etimer_stop( &_ctx.tot_timer );
+              etimer_set( &_ctx.tot_timer, LWM2M_INTERVAL_UPDATE *
+                          bsp_getTRes(), NULL);
           }
           else if( etimer_expired( &_ctx.tot_timer) )
           {
