@@ -79,12 +79,12 @@ static void dllc_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
 static void dllc_cbtx(void *p_arg, e_nsErr_t *p_err);
 static void dllc_verifyAddr(frame802154_t *p_frame, e_nsErr_t *p_err);
 
-#if LLSEC802154_ENABLED && LLSEC802154_USES_AUX_HEADER
+#if LLSEC802154_ENABLED
 static void dllc_nonce_generation_forward(uint8_t *nonce, uint8_t *sender);
 static void dllc_nonce_generation_reverse(uint8_t *nonce, uint8_t  *sender);
 static void dllc_secure_frame_forward(uint8_t *sender);
 static uint8_t dllc_secure_frame_reverse(uint8_t *sender);
-#endif  /*LLSEC802154_ENABLED && LLSEC802154_USES_AUX_HEADER*/
+#endif  /*LLSEC802154_ENABLED*/
 
 /*
 ********************************************************************************
@@ -100,10 +100,10 @@ static void            *pdllc_cbtxarg;
 static nsTxCbFnct_t     dllc_cbTxFnct;
 static nsRxCbFnct_t     dllc_cbRxFnct;
 static s_ns_t          *pdllc_netstk;
-#if LLSEC802154_ENABLED && LLSEC802154_USES_AUX_HEADER
+#if LLSEC802154_ENABLED
 static uint8_t Key1[] =  {0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF};
 //static uint8_t Key2[] = {0x90, 0x92, 0x9a, 0x4b, 0x0a, 0xc6, 0x5b, 0x35, 0x0a, 0xd1, 0x59, 0x16, 0x11, 0xfe, 0x48, 0x29};
-#endif /*LLSEC802154_ENABLED && LLSEC802154_USES_AUX_HEADER*/
+#endif /*LLSEC802154_ENABLED*/
 
 #if (NETSTK_CFG_AUTO_ONOFF_EN == TRUE)
 static uint8_t       dllc_isOn;
@@ -208,7 +208,7 @@ static void dllc_off(e_nsErr_t *p_err)
 #endif
 }
 
-#if LLSEC802154_ENABLED && LLSEC802154_USES_AUX_HEADER
+#if LLSEC802154_ENABLED
 /*
  * Generate nonce at the sender side
  */
@@ -364,7 +364,7 @@ static uint8_t dllc_secure_frame_reverse(uint8_t *sender)
 
     return equalMIC;
 }
-#endif /* LLSEC802154_ENABLED && LLSEC802154_USES_AUX_HEADER */
+#endif /* LLSEC802154_ENABLED  */
 
 
 /**
@@ -453,7 +453,7 @@ static void dllc_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 
 
   /* auxiliary security */
-#if LLSEC802154_ENABLED && LLSEC802154_USES_AUX_HEADER
+#if LLSEC802154_ENABLED
   if(packetbuf_attr(PACKETBUF_ATTR_SECURITY_LEVEL)) {
     params.fcf.security_enabled = 1;
   }
@@ -473,7 +473,7 @@ static void dllc_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
   params.aux_hdr.key_index = packetbuf_attr(PACKETBUF_ATTR_KEY_INDEX);
   params.aux_hdr.key_source.u16[0] = packetbuf_attr(PACKETBUF_ATTR_KEY_SOURCE_BYTES_0_1);
 #endif /* LLSEC802154_USES_EXPLICIT_KEYS */
-#endif /*LLSEC802154_ENABLED && LLSEC802154_USES_AUX_HEADER */
+#endif /*LLSEC802154_ENABLED */
 
 
   /* configure packet payload */
@@ -496,7 +496,7 @@ static void dllc_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
   /* write the header */
   frame802154_create(&params, packetbuf_hdrptr());
 
-#if LLSEC802154_ENABLED && LLSEC802154_USES_AUX_HEADER
+#if LLSEC802154_ENABLED
 
   if (SEC_LVL != FRAME802154_SECURITY_LEVEL_NONE)
   {
@@ -547,7 +547,7 @@ static void dllc_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     }
 
   }
-#endif /* LLSEC802154_ENABLED && LLSEC802154_USES_AUX_HEADER */
+#endif /* LLSEC802154_ENABLED */
 
 
 #if !defined(NETSTK_SUPPORT_HW_CRC)
@@ -685,7 +685,7 @@ static void dllc_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 
 #endif
 
-#if LLSEC802154_ENABLED && LLSEC802154_USES_AUX_HEADER
+#if LLSEC802154_ENABLED
     if (SEC_LVL != FRAME802154_SECURITY_LEVEL_NONE)
     {
       /* Assigning security key at the receiver side */
@@ -710,21 +710,21 @@ static void dllc_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
       MICequal = dllc_secure_frame_reverse(frame.src_addr);
 
     }
-#endif  /* LLSEC802154_ENABLED && LLSEC802154_USES_AUX_HEADER*/
+#endif  /* LLSEC802154_ENABLED*/
 
   /* set packet buffer miscellaneous attributes */
   pdllc_netstk->mac->ioctrl(NETSTK_CMD_RF_RSSI_GET, &rssi, p_err);
   packetbuf_set_attr(PACKETBUF_ATTR_RSSI, rssi);
 
 
-#if LLSEC802154_ENABLED && LLSEC802154_USES_AUX_HEADER
+#if LLSEC802154_ENABLED
   if (SEC_LVL != FRAME802154_SECURITY_LEVEL_NONE)
   {
     LOG_INFO("Decrypted/Original Data:");
     LOG2_HEXDUMP(packetbuf_dataptr(),packetbuf_datalen());
 
   }
-#endif  /* LLSEC802154_ENABLED && LLSEC802154_USES_AUX_HEADER*/
+#endif  /* LLSEC802154_ENABLED*/
 
  /* check whether the received MIC over the channel is equal to the MIC generated at the receiver side
  *  Pass the received data to the higher layer only if both the MICs match */
