@@ -127,28 +127,15 @@
 #define FRAME802154_5_BYTE_KEY_ID_MODE         (2)
 #define FRAME802154_9_BYTE_KEY_ID_MODE         (3)
 
-#define CCM_CBC_MIC_LENGTH 1
-#define NONE_ENC_MIC_LENGTH 0
-
-/**
- * \brief Defines the security level used in IEEE 802.15.4
- */
-#define SEC_LVL FRAME802154_SECURITY_LEVEL_ENC_MIC_32
-
-/**
- * \brief Defines the Message Integrity Code (MIC) length as per the security level
- */
-
-#if CCM_CBC_MIC_LENGTH
-#define MIC_LEN LLSEC802154_MIC_LEN(SEC_LVL)
-#elif NONE_ENC_MIC_LENGTH
-#define MIC_LEN 0
-#endif
-
 /**
  * \brief Defines the maximum entries possible in Access Control List (ACL) for Replay Protection
  */
 #define MAX_ENTRY 10
+
+#if LLSEC802154_ENABLED
+#define FRAME802154_SEC_KEY_SIZE               16
+extern uint8_t frame802154_key[FRAME802154_SEC_KEY_SIZE];
+#endif /* #if LLSEC802154_ENABLED */
 
 
 /**
@@ -285,7 +272,7 @@ uint8_t frame802154_broadcast(frame802154_t *p);
 /* checking if the security key is changed*/
 uint8_t frame802154_securityKeyChecking(uint8_t *newKey);
 /* Setting of the security key*/
-void frame802154_securityKey(uint8_t *key);
+void frame802154_set_security_key(uint8_t *key, uint8_t len);
 /* ACL Database */
  void frame802154_replayProtectionDatabase();
 #endif  /*LLSEC802154_ENABLED && LLSEC802154_USES_AUX_HEADER*/

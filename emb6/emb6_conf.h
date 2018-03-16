@@ -62,11 +62,6 @@
 #define EMB6_TEST_CFG_CONT_TX_EN                      FALSE
 #define EMB6_TEST_CFG_CONT_RX_EN                      FALSE
 #define EMB6_TEST_CFG_WOR_EN                          FALSE
-#define LLSEC802154_CONF_ENABLE                       TRUE
-#define LLSEC802154_CONF_USES_FRAME_COUNTER           TRUE
-#define LLSEC802154_CONF_USES_EXPLICIT_KEYS           FALSE
-#define LLSEC802154_CONF_USES_AUX_HEADER              TRUE
-#define LLSEC802154_SECURITY_LEVEL                    TRUE
 
 
 
@@ -148,12 +143,6 @@
  =============================================================================*/
 
 
-/** To avoid unnecessary complexity, we assume the common case of
-   a constant LoWPAN-wide IEEE 802.15.4 security level, which
-   can be specified by defining LLSEC802154_CONF_SECURITY_LEVEL. */
-#ifndef LLSEC802154_CONF_SECURITY_LEVEL
-#define LLSEC802154_CONF_SECURITY_LEVEL           0
-#endif /* LLSEC802154_CONF_SECURITY_LEVEL */
 
 #ifdef LLSEC802154_CONF_ENABLED
 #define LLSEC802154_ENABLED                       LLSEC802154_CONF_ENABLED
@@ -164,6 +153,12 @@
 #if LLSEC802154_ENABLED
 /* Auxiliary Header must be enabled for security */
 #define LLSEC802154_USES_AUX_HEADER               TRUE
+
+#ifdef LLSEC802154_CONF_SECURITY_LEVEL
+#define LLSEC802154_SECURITY_LEVEL                LLSEC802154_CONF_SECURITY_LEVEL
+#else
+#define LLSEC802154_SECURITY_LEVEL                0
+#endif /* LLSEC802154_CONF_SECURITY_LEVEL */
 
 #ifdef LLSEC802154_CONF_USES_EXPLICIT_KEYS
 #define LLSEC802154_USES_EXPLICIT_KEYS            LLSEC802154_CONF_USES_EXPLICIT_KEYS

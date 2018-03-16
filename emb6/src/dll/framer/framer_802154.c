@@ -73,10 +73,10 @@
 #include "ccm-star.h"
 #include "linkaddr.h"
 
-/*
- * Contains the current key
- */
-static uint8_t currentKey[] = {0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
+#if LLSEC802154_ENABLED
+static uint8_t currentKey[FRAME802154_SEC_KEY_SIZE] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+uint8_t frame802154_key[FRAME802154_SEC_KEY_SIZE] =  {0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF};
+#endif /*LLSEC802154_ENABLED*/
 
 /**  \brief The 16-bit identifier of the PAN on which the device is
  *   operating.  If this value is 0xffff, the device is not
@@ -773,12 +773,16 @@ uint8_t frame802154_broadcast(frame802154_t *p)
 /*---------------------------------------------------------------------------*/
 /* checking if the security key is changed.
  */
-uint8_t frame802154_securityKeyChecking(uint8_t *newKey)
+static uint8_t key_compare( uint8_t *key, uint8_t len )
 {
   uint8_t sameKey = true;
+
+  if( len != sizeof(currentKey) )
+    return false;
+
   for(uint8_t i = 0; i< sizeof(currentKey);i++)
   {
-      if (currentKey[i] == newKey[i])
+      if (currentKey[i] == key[i])
           sameKey = true;
       else
       {
@@ -789,7 +793,7 @@ uint8_t frame802154_securityKeyChecking(uint8_t *newKey)
   if (sameKey == false)
   {
     for(uint8_t i = 0; i < sizeof(currentKey); i++)
-      currentKey[i] = *(newKey + i);
+      currentKey[i] = *(key + i);
   }
   return sameKey;
 }
@@ -797,11 +801,12 @@ uint8_t frame802154_securityKeyChecking(uint8_t *newKey)
  /*---------------------------------------------------------------------------*/
  /* Setting of the security key.
   */
- void frame802154_securityKey(uint8_t *key)
+ void frame802154_set_security_key( uint8_t *key, uint8_t len)
 {
-   uint8_t sameKey = true;
+  uint8_t sameKey = true;
 
-  sameKey = frame802154_securityKeyChecking(key);
+  sameKey = key_compare( key, len );
+
   /* setting key for Advanced Encryption Standard(AES) operations */
   if(sameKey == false)
   {

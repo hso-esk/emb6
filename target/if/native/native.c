@@ -61,6 +61,7 @@
 #include "packetbuf.h"
 #include "tcpip.h"
 #include "etimer.h"
+#include "linkaddr.h"
 #include <errno.h>
 #include <sys/time.h>
 #include <stdio.h>

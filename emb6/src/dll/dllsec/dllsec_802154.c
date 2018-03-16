@@ -48,17 +48,13 @@
 ********************************************************************************
 */
 #include "emb6.h"
-#include "dllsec_null.h"
-#include "dllsec_802154.h"
+#include "dllsec.h"
 #include "framer_802154.h"
 #include "packetbuf.h"
 #include "ccm-star.h"
 
-#define     LOGGER_ENABLE        LOGGER_LLCSEC
-#include    "logger.h"
-
-
-
+#define LOGGER_ENABLE         LOGGER_LLCSEC
+#include "logger.h"
 
 /*
 ********************************************************************************
@@ -69,11 +65,10 @@
 static s_ns_t *pdllsec_netstk;
 static mac_callback_t dllsec_txCbFnct;
 
-#if LLSEC802154_ENABLED && LLSEC802154_USES_AUX_HEADER
+#if LLSEC802154_ENABLED
 static frame802154_frame_counter_t counter;
-static uint8_t Key1[] =  {0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF};
-//static uint8_t Key2[] = {0x90, 0x92, 0x9a, 0x4b, 0x0a, 0xc6, 0x5b, 0x35, 0x0a, 0xd1, 0x59, 0x16, 0x11, 0xfe, 0x48, 0x29};
-#endif /* LLSEC802154_ENABLED && LLSEC802154_USES_AUX_HEADER */
+#endif /* LLSEC802154_ENABLED */
+
 /*
 ********************************************************************************
 *                          LOCAL FUNCTION DECLARATIONS
@@ -85,13 +80,16 @@ static int dllsec_onFrameCreated(void);
 static void dllsec_input(void);
 static uint8_t dllsec_getOverhead(void);
 static void dllsec_init(s_ns_t *p_netstk);
-#if LLSEC802154_ENABLED && LLSEC802154_USES_AUX_HEADER
+#if LLSEC802154_ENABLED
 static void dllsec_security(void);
+
+#if LLSEC802154_USES_FRAME_COUNTER
 /* storing the received frame counter value */
 static uint32_t dllsec_receivedFrameCounter(void);
 /* Comparing the received frame counter value to the expected frame counter value */
-static _Bool dllsec_receivedFrameCounterCheck(uint32_t revCounter);
-#endif /*LLSEC802154_ENABLED && LLSEC802154_USES_AUX_HEADER*/
+static uint8_t dllsec_receivedFrameCounterCheck(uint32_t revCounter);
+#endif /* #if LLSEC802154_USES_FRAME_COUNTER */
+#endif /*LLSEC802154_ENABLED*/
 
 /*---------------------------------------------------------------------------*/
 
@@ -140,128 +138,137 @@ static void dllsec_cbTx(void *p_arg, e_nsErr_t *p_err)
 }
 
 
-#if LLSEC802154_ENABLED && LLSEC802154_USES_AUX_HEADER
+#if LLSEC802154_ENABLED
+#if LLSEC802154_USES_FRAME_COUNTER
 /*---------------------------------------------------------------------------*/
 /* storing the received frame counter value
  */
 static uint32_t dllsec_receivedFrameCounter(void)
 {
-	frame802154_frame_counter_t recCounter;
-	recCounter.u8[3] = packetbuf_attr(PACKETBUF_ATTR_FRAME_COUNTER_BYTES_0_1) >> 8;
-	recCounter.u8[2] = packetbuf_attr(PACKETBUF_ATTR_FRAME_COUNTER_BYTES_0_1) & 0xff;
-	recCounter.u8[1] = packetbuf_attr(PACKETBUF_ATTR_FRAME_COUNTER_BYTES_2_3) >> 8;
-	recCounter.u8[0] = packetbuf_attr(PACKETBUF_ATTR_FRAME_COUNTER_BYTES_2_3) & 0xff;
-
-	return recCounter.u32;
+  frame802154_frame_counter_t recCounter = {.u32 =0 };
+#if LLSEC802154_USES_FRAME_COUNTER
+  recCounter.u8[3] = packetbuf_attr(PACKETBUF_ATTR_FRAME_COUNTER_BYTES_0_1) >> 8;
+  recCounter.u8[2] = packetbuf_attr(PACKETBUF_ATTR_FRAME_COUNTER_BYTES_0_1) & 0xff;
+  recCounter.u8[1] = packetbuf_attr(PACKETBUF_ATTR_FRAME_COUNTER_BYTES_2_3) >> 8;
+  recCounter.u8[0] = packetbuf_attr(PACKETBUF_ATTR_FRAME_COUNTER_BYTES_2_3) & 0xff;
+#endif /* #if LLSEC802154_USES_FRAME_COUNTER */
+  return recCounter.u32;
 }
 
-/*-----------------------------------------+----------------------------------*/
+/*----------------------------------------------------------------------------*/
 /* Comparing the received frame counter value to the expected frame counter value. Expected frame counter
  * value is accessed from the Access Control List based on the source address.
  */
-static _Bool dllsec_receivedFrameCounterCheck(uint32_t revCounter)
+static uint8_t dllsec_receivedFrameCounterCheck(uint32_t revCounter)
 {
-	static uint32_t lastFrameCounterVal;
-	uint8_t source_addr[8];
-	linkaddr_copy((linkaddr_t *)&source_addr, packetbuf_addr(PACKETBUF_ADDR_SENDER));
-	#if LOGGER_ENABLE
-		LOG_INFO("source Address");
-		LOG2_HEXDUMP(&source_addr, 8);
+  static uint32_t lastFrameCounterVal;
+  uint8_t source_addr[8];
+  linkaddr_copy((linkaddr_t *)&source_addr, packetbuf_addr(PACKETBUF_ADDR_SENDER));
 
-		LOG_INFO("revCounter from dllsec_input function");
-		LOG2_HEXDUMP(&revCounter, 4);
-	#endif
-	/* Searching for entry in Access Control List
-	 * if entry found, fetching the last frame counter value from Access Control List
-	 */
-	for(uint8_t count = 0; count< MAX_ENTRY;count++)
-	{
-		_Bool equal = linkaddr_cmp((linkaddr_t *)&database[count].src_addr,(linkaddr_t *)&source_addr);
-		if(equal)
-		{
-			lastFrameCounterVal = database[count].last_frame_counter_value.u32;
-			#if LOGGER_ENABLE
-				LOG_INFO("source address matched!");
-				LOG_INFO("lastFrameCounterVal before comparing");
-				LOG2_HEXDUMP(&lastFrameCounterVal, 4);
-			#endif
-		}
-	}
-		/*
-		 * checking if the received frame counter value is less than the expected frame counter value
-		 */
-		if(revCounter <= lastFrameCounterVal)
-		{
-			#if LOGGER_ENABLE
-				LOG_INFO("Received Counter value is invalid");
-				LOG_INFO("lastFrameCounterVal");
-				LOG2_HEXDUMP(&lastFrameCounterVal, 4);
-			#endif
-			return 1;
-		}
-		else
-		{
-			lastFrameCounterVal = revCounter;
-			for(uint8_t count = 0; count< MAX_ENTRY;count++)
-			{
-				_Bool equal = linkaddr_cmp((linkaddr_t *)&database[count].src_addr,(linkaddr_t *)&source_addr);
-				if(equal)
-				{
-					database[count].last_frame_counter_value.u32 = lastFrameCounterVal;
-				}
-			}
-			#if LOGGER_ENABLE
-				LOG_INFO("Received Counter value is valid");
-		    	LOG_INFO("last Counter value updated");
-		    	LOG2_HEXDUMP(&lastFrameCounterVal, 4);
-			#endif
-		}
-	return 0;
+  LOG_INFO("source Address");
+  LOG2_HEXDUMP(&source_addr, 8);
+
+  LOG_INFO("revCounter from dllsec_input function");
+  LOG2_HEXDUMP(&revCounter, 4);
+
+  /* Searching for entry in Access Control List
+   * if entry found, fetching the last frame counter value from Access Control List
+   */
+  for(uint8_t count = 0; count< MAX_ENTRY;count++)
+  {
+    uint8_t equal = linkaddr_cmp((linkaddr_t *)&database[count].src_addr,(linkaddr_t *)&source_addr);
+    if(equal)
+    {
+      lastFrameCounterVal = database[count].last_frame_counter_value.u32;
+
+      LOG_INFO("source address matched!");
+      LOG_INFO("lastFrameCounterVal before comparing");
+      LOG2_HEXDUMP(&lastFrameCounterVal, 4);
+
+    }
+  }
+  /*
+   * checking if the received frame counter value is less than the expected frame counter value
+   */
+  if(revCounter <= lastFrameCounterVal)
+  {
+
+    LOG_INFO("Received Counter value is invalid");
+    LOG_INFO("lastFrameCounterVal");
+    LOG2_HEXDUMP(&lastFrameCounterVal, 4);
+
+    return 1;
+  }
+  else
+  {
+    lastFrameCounterVal = revCounter;
+    for(uint8_t count = 0; count< MAX_ENTRY;count++)
+    {
+      uint8_t equal = linkaddr_cmp((linkaddr_t *)&database[count].src_addr,(linkaddr_t *)&source_addr);
+      if(equal)
+      {
+        database[count].last_frame_counter_value.u32 = lastFrameCounterVal;
+      }
+    }
+
+    LOG_INFO("Received Counter value is valid");
+    LOG_INFO("last Counter value updated");
+    LOG2_HEXDUMP(&lastFrameCounterVal, 4);
+
+  }
+
+  return 0;
 }
+#endif /* #if LLSEC802154_USES_FRAME_COUNTER */
 
 /*---------------------------------------------------------------------------*/
 /* setting of security level and frame counter values of Auxiliary Security Header in packetbuf attributes
  */
 static void dllsec_security(void)
 {
-	/* Assigning the frame counter values in the corresponding packetbuf attributes */
-    #if LLSEC802154_USES_FRAME_COUNTER
-	packetbuf_set_attr(PACKETBUF_ATTR_FRAME_COUNTER_BYTES_0_1, counter.u16[0]);
-	packetbuf_set_attr(PACKETBUF_ATTR_FRAME_COUNTER_BYTES_2_3, counter.u16[1]);
-    #endif /* LLSEC802154_USES_FRAME_COUNTER */
+  /* Assigning the frame counter values in the corresponding packetbuf attributes */
+ #if LLSEC802154_USES_FRAME_COUNTER
+  packetbuf_set_attr(PACKETBUF_ATTR_FRAME_COUNTER_BYTES_0_1, counter.u16[0]);
+  packetbuf_set_attr(PACKETBUF_ATTR_FRAME_COUNTER_BYTES_2_3, counter.u16[1]);
+ #endif /* LLSEC802154_USES_FRAME_COUNTER */
 
-    #if LLSEC802154_SECURITY_LEVEL
-    /* assigning the security level in the corresponding packetbuf attributes */
-    packetbuf_set_attr(PACKETBUF_ATTR_SECURITY_LEVEL, SEC_LVL);
-    #endif  /* LLSEC802154_SECURITY_LEVEL*/
+#if LLSEC802154_SECURITY_LEVEL
+  /* assigning the security level in the corresponding packetbuf attributes */
+  packetbuf_set_attr(PACKETBUF_ATTR_SECURITY_LEVEL, LLSEC802154_SECURITY_LEVEL);
+#endif  /* LLSEC802154_SECURITY_LEVEL*/
 }
+#endif /* #if LLSEC802154_ENABLED */
+
 /*---------------------------------------------------------------------------*/
 static void dllsec_input(void)
 {
-	uint32_t CounterValReceived;
-	_Bool replayAttack;
-	CounterValReceived = dllsec_receivedFrameCounter();
-	replayAttack = dllsec_receivedFrameCounterCheck(CounterValReceived);
-	/* if frame counter value is less than expected, discarding the frame */
-	if(replayAttack == true)
-	{
-		#if LOGGER_ENABLE
-		LOG_INFO("REPLAY ATTACK!!");
-			LOG_INFO("Data not passed to the higher layer");
-		#endif
-	}
-	else
-	{
-		/* if frame counter value is greater than the last frame counter value,
-		 *  passing the frame to higher layer*/
-		pdllsec_netstk->hc->input();
-		#if LOGGER_ENABLE
-			LOG_INFO("Data passed to the higher layer");
-		#endif
-	}
+#if LLSEC802154_ENABLED && LLSEC802154_USES_FRAME_COUNTER
+  uint32_t CounterValReceived;
+  uint8_t replayAttack;
+  CounterValReceived = dllsec_receivedFrameCounter();
+  replayAttack = dllsec_receivedFrameCounterCheck(CounterValReceived);
+  /* if frame counter value is less than expected, discarding the frame */
+  if(replayAttack == true)
+  {
+
+    LOG_INFO("REPLAY ATTACK!!");
+    LOG_INFO("Data not passed to the higher layer");
+  }
+  else
+  {
+    /* if frame counter value is greater than the last frame counter value,
+     *  passing the frame to higher layer*/
+    pdllsec_netstk->hc->input();
+    LOG_INFO("Data passed to the higher layer");
+
+  }
+#else
+  /* No frame counter check */
+  pdllsec_netstk->hc->input();
+  LOG_INFO("Data passed to the higher layer");
+#endif /* #if LLSEC802154_ENABLED && LLSEC802154_USES_FRAME_COUNTER */
 }
 
-#endif /* LLSEC802154_ENABLED && LLSEC802154_USES_AUX_HEADER */
 
 /*---------------------------------------------------------------------------*/
 static void dllsec_send(mac_callback_t sent, void *p_arg)
@@ -271,17 +278,17 @@ static void dllsec_send(mac_callback_t sent, void *p_arg)
   dllsec_txCbFnct = sent;
   packetbuf_set_attr(PACKETBUF_ATTR_FRAME_TYPE, FRAME802154_DATAFRAME);
 
-#if LLSEC802154_ENABLED && LLSEC802154_USES_AUX_HEADER
-  if (SEC_LVL != FRAME802154_SECURITY_LEVEL_NONE)
+#if LLSEC802154_ENABLED
+  if (LLSEC802154_SECURITY_LEVEL != FRAME802154_SECURITY_LEVEL_NONE)
   {
-	  /* Assigning security key at the sender side */
-	  frame802154_securityKey(Key1);
-	  /* Setting of security level and frame counter values of Auxiliary Security Header */
-	  dllsec_security();
-	  /* Incrementing the frame counter values of Auxiliary Security Header */
-	  counter.u32 = counter.u32+1;
+    /* Assigning security key at the sender side */
+    frame802154_set_security_key( frame802154_key, FRAME802154_SEC_KEY_SIZE );
+    /* Setting of security level and frame counter values of Auxiliary Security Header */
+    dllsec_security();
+    /* Incrementing the frame counter values of Auxiliary Security Header */
+    counter.u32 = counter.u32+1;
   }
-#endif /*LLSEC802154_ENABLED && LLSEC802154_USES_AUX_HEADER*/
+#endif /*LLSEC802154_ENABLED*/
   /*
    * Issue next lower layer to transmit the prepared packet
    */
@@ -318,14 +325,14 @@ static void dllsec_init(s_ns_t *p_netstk)
   e_nsErr_t err = NETSTK_ERR_NONE;
 
   pdllsec_netstk = p_netstk;
-#if LLSEC802154_ENABLED && LLSEC802154_USES_AUX_HEADER
   pdllsec_netstk->dllc->ioctrl(NETSTK_CMD_RX_CBFNT_SET, (void *) dllsec_input, &err);
+#if LLSEC802154_ENABLED
   /* Initialising the value of frame counter of Auxiliary Security Header */
   counter.u32 = 0;
 
   /*Initialising the ACL for Replay Protection*/
   frame802154_replayProtectionDatabase();
-#endif /* LLSEC802154_ENABLED && LLSEC802154_USES_AUX_HEADER */
+#endif /* LLSEC802154_ENABLED */
 }
 
 /*---------------------------------------------------------------------------*/
