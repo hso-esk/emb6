@@ -640,11 +640,14 @@ static void dllc_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
  */
 static void dllc_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 {
-  uint8_t MICequal = 0 ;
 #if NETSTK_CFG_ARG_CHK_EN
   if (p_err == NULL) {
     return;
   }
+
+#if LLSEC802154_ENABLED
+  uint8_t MICequal = 0 ;
+#endif /* #if LLSEC802154_ENABLED */
 
   if ((len == 0) ||
       (p_data == NULL)) {
