@@ -174,7 +174,7 @@
 
 #else
 /* Auxiliary Header is not required */
-#define LLSEC802154_USES_AUX_HEADER               TRUE
+#define LLSEC802154_USES_AUX_HEADER               FALSE
 #endif /* #if LLSEC802154_ENABLED */
 
 
