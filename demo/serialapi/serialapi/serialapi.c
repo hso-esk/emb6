@@ -1084,7 +1084,7 @@ int8_t serialApiInput( uint8_t* p_data, uint16_t len, uint8_t valid )
       /* set the according frame id of the reply  */
       EMB6_ASSERT_RET( txBufLen >= sizeof(serialapi_frameID_t), -1 );
       SERIAL_API_SET_FIELD( p_txBuf, txBufLen, serialapi_frameID_t,
-          e_serial_api_type_status_ret );
+          e_serial_api_type_ret );
 
       /* A general error occurred */
       EMB6_ASSERT_RET( txBufLen >= sizeof(serialapi_frameID_t), -1 );
