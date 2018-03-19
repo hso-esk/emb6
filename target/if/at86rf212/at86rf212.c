@@ -64,6 +64,7 @@
 
 #include "evproc.h"
 #include "packetbuf.h"
+#include "linkaddr.h"
 
 /*==============================================================================
                                      MACROS

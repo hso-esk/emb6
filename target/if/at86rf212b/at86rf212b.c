@@ -66,6 +66,7 @@
 #include "ctimer.h"
 #include "packetbuf.h"
 #include "ringbuffer.h"
+#include "linkaddr.h"
 
 /*==============================================================================
                                      MACROS
