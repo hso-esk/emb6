@@ -54,15 +54,23 @@
 #include "emb6.h"
 #include "board_conf.h"
 #include "framer_802154.h"
-#include "packetbuf.h"
 #include "random.h"
+#include "ccm-star.h"
+#include "packetbuf.h"
 
-#define     LOGGER_ENABLE        LOGGER_LLC
-#include    "logger.h"
+#define LOGGER_ENABLE         LOGGER_LLC
+#include "logger.h"
 
 #if !defined(NETSTK_SUPPORT_HW_CRC)
 #include "crc.h"
 #endif /* #if !defined(NETSTK_SUPPORT_HW_CRC) */
+
+
+#if LLSEC802154_ENABLED
+/** \brief Defines the Message Integrity Code (MIC) length as per the security level */
+#define LLSEC802154_MIC_LEN(a)                    (2 << (a & 3))
+#endif  /*LLSEC802154_ENABLED*/
+
 
 /*
 ********************************************************************************
@@ -78,6 +86,12 @@ static void dllc_ioctl(e_nsIocCmd_t cmd, void *p_val, e_nsErr_t *p_err);
 static void dllc_cbtx(void *p_arg, e_nsErr_t *p_err);
 static void dllc_verifyAddr(frame802154_t *p_frame, e_nsErr_t *p_err);
 
+#if LLSEC802154_ENABLED
+static void dllc_nonce_generation_forward(uint8_t *nonce, uint8_t *sender);
+static void dllc_nonce_generation_reverse(uint8_t *nonce, uint8_t  *sender);
+static void dllc_secure_frame_forward(uint8_t *sender);
+static uint8_t dllc_secure_frame_reverse(uint8_t *sender);
+#endif  /*LLSEC802154_ENABLED*/
 
 /*
 ********************************************************************************
@@ -120,6 +134,7 @@ const s_nsDLLC_t dllc_driver_802154 =
 *                           LOCAL FUNCTION DEFINITIONS
 ********************************************************************************
 */
+
 
 /**
  * @brief   Initialize driver
@@ -196,6 +211,170 @@ static void dllc_off(e_nsErr_t *p_err)
 #endif
 }
 
+#if LLSEC802154_ENABLED
+/*
+ * Generate nonce at the sender side
+ */
+static void dllc_nonce_generation_forward(uint8_t *nonce, uint8_t *sender)
+{
+  memset(nonce, 0, 13);
+  memcpy(nonce, sender, 8);
+#if LLSEC802154_USES_FRAME_COUNTER
+  nonce[8] = packetbuf_attr(PACKETBUF_ATTR_FRAME_COUNTER_BYTES_2_3) >> 8;
+  nonce[9] = packetbuf_attr(PACKETBUF_ATTR_FRAME_COUNTER_BYTES_2_3)& 0xff;
+  nonce[10] = packetbuf_attr(PACKETBUF_ATTR_FRAME_COUNTER_BYTES_0_1) >> 8;
+  nonce[11] = packetbuf_attr(PACKETBUF_ATTR_FRAME_COUNTER_BYTES_0_1) & 0xff;
+#endif /* LLSEC802154_USES_FRAME_COUNTER */
+
+#if LLSEC802154_SECURITY_LEVEL
+  nonce[12] = packetbuf_attr(PACKETBUF_ATTR_SECURITY_LEVEL);
+#endif /* LLSEC802154_SECURITY_LEVEL */
+}
+
+/*
+ * Generate nonce at the receiver side
+ */
+static void dllc_nonce_generation_reverse(uint8_t *nonce, uint8_t *sender)
+{
+  memset(nonce, 0, 13);
+  memcpy(nonce, sender, 8);
+#if LLSEC802154_USES_FRAME_COUNTER
+  nonce[8] = packetbuf_attr(PACKETBUF_ATTR_FRAME_COUNTER_BYTES_0_1) >> 8;
+  nonce[9] = packetbuf_attr(PACKETBUF_ATTR_FRAME_COUNTER_BYTES_0_1) & 0xff;
+  nonce[10] = packetbuf_attr(PACKETBUF_ATTR_FRAME_COUNTER_BYTES_2_3) >> 8;
+  nonce[11] = packetbuf_attr(PACKETBUF_ATTR_FRAME_COUNTER_BYTES_2_3) & 0xff;
+#endif /* LLSEC802154_USES_FRAME_COUNTER */
+
+#if LLSEC802154_SECURITY_LEVEL
+  nonce[12] = packetbuf_attr(PACKETBUF_ATTR_SECURITY_LEVEL);
+#endif /* LLSEC802154_SECURITY_LEVEL */
+}
+
+/*
+ * Encryption of data/MIC generation at the sender side
+ */
+static void dllc_secure_frame_forward(uint8_t *sender)
+{
+  uint8_t nonce[13];
+  /* generate 13 byte Nonce for Encryption */
+  dllc_nonce_generation_forward(nonce,sender);
+
+  /* generate MIC */
+  if (packetbuf_attr(PACKETBUF_ATTR_SECURITY_LEVEL) == FRAME802154_SECURITY_LEVEL_MIC_32 ||
+      packetbuf_attr(PACKETBUF_ATTR_SECURITY_LEVEL) == FRAME802154_SECURITY_LEVEL_MIC_64 ||
+      packetbuf_attr(PACKETBUF_ATTR_SECURITY_LEVEL) == FRAME802154_SECURITY_LEVEL_MIC_128)
+  {
+    CCM_STAR.aead(nonce, packetbuf_dataptr(), 0,
+          packetbuf_hdrptr(), packetbuf_hdrlen() + packetbuf_datalen(),
+          ((uint8_t *) packetbuf_dataptr()) + packetbuf_datalen(),
+          LLSEC802154_MIC_LEN(LLSEC802154_SECURITY_LEVEL), 1);
+  }
+  /* encrypt only the data */
+  else if (packetbuf_attr(PACKETBUF_ATTR_SECURITY_LEVEL) == FRAME802154_SECURITY_LEVEL_ENC) {
+    CCM_STAR.aead(nonce, packetbuf_dataptr(), packetbuf_datalen(),
+          packetbuf_hdrptr(), packetbuf_hdrlen(),
+          ((uint8_t *) packetbuf_dataptr()) + packetbuf_datalen(), 0, 1);
+  }
+  /* encrypt the data and generate MIC */
+  else
+  {
+    CCM_STAR.aead(nonce, packetbuf_dataptr(), packetbuf_datalen(),
+        packetbuf_hdrptr(), packetbuf_hdrlen(),
+        ((uint8_t *) packetbuf_dataptr()) + packetbuf_datalen(),
+        LLSEC802154_MIC_LEN(LLSEC802154_SECURITY_LEVEL), 1);
+  }
+
+  LOG_INFO("Nonce:");
+  LOG2_HEXDUMP(nonce, 13);
+
+  memset(nonce, 0, sizeof(nonce));
+}
+
+/*
+ * Decrypt data/generate MIC at the receiver side
+ */
+static uint8_t dllc_secure_frame_reverse(uint8_t *sender)
+{
+    packetbuf_attr_t secLevel = packetbuf_attr(PACKETBUF_ATTR_SECURITY_LEVEL);
+    uint8_t nonce[13];
+    memset(nonce, 0, sizeof(nonce));
+    uint8_t MICarray[16];
+    memset(MICarray, 0, sizeof(MICarray));
+    uint8_t MICresult[16];
+    memset(MICresult, 0, sizeof(MICresult));
+    uint8_t equalMIC =0;
+
+    if (secLevel != FRAME802154_SECURITY_LEVEL_ENC )
+    {
+      for(uint8_t i = 0; i< LLSEC802154_MIC_LEN(secLevel); i++)
+        MICarray[i] = *(((uint8_t *) packetbuf_dataptr()) + packetbuf_datalen() + i);
+
+      LOG_INFO("MIC original is: ");
+      LOG2_HEXDUMP(MICarray, LLSEC802154_MIC_LEN(secLevel));
+
+      memset(((uint8_t *) packetbuf_dataptr()) + packetbuf_datalen(), 0, sizeof(LLSEC802154_MIC_LEN(secLevel)));
+    }
+
+    /* generate 13 byte Nonce for Decryption */
+    dllc_nonce_generation_reverse(nonce, sender);
+
+    /* perform security operation to generate the MIC at the receiver side */
+    if (packetbuf_attr(PACKETBUF_ATTR_SECURITY_LEVEL) == FRAME802154_SECURITY_LEVEL_MIC_32 ||
+        packetbuf_attr(PACKETBUF_ATTR_SECURITY_LEVEL) == FRAME802154_SECURITY_LEVEL_MIC_64 ||
+        packetbuf_attr(PACKETBUF_ATTR_SECURITY_LEVEL) == FRAME802154_SECURITY_LEVEL_MIC_128)
+    {
+      CCM_STAR.aead(nonce, packetbuf_dataptr(), 0,
+          packetbuf_hdrptr(), packetbuf_hdrlen() + packetbuf_datalen(),
+          ((uint8_t *) packetbuf_dataptr()) + packetbuf_datalen(), LLSEC802154_MIC_LEN(secLevel), 0);
+
+      for(uint8_t i = 0; i< LLSEC802154_MIC_LEN(secLevel); i++)
+        MICresult[i] = *(((uint8_t *) packetbuf_dataptr()) + packetbuf_datalen() + i);
+    }
+    /* perform security operation to get back the original data */
+    else if (secLevel == FRAME802154_SECURITY_LEVEL_ENC) {
+      CCM_STAR.aead(nonce, packetbuf_dataptr(), packetbuf_datalen(),
+            packetbuf_hdrptr(), packetbuf_hdrlen(),
+            ((uint8_t *) packetbuf_dataptr()) + packetbuf_datalen(), 0, 0);
+    }
+    /* perform security operation to get back the original data and generate the MIC */
+    else if (packetbuf_attr(PACKETBUF_ATTR_SECURITY_LEVEL) == FRAME802154_SECURITY_LEVEL_ENC_MIC_32 ||
+             packetbuf_attr(PACKETBUF_ATTR_SECURITY_LEVEL) == FRAME802154_SECURITY_LEVEL_ENC_MIC_64 ||
+             packetbuf_attr(PACKETBUF_ATTR_SECURITY_LEVEL) == FRAME802154_SECURITY_LEVEL_ENC_MIC_128)
+    {
+       CCM_STAR.aead(nonce, packetbuf_dataptr(), packetbuf_datalen(),
+           packetbuf_hdrptr(), packetbuf_hdrlen(),
+           ((uint8_t *) packetbuf_dataptr()) + packetbuf_datalen(), LLSEC802154_MIC_LEN(secLevel), 0);
+
+       for(uint8_t i = 0; i< LLSEC802154_MIC_LEN(secLevel); i++)
+         MICresult[i] = *(((uint8_t *) packetbuf_dataptr()) + packetbuf_datalen() + i);
+    }
+    if (!(packetbuf_attr(PACKETBUF_ATTR_SECURITY_LEVEL) == FRAME802154_SECURITY_LEVEL_ENC))
+    {
+      LOG_INFO("MIC generated after re-encryption is: ");
+      LOG2_HEXDUMP(MICresult, LLSEC802154_MIC_LEN(secLevel));
+      for(uint8_t i = 0; i< LLSEC802154_MIC_LEN(secLevel);i++){
+        if( MICarray[i] == MICresult[i])
+          equalMIC = 1;
+        else
+        {
+          equalMIC = 0;
+          break;
+        }
+      }
+      if(equalMIC)
+        LOG_INFO("Strings are equal");
+    }
+
+    LOG_INFO("Source Address is: ");
+    LOG2_HEXDUMP(sender, 8);
+
+    LOG_INFO("Nonce:");
+    LOG2_HEXDUMP(nonce, 13);
+
+    return equalMIC;
+}
+#endif /* LLSEC802154_ENABLED  */
+
 
 /**
  * @brief   Frame transmission handler
@@ -206,6 +385,7 @@ static void dllc_off(e_nsErr_t *p_err)
  */
 static void dllc_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 {
+
   int alloc;
   int is_broadcast;
   uint8_t hdr_len;
@@ -230,6 +410,7 @@ static void dllc_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 
   /* init to zeros */
   memset(&params, 0, sizeof(params));
+
 
   /* build the FCF. */
   params.fcf.frame_type = packetbuf_attr(PACKETBUF_ATTR_FRAME_TYPE);
@@ -279,25 +460,41 @@ static void dllc_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
   }
   linkaddr_copy((linkaddr_t *)&params.src_addr, &linkaddr_node_addr);
 
+
   /* auxiliary security */
-#if LLSEC802154_SECURITY_LEVEL
+#if LLSEC802154_ENABLED
   if(packetbuf_attr(PACKETBUF_ATTR_SECURITY_LEVEL)) {
     params.fcf.security_enabled = 1;
   }
+
+#if LLSEC802154_SECURITY_LEVEL
   /* Setting security-related attributes */
   params.aux_hdr.security_control.security_level = packetbuf_attr(PACKETBUF_ATTR_SECURITY_LEVEL);
+#endif /* LLSEC802154_SECURITY_LEVEL */
+
+#if LLSEC802154_USES_FRAME_COUNTER
   params.aux_hdr.frame_counter.u16[0] = packetbuf_attr(PACKETBUF_ATTR_FRAME_COUNTER_BYTES_0_1);
   params.aux_hdr.frame_counter.u16[1] = packetbuf_attr(PACKETBUF_ATTR_FRAME_COUNTER_BYTES_2_3);
+#endif /* LLSEC802154_USES_FRAME_COUNTER */
+
 #if LLSEC802154_USES_EXPLICIT_KEYS
   params.aux_hdr.security_control.key_id_mode = packetbuf_attr(PACKETBUF_ATTR_KEY_ID_MODE);
   params.aux_hdr.key_index = packetbuf_attr(PACKETBUF_ATTR_KEY_INDEX);
   params.aux_hdr.key_source.u16[0] = packetbuf_attr(PACKETBUF_ATTR_KEY_SOURCE_BYTES_0_1);
 #endif /* LLSEC802154_USES_EXPLICIT_KEYS */
-#endif /* LLSEC802154_SECURITY_LEVEL */
+
+  if((LLSEC802154_SECURITY_LEVEL != FRAME802154_SECURITY_LEVEL_ENC) &&
+      (LLSEC802154_SECURITY_LEVEL != FRAME802154_SECURITY_LEVEL_NONE) &&
+      (LLSEC802154_ENABLED == 1))
+    params.payload_len = packetbuf_datalen() + LLSEC802154_MIC_LEN(LLSEC802154_SECURITY_LEVEL);
+  else
+    params.payload_len = packetbuf_datalen();
+#else
+  params.payload_len = packetbuf_datalen();
+#endif /*LLSEC802154_ENABLED */
 
   /* configure packet payload */
   params.payload = packetbuf_dataptr();
-  params.payload_len = packetbuf_datalen();
 
   /* allocate buffer for MAC header */
   hdr_len = frame802154_hdrlen(&params);
@@ -309,6 +506,60 @@ static void dllc_send(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
 
   /* write the header */
   frame802154_create(&params, packetbuf_hdrptr());
+
+#if LLSEC802154_ENABLED
+
+  if (LLSEC802154_SECURITY_LEVEL != FRAME802154_SECURITY_LEVEL_NONE)
+  {
+    LOG_INFO("Original Data:");
+    LOG2_HEXDUMP(packetbuf_dataptr(),packetbuf_datalen());
+
+    /*  Perform AES operation for Encryption */
+    dllc_secure_frame_forward(params.src_addr);
+
+    LOG_INFO("Destination address:");
+    LOG2_HEXDUMP(params.dest_addr,8);
+
+    LOG_INFO("Header:");
+    LOG2_HEXDUMP(packetbuf_hdrptr(),packetbuf_hdrlen());
+
+    LOG_INFO("Tag:");
+    LOG2_HEXDUMP(packetbuf_dataptr()+ packetbuf_datalen(),LLSEC802154_MIC_LEN(LLSEC802154_SECURITY_LEVEL));
+
+
+    if (((LLSEC802154_SECURITY_LEVEL != FRAME802154_SECURITY_LEVEL_ENC) &&
+        (LLSEC802154_SECURITY_LEVEL != FRAME802154_SECURITY_LEVEL_NONE) &&
+        (LLSEC802154_ENABLED == 1)))
+    {
+      /* Data length increased by MIC length. New data length is plain-text length plus MIC length */
+      packetbuf_set_datalen(packetbuf_datalen() + LLSEC802154_MIC_LEN(LLSEC802154_SECURITY_LEVEL));
+    }
+
+
+    if((LLSEC802154_SECURITY_LEVEL == FRAME802154_SECURITY_LEVEL_ENC_MIC_32) ||
+        (LLSEC802154_SECURITY_LEVEL == FRAME802154_SECURITY_LEVEL_ENC_MIC_64) ||
+        (LLSEC802154_SECURITY_LEVEL == FRAME802154_SECURITY_LEVEL_ENC_MIC_128))
+    {
+      LOG_INFO("Encrypted Data with Tag:");
+      LOG2_HEXDUMP(packetbuf_dataptr(),packetbuf_datalen());
+
+    }
+    else if ((LLSEC802154_SECURITY_LEVEL == FRAME802154_SECURITY_LEVEL_MIC_32) ||
+        (LLSEC802154_SECURITY_LEVEL == FRAME802154_SECURITY_LEVEL_MIC_64) ||
+        (LLSEC802154_SECURITY_LEVEL == FRAME802154_SECURITY_LEVEL_MIC_128))
+    {
+      LOG_INFO("Original Data appended with Tag:");
+      LOG2_HEXDUMP(packetbuf_dataptr(),packetbuf_datalen());
+    }
+    else if (LLSEC802154_SECURITY_LEVEL == FRAME802154_SECURITY_LEVEL_ENC)
+    {
+      LOG_INFO("Encrypted Data:");
+      LOG2_HEXDUMP(packetbuf_dataptr(),packetbuf_datalen());
+    }
+
+  }
+#endif /* LLSEC802154_ENABLED */
+
 
 #if !defined(NETSTK_SUPPORT_HW_CRC)
   uint16_t checksum_data_len;
@@ -394,6 +645,10 @@ static void dllc_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     return;
   }
 
+#if LLSEC802154_ENABLED
+  uint8_t MICequal = 0 ;
+#endif /* #if LLSEC802154_ENABLED */
+
   if ((len == 0) ||
       (p_data == NULL)) {
     *p_err = NETSTK_ERR_INVALID_ARGUMENT;
@@ -430,12 +685,6 @@ static void dllc_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     return;
   }
 
-  /* set packet buffer miscellaneous attributes */
-  pdllc_netstk->mac->ioctrl(NETSTK_CMD_RF_RSSI_GET, &rssi, p_err);
-  packetbuf_set_attr(PACKETBUF_ATTR_RSSI, rssi);
-
-  /* signal next higher layer of the valid received frame */
-  if (dllc_cbRxFnct) {
 #if LOGGER_ENABLE
     /*
      * Logging
@@ -449,11 +698,87 @@ static void dllc_recv(uint8_t *p_data, uint16_t len, e_nsErr_t *p_err)
     LOG_RAW("\r\n====================\r\n");
 #endif
 
+#if LLSEC802154_ENABLED
+    if ((frame.fcf.security_enabled) &&
+        (frame.aux_hdr.security_control.security_level != FRAME802154_SECURITY_LEVEL_NONE))
+    {
+      /* Assigning security key at the receiver side */
+      frame802154_set_security_key( frame802154_key, FRAME802154_SEC_KEY_SIZE);
+      /* Set packetbuf attributes */
+#if LLSEC802154_USES_FRAME_COUNTER
+        packetbuf_set_attr(PACKETBUF_ATTR_FRAME_COUNTER_BYTES_0_1, frame.aux_hdr.frame_counter.u16[1]);
+        packetbuf_set_attr(PACKETBUF_ATTR_FRAME_COUNTER_BYTES_2_3, frame.aux_hdr.frame_counter.u16[0]);
+#endif  /* LLSEC802154_USES_FRAME_COUNTER*/
+
+#if LLSEC802154_SECURITY_LEVEL
+        packetbuf_set_attr(PACKETBUF_ATTR_SECURITY_LEVEL, frame.aux_hdr.security_control.security_level);
+#endif  /* LLSEC802154_SECURITY_LEVEL*/
+
+      if (((frame.aux_hdr.security_control.security_level != FRAME802154_SECURITY_LEVEL_ENC) &&
+          (frame.aux_hdr.security_control.security_level != FRAME802154_SECURITY_LEVEL_NONE) ))
+      {
+        /* Data length decreased by MIC length. New data length is plain-text length minus MIC length as MIC is removed */
+        packetbuf_set_datalen(packetbuf_datalen() -
+            LLSEC802154_MIC_LEN(frame.aux_hdr.security_control.security_level));
+      }
+
+      /* Perform AES security operation */
+      MICequal = dllc_secure_frame_reverse(frame.src_addr);
+    }
+#endif  /* LLSEC802154_ENABLED*/
+
+  /* set packet buffer miscellaneous attributes */
+  pdllc_netstk->mac->ioctrl(NETSTK_CMD_RF_RSSI_GET, &rssi, p_err);
+  packetbuf_set_attr(PACKETBUF_ATTR_RSSI, rssi);
+
+
+#if LLSEC802154_ENABLED
+  if (frame.aux_hdr.security_control.security_level != FRAME802154_SECURITY_LEVEL_NONE)
+  {
+    LOG_INFO("Decrypted/Original Data:");
+    LOG2_HEXDUMP(packetbuf_dataptr(),packetbuf_datalen());
+
+  }
+#endif  /* LLSEC802154_ENABLED*/
+
+#if LLSEC802154_ENABLED
+ /* check whether the received MIC over the channel is equal to the MIC generated at the receiver side
+ *  Pass the received data to the higher layer only if both the MICs match */
+  if(MICequal)
+  {
+    /* signal next higher layer of the valid received frame */
+    if (dllc_cbRxFnct) {
+      /* Inform the next higher layer */
+      LOG_INFO("MIC Matched and data sent to higher layer");
+      dllc_cbRxFnct(packetbuf_dataptr(), packetbuf_datalen(), p_err);
+     }
+  }
+  else if((MICequal == 0) &&
+      (frame.aux_hdr.security_control.security_level != FRAME802154_SECURITY_LEVEL_ENC) &&
+      (frame.aux_hdr.security_control.security_level != FRAME802154_SECURITY_LEVEL_NONE))
+  {
+    LOG_INFO("MIC unmatched and data not sent to the above layer");
+  }
+  else if ((LLSEC802154_ENABLED == 0) ||
+      (frame.aux_hdr.security_control.security_level == FRAME802154_SECURITY_LEVEL_ENC) ||
+      (frame.aux_hdr.security_control.security_level == FRAME802154_SECURITY_LEVEL_NONE))
+  {
+    /* signal next higher layer of the valid received frame */
+    if (dllc_cbRxFnct) {
+      /* Inform the next higher layer */
+      LOG_INFO("data sent to higher layer");
+      dllc_cbRxFnct(packetbuf_dataptr(), packetbuf_datalen(), p_err);
+    }
+  }
+#else
+  /* signal next higher layer of the valid received frame */
+  if (dllc_cbRxFnct) {
     /* Inform the next higher layer */
+    LOG_INFO("data sent to higher layer");
     dllc_cbRxFnct(packetbuf_dataptr(), packetbuf_datalen(), p_err);
   }
+#endif /* #if LLSEC802154_ENABLED */
 }
-
 
 /**
  * @brief    Miscellaneous commands handler
@@ -565,9 +890,3 @@ static void dllc_verifyAddr(frame802154_t *p_frame, e_nsErr_t *p_err)
   packetbuf_set_addr(PACKETBUF_ADDR_SENDER, (linkaddr_t *) &p_frame->src_addr);
 }
 
-
-/*
-********************************************************************************
-*                               END OF FILE
-********************************************************************************
-*/

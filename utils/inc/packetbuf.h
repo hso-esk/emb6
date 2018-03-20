@@ -55,7 +55,6 @@
 
 
 #include "emb6.h"
-#include "dllsec_802154.h"
 
 /**
  * \brief      The size of the packetbuf, in bytes

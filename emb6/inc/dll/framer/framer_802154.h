@@ -66,6 +66,7 @@
 
 
 #include "linkaddr.h"
+#include "emb6.h"
 
 #ifdef FRAME802154_CONF_VERSION
 #define FRAME802154_VERSION FRAME802154_CONF_VERSION
@@ -125,6 +126,17 @@
 #define FRAME802154_1_BYTE_KEY_ID_MODE         (1)
 #define FRAME802154_5_BYTE_KEY_ID_MODE         (2)
 #define FRAME802154_9_BYTE_KEY_ID_MODE         (3)
+
+/**
+ * \brief Defines the maximum entries possible in Access Control List (ACL) for Replay Protection
+ */
+#define MAX_ENTRY 10
+
+#if LLSEC802154_ENABLED
+#define FRAME802154_SEC_KEY_SIZE               16
+extern uint8_t frame802154_key[FRAME802154_SEC_KEY_SIZE];
+#endif /* #if LLSEC802154_ENABLED */
+
 
 /**
  *    @brief  The IEEE 802.15.4 frame has a number of constant/fixed fields that
@@ -221,6 +233,15 @@ typedef struct {
     int payload_len;                /**< Length of payload field */
 } frame802154_t;
 
+
+/* Access Control List(ACL) structure for Replay Protection */
+ typedef struct{
+	uint8_t src_addr[8]; /**< Source address */
+	frame802154_frame_counter_t last_frame_counter_value;    /**< Frame counter, used for Replay Protection */
+} frame802154_replayProtection;
+
+frame802154_replayProtection database[10];
+
 /* Prototypes */
 
 int frame802154_hdrlen(frame802154_t *p);
@@ -246,6 +267,15 @@ uint8_t frame802154_getDSN(void);
 
 uint8_t frame802154_broadcast(frame802154_t *p);
 
+
+#if LLSEC802154_ENABLED && LLSEC802154_USES_AUX_HEADER
+/* checking if the security key is changed*/
+uint8_t frame802154_securityKeyChecking(uint8_t *newKey);
+/* Setting of the security key*/
+void frame802154_set_security_key(uint8_t *key, uint8_t len);
+/* ACL Database */
+ void frame802154_replayProtectionDatabase();
+#endif  /*LLSEC802154_ENABLED && LLSEC802154_USES_AUX_HEADER*/
 
 #endif /* FRAME_802154_H */
 /** @} */

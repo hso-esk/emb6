@@ -691,6 +691,7 @@ extern const s_nsHeadComp_t hc_driver_slipnet;
 
 /* Supported link layer security handlers */
 extern const s_nsDllsec_t dllsec_driver_null;
+extern const s_nsDllsec_t dllsec_driver_802154;
 extern const s_nsDllsec_t dllsec_tsch_adaptive_driver;
 
 

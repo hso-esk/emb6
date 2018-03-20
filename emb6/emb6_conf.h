@@ -64,6 +64,7 @@
 #define EMB6_TEST_CFG_WOR_EN                          FALSE
 
 
+
 /*=============================================================================
                                 APPLICATION LAYER SECTION
 ===============================================================================*/
@@ -135,12 +136,46 @@
 /** Do we compress the IP header or not */
 #define SICSLOWPAN_CONF_COMPRESSION          SICSLOWPAN_COMPRESSION_HC06
 
-/** To avoid unnecessary complexity, we assume the common case of
-   a constant LoWPAN-wide IEEE 802.15.4 security level, which
-   can be specified by defining LLSEC802154_CONF_SECURITY_LEVEL. */
-#ifndef LLSEC802154_CONF_SECURITY_LEVEL
-#define LLSEC802154_CONF_SECURITY_LEVEL      0
+/*==============================================================================
+
+                        Security Configuration
+
+ =============================================================================*/
+
+
+
+#ifdef LLSEC802154_CONF_ENABLED
+#define LLSEC802154_ENABLED                       LLSEC802154_CONF_ENABLED
+#else
+#define LLSEC802154_ENABLED                       FALSE
+#endif /* LLSEC802154_CONF_ENABLED */
+
+#if LLSEC802154_ENABLED
+/* Auxiliary Header must be enabled for security */
+#define LLSEC802154_USES_AUX_HEADER               TRUE
+
+#ifdef LLSEC802154_CONF_SECURITY_LEVEL
+#define LLSEC802154_SECURITY_LEVEL                LLSEC802154_CONF_SECURITY_LEVEL
+#else
+#define LLSEC802154_SECURITY_LEVEL                0
 #endif /* LLSEC802154_CONF_SECURITY_LEVEL */
+
+#ifdef LLSEC802154_CONF_USES_EXPLICIT_KEYS
+#define LLSEC802154_USES_EXPLICIT_KEYS            LLSEC802154_CONF_USES_EXPLICIT_KEYS
+#else
+#define LLSEC802154_USES_EXPLICIT_KEYS            0
+#endif /* LLSEC802154_CONF_USES_EXPLICIT_KEYS */
+
+#ifdef LLSEC802154_CONF_USES_FRAME_COUNTER
+#define LLSEC802154_USES_FRAME_COUNTER            LLSEC802154_CONF_USES_FRAME_COUNTER
+#else
+#define LLSEC802154_USES_FRAME_COUNTER            0
+#endif /* LLSEC802154_CONF_USES_FRAME_COUNTER */
+
+#else
+/* Auxiliary Header is not required */
+#define LLSEC802154_USES_AUX_HEADER               FALSE
+#endif /* #if LLSEC802154_ENABLED */
 
 
 /*==============================================================================
@@ -1016,6 +1051,13 @@ void uip_log(char *msg);
 #ifndef LOGGER_LLC
 #define LOGGER_LLC                          FALSE
 #endif
+
+/** Event process functions                (see llsec_xxx.c) */
+
+#ifndef LOGGER_LLCSEC
+#define LOGGER_LLCSEC                       FALSE
+#endif
+
 
 /** Event process functions                 (see mac_xxx.c) */
 #ifndef LOGGER_MAC

@@ -41,7 +41,6 @@
 #include "framer.h"
 #include "framer-802154.h"
 #include "framer_802154.h"
-#include "dllsec_802154.h"
 #include "packetbuf.h"
 #include "random.h"
 

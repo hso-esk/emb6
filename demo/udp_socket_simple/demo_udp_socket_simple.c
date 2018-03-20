@@ -258,7 +258,11 @@ int8_t demo_udpSocketSimpleConf(s_ns_t *p_netstk)
     if (p_netstk->c_configured == FALSE) {
       p_netstk->hc = &hc_driver_sicslowpan;
       p_netstk->frame = &framer_802154;
+#if LLSEC802154_ENABLED
+      p_netstk->dllsec = &dllsec_driver_802154;
+#else
       p_netstk->dllsec = &dllsec_driver_null;
+#endif /* #if LLSEC802154_ENABLED */
       i_ret = 0;
     } else {
       if ((p_netstk->hc == &hc_driver_sicslowpan) &&

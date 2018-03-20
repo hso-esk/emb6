@@ -70,6 +70,13 @@
 #include "cc.h"
 #include "framer.h"
 #include "framer_802154.h"
+#include "ccm-star.h"
+#include "linkaddr.h"
+
+#if LLSEC802154_ENABLED
+static uint8_t currentKey[FRAME802154_SEC_KEY_SIZE] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+uint8_t frame802154_key[FRAME802154_SEC_KEY_SIZE] =  {0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF};
+#endif /*LLSEC802154_ENABLED*/
 
 /**  \brief The 16-bit identifier of the PAN on which the device is
  *   operating.  If this value is 0xffff, the device is not
@@ -89,6 +96,10 @@ typedef struct {
   uint8_t src_addr_len;    /**<  Length (in bytes) of source address field */
   uint8_t aux_sec_len;     /**<  Length (in bytes) of aux security header field */
 } field_length_t;
+
+
+
+
 
 /*----------------------------------------------------------------------------*/
 static uint8_t Framer802154_DSN;
@@ -279,8 +290,8 @@ frame802154_has_panid(frame802154_fcf_t *fcf, int *has_src_pan_id, int *has_dest
   } else {
     /* No PAN ID in ACK */
     if(fcf->frame_type != FRAME802154_ACKFRAME) {
-      if(!fcf->panid_compression && fcf->src_addr_mode & 3) {
-        /* If compressed, don't inclue source PAN ID */
+      if(!fcf->panid_compression && (fcf->src_addr_mode & 3)) {
+        /* If compressed, don't include source PAN ID */
         src_pan_id = 1;
       }
       if(fcf->dest_addr_mode & 3) {
@@ -400,8 +411,8 @@ field_len(frame802154_t *p, field_length_t *flen)
    * up to the caller. */
   if(p->fcf.frame_version < FRAME802154_IEEE802154E_2012) {
     /* Set PAN ID compression bit if src pan id matches dest pan id. */
-    if(p->fcf.dest_addr_mode & 3 && p->fcf.src_addr_mode & 3 &&
-       p->src_pid == p->dest_pid) {
+    if((p->fcf.dest_addr_mode & 3) && (p->fcf.src_addr_mode & 3) &&
+       (p->src_pid == p->dest_pid)) {
       p->fcf.panid_compression = 1;
     } else {
       p->fcf.panid_compression = 0;
@@ -502,8 +513,8 @@ frame802154_create(frame802154_t *p, uint8_t *buf)
             | ((p->fcf.panid_compression & 1) << 6);
 
     buf[1] = ((p->fcf.sequence_number_suppression & 1))
-    		| ((p->fcf.ie_list_present & 1)) << 1
-			| ((p->fcf.dest_addr_mode & 3) << 2)
+            | ((p->fcf.ie_list_present & 1)) << 1
+            | ((p->fcf.dest_addr_mode & 3) << 2)
             | ((p->fcf.frame_version & 3) << 4)
             | ((p->fcf.src_addr_mode & 3) << 6);
 
@@ -540,11 +551,11 @@ frame802154_create(frame802154_t *p, uint8_t *buf)
     if(flen.aux_sec_len) {
         buf[pos++] = p->aux_hdr.security_control.security_level
 #if LLSEC802154_USES_EXPLICIT_KEYS
-      | (p->aux_hdr.security_control.key_id_mode << 3)
+                | (p->aux_hdr.security_control.key_id_mode << 3)
 #endif /* LLSEC802154_USES_EXPLICIT_KEYS */
-	  | (p->aux_hdr.security_control.frame_counter_suppression << 5)
-	  | (p->aux_hdr.security_control.frame_counter_size << 6)
-	;
+                | (p->aux_hdr.security_control.frame_counter_suppression << 5)
+                | (p->aux_hdr.security_control.frame_counter_size << 6);
+
     if(p->aux_hdr.security_control.frame_counter_suppression == 0) {
       /* We support only 4-byte counters */
       memcpy(buf + pos, p->aux_hdr.frame_counter.u8, 4);
@@ -621,13 +632,13 @@ frame802154_parse(uint8_t *data, int len, frame802154_t *pf)
 
     /* Destination address, if any */
     if (fcf.dest_addr_mode) {
-    	if(has_dest_panid) {
-    	  /* Destination PAN */
-    	  pf->dest_pid = p[0] + (p[1] << 8);
-    	  p += 2;
-    	} else {
-    	  pf->dest_pid = 0;
-    	}
+      if(has_dest_panid) {
+        /* Destination PAN */
+        pf->dest_pid = p[0] + (p[1] << 8);
+        p += 2;
+      } else {
+        pf->dest_pid = 0;
+      }
 
         /* Destination address */
         /*     l = addr_len(fcf.dest_addr_mode); */
@@ -654,7 +665,7 @@ frame802154_parse(uint8_t *data, int len, frame802154_t *pf)
     /* Source address, if any */
     if (fcf.src_addr_mode) {
         /* Source PAN */
-    	if(has_src_panid) {
+      if(has_src_panid) {
           pf->src_pid = p[0] + (p[1] << 8);
           p += 2;
           if(!has_dest_panid) {
@@ -665,11 +676,6 @@ frame802154_parse(uint8_t *data, int len, frame802154_t *pf)
         }
 
         /* Source address */
-        /*     l = addr_len(fcf.src_addr_mode); */
-        /*     for(c = 0; c < l; c++) { */
-        /*       pf->src_addr.u8[c] = p[l - c - 1]; */
-        /*     } */
-        /*     p += l; */
         if (fcf.src_addr_mode == FRAME802154_SHORTADDRMODE) {
             linkaddr_copy((linkaddr_t *) &(pf->src_addr), &linkaddr_null);
             pf->src_addr[0] = p[1];
@@ -761,6 +767,70 @@ uint8_t frame802154_broadcast(frame802154_t *p)
     }
     return 1;
 }
+
+
+#if LLSEC802154_ENABLED && LLSEC802154_USES_AUX_HEADER
+/*---------------------------------------------------------------------------*/
+/* checking if the security key is changed.
+ */
+static uint8_t key_compare( uint8_t *key, uint8_t len )
+{
+  uint8_t sameKey = true;
+
+  if( len != sizeof(currentKey) )
+    return false;
+
+  for(uint8_t i = 0; i< sizeof(currentKey);i++)
+  {
+      if (currentKey[i] == key[i])
+          sameKey = true;
+      else
+      {
+        sameKey = false;
+        break;
+      }
+  }
+  if (sameKey == false)
+  {
+    for(uint8_t i = 0; i < sizeof(currentKey); i++)
+      currentKey[i] = *(key + i);
+  }
+  return sameKey;
+}
+
+ /*---------------------------------------------------------------------------*/
+ /* Setting of the security key.
+  */
+ void frame802154_set_security_key( uint8_t *key, uint8_t len)
+{
+  uint8_t sameKey = true;
+
+  sameKey = key_compare( key, len );
+
+  /* setting key for Advanced Encryption Standard(AES) operations */
+  if(sameKey == false)
+  {
+    CCM_STAR.set_key(currentKey);
+  }
+}
+
+ /*---------------------------------------------------------------------------*/
+ /* ACL Database
+  */
+ void frame802154_replayProtectionDatabase()
+{
+   uint8_t src_addr1[8] = {0x00, 0x50, 0xc2, 0xff, 0xfe, 0xa8, 0x00, 0xaa };
+   uint8_t src_addr2[8] = {0x00, 0x50, 0xc2, 0xff, 0xfe, 0xa8, 0x00, 0xbb };
+
+   /*ACL 1st entry */
+   linkaddr_copy((linkaddr_t *)&database[0].src_addr,(linkaddr_t *)&src_addr1);
+   database[0].last_frame_counter_value.u32 = 0;
+
+    /*ACL 2st entry */
+    linkaddr_copy((linkaddr_t *)&database[1].src_addr,(linkaddr_t *)&src_addr2);
+    database[1].last_frame_counter_value.u32 = 0;
+}
+#endif  /*LLSEC802154_ENABLED && LLSEC802154_USES_AUX_HEADER*/
 
 /** \}   */
 /** @} */
