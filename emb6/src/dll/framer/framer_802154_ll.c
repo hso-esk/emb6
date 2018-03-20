@@ -223,7 +223,9 @@ uint8_t framer802154ll_addrFilter(framer802154ll_attr_t *p_frame, uint8_t *p_buf
     }
 
     /* is destination PAN Id different from source PAN Id? */
-    if (destPANId != dev_pan_id) {
+    if ((dev_pan_id != FRAME802154_BROADCASTPANDID) &&
+        (destPANId != dev_pan_id))
+    {
       /* then discard the frame */
       TRACE_LOG_ERR("+++ LLFRAMER: invalid destPANId %04x", destPANId);
       return FALSE;
