@@ -35,6 +35,18 @@
 #include "bsp/srf06eb_cc26xx/drivers/source/bsp.h"
 
 #include "hal.h"
+
+/* Which events to trigger a UART interrupt */
+#define UART_RX_INTERRUPT_TRIGGERS        (UART_INT_RX | UART_INT_RT)
+
+/* Which events to trigger a UART interrupt */
+#define UART_TX_INTERRUPT_TRIGGERS        (UART_INT_TX)
+
+/* All interrupt masks */
+#define UART_INTERRUPT_ALL                (UART_INT_OE | UART_INT_BE | UART_INT_PE | \
+                                           UART_INT_FE | UART_INT_RT | UART_INT_TX | \
+                                           UART_INT_RX | UART_INT_CTS)
+
 /*==============================================================================
                             CONFIGURATION
 ==============================================================================*/
@@ -194,7 +206,7 @@ void loc_readUartRxFifo(void)
 
   while(UARTCharsAvail(UART0_BASE) == true)
   {
-    uint8_t rxData = UARTCharGet(UART0_BASE);
+    uint8_t rxData = UARTCharGetNonBlocking(UART0_BASE);
     if(gf_uart_rx_cb != NULL)
         gf_uart_rx_cb(rxData);
   }
@@ -207,33 +219,29 @@ void loc_readUartRxFifo(void)
 *******************************************************************************/
 void UART0IntHandler(void)
 {
-  volatile uint32_t l_intStatus;
-  l_intStatus = UARTIntStatus(UART0_BASE, true);
-  
-  if((l_intStatus & UART_INT_TX) == UART_INT_TX)
-  {
-    /* Fill the tx fifo */
-    loc_writeUartTxFifo();
 
-    /* Clear the UART interrupt flag. */
-    UARTIntClear(UART0_BASE, UART_INT_TX);
-  }/* if */
+  uint32_t flags;
+  /* Read out the masked interrupt status */
+  flags = UARTIntStatus(UART0_BASE, true);
 
-  if((l_intStatus & UART_INT_RX) == UART_INT_RX)
-  {
-    /* Fill the rx fifo */
-    loc_readUartRxFifo();
+  /* Clear all UART interrupt flags */
+  UARTIntClear(UART0_BASE, UART_INTERRUPT_ALL);
 
-    /* Clear the UART interrupt flag. */
-    UARTIntClear(UART0_BASE, UART_INT_RX);
-  }/* if */
+  if((flags & UART_RX_INTERRUPT_TRIGGERS) != 0) {
+    /*
+     * If this was a FIFO RX or an RX timeout, read all bytes available in the
+     * RX FIFO.
+     */
+    while(UARTCharsAvail(UART0_BASE)) {
+        /* Fill the rx fifo */
+        loc_readUartRxFifo();
+    }
+  }
 
-  l_intStatus = UARTIntStatus(UART0_BASE, false);
-  if((l_intStatus & UART_INT_OE) == UART_INT_OE)
-  {
-    /* Clear the UART interrupt flag. */
-    UARTIntClear(UART0_BASE, UART_INT_OE);
-  }/* if */
+  if( flags & UART_TX_INTERRUPT_TRIGGERS ) {
+        /* Fill the tx fifo */
+        loc_writeUartTxFifo();
+  }
 }
 /*==============================================================================
                             FUNCTIONS
