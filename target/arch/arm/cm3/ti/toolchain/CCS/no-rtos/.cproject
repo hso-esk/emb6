@@ -1963,10 +1963,10 @@
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_MANUFACTURER=\&quot;ivESK/HSG\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_TYPE=\&quot;EIS\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_MODEL_NUMBER=\&quot;NIKI4.0\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SERIAL_NO=\&quot;20180309-0001\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SERIAL_NO=\&quot;20180326-0001\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_HW_VERSION=\&quot;R1\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_FIRMWARE_VERSION=\&quot;v1.2.0\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SW_VERSION=\&quot;v1.2.0\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_FIRMWARE_VERSION=\&quot;v1.2.1\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SW_VERSION=\&quot;v1.2.1\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_ENGINE_CONF_MAX_OBJECTS=20"/>
 									<listOptionValue builtIn="false" value="COAP_MAX_OBSERVERS=40"/>
 									<listOptionValue builtIn="false" value="COAP_OBSERVE_REFRESH_INTERVAL=0"/>
@@ -2122,10 +2122,10 @@
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_MANUFACTURER=\&quot;ivESK/HSG\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_TYPE=\&quot;E-METER\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_MODEL_NUMBER=\&quot;NIKI4.0\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SERIAL_NO=\&quot;20180309-0001\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SERIAL_NO=\&quot;20180326-0001\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_HW_VERSION=\&quot;R1\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_FIRMWARE_VERSION=\&quot;v1.2.0\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SW_VERSION=\&quot;v1.2.0\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_FIRMWARE_VERSION=\&quot;v1.2.1\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SW_VERSION=\&quot;v1.2.1\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_ENGINE_CONF_MAX_OBJECTS=20"/>
 									<listOptionValue builtIn="false" value="COAP_MAX_OBSERVERS=40"/>
 									<listOptionValue builtIn="false" value="COAP_OBSERVE_REFRESH_INTERVAL=0"/>
@@ -2278,10 +2278,10 @@
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_MANUFACTURER=\&quot;SF/HSG\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_TYPE=\&quot;GENERIC\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_MODEL_NUMBER=\&quot;PARSIFAL\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SERIAL_NO=\&quot;20180309-0001\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SERIAL_NO=\&quot;20180326-0001\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_HW_VERSION=\&quot;R1\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_FIRMWARE_VERSION=\&quot;v1.2.0\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SW_VERSION=\&quot;v1.2.0\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_FIRMWARE_VERSION=\&quot;v1.2.1\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SW_VERSION=\&quot;v1.2.1\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_ENGINE_CONF_MAX_OBJECTS=20"/>
 									<listOptionValue builtIn="false" value="COAP_MAX_OBSERVERS=40"/>
 									<listOptionValue builtIn="false" value="COAP_OBSERVE_REFRESH_INTERVAL=0"/>
@@ -2439,10 +2439,10 @@
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_MANUFACTURER=\&quot;SF/HSG\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_TYPE=\&quot;GENERIC\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_MODEL_NUMBER=\&quot;AMELI\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SERIAL_NO=\&quot;20180309-0001\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SERIAL_NO=\&quot;20180326-0001\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_HW_VERSION=\&quot;R1\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_FIRMWARE_VERSION=\&quot;v1.2.0\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SW_VERSION=\&quot;v1.2.0\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_FIRMWARE_VERSION=\&quot;v1.2.1\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SW_VERSION=\&quot;v1.2.1\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_ENGINE_CONF_MAX_OBJECTS=20"/>
 									<listOptionValue builtIn="false" value="COAP_MAX_OBSERVERS=40"/>
 									<listOptionValue builtIn="false" value="COAP_OBSERVE_REFRESH_INTERVAL=0"/>
@@ -2595,10 +2595,10 @@
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_MANUFACTURER=\&quot;ivESK/HSG\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_TYPE=\&quot;GENERIC\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_MODEL_NUMBER=\&quot;SENSORSIM\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SERIAL_NO=\&quot;20180309-0001\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SERIAL_NO=\&quot;20180326-0001\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_HW_VERSION=\&quot;R1\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_FIRMWARE_VERSION=\&quot;v1.2.0\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SW_VERSION=\&quot;v1.2.0\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_FIRMWARE_VERSION=\&quot;v1.2.1\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SW_VERSION=\&quot;v1.2.1\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_ENGINE_CONF_MAX_OBJECTS=20"/>
 									<listOptionValue builtIn="false" value="COAP_MAX_OBSERVERS=40"/>
 									<listOptionValue builtIn="false" value="COAP_OBSERVE_REFRESH_INTERVAL=0"/>
@@ -2751,10 +2751,10 @@
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_MANUFACTURER=\&quot;ivESK/HSG\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_TYPE=\&quot;GENERIC\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_MODEL_NUMBER=\&quot;SENSORSIM-STATIC\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SERIAL_NO=\&quot;20180309-0001\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SERIAL_NO=\&quot;20180326-0001\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_DEVICE_HW_VERSION=\&quot;R1\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_FIRMWARE_VERSION=\&quot;v1.2.0\&quot;"/>
-									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SW_VERSION=\&quot;v1.2.0\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_FIRMWARE_VERSION=\&quot;v1.2.1\&quot;"/>
+									<listOptionValue builtIn="false" value="LWM2M_DEVICE_SW_VERSION=\&quot;v1.2.1\&quot;"/>
 									<listOptionValue builtIn="false" value="LWM2M_ENGINE_CONF_MAX_OBJECTS=20"/>
 									<listOptionValue builtIn="false" value="COAP_MAX_OBSERVERS=40"/>
 									<listOptionValue builtIn="false" value="COAP_OBSERVE_REFRESH_INTERVAL=0"/>
