@@ -1474,6 +1474,7 @@ static int32_t _hndl_obj_create( uint8_t* p_cmd, uint16_t cmdLen,
   lwm2m_object_t* p_lwm2mObjTmp = NULL;
   lwm2m_instance_t* p_lwm2mInstTmp = NULL;
   resource_t* p_restTmp = NULL;
+  uint8_t objNew = FALSE;
 
   EMB6_ASSERT_RET( p_cmd != NULL, 0 );
   EMB6_ASSERT_RET( p_rpl != NULL, 0 );
@@ -1517,6 +1518,8 @@ static int32_t _hndl_obj_create( uint8_t* p_cmd, uint16_t cmdLen,
 
   if( p_lwm2mObj == NULL )
   {
+    objNew = TRUE;
+
     /* allocate memory for an object */
     p_lwm2mObjTmp = (lwm2m_object_t* )memb_alloc( &lwm2mobject_storage );
 
@@ -1582,18 +1585,21 @@ static int32_t _hndl_obj_create( uint8_t* p_cmd, uint16_t cmdLen,
 
   if( ret == 0 )
   {
-    /* add object to container */
-    for( i = 0; i < LWM2MAPI_OBJ_MAX; i++ )
+    if( objNew == TRUE )
     {
-      if(lwm2m_object_container[i] == NULL )
+      /* add object to container only if not there yet */
+      for( i = 0; i < LWM2MAPI_OBJ_MAX; i++ )
       {
-        lwm2m_object_container[i] = p_lwm2mObj;
-        break;
+        if(lwm2m_object_container[i] == NULL )
+        {
+          lwm2m_object_container[i] = p_lwm2mObj;
+          break;
+        }
       }
-    }
 
-    /* link object to LWM2M engine */
-    lwm2m_engine_register_object( p_lwm2mObj );
+      /* link object to LWM2M engine */
+      lwm2m_engine_register_object( p_lwm2mObj );
+    }
 
     /* set status OK */
     EMB6_ASSERT_RET( rplLen >= sizeof(lwm2mapi_ret_t), -1 );
