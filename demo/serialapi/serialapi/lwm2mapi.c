@@ -2253,10 +2253,10 @@ static int32_t _wr_res( const lwm2m_resource_t* p_lwm2mRes, uint8_t** p_cmd,
       }
       else
       {
-        EMB6_ASSERT_RET( *p_cmdLen < p_lwm2mRes->value.stringvar.size, -3 );
+        EMB6_ASSERT_RET( len < p_lwm2mRes->value.stringvar.size, -3 );
         memset( *p_lwm2mRes->value.stringvar.var, 0,
             p_lwm2mRes->value.stringvar.size);
-        *p_lwm2mRes->value.stringvar.len = *p_cmdLen;
+        *p_lwm2mRes->value.stringvar.len = len;
         LWM2M_API_GET_FIELD_MEM( *p_lwm2mRes->value.stringvar.var,
             *p_cmd, *p_cmdLen, len );
       }
