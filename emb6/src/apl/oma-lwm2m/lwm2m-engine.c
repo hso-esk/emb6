@@ -84,18 +84,62 @@
 /* Default ports to connect to the bootstrap server */
 #define BS_REMOTE_PORT     UIP_HTONS(5685)
 
+
 /* Interval of the LWM2M handler */
-#define LWM2M_INTERVAL_EVENT_HANDLER                    5
+#define LWM2M_INTERVAL_EVENT_HANDLER                    333
+
+#define LWM2M_GET_RAND_TIMEOUT(min, rmin, rmax)         ((min * bsp_getTRes()) + (bsp_getrand( rmin * bsp_getTRes(), rmax * bsp_getTRes())))
+#define LWM2M_GET_RAND_TIMEOUT_TMPLT(a)                 (LWM2M_GET_RAND_TIMEOUT(a##_MIN, a##_RANDOM_MIN, a##_RANDOM_MAX))
+
 /* Timeout for a registration to complete */
-#define LWM2M_TIMEOUT_REGISTRATION                      10
-/* How many updates shall be performed during the lifetime */
-#define LWM2M_INTERVAL_UPDATE                           ((lwm2m_server_getLifetime() / 2) + \
-                                                         bsp_getrand(0, (lwm2m_server_getLifetime() / 4) ))
+#define LWM2M_TIMEOUT_REG_MIN                           5
+#define LWM2M_TIMEOUT_REG_RANDOM_MIN                    0
+#define LWM2M_TIMEOUT_REG_RANDOM_MAX                    5
+#define LWM2M_REG_TIMEOUT                               LWM2M_GET_RAND_TIMEOUT_TMPLT(LWM2M_TIMEOUT_REG)
+//#define LWM2M_REG_TIMEOUT                               LWM2M_GET_RAND_TIMEOUT(LWM2M_TIMEOUT_REG_MIN, \
+//                                                                              LWM2M_TIMEOUT_REG_RANDOM_MIN, \
+//                                                                              LWM2M_TIMEOUT_REG_RANDOM_MAX)
+
+
+/* Timeout for update intervals */
+#define LWM2M_TIMEOUT_UPDATEITV_MIN                     (lwm2m_server_getLifetime() / 2)
+#define LWM2M_TIMEOUT_UPDATEITV_RANDOM_MIN              0
+#define LWM2M_TIMEOUT_UPDATEITV_RANDOM_MAX              (lwm2m_server_getLifetime() / 4)
+#define LWM2M_INTERVAL_TIMEOUT                          LWM2M_GET_RAND_TIMEOUT_TMPLT(LWM2M_TIMEOUT_UPDATEITV)
+//#define LWM2M_INTERVAL_TIMEOUT                          LWM2M_GET_RAND_TIMEOUT(LWM2M_TIMEOUT_UPDATEITV_MIN, \
+//                                                                              LWM2M_TIMEOUT_UPDATEITV_RANDOM_MIN, \
+//                                                                              LWM2M_TIMEOUT_UPDATEITV_RANDOM_MAX)
+
 /* Timeout for a registration to complete */
-#define LWM2M_TIMEOUT_UPDATE                            10
+#define LWM2M_TIMEOUT_UPDATE_MIN                        8
+#define LWM2M_TIMEOUT_UPDATE_RANDOM_MIN                 0
+#define LWM2M_TIMEOUT_UPDATE_RANDOM_MAX                 5
+#define LWM2M_UPDATE_TIMEOUT                            LWM2M_GET_RAND_TIMEOUT_TMPLT(LWM2M_TIMEOUT_UPDATE)
+//#define LWM2M_UPDATE_TIMEOUT                            LWM2M_GET_RAND_TIMEOUT(LWM2M_TIMEOUT_UPDATE_MIN, \
+//                                                                              LWM2M_TIMEOUT_UPDATE_RANDOM_MIN, \
+//                                                                              LWM2M_TIMEOUT_UPDATE_RANDOM_MAX)
+
 /* Maximum number of error allowed during update */
 #define LWM2M_ERRMAX_UPDATE                             5
 
+/* Timoeut for startup delay */
+#define LWM2M_TIMEOUT_DELAY_START_MIN                   0
+#define LWM2M_TIMEOUT_DELAY_START_RANDOM_MIN            0
+#define LWM2M_TIMEOUT_DELAY_START_RANDOM_MAX            1
+#define LWM2M_DELAY_START_TIMEOUT                       LWM2M_GET_RAND_TIMEOUT_TMPLT(LWM2M_TIMEOUT_DELAY_START)
+//#define LWM2M_DELAY_START_TIMEOUT                       LWM2M_GET_RAND_TIMEOUT(LWM2M_TIMEOUT_DELAY_START_MIN, \
+//                                                                              LWM2M_TIMEOUT_DELAY_START_RANDOM_MIN, \
+//                                                                              LWM2M_TIMEOUT_DELAY_START_RANDOM_MAX)
+
+
+/* Timoeut for startup delay */
+#define LWM2M_TIMEOUT_DELAY_READY_MIN                   10
+#define LWM2M_TIMEOUT_DELAY_READY_RANDOM_MIN            0
+#define LWM2M_TIMEOUT_DELAY_READY_RANDOM_MAX            5
+#define LWM2M_DELAY_READY_TIMEOUT                       LWM2M_GET_RAND_TIMEOUT_TMPLT(LWM2M_TIMEOUT_DELAY_READY)
+//#define LWM2M_DELAY_READY_TIMEOUT                       LWM2M_GET_RAND_TIMEOUT(LWM2M_TIMEOUT_DELAY_READY_MIN, \
+//                                                                              LWM2M_TIMEOUT_DELAY_READY_RANDOM_MIN, \
+//                                                                              LWM2M_TIMEOUT_DELAY_READY_RANDOM_MAX)
 
 /* Flag identifying that a registration server shall be used */
 #define LWM2M_STATUS_FLAG_USE_REG_SERVER                (1 << 0)
@@ -131,7 +175,7 @@ typedef enum E_LWM2M_ENGINE_STATE_T
   /** Engine is idle */
   E_LWM2M_ENGINE_STATE_IDLE,
   /** Random delay of the engine */
-  E_LWM2M_ENGINE_STATE_DELAY,
+  E_LWM2M_ENGINE_STATE_DELAY_START,
   /** Engine is bootstrapping */
   E_LWM2M_ENGINE_STATE_BS,
   /** Engine waits for bootstrapping response */
@@ -140,6 +184,8 @@ typedef enum E_LWM2M_ENGINE_STATE_T
   E_LWM2M_ENGINE_STATE_REG,
   /** Engine waits for register response */
   E_LWM2M_ENGINE_STATE_REG_WAIT,
+  /** Random delay of the engine */
+  E_LWM2M_ENGINE_STATE_DELAY_READY,
   /** Engine waits for register response */
   E_LWM2M_ENGINE_STATE_READY,
   /** Engine is updating */
@@ -1111,18 +1157,18 @@ _lwm2m_engine_event_handler(c_event_t c_event, p_data_t p_data)
             if( (_ctx.statusFlag & LWM2M_STATUS_FLAG_USE_REG_SERVER) &&
                 (_ctx.statusFlag & LWM2M_STATUS_FLAG_HAS_REG_SERVER_INFO) )
             {
-                /* we can start the registration procedure */
-                _ctx.state = E_LWM2M_ENGINE_STATE_DELAY;
+                /* go to delay */
+                _ctx.state = E_LWM2M_ENGINE_STATE_DELAY_START;
                 evproc_putEvent( E_EVPROC_TAIL, EVENT_TYPE_LWM2M, NULL );
 
-                etimer_set( &_ctx.tot_timer, bsp_getrand(0, 5 * bsp_getTRes()),
+                etimer_set( &_ctx.tot_timer, LWM2M_DELAY_START_TIMEOUT,
                             _lwm2m_engine_tot_timer_handler );
             }
         }
         break;
 
 
-      case E_LWM2M_ENGINE_STATE_DELAY:
+      case E_LWM2M_ENGINE_STATE_DELAY_START:
 
         if( etimer_expired( &_ctx.tot_timer ) )
         {
@@ -1171,8 +1217,8 @@ _lwm2m_engine_event_handler(c_event_t c_event, p_data_t p_data)
             /* set the timeout timer to the according wait
              * interval */
             etimer_stop( &_ctx.tot_timer );
-            etimer_set( &_ctx.tot_timer, LWM2M_TIMEOUT_REGISTRATION *
-                        bsp_getTRes(), NULL);
+            etimer_set( &_ctx.tot_timer, LWM2M_REG_TIMEOUT,
+                        _lwm2m_engine_tot_timer_handler);
         }
         break;
 
@@ -1184,19 +1230,19 @@ _lwm2m_engine_event_handler(c_event_t c_event, p_data_t p_data)
         if( _ctx.statusFlag & LWM2M_STATUS_FLAG_REGISTERED )
         {
             /* the client was registered successfully */
-            _ctx.state = E_LWM2M_ENGINE_STATE_READY;
+            _ctx.state = E_LWM2M_ENGINE_STATE_DELAY_READY;
+            evproc_putEvent( E_EVPROC_TAIL, EVENT_TYPE_LWM2M, NULL );
 
-            /* set the timeout timer to the according wait
-             * interval */
-            etimer_stop( &_ctx.tot_timer );
-            etimer_set( &_ctx.tot_timer, LWM2M_INTERVAL_UPDATE *
-                        bsp_getTRes(), NULL);
+            etimer_set( &_ctx.tot_timer, LWM2M_DELAY_READY_TIMEOUT,
+                        _lwm2m_engine_tot_timer_handler );
+
 
         }
         else if( _ctx.statusFlag & LWM2M_STATUS_FLAG_REGISTER_ERROR )
         {
-            /* An error occurred during the registration */
-            _ctx.state = E_LWM2M_ENGINE_STATE_REG;
+            /* An error occurred during the registration. Delete the error flag
+             * and wait for the timeout */
+            _ctx.statusFlag &= ~LWM2M_STATUS_FLAG_REGISTER_ERROR;
             evproc_putEvent( E_EVPROC_TAIL, EVENT_TYPE_LWM2M, NULL );
         }
         else if( etimer_expired( &_ctx.tot_timer) )
@@ -1211,6 +1257,20 @@ _lwm2m_engine_event_handler(c_event_t c_event, p_data_t p_data)
         }
         break;
 
+      case E_LWM2M_ENGINE_STATE_DELAY_READY:
+
+        if( etimer_expired( &_ctx.tot_timer ) )
+        {
+            /* Device is ready now */
+            _ctx.state = E_LWM2M_ENGINE_STATE_READY;
+
+            /* set the timeout timer to the according wait
+             * interval */
+            etimer_stop( &_ctx.tot_timer );
+            etimer_set( &_ctx.tot_timer, LWM2M_INTERVAL_TIMEOUT,
+                        _lwm2m_engine_tot_timer_handler);
+        }
+        break;
 
 
       case E_LWM2M_ENGINE_STATE_READY:
@@ -1227,8 +1287,8 @@ _lwm2m_engine_event_handler(c_event_t c_event, p_data_t p_data)
             /* set the timeout timer to the according wait
              * interval */
             etimer_stop( &_ctx.tot_timer );
-            etimer_set( &_ctx.tot_timer, LWM2M_TIMEOUT_UPDATE *
-                        bsp_getTRes(), NULL);
+            etimer_set( &_ctx.tot_timer, LWM2M_UPDATE_TIMEOUT,
+                        _lwm2m_engine_tot_timer_handler );
         }
         break;
 
@@ -1253,8 +1313,13 @@ _lwm2m_engine_event_handler(c_event_t c_event, p_data_t p_data)
                * transactions */
               if( _ctx.p_trans != NULL )
                   coap_clear_transaction( _ctx.p_trans );
-              _ctx.state = E_LWM2M_ENGINE_STATE_REG;
 
+              /* we can start the registration procedure */
+              _ctx.state = E_LWM2M_ENGINE_STATE_DELAY_START;
+              evproc_putEvent( E_EVPROC_TAIL, EVENT_TYPE_LWM2M, NULL );
+
+              etimer_set( &_ctx.tot_timer, LWM2M_DELAY_START_TIMEOUT,
+                        _lwm2m_engine_tot_timer_handler );
 
           }
         break;
@@ -1270,15 +1335,15 @@ _lwm2m_engine_event_handler(c_event_t c_event, p_data_t p_data)
           /* Check if the registered flag was set */
           if( _ctx.statusFlag & LWM2M_STATUS_FLAG_UPDATED )
           {
-              /* the client was registered successfully */
+              /* the client was updated successfully */
               _ctx.state = E_LWM2M_ENGINE_STATE_READY;
               _ctx.statusFlag &= ~LWM2M_STATUS_FLAG_UPDATE_ERROR;
 
               /* set the timeout timer to the according wait
                * interval */
               etimer_stop( &_ctx.tot_timer );
-              etimer_set( &_ctx.tot_timer, LWM2M_INTERVAL_UPDATE *
-                          bsp_getTRes(), NULL);
+              etimer_set( &_ctx.tot_timer, LWM2M_INTERVAL_TIMEOUT,
+                          _lwm2m_engine_tot_timer_handler );
           }
           else if( etimer_expired( &_ctx.tot_timer) )
           {
@@ -1299,8 +1364,12 @@ _lwm2m_engine_event_handler(c_event_t c_event, p_data_t p_data)
               if( errors >= LWM2M_ERRMAX_UPDATE )
               {
                   /* To many errors occurred during the registration */
-                  _ctx.state = E_LWM2M_ENGINE_STATE_REG;
+                  /* we can start the registration procedure */
+                  _ctx.state = E_LWM2M_ENGINE_STATE_DELAY_START;
                   evproc_putEvent( E_EVPROC_TAIL, EVENT_TYPE_LWM2M, NULL );
+
+                  etimer_set( &_ctx.tot_timer, LWM2M_DELAY_START_TIMEOUT,
+                              _lwm2m_engine_tot_timer_handler );
               }
               else
               {
@@ -1311,8 +1380,8 @@ _lwm2m_engine_event_handler(c_event_t c_event, p_data_t p_data)
                   /* set the timeout timer to the according wait
                    * interval */
                   etimer_stop( &_ctx.tot_timer );
-                  etimer_set( &_ctx.tot_timer, LWM2M_TIMEOUT_UPDATE *
-                              bsp_getTRes(), NULL);
+                  etimer_set( &_ctx.tot_timer, LWM2M_UPDATE_TIMEOUT,
+                              _lwm2m_engine_tot_timer_handler );
               }
           }
           break;
@@ -1488,7 +1557,7 @@ void lwm2m_engine_init( char* epname, f_lwm2m_engine_statch_cb p_cb,
 
   /* start timer for local lwm2m engine callback */
   etimer_stop( &_ctx.event_timer );
-  etimer_set( &_ctx.event_timer, LWM2M_INTERVAL_EVENT_HANDLER * bsp_getTRes(),
+  etimer_set( &_ctx.event_timer, (LWM2M_INTERVAL_EVENT_HANDLER * bsp_getTRes()) / 1000,
              _lwm2m_engine_timer_handler );
 
   /* reset timeout timer */
