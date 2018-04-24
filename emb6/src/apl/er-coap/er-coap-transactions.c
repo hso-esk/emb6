@@ -130,19 +130,15 @@ coap_send_transaction(coap_transaction_t *t)
       /* not timed out yet */
       PRINTF("Keeping transaction %u\n\r", t->mid);
 
-      if(t->retrans_counter == 0) {
-        t->retrans_timer.timer.interval =
-          COAP_RESPONSE_TIMEOUT_TICKS + (random_rand()
-                                         %
-                                         (clock_time_t)
-                                         COAP_RESPONSE_TIMEOUT_BACKOFF_MASK);
+      //if(t->retrans_counter == 0) {
+        t->retrans_timer.timer.interval = bsp_getrand( (150 * bsp_getTRes()) / 1000, (700 * bsp_getTRes()) / 1000 );
         PRINTF("Initial interval %d seconds\n\r",
                (int)t->retrans_timer.timer.interval / bsp_getTRes());
-      } else {
-        t->retrans_timer.timer.interval <<= 1;  /* double */
-        PRINTF("Doubled (%d) interval %d seconds\n\r", t->retrans_counter,
-               (int)t->retrans_timer.timer.interval / bsp_getTRes());
-      }
+//      } else {
+//        t->retrans_timer.timer.interval <<= 1;  /* double */
+//        PRINTF("Doubled (%d) interval %d seconds\n\r", t->retrans_counter,
+//               (int)t->retrans_timer.timer.interval / bsp_getTRes());
+//      }
 
       etimer_set(&t->retrans_timer, t->retrans_timer.timer.interval, coap_engine_callback);
 
