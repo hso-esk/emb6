@@ -67,7 +67,7 @@
  */
 
 /** Default Lifetime */
-#define LWM2M_SERVER_LIFETIME_DEFAULT   300
+#define LWM2M_SERVER_LIFETIME_DEFAULT   86400
 /** Default bindig */
 #define LWM2M_SERVER_BINDING            "U"
 
